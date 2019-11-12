@@ -1,0 +1,3 @@
+FROM node
+
+WORKDIR /client

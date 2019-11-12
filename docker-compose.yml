@@ -1,0 +1,50 @@
+version: "3"
+services:
+  server:
+    build: server
+    container_name: jserver
+    entrypoint: /bin/bash
+    environment:
+      LOG_LEVEL: DEBUG
+      POSTGRES_DB_USER: postgres
+      POSTGRES_DB_PASSWORD: mypassword
+      POSTGRES_DB_HOST: db:5432
+      POSTGRES_DB_NAME: postgres
+      ENVIRONMENT: development
+    networks:
+      - jnet
+    ports:
+      - 5001:5000
+    stdin_open: true
+    volumes:
+      - ./server/:/app
+    links:
+      - "db"
+
+  client:
+    build: client
+#    command: yarn --modules-folder /node_modules start
+    command: /bin/bash
+    container_name: jclient
+    networks:
+      - jnet
+    ports:
+      - 3000:3000
+    stdin_open: true
+    volumes:
+      - ./client:/client
+
+  db:
+    image: postgres
+    container_name: jdb
+    networks:
+      - jnet
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_PASSWORD: mypassword
+      # POSTGRES_USER: fable
+      # POSTGRES_DB: fable
+
+networks:
+  jnet:
