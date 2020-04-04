@@ -17,4 +17,5 @@ def identity(payload):
 
 
 app.config['SECRET_KEY'] = environ.get('JWT_SECRET_KEY')
+app.config['JWT_LEEWAY'] = 30000  # FIXME figure this out
 jwt = JWT(app, authenticate, identity)

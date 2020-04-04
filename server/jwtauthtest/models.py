@@ -1,7 +1,7 @@
 from jwtauthtest.database import Base
-from sqlalchemy import Column, Integer, String, Text, Enum, Float, ForeignKey, Boolean
+from sqlalchemy import Column, Integer, String, Text, Enum, Float, ForeignKey, Boolean, DateTime
 from sqlalchemy.orm import relationship
-import enum
+import enum, datetime
 
 class User(Base):
     __tablename__ = 'users'
@@ -28,14 +28,27 @@ class Entry(Base):
     # Title optional, otherwise generated from text. topic-modeled, or BERT summary, etc?
     title = Column(String(128))
     text = Column(Text, nullable=False)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.datetime.utcnow)
 
     # Static fields (not user-generated)
     incognito_therapist = Column(Boolean)
     incognito_ml = Column(Boolean)
 
-
     field_entries = relationship("FieldEntry")
     user_id = Column(Integer, ForeignKey('users.id'))
+
+    def __init__(self, title, text):
+        self.title = title
+        self.text = text
+
+    # TODO look into https://stackoverflow.com/questions/7102754/jsonify-a-sqlalchemy-result-set-in-flask
+    def json(self):
+        return {
+            'id': self.id,
+            'title': self.title,
+            'text': self.text
+        }
 
 
 class FieldType(enum.Enum):
