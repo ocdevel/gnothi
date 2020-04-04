@@ -1,9 +1,10 @@
+import pdb
 from flask_jwt import jwt_required
 from jwtauthtest import app
 from jwtauthtest.database import db_session
 from jwtauthtest.models import User
 from passlib.hash import pbkdf2_sha256
-from flask import request
+from flask import request, jsonify
 
 def useradd(username, password):
     db_session.add(User(username, pbkdf2_sha256.hash(password)))
@@ -18,7 +19,9 @@ def hello():
 
 @app.route('/register', methods=['POST'])
 def register():
-    useradd(request.form['username'], request.form['password'])
+    data = request.get_json()
+    useradd(data['username'], data['password'])
+    return jsonify({'ok': True})
 
 ## actually, this is built into flask_jwt
 # @app.route('/auth', methods=['POST'])

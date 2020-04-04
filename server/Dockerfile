@@ -1,6 +1,6 @@
 FROM python
 
-RUN pip install flask flask-jwt flask-sqlalchemy passlib psycopg2
+RUN pip install flask flask-cors flask-jwt flask-sqlalchemy passlib psycopg2
 
 WORKDIR /app
 

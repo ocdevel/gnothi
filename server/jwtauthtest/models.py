@@ -10,8 +10,8 @@ class User(Base):
     username = Column(String(50), nullable=False, unique=True)
     password = Column(String(200), nullable=False)
 
-    entries = relationship("Entries")
-    fields = relationship("Fields")
+    entries = relationship("Entry")
+    fields = relationship("Field")
 
     def __init__(self, username, password):
         self.username = username
@@ -34,7 +34,7 @@ class Entry(Base):
     incognito_ml = Column(Boolean)
 
 
-    field_entries = relationship("FieldEntries")
+    field_entries = relationship("FieldEntry")
     user_id = Column(Integer, ForeignKey('users.id'))
 
 
