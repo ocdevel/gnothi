@@ -5,11 +5,6 @@ services:
     container_name: jserver
     entrypoint: /bin/bash
     environment:
-      LOG_LEVEL: DEBUG
-      POSTGRES_DB_USER: postgres
-      POSTGRES_DB_PASSWORD: mypassword
-      POSTGRES_DB_HOST: db:5432
-      POSTGRES_DB_NAME: postgres
       ENVIRONMENT: development
     networks:
       - jnet
@@ -43,8 +38,6 @@ services:
       - 5432:5432
     environment:
       POSTGRES_PASSWORD: mypassword
-      # POSTGRES_USER: fable
-      # POSTGRES_DB: fable
 
 networks:
   jnet:

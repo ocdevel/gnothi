@@ -1,6 +1,6 @@
 FROM python
 
-RUN pip install flask flask-jwt flask-sqlalchemy click passlib
+RUN pip install flask flask-jwt flask-sqlalchemy click passlib psycopg2
 
 WORKDIR /app
 
