@@ -6,6 +6,5 @@ https://medium.com/trabe/user-authentication-with-flask-jwt-be0e6f457dff
 https://github.com/martinlamas/flask-jwt-auth-test
 
 ```shell
-$ export FLASK_APP=jwtauthtest
-$ flask run
+$ run.sh
 ```
