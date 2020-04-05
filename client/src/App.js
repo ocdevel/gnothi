@@ -292,16 +292,20 @@ function Entry({jwt}) {
         </Col>
       </Row>
 
-      <Form.Group controlId="formFields">
-        <Form.Label>Fields</Form.Label>
-        {fields.map(f => (
-          <Form.Control
-            type='text'
-            placeholder={f.name}
-            value={fieldVals[f.id]}
-            onChange={changeFieldVal(f.id)}
-          />
-        ))}
+      <Form.Group controlId={`formFieldsFields`}>
+        <Row>
+          {fields.map(f => (
+            <Col>
+              <Form.Label>{f.name}</Form.Label>
+              <Form.Control
+                type='text'
+                placeholder={f.name}
+                value={fieldVals[f.id]}
+                onChange={changeFieldVal(f.id)}
+              />
+            </Col>
+          ))}
+        </Row>
       </Form.Group>
 
       <Button variant="primary" type="submit">
@@ -314,10 +318,22 @@ function Entry({jwt}) {
   )
 }
 
-class Journal extends Component {
-  render() {
-    const {jwt} = this.props
-    return (
+function Journal({jwt}) {
+  const logout = () => {
+    localStorage.removeItem('jwt')
+    window.location.href = "/"
+  }
+
+  return (
+    <div>
+      <Button
+        variant='danger'
+        size='sm'
+        style={{position: 'absolute', top:5, right: 5}}
+        onClick={logout}
+      >
+        Logout
+      </Button>
       <Switch>
         <Route path="/entry/:entry_id">
           <Entry jwt={jwt} />
@@ -328,9 +344,9 @@ class Journal extends Component {
         <Route exact path="/">
           <Entries jwt={jwt} />
         </Route>
-    </Switch>
-    )
-  }
+      </Switch>
+    </div>
+  )
 }
 
 function App() {
