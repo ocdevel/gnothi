@@ -30,55 +30,53 @@ const fetch_ = async (route, method='GET', body=null, jwt=null) => {
   return await response.json()
 }
 
-class Auth extends Component {
-  state = {
-    username: '',
-    password: '',
-    passwordConfirm: ''
-  }
+function Auth({onAuth}) {
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
+  const [passwordConfirm, setPasswordConfirm] = useState('')
 
-  componentDidMount() {
-    this.checkJwt();
-  }
 
-  checkJwt = async () => {
+  const checkJwt = async () => {
     const jwt = localStorage.getItem('jwt');
     if (!jwt) { return }
     const res = await fetch_('check-jwt', 'GET', null, jwt)
     if (res.status_code == 401) {
       return localStorage.removeItem('jwt')
     }
-    this.props.onAuth(jwt);
+    onAuth(jwt);
   }
 
-  onChange = k => e => this.setState({[k]: e.target.value})
+  useEffect(() => {
+    checkJwt()
+  }, [])
 
-  login = async (username, password) => {
+  const changeUsername = e => setUsername(e.target.value)
+  const changePassword = e => setPassword(e.target.value)
+  const changePasswordConfirm = e => setPasswordConfirm(e.target.value)
+
+  const login = async () => {
     const res = await fetch_('auth','POST', {username, password})
     const jwt = res.access_token;
     localStorage.setItem('jwt', jwt);
-    this.props.onAuth(jwt);
+    onAuth(jwt);
   }
 
-  submitLogin = async e => {
+  const submitLogin = async e => {
     // TODO switch to Axios https://malcoded.com/posts/react-http-requests-axios/
     e.preventDefault();
-    const {username, password} = this.state
-    this.login(username, password)
+    login()
   };
 
-  submitRegister = async e => {
+  const submitRegister = async e => {
     e.preventDefault();
     // assert password = passwordConfirm. See react-bootstrap, use yup library or something for form stuff
-    const {username, password} = this.state
     const res = await fetch_('register','POST',{username, password})
-    this.login(username, password);
+    login();
   };
 
-  renderLogin = () => {
-    const {username, password} = this.state
+  const renderLogin = () => {
     return (
-      <Form onSubmit={this.submitLogin}>
+      <Form onSubmit={submitLogin}>
         <Form.Group controlId="formLoginEmail">
           <Form.Label>Email address</Form.Label>
           <Form.Control
@@ -86,7 +84,7 @@ class Auth extends Component {
             placeholder="Enter email"
             required
             value={username}
-            onChange={this.onChange('username')}
+            onChange={changeUsername}
           />
         </Form.Group>
 
@@ -97,7 +95,7 @@ class Auth extends Component {
             placeholder="Password"
             required
             value={password}
-            onChange={this.onChange('password')}
+            onChange={changePassword}
           />
         </Form.Group>
         <Button variant="primary" type="submit">
@@ -107,10 +105,9 @@ class Auth extends Component {
     )
   };
 
-  renderRegister = () => {
-    const {username, password, passwordConfirm} = this.state
+  const renderRegister = () => {
     return (
-      <Form onSubmit={this.submitRegister}>
+      <Form onSubmit={submitRegister}>
         <Form.Group controlId="formRegisterEmail">
           <Form.Label>Email address</Form.Label>
           <Form.Control
@@ -118,7 +115,7 @@ class Auth extends Component {
             placeholder="Enter email"
             required
             value={username}
-            onChange={this.onChange('username')}
+            onChange={changeUsername}
           />
         </Form.Group>
 
@@ -129,7 +126,7 @@ class Auth extends Component {
             placeholder="Password"
             required
             value={password}
-            onChange={this.onChange('password')}
+            onChange={changePassword}
           />
         </Form.Group>
         <Form.Group controlId="formRegisterPasswordConfirm">
@@ -139,7 +136,7 @@ class Auth extends Component {
             placeholder="Confirm Password"
             required
             value={passwordConfirm}
-            onChange={this.onChange('passwordConfirm')}
+            onChange={changePasswordConfirm}
           />
         </Form.Group>
         <Button variant="primary" type="submit">
@@ -149,57 +146,49 @@ class Auth extends Component {
     )
   };
 
-  render() {
-    return (
-      <div>
-        <Tabs defaultActiveKey="login">
-          <Tab eventKey="login" title="Login">
-            {this.renderLogin()}
-          </Tab>
-          <Tab eventKey="register" title="Register">
-            {this.renderRegister()}
-          </Tab>
-        </Tabs>
-      </div>
-    )
-  }
+  return (
+    <div>
+      <Tabs defaultActiveKey="login">
+        <Tab eventKey="login" title="Login">
+          {renderLogin()}
+        </Tab>
+        <Tab eventKey="register" title="Register">
+          {renderRegister()}
+        </Tab>
+      </Tabs>
+    </div>
+  )
 }
 
-class Entries extends Component {
-  state = {
-    entries: []
-  }
-  // history = useHistory()
+function Entries({jwt}) {
+  const [entries, setEntries] = useState([])
+  const history = useHistory()
 
-  componentDidMount() {
-    this.fetchEntries();
-  }
-
-  fetchEntries = async () => {
-    const res = await fetch_('entries', 'GET', null, this.props.jwt)
+  const fetchEntries = async () => {
+    const res = await fetch_('entries', 'GET', null, jwt)
     console.log(res);
-    this.setState({entries: res.entries})
+    setEntries(res.entries)
   }
 
-  gotoForm = (id=null) => {
-    if (!id) { return window.location = '/entry' }
-    window.location = `/entry/${id}`
+  useEffect(() => {
+    fetchEntries()
+  }, [])
+
+  const gotoForm = (entry_id=null) => {
+    history.push(entry_id ? `/entry/${entry_id}` : '/entry')
   }
 
-  render() {
-    const {entries} = this.state
-    return (
-      <div>
-        <Button variant="Primary" onClick={() => this.gotoForm()}>New</Button>
-        <h2>Entries</h2>
-        <ul>
-          {entries.map(e => (
-            <li onClick={() => this.gotoForm(e.id)}>{e.title}</li>
-          ))}
-        </ul>
-      </div>
-    )
-  }
+  return (
+    <div>
+      <Button variant="Primary" onClick={() => gotoForm()}>New</Button>
+      <h2>Entries</h2>
+      <ul>
+        {entries.map(e => (
+          <li onClick={() => gotoForm(e.id)}>{e.title}</li>
+        ))}
+      </ul>
+    </div>
+  )
 }
 
 function Entry(props) {
@@ -279,29 +268,22 @@ class Journal extends Component {
   }
 }
 
-class App extends Component {
-  state = {
-    jwt: null
-  };
+function App() {
+  const [jwt, setJwt] = useState()
 
-  onAuth = (jwt) => {
-    this.setState({jwt})
-  };
+  const onAuth = jwt => setJwt(jwt)
 
-  render() {
-    const {jwt} = this.state;
-    return (
-      <Router>
-        <Container fluid>
-          <h1>ML Journal</h1>
-          {
-            jwt ? <Journal jwt={jwt} />
-              : <Auth onAuth={this.onAuth} />
-          }
-        </Container>
-      </Router>
-    )
-  }
+  return (
+    <Router>
+      <Container fluid>
+        <h1>ML Journal</h1>
+        {
+          jwt ? <Journal jwt={jwt} />
+            : <Auth onAuth={onAuth} />
+        }
+      </Container>
+    </Router>
+  )
 }
 
 export default App;
