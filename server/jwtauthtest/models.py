@@ -10,7 +10,7 @@ class User(Base):
     username = Column(String(50), nullable=False, unique=True)
     password = Column(String(200), nullable=False)
 
-    entries = relationship("Entry")
+    entries = relationship("Entry", order_by='Entry.created_at.desc()')
     fields = relationship("Field")
 
     def __init__(self, username, password):
@@ -48,7 +48,8 @@ class Entry(Base):
         return {
             'id': self.id,
             'title': self.title,
-            'text': self.text
+            'text': self.text,
+            'created_at': self.created_at
         }
 
 

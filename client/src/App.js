@@ -1,13 +1,14 @@
 import React, { Component, useState, useEffect } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
-import _ from 'lodash'
+import moment from 'moment'
 import {
   Container,
   Tabs,
   Tab,
   Form,
-  Button
+  Button,
+  Table
 } from 'react-bootstrap';
 import {
   BrowserRouter as Router,
@@ -166,7 +167,6 @@ function Entries({jwt}) {
 
   const fetchEntries = async () => {
     const res = await fetch_('entries', 'GET', null, jwt)
-    console.log(res);
     setEntries(res.entries)
   }
 
@@ -178,15 +178,38 @@ function Entries({jwt}) {
     history.push(entry_id ? `/entry/${entry_id}` : '/entry')
   }
 
+  const deleteEntry = async entry => {
+    if (window.confirm(`Delete "${entry.title}?"`)) {
+      await fetch_(`entries/${entry.id}`, 'DELETE', null, jwt)
+      fetchEntries()
+    }
+  }
+
   return (
     <div>
-      <Button variant="Primary" onClick={() => gotoForm()}>New</Button>
-      <h2>Entries</h2>
-      <ul>
-        {entries.map(e => (
-          <li onClick={() => gotoForm(e.id)}>{e.title}</li>
-        ))}
-      </ul>
+      <Button variant="primary" size='lg' onClick={gotoForm}>New Entry</Button>
+      <hr/>
+      <Table striped bordered hover>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Title</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {entries.map(e => (
+            <tr>
+              <td>{moment(e.created_at).format('YYYY-MM-DD h:mm a')}</td>
+              <td>{e.title}</td>
+              <td>
+                <Button size='sm' onClick={() => gotoForm(e.id)}>Edit</Button>&nbsp;
+                <Button variant='danger' size='sm' onClick={() => deleteEntry(e)}>Delete</Button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </Table>
     </div>
   )
 }
@@ -205,6 +228,8 @@ function Entry(props) {
       setText(res.text)
     })()
   }, [entry_id])
+
+  const cancel = () => history.push('/')
 
   const submit = async e => {
     e.preventDefault()
@@ -244,6 +269,9 @@ function Entry(props) {
       </Form.Group>
       <Button variant="primary" type="submit">
         Submit
+      </Button>&nbsp;
+      <Button type="submit" variant='secondary' size="sm">
+        Cancel
       </Button>
     </Form>
   )
@@ -276,7 +304,7 @@ function App() {
   return (
     <Router>
       <Container fluid>
-        <h1>ML Journal</h1>
+        <Link to="/"><h1>ML Journal</h1></Link>
         {
           jwt ? <Journal jwt={jwt} />
             : <Auth onAuth={onAuth} />

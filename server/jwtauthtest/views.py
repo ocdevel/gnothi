@@ -29,6 +29,7 @@ def register():
 def entries():
     user = current_identity
     if request.method == 'GET':
+
         return jsonify({'entries': [e.json() for e in user.entries]})
     elif request.method == 'POST':
         data = request.get_json()
