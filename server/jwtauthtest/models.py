@@ -1,5 +1,5 @@
 from jwtauthtest.database import Base
-from sqlalchemy import Column, Integer, String, Text, Enum, Float, ForeignKey, Boolean, DateTime
+from sqlalchemy import Column, Integer, String, Text, Enum, Float, ForeignKey, Boolean, DateTime, JSON
 from sqlalchemy.orm import relationship
 import enum, datetime
 
@@ -43,6 +43,7 @@ class Entry(Base):
         self.text = text
 
     # TODO look into https://stackoverflow.com/questions/7102754/jsonify-a-sqlalchemy-result-set-in-flask
+    # Also Marshmallow https://marshmallow-sqlalchemy.readthedocs.io/en/latest/
     def json(self):
         return {
             'id': self.id,
@@ -54,17 +55,20 @@ class Entry(Base):
 class FieldType(enum.Enum):
     # medication changes / substance intake
     # exercise, sleep, diet, weight
-    numeric = 1
+    number = 1
 
     # happiness score
     fivestar = 2
 
     # periods
-    bool = 3
+    check = 3
+
+    # moods (happy, sad, anxious, wired, bored, ..)
+    option = 4
 
     # think of more
     # weather_api?
-    # mood words (happy, sad, anxious, wired, bored, ..)
+    # text entries?
 
 
 class Field(Base):
@@ -78,7 +82,14 @@ class Field(Base):
     id = Column(Integer, primary_key=True)
     type = Column(Enum(FieldType))
     name = Column(String(128))
-    # attributes = dict()
+    # Start entries/graphs/correlations here
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    # Don't actually delete fields, unless it's the same day. Instead
+    # stop entries/graphs/correlations here
+    deleted_at = Column(DateTime)
+    # option{single_or_multi, options:[], ..}
+    # number{float_or_int, ..}
+    attributes = Column(JSON)
 
     user_id = Column(Integer, ForeignKey('users.id'))
 

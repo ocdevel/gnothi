@@ -2,7 +2,15 @@ import React, { Component } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
 import { Container, Row, Col, Tabs, Tab, Form, Button } from 'react-bootstrap';
+import _ from 'lodash'
 
+import {
+  BrowserRouter as Router,
+  Switch,
+  Route,
+  Link
+} from "react-router-dom";
+import { useHistory } from "react-router-dom";
 
 const fetch_ = async (route, method='GET', body=null, jwt=null) => {
   const obj = {
@@ -113,11 +121,11 @@ class Auth extends Component {
   }
 }
 
-class Journal extends Component {
+class Entries extends Component {
   state = {
-    entries: [],
-    creating: false
+    entries: []
   }
+  // history = useHistory()
 
   componentDidMount() {
     this.fetchEntries();
@@ -129,28 +137,56 @@ class Journal extends Component {
     this.setState({entries: res.entries})
   }
 
-  startNew = () => {
-    this.setState({creating: true})
+  gotoForm = (id=null) => {
+    if (!id) { return window.location = '/entry' }
+    window.location = `/entry/${id}`
   }
 
-  endNew = () => {
-    this.setState({creating: false})
-    this.fetchEntries()
-  }
-
-  submitNew = async e => {
-    const title = e.target['formTitle'].value
-    const text = e.target['formText'].value
-    await fetch_('entries', 'POST', {title, text}, this.props.jwt)
-  }
-
-  renderForm = () => {
-    const {creating} = this.state
-    if (!creating) return (
-      <Button variant="Primary" onClick={this.startNew}>New</Button>
-    )
+  render() {
+    const {entries} = this.state
     return (
-      <Form onSubmit={this.submitNew}>
+      <div>
+        <Button variant="Primary" onClick={() => this.gotoForm()}>New</Button>
+        <h2>Entries</h2>
+        <ul>
+          {entries.map(e => (
+            <li onClick={() => this.gotoForm(e.id)}>{e.title}</li>
+          ))}
+        </ul>
+      </div>
+    )
+  }
+}
+
+class Entry extends Component {
+  componentDidMount() {
+    this.id = _.get(this.props, 'match.id', null)
+    if (this.id) {
+      const res = fetch_(`entries/${this.id}`, 'GET', null, this.props.jwt)
+      debugger
+    }
+  }
+
+  state = {
+    title: '',
+    text: ''
+  }
+
+  submit = async e => {
+    e.preventDefault()
+    if (this.id) {
+      // put()
+    } else {
+      const title = e.target['formTitle'].value
+      const text = e.target['formText'].value
+      await fetch_('entries', 'POST', {title, text}, this.props.jwt)
+      window.location.href = '/'
+    }
+  }
+
+  render() {
+    return (
+      <Form onSubmit={this.submit}>
         <Form.Group controlId="formTitle">
           <Form.Label>Title</Form.Label>
           <Form.Control type="text" placeholder="Title" />
@@ -166,40 +202,26 @@ class Journal extends Component {
       </Form>
     )
   }
+}
 
-  renderEntries = () => {
-    const {entries} = this.state
-    return (
-      <div>
-        <h2>Entries</h2>
-        <ul>
-          {entries.map(e => <li>{e.title}</li>)}
-        </ul>
-      </div>
-    )
-  }
-
+class Journal extends Component {
   render() {
+    const {jwt} = this.props
     return (
-      <div>
-        {this.renderForm()}
-        {this.renderEntries()}
-      </div>
+      <Switch>
+        <Route exact path="/">
+          <Entries jwt={jwt} />
+        </Route>
+        <Route path="/entry">
+          <Entry jwt={jwt} />
+        </Route>
+        <Route path="/entry/:id">
+          <Entry jwt={jwt} />
+        </Route>
+    </Switch>
     )
   }
 }
-
-// function OldApp() {
-//   return (
-//     <div className="App">
-//       <header className="App-header">
-//         <img src={logo} className="App-logo" alt="logo" />
-//         <p>Edit <code>src/App.js</code> and save to reload.</p>
-//         <a className="App-link" href="https://reactjs.org" target="_blank" rel="noopener noreferrer">Learn React</a>
-//       </header>
-//     </div>
-//   );
-// }
 
 class App extends Component {
   state = {
@@ -213,13 +235,15 @@ class App extends Component {
   render() {
     const {jwt} = this.state;
     return (
-      <Container fluid>
-        <h1>ML Journal</h1>
-        {
-          jwt ? <Journal jwt={jwt} />
-            : <Auth onAuth={this.onAuth} />
-        }
-      </Container>
+      <Router>
+        <Container fluid>
+          <h1>ML Journal</h1>
+          {
+            jwt ? <Journal jwt={jwt} />
+              : <Auth onAuth={this.onAuth} />
+          }
+        </Container>
+      </Router>
     )
   }
 }
