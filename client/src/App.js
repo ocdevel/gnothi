@@ -2,6 +2,7 @@ import React, { Component, useState, useEffect } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
 import moment from 'moment'
+import _ from 'lodash'
 import {
   Container,
   Tabs,
@@ -190,7 +191,7 @@ function Entries({jwt}) {
 
   return (
     <div>
-      <Button variant="primary" size='lg' onClick={gotoForm}>New Entry</Button>
+      <Button variant="primary" size='lg' onClick={() => gotoForm()}>New Entry</Button>
       <hr/>
       <Table striped bordered hover>
         <thead>
@@ -217,35 +218,48 @@ function Entries({jwt}) {
   )
 }
 
-function Entry(props) {
+function Entry({jwt}) {
   const {entry_id} = useParams()
   const history = useHistory()
   const [title, setTitle] = useState('')
   const [text, setText] = useState('')
+  const [fields, setFields] = useState([])
+  const [fieldVals, setFieldVals] = useState({})
+
+  const fetchEntry = async () => {
+    let res = await fetch_(`fields`, 'GET', null, jwt)
+    setFields(res.fields)
+    setFieldVals(_.zipObject(_.map(res.fields))) // => {'a': undefined, 'b': undefined}
+
+    if (!entry_id) { return }
+    res = await fetch_(`entries/${entry_id}`, 'GET', null, jwt)
+    setTitle(res.title)
+    setText(res.text)
+    setFieldVals(res.fields)
+  }
 
   useEffect(() => {
-    (async () => {
-      if (!entry_id) { return }
-      const res = await fetch_(`entries/${entry_id}`, 'GET', null, props.jwt)
-      setTitle(res.title)
-      setText(res.text)
-    })()
+    fetchEntry()
   }, [entry_id])
 
   const cancel = () => history.push('/')
 
   const submit = async e => {
     e.preventDefault()
+    const body = {title, text, fields: fieldVals}
     if (entry_id) {
-      await fetch_(`entries/${entry_id}`, 'PUT', {title, text}, props.jwt)
+      await fetch_(`entries/${entry_id}`, 'PUT', body, jwt)
     } else {
-      await fetch_(`entries`, 'POST', {title, text}, props.jwt)
+      await fetch_(`entries`, 'POST', body, jwt)
     }
     history.push('/')
   }
 
   const changeTitle = e => setTitle(e.target.value)
   const changeText = e => setText(e.target.value)
+  const changeFieldVal = k => e => {
+    setFieldVals({...fieldVals, [k]: e.target.value})
+  }
 
   return (
     <Form onSubmit={submit}>
@@ -277,6 +291,18 @@ function Entry(props) {
           <ReactMarkdown source={text} />
         </Col>
       </Row>
+
+      <Form.Group controlId="formFields">
+        <Form.Label>Fields</Form.Label>
+        {fields.map(f => (
+          <Form.Control
+            type='text'
+            placeholder={f.name}
+            value={fieldVals[f.id]}
+            onChange={changeFieldVal(f.id)}
+          />
+        ))}
+      </Form.Group>
 
       <Button variant="primary" type="submit">
         Submit

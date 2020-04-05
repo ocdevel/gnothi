@@ -49,7 +49,8 @@ class Entry(Base):
             'id': self.id,
             'title': self.title,
             'text': self.text,
-            'created_at': self.created_at
+            'created_at': self.created_at,
+            'fields': {f.id: f.value for f in self.field_entries}
         }
 
 
@@ -94,6 +95,14 @@ class Field(Base):
 
     user_id = Column(Integer, ForeignKey('users.id'))
 
+    def json(self):
+        return {
+            'id': self.id,
+            'type': self.type.name,
+            'name': self.name,
+            'created_at': self.created_at
+        }
+
 
 class FieldEntry(Base):
     __tablename__ = 'field_entries'
@@ -103,3 +112,7 @@ class FieldEntry(Base):
 
     entry_id = Column(Integer, ForeignKey('entries.id'))
     field_id = Column(Integer, ForeignKey('fields.id'))
+
+    def __init__(self, value, field_id):
+        self.value = value
+        self.field_id = field_id
