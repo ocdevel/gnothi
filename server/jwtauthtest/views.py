@@ -37,7 +37,21 @@ def entries():
         return jsonify({'ok': True})
 
 
-@app.route('/entries/:id', methods=['GET', 'PUT', 'DELETE'])
+@app.route('/entries/<entry_id>', methods=['GET', 'PUT', 'DELETE'])
 @jwt_required()
-def entry(id):
-    return jsonify({'ok', True})
+def entry(entry_id):
+    entry = Entry.query.filter_by(user_id=current_identity.id, id=entry_id)
+    if request.method == 'GET':
+        return jsonify(entry.first().json())
+    if request.method == 'PUT':
+        data = request.get_json()
+        entry = entry.first()
+        entry.title = data['title']
+        entry.text = data['text']
+        db_session.commit()
+        return jsonify({'ok': True})
+    if request.method == 'DELETE':
+        entry.delete()
+        db_session.commit()
+        return jsonify({'ok': True})
+

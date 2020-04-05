@@ -1,16 +1,23 @@
-import React, { Component } from 'react';
+import React, { Component, useState, useEffect } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
-import { Container, Row, Col, Tabs, Tab, Form, Button } from 'react-bootstrap';
 import _ from 'lodash'
-
+import {
+  Container,
+  Tabs,
+  Tab,
+  Form,
+  Button
+} from 'react-bootstrap';
 import {
   BrowserRouter as Router,
   Switch,
   Route,
-  Link
+  Link,
+  useHistory,
+  useRouteMatch,
+  useParams
 } from "react-router-dom";
-import { useHistory } from "react-router-dom";
 
 const fetch_ = async (route, method='GET', body=null, jwt=null) => {
   const obj = {
@@ -24,6 +31,12 @@ const fetch_ = async (route, method='GET', body=null, jwt=null) => {
 }
 
 class Auth extends Component {
+  state = {
+    username: '',
+    password: '',
+    passwordConfirm: ''
+  }
+
   componentDidMount() {
     this.checkJwt();
   }
@@ -38,6 +51,8 @@ class Auth extends Component {
     this.props.onAuth(jwt);
   }
 
+  onChange = k => e => this.setState({[k]: e.target.value})
+
   login = async (username, password) => {
     const res = await fetch_('auth','POST', {username, password})
     const jwt = res.access_token;
@@ -48,32 +63,42 @@ class Auth extends Component {
   submitLogin = async e => {
     // TODO switch to Axios https://malcoded.com/posts/react-http-requests-axios/
     e.preventDefault();
-    this.login(
-      e.target['formLoginEmail'].value,
-      e.target['formLoginPassword'].value
-    )
+    const {username, password} = this.state
+    this.login(username, password)
   };
 
   submitRegister = async e => {
     e.preventDefault();
     // assert password = passwordConfirm. See react-bootstrap, use yup library or something for form stuff
-    const username = e.target['formRegisterEmail'].value;
-    const password = e.target['formRegisterPassword'].value;
+    const {username, password} = this.state
     const res = await fetch_('register','POST',{username, password})
     this.login(username, password);
   };
 
   renderLogin = () => {
+    const {username, password} = this.state
     return (
       <Form onSubmit={this.submitLogin}>
         <Form.Group controlId="formLoginEmail">
           <Form.Label>Email address</Form.Label>
-          <Form.Control type="email" placeholder="Enter email" />
+          <Form.Control
+            type="email"
+            placeholder="Enter email"
+            required
+            value={username}
+            onChange={this.onChange('username')}
+          />
         </Form.Group>
 
         <Form.Group controlId="formLoginPassword">
           <Form.Label>Password</Form.Label>
-          <Form.Control type="password" placeholder="Password" />
+          <Form.Control
+            type="password"
+            placeholder="Password"
+            required
+            value={password}
+            onChange={this.onChange('password')}
+          />
         </Form.Group>
         <Button variant="primary" type="submit">
           Login
@@ -83,20 +108,39 @@ class Auth extends Component {
   };
 
   renderRegister = () => {
+    const {username, password, passwordConfirm} = this.state
     return (
       <Form onSubmit={this.submitRegister}>
         <Form.Group controlId="formRegisterEmail">
           <Form.Label>Email address</Form.Label>
-          <Form.Control type="email" placeholder="Enter email" />
+          <Form.Control
+            type="email"
+            placeholder="Enter email"
+            required
+            value={username}
+            onChange={this.onChange('username')}
+          />
         </Form.Group>
 
         <Form.Group controlId="formRegisterPassword">
           <Form.Label>Password</Form.Label>
-          <Form.Control type="password" placeholder="Password" />
+          <Form.Control
+            type="password"
+            placeholder="Password"
+            required
+            value={password}
+            onChange={this.onChange('password')}
+          />
         </Form.Group>
         <Form.Group controlId="formRegisterPasswordConfirm">
           <Form.Label>Confirm Password</Form.Label>
-          <Form.Control type="password" placeholder="Confirm Password" />
+          <Form.Control
+            type="password"
+            placeholder="Confirm Password"
+            required
+            value={passwordConfirm}
+            onChange={this.onChange('passwordConfirm')}
+          />
         </Form.Group>
         <Button variant="primary" type="submit">
           Register
@@ -158,50 +202,62 @@ class Entries extends Component {
   }
 }
 
-class Entry extends Component {
-  componentDidMount() {
-    this.id = _.get(this.props, 'match.id', null)
-    if (this.id) {
-      const res = fetch_(`entries/${this.id}`, 'GET', null, this.props.jwt)
-      debugger
-    }
-  }
+function Entry(props) {
+  const {entry_id} = useParams()
+  const history = useHistory()
+  const [title, setTitle] = useState('')
+  const [text, setText] = useState('')
 
-  state = {
-    title: '',
-    text: ''
-  }
+  useEffect(() => {
+    (async () => {
+      if (!entry_id) { return }
+      const res = await fetch_(`entries/${entry_id}`, 'GET', null, props.jwt)
+      setTitle(res.title)
+      setText(res.text)
+    })()
+  }, [entry_id])
 
-  submit = async e => {
+  const submit = async e => {
     e.preventDefault()
-    if (this.id) {
-      // put()
+    if (entry_id) {
+      await fetch_(`entries/${entry_id}`, 'PUT', {title, text}, props.jwt)
     } else {
-      const title = e.target['formTitle'].value
-      const text = e.target['formText'].value
-      await fetch_('entries', 'POST', {title, text}, this.props.jwt)
-      window.location.href = '/'
+      await fetch_(`entries`, 'POST', {title, text}, props.jwt)
     }
+    history.push('/')
   }
 
-  render() {
-    return (
-      <Form onSubmit={this.submit}>
-        <Form.Group controlId="formTitle">
-          <Form.Label>Title</Form.Label>
-          <Form.Control type="text" placeholder="Title" />
-        </Form.Group>
+  const changeTitle = e => setTitle(e.target.value)
+  const changeText = e => setText(e.target.value)
 
-        <Form.Group controlId="formText">
-          <Form.Label>Entry</Form.Label>
-          <Form.Control type="textarea" placeholder="Entry" />
-        </Form.Group>
-        <Button variant="primary" type="submit">
-          Submit
-        </Button>
-      </Form>
-    )
-  }
+  return (
+    <Form onSubmit={submit}>
+      <Form.Group controlId="formTitle">
+        <Form.Label>Title</Form.Label>
+        <Form.Control
+          type="text"
+          placeholder="Title"
+          value={title}
+          onChange={changeTitle}
+        />
+      </Form.Group>
+
+      <Form.Group controlId="formText">
+        <Form.Label>Entry</Form.Label>
+        <Form.Control
+          as="textarea"
+          placeholder="Entry"
+          required
+          rows={10}
+          value={text}
+          onChange={changeText}
+        />
+      </Form.Group>
+      <Button variant="primary" type="submit">
+        Submit
+      </Button>
+    </Form>
+  )
 }
 
 class Journal extends Component {
@@ -209,14 +265,14 @@ class Journal extends Component {
     const {jwt} = this.props
     return (
       <Switch>
-        <Route exact path="/">
-          <Entries jwt={jwt} />
+        <Route path="/entry/:entry_id">
+          <Entry jwt={jwt} />
         </Route>
         <Route path="/entry">
           <Entry jwt={jwt} />
         </Route>
-        <Route path="/entry/:id">
-          <Entry jwt={jwt} />
+        <Route exact path="/">
+          <Entries jwt={jwt} />
         </Route>
     </Switch>
     )
