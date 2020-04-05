@@ -8,7 +8,9 @@ import {
   Tab,
   Form,
   Button,
-  Table
+  Table,
+  Row,
+  Col
 } from 'react-bootstrap';
 import {
   BrowserRouter as Router,
@@ -19,6 +21,7 @@ import {
   useRouteMatch,
   useParams
 } from "react-router-dom";
+import ReactMarkdown from 'react-markdown'
 
 const fetch_ = async (route, method='GET', body=null, jwt=null) => {
   const obj = {
@@ -256,21 +259,29 @@ function Entry(props) {
         />
       </Form.Group>
 
-      <Form.Group controlId="formText">
-        <Form.Label>Entry</Form.Label>
-        <Form.Control
-          as="textarea"
-          placeholder="Entry"
-          required
-          rows={10}
-          value={text}
-          onChange={changeText}
-        />
-      </Form.Group>
+      <Row>
+        <Col>
+          <Form.Group controlId="formText">
+            <Form.Label>Entry</Form.Label>
+            <Form.Control
+              as="textarea"
+              placeholder="Entry"
+              required
+              rows={10}
+              value={text}
+              onChange={changeText}
+            />
+          </Form.Group>
+        </Col>
+        <Col style={{backgroundColor: '#eee'}}>
+          <ReactMarkdown source={text} />
+        </Col>
+      </Row>
+
       <Button variant="primary" type="submit">
         Submit
       </Button>&nbsp;
-      <Button type="submit" variant='secondary' size="sm">
+      <Button variant='secondary' size="sm" onClick={cancel}>
         Cancel
       </Button>
     </Form>
