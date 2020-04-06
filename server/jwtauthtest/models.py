@@ -12,6 +12,7 @@ class User(Base):
 
     entries = relationship("Entry", order_by='Entry.created_at.desc()')
     fields = relationship("Field")
+    family_members = relationship("Family")
 
     def __init__(self, username, password):
         self.username = username
@@ -114,3 +115,50 @@ class FieldEntry(Base):
     def __init__(self, value, field_id):
         self.value = value
         self.field_id = field_id
+
+
+class FamilyType(Base):
+    __tablename__ = 'family_types'
+    """
+    Mother
+    Father
+    Brother
+    Sister
+    Grandmother
+    Grandfather
+    Great_Grandmother
+    Great_Grandfather
+    Uncle
+    Aunt
+    Spouse
+    """
+    id = Column(Integer, primary_key=True)
+    name = Column(String(128))
+
+
+class Family(Base):
+    __tablename__ = 'family'
+    id = Column(Integer, primary_key=True)
+    name = Column(String(128))  # Brett, Lara, ..
+    family_type = Column(Integer, ForeignKey('family_types.id'), nullable=False)
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    notes = Column(Text)
+
+
+class FamilyIssueType(Base):
+    __tablename__ = 'family_issue_types'
+    id = Column(Integer, primary_key=True)
+    """"
+    Bipolar
+    Depression
+    Alcohol
+    Heart Disease
+    Avoidant
+    ...
+    """
+    name = Column(String(128), nullable=False)
+
+class FamilyIssue(Base):
+    __tablename__ = 'family_issues'
+    family_id = Column(Integer, ForeignKey('family.id'), primary_key=True)
+    family_issue_type_id = Column(Integer, ForeignKey('family_issue_types.id'), primary_key=True)
