@@ -308,7 +308,6 @@ function Entry({jwt}) {
               ) : (
                 <Form.Control
                   type='text'
-                  placeholder={f.name}
                   value={fieldVals[f.id]}
                   onChange={changeFieldVal(f.id)}
                 />

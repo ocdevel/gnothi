@@ -52,6 +52,7 @@ def entry(entry_id):
         entry = entry.first()
         entry.title = data['title']
         entry.text = data['text']
+        # FIXME doesn't account for fields added after saving entry
         for f in entry.field_entries:
             f.value = data['fields'][str(f.field_id)]
         db_session.commit()

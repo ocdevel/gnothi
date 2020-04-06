@@ -35,7 +35,7 @@ class Entry(Base):
     incognito_therapist = Column(Boolean)
     incognito_ml = Column(Boolean)
 
-    field_entries = relationship("FieldEntry")
+    field_entries = relationship("FieldEntry", order_by="FieldEntry.field_id")
     user_id = Column(Integer, ForeignKey('users.id'))
 
     def __init__(self, title, text):
