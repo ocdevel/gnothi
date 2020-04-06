@@ -23,6 +23,7 @@ import {
   useParams
 } from "react-router-dom";
 import ReactMarkdown from 'react-markdown'
+import ReactStars from 'react-stars'
 
 const fetch_ = async (route, method='GET', body=null, jwt=null) => {
   const obj = {
@@ -257,8 +258,9 @@ function Entry({jwt}) {
 
   const changeTitle = e => setTitle(e.target.value)
   const changeText = e => setText(e.target.value)
-  const changeFieldVal = k => e => {
-    setFieldVals({...fieldVals, [k]: e.target.value})
+  const changeFieldVal = (k, direct=false) => e => {
+    const v = direct ? e : e.target.value
+    setFieldVals({...fieldVals, [k]: v})
   }
 
   return (
@@ -297,12 +299,20 @@ function Entry({jwt}) {
           {fields.map(f => (
             <Col>
               <Form.Label>{f.name}</Form.Label>
-              <Form.Control
-                type='text'
-                placeholder={f.name}
-                value={fieldVals[f.id]}
-                onChange={changeFieldVal(f.id)}
-              />
+              {f.type === 'fivestar' ? (
+                <ReactStars
+                  value={fieldVals[f.id]}
+                  size={25}
+                  onChange={changeFieldVal(f.id, true)}
+                />
+              ) : (
+                <Form.Control
+                  type='text'
+                  placeholder={f.name}
+                  value={fieldVals[f.id]}
+                  onChange={changeFieldVal(f.id)}
+                />
+              )}
             </Col>
           ))}
         </Row>
