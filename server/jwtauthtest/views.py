@@ -53,7 +53,7 @@ def entry(entry_id):
         entry.title = data['title']
         entry.text = data['text']
         for f in entry.field_entries:
-            f.value = data['fields'][str(f.id)]
+            f.value = data['fields'][str(f.field_id)]
         db_session.commit()
         return jsonify({'ok': True})
     if request.method == 'DELETE':

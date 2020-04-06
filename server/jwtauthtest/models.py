@@ -50,7 +50,7 @@ class Entry(Base):
             'title': self.title,
             'text': self.text,
             'created_at': self.created_at,
-            'fields': {f.id: f.value for f in self.field_entries}
+            'fields': {f.field_id: f.value for f in self.field_entries}
         }
 
 

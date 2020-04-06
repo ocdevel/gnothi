@@ -229,7 +229,7 @@ function Entry({jwt}) {
   const fetchEntry = async () => {
     let res = await fetch_(`fields`, 'GET', null, jwt)
     setFields(res.fields)
-    setFieldVals(_.zipObject(_.map(res.fields))) // => {'a': undefined, 'b': undefined}
+    setFieldVals(_.zipObject(_.map(res.fields, 'id'))) // => {'a': undefined, 'b': undefined}
 
     if (!entry_id) { return }
     res = await fetch_(`entries/${entry_id}`, 'GET', null, jwt)
