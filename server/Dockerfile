@@ -8,7 +8,8 @@ RUN pip install \
   passlib \
   psycopg2 \
   python-box \
-  sqlalchemy_utils
+  sqlalchemy_utils \
+  pandas
 
 # Install postgres-12 client
 # https://computingforgeeks.com/install-postgresql-11-on-ubuntu-18-04-ubuntu-16-04/

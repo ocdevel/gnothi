@@ -12,7 +12,7 @@ db_session = scoped_session(sessionmaker(autocommit=False,
 
 if os.environ.get('WIPE', False):
     with engine.connect() as conn:
-        conn.execute(' DROP SCHEMA public CASCADE;CREATE SCHEMA public;')
+        conn.execute('DROP SCHEMA public CASCADE;CREATE SCHEMA public;')
 
 Base = declarative_base()
 Base.query = db_session.query_property()
