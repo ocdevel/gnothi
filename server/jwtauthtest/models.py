@@ -106,12 +106,10 @@ class Field(Base):
 
 class FieldEntry(Base):
     __tablename__ = 'field_entries'
-
-    id = Column(Integer, primary_key=True)
     value = Column(Float)  # TODO Can everything be a number? reconsider
 
-    entry_id = Column(Integer, ForeignKey('entries.id'))
-    field_id = Column(Integer, ForeignKey('fields.id'))
+    entry_id = Column(Integer, ForeignKey('entries.id'), primary_key=True)
+    field_id = Column(Integer, ForeignKey('fields.id'), primary_key=True)
 
     def __init__(self, value, field_id):
         self.value = value
