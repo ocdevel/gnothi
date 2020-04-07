@@ -3,7 +3,8 @@ services:
   server:
     build: server
     container_name: jserver
-    entrypoint: /bin/bash
+    entrypoint: ./run.sh
+#    entrypoint: /bin/bash
     environment:
       ENVIRONMENT: development
       JWT_SECRET_KEY: my jwt secret key
@@ -12,7 +13,7 @@ services:
     networks:
       - jnet
     ports:
-      - 5000:5000
+      - 5001:5000
     stdin_open: true
     volumes:
       - ./server/:/app
@@ -21,13 +22,13 @@ services:
 
   client:
     build: client
-#    command: yarn --modules-folder /node_modules start
-    command: /bin/bash
+    command: yarn start
+#    command: /bin/bash
     container_name: jclient
     networks:
       - jnet
     ports:
-      - 3000:3000
+      - 3001:3000
     stdin_open: true
     volumes:
       - ./client:/client
@@ -38,7 +39,7 @@ services:
     networks:
       - jnet
     ports:
-      - 5432:5432
+      - 5433:5432
     environment:
       POSTGRES_PASSWORD: mypassword
 
