@@ -119,19 +119,6 @@ class FieldEntry(Base):
 
 class FamilyType(Base):
     __tablename__ = 'family_types'
-    """
-    Mother
-    Father
-    Brother
-    Sister
-    Grandmother
-    Grandfather
-    Great_Grandmother
-    Great_Grandfather
-    Uncle
-    Aunt
-    Spouse
-    """
     id = Column(Integer, primary_key=True)
     name = Column(String(128))
 
@@ -148,14 +135,6 @@ class Family(Base):
 class FamilyIssueType(Base):
     __tablename__ = 'family_issue_types'
     id = Column(Integer, primary_key=True)
-    """"
-    Bipolar
-    Depression
-    Alcohol
-    Heart Disease
-    Avoidant
-    ...
-    """
     name = Column(String(128), nullable=False)
 
 class FamilyIssue(Base):
