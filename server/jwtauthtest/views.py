@@ -99,8 +99,10 @@ def get_habitica(entry_id):
     # Remove Habitica-deleted tasks
     for f in user.fields:
         if f.service != 'habitica': continue
-        if f.service_id not in f_id_map:
-            f.delete()
+        if f.service_id not in t_id_map:
+            # FIXME change models to cascade deletes, remove line below https://dev.to/zchtodd/sqlalchemy-cascading-deletes-8hk
+            FieldEntry.query.filter_by(field_id=f.id).delete()
+            db_session.delete(f)
 
     # Add/update tasks from Habitica
     for task in r['data']:
