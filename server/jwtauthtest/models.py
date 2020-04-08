@@ -1,12 +1,17 @@
 from jwtauthtest.database import Base
 from sqlalchemy import Column, Integer, String, Text, Enum, Float, ForeignKey, Boolean, DateTime, JSON
 from sqlalchemy.orm import relationship
+from sqlalchemy.dialects.postgresql import UUID
+from uuid import uuid4
 import enum, datetime
+
+def uuid_():
+    return str(uuid4())
 
 class User(Base):
     __tablename__ = 'users'
 
-    id = Column(Integer, primary_key=True)
+    id = Column(UUID, primary_key=True, default=uuid_)
     username = Column(String(50), nullable=False, unique=True)
     password = Column(String(200), nullable=False)
 
@@ -25,7 +30,7 @@ class User(Base):
 class Entry(Base):
     __tablename__ = 'entries'
 
-    id = Column(Integer, primary_key=True)
+    id = Column(UUID, primary_key=True, default=uuid_)
     # Title optional, otherwise generated from text. topic-modeled, or BERT summary, etc?
     title = Column(String(128))
     text = Column(Text, nullable=False)
@@ -33,11 +38,11 @@ class Entry(Base):
     updated_at = Column(DateTime, default=datetime.datetime.utcnow)
 
     # Static fields (not user-generated)
-    incognito_therapist = Column(Boolean)
-    incognito_ml = Column(Boolean)
+    show_therapist = Column(Boolean)
+    show_ml = Column(Boolean)
 
     field_entries = relationship("FieldEntry", order_by="FieldEntry.field_id")
-    user_id = Column(Integer, ForeignKey('users.id'))
+    user_id = Column(UUID, ForeignKey('users.id'))
 
     def __init__(self, title, text):
         self.title = title
@@ -83,7 +88,7 @@ class Field(Base):
     """
     __tablename__ = 'fields'
 
-    id = Column(Integer, primary_key=True)
+    id = Column(UUID, primary_key=True, default=uuid_)
     type = Column(Enum(FieldType))
     name = Column(String(128))
     # Start entries/graphs/correlations here
@@ -99,7 +104,7 @@ class Field(Base):
     service_id = Column(String(64))
     service_exclude = Column(Boolean, default=False)
 
-    user_id = Column(Integer, ForeignKey('users.id'))
+    user_id = Column(UUID, ForeignKey('users.id'))
 
     def json(self):
         return {
@@ -117,8 +122,8 @@ class FieldEntry(Base):
     __tablename__ = 'field_entries'
     value = Column(Float)  # TODO Can everything be a number? reconsider
 
-    entry_id = Column(Integer, ForeignKey('entries.id'), primary_key=True)
-    field_id = Column(Integer, ForeignKey('fields.id'), primary_key=True)
+    entry_id = Column(UUID, ForeignKey('entries.id'), primary_key=True)
+    field_id = Column(UUID, ForeignKey('fields.id'), primary_key=True)
 
     def __init__(self, value, field_id):
         self.value = value
@@ -127,25 +132,25 @@ class FieldEntry(Base):
 
 class FamilyType(Base):
     __tablename__ = 'family_types'
-    id = Column(Integer, primary_key=True)
+    id = Column(UUID, primary_key=True, default=uuid_)
     name = Column(String(128))
 
 
 class Family(Base):
     __tablename__ = 'family'
-    id = Column(Integer, primary_key=True)
+    id = Column(UUID, primary_key=True, default=uuid_)
     name = Column(String(128))  # Brett, Lara, ..
-    family_type = Column(Integer, ForeignKey('family_types.id'), nullable=False)
-    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    family_type_id = Column(UUID, ForeignKey('family_types.id'), nullable=False)
+    user_id = Column(UUID, ForeignKey('users.id'), nullable=False)
     notes = Column(Text)
 
 
 class FamilyIssueType(Base):
     __tablename__ = 'family_issue_types'
-    id = Column(Integer, primary_key=True)
+    id = Column(UUID, primary_key=True, default=uuid_)
     name = Column(String(128), nullable=False)
 
 class FamilyIssue(Base):
     __tablename__ = 'family_issues'
-    family_id = Column(Integer, ForeignKey('family.id'), primary_key=True)
-    family_issue_type_id = Column(Integer, ForeignKey('family_issue_types.id'), primary_key=True)
+    family_id = Column(UUID, ForeignKey('family.id'), primary_key=True)
+    family_issue_type_id = Column(UUID, ForeignKey('family_issue_types.id'), primary_key=True)

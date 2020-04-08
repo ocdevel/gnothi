@@ -230,6 +230,9 @@ function Entry({jwt}) {
   const [fields, setFields] = useState([])
   const [fieldVals, setFieldVals] = useState({})
 
+  const [fieldName, setFieldName] = useState('')
+  const [fieldType, setFieldType] = useState('number')
+
   const fetchEntry = async () => {
     let res;
 
@@ -261,6 +264,13 @@ function Entry({jwt}) {
     history.push('/')
   }
 
+  const createField = async e => {
+    // e.preventDefault()
+    const body = {name: fieldName, type: fieldType}
+    await fetch_(`fields`, 'POST', body, jwt)
+    fetchEntry()
+  }
+
   const fetchService = async (service) => {
     await fetch_(`${service}/${entry_id}`, 'GET', null, jwt)
     fetchEntry()
@@ -272,6 +282,8 @@ function Entry({jwt}) {
     const v = direct ? e : e.target.value
     setFieldVals({...fieldVals, [k]: v})
   }
+  const changeFieldName = e => setFieldName(e.target.value)
+  const changeFieldType = e => setFieldType(e.target.value)
 
   const renderFields = (group, service) => (
     <Form.Group controlId={`formFieldsFields`}>
@@ -334,11 +346,42 @@ function Entry({jwt}) {
         <Card>
           <Card.Header>
             <Accordion.Toggle as={Button} variant="link" eventKey='more'>
-              External Services
+              More
             </Accordion.Toggle>
           </Card.Header>
           <Accordion.Collapse eventKey='more'>
             <Card.Body>
+
+
+              <Form.Group controlId="formFieldName">
+                <Form.Label>Field Name</Form.Label>
+                <Form.Control
+                  type="text"
+                  placeholder="Name"
+                  value={fieldName}
+                  onChange={changeFieldName}
+                />
+              </Form.Group>
+
+              <Form.Group controlId="formFieldType">
+                <Form.Label>Field Type</Form.Label>
+                <Form.Control
+                  as="select"
+                  value={fieldType}
+                  onChange={changeFieldType}
+                >
+                  <option>number</option>
+                  <option>fivestar</option>
+                </Form.Control>
+              </Form.Group>
+
+              <Button variant="primary" onClick={createField}>
+                Submit
+              </Button>
+
+
+
+              <hr />
               <Button onClick={() => fetchService('habitica')}>Habitica</Button>
             </Card.Body>
           </Accordion.Collapse>

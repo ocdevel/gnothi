@@ -53,9 +53,13 @@ def entry(entry_id):
         entry = entry.first()
         entry.title = data['title']
         entry.text = data['text']
-        # FIXME doesn't account for fields added after saving entry
-        for f in entry.field_entries:
-            f.value = data['fields'][str(f.field_id)]
+        fe_map = {f.field_id: f for f in entry.field_entries}
+        for k, v in data['fields'].items():
+            f = fe_map.get(k, None)
+            if f:
+                f.value = v
+            if not f:
+                entry.field_entries.append(FieldEntry(v, k))
         db_session.commit()
         return jsonify({'ok': True})
     if request.method == 'DELETE':
@@ -70,6 +74,12 @@ def fields():
     user = current_identity
     if request.method == 'GET':
         return jsonify({'fields': [f.json() for f in user.fields]})
+    if request.method == 'POST':
+        data = request.get_json()
+        f = Field(name=data['name'], type=data['type'])
+        user.fields.append(f)
+        db_session.commit()
+        return jsonify({'ok': True})
 
 
 import requests
