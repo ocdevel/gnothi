@@ -25,6 +25,7 @@ import {
 import ReactMarkdown from 'react-markdown'
 import ReactStars from 'react-stars'
 
+
 const fetch_ = async (route, method='GET', body=null, jwt=null) => {
   const obj = {
     method,
@@ -228,7 +229,9 @@ function Entry({jwt}) {
   const [fieldVals, setFieldVals] = useState({})
 
   const fetchEntry = async () => {
-    let res = await fetch_(`fields`, 'GET', null, jwt)
+    let res;
+
+    res = await fetch_(`fields`, 'GET', null, jwt)
     setFields(res.fields)
     setFieldVals(_.zipObject(_.map(res.fields, 'id'))) // => {'a': undefined, 'b': undefined}
 
@@ -254,6 +257,11 @@ function Entry({jwt}) {
       await fetch_(`entries`, 'POST', body, jwt)
     }
     history.push('/')
+  }
+
+  const fetchHabitica = async () => {
+    await fetch_(`habitica/${entry_id}`, 'GET', null, jwt)
+    fetchEntry()
   }
 
   const changeTitle = e => setTitle(e.target.value)
@@ -290,32 +298,42 @@ function Entry({jwt}) {
           </Form.Group>
         </Col>
         <Col style={{backgroundColor: '#eee'}}>
-          <ReactMarkdown source={text} />
+          <ReactMarkdown source={text} linkTarget='_blank' />
         </Col>
       </Row>
 
+      <hr />
       <Form.Group controlId={`formFieldsFields`}>
-        <Row>
+        <Row sm={3}>
           {fields.map(f => (
-            <Col>
-              <Form.Label>{f.name}</Form.Label>
-              {f.type === 'fivestar' ? (
-                <ReactStars
-                  value={fieldVals[f.id]}
-                  size={25}
-                  onChange={changeFieldVal(f.id, true)}
-                />
-              ) : (
-                <Form.Control
-                  type='text'
-                  value={fieldVals[f.id]}
-                  onChange={changeFieldVal(f.id)}
-                />
-              )}
+            <Col style={{borderLeft: '1px solid #eee'}}>
+              <Form.Row>
+                <Form.Label column="sm" lg={6}>
+                  <ReactMarkdown source={f.name} linkTarget='_blank' />
+                </Form.Label>
+                <Col>
+                {f.type === 'fivestar' ? (
+                  <ReactStars
+                    value={fieldVals[f.id]}
+                    size={25}
+                    onChange={changeFieldVal(f.id, true)}
+                  />
+                ) : (
+                  <Form.Control
+                    type='text'
+                    size="sm"
+                    value={fieldVals[f.id]}
+                    onChange={changeFieldVal(f.id)}
+                  />
+                )}
+                </Col>
+              </Form.Row>
             </Col>
           ))}
         </Row>
+        {entry_id && <Button onClick={fetchHabitica}>Sync Habitica</Button>}
       </Form.Group>
+      <hr />
 
       <Button variant="primary" type="submit">
         Submit

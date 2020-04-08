@@ -44,7 +44,8 @@ class Entry(Base):
         self.text = text
 
     # TODO look into https://stackoverflow.com/questions/7102754/jsonify-a-sqlalchemy-result-set-in-flask
-    # Also Marshmallow https://marshmallow-sqlalchemy.readthedocs.io/en/latest/
+    #                https://stackoverflow.com/questions/5022066/how-to-serialize-sqlalchemy-result-to-json
+    # Marshmallow    https://marshmallow-sqlalchemy.readthedocs.io/en/latest/
     def json(self):
         return {
             'id': self.id,
@@ -93,6 +94,9 @@ class Field(Base):
     # option{single_or_multi, options:[], ..}
     # number{float_or_int, ..}
     attributes = Column(JSON)
+    # Used if pulling from external service
+    service = Column(String(64))
+    service_id = Column(String(64))
 
     user_id = Column(Integer, ForeignKey('users.id'))
 
