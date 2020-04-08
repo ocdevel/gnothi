@@ -11,7 +11,9 @@ import {
   Button,
   Table,
   Row,
-  Col
+  Col,
+  Accordion,
+  Card
 } from 'react-bootstrap';
 import {
   BrowserRouter as Router,
@@ -259,8 +261,8 @@ function Entry({jwt}) {
     history.push('/')
   }
 
-  const fetchHabitica = async () => {
-    await fetch_(`habitica/${entry_id}`, 'GET', null, jwt)
+  const fetchService = async (service) => {
+    await fetch_(`${service}/${entry_id}`, 'GET', null, jwt)
     fetchEntry()
   }
 
@@ -269,6 +271,61 @@ function Entry({jwt}) {
   const changeFieldVal = (k, direct=false) => e => {
     const v = direct ? e : e.target.value
     setFieldVals({...fieldVals, [k]: v})
+  }
+
+  const renderFields = (group, service) => (
+    <Form.Group controlId={`formFieldsFields`}>
+      <Row sm={3}>
+        {group.map(f => (
+          <Col style={{borderLeft: '1px solid #eee'}}>
+            <Form.Row>
+              <Form.Label column="sm" lg={6}>
+                <ReactMarkdown source={f.name} linkTarget='_blank' />
+              </Form.Label>
+              <Col>
+              {f.type === 'fivestar' ? (
+                <ReactStars
+                  value={fieldVals[f.id]}
+                  size={25}
+                  onChange={changeFieldVal(f.id, true)}
+                />
+              ) : (
+                <Form.Control
+                  disabled={!!f.service}
+                  type='text'
+                  size="sm"
+                  value={fieldVals[f.id]}
+                  onChange={changeFieldVal(f.id)}
+                />
+              )}
+              </Col>
+            </Form.Row>
+          </Col>
+        ))}
+      </Row>
+      {entry_id && service && <Button onClick={() => fetchService(service)}>Sync {service}</Button>}
+    </Form.Group>
+  )
+
+
+  const renderFieldGroups = () => {
+    const groups = _.transform(fields, (m, v, k) => {
+      (m[v.service] || (m[v.service] = [])).push(v)
+    }, {})
+    return (
+      <Accordion>{_.map(groups, (group, service)=> (
+        <Card>
+          <Card.Header>
+            <Accordion.Toggle as={Button} variant="link" eventKey={service}>
+              {service}
+            </Accordion.Toggle>
+          </Card.Header>
+          <Accordion.Collapse eventKey={service}>
+            <Card.Body>{renderFields(group, service)}</Card.Body>
+          </Accordion.Collapse>
+        </Card>
+      ))}</Accordion>
+    )
   }
 
   return (
@@ -303,36 +360,7 @@ function Entry({jwt}) {
       </Row>
 
       <hr />
-      <Form.Group controlId={`formFieldsFields`}>
-        <Row sm={3}>
-          {fields.map(f => (
-            <Col style={{borderLeft: '1px solid #eee'}}>
-              <Form.Row>
-                <Form.Label column="sm" lg={6}>
-                  <ReactMarkdown source={f.name} linkTarget='_blank' />
-                </Form.Label>
-                <Col>
-                {f.type === 'fivestar' ? (
-                  <ReactStars
-                    value={fieldVals[f.id]}
-                    size={25}
-                    onChange={changeFieldVal(f.id, true)}
-                  />
-                ) : (
-                  <Form.Control
-                    type='text'
-                    size="sm"
-                    value={fieldVals[f.id]}
-                    onChange={changeFieldVal(f.id)}
-                  />
-                )}
-                </Col>
-              </Form.Row>
-            </Col>
-          ))}
-        </Row>
-        {entry_id && <Button onClick={fetchHabitica}>Sync Habitica</Button>}
-      </Form.Group>
+      {renderFieldGroups()}
       <hr />
 
       <Button variant="primary" type="submit">

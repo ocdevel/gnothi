@@ -97,6 +97,7 @@ class Field(Base):
     # Used if pulling from external service
     service = Column(String(64))
     service_id = Column(String(64))
+    service_exclude = Column(Boolean, default=False)
 
     user_id = Column(Integer, ForeignKey('users.id'))
 
@@ -105,7 +106,10 @@ class Field(Base):
             'id': self.id,
             'type': self.type.name,
             'name': self.name,
-            'created_at': self.created_at
+            'created_at': self.created_at,
+            'service': self.service,
+            'service_id': self.service_id,
+            'service_exclude': self.service_exclude
         }
 
 

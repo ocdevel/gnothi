@@ -1,4 +1,4 @@
 data.db
 jwtauthtest/config.json
-*.sql
+tmp/
 

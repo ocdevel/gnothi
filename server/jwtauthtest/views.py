@@ -134,15 +134,15 @@ def get_habitica(entry_id):
             value = task['counterUp'] - task['counterDown']
         # Daily
         else:
-            # TODO How to handle !isDue? True automatically? Null?
+            value = 1. if task['completed'] \
+                else 0. if not task['isDue'] \
+                else -1.
 
             # With Checklist
-            if task['checklist']:
-                value = 1. if task['completed'] else\
-                    sum(c['completed'] for c in task['checklist']) / len(task['checklist'])
-            # Without
-            else:
-                value = float(task['completed'])
+            cl = task['checklist']
+            if (not task['completed']) and any(c['completed'] for c in cl):
+                value = sum(c['completed'] for c in cl) / len(cl)
+
         fe = fe_id_map.get(f.id, None)
         if fe:
             fe.value = value
