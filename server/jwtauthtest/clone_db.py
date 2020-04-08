@@ -1,6 +1,6 @@
 import os, sys, pdb
 from sqlalchemy import create_engine
-from utils import vars
+from utils import vars, DROP_SQL
 import pandas as pd
 
 method = sys.argv[-1]  # push/pull
@@ -20,33 +20,34 @@ from_engine = create_engine(from_url)
 print('to', to_url)
 to_engine = create_engine(to_url)
 
-drop_sql = "DROP SCHEMA public CASCADE;CREATE SCHEMA public;"
-dfs = []
 if method == 'push':
-    # fetch old data, we may be pushing live to a new schema
-    with to_engine.connect() as to_conn, from_engine.connect() as from_conn:
-        for t in 'users fields entries field_entries family_types family_issue_types'.split():
-            dfs.append([t, pd.read_sql(t, to_conn)])
+    with to_engine.connect() as conn:
+        conn.execute(DROP_SQL)
+    # cmd = f"pg_dump --no-owner --no-acl {from_url}"\
+    #       f" | sed 's/{from_name}/{to_name}/g'"\
+    #       f" | psql {to_url}"
+    cmd = f"pg_dump --no-owner --no-acl {from_url}" \
+          f" | psql {to_url}"
+    os.system(cmd)
+    exit(0)
 
-    ## Was trying to re-generate local DB from code, but issue. Just start server
-    ## to regen localDB with `WIPE=1 flask run` and go from there
-    #     # wipe local database
-    #     from_conn.execute(drop_sql)
-    # # recreate schema
-    # import jwtauthtest.models
-    # declarative_base().metadata.create_all(bind=from_engine)
+# pull
 
-with to_engine.connect() as conn:
-    conn.execute(drop_sql)
+dfs = []
+# fetch old data, we may be pushing live to a new schema
+with from_engine.connect() as from_conn:
+    for t in 'users fields entries field_entries family_types family_issue_types family family_issues'.split():
+        dfs.append([t, pd.read_sql(t, from_conn)])
 
-# cmd = f"pg_dump --no-owner --no-acl {from_url}"\
-#       f" | sed 's/{from_name}/{to_name}/g'"\
-#       f" | psql {to_url}"
-cmd = f"pg_dump --no-owner --no-acl {from_url}"\
-      f" | psql {to_url}"
-os.system(cmd)
+## Was trying to re-generate local DB from code, but issue. Just start server
+## to regen localDB with `WIPE=1 flask run` and go from there
+#     # wipe local database
+#     from_conn.execute(DROP_SQL)
+# # recreate schema
+# import jwtauthtest.models
+# declarative_base().metadata.create_all(bind=from_engine)
 
-with to_engine.connect() as conn:
+with to_engine.connect() as to_conn:
     for t, df in dfs:
-        df.to_sql(t, conn, index=False, if_exists='append')
+        df.to_sql(t, to_conn, index=False, if_exists='append')
 

@@ -303,28 +303,47 @@ function Entry({jwt}) {
           </Col>
         ))}
       </Row>
-      {entry_id && service && <Button onClick={() => fetchService(service)}>Sync {service}</Button>}
+      {
+        entry_id &&
+        service !== 'Custom' &&
+        <Button onClick={() => fetchService(service)}>Sync {service}</Button>
+      }
     </Form.Group>
   )
 
 
   const renderFieldGroups = () => {
     const groups = _.transform(fields, (m, v, k) => {
-      (m[v.service] || (m[v.service] = [])).push(v)
+      const svc = v.service || 'Custom';
+      (m[svc] || (m[svc] = [])).push(v)
     }, {})
     return (
-      <Accordion>{_.map(groups, (group, service)=> (
+      <Accordion>
+        {_.map(groups, (group, service)=> (
+          <Card>
+            <Card.Header>
+              <Accordion.Toggle as={Button} variant="link" eventKey={service}>
+                {service}
+              </Accordion.Toggle>
+            </Card.Header>
+            <Accordion.Collapse eventKey={service}>
+              <Card.Body>{renderFields(group, service)}</Card.Body>
+            </Accordion.Collapse>
+          </Card>
+        ))}
         <Card>
           <Card.Header>
-            <Accordion.Toggle as={Button} variant="link" eventKey={service}>
-              {service}
+            <Accordion.Toggle as={Button} variant="link" eventKey='more'>
+              External Services
             </Accordion.Toggle>
           </Card.Header>
-          <Accordion.Collapse eventKey={service}>
-            <Card.Body>{renderFields(group, service)}</Card.Body>
+          <Accordion.Collapse eventKey='more'>
+            <Card.Body>
+              <Button onClick={() => fetchService('habitica')}>Habitica</Button>
+            </Card.Body>
           </Accordion.Collapse>
         </Card>
-      ))}</Accordion>
+      </Accordion>
     )
   }
 

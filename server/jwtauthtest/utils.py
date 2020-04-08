@@ -1,7 +1,7 @@
 import json, os
-from sqlalchemy import create_engine, text
-from sqlalchemy_utils import database_exists, create_database
 from box import Box
+
+DROP_SQL = 'DROP SCHEMA public CASCADE;CREATE SCHEMA public;'
 
 def join_(paths):
     return os.path.join(os.path.dirname(__file__), *paths)

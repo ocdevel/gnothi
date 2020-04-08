@@ -2,7 +2,7 @@ import os
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import scoped_session, sessionmaker
-from jwtauthtest.utils import vars
+from jwtauthtest.utils import vars, DROP_SQL
 
 engine = create_engine(vars.DB_URL, convert_unicode=True)
 
@@ -12,7 +12,7 @@ db_session = scoped_session(sessionmaker(autocommit=False,
 
 if os.environ.get('WIPE', False):
     with engine.connect() as conn:
-        conn.execute('DROP SCHEMA public CASCADE;CREATE SCHEMA public;')
+        conn.execute(DROP_SQL)
 
 Base = declarative_base()
 Base.query = db_session.query_property()

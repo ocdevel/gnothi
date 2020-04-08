@@ -128,7 +128,7 @@ def get_habitica(entry_id):
         if f.name != task['text']:
             f.name = task['text']
 
-        db_session.commit()  # for f to have f.id?
+        db_session.commit()  # for f to have f.id
 
         value = 0.
         # Habit
