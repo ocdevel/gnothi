@@ -36,7 +36,7 @@ export default function Entries({jwt}) {
       <Button
         variant="success"
         size='lg'
-        style={{marginBottom: 10}}
+        className='margin-bottom'
         onClick={() => gotoForm()}
       >New Entry</Button>
       <Table striped bordered hover>

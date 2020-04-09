@@ -132,6 +132,7 @@ class Field(Base):
         history = [
             dict(value=x.value, created_at=x.Entry.created_at)
             for x in history
+            if x.value is not None
         ]
 
         return {

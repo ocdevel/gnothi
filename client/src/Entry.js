@@ -8,15 +8,20 @@ import ReactStars from "react-stars"
 import './Entry.css'
 
 
-function Fields({jwt, fetchEntry, entry_id, fieldVals, setFieldVals}) {
-  const [fields, setFields] = useState([])
+function Fields(props) {
+  const {
+    jwt,
+    fetchEntry,
+    entry_id,
+    fields,
+    setFields,
+    fieldVals,
+    setFieldVals
+  } = props
 
   const fetchFields = async () => {
     const res = await fetch_(`fields`, 'GET', null, jwt)
     setFields(res.fields)
-    // if (_.isEmpty(fieldVals)) {
-    //   setFieldVals(_.zipObject(_.map(res.fields, 'id'))) // => {'a': undefined, 'b': undefined}
-    // }
   }
 
   useEffect(() => {fetchFields()}, [])
@@ -71,6 +76,7 @@ function Fields({jwt, fetchEntry, entry_id, fieldVals, setFieldVals}) {
 
   const renderFieldGroups = () => {
     const groups = _.transform(fields, (m, v, k) => {
+      if (v.excluded_at) {return}
       const svc = v.service || 'Custom';
       (m[svc] || (m[svc] = [])).push(v)
     }, {})
@@ -101,6 +107,11 @@ export default function Entry({jwt}) {
   const [title, setTitle] = useState('')
   const [text, setText] = useState('')
   const [fieldVals, setFieldVals] = useState({})
+  const [fields, setFields] = useState({})
+
+  const f_map = _.transform(fields, (m, v, k) => {
+    m[v.id] = v
+  }, {})
 
   const fetchEntry = async () => {
     if (!entry_id) { return }
@@ -118,8 +129,8 @@ export default function Entry({jwt}) {
 
   const submit = async e => {
     e.preventDefault()
-    // FIXME only include custom fields
-    const body = {title, text, fields: fieldVals}
+    const customVals = _.omitBy(fieldVals, (v,k) => f_map[k].service)
+    const body = {title, text, fields: customVals}
     if (entry_id) {
       await fetch_(`entries/${entry_id}`, 'PUT', body, jwt)
     } else {
@@ -167,6 +178,8 @@ export default function Entry({jwt}) {
         jwt={jwt}
         fetchEntry={fetchEntry}
         entry_id={entry_id}
+        fields={fields}
+        setFields={setFields}
         fieldVals={fieldVals}
         setFieldVals={setFieldVals}
       />

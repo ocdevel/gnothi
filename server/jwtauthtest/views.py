@@ -93,14 +93,16 @@ def fields():
 def field(field_id):
     user = current_identity
     if request.method == 'PUT':
-        f = next(f for f in user.fields if f.id == field_id)
+        f = Field.query.filter_by(user_id=user.id, id=field_id).first()
         data = request.get_json()
         for k, v in data.items():
             setattr(f, k, v)
         db_session.commit()
         return jsonify({'ok': True})
     if request.method == 'DELETE':
+        FieldEntry.query.filter_by(field_id=field_id).delete()
         Field.query.filter_by(user_id=user.id, id=field_id).delete()
+        db_session.commit()
         return jsonify({'ok': True})
 
 @app.route('/habitica', methods=['POST'])

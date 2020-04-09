@@ -43,6 +43,7 @@ export default function Fields({jwt}) {
   const f_map = _.transform(fields, (m,v,k) => {
     m[v.id] = v
   }, {})
+  const field = f_map[fid]
 
   const fetchFields = async () => {
     const res = await fetch_(`fields`, 'GET', null, jwt)
@@ -110,14 +111,25 @@ export default function Fields({jwt}) {
     setFieldDefault(default_value)
   }
 
-  const destroyField = () => {
-
+  const destroyField = async () => {
+    if (!window.confirm("Are you sure? This will delete all data for this field.")) {
+      return
+    }
+    await fetch_(`fields/${fid}`, 'DELETE', null, jwt)
+    setShowForm(false)
+    fetchFields()
+  }
+  const excludeField = async (exclude=true) => {
+    const body = {excluded_at: exclude ? new Date() : null}
+    await fetch_(`fields/${fid}`, 'PUT', body, jwt)
+    setShowForm(false)
+    fetchFields()
   }
 
-  const renderFieldForm = (fid=null) => (
+  const renderFieldForm = () => (
     <Modal.Dialog style={{margin: 0, marginBottom: 10}}>
       <Modal.Header>
-        <Modal.Title>{fid ? "" : "New Field"}</Modal.Title>
+        <Modal.Title>{fid ? field.name : "New Field"}</Modal.Title>
       </Modal.Header>
 
       <Modal.Body>
@@ -155,6 +167,53 @@ export default function Fields({jwt}) {
             <option value="average">Average of your entries</option>
           </Form.Control>
         </Form.Group>
+
+        {fid && (
+          <>
+            <div className='bottom-margin'>
+              <Button
+                disabled={field.service}
+                variant='danger'
+                onClick={() => destroyField(fid)}
+                size='sm'
+              >Delete</Button>
+              <br/>
+              <small
+                style={field.service ? {textDecoration: 'line-through'}: {}}
+              >
+                Permenantly delete this field and all its entries
+              </small>
+              {field.service && <>
+                <br/>
+                <small>Delete this field at the source. To exclude from Gnothi, click "Remove".</small>
+              </>}
+
+            </div>
+            <div>
+              {field.excluded_at ? (
+                <>
+                <Button
+                  variant='primary'
+                  onClick={() => excludeField(false)}
+                  size='sm'
+                >Include</Button>
+                <br/>
+                <small>Bring this field back</small>
+                </>
+              ) : (
+                <>
+                <Button
+                  variant='danger'
+                  onClick={() => excludeField(true)}
+                  size='sm'
+                >Remove</Button>
+                <br/>
+                <small>Don't delete this field, but exclude it from showing up starting now.</small>
+                </>
+              )}
+            </div>
+          </>
+        )}
       </Modal.Body>
 
       <Modal.Footer>
@@ -168,15 +227,20 @@ export default function Fields({jwt}) {
     <Form.Group controlId={`formFieldsFields`}>
       <Row sm={4}>
         {group.map(f => (
-          <Col className='field-column'>
+          <Col
+            className='field-column'
+            style={!f.excluded_at ? {} : {
+              textDecoration: 'line-through',
+              opacity: .5
+            }}
+          >
             <Form.Row>
-              <Form.Label column="sm" lg={4}>
-                <ReactMarkdown source={f.name} linkTarget='_blank' />
-              </Form.Label>
-              <Col lg={4}>
+              <Col lg={2}>
                 <a onClick={() => doShowForm(f.id)}>✏</a>
-                <a onClick={() => destroyField(f.id)}>⛔</a>
               </Col>
+              <Form.Label column="sm" lg={6}>
+                <ReactMarkdown source={f.name} linkTarget='_blank'/>
+              </Form.Label>
               <Col lg={4}>
                 Avg: {f.avg.toFixed(1)} <span onClick={() => showChart(f.id)}>📈</span>
               </Col>
@@ -266,7 +330,7 @@ export default function Fields({jwt}) {
           variant="success"
           onClick={() => doShowForm(true)}
           size="lg"
-          style={{marginBottom: 10}}
+          className='margin-bottom'
         >New Field</Button>
       )}
       {renderFieldGroups()}
