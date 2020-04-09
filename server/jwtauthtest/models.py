@@ -1,9 +1,9 @@
+import enum, datetime, pdb
 from jwtauthtest.database import Base
 from sqlalchemy import Column, Integer, String, Text, Enum, Float, ForeignKey, Boolean, DateTime, JSON
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, load_only, joinedload
 from sqlalchemy.dialects.postgresql import UUID
 from uuid import uuid4
-import enum, datetime
 
 def uuid_():
     return str(uuid4())
@@ -80,6 +80,12 @@ class FieldType(enum.Enum):
     # text entries?
 
 
+class DefaultValueTypes(enum.Enum):
+    value = 1
+    average = 2
+    ffill = 3
+
+
 class Field(Base):
     """Entries that change over time. Uses:
     * Charts
@@ -95,26 +101,43 @@ class Field(Base):
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     # Don't actually delete fields, unless it's the same day. Instead
     # stop entries/graphs/correlations here
-    deleted_at = Column(DateTime)
+    excluded_at = Column(DateTime)
+    default_value = Column(Enum(DefaultValueTypes))
     # option{single_or_multi, options:[], ..}
     # number{float_or_int, ..}
     attributes = Column(JSON)
     # Used if pulling from external service
     service = Column(String(64))
     service_id = Column(String(64))
-    service_exclude = Column(Boolean, default=False)
 
     user_id = Column(UUID, ForeignKey('users.id'))
 
     def json(self):
+        history = Entry.query\
+            .join(Entry.field_entries)\
+            .add_column(FieldEntry.value)\
+            .filter(FieldEntry.field_id==self.id)\
+            .order_by(Entry.created_at.asc())\
+            .all()
+        # .options(load_only(FieldEntry.value, Entry.created_at))\
+        # FIXME it's pulling full Entry model. Not using join/load_only correctly
+        # Figure out how to execute raw SQL here or how to use ORM correctly
+        history = [
+            dict(value=x.value, created_at=x.Entry.created_at)
+            for x in history
+        ]
+
         return {
             'id': self.id,
             'type': self.type.name,
             'name': self.name,
             'created_at': self.created_at,
+            'excluded_at': self.excluded_at,
             'service': self.service,
             'service_id': self.service_id,
-            'service_exclude': self.service_exclude
+
+            'avg': sum(x['value'] for x in history)/len(history) if history else 0.,
+            'history': history
         }
 
 

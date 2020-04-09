@@ -7,21 +7,6 @@ export default function Auth({onAuth}) {
   const [password, setPassword] = useState('')
   const [passwordConfirm, setPasswordConfirm] = useState('')
 
-
-  const checkJwt = async () => {
-    const jwt = localStorage.getItem('jwt');
-    if (!jwt) { return }
-    const res = await fetch_('check-jwt', 'GET', null, jwt)
-    if (res.status_code == 401) {
-      return localStorage.removeItem('jwt')
-    }
-    onAuth(jwt);
-  }
-
-  useEffect(() => {
-    checkJwt()
-  }, [])
-
   const changeUsername = e => setUsername(e.target.value)
   const changePassword = e => setPassword(e.target.value)
   const changePasswordConfirm = e => setPasswordConfirm(e.target.value)

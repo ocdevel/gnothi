@@ -6,11 +6,19 @@ import {Accordion, Button, Card, Col, Form, Row} from "react-bootstrap"
 import ReactMarkdown from "react-markdown"
 import ReactStars from "react-stars"
 import './Entry.css'
+import {LineChart,
+CartesianGrid,
+XAxis,
+YAxis,
+Tooltip,
+Legend,
+Line} from 'recharts'
 
 function Fields({jwt, fetchEntry, entry_id, fieldVals, setFieldVals}) {
   const [fields, setFields] = useState([])
   const [fieldName, setFieldName] = useState('')
   const [fieldType, setFieldType] = useState('number')
+  const [showCharts, setShowCharts] = useState({})
 
   const fetchFields = async () => {
     const res = await fetch_(`fields`, 'GET', null, jwt)
@@ -25,7 +33,7 @@ function Fields({jwt, fetchEntry, entry_id, fieldVals, setFieldVals}) {
     const body = {name: fieldName, type: fieldType}
     await fetch_(`fields`, 'POST', body, jwt)
     await fetchFields()
-    await fetchEntry()
+    fetchEntry()
   }
 
   const fetchService = async (service) => {
@@ -39,17 +47,20 @@ function Fields({jwt, fetchEntry, entry_id, fieldVals, setFieldVals}) {
   }
   const changeFieldName = e => setFieldName(e.target.value)
   const changeFieldType = e => setFieldType(e.target.value)
+  const showChart = fid => {
+    setShowCharts({...showCharts, [fid]: !showCharts[fid]})
+  }
 
   const renderFields = (group, service) => (
     <Form.Group controlId={`formFieldsFields`}>
-      <Row sm={3}>
+      <Row sm={4}>
         {group.map(f => (
           <Col className='field-column'>
             <Form.Row>
-              <Form.Label column="sm" lg={6}>
+              <Form.Label column="sm" lg={3}>
                 <ReactMarkdown source={f.name} linkTarget='_blank' />
               </Form.Label>
-              <Col>
+              <Col lg={6}>
               {f.type === 'fivestar' ? (
                 <ReactStars
                   value={fieldVals[f.id]}
@@ -66,7 +77,19 @@ function Fields({jwt, fetchEntry, entry_id, fieldVals, setFieldVals}) {
                 />
               )}
               </Col>
+              <Col lg={3}>Avg: {f.avg} <span onClick={() => showChart(f.id)}>📈</span></Col>
             </Form.Row>
+            {showCharts[f.id] && (
+              <LineChart width={730} height={250} data={f.history}>
+                {/*margin={{ top: 5, right: 30, left: 20, bottom: 5 }}*/}
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="created_at" />
+                <YAxis />
+                <Tooltip />
+                {/*<Legend />*/}
+                <Line type="monotone" dataKey="value" stroke="#8884d8" />
+              </LineChart>
+            )}
           </Col>
         ))}
       </Row>

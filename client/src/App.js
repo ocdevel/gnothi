@@ -11,6 +11,7 @@ import {
 import Auth from './Auth'
 import Journal from './Journal'
 import Family from './Family'
+import {fetch_} from "./utils";
 
 function App() {
   const [jwt, setJwt] = useState()
@@ -21,6 +22,16 @@ function App() {
     localStorage.removeItem('jwt')
     window.location.href = "/"
   }
+
+  const checkJwt = async () => {
+    const jwt = localStorage.getItem('jwt');
+    if (!jwt) { return }
+    const res = await fetch_('check-jwt', 'GET', null, jwt)
+    if (res.status_code == 401) { return logout() }
+    onAuth(jwt);
+  }
+
+  useEffect(() => { checkJwt() }, [])
 
   const renderLogout = () => (
     <Button
