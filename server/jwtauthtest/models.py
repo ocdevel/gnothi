@@ -15,6 +15,9 @@ class User(Base):
     username = Column(String(50), nullable=False, unique=True)
     password = Column(String(200), nullable=False)
 
+    habitica_user_id = Column(String(200))
+    habitica_api_token = Column(String(200))
+
     entries = relationship("Entry", order_by='Entry.created_at.desc()')
     fields = relationship("Field")
     family_members = relationship("Family")
@@ -25,6 +28,14 @@ class User(Base):
 
     def __repr__(self):
         return f'<User {{ username: {self.username}, password: {self.password} }}'
+
+    def json(self):
+        return {
+            'id': self.id,
+            'username': self.username,
+            'habitica_user_id': self.habitica_user_id,
+            'habitica_api_token': self.habitica_api_token
+        }
 
 
 class Entry(Base):

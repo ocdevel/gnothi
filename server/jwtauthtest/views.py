@@ -18,6 +18,12 @@ def check_jwt():
     return jsonify({'ok': True})
 
 
+@app.route('/user', methods=['GET'])
+@jwt_required()
+def get_user():
+    return jsonify(current_identity.json())
+
+
 @app.route('/register', methods=['POST'])
 def register():
     data = request.get_json()
@@ -97,6 +103,16 @@ def field(field_id):
         Field.query.filter_by(user_id=user.id, id=field_id).delete()
         return jsonify({'ok': True})
 
+@app.route('/habitica', methods=['POST'])
+@jwt_required()
+def setup_habitica():
+    user = current_identity
+    data = request.get_json()
+    user.habitica_user_id = data['habitica_user_id']
+    user.habitica_api_token = data['habitica_api_token']
+    db_session.commit()
+    return jsonify({'ok': True})
+
 
 import requests
 @app.route('/habitica/<entry_id>', methods=['GET'])
@@ -112,8 +128,8 @@ def get_habitica(entry_id):
         'https://habitica.com/api/v3/tasks/user',
         headers={
             "Content-Type": "application/json",
-            "x-api-user": vars.HABIT.USER,
-            "x-api-key": vars.HABIT.KEY,
+            "x-api-user": user.habitica_user_id,
+            "x-api-key": user.habitica_api_token,
             "x-client": f"{vars.HABIT.USER}-{vars.HABIT.APP}"
         }
     ).json()

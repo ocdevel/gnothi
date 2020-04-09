@@ -28,6 +28,9 @@ export default function Fields({jwt}) {
   const [fields, setFields] = useState([])
   const [showCharts, setShowCharts] = useState({})
 
+  const [habiticaUserId, setHabiticaUserId] = useState('')
+  const [habiticaApiToken, setHabiticaApiToken] = useState('')
+
   const DEFAULT_NAME = ''
   const DEFAULT_TYPE = 'number'
   const DEFAULT_DEFAULT = 'value'
@@ -48,8 +51,17 @@ export default function Fields({jwt}) {
       _.each(f.history, (h, i) => {f.history[i].created_at = moment(h.created_at).format("YYYY-MM-DD")})
     })
   }
+  
+  const fetchUser = async () => {
+    const res = await fetch_(`user`, 'GET', null, jwt)
+    setHabiticaUserId(res.habitica_user_id)
+    setHabiticaApiToken(res.habitica_api_token)
+  }
 
-  useEffect(() => {fetchFields()}, [])
+  useEffect(() => {
+    fetchFields()
+    fetchUser()
+  }, [])
 
   const saveField = async e => {
     // e.preventDefault()
@@ -68,9 +80,21 @@ export default function Fields({jwt}) {
     doShowForm(false)
   }
 
+  const saveHabitica = async e => {
+    e.preventDefault()
+    const body = {
+      habitica_user_id: habiticaUserId,
+      habitica_api_token: habiticaApiToken
+    }
+    await fetch_(`habitica`, 'POST', body, jwt)
+    fetchUser()
+  }
+
   const changeFieldName = e => setFieldName(e.target.value)
   const changeFieldType = e => setFieldType(e.target.value)
   const changeFieldDefault = e => setFieldDefault(e.target.value)
+  const changeHabiticaUserId = e => setHabiticaUserId(e.target.value)
+  const changeHabiticaApiToken = e => setHabiticaApiToken(e.target.value)
   const showChart = fid => {
     setShowCharts({...showCharts, [fid]: !showCharts[fid]})
   }
@@ -174,6 +198,32 @@ export default function Fields({jwt}) {
     </Form.Group>
   )
 
+  const renderSetupHabitica = () => (
+    <Form onSubmit={saveHabitica}>
+      <Form.Group controlId="formHabiticaUserId">
+        <Form.Label>User ID</Form.Label>
+        <Form.Control
+          type="text"
+          value={habiticaUserId}
+          onChange={changeHabiticaUserId}
+        />
+      </Form.Group>
+
+      <Form.Group controlId="formHabiticaApiToken">
+        <Form.Label>API Key</Form.Label>
+        <Form.Control
+          type="text"
+          value={habiticaApiToken}
+          onChange={changeHabiticaApiToken}
+        />
+      </Form.Group>
+      
+      <Button type='submit' variant='success'>
+        Save
+      </Button>
+    </Form>
+  )
+
   const renderFieldGroups = () => {
     const groups = _.transform(fields, (m, v, k) => {
       const svc = v.service || 'Custom';
@@ -193,6 +243,18 @@ export default function Fields({jwt}) {
             </Accordion.Collapse>
           </Card>
         ))}
+        {!groups.habitica || true && (
+          <Card>
+            <Card.Header>
+              <Accordion.Toggle as={Button} variant="link" eventKey='setupHabitica'>
+                Setup Habitica
+              </Accordion.Toggle>
+            </Card.Header>
+            <Accordion.Collapse eventKey='setupHabitica'>
+              <Card.Body>{renderSetupHabitica()}</Card.Body>
+            </Accordion.Collapse>
+          </Card>
+        )}
       </Accordion>
     )
   }
