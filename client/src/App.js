@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import './App.css'
 import {Button, Container, Nav, Navbar} from 'react-bootstrap';
+import {LinkContainer} from 'react-router-bootstrap'
 import {
   BrowserRouter as Router,
   Switch,
@@ -39,8 +40,12 @@ function App() {
       <Navbar.Toggle aria-controls="responsive-navbar-nav" />
       <Navbar.Collapse id="responsive-navbar-nav">
         <Nav className="mr-auto">
-          <Nav.Link href="/j">Entries</Nav.Link>
-        <Nav.Link href="/j/fields">Fields</Nav.Link>
+          <LinkContainer exact to="/j">
+            <Nav.Link>Entries</Nav.Link>
+          </LinkContainer>
+          <LinkContainer to="/j/fields">
+            <Nav.Link>Fields</Nav.Link>
+          </LinkContainer>
         </Nav>
         <Nav>
           <Nav.Link onClick={logout}>Logout</Nav.Link>

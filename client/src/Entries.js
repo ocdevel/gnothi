@@ -33,8 +33,12 @@ export default function Entries({jwt}) {
 
   return (
     <div>
-      <Button variant="primary" size='lg' onClick={() => gotoForm()}>New Entry</Button>
-      <hr/>
+      <Button
+        variant="success"
+        size='lg'
+        style={{marginBottom: 10}}
+        onClick={() => gotoForm()}
+      >New Entry</Button>
       <Table striped bordered hover>
         <thead>
           <tr>
