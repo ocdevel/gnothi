@@ -56,7 +56,6 @@ export default function Entries({jwt}) {
           ))}
         </tbody>
       </Table>
-      <Fields jwt={jwt}/>
     </div>
   )
 }

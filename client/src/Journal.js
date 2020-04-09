@@ -1,12 +1,11 @@
-import {Route, Switch, useRouteMatch} from "react-router-dom"
+import {Link, Route, Switch, useRouteMatch} from "react-router-dom"
 import Entries from "./Entries"
 import Entry from "./Entry"
+import Fields from "./Fields"
 import React from "react"
 
 export default function Journal({jwt}) {
   let match = useRouteMatch()
-
-  console.log(match.url)
 
   return (
     <Switch>
@@ -15,6 +14,9 @@ export default function Journal({jwt}) {
       </Route>
       <Route path={`${match.url}/entry`}>
         <Entry jwt={jwt} />
+      </Route>
+      <Route path={`${match.url}/fields`}>
+        <Fields jwt={jwt} />
       </Route>
       <Route path={match.url}>
         <Entries jwt={jwt} />

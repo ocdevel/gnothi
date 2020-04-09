@@ -1,6 +1,7 @@
 import React, {useEffect, useState} from "react";
 import {Button, Form, Tab, Tabs} from "react-bootstrap";
 import {fetch_} from './utils'
+import {Link} from "react-router-dom";
 
 export default function Auth({onAuth}) {
   const [username, setUsername] = useState('')
@@ -105,6 +106,7 @@ export default function Auth({onAuth}) {
 
   return (
     <div>
+      <h1>Gnothi</h1>
       <Tabs defaultActiveKey="login">
         <Tab eventKey="login" title="Login">
           {renderLogin()}
