@@ -22,6 +22,19 @@ function Fields(props) {
   const fetchFields = async () => {
     const res = await fetch_(`fields`, 'GET', null, jwt)
     setFields(res.fields)
+    if (entry_id) {
+      // fieldVals will be set by the entry json response (Entry)
+      return
+    }
+    // set fieldVals based on f.default_value. FIXME do this server-side!
+    const fieldVals_ = _.transform(res.fields, (m, v, k) => {
+      m[v.id] = {
+        value: v.default_value_value,
+        ffill: _.last(v.history).value,
+        average: v.avg
+      }[v.default_value]
+    }, {})
+    setFieldVals(fieldVals_)
   }
 
   useEffect(() => {fetchFields()}, [])

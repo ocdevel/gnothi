@@ -110,6 +110,7 @@ class Field(Base):
     # stop entries/graphs/correlations here
     excluded_at = Column(DateTime)
     default_value = Column(Enum(DefaultValueTypes), default="value")
+    default_value_value = Column(Float, default=None)
     # option{single_or_multi, options:[], ..}
     # number{float_or_int, ..}
     attributes = Column(JSON)
@@ -142,6 +143,7 @@ class Field(Base):
             'created_at': self.created_at,
             'excluded_at': self.excluded_at,
             'default_value': self.default_value.name if self.default_value else "value",
+            'default_value_value': self.default_value_value,
             'service': self.service,
             'service_id': self.service_id,
 

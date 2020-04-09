@@ -31,13 +31,13 @@ export default function Fields({jwt}) {
   const [habiticaUserId, setHabiticaUserId] = useState('')
   const [habiticaApiToken, setHabiticaApiToken] = useState('')
 
-  const DEFAULT_NAME = ''
   const DEFAULT_TYPE = 'number'
   const DEFAULT_DEFAULT = 'value'
   const [showForm, setShowForm] = useState(false) // true, false, fid
-  const [fieldName, setFieldName] = useState(DEFAULT_NAME)
+  const [fieldName, setFieldName] = useState("")
   const [fieldType, setFieldType] = useState(DEFAULT_TYPE)
   const [fieldDefault, setFieldDefault] = useState(DEFAULT_DEFAULT)
+  const [fieldDefaultValue, setFieldDefaultValue] = useState("")
 
   const fid = show2fid(showForm)
   const f_map = _.transform(fields, (m,v,k) => {
@@ -69,7 +69,8 @@ export default function Fields({jwt}) {
     const body = {
       name: fieldName,
       type: fieldType,
-      default_value: fieldDefault
+      default_value: fieldDefault,
+      default_value_value: fieldDefaultValue
     }
     if (fid) {
       await fetch_(`fields/${fid}`, 'PUT', body, jwt)
@@ -94,6 +95,7 @@ export default function Fields({jwt}) {
   const changeFieldName = e => setFieldName(e.target.value)
   const changeFieldType = e => setFieldType(e.target.value)
   const changeFieldDefault = e => setFieldDefault(e.target.value)
+  const changeFieldDefaultValue = e => setFieldDefaultValue(e.target.value)
   const changeHabiticaUserId = e => setHabiticaUserId(e.target.value)
   const changeHabiticaApiToken = e => setHabiticaApiToken(e.target.value)
   const showChart = fid => {
@@ -103,12 +105,13 @@ export default function Fields({jwt}) {
   const doShowForm = (show_or_id) => {
     setShowForm(show_or_id)
     const fid = show2fid(show_or_id)
-    const [name, type, default_value] =
-      fid ? [f_map[fid].name, f_map[fid].type, f_map[fid].default_value]
-      : [DEFAULT_NAME, DEFAULT_TYPE, DEFAULT_DEFAULT]
+    const [name, type, default_value, default_value_value] =
+      fid ? [f_map[fid].name, f_map[fid].type, f_map[fid].default_value, f_map[fid].default_value_value]
+      : ["", DEFAULT_TYPE, DEFAULT_DEFAULT, ""]
     setFieldName(name)
     setFieldType(type)
     setFieldDefault(default_value)
+    setFieldDefaultValue(default_value_value)
   }
 
   const destroyField = async () => {
@@ -129,7 +132,7 @@ export default function Fields({jwt}) {
   const renderFieldForm = () => (
     <Modal.Dialog style={{margin: 0, marginBottom: 10}}>
       <Modal.Header>
-        <Modal.Title>{fid ? field.name : "New Field"}</Modal.Title>
+        <Modal.Title>{fid ? "Edit Field" : "New Field"}</Modal.Title>
       </Modal.Header>
 
       <Modal.Body>
@@ -166,10 +169,30 @@ export default function Fields({jwt}) {
             <option value="ffill">Pull entry from yesterday</option>
             <option value="average">Average of your entries</option>
           </Form.Control>
+          <Form.Text className="text-muted">
+            {{
+              value: `Auto-populate this field with "Default Value". Leaving it empty is valid (blanks are considered by ML models)`,
+              ffill: `Pulls the value from your last entry for this field` + (fid ? ` (currently ${_.last(field.history).value})` : ''),
+              average: `Uses your average accross entries for this field` + (fid ? ` (currently ${field.avg})` : '')
+            }[fieldDefault]}
+
+          </Form.Text>
         </Form.Group>
+
+        {fieldDefault === 'value' && (
+          <Form.Group controlId="formFieldDefaultValue">
+            <Form.Label>Default Value</Form.Label>
+            <Form.Control
+              type="text"
+              value={fieldDefaultValue}
+              onChange={changeFieldDefaultValue}
+            />
+          </Form.Group>
+        )}
 
         {fid && (
           <>
+            <hr/>
             <div className='bottom-margin'>
               <Button
                 disabled={field.service}
