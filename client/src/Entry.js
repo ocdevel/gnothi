@@ -2,7 +2,15 @@ import {useHistory, useParams} from "react-router-dom"
 import React, {useEffect, useState} from "react"
 import {fetch_} from "./utils"
 import _ from "lodash"
-import {Accordion, Button, Card, Col, Form, Row} from "react-bootstrap"
+import {
+  Accordion,
+  Button,
+  Card,
+  Col,
+  Form,
+  Row,
+  Alert
+} from "react-bootstrap"
 import ReactMarkdown from "react-markdown"
 import ReactStars from "react-stars"
 import './Entry.css'
@@ -28,9 +36,10 @@ function Fields(props) {
     }
     // set fieldVals based on f.default_value. FIXME do this server-side!
     const fieldVals_ = _.transform(res.fields, (m, v, k) => {
+      const recent = _.last(v.history)
       m[v.id] = {
         value: v.default_value_value,
-        ffill: _.last(v.history).value,
+        ffill: recent ? recent.value : null,
         average: v.avg
       }[v.default_value]
     }, {})
@@ -49,41 +58,54 @@ function Fields(props) {
     setFieldVals({...fieldVals, [k]: v})
   }
 
+  const renderSyncButton = (service) => {
+    if (service === 'Custom') {return null}
+    return <>
+      {entry_id ? (
+        <Button onClick={() => fetchService(service)}>
+          Sync {service}
+        </Button>
+      ) : (
+        <Alert variant='warning'>
+          Save this entry first, then come back to sync (bug)
+        </Alert>
+      )}
+      <br/>
+      <small>Not automatically synced, so be sure to sync before bed each day.</small>
+    </>
+  }
+
   const renderFields = (group, service) => (
     <Form.Group controlId={`formFieldsFields`}>
       <Row sm={4}>
-        {group.map(f => (
-          <Col className='field-column'>
+        {_.sortBy(group, 'id').map(f => (
+          <Col className='field-column' key={f.id}>
             <Form.Row>
               <Form.Label column="sm" lg={6}>
                 <ReactMarkdown source={f.name} linkTarget='_blank' />
               </Form.Label>
               <Col lg={6}>
-              {f.type === 'fivestar' ? (
-                <ReactStars
-                  value={fieldVals[f.id]}
-                  size={25}
-                  onChange={changeFieldVal(f.id, true)}
-                />
-              ) : (
-                <Form.Control
-                  disabled={!!f.service}
-                  type='text'
-                  size="sm"
-                  value={fieldVals[f.id]}
-                  onChange={changeFieldVal(f.id)}
-                />
-              )}
+                {f.type === 'fivestar' ? (
+                  <ReactStars
+                    value={fieldVals[f.id]}
+                    size={25}
+                    onChange={changeFieldVal(f.id, true)}
+                  />
+                ) : (
+                  <Form.Control
+                    disabled={!!f.service}
+                    type='text'
+                    size="sm"
+                    value={fieldVals[f.id]}
+                    onChange={changeFieldVal(f.id)}
+                  />
+                )}
               </Col>
             </Form.Row>
           </Col>
         ))}
       </Row>
-      {
-        entry_id &&
-        service !== 'Custom' &&
-        <Button onClick={() => fetchService(service)}>Sync {service}</Button>
-      }
+      {renderSyncButton(service)}
     </Form.Group>
   )
 
@@ -96,7 +118,7 @@ function Fields(props) {
     return (
       <Accordion defaultActiveKey="Custom">
         {_.map(groups, (group, service)=> (
-          <Card>
+          <Card key={service}>
             <Card.Header>
               <Accordion.Toggle as={Button} variant="link" eventKey={service}>
                 {service}

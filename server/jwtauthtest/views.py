@@ -1,4 +1,4 @@
-import pdb
+import pdb, logging
 from flask_jwt import jwt_required, current_identity
 from jwtauthtest import app
 from jwtauthtest.database import db_session
@@ -120,10 +120,14 @@ import requests
 @app.route('/habitica/<entry_id>', methods=['GET'])
 @jwt_required()
 def get_habitica(entry_id):
+    app.logger.info("Start of Habitica")
+
     user = current_identity
     entry = Entry.query\
         .filter_by(user_id=user.id, id=entry_id)\
         .first()
+
+    app.logger.info("Calling Habitica")
 
     # https://habitica.com/apidoc/#api-Task-GetUserTasks
     r = requests.get(
@@ -134,7 +138,10 @@ def get_habitica(entry_id):
             "x-api-key": user.habitica_api_token,
             "x-client": f"{vars.HABIT.USER}-{vars.HABIT.APP}"
         }
-    ).json()
+    )
+    r = r.json()
+
+    app.logger.info("Habitica finished")
 
     f_id_map = {f.service_id: f for f in user.fields}
     fe_id_map = {f.field_id: f for f in entry.field_entries}
@@ -196,6 +203,6 @@ def get_habitica(entry_id):
             fe = FieldEntry(field_id=f.id)
             entry.field_entries.append(fe)
         db_session.commit()
-        print(task['text'], 'done')
+        app.logger.info(task['text'] + " done")
 
     return jsonify({'ok': True})

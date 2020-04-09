@@ -1,4 +1,5 @@
 import os, sys, pdb
+from datetime import datetime
 from sqlalchemy import create_engine
 from utils import vars, DROP_SQL
 import pandas as pd
@@ -21,6 +22,8 @@ print('to', to_url)
 to_engine = create_engine(to_url)
 
 if method == 'push':
+    now = datetime.now().strftime("%Y-%m-%d-%I-%Mp")
+    os.system(f"pg_dump {to_url} > tmp/bk-{now}.sql")
     with to_engine.connect() as conn:
         conn.execute(DROP_SQL)
     # cmd = f"pg_dump --no-owner --no-acl {from_url}"\

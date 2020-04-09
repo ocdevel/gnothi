@@ -36,7 +36,7 @@ export default function Entries({jwt}) {
       <Button
         variant="success"
         size='lg'
-        className='margin-bottom'
+        className='bottom-margin'
         onClick={() => gotoForm()}
       >New Entry</Button>
       <Table striped bordered hover>
@@ -49,7 +49,7 @@ export default function Entries({jwt}) {
         </thead>
         <tbody>
           {entries.map(e => (
-            <tr>
+            <tr key={e.id}>
               <td>{moment(e.created_at).format('YYYY-MM-DD h:mm a')}</td>
               <td>{e.title}</td>
               <td>

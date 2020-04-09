@@ -70,7 +70,7 @@ export default function Fields({jwt}) {
       name: fieldName,
       type: fieldType,
       default_value: fieldDefault,
-      default_value_value: fieldDefaultValue
+      default_value_value: _.isEmpty(fieldDefaultValue) ? null : fieldDefaultValue
     }
     if (fid) {
       await fetch_(`fields/${fid}`, 'PUT', body, jwt)
@@ -129,6 +129,18 @@ export default function Fields({jwt}) {
     fetchFields()
   }
 
+  let defValHelp = {
+    value: `Auto-populate this field with "Default Value". Leaving it empty is valid (blanks are considered by ML models)`,
+    ffill: `Pulls the value from your last entry for this field`,
+    average: `Uses your average accross entries for this field`
+  }
+  const lastEntry = fid && _.last(field.history)
+  if (lastEntry) { // only show if have values to work with
+    defValHelp.ffill += ` (currently ${lastEntry.value})`
+    defValHelp.average += ` (currently ${field.avg})`
+  }
+  defValHelp = defValHelp[fieldDefault]
+
   const renderFieldForm = () => (
     <Modal.Dialog style={{margin: 0, marginBottom: 10}}>
       <Modal.Header>
@@ -170,12 +182,7 @@ export default function Fields({jwt}) {
             <option value="average">Average of your entries</option>
           </Form.Control>
           <Form.Text className="text-muted">
-            {{
-              value: `Auto-populate this field with "Default Value". Leaving it empty is valid (blanks are considered by ML models)`,
-              ffill: `Pulls the value from your last entry for this field` + (fid ? ` (currently ${_.last(field.history).value})` : ''),
-              average: `Uses your average accross entries for this field` + (fid ? ` (currently ${field.avg})` : '')
-            }[fieldDefault]}
-
+            {defValHelp}
           </Form.Text>
         </Form.Group>
 
@@ -249,8 +256,9 @@ export default function Fields({jwt}) {
   const renderFields = (group, service) => (
     <Form.Group controlId={`formFieldsFields`}>
       <Row sm={4}>
-        {group.map(f => (
+        {_.sortBy(group, 'id').map(f => (
           <Col
+            key={f.id}
             className='field-column'
             style={!f.excluded_at ? {} : {
               textDecoration: 'line-through',
@@ -319,7 +327,7 @@ export default function Fields({jwt}) {
     return (
       <Accordion defaultActiveKey="Custom">
         {_.map(groups, (group, service)=> (
-          <Card>
+          <Card key={service}>
             <Card.Header>
               <Accordion.Toggle as={Button} variant="link" eventKey={service}>
                 {service}
@@ -353,7 +361,7 @@ export default function Fields({jwt}) {
           variant="success"
           onClick={() => doShowForm(true)}
           size="lg"
-          className='margin-bottom'
+          className='bottom-margin'
         >New Field</Button>
       )}
       {renderFieldGroups()}
