@@ -44,10 +44,6 @@ class Entry(Base):
     field_entries = relationship("FieldEntry", order_by="FieldEntry.field_id")
     user_id = Column(UUID, ForeignKey('users.id'))
 
-    def __init__(self, title, text):
-        self.title = title
-        self.text = text
-
     # TODO look into https://stackoverflow.com/questions/7102754/jsonify-a-sqlalchemy-result-set-in-flask
     #                https://stackoverflow.com/questions/5022066/how-to-serialize-sqlalchemy-result-to-json
     # Marshmallow    https://marshmallow-sqlalchemy.readthedocs.io/en/latest/
@@ -81,7 +77,7 @@ class FieldType(enum.Enum):
 
 
 class DefaultValueTypes(enum.Enum):
-    value = 1
+    value = 1  # which includes None
     average = 2
     ffill = 3
 
@@ -102,7 +98,7 @@ class Field(Base):
     # Don't actually delete fields, unless it's the same day. Instead
     # stop entries/graphs/correlations here
     excluded_at = Column(DateTime)
-    default_value = Column(Enum(DefaultValueTypes))
+    default_value = Column(Enum(DefaultValueTypes), default="value")
     # option{single_or_multi, options:[], ..}
     # number{float_or_int, ..}
     attributes = Column(JSON)
@@ -133,6 +129,7 @@ class Field(Base):
             'name': self.name,
             'created_at': self.created_at,
             'excluded_at': self.excluded_at,
+            'default_value': self.default_value.name if self.default_value else "value",
             'service': self.service,
             'service_id': self.service_id,
 
@@ -147,11 +144,6 @@ class FieldEntry(Base):
 
     entry_id = Column(UUID, ForeignKey('entries.id'), primary_key=True)
     field_id = Column(UUID, ForeignKey('fields.id'), primary_key=True)
-
-    def __init__(self, value, field_id):
-        self.value = value
-        self.field_id = field_id
-
 
 class FamilyType(Base):
     __tablename__ = 'family_types'

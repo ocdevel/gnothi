@@ -33,10 +33,10 @@ def entries():
         return jsonify({'entries': [e.json() for e in user.entries]})
     elif request.method == 'POST':
         data = request.get_json()
-        entry = Entry(data['title'], data['text'])
+        entry = Entry(title=data['title'], text=data['text'])
         user.entries.append(entry)
         for k, v in data['fields'].items():
-            entry.field_entries.append(FieldEntry(v, k))
+            entry.field_entries.append(FieldEntry(value=v, field_id=k))
         db_session.commit()
         return jsonify({'ok': True})
 
@@ -59,7 +59,7 @@ def entry(entry_id):
             if f:
                 f.value = v
             if not f:
-                entry.field_entries.append(FieldEntry(v, k))
+                entry.field_entries.append(FieldEntry(value=v, field_id=k))
         db_session.commit()
         return jsonify({'ok': True})
     if request.method == 'DELETE':
@@ -76,9 +76,25 @@ def fields():
         return jsonify({'fields': [f.json() for f in user.fields]})
     if request.method == 'POST':
         data = request.get_json()
-        f = Field(name=data['name'], type=data['type'])
+        f = Field(**data)
         user.fields.append(f)
         db_session.commit()
+        return jsonify({'ok': True})
+
+
+@app.route('/fields/<field_id>', methods=['PUT', 'DELETE'])
+@jwt_required()
+def field(field_id):
+    user = current_identity
+    if request.method == 'PUT':
+        f = next(f for f in user.fields if f.id == field_id)
+        data = request.get_json()
+        for k, v in data.items():
+            setattr(f, k, v)
+        db_session.commit()
+        return jsonify({'ok': True})
+    if request.method == 'DELETE':
+        Field.query.filter_by(user_id=user.id, id=field_id).delete()
         return jsonify({'ok': True})
 
 
@@ -159,7 +175,7 @@ def get_habitica(entry_id):
         if fe:
             fe.value = value
         else:
-            fe = FieldEntry(value, f.id)
+            fe = FieldEntry(field_id=f.id)
             entry.field_entries.append(fe)
         db_session.commit()
         print(task['text'], 'done')

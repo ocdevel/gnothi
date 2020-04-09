@@ -2,21 +2,44 @@ import React, {useEffect, useState} from "react";
 import {fetch_} from "./utils";
 import _ from "lodash";
 import moment from "moment";
-import {Accordion, Button, Card, Col, Form, Row} from "react-bootstrap";
+import {
+  Accordion,
+  Button,
+  Card,
+  Col,
+  Form,
+  Row,
+  Modal
+} from "react-bootstrap";
 import ReactMarkdown from "react-markdown";
-import {LineChart,
-CartesianGrid,
-XAxis,
-YAxis,
-Tooltip,
-Legend,
-Line} from 'recharts'
+import {
+  LineChart,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Legend,
+  Line
+} from 'recharts'
+
+const show2fid = showForm => showForm === true || showForm === false ? null : showForm;
 
 export default function Fields({jwt}) {
   const [fields, setFields] = useState([])
-  const [fieldName, setFieldName] = useState('')
-  const [fieldType, setFieldType] = useState('number')
   const [showCharts, setShowCharts] = useState({})
+
+  const DEFAULT_NAME = ''
+  const DEFAULT_TYPE = 'number'
+  const DEFAULT_DEFAULT = 'value'
+  const [showForm, setShowForm] = useState(false) // true, false, fid
+  const [fieldName, setFieldName] = useState(DEFAULT_NAME)
+  const [fieldType, setFieldType] = useState(DEFAULT_TYPE)
+  const [fieldDefault, setFieldDefault] = useState(DEFAULT_DEFAULT)
+
+  const fid = show2fid(showForm)
+  const f_map = _.transform(fields, (m,v,k) => {
+    m[v.id] = v
+  }, {})
 
   const fetchFields = async () => {
     const res = await fetch_(`fields`, 'GET', null, jwt)
@@ -28,20 +51,94 @@ export default function Fields({jwt}) {
 
   useEffect(() => {fetchFields()}, [])
 
-  const createField = async e => {
+  const saveField = async e => {
     // e.preventDefault()
-    const body = {name: fieldName, type: fieldType}
-    await fetch_(`fields`, 'POST', body, jwt)
-    await fetchFields()
-    fetchFields()
-  }
+    const body = {
+      name: fieldName,
+      type: fieldType,
+      default_value: fieldDefault
+    }
+    if (fid) {
+      await fetch_(`fields/${fid}`, 'PUT', body, jwt)
+    } else {
+      await fetch_(`fields`, 'POST', body, jwt)
+    }
 
+    await fetchFields()
+    doShowForm(false)
+  }
 
   const changeFieldName = e => setFieldName(e.target.value)
   const changeFieldType = e => setFieldType(e.target.value)
+  const changeFieldDefault = e => setFieldDefault(e.target.value)
   const showChart = fid => {
     setShowCharts({...showCharts, [fid]: !showCharts[fid]})
   }
+
+  const doShowForm = (show_or_id) => {
+    setShowForm(show_or_id)
+    const fid = show2fid(show_or_id)
+    const [name, type, default_value] =
+      fid ? [f_map[fid].name, f_map[fid].type, f_map[fid].default_value]
+      : [DEFAULT_NAME, DEFAULT_TYPE, DEFAULT_DEFAULT]
+    setFieldName(name)
+    setFieldType(type)
+    setFieldDefault(default_value)
+  }
+
+  const destroyField = () => {
+
+  }
+
+  const renderFieldForm = (fid=null) => (
+    <Modal.Dialog style={{margin: 0, marginBottom: 10}}>
+      <Modal.Header>
+        <Modal.Title>{fid ? "" : "New Field"}</Modal.Title>
+      </Modal.Header>
+
+      <Modal.Body>
+        <Form.Group controlId="formFieldName">
+          <Form.Label>Field Name</Form.Label>
+          <Form.Control
+            type="text"
+            placeholder="Name"
+            value={fieldName}
+            onChange={changeFieldName}
+          />
+        </Form.Group>
+
+        <Form.Group controlId="formFieldType">
+          <Form.Label>Field Type</Form.Label>
+          <Form.Control
+            as="select"
+            value={fieldType}
+            onChange={changeFieldType}
+          >
+            <option>number</option>
+            <option>fivestar</option>
+          </Form.Control>
+        </Form.Group>
+
+        <Form.Group controlId="formFieldDefault">
+          <Form.Label>Field Default</Form.Label>
+          <Form.Control
+            as="select"
+            value={fieldDefault}
+            onChange={changeFieldDefault}
+          >
+            <option value="value">Specific value (including empty)</option>
+            <option value="ffill">Pull entry from yesterday</option>
+            <option value="average">Average of your entries</option>
+          </Form.Control>
+        </Form.Group>
+      </Modal.Body>
+
+      <Modal.Footer>
+        <Button variant="secondary" onClick={() => doShowForm(false)}>Cancel</Button>
+        <Button variant="primary" onClick={() => saveField(fid)}>Save</Button>
+      </Modal.Footer>
+    </Modal.Dialog>
+  )
 
   const renderFields = (group, service) => (
     <Form.Group controlId={`formFieldsFields`}>
@@ -49,10 +146,16 @@ export default function Fields({jwt}) {
         {group.map(f => (
           <Col className='field-column'>
             <Form.Row>
-              <Form.Label column="sm" lg={6}>
+              <Form.Label column="sm" lg={4}>
                 <ReactMarkdown source={f.name} linkTarget='_blank' />
               </Form.Label>
-              <Col lg={6}>Avg: {f.avg.toFixed(1)} <span onClick={() => showChart(f.id)}>📈</span></Col>
+              <Col lg={4}>
+                <a onClick={() => doShowForm(f.id)}>✏</a>
+                <a onClick={() => destroyField(f.id)}>⛔</a>
+              </Col>
+              <Col lg={4}>
+                Avg: {f.avg.toFixed(1)} <span onClick={() => showChart(f.id)}>📈</span>
+              </Col>
             </Form.Row>
             {showCharts[f.id] && (
               <LineChart width={730} height={250} data={f.history}>
@@ -70,37 +173,6 @@ export default function Fields({jwt}) {
       </Row>
     </Form.Group>
   )
-
-  const renderNewField = () => (
-    <div>
-      <Form.Group controlId="formFieldName">
-        <Form.Label>Field Name</Form.Label>
-        <Form.Control
-          type="text"
-          placeholder="Name"
-          value={fieldName}
-          onChange={changeFieldName}
-        />
-      </Form.Group>
-
-      <Form.Group controlId="formFieldType">
-        <Form.Label>Field Type</Form.Label>
-        <Form.Control
-          as="select"
-          value={fieldType}
-          onChange={changeFieldType}
-        >
-          <option>number</option>
-          <option>fivestar</option>
-        </Form.Control>
-      </Form.Group>
-
-      <Button variant="primary" onClick={createField}>
-        Submit
-      </Button>
-    </div>
-  )
-
 
   const renderFieldGroups = () => {
     const groups = _.transform(fields, (m, v, k) => {
@@ -121,21 +193,21 @@ export default function Fields({jwt}) {
             </Accordion.Collapse>
           </Card>
         ))}
-        <Card>
-          <Card.Header>
-            <Accordion.Toggle as={Button} variant="link" eventKey='more'>
-              More
-            </Accordion.Toggle>
-          </Card.Header>
-          <Accordion.Collapse eventKey='more'>
-            <Card.Body>
-              {renderNewField()}
-            </Card.Body>
-          </Accordion.Collapse>
-        </Card>
       </Accordion>
     )
   }
 
-  return renderFieldGroups()
+  return (
+    <>
+      {showForm ? renderFieldForm() : (
+        <Button
+          variant="success"
+          onClick={() => doShowForm(true)}
+          size="lg"
+          style={{marginBottom: 10}}
+        >New Field</Button>
+      )}
+      {renderFieldGroups()}
+    </>
+  )
 }
