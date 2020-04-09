@@ -7,53 +7,25 @@ import ReactMarkdown from "react-markdown"
 import ReactStars from "react-stars"
 import './Entry.css'
 
-export default function Entry({jwt}) {
-  const {entry_id} = useParams()
-  const history = useHistory()
-  const [title, setTitle] = useState('')
-  const [text, setText] = useState('')
+function Fields({jwt, fetchEntry, entry_id, fieldVals, setFieldVals}) {
   const [fields, setFields] = useState([])
-  const [fieldVals, setFieldVals] = useState({})
-
   const [fieldName, setFieldName] = useState('')
   const [fieldType, setFieldType] = useState('number')
 
-  const fetchEntry = async () => {
-    let res;
-
-    res = await fetch_(`fields`, 'GET', null, jwt)
+  const fetchFields = async () => {
+    const res = await fetch_(`fields`, 'GET', null, jwt)
     setFields(res.fields)
     setFieldVals(_.zipObject(_.map(res.fields, 'id'))) // => {'a': undefined, 'b': undefined}
-
-    if (!entry_id) { return }
-    res = await fetch_(`entries/${entry_id}`, 'GET', null, jwt)
-    setTitle(res.title)
-    setText(res.text)
-    setFieldVals(res.fields)
   }
 
-  useEffect(() => {
-    fetchEntry()
-  }, [entry_id])
-
-  const cancel = () => history.push('/j')
-
-  const submit = async e => {
-    e.preventDefault()
-    const body = {title, text, fields: fieldVals}
-    if (entry_id) {
-      await fetch_(`entries/${entry_id}`, 'PUT', body, jwt)
-    } else {
-      await fetch_(`entries`, 'POST', body, jwt)
-    }
-    history.push('/j')
-  }
+  useEffect(() => {fetchFields()}, [])
 
   const createField = async e => {
     // e.preventDefault()
     const body = {name: fieldName, type: fieldType}
     await fetch_(`fields`, 'POST', body, jwt)
-    fetchEntry()
+    await fetchFields()
+    await fetchEntry()
   }
 
   const fetchService = async (service) => {
@@ -61,8 +33,6 @@ export default function Entry({jwt}) {
     fetchEntry()
   }
 
-  const changeTitle = e => setTitle(e.target.value)
-  const changeText = e => setText(e.target.value)
   const changeFieldVal = (k, direct=false) => e => {
     const v = direct ? e : e.target.value
     setFieldVals({...fieldVals, [k]: v})
@@ -108,6 +78,36 @@ export default function Entry({jwt}) {
     </Form.Group>
   )
 
+  const renderNewField = () => (
+    <div>
+      <Form.Group controlId="formFieldName">
+        <Form.Label>Field Name</Form.Label>
+        <Form.Control
+          type="text"
+          placeholder="Name"
+          value={fieldName}
+          onChange={changeFieldName}
+        />
+      </Form.Group>
+
+      <Form.Group controlId="formFieldType">
+        <Form.Label>Field Type</Form.Label>
+        <Form.Control
+          as="select"
+          value={fieldType}
+          onChange={changeFieldType}
+        >
+          <option>number</option>
+          <option>fivestar</option>
+        </Form.Control>
+      </Form.Group>
+
+      <Button variant="primary" onClick={createField}>
+        Submit
+      </Button>
+    </div>
+  )
+
 
   const renderFieldGroups = () => {
     const groups = _.transform(fields, (m, v, k) => {
@@ -136,36 +136,7 @@ export default function Entry({jwt}) {
           </Card.Header>
           <Accordion.Collapse eventKey='more'>
             <Card.Body>
-
-
-              <Form.Group controlId="formFieldName">
-                <Form.Label>Field Name</Form.Label>
-                <Form.Control
-                  type="text"
-                  placeholder="Name"
-                  value={fieldName}
-                  onChange={changeFieldName}
-                />
-              </Form.Group>
-
-              <Form.Group controlId="formFieldType">
-                <Form.Label>Field Type</Form.Label>
-                <Form.Control
-                  as="select"
-                  value={fieldType}
-                  onChange={changeFieldType}
-                >
-                  <option>number</option>
-                  <option>fivestar</option>
-                </Form.Control>
-              </Form.Group>
-
-              <Button variant="primary" onClick={createField}>
-                Submit
-              </Button>
-
-
-
+              {renderNewField()}
               <hr />
               <Button onClick={() => fetchService('habitica')}>Habitica</Button>
             </Card.Body>
@@ -174,6 +145,44 @@ export default function Entry({jwt}) {
       </Accordion>
     )
   }
+
+  return renderFieldGroups()
+}
+
+export default function Entry({jwt}) {
+  const {entry_id} = useParams()
+  const history = useHistory()
+  const [title, setTitle] = useState('')
+  const [text, setText] = useState('')
+  const [fieldVals, setFieldVals] = useState({})
+
+  const fetchEntry = async () => {
+    if (!entry_id) { return }
+    const res = await fetch_(`entries/${entry_id}`, 'GET', null, jwt)
+    setTitle(res.title)
+    setText(res.text)
+    setFieldVals(res.fields)
+  }
+
+  useEffect(() => {
+    fetchEntry()
+  }, [entry_id])
+
+  const cancel = () => history.push('/j')
+
+  const submit = async e => {
+    e.preventDefault()
+    const body = {title, text, fields: fieldVals}
+    if (entry_id) {
+      await fetch_(`entries/${entry_id}`, 'PUT', body, jwt)
+    } else {
+      await fetch_(`entries`, 'POST', body, jwt)
+    }
+    history.push('/j')
+  }
+
+  const changeTitle = e => setTitle(e.target.value)
+  const changeText = e => setText(e.target.value)
 
   return (
     <Form onSubmit={submit}>
@@ -207,7 +216,13 @@ export default function Entry({jwt}) {
       </Row>
 
       <hr />
-      {renderFieldGroups()}
+      <Fields
+        jwt={jwt}
+        fetchEntry={fetchEntry}
+        entry_id={entry_id}
+        fieldVals={fieldVals}
+        setFieldVals={setFieldVals}
+      />
       <hr />
 
       <Button variant="primary" type="submit">
