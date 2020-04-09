@@ -6,35 +6,20 @@ import {Accordion, Button, Card, Col, Form, Row} from "react-bootstrap"
 import ReactMarkdown from "react-markdown"
 import ReactStars from "react-stars"
 import './Entry.css'
-import {LineChart,
-CartesianGrid,
-XAxis,
-YAxis,
-Tooltip,
-Legend,
-Line} from 'recharts'
+
 
 function Fields({jwt, fetchEntry, entry_id, fieldVals, setFieldVals}) {
   const [fields, setFields] = useState([])
-  const [fieldName, setFieldName] = useState('')
-  const [fieldType, setFieldType] = useState('number')
-  const [showCharts, setShowCharts] = useState({})
 
   const fetchFields = async () => {
     const res = await fetch_(`fields`, 'GET', null, jwt)
     setFields(res.fields)
-    setFieldVals(_.zipObject(_.map(res.fields, 'id'))) // => {'a': undefined, 'b': undefined}
+    // if (_.isEmpty(fieldVals)) {
+    //   setFieldVals(_.zipObject(_.map(res.fields, 'id'))) // => {'a': undefined, 'b': undefined}
+    // }
   }
 
   useEffect(() => {fetchFields()}, [])
-
-  const createField = async e => {
-    // e.preventDefault()
-    const body = {name: fieldName, type: fieldType}
-    await fetch_(`fields`, 'POST', body, jwt)
-    await fetchFields()
-    fetchEntry()
-  }
 
   const fetchService = async (service) => {
     await fetch_(`${service}/${entry_id}`, 'GET', null, jwt)
@@ -45,11 +30,6 @@ function Fields({jwt, fetchEntry, entry_id, fieldVals, setFieldVals}) {
     const v = direct ? e : e.target.value
     setFieldVals({...fieldVals, [k]: v})
   }
-  const changeFieldName = e => setFieldName(e.target.value)
-  const changeFieldType = e => setFieldType(e.target.value)
-  const showChart = fid => {
-    setShowCharts({...showCharts, [fid]: !showCharts[fid]})
-  }
 
   const renderFields = (group, service) => (
     <Form.Group controlId={`formFieldsFields`}>
@@ -57,7 +37,7 @@ function Fields({jwt, fetchEntry, entry_id, fieldVals, setFieldVals}) {
         {group.map(f => (
           <Col className='field-column'>
             <Form.Row>
-              <Form.Label column="sm" lg={3}>
+              <Form.Label column="sm" lg={6}>
                 <ReactMarkdown source={f.name} linkTarget='_blank' />
               </Form.Label>
               <Col lg={6}>
@@ -77,19 +57,7 @@ function Fields({jwt, fetchEntry, entry_id, fieldVals, setFieldVals}) {
                 />
               )}
               </Col>
-              <Col lg={3}>Avg: {f.avg} <span onClick={() => showChart(f.id)}>📈</span></Col>
             </Form.Row>
-            {showCharts[f.id] && (
-              <LineChart width={730} height={250} data={f.history}>
-                {/*margin={{ top: 5, right: 30, left: 20, bottom: 5 }}*/}
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="created_at" />
-                <YAxis />
-                <Tooltip />
-                {/*<Legend />*/}
-                <Line type="monotone" dataKey="value" stroke="#8884d8" />
-              </LineChart>
-            )}
           </Col>
         ))}
       </Row>
@@ -101,44 +69,13 @@ function Fields({jwt, fetchEntry, entry_id, fieldVals, setFieldVals}) {
     </Form.Group>
   )
 
-  const renderNewField = () => (
-    <div>
-      <Form.Group controlId="formFieldName">
-        <Form.Label>Field Name</Form.Label>
-        <Form.Control
-          type="text"
-          placeholder="Name"
-          value={fieldName}
-          onChange={changeFieldName}
-        />
-      </Form.Group>
-
-      <Form.Group controlId="formFieldType">
-        <Form.Label>Field Type</Form.Label>
-        <Form.Control
-          as="select"
-          value={fieldType}
-          onChange={changeFieldType}
-        >
-          <option>number</option>
-          <option>fivestar</option>
-        </Form.Control>
-      </Form.Group>
-
-      <Button variant="primary" onClick={createField}>
-        Submit
-      </Button>
-    </div>
-  )
-
-
   const renderFieldGroups = () => {
     const groups = _.transform(fields, (m, v, k) => {
       const svc = v.service || 'Custom';
       (m[svc] || (m[svc] = [])).push(v)
     }, {})
     return (
-      <Accordion>
+      <Accordion defaultActiveKey="Custom">
         {_.map(groups, (group, service)=> (
           <Card>
             <Card.Header>
@@ -151,20 +88,6 @@ function Fields({jwt, fetchEntry, entry_id, fieldVals, setFieldVals}) {
             </Accordion.Collapse>
           </Card>
         ))}
-        <Card>
-          <Card.Header>
-            <Accordion.Toggle as={Button} variant="link" eventKey='more'>
-              More
-            </Accordion.Toggle>
-          </Card.Header>
-          <Accordion.Collapse eventKey='more'>
-            <Card.Body>
-              {renderNewField()}
-              <hr />
-              <Button onClick={() => fetchService('habitica')}>Habitica</Button>
-            </Card.Body>
-          </Accordion.Collapse>
-        </Card>
       </Accordion>
     )
   }
@@ -195,6 +118,7 @@ export default function Entry({jwt}) {
 
   const submit = async e => {
     e.preventDefault()
+    // FIXME only include custom fields
     const body = {title, text, fields: fieldVals}
     if (entry_id) {
       await fetch_(`entries/${entry_id}`, 'PUT', body, jwt)

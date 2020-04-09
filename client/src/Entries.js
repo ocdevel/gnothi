@@ -3,7 +3,7 @@ import {useHistory, useRouteMatch} from "react-router-dom"
 import {fetch_} from "./utils"
 import {Button, Table} from "react-bootstrap"
 import moment from "moment"
-import Entry from './Entries'
+import Fields from './Fields'
 
 export default function Entries({jwt}) {
   const [entries, setEntries] = useState([])
@@ -56,6 +56,7 @@ export default function Entries({jwt}) {
           ))}
         </tbody>
       </Table>
+      <Fields jwt={jwt}/>
     </div>
   )
 }
