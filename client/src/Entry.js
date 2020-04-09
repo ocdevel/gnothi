@@ -19,8 +19,8 @@ import './Entry.css'
 function Fields(props) {
   const {
     jwt,
-    fetchEntry,
     entry_id,
+    fetchEntry,
     fields,
     setFields,
     fieldVals,
@@ -46,11 +46,11 @@ function Fields(props) {
     setFieldVals(fieldVals_)
   }
 
-  useEffect(() => {fetchFields()}, [])
+  useEffect(() => {fetchFields()}, [entry_id])
 
   const fetchService = async (service) => {
     await fetch_(`${service}/${entry_id}`, 'GET', null, jwt)
-    fetchEntry()
+    await fetchEntry()
   }
 
   const changeFieldVal = (k, direct=false) => e => {
@@ -115,6 +115,11 @@ function Fields(props) {
       const svc = v.service || 'Custom';
       (m[svc] || (m[svc] = [])).push(v)
     }, {})
+
+    // FIXME how to handle this automatically?
+    if (!groups.habitica) {
+      groups.habitica = []
+    }
     return (
       <Accordion defaultActiveKey="Custom">
         {_.map(groups, (group, service)=> (

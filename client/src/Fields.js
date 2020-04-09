@@ -338,18 +338,16 @@ export default function Fields({jwt}) {
             </Accordion.Collapse>
           </Card>
         ))}
-        {!groups.habitica || true && (
-          <Card>
-            <Card.Header>
-              <Accordion.Toggle as={Button} variant="link" eventKey='setupHabitica'>
-                Setup Habitica
-              </Accordion.Toggle>
-            </Card.Header>
-            <Accordion.Collapse eventKey='setupHabitica'>
-              <Card.Body>{renderSetupHabitica()}</Card.Body>
-            </Accordion.Collapse>
-          </Card>
-        )}
+        <Card>
+          <Card.Header>
+            <Accordion.Toggle as={Button} variant="link" eventKey='setupHabitica'>
+              Setup Habitica
+            </Accordion.Toggle>
+          </Card.Header>
+          <Accordion.Collapse eventKey='setupHabitica'>
+            <Card.Body>{renderSetupHabitica()}</Card.Body>
+          </Accordion.Collapse>
+        </Card>
       </Accordion>
     )
   }
