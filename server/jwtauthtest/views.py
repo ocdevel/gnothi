@@ -224,6 +224,7 @@ def causation():
         join fields f on f.id=fe.field_id
         join entries e on e.id=fe.entry_id
         where f.user_id=%(user_id)s
+        order by e.created_at asc
         """, conn, params={'user_id': user.id})
 
     # uuid as string
@@ -236,17 +237,20 @@ def causation():
     Y = df[is_target][fields].set_index(['field_id', 'created_at'])
     cols = [c[1] for c in X.columns]
 
-    # app.logger.info("X")
-    # app.logger.info(X)
-    # app.logger.info("Y")
-    # app.logger.info(Y)
     targets = {}
     specific_target = request.args.get('target', None)
     for target, group in Y.groupby(level=0):
         if specific_target and specific_target != target:
             continue
         model = XGBRegressor()
-        model.fit(X, group.value)
+        # This part is important. Rather than say "what today predicts y" (not useful),
+        # or even "what history predicts y" (would be time-series models, which don't have feature_importances_)
+        # we can approximate it a rolling average of activity.
+        # TODO not sure which window fn to use: rolling|expanding|ewm?
+        # https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.rolling.html
+        # http://people.duke.edu/~ccc14/bios-823-2018/S18A_Time_Series_Manipulation_Smoothing.html#Window-functions
+        mult_day_avg = X.ewm(span=4).mean()
+        model.fit(mult_day_avg, group.value)
         imps = [float(x) for x in model.feature_importances_]
         targets[target] = dict(zip(cols, imps))
     return jsonify(targets)

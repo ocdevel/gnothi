@@ -54,10 +54,15 @@ function ChartModal({jwt, field, onClose}) {
         </tr>
       </thead>
       <tbody>
-        {_(importances).toPairs().orderBy(x => -x[1]).map(x => <tr>
-          <td>{x[1]}</td>
-          <td><ReactMarkdown source={f_map[x[0]].name} /></td>
-        </tr>).value()}
+        {_(importances)
+          .toPairs()
+          .filter(x => x[1] > 0)
+          .orderBy(x => -x[1])
+          .value()
+          .map(x => <tr>
+            <td>{x[1]}</td>
+            <td><ReactMarkdown source={f_map[x[0]].name} /></td>
+          </tr>)}
       </tbody>
     </Table>
   </>

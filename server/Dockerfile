@@ -22,7 +22,8 @@ RUN pip install \
   sqlalchemy_utils \
   pandas \
   requests \
-  xgboost
+  xgboost \
+  sklearn
 
 WORKDIR /app
 
