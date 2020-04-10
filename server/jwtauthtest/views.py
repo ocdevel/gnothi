@@ -211,9 +211,9 @@ def get_habitica(entry_id):
     return jsonify({'ok': True})
 
 
-@app.route('/causation', methods=['GET'])
+@app.route('/influencers', methods=['GET'])
 @jwt_required()
-def causation():
+def influencers():
     user = current_identity
     with engine.connect() as conn:
         df = pd.read_sql("""

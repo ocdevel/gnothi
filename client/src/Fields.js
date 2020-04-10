@@ -25,7 +25,7 @@ import {
 const show2fid = showForm => showForm === true || showForm === false ? null : showForm;
 
 function ChartModal({jwt, field, onClose}) {
-  const [importances, setImportances] = useState({})
+  const [influencers, setInfluencers] = useState({})
   const [fields, setFields] = useState([])
 
   const target = field.id
@@ -37,15 +37,15 @@ function ChartModal({jwt, field, onClose}) {
   const fetchTargets = async () => {
     let res = await fetch_('fields', 'GET', null, jwt)
     setFields(res.fields)
-    res = await fetch_(`causation?target=${target}`, 'GET', null, jwt)
-    setImportances(res[target])
+    res = await fetch_(`influencers?target=${target}`, 'GET', null, jwt)
+    setInfluencers(res[target])
   }
 
   useEffect(() => {
     fetchTargets()
   }, [])
 
-  const renderImportances = () => <>
+  const renderInfluencers = () => <>
     <Table striped size="sm">
       <thead>
         <tr>
@@ -54,7 +54,7 @@ function ChartModal({jwt, field, onClose}) {
         </tr>
       </thead>
       <tbody>
-        {_(importances)
+        {_(influencers)
           .toPairs()
           .filter(x => x[1] > 0)
           .orderBy(x => -x[1])
@@ -84,8 +84,8 @@ function ChartModal({jwt, field, onClose}) {
             <Line type="monotone" dataKey="value" stroke="#8884d8" isAnimationActive={false}/>
           </LineChart>
           {field.target && <>
-            <h2>Field Importances</h2>
-            {renderImportances()}
+            <h2>Top Influencers</h2>
+            {renderInfluencers()}
           </>}
         </Modal.Body>
       </Modal>
