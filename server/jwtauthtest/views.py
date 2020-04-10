@@ -219,22 +219,43 @@ def influencers():
         df = pd.read_sql("""
         select fe.value, 
             e.created_at, 
-            f.id as field_id, f.target
+            f.id as fid, f.target
         from field_entries fe
         join fields f on f.id=fe.field_id
         join entries e on e.id=fe.entry_id
         where f.user_id=%(user_id)s
+            -- exclude these to improve model perf
+            -- TODO reconsider for past data
+            and f.excluded_at is null 
         order by e.created_at asc
         """, conn, params={'user_id': user.id})
 
+        defaults = pd.read_sql("""
+        select id, default_value, default_value_value
+        from fields
+        where user_id=%(user_id)s
+        """, conn, params={'user_id': user.id})
+        defaults = {str(r.id): r for i, r in defaults.iterrows()}
+
     # uuid as string
-    df['field_id'] = df.field_id.apply(lambda x: str(x))
+    df['fid'] = df.fid.apply(lambda x: str(x))
     ## Easier debugging
-    # df['field_id'] =  df.field_id.apply(lambda x: x[0:4])
+    # df['fid'] =  df.fid.apply(lambda x: x[0:4])
     is_target = (df.target==True)
-    fields = ['value', 'created_at', 'field_id']
-    X = df[~is_target][fields].pivot(index='created_at', columns='field_id')
-    Y = df[is_target][fields].set_index(['field_id', 'created_at'])
+    fields = ['value', 'created_at', 'fid']
+    X = df[~is_target][fields].pivot(index='created_at', columns='fid')
+    for _, fid in X.columns:
+        dv, dvv = defaults[fid].default_value, defaults[fid].default_value_value
+        if not dv: continue
+        if dv == 'value':
+            if not dvv: continue
+            X[fid] = X[fid].fillna(dvv)
+        elif dv == 'ffill':
+            X[fid] = X[fid].fillna(method=X[fid].ffill())
+        elif df == 'average':
+            X[fid] = X[fid].fillna(X[fid].mean())
+
+    Y = df[is_target][fields].set_index(['fid', 'created_at'])
     cols = [c[1] for c in X.columns]
 
     targets = {}
@@ -249,7 +270,7 @@ def influencers():
         # TODO not sure which window fn to use: rolling|expanding|ewm?
         # https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.rolling.html
         # http://people.duke.edu/~ccc14/bios-823-2018/S18A_Time_Series_Manipulation_Smoothing.html#Window-functions
-        mult_day_avg = X.ewm(span=4).mean()
+        mult_day_avg = X.ewm(span=5).mean()
         model.fit(mult_day_avg, group.value)
         imps = [float(x) for x in model.feature_importances_]
         targets[target] = dict(zip(cols, imps))

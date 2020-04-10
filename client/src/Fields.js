@@ -59,7 +59,7 @@ function ChartModal({jwt, field, onClose}) {
           .filter(x => x[1] > 0)
           .orderBy(x => -x[1])
           .value()
-          .map(x => <tr>
+          .map(x => <tr key={x[0]}>
             <td>{x[1]}</td>
             <td><ReactMarkdown source={f_map[x[0]].name} /></td>
           </tr>)}
@@ -325,12 +325,13 @@ export default function Fields({jwt}) {
               <br/>
               <small
                 style={field.service ? {textDecoration: 'line-through'}: {}}
+                className='text-muted'
               >
                 Permenantly delete this field and all its entries
               </small>
               {field.service && <>
                 <br/>
-                <small>Delete this field at the source. To exclude from Gnothi, click "Remove".</small>
+                <small className='text-muted'>Delete this field at the source. To exclude from Gnothi, click "Remove".</small>
               </>}
 
             </div>
@@ -343,7 +344,7 @@ export default function Fields({jwt}) {
                   size='sm'
                 >Include</Button>
                 <br/>
-                <small>Bring this field back</small>
+                <small className='text-muted'>Bring this field back</small>
                 </>
               ) : (
                 <>
@@ -353,7 +354,7 @@ export default function Fields({jwt}) {
                   size='sm'
                 >Remove</Button>
                 <br/>
-                <small>Don't delete this field, but exclude it from showing up starting now.</small>
+                <small className='text-muted'>Don't delete this field, but exclude it from showing up starting now. Fewer fields means easier machine learning. Consider "Remove"-ing irrelevant imported fields.</small>
                 </>
               )}
             </div>
