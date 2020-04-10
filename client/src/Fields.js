@@ -9,7 +9,7 @@ import {
   Col,
   Form,
   Row,
-  Modal
+  Modal, Table
 } from "react-bootstrap";
 import ReactMarkdown from "react-markdown";
 import {
@@ -24,7 +24,44 @@ import {
 
 const show2fid = showForm => showForm === true || showForm === false ? null : showForm;
 
-function ChartModal({field, onClose}) {
+function ChartModal({jwt, field, onClose}) {
+  const [importances, setImportances] = useState({})
+  const [fields, setFields] = useState([])
+
+  const target = field.id
+
+  const f_map = _.transform(fields, (m, v, k) => {
+    m[v.id] = v
+  }, {})
+
+  const fetchTargets = async () => {
+    let res = await fetch_('fields', 'GET', null, jwt)
+    setFields(res.fields)
+    res = await fetch_(`causation?target=${target}`, 'GET', null, jwt)
+    setImportances(res[target])
+  }
+
+  useEffect(() => {
+    fetchTargets()
+  }, [])
+
+  const renderImportances = () => <>
+    <Table striped size="sm">
+      <thead>
+        <tr>
+          <th>Importance</th>
+          <th>Field</th>
+        </tr>
+      </thead>
+      <tbody>
+        {_(importances).toPairs().orderBy(x => -x[1]).map(x => <tr>
+          <td>{x[1]}</td>
+          <td><ReactMarkdown source={f_map[x[0]].name} /></td>
+        </tr>).value()}
+      </tbody>
+    </Table>
+  </>
+
   return (
     <>
       <Modal size="lg" show={true} onHide={onClose} animation={false}>
@@ -41,6 +78,10 @@ function ChartModal({field, onClose}) {
             {/*<Legend />*/}
             <Line type="monotone" dataKey="value" stroke="#8884d8" isAnimationActive={false}/>
           </LineChart>
+          {field.target && <>
+            <h2>Field Importances</h2>
+            {renderImportances()}
+          </>}
         </Modal.Body>
       </Modal>
     </>
@@ -345,7 +386,7 @@ export default function Fields({jwt}) {
                 <ReactMarkdown source={f.name} linkTarget='_blank'/>
               </Form.Label>
               <Col lg={4}>
-                Avg: {f.avg.toFixed(1)}&nbsp;
+                ~{f.avg.toFixed(1)}&nbsp;
                 <a
                   onClick={() => setShowChart(f.id)}
                   className='cursor-pointer'
@@ -393,7 +434,12 @@ export default function Fields({jwt}) {
 
   return (
     <>
-      {showChart && <ChartModal field={f_map[showChart]} onClose={() => setShowChart(null)}/>}
+      {showChart && <ChartModal
+        field={f_map[showChart]}
+        onClose={() => setShowChart(null)}
+        jwt={jwt}
+        />
+      }
       {showForm ? renderFieldForm() : (
         <Button
           variant="success"

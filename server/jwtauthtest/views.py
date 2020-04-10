@@ -241,7 +241,10 @@ def causation():
     # app.logger.info("Y")
     # app.logger.info(Y)
     targets = {}
+    specific_target = request.args.get('target', None)
     for target, group in Y.groupby(level=0):
+        if specific_target and specific_target != target:
+            continue
         model = XGBRegressor()
         model.fit(X, group.value)
         imps = [float(x) for x in model.feature_importances_]

@@ -60,9 +60,6 @@ function App() {
             <LinkContainer to="/reports/summaries">
               <NavDropdown.Item>Summaries</NavDropdown.Item>
             </LinkContainer>
-            <LinkContainer to="/reports/causation">
-              <NavDropdown.Item>Causation</NavDropdown.Item>
-            </LinkContainer>
             <LinkContainer to="/reports/association">
               <NavDropdown.Item>Free-word Association</NavDropdown.Item>
             </LinkContainer>
