@@ -23,7 +23,13 @@ RUN pip install \
   pandas \
   requests \
   xgboost \
-  sklearn
+  sklearn \
+  transformers
+
+# Install transformers & run some init tasks to download files
+RUN pip install transformers &&\
+  pip install torch==1.4.0+cpu torchvision==0.5.0+cpu -f https://download.pytorch.org/whl/torch_stable.html &&\
+  python -c "from transformers import pipeline;pipeline('summarization');pipeline('sentiment-analysis')"
 
 WORKDIR /app
 

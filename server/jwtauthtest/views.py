@@ -43,6 +43,7 @@ def entries():
     elif request.method == 'POST':
         data = request.get_json()
         entry = Entry(title=data['title'], text=data['text'])
+        entry.run_models()
         user.entries.append(entry)
         for k, v in data['fields'].items():
             entry.field_entries.append(FieldEntry(value=v, field_id=k))
@@ -62,6 +63,7 @@ def entry(entry_id):
         entry = entry.first()
         entry.title = data['title']
         entry.text = data['text']
+        entry.run_models()
         fe_map = {f.field_id: f for f in entry.field_entries}
         for k, v in data['fields'].items():
             f = fe_map.get(k, None)

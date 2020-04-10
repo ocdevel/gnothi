@@ -88,6 +88,7 @@ function Fields(props) {
                 {f.type === 'fivestar' ? (
                   <ReactStars
                     value={fieldVals[f.id]}
+                    half={false}
                     size={25}
                     onChange={changeFieldVal(f.id, true)}
                   />
@@ -192,6 +193,9 @@ export default function Entry({jwt}) {
           value={title}
           onChange={changeTitle}
         />
+        <Form.Text>
+          Leave blank to use a machine-generated title based on your entry.
+        </Form.Text>
       </Form.Group>
 
       <Row>

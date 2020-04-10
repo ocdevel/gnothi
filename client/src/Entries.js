@@ -39,22 +39,41 @@ export default function Entries({jwt}) {
         className='bottom-margin'
         onClick={() => gotoForm()}
       >New Entry</Button>
-      <Table striped bordered hover>
+      <Table>
         <thead>
           <tr>
-            <th>Date</th>
-            <th>Title</th>
             <th></th>
+            <th>Date</th>
+            <th>Sentiment</th>
+            <th>Entry</th>
           </tr>
         </thead>
         <tbody>
           {entries.map(e => (
             <tr key={e.id}>
-              <td>{moment(e.created_at).format('YYYY-MM-DD h:mm a')}</td>
-              <td>{e.title}</td>
               <td>
-                <Button size='sm' onClick={() => gotoForm(e.id)}>Edit</Button>&nbsp;
-                <Button variant='danger' size='sm' onClick={() => deleteEntry(e)}>Delete</Button>
+                <a className='cursor-pointer' onClick={() => gotoForm(e.id)}>✏</a>&nbsp;
+                <a className='cursor-pointer' onClick={() => deleteEntry(e)}>⛔</a>
+              </td>
+              <td>{moment(e.created_at).format('YYYY-MM-DD ha')}</td>
+              <td
+                style={{
+                  backgroundColor: {
+                    POSITIVE: '#24cc8f',
+                    NEGATIVE: '#ff6165',
+                    undefined: 'default'
+                  }[e.sentiment]
+                }}
+              >
+                {{
+                  POSITIVE: '🙂',
+                  NEGATIVE: '🙁',
+                  undefined: ''
+                }[e.sentiment]}
+              </td>
+              <td>
+                <h5>{e.title || e.title_summary}</h5>
+                <p>{e.text_summary}</p>
               </td>
             </tr>
           ))}

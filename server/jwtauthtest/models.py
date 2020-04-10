@@ -4,6 +4,10 @@ from sqlalchemy import Column, Integer, String, Text, Enum, Float, ForeignKey, B
 from sqlalchemy.orm import relationship, load_only, joinedload
 from sqlalchemy.dialects.postgresql import UUID
 from uuid import uuid4
+from transformers import pipeline
+
+summarizer = pipeline("summarization")
+sentimenter = pipeline("sentiment-analysis")
 
 def uuid_():
     return str(uuid4())
@@ -48,12 +52,35 @@ class Entry(Base):
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.datetime.utcnow)
 
+    # Generated
+    title_summary = Column(String(128))
+    text_summary = Column(Text)
+    sentiment = Column((String(32)))
+
     # Static fields (not user-generated)
     show_therapist = Column(Boolean)
     show_ml = Column(Boolean)
 
     field_entries = relationship("FieldEntry", order_by="FieldEntry.field_id")
     user_id = Column(UUID, ForeignKey('users.id'))
+
+    def gen_sentiment(self, text):
+        sentiments = sentimenter(text)
+        for s in sentiments:
+            # numpy can't serialize
+            s['score'] = float(s['score'])
+        return sentiments[0]['label']
+
+    def gen_summary(self, text, min_length=5, max_length=20):
+        s = summarizer(text, min_length=min_length, max_length=max_length)
+        return s[0]['summary_text']
+
+
+    def run_models(self):
+        self.title_summary = self.gen_summary(self.text, 5, 20)
+        self.text_summary = self.gen_summary(self.text, 32, 128)
+        self.sentiment = self.gen_sentiment(self.text)
+
 
     # TODO look into https://stackoverflow.com/questions/7102754/jsonify-a-sqlalchemy-result-set-in-flask
     #                https://stackoverflow.com/questions/5022066/how-to-serialize-sqlalchemy-result-to-json
@@ -64,7 +91,10 @@ class Entry(Base):
             'title': self.title,
             'text': self.text,
             'created_at': self.created_at,
-            'fields': {f.field_id: f.value for f in self.field_entries}
+            'fields': {f.field_id: f.value for f in self.field_entries},
+            'title_summary': self.title_summary,
+            'text_summary': self.text_summary,
+            'sentiment': self.sentiment
         }
 
 
