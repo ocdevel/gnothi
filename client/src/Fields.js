@@ -24,7 +24,6 @@ import {
 
 const show2fid = showForm => showForm === true || showForm === false ? null : showForm;
 
-
 function ChartModal({field, onClose}) {
   return (
     <>
@@ -139,7 +138,8 @@ export default function Fields({jwt}) {
       name: fieldName,
       type: fieldType,
       default_value: fieldDefault,
-      default_value_value: _.isEmpty(fieldDefaultValue) ? null : fieldDefaultValue
+      default_value_value: _.isEmpty(fieldDefaultValue) ? null : fieldDefaultValue,
+      target: !!fieldTarget
     }
     if (fid) {
       await fetch_(`fields/${fid}`, 'PUT', body, jwt)
@@ -155,19 +155,20 @@ export default function Fields({jwt}) {
   const changeFieldType = e => setFieldType(e.target.value)
   const changeFieldDefault = e => setFieldDefault(e.target.value)
   const changeFieldDefaultValue = e => setFieldDefaultValue(e.target.value)
-  const changeFieldTarget = e => setFieldTarget(e.target.value)
+  const changeFieldTarget = e => setFieldTarget(e.target.checked)
 
   const doShowForm = (show_or_id) => {
     setShowForm(show_or_id)
     const fid = show2fid(show_or_id)
+    const f = fid && f_map[fid]
     const [name, type, default_value, default_value_value, target] =
-      fid ? [f_map[fid].name, f_map[fid].type, f_map[fid].default_value, f_map[fid].default_value_value, f_map[fid].target]
+      f ? [f.name, f.type, f.default_value, f.default_value_value, f.target]
       : ["", DEFAULT_TYPE, DEFAULT_DEFAULT, "", false]
     setFieldName(name)
     setFieldType(type)
     setFieldDefault(default_value)
     setFieldDefaultValue(default_value_value)
-    setFieldTarget(target)
+    setFieldTarget(!!target)
   }
 
   const destroyField = async () => {
@@ -257,7 +258,7 @@ export default function Fields({jwt}) {
           <Form.Check
             type="checkbox"
             label="Target"
-            value={fieldTarget}
+            checked={fieldTarget}
             onChange={changeFieldTarget}
           />
           <Form.Text className="text-muted">

@@ -145,6 +145,7 @@ class Field(Base):
             'excluded_at': self.excluded_at,
             'default_value': self.default_value.name if self.default_value else "value",
             'default_value_value': self.default_value_value,
+            'target': self.target,
             'service': self.service,
             'service_id': self.service_id,
 
