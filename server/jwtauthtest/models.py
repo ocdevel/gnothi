@@ -111,6 +111,7 @@ class Field(Base):
     excluded_at = Column(DateTime)
     default_value = Column(Enum(DefaultValueTypes), default="value")
     default_value_value = Column(Float, default=None)
+    target = Column(Boolean, default=False)
     # option{single_or_multi, options:[], ..}
     # number{float_or_int, ..}
     attributes = Column(JSON)

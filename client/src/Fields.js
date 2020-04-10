@@ -24,12 +24,87 @@ import {
 
 const show2fid = showForm => showForm === true || showForm === false ? null : showForm;
 
-export default function Fields({jwt}) {
-  const [fields, setFields] = useState([])
-  const [showCharts, setShowCharts] = useState({})
 
+function ChartModal({field, onClose}) {
+  return (
+    <>
+      <Modal size="lg" show={true} onHide={onClose} animation={false}>
+        <Modal.Header closeButton>
+          <Modal.Title>{field.name}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <LineChart width={730} height={250} data={field.history}>
+            {/*margin={{ top: 5, right: 30, left: 20, bottom: 5 }}*/}
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="created_at" />
+            <YAxis />
+            <Tooltip />
+            {/*<Legend />*/}
+            <Line type="monotone" dataKey="value" stroke="#8884d8" isAnimationActive={false}/>
+          </LineChart>
+        </Modal.Body>
+      </Modal>
+    </>
+  );
+}
+
+function Habitica({jwt}) {
   const [habiticaUserId, setHabiticaUserId] = useState('')
   const [habiticaApiToken, setHabiticaApiToken] = useState('')
+
+  const fetchUser = async () => {
+    const res = await fetch_(`user`, 'GET', null, jwt)
+    setHabiticaUserId(res.habitica_user_id)
+    setHabiticaApiToken(res.habitica_api_token)
+  }
+
+  useEffect(() => {
+    fetchUser()
+  }, [])
+
+  const saveHabitica = async e => {
+    e.preventDefault()
+    const body = {
+      habitica_user_id: habiticaUserId,
+      habitica_api_token: habiticaApiToken
+    }
+    await fetch_(`habitica`, 'POST', body, jwt)
+    fetchUser()
+  }
+
+  const changeHabiticaUserId = e => setHabiticaUserId(e.target.value)
+  const changeHabiticaApiToken = e => setHabiticaApiToken(e.target.value)
+
+  return (
+    <Form onSubmit={saveHabitica}>
+      <Form.Group controlId="formHabiticaUserId">
+        <Form.Label>User ID</Form.Label>
+        <Form.Control
+          type="text"
+          value={habiticaUserId}
+          onChange={changeHabiticaUserId}
+        />
+      </Form.Group>
+
+      <Form.Group controlId="formHabiticaApiToken">
+        <Form.Label>API Key</Form.Label>
+        <Form.Control
+          type="text"
+          value={habiticaApiToken}
+          onChange={changeHabiticaApiToken}
+        />
+      </Form.Group>
+
+      <Button type='submit' variant='success'>
+        Save
+      </Button>
+    </Form>
+  )
+}
+
+export default function Fields({jwt}) {
+  const [fields, setFields] = useState([])
+  const [showChart, setShowChart] = useState(null)
 
   const DEFAULT_TYPE = 'number'
   const DEFAULT_DEFAULT = 'value'
@@ -53,16 +128,9 @@ export default function Fields({jwt}) {
       _.each(f.history, (h, i) => {f.history[i].created_at = moment(h.created_at).format("YYYY-MM-DD")})
     })
   }
-  
-  const fetchUser = async () => {
-    const res = await fetch_(`user`, 'GET', null, jwt)
-    setHabiticaUserId(res.habitica_user_id)
-    setHabiticaApiToken(res.habitica_api_token)
-  }
 
   useEffect(() => {
     fetchFields()
-    fetchUser()
   }, [])
 
   const saveField = async e => {
@@ -83,26 +151,11 @@ export default function Fields({jwt}) {
     doShowForm(false)
   }
 
-  const saveHabitica = async e => {
-    e.preventDefault()
-    const body = {
-      habitica_user_id: habiticaUserId,
-      habitica_api_token: habiticaApiToken
-    }
-    await fetch_(`habitica`, 'POST', body, jwt)
-    fetchUser()
-  }
-
   const changeFieldName = e => setFieldName(e.target.value)
   const changeFieldType = e => setFieldType(e.target.value)
   const changeFieldDefault = e => setFieldDefault(e.target.value)
   const changeFieldDefaultValue = e => setFieldDefaultValue(e.target.value)
   const changeFieldTarget = e => setFieldTarget(e.target.value)
-  const changeHabiticaUserId = e => setHabiticaUserId(e.target.value)
-  const changeHabiticaApiToken = e => setHabiticaApiToken(e.target.value)
-  const showChart = fid => {
-    setShowCharts({...showCharts, [fid]: !showCharts[fid]})
-  }
 
   const doShowForm = (show_or_id) => {
     setShowForm(show_or_id)
@@ -204,7 +257,8 @@ export default function Fields({jwt}) {
           <Form.Check
             type="checkbox"
             label="Target"
-            checked={fieldTarget}
+            value={fieldTarget}
+            onChange={changeFieldTarget}
           />
           <Form.Text className="text-muted">
             Use this field as a target variable. Ie, you want to know what causes this field (based on other fields). Eg, if "Mood" is a target, we'll look at what other fields effect mood.
@@ -281,56 +335,26 @@ export default function Fields({jwt}) {
           >
             <Form.Row>
               <Col lg={2}>
-                <a onClick={() => doShowForm(f.id)}>✏</a>
+                <a
+                  onClick={() => doShowForm(f.id)}
+                  className='cursor-pointer'
+                >✏</a>
               </Col>
               <Form.Label column="sm" lg={6}>
                 <ReactMarkdown source={f.name} linkTarget='_blank'/>
               </Form.Label>
               <Col lg={4}>
-                Avg: {f.avg.toFixed(1)} <span onClick={() => showChart(f.id)}>📈</span>
+                Avg: {f.avg.toFixed(1)}&nbsp;
+                <a
+                  onClick={() => setShowChart(f.id)}
+                  className='cursor-pointer'
+                >📈</a>
               </Col>
             </Form.Row>
-            {showCharts[f.id] && (
-              <LineChart width={730} height={250} data={f.history}>
-                {/*margin={{ top: 5, right: 30, left: 20, bottom: 5 }}*/}
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="created_at" />
-                <YAxis />
-                <Tooltip />
-                {/*<Legend />*/}
-                <Line type="monotone" dataKey="value" stroke="#8884d8" />
-              </LineChart>
-            )}
           </Col>
         ))}
       </Row>
     </Form.Group>
-  )
-
-  const renderSetupHabitica = () => (
-    <Form onSubmit={saveHabitica}>
-      <Form.Group controlId="formHabiticaUserId">
-        <Form.Label>User ID</Form.Label>
-        <Form.Control
-          type="text"
-          value={habiticaUserId}
-          onChange={changeHabiticaUserId}
-        />
-      </Form.Group>
-
-      <Form.Group controlId="formHabiticaApiToken">
-        <Form.Label>API Key</Form.Label>
-        <Form.Control
-          type="text"
-          value={habiticaApiToken}
-          onChange={changeHabiticaApiToken}
-        />
-      </Form.Group>
-      
-      <Button type='submit' variant='success'>
-        Save
-      </Button>
-    </Form>
   )
 
   const renderFieldGroups = () => {
@@ -359,7 +383,7 @@ export default function Fields({jwt}) {
             </Accordion.Toggle>
           </Card.Header>
           <Accordion.Collapse eventKey='setupHabitica'>
-            <Card.Body>{renderSetupHabitica()}</Card.Body>
+            <Card.Body><Habitica jwt={jwt}/></Card.Body>
           </Accordion.Collapse>
         </Card>
       </Accordion>
@@ -368,6 +392,7 @@ export default function Fields({jwt}) {
 
   return (
     <>
+      {showChart && <ChartModal field={f_map[showChart]} onClose={() => setShowChart(null)}/>}
       {showForm ? renderFieldForm() : (
         <Button
           variant="success"
