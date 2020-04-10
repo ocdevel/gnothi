@@ -1,11 +1,14 @@
 import pdb, logging
 from flask_jwt import jwt_required, current_identity
 from jwtauthtest import app
-from jwtauthtest.database import db_session
+from jwtauthtest.database import db_session, engine
 from jwtauthtest.models import User, Entry, Field, FieldEntry
 from passlib.hash import pbkdf2_sha256
 from flask import request, jsonify
 from jwtauthtest.utils import vars
+
+from xgboost import XGBRegressor
+import pandas as pd
 
 def useradd(username, password):
     db_session.add(User(username, pbkdf2_sha256.hash(password)))
@@ -206,3 +209,41 @@ def get_habitica(entry_id):
         app.logger.info(task['text'] + " done")
 
     return jsonify({'ok': True})
+
+
+@app.route('/causation', methods=['GET'])
+@jwt_required()
+def causation():
+    user = current_identity
+    with engine.connect() as conn:
+        df = pd.read_sql("""
+        select fe.value, 
+            e.created_at, 
+            f.id as field_id, f.target
+        from field_entries fe
+        join fields f on f.id=fe.field_id
+        join entries e on e.id=fe.entry_id
+        where f.user_id=%(user_id)s
+        """, conn, params={'user_id': user.id})
+
+    # uuid as string
+    df['field_id'] = df.field_id.apply(lambda x: str(x))
+    ## Easier debugging
+    # df['field_id'] =  df.field_id.apply(lambda x: x[0:4])
+    is_target = (df.target==True)
+    fields = ['value', 'created_at', 'field_id']
+    X = df[~is_target][fields].pivot(index='created_at', columns='field_id')
+    Y = df[is_target][fields].set_index(['field_id', 'created_at'])
+    cols = [c[1] for c in X.columns]
+
+    # app.logger.info("X")
+    # app.logger.info(X)
+    # app.logger.info("Y")
+    # app.logger.info(Y)
+    targets = {}
+    for target, group in Y.groupby(level=0):
+        model = XGBRegressor()
+        model.fit(X, group.value)
+        imps = [float(x) for x in model.feature_importances_]
+        targets[target] = dict(zip(cols, imps))
+    return jsonify(targets)

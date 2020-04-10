@@ -21,7 +21,8 @@ RUN pip install \
   python-box \
   sqlalchemy_utils \
   pandas \
-  requests
+  requests \
+  xgboost
 
 WORKDIR /app
 
