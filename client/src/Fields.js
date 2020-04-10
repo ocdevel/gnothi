@@ -38,6 +38,7 @@ export default function Fields({jwt}) {
   const [fieldType, setFieldType] = useState(DEFAULT_TYPE)
   const [fieldDefault, setFieldDefault] = useState(DEFAULT_DEFAULT)
   const [fieldDefaultValue, setFieldDefaultValue] = useState("")
+  const [fieldTarget, setFieldTarget] = useState(false)
 
   const fid = show2fid(showForm)
   const f_map = _.transform(fields, (m,v,k) => {
@@ -96,6 +97,7 @@ export default function Fields({jwt}) {
   const changeFieldType = e => setFieldType(e.target.value)
   const changeFieldDefault = e => setFieldDefault(e.target.value)
   const changeFieldDefaultValue = e => setFieldDefaultValue(e.target.value)
+  const changeFieldTarget = e => setFieldTarget(e.target.value)
   const changeHabiticaUserId = e => setHabiticaUserId(e.target.value)
   const changeHabiticaApiToken = e => setHabiticaApiToken(e.target.value)
   const showChart = fid => {
@@ -105,13 +107,14 @@ export default function Fields({jwt}) {
   const doShowForm = (show_or_id) => {
     setShowForm(show_or_id)
     const fid = show2fid(show_or_id)
-    const [name, type, default_value, default_value_value] =
-      fid ? [f_map[fid].name, f_map[fid].type, f_map[fid].default_value, f_map[fid].default_value_value]
-      : ["", DEFAULT_TYPE, DEFAULT_DEFAULT, ""]
+    const [name, type, default_value, default_value_value, target] =
+      fid ? [f_map[fid].name, f_map[fid].type, f_map[fid].default_value, f_map[fid].default_value_value, f_map[fid].target]
+      : ["", DEFAULT_TYPE, DEFAULT_DEFAULT, "", false]
     setFieldName(name)
     setFieldType(type)
     setFieldDefault(default_value)
     setFieldDefaultValue(default_value_value)
+    setFieldTarget(target)
   }
 
   const destroyField = async () => {
@@ -196,6 +199,17 @@ export default function Fields({jwt}) {
             />
           </Form.Group>
         )}
+
+        <Form.Group controlId="formFieldTarget">
+          <Form.Check
+            type="checkbox"
+            label="Target"
+            checked={fieldTarget}
+          />
+          <Form.Text className="text-muted">
+            Use this field as a target variable. Ie, you want to know what causes this field (based on other fields). Eg, if "Mood" is a target, we'll look at what other fields effect mood.
+          </Form.Text>
+        </Form.Group>
 
         {fid && (
           <>
