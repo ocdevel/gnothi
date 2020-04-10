@@ -9,7 +9,8 @@ import {
   Col,
   Form,
   Row,
-  Alert
+  Alert,
+  Spinner
 } from "react-bootstrap"
 import ReactMarkdown from "react-markdown"
 import ReactStars from "react-stars"
@@ -146,6 +147,7 @@ export default function Entry({jwt}) {
   const {entry_id} = useParams()
   const history = useHistory()
   const [title, setTitle] = useState('')
+  const [submitting, setSubmitting] = useState(false)
   const [text, setText] = useState('')
   const [fieldVals, setFieldVals] = useState({})
   const [fields, setFields] = useState({})
@@ -170,6 +172,7 @@ export default function Entry({jwt}) {
 
   const submit = async e => {
     e.preventDefault()
+    setSubmitting(true)
     const customVals = _.omitBy(fieldVals, (v,k) => f_map[k].service)
     const body = {title, text, fields: customVals}
     if (entry_id) {
@@ -177,6 +180,7 @@ export default function Entry({jwt}) {
     } else {
       await fetch_(`entries`, 'POST', body, jwt)
     }
+    setSubmitting(false)
     history.push('/j')
   }
 
@@ -229,12 +233,26 @@ export default function Entry({jwt}) {
       />
       <hr />
 
-      <Button variant="primary" type="submit">
-        Submit
-      </Button>&nbsp;
-      <Button variant='secondary' size="sm" onClick={cancel}>
-        Cancel
-      </Button>
+      {submitting ? (
+        <>
+        <Spinner animation="border" role="status">
+          <span className="sr-only">Loading...</span>
+        </Spinner>
+        <p className='text-muted'>Generating summaries & sentiment</p>
+        </>
+      ) : (
+        <>
+        <Button
+          variant="primary"
+          type="submit"
+        >
+          Submit
+        </Button>&nbsp;
+        <Button variant='secondary' size="sm" onClick={cancel}>
+          Cancel
+        </Button>
+        </>
+      )}
     </Form>
   )
 }

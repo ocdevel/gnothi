@@ -1,9 +1,22 @@
 import React, {useEffect, useState} from "react";
-import {Button, Form, Tab, Tabs} from "react-bootstrap";
+import {
+  Button,
+  Form,
+  Tab,
+  Tabs,
+  Spinner
+} from "react-bootstrap";
 import {fetch_} from './utils'
 import {Link} from "react-router-dom";
 
+const spinner = (
+  <Spinner animation="border" role="status">
+    <span className="sr-only">Loading...</span>
+  </Spinner>
+)
+
 export default function Auth({onAuth}) {
+  const [submitting, setSubmitting] = useState(false)
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [passwordConfirm, setPasswordConfirm] = useState('')
@@ -16,17 +29,20 @@ export default function Auth({onAuth}) {
     const res = await fetch_('auth','POST', {username, password})
     const jwt = res.access_token;
     localStorage.setItem('jwt', jwt);
+    setSubmitting(false)
     onAuth(jwt);
   }
 
   const submitLogin = async e => {
     // TODO switch to Axios https://malcoded.com/posts/react-http-requests-axios/
     e.preventDefault();
+    setSubmitting(true)
     login()
   };
 
   const submitRegister = async e => {
     e.preventDefault();
+    setSubmitting(true)
     // assert password = passwordConfirm. See react-bootstrap, use yup library or something for form stuff
     const res = await fetch_('register','POST',{username, password})
     login();
@@ -56,9 +72,11 @@ export default function Auth({onAuth}) {
             onChange={changePassword}
           />
         </Form.Group>
-        <Button variant="primary" type="submit">
-          Login
-        </Button>
+        {submitting ? spinner : (
+          <Button variant="primary" type="submit">
+            Login
+          </Button>
+        )}
       </Form>
     )
   };
@@ -97,9 +115,11 @@ export default function Auth({onAuth}) {
             onChange={changePasswordConfirm}
           />
         </Form.Group>
-        <Button variant="primary" type="submit">
-          Register
-        </Button>
+        {submitting ? spinner : (
+          <Button variant="primary" type="submit">
+            Register
+          </Button>
+        )}
       </Form>
     )
   };
