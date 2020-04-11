@@ -1,3 +1,6 @@
+import {Spinner} from "react-bootstrap";
+import React from "react";
+
 const fetch_ = async (route, method='GET', body=null, jwt=null) => {
   const obj = {
     method,
@@ -9,4 +12,10 @@ const fetch_ = async (route, method='GET', body=null, jwt=null) => {
   return await response.json()
 }
 
-export {fetch_}
+const spinner = (
+  <Spinner animation="border" role="status">
+    <span className="sr-only">Loading...</span>
+  </Spinner>
+)
+
+export {fetch_, spinner}

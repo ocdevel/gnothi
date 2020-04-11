@@ -1,6 +1,6 @@
 import {useHistory, useParams} from "react-router-dom"
 import React, {useEffect, useState} from "react"
-import {fetch_} from "./utils"
+import {fetch_, spinner} from "./utils"
 import _ from "lodash"
 import {
   Accordion,
@@ -10,18 +10,11 @@ import {
   Form,
   Row,
   Alert,
-  Spinner,
   Table
 } from "react-bootstrap"
 import ReactMarkdown from "react-markdown"
 import ReactStars from "react-stars"
 import './Entry.css'
-
-const spinner = (
-  <Spinner animation="border" role="status">
-    <span className="sr-only">Loading...</span>
-  </Spinner>
-)
 
 function Fields(props) {
   const {

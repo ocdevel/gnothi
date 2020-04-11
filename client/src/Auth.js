@@ -3,17 +3,10 @@ import {
   Button,
   Form,
   Tab,
-  Tabs,
-  Spinner
+  Tabs
 } from "react-bootstrap";
-import {fetch_} from './utils'
+import {fetch_, spinner} from './utils'
 import {Link} from "react-router-dom";
-
-const spinner = (
-  <Spinner animation="border" role="status">
-    <span className="sr-only">Loading...</span>
-  </Spinner>
-)
 
 export default function Auth({onAuth}) {
   const [submitting, setSubmitting] = useState(false)
