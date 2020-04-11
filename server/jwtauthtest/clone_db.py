@@ -39,19 +39,9 @@ if method == 'push':
 dfs = []
 # fetch old data, we may be pushing live to a new schema
 with from_engine.connect() as from_conn:
-    for t in 'users fields entries family_types family_issue_types family family_issues'.split():
+    for t in 'users fields entries field_entries family_types family_issue_types family family_issues'.split():
         sql = f"select * from {t}"
         dfs.append([t, pd.read_sql(t, from_conn)])
-
-    from uuid import uuid4
-    df = pd.read_sql(f"""
-    select fe.*, e.created_at, e.user_id
-    from field_entries fe
-    join entries e on e.id=fe.entry_id
-    """, from_conn)
-    df.drop(columns=['entry_id'], inplace=True)
-    df['id'] = [uuid4() for _ in range(df.shape[0])]
-    dfs.insert(3, ['field_entries', df])
 
 ## Was trying to re-generate local DB from code, but issue. Just start server
 ## to regen localDB with `WIPE=1 flask run` and go from there
