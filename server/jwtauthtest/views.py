@@ -116,10 +116,11 @@ def field_entry(field_id):
     user = current_identity
     data = request.get_json()
     fe = FieldEntry.get_today_entries(user.id, field_id).first()
+    v = float(data['value'])
     if fe:
-        fe.value = data['value']
+        fe.value = v
     if not fe:
-        fe = FieldEntry(**data)
+        fe = FieldEntry(value=v, field_id=field_id)
         user.field_entries.append(fe)
     db_session.commit()
     return jsonify({'ok': True})

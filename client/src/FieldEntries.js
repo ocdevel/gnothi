@@ -4,11 +4,16 @@ import _ from "lodash";
 import {Accordion, Alert, Button, Card, Form, Table} from "react-bootstrap";
 import ReactMarkdown from "react-markdown";
 import ReactStars from "react-stars";
+import SetupHabitica from "./SetupHabitica";
+import FieldModal from "./FieldModal";
+import ChartModal from "./ChartModal";
 
 export default function FieldEntries({jwt}) {
   const [fetchingSvc, setFetchingSvc] = useState(false)
   const [fields, setFields] = useState({})
   const [fieldEntries, setFieldEntries] = useState({})
+  const [showForm, setShowForm] = useState(false)
+  const [showChart, setShowChart] = useState(false)
 
   const fetchFieldEntries = async (fields) => {
     // FIXME shouldn't need to pass in fields, but fields=={} even after fetchFields..
@@ -46,7 +51,8 @@ export default function FieldEntries({jwt}) {
   }
 
   const changeFieldVal = (fid, direct=false) => e => {
-    const v = direct ? e : e.target.value
+    let v = direct ? e : e.target.value
+    v = parseFloat(v)  // until we support strings
     setFieldEntries({...fieldEntries, [fid]: v})
     const body = {value: v}
     fetch_(`field-entries/${fid}`, 'POST', body, jwt)
@@ -60,38 +66,52 @@ export default function FieldEntries({jwt}) {
     </>
   }
 
-  const renderFields = (group, service) => (
-    <Table size='sm' borderless>
-      <tbody>
-        {_.sortBy(group, 'id').map(f => (
-          <tr key={f.id}>
-              <td>
-                <ReactMarkdown source={f.name} linkTarget='_blank' />
-              </td>
-              <td>
-                {f.type === 'fivestar' ? (
-                  <ReactStars
-                    value={fieldEntries[f.id]}
-                    half={false}
-                    size={25}
-                    onChange={changeFieldVal(f.id, true)}
-                  />
-                ) : (
-                  <Form.Control
-                    disabled={!!f.service}
-                    type='text'
-                    size="sm"
-                    value={fieldEntries[f.id]}
-                    onChange={changeFieldVal(f.id)}
-                  />
-                )}
-              </td>
-          </tr>
-        ))}
-      </tbody>
-      {renderSyncButton(service)}
-    </Table>
-  )
+  const onFormClose = () => {
+    setShowForm(false)
+    fetchFields()
+  }
+
+  const onChartClose = () => {
+    setShowChart(false)
+  }
+
+  const renderField = (f) => {
+    return (
+      <tr key={f.id}>
+        <td
+          onClick={() => setShowForm(f.id)}
+          className='cursor-pointer'
+        >
+          <ReactMarkdown source={f.name} linkTarget='_blank' />
+        </td>
+        <td>
+          {f.type === 'fivestar' ? (
+            <ReactStars
+              value={fieldEntries[f.id]}
+              half={false}
+              size={25}
+              onChange={changeFieldVal(f.id, true)}
+            />
+          ) : (
+            <Form.Control
+              disabled={!!f.service}
+              type='number'
+              size="sm"
+              value={fieldEntries[f.id]}
+              onChange={changeFieldVal(f.id)}
+            />
+          )}
+        </td>
+        <td>
+          ~{f.avg.toFixed(1)}
+          <a
+            onClick={() => setShowChart(f.id)}
+            className='cursor-pointer'
+          >📈</a>
+        </td>
+      </tr>
+    )
+  }
 
   const groups = _.transform(fields, (m, v, k) => {
     if (v.excluded_at) {return}
@@ -103,7 +123,23 @@ export default function FieldEntries({jwt}) {
   if (!groups.habitica) {
     groups.habitica = []
   }
-  return (
+  return <div>
+    {showForm && (
+      <FieldModal
+        jwt={jwt}
+        close={onFormClose}
+        field={showForm === true ? {} : fields[showForm]}
+      />
+    )}
+
+    {showChart && (
+      <ChartModal
+        jwt={jwt}
+        field={fields[showChart]}
+        close={onChartClose}
+      />
+    )}
+
     <Accordion defaultActiveKey="Custom">
       {_.map(groups, (group, service)=> (
         <Card key={service}>
@@ -113,10 +149,35 @@ export default function FieldEntries({jwt}) {
             </Accordion.Toggle>
           </Card.Header>
           <Accordion.Collapse eventKey={service}>
-            <Card.Body>{renderFields(group, service)}</Card.Body>
+            <Card.Body>
+              <Table size='sm' borderless>
+                <tbody>
+                  {_.sortBy(group, 'id').map(renderField)}
+                </tbody>
+                {renderSyncButton(service)}
+              </Table>
+              {service === 'Custom' && (
+                <Button
+                  variant="success"
+                  onClick={() => setShowForm(true)}
+                  size="lg"
+                  className='bottom-margin'
+                >New Field</Button>
+              )}
+            </Card.Body>
           </Accordion.Collapse>
         </Card>
       ))}
+      <Card>
+        <Card.Header>
+          <Accordion.Toggle as={Button} variant="link" eventKey='setupHabitica'>
+            Setup Habitica
+          </Accordion.Toggle>
+        </Card.Header>
+        <Accordion.Collapse eventKey='setupHabitica'>
+          <Card.Body><SetupHabitica jwt={jwt}/></Card.Body>
+        </Accordion.Collapse>
+      </Card>
     </Accordion>
-  )
+  </div>
 }

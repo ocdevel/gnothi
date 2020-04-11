@@ -48,10 +48,7 @@ function App() {
       <Navbar.Collapse id="responsive-navbar-nav">
         <Nav className="mr-auto">
           <LinkContainer exact to="/j">
-            <Nav.Link>Entries</Nav.Link>
-          </LinkContainer>
-          <LinkContainer to="/j/fields">
-            <Nav.Link>Fields</Nav.Link>
+            <Nav.Link>Journal</Nav.Link>
           </LinkContainer>
           <NavDropdown title="Reports" id="basic-nav-dropdown">
             <LinkContainer to="/reports/themes">
