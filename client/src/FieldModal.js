@@ -62,7 +62,7 @@ export default function FieldModal({jwt, close, field= {}}) {
   defValHelp = defValHelp[form.default_value]
 
   return (
-    <Modal.Dialog size="lg" show={true} onHide={close}>
+    <Modal size="lg" show={true} onHide={close}>
       <Modal.Header>
         <Modal.Title>{fid ? "Edit Field" : "New Field"}</Modal.Title>
       </Modal.Header>
@@ -183,6 +183,6 @@ export default function FieldModal({jwt, close, field= {}}) {
         <Button variant="secondary" onClick={() => close()}>Cancel</Button>
         <Button variant="primary" onClick={() => saveField(fid)}>Save</Button>
       </Modal.Footer>
-    </Modal.Dialog>
+    </Modal>
   )
 }

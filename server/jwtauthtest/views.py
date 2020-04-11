@@ -256,16 +256,17 @@ def influencers():
     fields = ['value', 'created_at', 'fid']
     X = df[~is_target][fields].pivot(index='created_at', columns='fid')
 
-    # for _, fid in X.columns:
-    #     dv, dvv = defaults[fid].default_value, defaults[fid].default_value_value
-    #     if not dv: continue
-    #     if dv == 'value':
-    #         if not dvv: continue
-    #         X[fid] = X[fid].fillna(dvv)
-    #     elif dv == 'ffill':
-    #         X[fid] = X[fid].fillna(method=X[fid].ffill())
-    #     elif dv == 'average':
-    #         X[fid] = X[fid].fillna(X[fid].mean())
+    # TODO resample on Days
+    for _, fid in X.columns:
+        dv, dvv = defaults[fid].default_value, defaults[fid].default_value_value
+        if not dv: continue
+        if dv == 'value':
+            if not dvv: continue
+            X[fid] = X[fid].fillna(dvv)
+        elif dv == 'ffill':
+            X[fid] = X[fid].fillna(method=X[fid].ffill())
+        elif dv == 'average':
+            X[fid] = X[fid].fillna(X[fid].mean())
 
     Y = df[is_target][fields].set_index(['fid', 'created_at'])
     cols = [c[1] for c in X.columns]
