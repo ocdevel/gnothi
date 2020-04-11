@@ -74,6 +74,7 @@ def entry(entry_id):
         db_session.commit()
         return jsonify({'ok': True})
     if request.method == 'DELETE':
+        FieldEntry.query.filter_by(entry_id=entry_id).delete()
         entry.delete()
         db_session.commit()
         return jsonify({'ok': True})

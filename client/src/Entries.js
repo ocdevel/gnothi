@@ -52,6 +52,7 @@ export default function Entries({jwt}) {
   }
 
   const renderEntry = e => {
+    const gotoForm_ = () => gotoForm(e.id)
     const style = {}
     let sentiment = null
     if (e.sentiment) {
@@ -73,14 +74,15 @@ export default function Entries({jwt}) {
     }
     const textSummary = <span>{e.text_summary}</span>
     return (
-      <tr
-        key={e.id}
-        className='cursor-pointer'
-        onClick={() => gotoForm(e.id)}
-      >
+      <tr key={e.id}>
         <td>
-          <h5>{moment(e.created_at).format('MM/DD/YYYY ha')}</h5>
-          <h6>{e.title || e.title_summary}</h6>
+          <div
+            onClick={gotoForm_}
+            className='cursor-pointer'
+          >
+            <h5>{moment(e.created_at).format('MM/DD/YYYY ha')}</h5>
+            <h6>{e.title || e.title_summary}</h6>
+          </div>
           <p>
             <span style={style}>{sentiment}</span>
             {e.text_summary === e.text ? textSummary : (
@@ -91,7 +93,7 @@ export default function Entries({jwt}) {
           </p>
         </td>
         <td>
-          <a className='cursor-pointer' onClick={() => gotoForm(e.id)}>✏</a>&nbsp;
+          <a className='cursor-pointer' onClick={gotoForm_}>✏</a>&nbsp;
           <a className='cursor-pointer' onClick={() => deleteEntry(e)}>⛔</a>
         </td>
       </tr>
