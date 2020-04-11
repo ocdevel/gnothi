@@ -149,6 +149,7 @@ function Fields(props) {
 export default function Entry({jwt}) {
   const {entry_id} = useParams()
   const history = useHistory()
+  const [showPreview, setShowPreview] = useState(false)
   const [title, setTitle] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [text, setText] = useState('')
@@ -189,6 +190,7 @@ export default function Entry({jwt}) {
 
   const changeTitle = e => setTitle(e.target.value)
   const changeText = e => setText(e.target.value)
+  const changeShowPreview = e => setShowPreview(e.target.checked)
 
   return (
     <Form onSubmit={submit}>
@@ -219,10 +221,21 @@ export default function Entry({jwt}) {
             />
           </Form.Group>
         </Col>
-        <Col className='markdown-render'>
-          <ReactMarkdown source={text} linkTarget='_blank' />
-        </Col>
+        {showPreview && (
+          <Col className='markdown-render'>
+            <ReactMarkdown source={text} linkTarget='_blank' />
+          </Col>
+        )}
       </Row>
+
+      <Form.Group controlId="formShowPreview">
+        <Form.Check
+          type="checkbox"
+          label="Show Preview"
+          checked={showPreview}
+          onChange={changeShowPreview}
+        />
+      </Form.Group>
 
       <hr />
       <Fields
