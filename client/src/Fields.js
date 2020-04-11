@@ -30,10 +30,6 @@ function ChartModal({jwt, field, onClose}) {
 
   const target = field.id
 
-  const f_map = _.transform(fields, (m, v, k) => {
-    m[v.id] = v
-  }, {})
-
   const fetchTargets = async () => {
     let res = await fetch_('fields', 'GET', null, jwt)
     setFields(res.fields)
@@ -61,7 +57,7 @@ function ChartModal({jwt, field, onClose}) {
           .value()
           .map(x => <tr key={x[0]}>
             <td>{x[1]}</td>
-            <td><ReactMarkdown source={f_map[x[0]].name} /></td>
+            <td><ReactMarkdown source={fields[x[0]].name} /></td>
           </tr>)}
       </tbody>
     </Table>
@@ -148,7 +144,7 @@ function Habitica({jwt}) {
 }
 
 export default function Fields({jwt}) {
-  const [fields, setFields] = useState([])
+  const [fields, setFields] = useState({})
   const [showChart, setShowChart] = useState(null)
 
   const DEFAULT_TYPE = 'number'
@@ -161,17 +157,15 @@ export default function Fields({jwt}) {
   const [fieldTarget, setFieldTarget] = useState(false)
 
   const fid = show2fid(showForm)
-  const f_map = _.transform(fields, (m,v,k) => {
-    m[v.id] = v
-  }, {})
-  const field = f_map[fid]
+  const field = fields[fid]
 
+  console.log(fields)
   const fetchFields = async () => {
     const res = await fetch_(`fields`, 'GET', null, jwt)
-    setFields(res.fields)
     _.each(res.fields, f => {
       _.each(f.history, (h, i) => {f.history[i].created_at = moment(h.created_at).format("YYYY-MM-DD")})
     })
+    setFields(res)
   }
 
   useEffect(() => {
@@ -206,7 +200,7 @@ export default function Fields({jwt}) {
   const doShowForm = (show_or_id) => {
     setShowForm(show_or_id)
     const fid = show2fid(show_or_id)
-    const f = fid && f_map[fid]
+    const f = fid && fields[fid]
     const [name, type, default_value, default_value_value, target] =
       f ? [f.name, f.type, f.default_value, f.default_value_value, f.target]
       : ["", DEFAULT_TYPE, DEFAULT_DEFAULT, "", false]
@@ -445,7 +439,7 @@ export default function Fields({jwt}) {
   return (
     <>
       {showChart && <ChartModal
-        field={f_map[showChart]}
+        field={fields[showChart]}
         onClose={() => setShowChart(null)}
         jwt={jwt}
         />

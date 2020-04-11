@@ -1,13 +1,28 @@
-import enum, datetime, pdb
+import enum, pdb
+from datetime import date, datetime
 from jwtauthtest.database import Base
-from sqlalchemy import Column, Integer, String, Text, Enum, Float, ForeignKey, Boolean, DateTime, JSON
-from sqlalchemy.orm import relationship, load_only, joinedload
+from sqlalchemy import \
+    Column, \
+    Integer, \
+    String, \
+    Text, \
+    Enum, \
+    Float, \
+    ForeignKey, \
+    Boolean, \
+    DateTime, \
+    JSON, \
+    Date, \
+    func
+from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import UUID
 from uuid import uuid4
 from transformers import pipeline
 
 summarizer = pipeline("summarization")
 sentimenter = pipeline("sentiment-analysis")
+# summarizer = None
+# sentimenter = None
 
 def uuid_():
     return str(uuid4())
@@ -23,6 +38,7 @@ class User(Base):
     habitica_api_token = Column(String(200))
 
     entries = relationship("Entry", order_by='Entry.created_at.desc()')
+    field_entries = relationship("FieldEntry", order_by='FieldEntry.created_at.desc()')
     fields = relationship("Field")
     family_members = relationship("Family")
 
@@ -49,8 +65,8 @@ class Entry(Base):
     # Title optional, otherwise generated from text. topic-modeled, or BERT summary, etc?
     title = Column(String(128))
     text = Column(Text, nullable=False)
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow)
 
     # Generated
     title_summary = Column(String(128))
@@ -61,7 +77,6 @@ class Entry(Base):
     show_therapist = Column(Boolean)
     show_ml = Column(Boolean)
 
-    field_entries = relationship("FieldEntry", order_by="FieldEntry.field_id")
     user_id = Column(UUID, ForeignKey('users.id'))
 
     def gen_sentiment(self, text):
@@ -93,7 +108,6 @@ class Entry(Base):
             'title': self.title,
             'text': self.text,
             'created_at': self.created_at,
-            'fields': {f.field_id: f.value for f in self.field_entries},
             'title_summary': self.title_summary,
             'text_summary': self.text_summary,
             'sentiment': self.sentiment
@@ -137,7 +151,7 @@ class Field(Base):
     type = Column(Enum(FieldType))
     name = Column(String(128))
     # Start entries/graphs/correlations here
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.utcnow)
     # Don't actually delete fields, unless it's the same day. Instead
     # stop entries/graphs/correlations here
     excluded_at = Column(DateTime)
@@ -154,17 +168,13 @@ class Field(Base):
     user_id = Column(UUID, ForeignKey('users.id'))
 
     def json(self):
-        history = Entry.query\
-            .join(Entry.field_entries)\
-            .add_column(FieldEntry.value)\
-            .filter(FieldEntry.field_id==self.id)\
-            .order_by(Entry.created_at.asc())\
+        history = FieldEntry.query\
+            .with_entities(FieldEntry.value, FieldEntry.created_at)\
+            .filter_by(field_id=self.id)\
+            .order_by(FieldEntry.created_at.asc())\
             .all()
-        # .options(load_only(FieldEntry.value, Entry.created_at))\
-        # FIXME it's pulling full Entry model. Not using join/load_only correctly
-        # Figure out how to execute raw SQL here or how to use ORM correctly
         history = [
-            dict(value=x.value, created_at=x.Entry.created_at)
+            dict(value=x.value, created_at=x.created_at)
             for x in history
             if x.value is not None
         ]
@@ -188,10 +198,24 @@ class Field(Base):
 
 class FieldEntry(Base):
     __tablename__ = 'field_entries'
+    id = Column(UUID, primary_key=True, default=uuid_)
     value = Column(Float)  # TODO Can everything be a number? reconsider
+    created_at = Column(Date, default=datetime.utcnow, index=True)
 
-    entry_id = Column(UUID, ForeignKey('entries.id'), primary_key=True)
-    field_id = Column(UUID, ForeignKey('fields.id'), primary_key=True)
+    user_id = Column(UUID, ForeignKey('users.id'), index=True)
+    field_id = Column(UUID, ForeignKey('fields.id'))
+
+    @staticmethod
+    def get_today_entries(user_id, field_id=None):
+        q = FieldEntry.query\
+            .filter(
+                FieldEntry.user_id == user_id,
+                func.DATE(FieldEntry.created_at) == date.today()
+            )
+        if field_id:
+            q = q.filter(FieldEntry.field_id == field_id)
+        return q
+
 
 class FamilyType(Base):
     __tablename__ = 'family_types'

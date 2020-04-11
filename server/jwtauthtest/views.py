@@ -45,8 +45,6 @@ def entries():
         entry = Entry(title=data['title'], text=data['text'])
         entry.run_models()
         user.entries.append(entry)
-        for k, v in data['fields'].items():
-            entry.field_entries.append(FieldEntry(value=v, field_id=k))
         db_session.commit()
         return jsonify({'ok': True})
 
@@ -64,17 +62,9 @@ def entry(entry_id):
         entry.title = data['title']
         entry.text = data['text']
         entry.run_models()
-        fe_map = {f.field_id: f for f in entry.field_entries}
-        for k, v in data['fields'].items():
-            f = fe_map.get(k, None)
-            if f:
-                f.value = v
-            if not f:
-                entry.field_entries.append(FieldEntry(value=v, field_id=k))
         db_session.commit()
         return jsonify({'ok': True})
     if request.method == 'DELETE':
-        FieldEntry.query.filter_by(entry_id=entry_id).delete()
         entry.delete()
         db_session.commit()
         return jsonify({'ok': True})
@@ -85,7 +75,7 @@ def entry(entry_id):
 def fields():
     user = current_identity
     if request.method == 'GET':
-        return jsonify({'fields': [f.json() for f in user.fields]})
+        return jsonify({f.id: f.json() for f in user.fields})
     if request.method == 'POST':
         data = request.get_json()
         f = Field(**data)
@@ -106,10 +96,34 @@ def field(field_id):
         db_session.commit()
         return jsonify({'ok': True})
     if request.method == 'DELETE':
-        FieldEntry.query.filter_by(field_id=field_id).delete()
+        FieldEntry.query.filter_by(user_id=user.id, field_id=field_id).delete()
         Field.query.filter_by(user_id=user.id, id=field_id).delete()
         db_session.commit()
         return jsonify({'ok': True})
+
+
+@app.route('/field-entries')
+@jwt_required()
+def field_entries():
+    res = FieldEntry.get_today_entries(current_identity.id).all()
+    res = {f.field_id: f.value for f in res}
+    return jsonify(res)
+
+
+@app.route('/field-entries/<field_id>', methods=['POST'])
+@jwt_required()
+def field_entry(field_id):
+    user = current_identity
+    data = request.get_json()
+    fe = FieldEntry.get_today_entries(user.id, field_id).first()
+    if fe:
+        fe.value = data['value']
+    if not fe:
+        fe = FieldEntry(**data)
+        user.field_entries.append(fe)
+    db_session.commit()
+    return jsonify({'ok': True})
+
 
 @app.route('/habitica', methods=['POST'])
 @jwt_required()
@@ -123,19 +137,13 @@ def setup_habitica():
 
 
 import requests
-@app.route('/habitica/<entry_id>', methods=['GET'])
+@app.route('/habitica/sync', methods=['POST'])
 @jwt_required()
-def get_habitica(entry_id):
-    app.logger.info("Start of Habitica")
-
+def get_habitica():
     user = current_identity
-    entry = Entry.query\
-        .filter_by(user_id=user.id, id=entry_id)\
-        .first()
-
-    app.logger.info("Calling Habitica")
 
     # https://habitica.com/apidoc/#api-Task-GetUserTasks
+    app.logger.info("Calling Habitica")
     r = requests.get(
         'https://habitica.com/api/v3/tasks/user',
         headers={
@@ -146,17 +154,16 @@ def get_habitica(entry_id):
         }
     )
     r = r.json()
-
     app.logger.info("Habitica finished")
 
-    f_id_map = {f.service_id: f for f in user.fields}
-    fe_id_map = {f.field_id: f for f in entry.field_entries}
-    t_id_map = {task['id']: task for task in r['data']}
+    f_map = {f.service_id: f for f in user.fields}
+    fe_map = {fe.field_id: fe for fe in FieldEntry.get_today_entries(user.id).all()}
+    t_map = {task['id']: task for task in r['data']}
 
     # Remove Habitica-deleted tasks
     for f in user.fields:
         if f.service != 'habitica': continue
-        if f.service_id not in t_id_map:
+        if f.service_id not in t_map:
             # FIXME change models to cascade deletes, remove line below https://dev.to/zchtodd/sqlalchemy-cascading-deletes-8hk
             FieldEntry.query.filter_by(field_id=f.id).delete()
             db_session.delete(f)
@@ -170,7 +177,7 @@ def get_habitica(entry_id):
         # only care about habits/dailies
         if task['type'] not in ['habit', 'daily']: continue
 
-        f = f_id_map.get(task['id'], None)
+        f = f_map.get(task['id'], None)
         if not f:
             # Field doesn't exist here yet, add it.
             # TODO delete things here if deleted in habitica
@@ -202,12 +209,12 @@ def get_habitica(entry_id):
             if (not task['completed']) and any(c['completed'] for c in cl):
                 value = sum(c['completed'] for c in cl) / len(cl)
 
-        fe = fe_id_map.get(f.id, None)
+        fe = fe_map.get(f.id, None)
         if fe:
             fe.value = value
         else:
             fe = FieldEntry(field_id=f.id)
-            entry.field_entries.append(fe)
+            user.field_entries.append(fe)
         db_session.commit()
         app.logger.info(task['text'] + " done")
 
@@ -221,16 +228,16 @@ def influencers():
     with engine.connect() as conn:
         df = pd.read_sql("""
         select fe.value, 
-            e.created_at, 
-            f.id as fid, f.target
+            fe.created_at::date, 
+            fe.field_id as fid, 
+            f.target
         from field_entries fe
         join fields f on f.id=fe.field_id
-        join entries e on e.id=fe.entry_id
         where f.user_id=%(user_id)s
             -- exclude these to improve model perf
             -- TODO reconsider for past data
-            and f.excluded_at is null 
-        order by e.created_at asc
+            and f.excluded_at is null
+        order by fe.created_at asc
         """, conn, params={'user_id': user.id})
 
         defaults = pd.read_sql("""
@@ -247,16 +254,17 @@ def influencers():
     is_target = (df.target==True)
     fields = ['value', 'created_at', 'fid']
     X = df[~is_target][fields].pivot(index='created_at', columns='fid')
-    for _, fid in X.columns:
-        dv, dvv = defaults[fid].default_value, defaults[fid].default_value_value
-        if not dv: continue
-        if dv == 'value':
-            if not dvv: continue
-            X[fid] = X[fid].fillna(dvv)
-        elif dv == 'ffill':
-            X[fid] = X[fid].fillna(method=X[fid].ffill())
-        elif df == 'average':
-            X[fid] = X[fid].fillna(X[fid].mean())
+
+    # for _, fid in X.columns:
+    #     dv, dvv = defaults[fid].default_value, defaults[fid].default_value_value
+    #     if not dv: continue
+    #     if dv == 'value':
+    #         if not dvv: continue
+    #         X[fid] = X[fid].fillna(dvv)
+    #     elif dv == 'ffill':
+    #         X[fid] = X[fid].fillna(method=X[fid].ffill())
+    #     elif dv == 'average':
+    #         X[fid] = X[fid].fillna(X[fid].mean())
 
     Y = df[is_target][fields].set_index(['fid', 'created_at'])
     cols = [c[1] for c in X.columns]
