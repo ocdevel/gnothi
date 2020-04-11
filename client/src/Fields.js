@@ -374,6 +374,7 @@ export default function Fields({jwt}) {
       <thead>
         <th></th>
         <th>Avg</th>
+        <th>Target</th>
         <th>Name</th>
       </thead>
       <tbody>
@@ -398,6 +399,7 @@ export default function Fields({jwt}) {
               className='cursor-pointer'
             >📈</a>
           </td>
+          <td>{f.target && "🎯"}</td>
           <td>
             <ReactMarkdown source={f.name} linkTarget='_blank'/>
           </td>
