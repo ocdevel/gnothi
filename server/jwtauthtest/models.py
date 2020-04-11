@@ -72,6 +72,8 @@ class Entry(Base):
         return sentiments[0]['label']
 
     def gen_summary(self, text, min_length=5, max_length=20):
+        if len(text) <= min_length:
+            return text
         s = summarizer(text, min_length=min_length, max_length=max_length)
         return s[0]['summary_text']
 

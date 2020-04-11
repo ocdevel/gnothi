@@ -370,39 +370,41 @@ export default function Fields({jwt}) {
   )
 
   const renderFields = (group, service) => (
-    <Form.Group controlId={`formFieldsFields`}>
-      <Row sm={4}>
-        {_.sortBy(group, 'id').map(f => (
-          <Col
-            key={f.id}
-            className='field-column'
-            style={!f.excluded_at ? {} : {
-              textDecoration: 'line-through',
-              opacity: .5
-            }}
-          >
-            <Form.Row>
-              <Col lg={2}>
-                <a
-                  onClick={() => doShowForm(f.id)}
-                  className='cursor-pointer'
-                >✏</a>
-              </Col>
-              <Form.Label column="sm" lg={6}>
-                <ReactMarkdown source={f.name} linkTarget='_blank'/>
-              </Form.Label>
-              <Col lg={4}>
-                ~{f.avg.toFixed(1)}&nbsp;
-                <a
-                  onClick={() => setShowChart(f.id)}
-                  className='cursor-pointer'
-                >📈</a>
-              </Col>
-            </Form.Row>
-          </Col>
-        ))}
-      </Row>
-    </Form.Group>
+    <Table size='sm' borderless>
+      <thead>
+        <th></th>
+        <th>Avg</th>
+        <th>Name</th>
+      </thead>
+      <tbody>
+      {_.sortBy(group, 'id').map(f => (
+        <tr
+          key={f.id}
+          style={!f.excluded_at ? {} : {
+            textDecoration: 'line-through',
+            opacity: .5
+          }}
+        >
+          <td>
+            <a
+              onClick={() => doShowForm(f.id)}
+              className='cursor-pointer'
+            >✏</a>
+          </td>
+          <td>
+            {f.avg.toFixed(1)}&nbsp;
+            <a
+              onClick={() => setShowChart(f.id)}
+              className='cursor-pointer'
+            >📈</a>
+          </td>
+          <td>
+            <ReactMarkdown source={f.name} linkTarget='_blank'/>
+          </td>
+        </tr>
+      ))}
+      </tbody>
+    </Table>
   )
 
   const renderFieldGroups = () => {

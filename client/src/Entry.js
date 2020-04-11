@@ -10,12 +10,18 @@ import {
   Form,
   Row,
   Alert,
-  Spinner
+  Spinner,
+  Table
 } from "react-bootstrap"
 import ReactMarkdown from "react-markdown"
 import ReactStars from "react-stars"
 import './Entry.css'
 
+const spinner = (
+  <Spinner animation="border" role="status">
+    <span className="sr-only">Loading...</span>
+  </Spinner>
+)
 
 function Fields(props) {
   const {
@@ -27,6 +33,8 @@ function Fields(props) {
     fieldVals,
     setFieldVals
   } = props
+
+  const [fetchingSvc, setFetchingSvc] = useState(false)
 
   const fetchFields = async () => {
     const res = await fetch_(`fields`, 'GET', null, jwt)
@@ -50,8 +58,10 @@ function Fields(props) {
   useEffect(() => {fetchFields()}, [entry_id])
 
   const fetchService = async (service) => {
+    setFetchingSvc(true)
     await fetch_(`${service}/${entry_id}`, 'GET', null, jwt)
     await fetchEntry()
+    setFetchingSvc(false)
   }
 
   const changeFieldVal = (k, direct=false) => e => {
@@ -62,30 +72,24 @@ function Fields(props) {
   const renderSyncButton = (service) => {
     if (service === 'Custom') {return null}
     return <>
-      {entry_id ? (
-        <Button onClick={() => fetchService(service)}>
-          Sync {service}
-        </Button>
-      ) : (
-        <Alert variant='warning'>
-          Save this entry first, then come back to sync (bug)
-        </Alert>
-      )}
+      {!entry_id ? <Alert variant='warning'>Save this entry first, then come back to sync (bug)</Alert>
+      : fetchingSvc ? spinner
+      : <Button onClick={() => fetchService(service)}>Sync {service}</Button>
+      }
       <br/>
       <small>Not automatically synced, so be sure to sync before bed each day.</small>
     </>
   }
 
   const renderFields = (group, service) => (
-    <Form.Group controlId={`formFieldsFields`}>
-      <Row sm={4}>
+    <Table size='sm' borderless>
+      <tbody>
         {_.sortBy(group, 'id').map(f => (
-          <Col className='field-column' key={f.id}>
-            <Form.Row>
-              <Form.Label column="sm" lg={6}>
+          <tr key={f.id}>
+              <td>
                 <ReactMarkdown source={f.name} linkTarget='_blank' />
-              </Form.Label>
-              <Col lg={6}>
+              </td>
+              <td>
                 {f.type === 'fivestar' ? (
                   <ReactStars
                     value={fieldVals[f.id]}
@@ -102,13 +106,12 @@ function Fields(props) {
                     onChange={changeFieldVal(f.id)}
                   />
                 )}
-              </Col>
-            </Form.Row>
-          </Col>
+              </td>
+          </tr>
         ))}
-      </Row>
+      </tbody>
       {renderSyncButton(service)}
-    </Form.Group>
+    </Table>
   )
 
   const renderFieldGroups = () => {
@@ -235,9 +238,7 @@ export default function Entry({jwt}) {
 
       {submitting ? (
         <>
-        <Spinner animation="border" role="status">
-          <span className="sr-only">Loading...</span>
-        </Spinner>
+        {spinner}
         <p className='text-muted'>Generating summaries & sentiment</p>
         </>
       ) : (
