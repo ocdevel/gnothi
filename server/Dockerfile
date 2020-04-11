@@ -9,6 +9,11 @@ RUN apt-get update &&\
   echo "deb http://apt.postgresql.org/pub/repos/apt/ ${RELEASE}"-pgdg main | tee  /etc/apt/sources.list.d/pgdg.list &&\
   apt update && apt -y install postgresql-client-12
 
+# Install transformers & run some init tasks to download files
+RUN pip install transformers &&\
+  pip install torch==1.4.0+cpu torchvision==0.5.0+cpu -f https://download.pytorch.org/whl/torch_stable.html &&\
+  python -c "from transformers import pipeline;pipeline('summarization');pipeline('sentiment-analysis')"
+
 RUN apt-get install htop
 
 RUN pip install \
@@ -24,12 +29,7 @@ RUN pip install \
   requests \
   xgboost \
   sklearn \
-  transformers
-
-# Install transformers & run some init tasks to download files
-RUN pip install transformers &&\
-  pip install torch==1.4.0+cpu torchvision==0.5.0+cpu -f https://download.pytorch.org/whl/torch_stable.html &&\
-  python -c "from transformers import pipeline;pipeline('summarization');pipeline('sentiment-analysis')"
+  flask-apscheduler
 
 WORKDIR /app
 

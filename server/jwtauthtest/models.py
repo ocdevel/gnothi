@@ -27,6 +27,7 @@ sentimenter = pipeline("sentiment-analysis")
 def uuid_():
     return str(uuid4())
 
+
 class User(Base):
     __tablename__ = 'users'
 
@@ -207,14 +208,19 @@ class FieldEntry(Base):
 
     @staticmethod
     def get_today_entries(user_id, field_id=None):
+        return FieldEntry.get_day_entries(date.today(), user_id, field_id)
+
+    @staticmethod
+    def get_day_entries(day, user_id, field_id=None):
         q = FieldEntry.query\
             .filter(
                 FieldEntry.user_id == user_id,
-                func.DATE(FieldEntry.created_at) == date.today()
+                func.DATE(FieldEntry.created_at) == day
             )
         if field_id:
             q = q.filter(FieldEntry.field_id == field_id)
         return q
+
 
 
 class FamilyType(Base):

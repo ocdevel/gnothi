@@ -6,9 +6,12 @@ from jwtauthtest.models import User, Entry, Field, FieldEntry
 from passlib.hash import pbkdf2_sha256
 from flask import request, jsonify
 from jwtauthtest.utils import vars
+import requests
+from dateutil.parser import parse as dparse
 
 from xgboost import XGBRegressor
 import pandas as pd
+
 
 def useradd(username, password):
     db_session.add(User(username, pbkdf2_sha256.hash(password)))
@@ -137,29 +140,32 @@ def setup_habitica():
     return jsonify({'ok': True})
 
 
-import requests
-@app.route('/habitica/sync', methods=['POST'])
-@jwt_required()
-def get_habitica():
-    user = current_identity
-
+def sync_habitica_for(user):
     # https://habitica.com/apidoc/#api-Task-GetUserTasks
     app.logger.info("Calling Habitica")
-    r = requests.get(
+    headers = {
+        "Content-Type": "application/json",
+        "x-api-user": user.habitica_user_id,
+        "x-api-key": user.habitica_api_token,
+        "x-client": f"{vars.HABIT.USER}-{vars.HABIT.APP}"
+    }
+    tasks = requests.get(
         'https://habitica.com/api/v3/tasks/user',
-        headers={
-            "Content-Type": "application/json",
-            "x-api-user": user.habitica_user_id,
-            "x-api-key": user.habitica_api_token,
-            "x-client": f"{vars.HABIT.USER}-{vars.HABIT.APP}"
-        }
-    )
-    r = r.json()
+        headers=headers
+    ).json()['data']
+    huser = requests.get(
+        'https://habitica.com/api/v3/user?userFields=lastCron,needsCron',
+        headers=headers
+    ).json()['data']
+
+    lastCron = dparse(huser['lastCron']).date()
     app.logger.info("Habitica finished")
 
+    fes = FieldEntry.get_day_entries(lastCron, user.id).all()
+
     f_map = {f.service_id: f for f in user.fields}
-    fe_map = {fe.field_id: fe for fe in FieldEntry.get_today_entries(user.id).all()}
-    t_map = {task['id']: task for task in r['data']}
+    fe_map = {fe.field_id: fe for fe in fes}
+    t_map = {task['id']: task for task in tasks}
 
     # Remove Habitica-deleted tasks
     for f in user.fields:
@@ -170,7 +176,7 @@ def get_habitica():
             db_session.delete(f)
 
     # Add/update tasks from Habitica
-    for task in r['data']:
+    for task in tasks:
         # {id, text, type, value}
         # habit: {counterUp, counterDown}
         # daily:{checklist: [{completed}], completed, isDue}
@@ -214,12 +220,18 @@ def get_habitica():
         if fe:
             fe.value = value
         else:
-            fe = FieldEntry(field_id=f.id)
+            fe = FieldEntry(field_id=f.id, created_at=lastCron)
             user.field_entries.append(fe)
         db_session.commit()
         app.logger.info(task['text'] + " done")
 
     return jsonify({'ok': True})
+
+
+@app.route('/habitica/sync', methods=['POST'])
+@jwt_required()
+def sync_habitica():
+    sync_habitica_for(current_identity)
 
 
 @app.route('/influencers', methods=['GET'])
@@ -288,3 +300,21 @@ def influencers():
         imps = [float(x) for x in model.feature_importances_]
         targets[target] = dict(zip(cols, imps))
     return jsonify(targets)
+
+
+# https://github.com/viniciuschiele/flask-apscheduler/blob/master/examples/jobs.py
+from flask_apscheduler import APScheduler
+class Config(object):
+    SCHEDULER_API_ENABLED = True
+scheduler = APScheduler()
+# interval examples
+@scheduler.task('interval', id='do_job_1', seconds=60, misfire_grace_time=900)
+def job1():
+    with app.app_context():
+        print("Running cron")
+        for u in User.query.filter(User.habitica_user_id != None).all():
+            sync_habitica_for(u)
+
+app.config.from_object(Config())
+scheduler.init_app(app)
+scheduler.start()
