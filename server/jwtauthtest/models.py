@@ -2,6 +2,7 @@ import enum, pdb
 from datetime import date, datetime
 from dateutil import tz
 from jwtauthtest.database import Base
+from jwtauthtest import ml
 from sqlalchemy import \
     Column, \
     Integer, \
@@ -18,12 +19,7 @@ from sqlalchemy import \
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import UUID
 from uuid import uuid4
-from transformers import pipeline
 
-summarizer = pipeline("summarization")
-sentimenter = pipeline("sentiment-analysis")
-# summarizer = None
-# sentimenter = None
 
 def uuid_():
     return str(uuid4())
@@ -81,24 +77,10 @@ class Entry(Base):
 
     user_id = Column(UUID, ForeignKey('users.id'))
 
-    def gen_sentiment(self, text):
-        sentiments = sentimenter(text)
-        for s in sentiments:
-            # numpy can't serialize
-            s['score'] = float(s['score'])
-        return sentiments[0]['label']
-
-    def gen_summary(self, text, min_length=5, max_length=20):
-        if len(text) <= min_length:
-            return text
-        s = summarizer(text, min_length=min_length, max_length=max_length)
-        return s[0]['summary_text']
-
-
     def run_models(self):
-        self.title_summary = self.gen_summary(self.text, 5, 20)
-        self.text_summary = self.gen_summary(self.text, 32, 128)
-        self.sentiment = self.gen_sentiment(self.text)
+        self.title_summary = ml.summarize(self.text, 5, 20)
+        self.text_summary = ml.summarize(self.text, 32, 128)
+        self.sentiment = ml.sentiment(self.text)
 
 
     # TODO look into https://stackoverflow.com/questions/7102754/jsonify-a-sqlalchemy-result-set-in-flask

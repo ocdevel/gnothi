@@ -1,5 +1,7 @@
 FROM python
 
+WORKDIR /app
+
 # Install postgres-12 client
 # https://computingforgeeks.com/install-postgresql-11-on-ubuntu-18-04-ubuntu-16-04/
 RUN apt-get update &&\
@@ -14,7 +16,11 @@ RUN pip install transformers &&\
   pip install torch==1.4.0+cpu torchvision==0.5.0+cpu -f https://download.pytorch.org/whl/torch_stable.html &&\
   python -c "from transformers import pipeline;pipeline('summarization');pipeline('sentiment-analysis')"
 
-RUN apt-get install htop
+RUN apt-get install -y htop unzip wget default-jre
+
+RUN wget http://mallet.cs.umass.edu/dist/mallet-2.0.8.zip && unzip mallet-2.0.8.zip && rm mallet-2.0.8.zip
+
+RUN pip install spacy && python -m spacy download en
 
 RUN pip install \
   flask \
@@ -33,9 +39,9 @@ RUN pip install \
   gensim \
   nltk \
   beautifulsoup4 \
-  markdown
-
-WORKDIR /app
+  markdown \
+  python-box \
+  lemminflect
 
 #EXPOSE 8080
 

@@ -1,22 +1,40 @@
 import {Link, Route, Switch, useRouteMatch, Redirect} from "react-router-dom"
 import React, {useEffect, useState} from "react"
 import _ from 'lodash'
-import {fetch_} from './utils'
+import {fetch_, spinner} from './utils'
 import ReactMarkdown from "react-markdown";
 import {Table, Form, Button, Badge, Card} from 'react-bootstrap'
 
 function Themes({jwt}) {
   const [topics, setTopics] = useState({})
+  const [advanced, setAdvanced] = useState(false)
+  const [fetching, setFetching] = useState(false)
 
   const fetchTopics = async () => {
-    const res = await fetch_('gensim', 'GET', null, jwt)
+    setFetching(true)
+    let url = 'gensim'
+    if (advanced) {url += '?advanced=1'}
+    const res = await fetch_(url, 'GET', null, jwt)
     setTopics(res)
+    setFetching(false)
   }
 
-  useEffect(() => {fetchTopics()}, [])
+  useEffect(() => {fetchTopics()}, [advanced])
+
+  const changeAdvanced = e => setAdvanced(e.target.checked)
 
   return <>
     <h1>Themes</h1>
+    <Form.Group controlId="formAdvanced">
+      <Form.Check
+        type="checkbox"
+        label="More Accurate"
+        checked={advanced}
+        onChange={changeAdvanced}
+      />
+      <Form.Text>Uses more advanced algorithm which is more accurate, but MUCH slower</Form.Text>
+    </Form.Group>
+    {fetching && spinner}
     {_.map(topics, (words, topic)=>(
       <Card>
         <Card.Body>

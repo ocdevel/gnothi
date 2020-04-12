@@ -6,12 +6,9 @@ from jwtauthtest.models import User, Entry, Field, FieldEntry
 from passlib.hash import pbkdf2_sha256
 from flask import request, jsonify
 from jwtauthtest.utils import vars
+from jwtauthtest import ml
 import requests
 from dateutil.parser import parse as dparse
-
-from xgboost import XGBRegressor
-import pandas as pd
-import numpy as np
 
 
 def useradd(username, password):
@@ -242,138 +239,16 @@ def sync_habitica():
 @app.route('/influencers', methods=['GET'])
 @jwt_required()
 def influencers():
-    user = current_identity
-    with engine.connect() as conn:
-        fes = pd.read_sql("""
-        select  
-            fe.created_at::date, -- index 
-            fe.field_id, -- column
-            fe.value -- value
-        from field_entries fe
-        inner join fields f on f.id=fe.field_id
-        where fe.user_id=%(user_id)s
-            -- exclude these to improve model perf
-            -- TODO reconsider for past data
-            and f.excluded_at is null
-        order by fe.created_at asc
-        """, conn, params={'user_id': user.id})
-        # uuid as string
-        fes['field_id'] = fes.field_id.apply(str)
-
-        fs = pd.read_sql("""
-        select id, target, default_value, default_value_value
-        from fields
-        where user_id=%(user_id)s
-        """, conn, params={'user_id': user.id})
-        fs['id'] = fs.id.apply(str)
-
-    target_ids = fs[fs.target == True].id.values
-    fs = {str(r.id): r for i, r in fs.iterrows()}
-
-    # Easier pivot debugging
-    # fields['field_id'] =  fields.field_id.apply(lambda x: x[0:4])
-    fes = fes.pivot(index='created_at', columns='field_id', values='value')
-
-    # fes = fes.resample('D')
-    cols = fes.columns.tolist()
-
-    # TODO resample on Days
-    for fid in fes.columns:
-        dv = fs[fid].default_value
-        dvv = fs[fid].default_value_value
-        if not dv: continue
-        if dv == 'value':
-            if not dvv: continue
-            fes[fid] = fes[fid].fillna(dvv)
-        elif dv == 'ffill':
-            fes[fid] = fes[fid].fillna(method='ffill')\
-                .fillna(method='bfill')
-        elif dv == 'average':
-            fes[fid] = fes[fid].fillna(fes[fid].mean())
-
-    specific_target = request.args.get('target', None)
-    targets = {}
-    all_imps = []
-    for target in target_ids:
-        if specific_target and specific_target != target:
-            continue
-        X = fes.drop(columns=[target])
-        y = fes[target]
-        model = XGBRegressor()
-        # This part is important. Rather than say "what today predicts y" (not useful),
-        # or even "what history predicts y" (would be time-series models, which don't have feature_importances_)
-        # we can approximate it a rolling average of activity.
-        # TODO not sure which window fn to use: rolling|expanding|ewm?
-        # https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.rolling.html
-        # http://people.duke.edu/~ccc14/bios-823-2018/S18A_Time_Series_Manipulation_Smoothing.html#Window-functions
-        mult_day_avg = X.ewm(span=5).mean()
-        model.fit(mult_day_avg, y)
-        imps = [float(x) for x in model.feature_importances_]
-
-        # FIXME
-        # /xgboost/sklearn.py:695: RuntimeWarning: invalid value encountered in true_divide return all_features / all_features.sum()
-        # I think this is due to target having no different value, in which case
-        # just leave like this.
-        imps = [0. if np.isnan(imp) else imp for imp in imps]
-
-        # put target col back in
-        imps.insert(cols.index(target), 0.0)
-        dict_ = dict(zip(cols, imps))
-        all_imps.append(dict_)
-        targets[target] = dict_
-    all_imps = dict(pd.DataFrame(all_imps).mean())
+    targets, all_imps = ml.influencers(engine, current_identity.id, request.args.get('target', None))
     return jsonify({'overall': all_imps, 'per_target': targets})
 
-from gensim.utils import simple_preprocess
-from gensim.parsing.preprocessing import preprocess_string
-from gensim.corpora.dictionary import Dictionary
-from gensim.models import LdaModel
-from bs4 import BeautifulSoup
-from markdown import markdown
-from pprint import pprint
-import re
-
-def markdown_to_text(markdown_string):
-    """ Converts a markdown string to plaintext """
-
-    # md -> html -> text since BeautifulSoup can extract text cleanly
-    html = markdown(markdown_string)
-
-    # remove code snippets
-    html = re.sub(r'<pre>(.*?)</pre>', ' ', html)
-    html = re.sub(r'<code>(.*?)</code >', ' ', html)
-
-    # extract text
-    soup = BeautifulSoup(html, "html.parser")
-    text = ''.join(soup.findAll(text=True))
-
-    return text
 
 @app.route('/gensim', methods=['GET'])
 @jwt_required()
 def run_gensim():
-    user = current_identity
-
-    entries = [markdown_to_text(_.text) for _ in user.entries]
-    entries = [preprocess_string(_) for _ in entries]
-    # entries = [simple_preprocess(_, deacc=True) for _ in entries]
-    dictionary = Dictionary(entries)
-
-    # Create a corpus from a list of texts
-    common_corpus = [dictionary.doc2bow(text) for text in entries]
-
-    # figure this out later, just a quick idea
-    n_topics = math.ceil(len(entries)/10)
-    n_topics = max(min(15, n_topics), 5)
-    # Train the model on the corpus
-    lda = LdaModel(common_corpus, num_topics=n_topics)
-
-
-    topics = {}
-    for idx, topic in lda.show_topics(formatted=False, num_words=10):
-        topics[str(idx)] = [dictionary[int(w[0])] for w in topic]
-
-    return jsonify(topics)
+    advanced = request.args.get('advanced', False)
+    entries = [e.text for e in current_identity.entries]
+    return jsonify(ml.themes(entries, advanced=advanced))
 
 
 # https://github.com/viniciuschiele/flask-apscheduler/blob/master/examples/jobs.py
