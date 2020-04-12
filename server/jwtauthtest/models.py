@@ -1,5 +1,6 @@
 import enum, pdb
 from datetime import date, datetime
+from dateutil import tz
 from jwtauthtest.database import Base
 from sqlalchemy import \
     Column, \
@@ -208,10 +209,15 @@ class FieldEntry(Base):
 
     @staticmethod
     def get_today_entries(user_id, field_id=None):
-        return FieldEntry.get_day_entries(date.today(), user_id, field_id)
+        return FieldEntry.get_day_entries(datetime.now(), user_id, field_id)
 
     @staticmethod
     def get_day_entries(day, user_id, field_id=None):
+        # FIXME handle this automatically, or as user timzeone preference, or such
+        tz_ = tz.gettz('America/Los_Angeles')
+        day = day.astimezone(tz_)
+        day = day.date()
+
         q = FieldEntry.query\
             .filter(
                 FieldEntry.user_id == user_id,

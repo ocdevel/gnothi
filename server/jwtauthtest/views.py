@@ -162,7 +162,7 @@ def sync_habitica_for(user):
         headers=headers
     ).json()['data']
 
-    lastCron = dparse(huser['lastCron']).date()
+    lastCron = dparse(huser['lastCron'])
     app.logger.info("Habitica finished")
 
     fes = FieldEntry.get_day_entries(lastCron, user.id).all()
