@@ -111,27 +111,10 @@ from gensim.parsing import preprocessing as pp
 from gensim.corpora.dictionary import Dictionary
 from gensim.models import LdaModel
 from gensim.models.wrappers import LdaMallet
-from bs4 import BeautifulSoup
-from markdown import markdown
 import spacy
 import lemminflect
+from jwtauthtest.unmarkdown import unmark
 nlp = spacy.load('en_core_web_sm', disable=['parser', 'ner'])
-
-def markdown_to_text(markdown_string):
-    """ Converts a markdown string to plaintext """
-
-    # md -> html -> text since BeautifulSoup can extract text cleanly
-    html = markdown(markdown_string)
-
-    # remove code snippets
-    html = re.sub(r'<pre>(.*?)</pre>', ' ', html)
-    html = re.sub(r'<code>(.*?)</code >', ' ', html)
-
-    # extract text
-    soup = BeautifulSoup(html, "html.parser")
-    text = ''.join(soup.findAll(text=True))
-
-    return text
 
 
 def lemmas(txt):
@@ -152,7 +135,7 @@ def lemmas(txt):
 
 def themes(entries, advanced=False):
     entries = [
-        markdown_to_text(para)
+        unmark(para)
         for entry in entries
         for para in re.split('\n{2,}', entry)
     ]
