@@ -89,7 +89,7 @@ function App() {
         <Switch>
           <Route path="/j">
             <Journal jwt={jwt} />
-          </Route>wt={jwt} />
+          </Route>
           <Route path="/profile">
             <Profile jwt={jwt} />
           </Route>
