@@ -11,6 +11,7 @@ from dateutil.parser import parse as dparse
 
 from xgboost import XGBRegressor
 import pandas as pd
+import numpy as np
 
 
 def useradd(username, password):
@@ -141,6 +142,9 @@ def setup_habitica():
 
 
 def sync_habitica_for(user):
+    if not user.habitica_user_id:
+        return jsonify({'ok': False})
+
     # https://habitica.com/apidoc/#api-Task-GetUserTasks
     app.logger.info("Calling Habitica")
     headers = {
@@ -239,55 +243,60 @@ def sync_habitica():
 def influencers():
     user = current_identity
     with engine.connect() as conn:
-        df = pd.read_sql("""
-        select fe.value, 
-            fe.created_at::date, 
-            fe.field_id as fid, 
-            f.target
+        fes = pd.read_sql("""
+        select  
+            fe.created_at::date, -- index 
+            fe.field_id, -- column
+            fe.value -- value
         from field_entries fe
-        join fields f on f.id=fe.field_id
-        where f.user_id=%(user_id)s
+        inner join fields f on f.id=fe.field_id
+        where fe.user_id=%(user_id)s
             -- exclude these to improve model perf
             -- TODO reconsider for past data
             and f.excluded_at is null
         order by fe.created_at asc
         """, conn, params={'user_id': user.id})
+        # uuid as string
+        fes['field_id'] = fes.field_id.apply(str)
 
-        defaults = pd.read_sql("""
-        select id, default_value, default_value_value
+        fs = pd.read_sql("""
+        select id, target, default_value, default_value_value
         from fields
         where user_id=%(user_id)s
         """, conn, params={'user_id': user.id})
-        defaults = {str(r.id): r for i, r in defaults.iterrows()}
+        fs['id'] = fs.id.apply(str)
 
-    # uuid as string
-    df['fid'] = df.fid.apply(lambda x: str(x))
-    ## Easier debugging
-    # df['fid'] =  df.fid.apply(lambda x: x[0:4])
-    is_target = (df.target==True)
-    fields = ['value', 'created_at', 'fid']
-    X = df[~is_target][fields].pivot(index='created_at', columns='fid')
+    target_ids = fs[fs.target == True].id.values
+    fs = {str(r.id): r for i, r in fs.iterrows()}
+
+    # Easier pivot debugging
+    # fields['field_id'] =  fields.field_id.apply(lambda x: x[0:4])
+    fes = fes.pivot(index='created_at', columns='field_id', values='value')
+
+    # fes = fes.resample('D')
+    cols = fes.columns.tolist()
 
     # TODO resample on Days
-    for _, fid in X.columns:
-        dv, dvv = defaults[fid].default_value, defaults[fid].default_value_value
+    for fid in fes.columns:
+        dv = fs[fid].default_value
+        dvv = fs[fid].default_value_value
         if not dv: continue
         if dv == 'value':
             if not dvv: continue
-            X[fid] = X[fid].fillna(dvv)
+            fes[fid] = fes[fid].fillna(dvv)
         elif dv == 'ffill':
-            X[fid] = X[fid].fillna(method=X[fid].ffill())
+            fes[fid] = fes[fid].fillna(method=fes[fid].ffill())
         elif dv == 'average':
-            X[fid] = X[fid].fillna(X[fid].mean())
+            fes[fid] = fes[fid].fillna(fes[fid].mean())
 
-    Y = df[is_target][fields].set_index(['fid', 'created_at'])
-    cols = [c[1] for c in X.columns]
-
-    targets = {}
     specific_target = request.args.get('target', None)
-    for target, group in Y.groupby(level=0):
+    targets = {}
+    all_imps = []
+    for target in target_ids:
         if specific_target and specific_target != target:
             continue
+        X = fes.drop(columns=[target])
+        y = fes[target]
         model = XGBRegressor()
         # This part is important. Rather than say "what today predicts y" (not useful),
         # or even "what history predicts y" (would be time-series models, which don't have feature_importances_)
@@ -296,10 +305,20 @@ def influencers():
         # https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.rolling.html
         # http://people.duke.edu/~ccc14/bios-823-2018/S18A_Time_Series_Manipulation_Smoothing.html#Window-functions
         mult_day_avg = X.ewm(span=5).mean()
-        model.fit(mult_day_avg, group.value)
+        model.fit(mult_day_avg, y)
         imps = [float(x) for x in model.feature_importances_]
-        targets[target] = dict(zip(cols, imps))
-    return jsonify(targets)
+
+        # FIXME
+        # /xgboost/sklearn.py:695: RuntimeWarning: invalid value encountered in true_divide return all_features / all_features.sum()
+        imps = [0. if np.isnan(imp) else imp for imp in imps]
+
+        # put target col back in
+        imps.insert(cols.index(target), 0.0)
+        dict_ = dict(zip(cols, imps))
+        all_imps.append(dict_)
+        targets[target] = dict_
+    all_imps = dict(pd.DataFrame(all_imps).mean())
+    return jsonify({'overall': all_imps, 'per_target': targets})
 
 
 # https://github.com/viniciuschiele/flask-apscheduler/blob/master/examples/jobs.py
@@ -308,7 +327,7 @@ class Config(object):
     SCHEDULER_API_ENABLED = True
 scheduler = APScheduler()
 # interval examples
-@scheduler.task('interval', id='do_job_1', seconds=60, misfire_grace_time=900)
+@scheduler.task('interval', id='do_job_1', seconds=120, misfire_grace_time=900)
 def job1():
     with app.app_context():
         print("Running cron")

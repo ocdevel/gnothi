@@ -64,7 +64,7 @@ export default function Entries({jwt}) {
       style.marginRight = 5
       sentiment = (
         <OverlayTrigger
-          trigger="hover"
+          trigger={["hover", "focus"]}
           placement="right"
           overlay={sentimentTip}
         >
@@ -86,7 +86,7 @@ export default function Entries({jwt}) {
           <p>
             <span style={style}>{sentiment}</span>
             {e.text_summary === e.text ? textSummary : (
-              <OverlayTrigger overlay={summaryTip} trigger="hover">
+              <OverlayTrigger overlay={summaryTip} trigger={["hover","focus"]}>
                 {textSummary}
               </OverlayTrigger>
             )}

@@ -135,7 +135,8 @@ export default function FieldEntries({jwt}) {
     {showChart && (
       <ChartModal
         jwt={jwt}
-        field={fields[showChart]}
+        field={showChart === true ? null : fields[showChart]}
+        overall={showChart === true}
         close={onChartClose}
       />
     )}
@@ -179,5 +180,11 @@ export default function FieldEntries({jwt}) {
         </Accordion.Collapse>
       </Card>
     </Accordion>
+    <br/>
+    <Button
+      variant="outline-primary"
+      size="sm"
+      onClick={() => setShowChart(true)}
+    >Top Influencers</Button>
   </div>
 }
