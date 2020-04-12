@@ -36,7 +36,7 @@ function Themes({jwt}) {
     </Form.Group>
     {fetching && spinner}
     {_.map(topics, (words, topic)=>(
-      <Card>
+      <Card key={topic} className='bottom-margin'>
         <Card.Body>
           <Card.Title>Topic {topic}</Card.Title>
           {/*<Card.Subtitle className="mb-2 text-muted">Card Subtitle</Card.Subtitle>*/}

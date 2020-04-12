@@ -44,13 +44,6 @@ export default function Entries({jwt}) {
     history.push(p)
   }
 
-  const deleteEntry = async entry => {
-    if (window.confirm(`Delete "${entry.title}?"`)) {
-      await fetch_(`entries/${entry.id}`, 'DELETE', null, jwt)
-      fetchEntries()
-    }
-  }
-
   const renderEntry = e => {
     const gotoForm_ = () => gotoForm(e.id)
     const style = {}
@@ -91,10 +84,6 @@ export default function Entries({jwt}) {
               </OverlayTrigger>
             )}
           </p>
-        </td>
-        <td>
-          <a className='cursor-pointer' onClick={gotoForm_}>✏</a>&nbsp;
-          <a className='cursor-pointer' onClick={() => deleteEntry(e)}>⛔</a>
         </td>
       </tr>
     )

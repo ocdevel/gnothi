@@ -21,15 +21,15 @@ export default function Entry({jwt}) {
   const {entry_id} = useParams()
   const history = useHistory()
   const [showPreview, setShowPreview] = useState(false)
-  const [title, setTitle] = useState('')
+  const [form, setForm] = useState({})
+  const [entry, setEntry] = useState({})
   const [submitting, setSubmitting] = useState(false)
-  const [text, setText] = useState('')
 
   const fetchEntry = async () => {
     if (!entry_id) { return }
     const res = await fetch_(`entries/${entry_id}`, 'GET', null, jwt)
-    setTitle(res.title)
-    setText(res.text)
+    setForm({title: res.title, text: res.text})
+    setEntry(res)
   }
 
   useEffect(() => {
@@ -41,7 +41,7 @@ export default function Entry({jwt}) {
   const submit = async e => {
     e.preventDefault()
     setSubmitting(true)
-    const body = {title, text}
+    const body = {title: form.title, text: form.text}
     if (entry_id) {
       await fetch_(`entries/${entry_id}`, 'PUT', body, jwt)
     } else {
@@ -51,8 +51,14 @@ export default function Entry({jwt}) {
     history.push('/j')
   }
 
-  const changeTitle = e => setTitle(e.target.value)
-  const changeText = e => setText(e.target.value)
+  const deleteEntry = async () => {
+    if (window.confirm(`Delete "${entry.title}"`)) {
+      await fetch_(`entries/${entry_id}`, 'DELETE', null, jwt)
+      history.push('/j')
+    }
+  }
+
+  const changeForm = k => e => setForm({...form, [k]: e.target.value})
   const changeShowPreview = e => setShowPreview(e.target.checked)
 
   return (
@@ -62,8 +68,8 @@ export default function Entry({jwt}) {
         <Form.Control
           type="text"
           placeholder="Title"
-          value={title}
-          onChange={changeTitle}
+          value={form.title}
+          onChange={changeForm('title')}
         />
         <Form.Text>
           Leave blank to use a machine-generated title based on your entry.
@@ -79,14 +85,14 @@ export default function Entry({jwt}) {
               placeholder="Entry"
               required
               rows={10}
-              value={text}
-              onChange={changeText}
+              value={form.text}
+              onChange={changeForm('text')}
             />
           </Form.Group>
         </Col>
         {showPreview && (
           <Col className='markdown-render'>
-            <ReactMarkdown source={text} linkTarget='_blank' />
+            <ReactMarkdown source={form.text} linkTarget='_blank' />
           </Col>
         )}
       </Row>
@@ -115,7 +121,12 @@ export default function Entry({jwt}) {
         </Button>&nbsp;
         <Button variant='secondary' size="sm" onClick={cancel}>
           Cancel
-        </Button>
+        </Button>&nbsp;
+        {entry_id && <>
+          <Button variant='danger' size="sm" onClick={deleteEntry}>
+            Delete
+          </Button>
+        </>}
         </>
       )}
     </Form>
