@@ -37,6 +37,7 @@ export default function Entries({jwt}) {
 
   useEffect(() => {
     fetchEntries()
+    fetch_('import', 'GET', null, jwt)
   }, [])
 
   const gotoForm = (entry_id=null) => {

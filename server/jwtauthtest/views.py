@@ -1,4 +1,4 @@
-import pdb, logging
+import pdb, logging, math
 from flask_jwt import jwt_required, current_identity
 from jwtauthtest import app
 from jwtauthtest.database import db_session, engine
@@ -363,7 +363,6 @@ def run_gensim():
     common_corpus = [dictionary.doc2bow(text) for text in entries]
 
     # Train the model on the corpus
-    n_topics = min(len(entries), 10)  # figure this out later
     lda = LdaModel(common_corpus, num_topics=n_topics)
 
 
@@ -390,3 +389,26 @@ def job1():
 app.config.from_object(Config())
 scheduler.init_app(app)
 scheduler.start()
+
+
+
+import os
+
+@app.route('/import')
+@jwt_required()
+def import_():
+    # Set the directory you want to start from
+    root = './jwtauthtest/gnrl'
+    for _, _, files in os.walk(root):
+        for fname in files:
+            d = fname.replace('.md', '')
+            d = dparse(d)
+            with open(root + "/" + fname) as f:
+                text = f.read()
+            e = Entry(user_id=current_identity.id, created_at=d, text=text)
+            e.run_models()
+            db_session.add(e)
+            db_session.commit()
+    print('done')
+
+    return jsonify({'ok':1})
