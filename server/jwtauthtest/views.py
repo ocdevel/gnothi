@@ -236,6 +236,7 @@ def sync_habitica_for(user):
 @jwt_required()
 def sync_habitica():
     sync_habitica_for(current_identity)
+    return jsonify({'ok': True})
 
 
 @app.route('/influencers', methods=['GET'])
