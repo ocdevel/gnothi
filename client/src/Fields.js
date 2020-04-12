@@ -59,7 +59,7 @@ export default function Fields({jwt}) {
   }
 
   const renderSyncButton = (service) => {
-    if (service === 'custom') {return null}
+    if (!~['habitica'].indexOf(service)) {return null}
     if (fetchingSvc) {return spinner}
     return <>
       <Button onClick={() => fetchService(service)}>Sync</Button>
@@ -124,11 +124,23 @@ export default function Fields({jwt}) {
   const groups = [{
     service: 'custom',
     name: 'Fields',
-    fields: _(fields).filter(v => !v.service).sortBy('id').value()
+    fields: _(fields)
+      .filter(v => !v.service && !v.excluded_at)
+      .sortBy('id').value()
   }, {
     service: 'habitica',
     name: 'Habitica',
-    fields: _(fields).filter(v => v.service === 'habitica').sortBy('id').value()
+    fields: _(fields)
+      .filter(v => v.service === 'habitica' && !v.excluded_at)
+      .sortBy('id')
+      .value()
+  }, {
+    service: 'excluded',
+    name: 'Excluded',
+    fields: _(fields)
+      .filter(v => v.excluded_at)
+      .sortBy('id')
+      .value()
   }]
 
   return <div>

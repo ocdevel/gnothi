@@ -115,6 +115,8 @@ function Family({jwt}) {
               <option>Anxious attachment</option>
               <option>Abuse</option>
               <option>Bipolar</option>
+              <option>Deceased</option>
+              <option>Abandonment</option>
             </Form.Control>
           </Form.Group>
         </td>

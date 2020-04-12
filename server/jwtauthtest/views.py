@@ -362,13 +362,16 @@ def run_gensim():
     # Create a corpus from a list of texts
     common_corpus = [dictionary.doc2bow(text) for text in entries]
 
+    # figure this out later, just a quick idea
+    n_topics = math.ceil(len(entries)/10)
+    n_topics = max(min(15, n_topics), 5)
     # Train the model on the corpus
     lda = LdaModel(common_corpus, num_topics=n_topics)
 
 
     topics = {}
     for idx, topic in lda.show_topics(formatted=False, num_words=10):
-        topics[idx] = [dictionary[int(w[0])] for w in topic]
+        topics[str(idx)] = [dictionary[int(w[0])] for w in topic]
 
     return jsonify(topics)
 
@@ -379,7 +382,7 @@ class Config(object):
     SCHEDULER_API_ENABLED = True
 scheduler = APScheduler()
 # interval examples
-@scheduler.task('interval', id='do_job_1', seconds=120*60, misfire_grace_time=900)
+@scheduler.task('interval', id='do_job_1', seconds=60*60, misfire_grace_time=900)
 def job1():
     with app.app_context():
         print("Running cron")
@@ -389,26 +392,3 @@ def job1():
 app.config.from_object(Config())
 scheduler.init_app(app)
 scheduler.start()
-
-
-
-import os
-
-@app.route('/import')
-@jwt_required()
-def import_():
-    # Set the directory you want to start from
-    root = './jwtauthtest/gnrl'
-    for _, _, files in os.walk(root):
-        for fname in files:
-            d = fname.replace('.md', '')
-            d = dparse(d)
-            with open(root + "/" + fname) as f:
-                text = f.read()
-            e = Entry(user_id=current_identity.id, created_at=d, text=text)
-            e.run_models()
-            db_session.add(e)
-            db_session.commit()
-    print('done')
-
-    return jsonify({'ok':1})
