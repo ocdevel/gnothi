@@ -327,7 +327,7 @@ class Config(object):
     SCHEDULER_API_ENABLED = True
 scheduler = APScheduler()
 # interval examples
-@scheduler.task('interval', id='do_job_1', seconds=120, misfire_grace_time=900)
+@scheduler.task('interval', id='do_job_1', seconds=120*60, misfire_grace_time=900)
 def job1():
     with app.app_context():
         print("Running cron")
