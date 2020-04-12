@@ -59,10 +59,10 @@ export default function FieldEntries({jwt}) {
   }
 
   const renderSyncButton = (service) => {
-    if (service === 'Custom') {return null}
+    if (service === 'custom') {return null}
     if (fetchingSvc) {return spinner}
     return <>
-      <Button onClick={() => fetchService(service)}>Sync {service}</Button>
+      <Button onClick={() => fetchService(service)}>Sync</Button>
     </>
   }
 
@@ -77,7 +77,13 @@ export default function FieldEntries({jwt}) {
 
   const renderField = (f) => {
     return (
-      <tr key={f.id}>
+      <tr
+        key={f.id}
+        style={!f.excluded_at ? {} : {
+          textDecoration: 'line-through',
+          opacity: .5
+        }}
+      >
         <td
           onClick={() => setShowForm(f.id)}
           className='cursor-pointer'
@@ -113,16 +119,18 @@ export default function FieldEntries({jwt}) {
     )
   }
 
-  const groups = _.transform(fields, (m, v, k) => {
-    if (v.excluded_at) {return}
-    const svc = v.service || 'Custom';
-    (m[svc] || (m[svc] = [])).push(v)
-  }, {})
+  // see 3b92a768 for dynamic field groups. Revisit when more than one service,
+  // currently just habitica
+  const groups = [{
+    service: 'custom',
+    name: 'Fields',
+    fields: _(fields).filter(v => !v.service).sortBy('id').value()
+  }, {
+    service: 'habitica',
+    name: 'Habitica',
+    fields: _(fields).filter(v => v.service === 'habitica').sortBy('id').value()
+  }]
 
-  // FIXME how to handle this automatically?
-  if (!groups.habitica) {
-    groups.habitica = []
-  }
   return <div>
     {showForm && (
       <FieldModal
@@ -141,23 +149,23 @@ export default function FieldEntries({jwt}) {
       />
     )}
 
-    <Accordion defaultActiveKey="Custom">
-      {_.map(groups, (group, service)=> (
-        <Card key={service}>
+    <Accordion defaultActiveKey="custom">
+      {groups.map(g => (
+        <Card key={g.service}>
           <Card.Header>
-            <Accordion.Toggle as={Button} variant="link" eventKey={service}>
-              {service}
+            <Accordion.Toggle as={Button} variant="link" eventKey={g.service}>
+              {g.name}
             </Accordion.Toggle>
           </Card.Header>
-          <Accordion.Collapse eventKey={service}>
+          <Accordion.Collapse eventKey={g.service}>
             <Card.Body>
               <Table size='sm' borderless>
                 <tbody>
-                  {_.sortBy(group, 'id').map(renderField)}
+                  {g.fields.map(renderField)}
                 </tbody>
-                {renderSyncButton(service)}
+                {renderSyncButton(g.service)}
               </Table>
-              {service === 'Custom' && (
+              {g.service === 'custom' && (
                 <Button
                   variant="success"
                   onClick={() => setShowForm(true)}
@@ -165,20 +173,11 @@ export default function FieldEntries({jwt}) {
                   className='bottom-margin'
                 >New Field</Button>
               )}
+              {g.service === 'habitica' && <SetupHabitica jwt={jwt}/>}
             </Card.Body>
           </Accordion.Collapse>
         </Card>
       ))}
-      <Card>
-        <Card.Header>
-          <Accordion.Toggle as={Button} variant="link" eventKey='setupHabitica'>
-            Setup Habitica
-          </Accordion.Toggle>
-        </Card.Header>
-        <Accordion.Collapse eventKey='setupHabitica'>
-          <Card.Body><SetupHabitica jwt={jwt}/></Card.Body>
-        </Accordion.Collapse>
-      </Card>
     </Accordion>
     <br/>
     <Button

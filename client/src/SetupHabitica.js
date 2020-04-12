@@ -49,7 +49,7 @@ export default function Habitica({jwt}) {
         />
       </Form.Group>
 
-      <Button type='submit' variant='success'>
+      <Button type='submit' variant='primary'>
         Save
       </Button>
     </Form>
