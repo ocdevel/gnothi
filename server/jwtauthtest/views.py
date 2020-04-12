@@ -324,6 +324,55 @@ def influencers():
     all_imps = dict(pd.DataFrame(all_imps).mean())
     return jsonify({'overall': all_imps, 'per_target': targets})
 
+from gensim.utils import simple_preprocess
+from gensim.parsing.preprocessing import preprocess_string
+from gensim.corpora.dictionary import Dictionary
+from gensim.models import LdaModel
+from bs4 import BeautifulSoup
+from markdown import markdown
+from pprint import pprint
+import re
+
+def markdown_to_text(markdown_string):
+    """ Converts a markdown string to plaintext """
+
+    # md -> html -> text since BeautifulSoup can extract text cleanly
+    html = markdown(markdown_string)
+
+    # remove code snippets
+    html = re.sub(r'<pre>(.*?)</pre>', ' ', html)
+    html = re.sub(r'<code>(.*?)</code >', ' ', html)
+
+    # extract text
+    soup = BeautifulSoup(html, "html.parser")
+    text = ''.join(soup.findAll(text=True))
+
+    return text
+
+@app.route('/gensim', methods=['GET'])
+@jwt_required()
+def run_gensim():
+    user = current_identity
+
+    entries = [markdown_to_text(_.text) for _ in user.entries]
+    entries = [preprocess_string(_) for _ in entries]
+    # entries = [simple_preprocess(_, deacc=True) for _ in entries]
+    dictionary = Dictionary(entries)
+
+    # Create a corpus from a list of texts
+    common_corpus = [dictionary.doc2bow(text) for text in entries]
+
+    # Train the model on the corpus
+    n_topics = min(len(entries), 10)  # figure this out later
+    lda = LdaModel(common_corpus, num_topics=n_topics)
+
+
+    topics = {}
+    for idx, topic in lda.show_topics(formatted=False, num_words=10):
+        topics[idx] = [dictionary[int(w[0])] for w in topic]
+
+    return jsonify(topics)
+
 
 # https://github.com/viniciuschiele/flask-apscheduler/blob/master/examples/jobs.py
 from flask_apscheduler import APScheduler

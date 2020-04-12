@@ -29,7 +29,11 @@ RUN pip install \
   requests \
   xgboost \
   sklearn \
-  flask-apscheduler
+  flask-apscheduler \
+  gensim \
+  nltk \
+  beautifulsoup4 \
+  markdown
 
 WORKDIR /app
 

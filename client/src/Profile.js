@@ -3,10 +3,32 @@ import React, {useEffect, useState} from "react"
 import _ from 'lodash'
 import {fetch_} from './utils'
 import ReactMarkdown from "react-markdown";
-import {Table, Form, Button, Badge} from 'react-bootstrap'
+import {Table, Form, Button, Badge, Card} from 'react-bootstrap'
 
 function Themes({jwt}) {
-  return <h1>Themes</h1>
+  const [topics, setTopics] = useState({})
+
+  const fetchTopics = async () => {
+    const res = await fetch_('gensim', 'GET', null, jwt)
+    setTopics(res)
+  }
+
+  useEffect(() => {fetchTopics()}, [])
+
+  return <>
+    <h1>Themes</h1>
+    {_.map(topics, (words, topic)=>(
+      <Card>
+        <Card.Body>
+          <Card.Title>Topic {topic}</Card.Title>
+          {/*<Card.Subtitle className="mb-2 text-muted">Card Subtitle</Card.Subtitle>*/}
+          <Card.Text>
+            {words.join(', ')}
+          </Card.Text>
+        </Card.Body>
+      </Card>
+    ))}
+  </>
 }
 
 function Family({jwt}) {
@@ -19,7 +41,6 @@ function Family({jwt}) {
 
   const addFamily = e => {
     e.preventDefault();
-    debugger
     family.push(form)
     setFamily(family)
     setForm({name: '', type: 'Self'})
