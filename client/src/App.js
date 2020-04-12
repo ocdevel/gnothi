@@ -17,8 +17,7 @@ import {
 } from "react-router-dom";
 import Auth from './Auth'
 import Journal from './Journal'
-import Family from './Family'
-import Reports from './Reports'
+import Profile from './Profile'
 import {fetch_} from "./utils";
 
 function App() {
@@ -50,17 +49,20 @@ function App() {
           <LinkContainer exact to="/j">
             <Nav.Link>Journal</Nav.Link>
           </LinkContainer>
-          <NavDropdown title="Reports" id="basic-nav-dropdown">
-            <LinkContainer to="/reports/themes">
+          <NavDropdown title="Profile" id="basic-nav-dropdown">
+            <LinkContainer to="/profile/sharing">
+              <NavDropdown.Item>Sharing</NavDropdown.Item>
+            </LinkContainer>
+            <LinkContainer to="/profile/family">
+              <NavDropdown.Item>Family</NavDropdown.Item>
+            </LinkContainer>
+            <LinkContainer to="/profile/themes">
               <NavDropdown.Item>Themes</NavDropdown.Item>
             </LinkContainer>
-            <LinkContainer to="/reports/summaries">
-              <NavDropdown.Item>Summaries</NavDropdown.Item>
-            </LinkContainer>
-            <LinkContainer to="/reports/association">
+            <LinkContainer to="/profile/association">
               <NavDropdown.Item>Free-word Association</NavDropdown.Item>
             </LinkContainer>
-            <LinkContainer to="/reports/resources">
+            <LinkContainer to="/profile/resources">
               <NavDropdown.Item>Resources</NavDropdown.Item>
             </LinkContainer>
           </NavDropdown>
@@ -87,12 +89,9 @@ function App() {
         <Switch>
           <Route path="/j">
             <Journal jwt={jwt} />
-          </Route>
-          <Route path="/family">
-            <Family jwt={jwt} />
-          </Route>
-          <Route path="/reports">
-            <Reports jwt={jwt} />
+          </Route>wt={jwt} />
+          <Route path="/profile">
+            <Profile jwt={jwt} />
           </Route>
           <Redirect from="/" to="/j" />
         </Switch>

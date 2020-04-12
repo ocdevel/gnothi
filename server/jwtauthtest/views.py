@@ -286,7 +286,8 @@ def influencers():
             if not dvv: continue
             fes[fid] = fes[fid].fillna(dvv)
         elif dv == 'ffill':
-            fes[fid] = fes[fid].fillna(method=fes[fid].ffill())
+            fes[fid] = fes[fid].fillna(method='ffill')\
+                .fillna(method='bfill')
         elif dv == 'average':
             fes[fid] = fes[fid].fillna(fes[fid].mean())
 
@@ -311,6 +312,8 @@ def influencers():
 
         # FIXME
         # /xgboost/sklearn.py:695: RuntimeWarning: invalid value encountered in true_divide return all_features / all_features.sum()
+        # I think this is due to target having no different value, in which case
+        # just leave like this.
         imps = [0. if np.isnan(imp) else imp for imp in imps]
 
         # put target col back in
