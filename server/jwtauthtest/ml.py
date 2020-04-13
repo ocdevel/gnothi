@@ -156,7 +156,7 @@ def themes(entries, advanced=False):
     common_corpus = [dictionary.doc2bow(text) for text in entries]
 
     # figure this out later, just a quick idea
-    n_topics = math.ceil(len(entries)/10)
+    n_topics = math.ceil(len(entries)/20)
     n_topics = max(min(15, n_topics), 5)
 
     topics = {}

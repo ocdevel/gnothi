@@ -11,9 +11,6 @@ export default function Journal({jwt}) {
   return (
     <div>
       <Row>
-        <Col lg={3}>
-          <Fields jwt={jwt} />
-        </Col>
         <Col>
           <Switch>
             <Route path={`${match.url}/entry/:entry_id`}>
@@ -26,7 +23,10 @@ export default function Journal({jwt}) {
               <Entries jwt={jwt} />
             </Route>
           </Switch>
-          </Col>
+        </Col>
+        <Col lg={3}>
+          <Fields jwt={jwt} />
+        </Col>
       </Row>
     </div>
   )

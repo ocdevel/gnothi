@@ -91,6 +91,7 @@ function Family({jwt}) {
           value={form.type}
         >
           <option>Self</option>
+          <option>Partner</option>
           <option>Mother</option>
           <option>Father</option>
           <option>Brother</option>

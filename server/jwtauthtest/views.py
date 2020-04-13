@@ -139,9 +139,6 @@ def setup_habitica():
 
 
 def sync_habitica_for(user):
-    if not user.habitica_user_id:
-        return jsonify({'ok': False})
-
     # https://habitica.com/apidoc/#api-Task-GetUserTasks
     app.logger.info("Calling Habitica")
     headers = {
@@ -226,13 +223,14 @@ def sync_habitica_for(user):
         db_session.commit()
         app.logger.info(task['text'] + " done")
 
-    return jsonify({'ok': True})
-
 
 @app.route('/habitica/sync', methods=['POST'])
 @jwt_required()
 def sync_habitica():
-    sync_habitica_for(current_identity)
+    user = current_identity
+    if not user.habitica_user_id:
+        return jsonify({'ok': False})
+    sync_habitica_for(user)
     return jsonify({'ok': True})
 
 

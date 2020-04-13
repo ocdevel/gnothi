@@ -109,7 +109,7 @@ export default function Fields({jwt}) {
           )}
         </td>
         <td>
-          ~{f.avg.toFixed(1)}
+          ~{f.avg && f.avg.toFixed(1)}
           <a
             onClick={() => setShowChart(f.id)}
             className='cursor-pointer'
