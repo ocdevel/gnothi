@@ -21,7 +21,7 @@ export default function Entry({jwt}) {
   const {entry_id} = useParams()
   const history = useHistory()
   const [showPreview, setShowPreview] = useState(false)
-  const [form, setForm] = useState({})
+  const [form, setForm] = useState({title: '', text: ''})
   const [entry, setEntry] = useState({})
   const [submitting, setSubmitting] = useState(false)
 
