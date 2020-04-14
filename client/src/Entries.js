@@ -5,9 +5,12 @@ import {
   Button,
   Table,
   Popover,
-  OverlayTrigger
+  OverlayTrigger,
+  Tabs,
+  Tab
 } from "react-bootstrap"
 import moment from "moment"
+import Themes from './Themes'
 
 const sentimentTip = (
   <Popover>
@@ -27,6 +30,7 @@ const summaryTip = (
 
 export default function Entries({jwt}) {
   const [entries, setEntries] = useState([])
+  const [tab, setTab] = useState('Entries');
   let history = useHistory()
   let match = useRouteMatch()
 
@@ -92,16 +96,29 @@ export default function Entries({jwt}) {
   return (
     <div>
       <Button
+        style={{float: 'right'}}
         variant="success"
         size='lg'
         className='bottom-margin'
         onClick={() => gotoForm()}
       >New Entry</Button>
-      <Table>
-        <tbody>
-          {entries.map(renderEntry)}
-        </tbody>
-      </Table>
+
+      <Tabs
+        variant='pills'
+        activeKey={tab}
+        onSelect={(k) => setTab(k)}
+      >
+        <Tab eventKey="Entries" title="Entries">
+          <Table>
+            <tbody>
+              {entries.map(renderEntry)}
+            </tbody>
+          </Table>
+        </Tab>
+        <Tab eventKey="Themes" title="Themes">
+          <Themes jwt={jwt} />
+        </Tab>
+      </Tabs>
     </div>
   )
 }

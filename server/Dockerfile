@@ -19,7 +19,7 @@ RUN pip install transformers &&\
 
 RUN apt-get install -y htop unzip wget default-jre
 
-RUN wget http://mallet.cs.umass.edu/dist/mallet-2.0.8.zip && unzip mallet-2.0.8.zip && rm mallet-2.0.8.zip
+RUN wget http://mallet.cs.umass.edu/dist/mallet-2.0.8.zip && unzip mallet-2.0.8.zip -d /app
 
 RUN pip install \
   flask \

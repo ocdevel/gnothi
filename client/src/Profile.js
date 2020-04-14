@@ -5,50 +5,6 @@ import {fetch_, spinner} from './utils'
 import ReactMarkdown from "react-markdown";
 import {Table, Form, Button, Badge, Card} from 'react-bootstrap'
 
-function Themes({jwt}) {
-  const [topics, setTopics] = useState({})
-  const [advanced, setAdvanced] = useState(false)
-  const [fetching, setFetching] = useState(false)
-
-  const fetchTopics = async () => {
-    setFetching(true)
-    let url = 'gensim'
-    if (advanced) {url += '?advanced=1'}
-    const res = await fetch_(url, 'GET', null, jwt)
-    setTopics(res)
-    setFetching(false)
-  }
-
-  useEffect(() => {fetchTopics()}, [advanced])
-
-  const changeAdvanced = e => setAdvanced(e.target.checked)
-
-  return <>
-    <h1>Themes</h1>
-    <Form.Group controlId="formAdvanced">
-      <Form.Check
-        type="checkbox"
-        label="More Accurate"
-        checked={advanced}
-        onChange={changeAdvanced}
-      />
-      <Form.Text>Uses more advanced algorithm which is more accurate, but MUCH slower</Form.Text>
-    </Form.Group>
-    {fetching && spinner}
-    {_.map(topics, (words, topic)=>(
-      <Card key={topic} className='bottom-margin'>
-        <Card.Body>
-          <Card.Title>Topic {topic}</Card.Title>
-          {/*<Card.Subtitle className="mb-2 text-muted">Card Subtitle</Card.Subtitle>*/}
-          <Card.Text>
-            {words.join(', ')}
-          </Card.Text>
-        </Card.Body>
-      </Card>
-    ))}
-  </>
-}
-
 function Family({jwt}) {
   const [form, setForm] = useState({})
   const [family, setFamily] = useState([
@@ -191,19 +147,16 @@ export default function Profile({jwt}) {
 
   return (
     <Switch>
-      <Route path={`${match.url}/themes`}>
-        <Themes jwt={jwt} />
+      <Route path={`${match.url}/sharing`}>
+        <Sharing jwt={jwt} />
       </Route>
       <Route path={`${match.url}/family`}>
         <Family jwt={jwt} />
       </Route>
-      <Route path={`${match.url}/sharing`}>
-        <Sharing jwt={jwt} />
-      </Route>
       <Route path={`${match.url}/resources`}>
         <Resources jwt={jwt} />
       </Route>
-      <Redirect from={match.url} to={`${match.url}/themes`} />
+      <Redirect from={match.url} to={`${match.url}/sharing`} />
     </Switch>
   )
 }

@@ -56,9 +56,6 @@ function App() {
             <LinkContainer to="/profile/family">
               <NavDropdown.Item>Family</NavDropdown.Item>
             </LinkContainer>
-            <LinkContainer to="/profile/themes">
-              <NavDropdown.Item>Themes</NavDropdown.Item>
-            </LinkContainer>
             <LinkContainer to="/profile/resources">
               <NavDropdown.Item>Resources</NavDropdown.Item>
             </LinkContainer>
