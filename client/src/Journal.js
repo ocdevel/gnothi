@@ -2,6 +2,7 @@ import {Link, Route, Switch, useRouteMatch} from "react-router-dom"
 import Entries from "./Entries"
 import Entry from "./Entry"
 import Fields from './Fields'
+import Query from './Query'
 import React from "react"
 import {Col, Row} from 'react-bootstrap'
 
@@ -26,6 +27,8 @@ export default function Journal({jwt}) {
         </Col>
         <Col lg={3}>
           <Fields jwt={jwt} />
+          <hr />
+          <Query jwt={jwt} />
         </Col>
       </Row>
     </div>

@@ -181,9 +181,6 @@ function Sharing({jwt}) {
   </div>
 }
 
-function Association({jwt}) {
-  return <h1>Association</h1>
-}
 
 function Resources({jwt}) {
   return <h1>Resources</h1>
@@ -202,9 +199,6 @@ export default function Profile({jwt}) {
       </Route>
       <Route path={`${match.url}/sharing`}>
         <Sharing jwt={jwt} />
-      </Route>
-      <Route path={`${match.url}/association`}>
-        <Association jwt={jwt} />
       </Route>
       <Route path={`${match.url}/resources`}>
         <Resources jwt={jwt} />

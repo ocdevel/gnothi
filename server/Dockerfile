@@ -12,15 +12,14 @@ RUN apt-get update &&\
   apt update && apt -y install postgresql-client-12
 
 # Install transformers & run some init tasks to download files
+RUN pip install spacy stfy && python -m spacy download en
 RUN pip install transformers &&\
   pip install torch==1.4.0+cpu torchvision==0.5.0+cpu -f https://download.pytorch.org/whl/torch_stable.html &&\
-  python -c "from transformers import pipeline;pipeline('summarization');pipeline('sentiment-analysis')"
+  python -c "from transformers import pipeline;pipeline('summarization');pipeline('sentiment-analysis');pipeline('question-answering')"
 
 RUN apt-get install -y htop unzip wget default-jre
 
 RUN wget http://mallet.cs.umass.edu/dist/mallet-2.0.8.zip && unzip mallet-2.0.8.zip && rm mallet-2.0.8.zip
-
-RUN pip install spacy && python -m spacy download en
 
 RUN pip install \
   flask \

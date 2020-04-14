@@ -249,6 +249,15 @@ def run_gensim():
     return jsonify(ml.themes(entries, advanced=advanced))
 
 
+@app.route('/query', methods=['POST'])
+@jwt_required()
+def query():
+    question = request.get_json()['query']
+    entries = [e.text for e in current_identity.entries]
+    res = ml.query(question, entries)
+    return jsonify(res)
+
+
 # https://github.com/viniciuschiele/flask-apscheduler/blob/master/examples/jobs.py
 from flask_apscheduler import APScheduler
 class Config(object):

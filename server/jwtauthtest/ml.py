@@ -9,7 +9,8 @@ THREADS = cpu_count()
 
 cache = Box({
     'summarizer': None,
-    'sentimenter': None
+    'sentimenter': None,
+    'qa': None
 })
 
 
@@ -208,3 +209,21 @@ def sentiment(text):
         s['score'] = float(s['score'])
     print(sentiments)
     return sentiments[0]['label']
+
+
+def query(question, entries):
+    global cache
+    if not cache.qa:
+        cache['qa'] = pipeline("question-answering")
+
+    context = ' '.join([unmark(e) for e in entries])
+    answer = cache.qa(question=question, context=context)
+
+    # {'score': 0.622232091629833, 'start': 34, 'end': 96, 'answer': 'the task of extracting an answer from a text given a question.'}
+    # {'score': 0.5115299158662765, 'start': 147, 'end': 161, 'answer': 'SQuAD dataset,'}
+    # answer = '\n\n'.join([
+    #     context[a['start']:a['end']] + a['answer']
+    #     for a in answer
+    # ])
+
+    return answer['answer']
