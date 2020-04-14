@@ -173,12 +173,16 @@ def themes(entries, advanced=False):
             id2word=dictionary,
             workers=THREADS
         )
-        for idx, topic in lda.show_topics(formatted=False, num_words=10):
-            topics[str(idx)] = [w[0] for w in topic]
     else:
         lda = LdaModel(common_corpus, num_topics=n_topics)
-        for idx, topic in lda.show_topics(formatted=False, num_words=10):
-            topics[str(idx)] = [dictionary[int(w[0])] for w in topic]
+
+    for idx, topic in lda.show_topics(formatted=False, num_words=10):
+        terms = [
+            w[0] if advanced else dictionary[int(w[0])]
+            for w in topic
+        ]
+        sent = sentiment(' '.join(terms))
+        topics[str(idx)] = {'terms': terms, 'sentiment': sent}
 
     return topics
 

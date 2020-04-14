@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from "react";
-import {fetch_, spinner} from "./utils";
+import {fetch_, sent2face, spinner} from "./utils";
 import {Card, Form} from "react-bootstrap";
 import _ from "lodash";
 
@@ -33,13 +33,14 @@ export default function Themes({jwt}) {
       <Form.Text>Uses more advanced algorithm which is more accurate, but MUCH slower</Form.Text>
     </Form.Group>
     {fetching && spinner}
-    {_.map(topics, (words, topic)=>(
+    {_.map(topics, (obj, topic)=>(
       <Card key={topic} className='bottom-margin'>
         <Card.Body>
           <Card.Title>Topic {topic}</Card.Title>
           {/*<Card.Subtitle className="mb-2 text-muted">Card Subtitle</Card.Subtitle>*/}
           <Card.Text>
-            {words.join(', ')}
+            {sent2face(obj.sentiment)}
+            {obj.terms.join(', ')}
           </Card.Text>
         </Card.Body>
       </Card>
