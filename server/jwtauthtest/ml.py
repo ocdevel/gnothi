@@ -287,17 +287,54 @@ def resources(entries, logger=None):
             lda, corpus, dictionary, books = pickle.load(pkl)
     else:
         logger.info("Fetching books")
+
         with book_engine.connect() as conn:
-            # Those MD5s: UnicodeDecodeError: 'charmap' codec can't decode byte 0x9d in position 636: character maps to <undefined>
             sql = """
-               select u.Title, u.Author, d.descr
-               from updated u 
-               join description d on d.md5=u.MD5
-               where u.Topic=198 and u.Language='English'
-                   and (length(d.descr) + length(u.Title)) > 200
-                   and u.MD5 not in ('96b2d80d4c9ccdca9a2c828f784adcfd', 'f2d6bdc57b366f14b3ae4d664107f0a6')
-               """
+            -- select u.ID, u.MD5
+            select u.Title, 
+                u.Author, 
+                d.descr,
+                t.topic_descr
+            from updated u
+                inner join description d on d.md5=u.MD5
+                inner join topics t on u.Topic=t.topic_id
+                    and t.lang='en'
+                    and t.topic_descr regexp 'psychology|self-help|therapy'
+            where u.Language = 'English'
+                and title not regexp 'sams|teach yourself'  -- comes from self-help; most are tech, figure this out
+                and (length(d.descr) + length(u.Title)) > 200
+                and u.MD5 not in (
+                    '96b2d80d4c9ccdca9a2c828f784adcfd',
+                    'f2d6bdc57b366f14b3ae4d664107f0a6',
+                    'b5acb277ad50a6585bc8b45e8c0bce4b',
+                    '3099eb8029a990cf0f9506fe04af4e77',
+                    '4a0178fdc4a9c46cf02fe59d79b19127',
+                    '30b71108a8636e1128602fa5a183f68d',
+                    '20e320bab753680cbfd7580c0cbd2709',
+                    '3204c90e2b8168f082a93653cbe00b20',
+                    '28f89c1cff1b1d696b6667d59d4c756d'
+                )
+            """
+
+            # Those MD5s: UnicodeDecodeError: 'charmap' codec can't decode byte 0x9d in position 636: character maps to <undefined>
+            # -- and d.descr not rlike '[^\x00-\x7F]'
+            # for row in conn.execute(sql):
+            #     sql = f"""
+            #     select u.MD5, u.Title, u.Author, d.descr, t.topic_descr
+            #     from updated u
+            #         inner join description d on d.md5=u.MD5
+            #         inner join topics t on u.Topic=t.topic_id
+            #     where u.ID={row.ID}
+            #     """
+            #     try:
+            #         x = conn.execute(sql).fetchone()
+            #     except:
+            #         logger.info(row.MD5)
+
             books = pd.read_sql(sql, conn)
+            books = books.drop_duplicates(['Title', 'Author'])
+
+
 
         logger.info("Removing HTML")
         broken = '(\?\?\?|\#\#\#)'  # russian / other FIXME better way to handle
@@ -316,10 +353,12 @@ def resources(entries, logger=None):
     texts_user, _, _ = entries_to_data(e_user, propn=False)
     corpus = [dictionary.doc2bow(e) for e in texts_user] + corpus
 
+    user_fillers = ['' for _ in e_user]
     rows = pd.DataFrame({
         'text': e_user + books.descr.tolist(),
-        'title': ['' for _ in e_user] + books.Title.tolist(),
-        'author': ['' for _ in e_user] + books.Author.tolist()
+        'title': user_fillers + books.Title.tolist(),
+        'author': user_fillers + books.Author.tolist(),
+        'topic': user_fillers + books.topic_descr.tolist()
     })
 
     logger.info("Finding similars")
@@ -341,5 +380,5 @@ def resources(entries, logger=None):
     rows = rows.iloc[len(e_user):].copy()
 
     # sort by similar, take k
-    recs = rows.sort_values(by='sim_prod').iloc[:30][['title', 'author', 'text']]
+    recs = rows.sort_values(by='sim_prod').iloc[:30][['title', 'author', 'text', 'topic']]
     return [x for x in recs.T.to_dict().values()]

@@ -165,12 +165,14 @@ function Resources({jwt}) {
           <th>Author</th>
           <th>Title</th>
           <th>Description</th>
+          <th>Topic</th>
         </thead>
         <tbody>
           {books.map(b => <tr>
             <td>{b.author}</td>
             <td>{b.title}</td>
             <td>{b.text}</td>
+            <td>{b.topic}</td>
           </tr>)}
         </tbody>
       </Table>
