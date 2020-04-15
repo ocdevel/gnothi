@@ -126,11 +126,11 @@ def entries_to_paras(entries):
     ]
 
 
-def prep_lda(entries, advanced=False, propn=True):
+def entries_to_data(entries, propn=True):
     def lemmas(txt):
         if not txt: return txt
 
-        postags = ['NOUN', 'ADJ', 'VERB', 'ADV']  # 'X'?
+        postags = ['NOUN', 'ADJ', 'VERB', 'ADV', 'X']
         if propn: postags.append('PROPN')
 
         tokens = []
@@ -155,14 +155,19 @@ def prep_lda(entries, advanced=False, propn=True):
         lambda x: pp.strip_short(x, 2),
         lemmas
     ]
-    entries = [pp.preprocess_string(e, filters=filters) for e in entries]
-    dictionary = Dictionary(entries)
+    texts = [pp.preprocess_string(e, filters=filters) for e in entries]
+    dictionary = Dictionary(texts)
 
     # Create a corpus from a list of texts
-    common_corpus = [dictionary.doc2bow(text) for text in entries]
+    corpus = [dictionary.doc2bow(text) for text in texts]
+
+    return texts, corpus, dictionary
+
+
+def run_lda(corpus, dictionary, advanced=False):
 
     # figure this out later, just a quick idea
-    n_topics = math.ceil(len(entries)/20)
+    n_topics = math.ceil(len(corpus)/20)
     n_topics = max(min(15, n_topics), 5)
 
     # Train the model on the corpus
@@ -171,19 +176,21 @@ def prep_lda(entries, advanced=False, propn=True):
         mallet_path = os.environ['MALLET_HOME'] + '/bin/mallet'  # update this path
         lda = LdaMallet(
             mallet_path,
-            corpus=common_corpus,
+            corpus=corpus,
             num_topics=n_topics,
             id2word=dictionary,
             workers=THREADS
         )
     else:
-        lda = LdaModel(common_corpus, num_topics=n_topics)
+        lda = LdaModel(corpus, num_topics=n_topics)
 
-    return lda, common_corpus, dictionary
+    return lda
+
 
 def themes(entries, advanced=False):
     entries = entries_to_paras(entries)
-    lda, _, dictionary = prep_lda(entries, advanced=advanced)
+    _, corpus, dictionary = entries_to_data(entries)
+    lda = run_lda(corpus, dictionary, advanced=advanced)
     topics = {}
     for idx, topic in lda.show_topics(formatted=False, num_words=10):
         terms = [
@@ -248,7 +255,9 @@ Resources
 
 from scipy.stats import entropy
 from bs4 import BeautifulSoup
-
+import pickle
+from sqlalchemy import create_engine
+book_engine = create_engine('mysql://root:mypassword@mysqldb/libgen')
 
 def jensen_shannon(query, matrix):
     """
@@ -265,46 +274,53 @@ def jensen_shannon(query, matrix):
 
 
 def resources(entries, logger=None):
-    from sqlalchemy import create_engine
-    engine = create_engine('mysql://root:mypassword@mysqldb/libgen')
+    e_user = entries_to_paras(entries)
 
     logger.info("Fetching books")
-    with engine.connect() as conn:
+    with book_engine.connect() as conn:
         # Those MD5s: UnicodeDecodeError: 'charmap' codec can't decode byte 0x9d in position 636: character maps to <undefined>
         sql = """
         select u.Title, u.Author, d.descr
         from updated u 
         join description d on d.md5=u.MD5
         where u.Topic=198 and u.Language='English'
-            and length(d.descr) > 150
+            and (length(d.descr) + length(u.Title)) > 200
             and u.MD5 not in ('96b2d80d4c9ccdca9a2c828f784adcfd', 'f2d6bdc57b366f14b3ae4d664107f0a6')
         """
         books = pd.read_sql(sql, conn)
 
-    entries = entries_to_paras(entries)
-
     logger.info("Removing HTML")
-    russian = '\?\?\?'  # russian. FIXME better way to handle
-    books = books[ ~(books.Title + books.descr).str.contains(russian) ]
-    books['clean'] = [
-        book.Title + BeautifulSoup(book.descr, "lxml").text
-        for i, book in books.iterrows()
-    ]
+    broken = '(\?\?\?|\#\#\#)'  # russian / other FIXME better way to handle
+    books = books[ ~(books.Title + books.descr).str.contains(broken) ]
+    books['descr'] = books.descr.apply(lambda x: BeautifulSoup(x, "lxml").text)
+    books['clean'] = books.Title + books.descr
+    e_books = books.clean.tolist()
 
-    entries_ = entries + books.descr.tolist()
-    logger.info(f"Running LDA on {len(entries_)} entries")
-    lda, corpus, dictionary = prep_lda(entries_, advanced=True, propn=False)
+    path_ = 'tmp/libgen.pkl'
+    if os.path.exists(path_):
+        logger.info("Loading LDA")
+        with open(path_, 'rb') as pkl:
+            lda, corpus, dictionary = pickle.load(pkl)
+    else:
+        logger.info(f"Running LDA on {len(e_books)} entries")
+        _, corpus, dictionary = entries_to_data(e_books, propn=False)
+        lda = run_lda(corpus, dictionary, advanced=True)
+        with open(path_, 'wb') as pkl:
+            pickle.dump([lda, corpus, dictionary], pkl)
+
+    texts_user, _, _ = entries_to_data(e_user, propn=False)
+    corpus = [dictionary.doc2bow(e) for e in texts_user] + corpus
+
     rows = pd.DataFrame({
-        'text': entries_,
-        'title': ['' for _ in entries] + books.Title.tolist(),
-        'author': ['' for _ in entries] + books.Author.tolist()
+        'text': e_user + e_books,
+        'title': ['' for _ in e_user] + books.Title.tolist(),
+        'author': ['' for _ in e_user] + books.Author.tolist()
     })
 
     logger.info("Finding similars")
-    vecs = lda[corpus]
     doc_topic_dist = np.array([
         [tup[1] for tup in lst]
-        for lst in vecs
+        for lst in lda[corpus]
     ])
 
     product = {}
@@ -316,7 +332,8 @@ def resources(entries, logger=None):
         product[str(mine)] = sims
     rows['sim_prod'] = pd.DataFrame(product).product(axis=1).values
     # remove already-reads (0 is equal-distance, and product of 0 is still 0)
-    rows = rows[rows.sim_prod > 0.].copy()
+    # rows = rows[rows.sim_prod > 0.].copy()
+    rows = rows.iloc[len(e_user):].copy()
 
     # sort by similar, take k
     recs = rows.sort_values(by='sim_prod').iloc[:30][['title', 'author', 'text']]
