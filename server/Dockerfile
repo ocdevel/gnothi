@@ -40,7 +40,12 @@ RUN pip install \
   beautifulsoup4 \
   markdown \
   python-box \
-  lemminflect
+  lemminflect \
+  mysqlclient \
+  'scipy==1.3.2' \
+  lxml
+
+#scipy==1.3.2 because https://github.com/scipy/scipy/issues/11325
 
 #EXPOSE 8080
 

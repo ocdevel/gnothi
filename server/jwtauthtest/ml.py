@@ -118,28 +118,33 @@ from jwtauthtest.unmarkdown import unmark
 nlp = spacy.load('en_core_web_sm', disable=['parser', 'ner'])
 
 
-def lemmas(txt):
-    if not txt: return txt
-
-    postags = ['NOUN', 'ADJ', 'VERB'] +\
-        ['ADV', 'PROPN', 'X']  # reonsider these later
-
-    tokens = []
-    doc = nlp(txt)
-    for t in doc:
-        if t.pos_ == 'NUM': tokens.append('number')
-        elif t.is_stop: continue
-        elif t.pos_ not in postags: continue
-        else: tokens.append(t._.inflect(t.pos_))
-    return " ".join(tokens)
-
-
-def themes(entries, advanced=False):
-    entries = [
+def entries_to_paras(entries):
+    return [
         unmark(para)
         for entry in entries
         for para in re.split('\n{2,}', entry)
     ]
+
+
+def prep_lda(entries, advanced=False, propn=True):
+    def lemmas(txt):
+        if not txt: return txt
+
+        postags = ['NOUN', 'ADJ', 'VERB', 'ADV']  # 'X'?
+        if propn: postags.append('PROPN')
+
+        tokens = []
+        doc = nlp(txt)
+        for t in doc:
+            if t.pos_ == 'NUM':
+                tokens.append('number')
+            elif t.is_stop:
+                continue
+            elif t.pos_ not in postags:
+                continue
+            else:
+                tokens.append(t._.inflect(t.pos_))
+        return " ".join(tokens)
 
     filters = [
         lambda x: x.lower(),
@@ -160,8 +165,6 @@ def themes(entries, advanced=False):
     n_topics = math.ceil(len(entries)/20)
     n_topics = max(min(15, n_topics), 5)
 
-    topics = {}
-
     # Train the model on the corpus
     if advanced:
         os.environ['MALLET_HOME'] = os.getcwd() + '/mallet-2.0.8'
@@ -176,6 +179,12 @@ def themes(entries, advanced=False):
     else:
         lda = LdaModel(common_corpus, num_topics=n_topics)
 
+    return lda, common_corpus, dictionary
+
+def themes(entries, advanced=False):
+    entries = entries_to_paras(entries)
+    lda, _, dictionary = prep_lda(entries, advanced=advanced)
+    topics = {}
     for idx, topic in lda.show_topics(formatted=False, num_words=10):
         terms = [
             w[0] if advanced else dictionary[int(w[0])]
@@ -231,3 +240,94 @@ def query(question, entries):
     # ])
 
     return answer['answer']
+
+
+"""
+Resources
+"""
+
+from scipy.stats import entropy
+from bs4 import BeautifulSoup
+
+
+def jensen_shannon(query, matrix):
+    """
+    This function implements a Jensen-Shannon similarity
+    between the input query (an LDA topic distribution for a document)
+    and the entire corpus of topic distributions.
+    It returns an array of length M where M is the number of documents in the corpus
+    """
+    # lets keep with the p,q notation above
+    p = query[None, :].T  # take transpose
+    q = matrix.T  # transpose matrix
+    m = 0.5 * (p + q)
+    return np.sqrt(0.5 * (entropy(p, m) + entropy(q, m)))
+
+
+def resources(entries):
+    from sqlalchemy import create_engine
+    engine = create_engine('mysql://root:mypassword@mysqldb/libgen')
+
+    sql = """
+    select u.Title, u.Author, d.descr
+    from updated u 
+    join description d on d.md5=u.MD5
+    where u.Topic=198 and u.Language='English'
+        and d.descr is not null and d.descr != ''
+    order by u.ID
+    """
+    with engine.connect() as conn:
+        # UnicodeDecodeError: 'charmap' codec can't decode byte 0x9d in position 636: character maps to <undefined>
+        # books = pd.read_sql(sql, conn)
+
+        # TODO tonight run this 1-by-one and find the baddies
+        books = []
+        batch, batch_size = 0, 1000
+        while True:
+            sql_ = sql + f" limit {batch_size} offset {batch*batch_size}"
+            batch += 1
+            try:
+                res = pd.read_sql(sql_, conn)
+                if res.empty: break
+                books.append(res)
+                # print(batch)
+            except Exception as err:
+                print(str(err), batch)
+                continue
+        books = pd.concat(books, axis=0, ignore_index=True)
+
+    entries = entries_to_paras(entries)
+
+    descr = [
+        book.Title + BeautifulSoup(book.descr, "lxml").text
+        for i, book in books.iterrows()
+    ]
+
+    entries_ = entries + descr
+    lda, corpus, dictionary = prep_lda(entries_, advanced=True, propn=False)
+    rows = pd.DataFrame({
+        'text': entries_,
+        'title': ['' for _ in entries] + books.Title.tolist(),
+        'author': ['' for _ in entries] + books.Author.tolist()
+    })
+
+    vecs = lda[corpus]
+    doc_topic_dist = np.array([
+        [tup[1] for tup in lst]
+        for lst in vecs
+    ])
+
+    product = {}
+    for mine in range(len(entries)):
+        sims = jensen_shannon(
+            doc_topic_dist[mine],
+            doc_topic_dist
+        )
+        product[str(mine)] = sims
+    rows['sim_prod'] = pd.DataFrame(product).product(axis=1).values
+    # remove already-reads (0 is equal-distance, and product of 0 is still 0)
+    rows = rows[rows.sim_prod > 0.].copy()
+
+    # sort by similar, take k
+    recs = rows.sort_values(by='sim_prod').iloc[:30][['title', 'author', 'text']]
+    return [x for x in recs.T.to_dict().values()]

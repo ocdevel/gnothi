@@ -249,6 +249,13 @@ def run_gensim():
     return jsonify(ml.themes(entries, advanced=advanced))
 
 
+@app.route('/books', methods=['GET'])
+@jwt_required()
+def get_books():
+    entries = [e.text for e in current_identity.entries]
+    return jsonify(ml.resources(entries))
+
+
 @app.route('/query', methods=['POST'])
 @jwt_required()
 def query():

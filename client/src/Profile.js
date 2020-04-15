@@ -137,9 +137,45 @@ function Sharing({jwt}) {
   </div>
 }
 
-
 function Resources({jwt}) {
-  return <h1>Resources</h1>
+  const [books, setBooks] = useState([])
+  const [fetching, setFetching] = useState(false)
+
+  const fetchBooks = async () => {
+    setFetching(true)
+    const res = await fetch_('books', 'GET', null, jwt)
+    setBooks(res)
+    setFetching(false)
+  }
+
+  useEffect(() => {
+    fetchBooks()
+  }, [])
+
+  return <>
+    <h1>Books</h1>
+    {fetching ? (
+      <>
+        {spinner}
+        <p className='text-muted'>This will take a VERY long time. I'll speed this up later</p>
+      </>
+    ) : (
+      <Table>
+        <thead>
+          <th>Title</th>
+          <th>Author</th>
+          <th>Description</th>
+        </thead>
+        <tbody>
+          {books.map(b => <tr>
+            <td>{b.author}</td>
+            <td>{b.title}</td>
+            <td>{b.text}</td>
+          </tr>)}
+        </tbody>
+      </Table>
+    )}
+  </>
 }
 
 export default function Profile({jwt}) {
