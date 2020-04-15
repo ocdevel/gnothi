@@ -26,8 +26,6 @@ services:
     command: yarn start
 #    command: /bin/bash
     container_name: jclient
-    networks:
-      - jnet
     ports:
       - 3001:3000
     stdin_open: true

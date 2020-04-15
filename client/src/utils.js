@@ -1,6 +1,9 @@
 import {OverlayTrigger, Popover, Spinner} from "react-bootstrap";
 import React from "react";
 
+let host = window.location.origin.split(':')
+host = host[0] + ':' + host[1]
+
 const fetch_ = async (route, method='GET', body=null, jwt=null) => {
   const obj = {
     method,
@@ -8,7 +11,7 @@ const fetch_ = async (route, method='GET', body=null, jwt=null) => {
   };
   if (body) obj['body'] = JSON.stringify(body)
   if (jwt) obj['headers']['Authorization'] = `JWT ${jwt}`
-  const response = await fetch(`http://192.168.0.2:5001/${route}`, obj)
+  const response = await fetch(`${host}:5001/${route}`, obj)
   return await response.json()
 }
 
