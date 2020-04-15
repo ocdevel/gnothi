@@ -264,46 +264,35 @@ def jensen_shannon(query, matrix):
     return np.sqrt(0.5 * (entropy(p, m) + entropy(q, m)))
 
 
-def resources(entries):
+def resources(entries, logger=None):
     from sqlalchemy import create_engine
     engine = create_engine('mysql://root:mypassword@mysqldb/libgen')
 
-    sql = """
-    select u.Title, u.Author, d.descr
-    from updated u 
-    join description d on d.md5=u.MD5
-    where u.Topic=198 and u.Language='English'
-        and d.descr is not null and d.descr != ''
-    order by u.ID
-    """
+    logger.info("Fetching books")
     with engine.connect() as conn:
-        # UnicodeDecodeError: 'charmap' codec can't decode byte 0x9d in position 636: character maps to <undefined>
-        # books = pd.read_sql(sql, conn)
-
-        # TODO tonight run this 1-by-one and find the baddies
-        books = []
-        batch, batch_size = 0, 1000
-        while True:
-            sql_ = sql + f" limit {batch_size} offset {batch*batch_size}"
-            batch += 1
-            try:
-                res = pd.read_sql(sql_, conn)
-                if res.empty: break
-                books.append(res)
-                # print(batch)
-            except Exception as err:
-                print(str(err), batch)
-                continue
-        books = pd.concat(books, axis=0, ignore_index=True)
+        # Those MD5s: UnicodeDecodeError: 'charmap' codec can't decode byte 0x9d in position 636: character maps to <undefined>
+        sql = """
+        select u.Title, u.Author, d.descr
+        from updated u 
+        join description d on d.md5=u.MD5
+        where u.Topic=198 and u.Language='English'
+            and length(d.descr) > 150
+            and u.MD5 not in ('96b2d80d4c9ccdca9a2c828f784adcfd', 'f2d6bdc57b366f14b3ae4d664107f0a6')
+        """
+        books = pd.read_sql(sql, conn)
 
     entries = entries_to_paras(entries)
 
-    descr = [
+    logger.info("Removing HTML")
+    russian = '\?\?\?'  # russian. FIXME better way to handle
+    books = books[ ~(books.Title + books.descr).str.contains(russian) ]
+    books['clean'] = [
         book.Title + BeautifulSoup(book.descr, "lxml").text
         for i, book in books.iterrows()
     ]
 
-    entries_ = entries + descr
+    entries_ = entries + books.descr.tolist()
+    logger.info(f"Running LDA on {len(entries_)} entries")
     lda, corpus, dictionary = prep_lda(entries_, advanced=True, propn=False)
     rows = pd.DataFrame({
         'text': entries_,
@@ -311,6 +300,7 @@ def resources(entries):
         'author': ['' for _ in entries] + books.Author.tolist()
     })
 
+    logger.info("Finding similars")
     vecs = lda[corpus]
     doc_topic_dist = np.array([
         [tup[1] for tup in lst]

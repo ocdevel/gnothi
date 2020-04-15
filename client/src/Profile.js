@@ -162,8 +162,8 @@ function Resources({jwt}) {
     ) : (
       <Table>
         <thead>
-          <th>Title</th>
           <th>Author</th>
+          <th>Title</th>
           <th>Description</th>
         </thead>
         <tbody>

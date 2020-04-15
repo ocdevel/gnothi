@@ -3,8 +3,8 @@ services:
   server:
     build: server
     container_name: jserver
-#    entrypoint: ./run.sh
-    entrypoint: /bin/bash
+    entrypoint: ./run.sh
+#    entrypoint: /bin/bash
     environment:
       ENVIRONMENT: development
       JWT_SECRET_KEY: my jwt secret key
