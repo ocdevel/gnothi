@@ -157,7 +157,7 @@ function Resources({jwt}) {
     {fetching ? (
       <>
         {spinner}
-        <p className='text-muted'>This will take a VERY long time. I'll speed this up later</p>
+        <p className='text-muted'>Loading book recommendations (1-10seconds)</p>
       </>
     ) : (
       <Table>

@@ -164,11 +164,12 @@ def entries_to_data(entries, propn=True):
     return texts, corpus, dictionary
 
 
-def run_lda(corpus, dictionary, advanced=False):
+def run_lda(corpus, dictionary, n_topics=None, advanced=False):
 
     # figure this out later, just a quick idea
-    n_topics = math.ceil(len(corpus)/20)
-    n_topics = max(min(15, n_topics), 5)
+    if not n_topics:
+        n_topics = math.ceil(len(corpus)/20)
+        n_topics = max(min(15, n_topics), 5)
 
     # Train the model on the corpus
     if advanced:
@@ -279,44 +280,44 @@ def jensen_shannon(query, matrix):
 def resources(entries, logger=None):
     e_user = entries_to_paras(entries)
 
-    logger.info("Fetching books")
-    with book_engine.connect() as conn:
-        # Those MD5s: UnicodeDecodeError: 'charmap' codec can't decode byte 0x9d in position 636: character maps to <undefined>
-        sql = """
-        select u.Title, u.Author, d.descr
-        from updated u 
-        join description d on d.md5=u.MD5
-        where u.Topic=198 and u.Language='English'
-            and (length(d.descr) + length(u.Title)) > 200
-            and u.MD5 not in ('96b2d80d4c9ccdca9a2c828f784adcfd', 'f2d6bdc57b366f14b3ae4d664107f0a6')
-        """
-        books = pd.read_sql(sql, conn)
-
-    logger.info("Removing HTML")
-    broken = '(\?\?\?|\#\#\#)'  # russian / other FIXME better way to handle
-    books = books[ ~(books.Title + books.descr).str.contains(broken) ]
-    books['descr'] = books.descr.apply(lambda x: BeautifulSoup(x, "lxml").text)
-    books['clean'] = books.Title + ' ' + books.descr
-    books = books[ books.clean.apply(lambda x: detect(x) == 'en') ]
-    e_books = books.clean.tolist()
-
     path_ = 'tmp/libgen.pkl'
     if os.path.exists(path_):
         logger.info("Loading LDA")
         with open(path_, 'rb') as pkl:
-            lda, corpus, dictionary = pickle.load(pkl)
+            lda, corpus, dictionary, books = pickle.load(pkl)
     else:
+        logger.info("Fetching books")
+        with book_engine.connect() as conn:
+            # Those MD5s: UnicodeDecodeError: 'charmap' codec can't decode byte 0x9d in position 636: character maps to <undefined>
+            sql = """
+               select u.Title, u.Author, d.descr
+               from updated u 
+               join description d on d.md5=u.MD5
+               where u.Topic=198 and u.Language='English'
+                   and (length(d.descr) + length(u.Title)) > 200
+                   and u.MD5 not in ('96b2d80d4c9ccdca9a2c828f784adcfd', 'f2d6bdc57b366f14b3ae4d664107f0a6')
+               """
+            books = pd.read_sql(sql, conn)
+
+        logger.info("Removing HTML")
+        broken = '(\?\?\?|\#\#\#)'  # russian / other FIXME better way to handle
+        books = books[~(books.Title + books.descr).str.contains(broken)]
+        books['descr'] = books.descr.apply(lambda x: BeautifulSoup(x, "lxml").text)
+        books['clean'] = books.Title + ' ' + books.descr
+        books = books[books.clean.apply(lambda x: detect(x) == 'en')]
+        e_books = books.clean.tolist()
+
         logger.info(f"Running LDA on {len(e_books)} entries")
         _, corpus, dictionary = entries_to_data(e_books, propn=False)
-        lda = run_lda(corpus, dictionary, advanced=True)
+        lda = run_lda(corpus, dictionary, n_topics=20, advanced=True)
         with open(path_, 'wb') as pkl:
-            pickle.dump([lda, corpus, dictionary], pkl)
+            pickle.dump([lda, corpus, dictionary, books], pkl)
 
     texts_user, _, _ = entries_to_data(e_user, propn=False)
     corpus = [dictionary.doc2bow(e) for e in texts_user] + corpus
 
     rows = pd.DataFrame({
-        'text': e_user + e_books,
+        'text': e_user + books.descr.tolist(),
         'title': ['' for _ in e_user] + books.Title.tolist(),
         'author': ['' for _ in e_user] + books.Author.tolist()
     })

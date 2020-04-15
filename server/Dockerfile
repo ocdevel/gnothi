@@ -43,7 +43,8 @@ RUN pip install \
   lemminflect \
   mysqlclient \
   'scipy==1.3.2' \
-  lxml
+  lxml \
+  langdetect
 
 #scipy==1.3.2 because https://github.com/scipy/scipy/issues/11325
 

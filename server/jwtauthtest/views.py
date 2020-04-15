@@ -218,7 +218,7 @@ def sync_habitica_for(user):
         if fe:
             fe.value = value
         else:
-            fe = FieldEntry(field_id=f.id, created_at=lastCron)
+            fe = FieldEntry(field_id=f.id, created_at=lastCron, value=value)
             user.field_entries.append(fe)
         db_session.commit()
         app.logger.info(task['text'] + " done")
