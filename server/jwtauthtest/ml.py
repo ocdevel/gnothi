@@ -256,6 +256,9 @@ Resources
 from scipy.stats import entropy
 from bs4 import BeautifulSoup
 import pickle
+from langdetect import detect
+from langdetect import DetectorFactory
+DetectorFactory.seed = 0
 from sqlalchemy import create_engine
 book_engine = create_engine('mysql://root:mypassword@mysqldb/libgen')
 
@@ -293,7 +296,8 @@ def resources(entries, logger=None):
     broken = '(\?\?\?|\#\#\#)'  # russian / other FIXME better way to handle
     books = books[ ~(books.Title + books.descr).str.contains(broken) ]
     books['descr'] = books.descr.apply(lambda x: BeautifulSoup(x, "lxml").text)
-    books['clean'] = books.Title + books.descr
+    books['clean'] = books.Title + ' ' + books.descr
+    books = books[ books.clean.apply(lambda x: detect(x) == 'en') ]
     e_books = books.clean.tolist()
 
     path_ = 'tmp/libgen.pkl'
