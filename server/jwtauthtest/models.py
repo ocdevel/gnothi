@@ -184,7 +184,7 @@ class FieldEntry(Base):
     __tablename__ = 'field_entries'
     id = Column(UUID, primary_key=True, default=uuid_)
     value = Column(Float)  # TODO Can everything be a number? reconsider
-    created_at = Column(Date, default=datetime.utcnow, index=True)
+    created_at = Column(DateTime(timezone=True), default=datetime.utcnow, index=True)
 
     user_id = Column(UUID, ForeignKey('users.id'), index=True)
     field_id = Column(UUID, ForeignKey('fields.id'))
@@ -196,14 +196,14 @@ class FieldEntry(Base):
     @staticmethod
     def get_day_entries(day, user_id, field_id=None):
         # FIXME handle this automatically, or as user timzeone preference, or such
-        tz_ = tz.gettz('America/Los_Angeles')
-        day = day.astimezone(tz_)
-        day = day.date()
+        timezoned = func.Date(func.timezone('America/Los_Angeles', FieldEntry.created_at))
+        day = day.astimezone(tz.gettz('America/Los_Angeles'))
+        # timezoned = func.Date(FieldEntry.created_at)
 
         q = FieldEntry.query\
             .filter(
                 FieldEntry.user_id == user_id,
-                func.DATE(FieldEntry.created_at) == day
+                timezoned == day.date()
             )
         if field_id:
             q = q.filter(FieldEntry.field_id == field_id)
