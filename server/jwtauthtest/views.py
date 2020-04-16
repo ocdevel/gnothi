@@ -1,14 +1,24 @@
-import pdb, logging, math
+import pdb, logging, math, os
 from flask_jwt import jwt_required, current_identity
 from jwtauthtest import app
 from jwtauthtest.database import db_session, engine
 from jwtauthtest.models import User, Entry, Field, FieldEntry
 from passlib.hash import pbkdf2_sha256
-from flask import request, jsonify
+from flask import request, jsonify, send_from_directory
 from jwtauthtest.utils import vars
 from jwtauthtest import ml
 import requests
 from dateutil.parser import parse as dparse
+
+
+# https://stackoverflow.com/questions/44209978/serving-a-front-end-created-with-create-react-app-with-flask
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def serve(path):
+    if path != "" and os.path.exists(app.static_folder + '/' + path):
+        return send_from_directory(app.static_folder, path)
+    else:
+        return send_from_directory(app.static_folder, 'index.html')
 
 
 def useradd(username, password):
@@ -16,26 +26,26 @@ def useradd(username, password):
     db_session.commit()
 
 
-@app.route('/check-jwt')
+@app.route('/api/check-jwt')
 @jwt_required()
 def check_jwt():
     return jsonify({'ok': True})
 
 
-@app.route('/user', methods=['GET'])
+@app.route('/api/user', methods=['GET'])
 @jwt_required()
 def get_user():
     return jsonify(current_identity.json())
 
 
-@app.route('/register', methods=['POST'])
+@app.route('/api/register', methods=['POST'])
 def register():
     data = request.get_json()
     useradd(data['username'], data['password'])
     return jsonify({'ok': True})
 
 
-@app.route('/entries', methods=['GET', 'POST'])
+@app.route('/api/entries', methods=['GET', 'POST'])
 @jwt_required()
 def entries():
     user = current_identity
@@ -50,7 +60,7 @@ def entries():
         return jsonify({'ok': True})
 
 
-@app.route('/entries/<entry_id>', methods=['GET', 'PUT', 'DELETE'])
+@app.route('/api/entries/<entry_id>', methods=['GET', 'PUT', 'DELETE'])
 @jwt_required()
 def entry(entry_id):
     user = current_identity
@@ -71,7 +81,7 @@ def entry(entry_id):
         return jsonify({'ok': True})
 
 
-@app.route('/fields', methods=['GET', 'POST'])
+@app.route('/api/fields', methods=['GET', 'POST'])
 @jwt_required()
 def fields():
     user = current_identity
@@ -85,7 +95,7 @@ def fields():
         return jsonify({'ok': True})
 
 
-@app.route('/fields/<field_id>', methods=['PUT', 'DELETE'])
+@app.route('/api/fields/<field_id>', methods=['PUT', 'DELETE'])
 @jwt_required()
 def field(field_id):
     user = current_identity
@@ -103,7 +113,7 @@ def field(field_id):
         return jsonify({'ok': True})
 
 
-@app.route('/field-entries')
+@app.route('/api/field-entries')
 @jwt_required()
 def field_entries():
     res = FieldEntry.get_today_entries(current_identity.id).all()
@@ -111,7 +121,7 @@ def field_entries():
     return jsonify(res)
 
 
-@app.route('/field-entries/<field_id>', methods=['POST'])
+@app.route('/api/field-entries/<field_id>', methods=['POST'])
 @jwt_required()
 def field_entry(field_id):
     user = current_identity
@@ -127,7 +137,7 @@ def field_entry(field_id):
     return jsonify({'ok': True})
 
 
-@app.route('/habitica', methods=['POST'])
+@app.route('/api/habitica', methods=['POST'])
 @jwt_required()
 def setup_habitica():
     user = current_identity
@@ -224,7 +234,7 @@ def sync_habitica_for(user):
         app.logger.info(task['text'] + " done")
 
 
-@app.route('/habitica/sync', methods=['POST'])
+@app.route('/api/habitica/sync', methods=['POST'])
 @jwt_required()
 def sync_habitica():
     user = current_identity
@@ -234,14 +244,19 @@ def sync_habitica():
     return jsonify({'ok': True})
 
 
-@app.route('/influencers', methods=['GET'])
+@app.route('/api/influencers', methods=['GET'])
 @jwt_required()
 def influencers():
-    targets, all_imps = ml.influencers(engine, current_identity.id, request.args.get('target', None))
+    targets, all_imps = ml.influencers(
+        engine,
+        current_identity.id,
+        specific_target=request.args.get('target', None),
+        logger=app.logger
+    )
     return jsonify({'overall': all_imps, 'per_target': targets})
 
 
-@app.route('/gensim', methods=['GET'])
+@app.route('/api/gensim', methods=['GET'])
 @jwt_required()
 def run_gensim():
     advanced = request.args.get('advanced', False)
@@ -249,7 +264,7 @@ def run_gensim():
     return jsonify(ml.themes(entries, advanced=advanced))
 
 
-@app.route('/books', methods=['GET'])
+@app.route('/api/books', methods=['GET'])
 @jwt_required()
 def get_books():
     entries = [e.text for e in current_identity.entries]
@@ -257,7 +272,7 @@ def get_books():
     return jsonify(books)
 
 
-@app.route('/query', methods=['POST'])
+@app.route('/api/query', methods=['POST'])
 @jwt_required()
 def query():
     question = request.get_json()['query']

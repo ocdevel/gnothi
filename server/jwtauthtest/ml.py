@@ -41,7 +41,7 @@ def influencers(engine, user_id, specific_target=None, logger=None):
         before_ct = fes.shape[0]
         fes = fes.drop_duplicates(['created_at', 'field_id'])
         if before_ct != fes.shape[0]:
-            logger.warning(f"{before_ct - fes.shape[0]} Duplicates")
+            logger.info(f"{before_ct - fes.shape[0]} Duplicates")
 
         fs = pd.read_sql("""
         select id, target, default_value, default_value_value
