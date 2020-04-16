@@ -3,17 +3,34 @@ services:
   server:
     build: server
     container_name: jserver
-    entrypoint: ./run.sh
-#    entrypoint: /bin/bash
+    entrypoint: flask run --host=0.0.0.0
     environment:
-      ENVIRONMENT: development
+      ENVIRONMENT: production
       JWT_SECRET_KEY: my jwt secret key
       FLASK_APP: jwtauthtest
-      FLASK_ENV: development
     networks:
       - jnet
     ports:
       - 5001:5000
+    stdin_open: true
+    volumes:
+      - ./server/:/app
+    links:
+      - "db"
+      - "mysqldb"
+
+  server-dev:
+    build: server
+    container_name: jserver-dev
+    entrypoint: /bin/bash
+    environment:
+      ENVIRONMENT: development
+      JWT_SECRET_KEY: my jwt secret key
+      FLASK_APP: jwtauthtest
+    networks:
+      - jnet
+    ports:
+      - 5002:5000
     stdin_open: true
     volumes:
       - ./server/:/app
@@ -28,6 +45,17 @@ services:
     container_name: jclient
     ports:
       - 3001:3000
+    stdin_open: true
+    volumes:
+      - ./client:/client
+
+  client-dev:
+    build: client
+    command: yarn start
+    #    command: /bin/bash
+    container_name: jclient-dev
+    ports:
+      - 3002:3000
     stdin_open: true
     volumes:
       - ./client:/client

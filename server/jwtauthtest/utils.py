@@ -11,7 +11,7 @@ vars = {}
 for k in ['DB_URL', 'DB_PROD_URL', 'DB_NAME', 'DB_PROD_NAME', 'HABIT']:
     vars[k] = os.environ.get(k, config_json.get(k, None))
 
-if os.environ.get('PROD_DB', False):
+if os.environ['ENVIRONMENT'] == 'production':
     vars['DB_URL'] = vars['DB_PROD_URL']
     vars['DB_NAME'] = vars['DB_PROD_NAME']
 
