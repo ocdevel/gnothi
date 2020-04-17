@@ -111,7 +111,9 @@ export default function FieldModal({jwt, close, field= {}}) {
           <Form.Group controlId="formFieldDefaultValue">
             <Form.Label>Default Value</Form.Label>
             <Form.Control
-              type="text"
+              type="number"
+              min={form.type === 'check' ? 0 : null}
+              max={form.type === 'check' ? 1 : null}
               value={form.default_value_value}
               onChange={changeText('default_value_value')}
             />
