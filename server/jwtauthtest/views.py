@@ -1,4 +1,5 @@
-import pdb, logging, math, os
+import pdb, logging, math, os, re
+import datetime
 from flask_jwt import jwt_required, current_identity
 from jwtauthtest import app
 from jwtauthtest.database import db_session, engine
@@ -279,6 +280,23 @@ def query():
     entries = [e.text for e in current_identity.entries]
     res = ml.query(question, entries)
     return jsonify(res)
+
+@app.route('/api/summarize', methods=['POST'])
+@jwt_required()
+def summarize():
+    data = request.get_json()
+    now = datetime.datetime.utcnow()
+    days, words = int(data['days']), int(data['words'])*5
+    x_days_ago = now - datetime.timedelta(days=days)
+    entries = Entry.query.filter(
+        Entry.user_id==current_identity.id,
+        Entry.created_at > x_days_ago
+    ).all()
+    entries = ' '.join(e.text for e in entries)
+    entries = re.sub('\s+', ' ', entries)  # mult new-lines
+    min_ = int(words*2/3)
+    res = ml.summarize(entries, min_, words)
+    return jsonify({'summary': res})
 
 
 # https://github.com/viniciuschiele/flask-apscheduler/blob/master/examples/jobs.py

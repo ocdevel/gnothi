@@ -6,6 +6,7 @@ services:
     entrypoint: flask run --host=0.0.0.0
     environment:
       ENVIRONMENT: production
+      FLASK_ENV: production
       JWT_SECRET_KEY: my jwt secret key
       FLASK_APP: jwtauthtest
     networks:
@@ -25,6 +26,7 @@ services:
     entrypoint: /bin/bash
     environment:
       ENVIRONMENT: development
+      FLASK_ENV: development
       JWT_SECRET_KEY: my jwt secret key
       FLASK_APP: jwtauthtest
     networks:

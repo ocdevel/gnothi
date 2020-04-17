@@ -3,6 +3,7 @@ import Entries from "./Entries"
 import Entry from "./Entry"
 import Fields from './Fields'
 import Query from './Query'
+import Summarize from './Summarize'
 import React from "react"
 import {Col, Row} from 'react-bootstrap'
 
@@ -27,6 +28,8 @@ export default function Journal({jwt}) {
         </Col>
         <Col lg={3}>
           <Fields jwt={jwt} />
+          <hr />
+          <Summarize jwt={jwt} />
           <hr />
           <Query jwt={jwt} />
         </Col>
