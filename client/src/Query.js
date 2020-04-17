@@ -1,8 +1,8 @@
 import React, {useEffect, useState} from "react";
 import {Col, Form, Card, Button} from "react-bootstrap";
-import {fetch_, spinner} from './utils'
+import {spinner} from './utils'
 
-export default function Query({jwt}) {
+export default function Query({fetch_}) {
   const [query, setQuery] = useState('')
   const [answer, setAnswer] = useState('')
   const [fetching, setFetching] = useState(false)
@@ -10,7 +10,7 @@ export default function Query({jwt}) {
   const fetchAnswer = async (e) => {
     setFetching(true)
     e.preventDefault()
-    const res = await fetch_('query', 'POST', {query}, jwt)
+    const res = await fetch_('query', 'POST', {query})
     setAnswer(res)
     setFetching(false)
   }

@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from "react"
 import {useHistory, useRouteMatch} from "react-router-dom"
-import {fetch_, sent2face} from "./utils"
+import {sent2face} from "./utils"
 import {
   Button,
   Table,
@@ -21,7 +21,7 @@ const summaryTip = (
   </Popover>
 );
 
-export default function Entries({jwt}) {
+export default function Entries({fetch_}) {
   const [entries, setEntries] = useState([])
   const [tab, setTab] = useState('Entries');
   const [cacheTabs, setCacheTabs] = useState({})
@@ -29,7 +29,7 @@ export default function Entries({jwt}) {
   let match = useRouteMatch()
 
   const fetchEntries = async () => {
-    const res = await fetch_('entries', 'GET', null, jwt)
+    const res = await fetch_('entries', 'GET')
     setEntries(res.entries)
   }
 
@@ -97,10 +97,10 @@ export default function Entries({jwt}) {
           </Table>
         </Tab>
         <Tab eventKey="Themes" title="Themes">
-          {cacheTabs['Themes'] && <Themes jwt={jwt} />}
+          {cacheTabs['Themes'] && <Themes fetch_={fetch_} />}
         </Tab>
         <Tab eventKey="Books" title="Books">
-          {cacheTabs['Books'] && <Books jwt={jwt} />}
+          {cacheTabs['Books'] && <Books fetch_={fetch_} />}
         </Tab>
       </Tabs>
     </div>

@@ -1,9 +1,9 @@
 import React, {useEffect, useState} from "react";
-import {fetch_, sent2face, spinner} from "./utils";
+import {sent2face, spinner} from "./utils";
 import {Card, Form} from "react-bootstrap";
 import _ from "lodash";
 
-export default function Themes({jwt}) {
+export default function Themes({fetch_}) {
   const [topics, setTopics] = useState({})
   const [advanced, setAdvanced] = useState(false)
   const [fetching, setFetching] = useState(false)
@@ -12,7 +12,7 @@ export default function Themes({jwt}) {
     setFetching(true)
     let url = 'gensim'
     if (advanced) {url += '?advanced=1'}
-    const res = await fetch_(url, 'GET', null, jwt)
+    const res = await fetch_(url, 'GET')
     setTopics(res)
     setFetching(false)
   }

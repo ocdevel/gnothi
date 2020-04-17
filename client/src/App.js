@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import './App.css'
 import {
-  Button,
   Container,
   Nav,
   Navbar,
@@ -18,27 +17,44 @@ import {
 import Auth from './Auth'
 import Journal from './Journal'
 import Profile from './Profile'
-import {fetch_} from "./utils";
+
+let host = window.location.origin.split(':')
+// host = host[0] + ':' + host[1] + ':' + 3001
+host = host[0] + ':' + host[1] + ':' + (host[2] === "3002" ? "5002" : "5001")
 
 function App() {
-  const [jwt, setJwt] = useState()
+  const [jwt, setJwt] = useState(localStorage.getItem('jwt'))
+  const [user, setUser] = useState()
 
-  const onAuth = jwt => setJwt(jwt)
+  const fetch_ = async (route, method='GET', body=null) => {
+    const obj = {
+      method,
+      headers: {'Content-Type': 'application/json'},
+    };
+    if (body) obj['body'] = JSON.stringify(body)
+    if (jwt) obj['headers']['Authorization'] = `JWT ${jwt}`
+    // auth is added by flask-jwt as /auth, all my custom paths are under /api/*
+    const url = route === 'auth' ? `${host}/${route}` :
+      `${host}/api/${route}`
+    const response = await fetch(url, obj)
+    return await response.json()
+  }
+
+  const getUser = async () => {
+    if (!jwt) {return}
+    const res = await fetch_('user', 'GET')
+    if (res.status_code == 401) { return logout() }
+    setUser(res)
+  }
+
+  const onAuth = jwt_ => setJwt(jwt_)
+
+  useEffect(() => { getUser() }, [jwt])
 
   const logout = () => {
     localStorage.removeItem('jwt')
     window.location.href = "/"
   }
-
-  const checkJwt = async () => {
-    const jwt = localStorage.getItem('jwt');
-    if (!jwt) { return }
-    const res = await fetch_('check-jwt', 'GET', null, jwt)
-    if (res.status_code == 401) { return logout() }
-    onAuth(jwt);
-  }
-
-  useEffect(() => { checkJwt() }, [])
 
   const renderNav = () => (
     <Navbar bg="dark" variant="dark">
@@ -49,26 +65,26 @@ function App() {
           <LinkContainer exact to="/j">
             <Nav.Link>Journal</Nav.Link>
           </LinkContainer>
-          <NavDropdown title="Profile" id="basic-nav-dropdown">
+        </Nav>
+        <Nav>
+          <NavDropdown title={user.username} id="basic-nav-dropdown">
             <LinkContainer to="/profile/sharing">
               <NavDropdown.Item>Sharing</NavDropdown.Item>
             </LinkContainer>
             <LinkContainer to="/profile/family">
               <NavDropdown.Item>Family</NavDropdown.Item>
             </LinkContainer>
+            <NavDropdown.Item onClick={logout}>Logout</NavDropdown.Item>
           </NavDropdown>
-        </Nav>
-        <Nav>
-          <Nav.Link onClick={logout}>Logout</Nav.Link>
         </Nav>
       </Navbar.Collapse>
     </Navbar>
   )
 
-  if (!jwt) {
+  if (!user) {
     return (
       <Container fluid>
-        <Auth onAuth={onAuth} />
+        <Auth onAuth={onAuth} fetch_={fetch_} />
       </Container>
     )
   }
@@ -79,10 +95,10 @@ function App() {
       <Container fluid>
         <Switch>
           <Route path="/j">
-            <Journal jwt={jwt} />
+            <Journal fetch_={fetch_} />
           </Route>
           <Route path="/profile">
-            <Profile jwt={jwt} />
+            <Profile fetch_={fetch_} />
           </Route>
           <Redirect from="/" to="/j" />
         </Switch>

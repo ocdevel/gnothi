@@ -1,8 +1,8 @@
 import React, {useState} from 'react'
 import {Form, InputGroup, Button} from "react-bootstrap";
-import {fetch_, spinner} from "./utils";
+import {spinner} from "./utils";
 
-export default function Summarize({jwt}) {
+export default function Summarize({fetch_}) {
   const [fetching, setFetching] = useState(false)
   const [summary, setSummary] = useState('')
   const [form, setForm] = useState({days: 7, words: 30})
@@ -10,7 +10,8 @@ export default function Summarize({jwt}) {
   const submit = async e => {
     setFetching(true)
     e.preventDefault();
-    const res = await fetch_('summarize', 'POST', form, jwt)
+    const res = await fetch_('summarize', 'POST', form
+    )
     setSummary(res.summary)
     setFetching(false)
   }

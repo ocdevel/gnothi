@@ -1,7 +1,6 @@
 import {useHistory, useParams} from "react-router-dom"
 import React, {useEffect, useState} from "react"
-import {fetch_, spinner} from "./utils"
-import _ from "lodash"
+import {spinner} from "./utils"
 import {
   Accordion,
   Button,
@@ -17,7 +16,7 @@ import ReactStars from "react-stars"
 import './Entry.css'
 
 
-export default function Entry({jwt}) {
+export default function Entry({fetch_}) {
   const {entry_id} = useParams()
   const history = useHistory()
   const [showPreview, setShowPreview] = useState(false)
@@ -27,7 +26,7 @@ export default function Entry({jwt}) {
 
   const fetchEntry = async () => {
     if (!entry_id) { return }
-    const res = await fetch_(`entries/${entry_id}`, 'GET', null, jwt)
+    const res = await fetch_(`entries/${entry_id}`, 'GET')
     setForm({title: res.title, text: res.text})
     setEntry(res)
   }
@@ -43,9 +42,9 @@ export default function Entry({jwt}) {
     setSubmitting(true)
     const body = {title: form.title, text: form.text}
     if (entry_id) {
-      await fetch_(`entries/${entry_id}`, 'PUT', body, jwt)
+      await fetch_(`entries/${entry_id}`, 'PUT', body)
     } else {
-      await fetch_(`entries`, 'POST', body, jwt)
+      await fetch_(`entries`, 'POST', body)
     }
     setSubmitting(false)
     history.push('/j')
@@ -53,7 +52,7 @@ export default function Entry({jwt}) {
 
   const deleteEntry = async () => {
     if (window.confirm(`Delete "${entry.title}"`)) {
-      await fetch_(`entries/${entry_id}`, 'DELETE', null, jwt)
+      await fetch_(`entries/${entry_id}`, 'DELETE')
       history.push('/j')
     }
   }

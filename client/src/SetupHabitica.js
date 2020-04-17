@@ -1,13 +1,12 @@
 import React, {useEffect, useState} from "react";
-import {fetch_} from "./utils";
 import {Button, Form} from "react-bootstrap";
 
-export default function Habitica({jwt}) {
+export default function Habitica({fetch_}) {
   const [habiticaUserId, setHabiticaUserId] = useState('')
   const [habiticaApiToken, setHabiticaApiToken] = useState('')
 
   const fetchUser = async () => {
-    const res = await fetch_(`user`, 'GET', null, jwt)
+    const res = await fetch_(`user`, 'GET')
     setHabiticaUserId(res.habitica_user_id)
     setHabiticaApiToken(res.habitica_api_token)
   }
@@ -22,7 +21,7 @@ export default function Habitica({jwt}) {
       habitica_user_id: habiticaUserId,
       habitica_api_token: habiticaApiToken
     }
-    await fetch_(`habitica`, 'POST', body, jwt)
+    await fetch_(`habitica`, 'POST', body)
     fetchUser()
   }
 

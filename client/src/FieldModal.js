@@ -1,11 +1,8 @@
-import React, {useEffect, useState} from "react";
-import {fetch_} from "./utils";
+import React, {useState} from "react";
 import _ from "lodash";
-import moment from "moment";
-import {Accordion, Button, Card, Form, Modal, Table} from "react-bootstrap";
-import ReactMarkdown from "react-markdown";
+import {Button, Form, Modal} from "react-bootstrap";
 
-export default function FieldModal({jwt, close, field= {}}) {
+export default function FieldModal({fetch_, close, field= {}}) {
   const form_ =
     field.id ? _.pick(field, ['name', 'type', 'default_value', 'default_value_value', 'target'])
     : {name: '', type: 'number', default_value: 'value', default_value_value: '', target: false}
@@ -24,9 +21,9 @@ export default function FieldModal({jwt, close, field= {}}) {
       target: !!form.target
     }
     if (fid) {
-      await fetch_(`fields/${fid}`, 'PUT', body, jwt)
+      await fetch_(`fields/${fid}`, 'PUT', body)
     } else {
-      await fetch_(`fields`, 'POST', body, jwt)
+      await fetch_(`fields`, 'POST', body)
     }
 
     close()
@@ -39,13 +36,13 @@ export default function FieldModal({jwt, close, field= {}}) {
     if (!window.confirm("Are you sure? This will delete all data for this field.")) {
       return
     }
-    await fetch_(`fields/${fid}`, 'DELETE', null, jwt)
+    await fetch_(`fields/${fid}`, 'DELETE')
     close()
   }
 
   const excludeField = async (exclude=true) => {
     const body = {excluded_at: exclude ? new Date() : null}
-    await fetch_(`fields/${fid}`, 'PUT', body, jwt)
+    await fetch_(`fields/${fid}`, 'PUT', body)
     close(false)
   }
 

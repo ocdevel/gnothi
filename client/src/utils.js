@@ -1,22 +1,6 @@
 import {OverlayTrigger, Popover, Spinner} from "react-bootstrap";
 import React from "react";
 
-let host = window.location.origin.split(':')
-// host = host[0] + ':' + host[1] + ':' + 3001
-host = host[0] + ':' + host[1] + ':' + (host[2] === "3002" ? "5002" : "5001")
-
-const fetch_ = async (route, method='GET', body=null, jwt=null, api=true) => {
-  const obj = {
-    method,
-    headers: {'Content-Type': 'application/json'},
-  };
-  if (body) obj['body'] = JSON.stringify(body)
-  if (jwt) obj['headers']['Authorization'] = `JWT ${jwt}`
-  const url = api ? `${host}/api/${route}` : `${host}/${route}`
-  const response = await fetch(url, obj)
-  return await response.json()
-}
-
 const spinner = (
   <Spinner animation="border" role="status">
     <span className="sr-only">Loading...</span>
@@ -51,4 +35,4 @@ const sent2face = (sentiment) => {
   )
 }
 
-export {fetch_, spinner, sent2face}
+export {spinner, sent2face}

@@ -3,7 +3,7 @@ import datetime
 from flask_jwt import jwt_required, current_identity
 from jwtauthtest import app
 from jwtauthtest.database import db_session, engine
-from jwtauthtest.models import User, Entry, Field, FieldEntry
+from jwtauthtest.models import User, Entry, Field, FieldEntry, Share
 from passlib.hash import pbkdf2_sha256
 from flask import request, jsonify
 from jwtauthtest.utils import vars
@@ -17,12 +17,6 @@ def useradd(username, password):
     db_session.commit()
 
 
-@app.route('/api/check-jwt')
-@jwt_required()
-def check_jwt():
-    return jsonify({'ok': True})
-
-
 @app.route('/api/user', methods=['GET'])
 @jwt_required()
 def get_user():
@@ -34,6 +28,19 @@ def register():
     data = request.get_json()
     useradd(data['username'], data['password'])
     return jsonify({'ok': True})
+
+
+@app.route('/api/shares', methods=['GET', 'POST'])
+@jwt_required()
+def shares():
+    if request.method == 'GET':
+        shared = Share.query.filter_by(user_id=current_identity.id).all()
+        return jsonify([x.json() for x in shared])
+    if request.method == 'POST':
+        data = request.get_json()
+        db_session.add(Share(user_id=current_identity.id, **data))
+        db_session.commit()
+        return jsonify({'ok': True})
 
 
 @app.route('/api/entries', methods=['GET', 'POST'])
@@ -308,6 +315,7 @@ def job1():
         q = User.query.filter(User.habitica_user_id != None, User.habitica_user_id != '')
         for u in q.all():
             sync_habitica_for(u)
+
 
 app.config.from_object(Config())
 scheduler.init_app(app)

@@ -15,9 +15,11 @@ from sqlalchemy import \
     DateTime, \
     JSON, \
     Date, \
+    ARRAY, \
     func
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy_utils.types import EmailType
 from uuid import uuid4
 
 
@@ -29,7 +31,8 @@ class User(Base):
     __tablename__ = 'users'
 
     id = Column(UUID, primary_key=True, default=uuid_)
-    username = Column(String(50), nullable=False, unique=True)
+    # https://stackoverflow.com/a/574698/362790
+    username = Column(EmailType, nullable=False, unique=True)
     password = Column(String(200), nullable=False)
 
     habitica_user_id = Column(String(200))
@@ -39,6 +42,7 @@ class User(Base):
     field_entries = relationship("FieldEntry", order_by='FieldEntry.created_at.desc()')
     fields = relationship("Field", order_by='Field.created_at.asc()')
     family_members = relationship("Family")
+    shares = relationship("Share")
 
     def __init__(self, username, password):
         self.username = username
@@ -47,12 +51,21 @@ class User(Base):
     def __repr__(self):
         return f'<User {{ username: {self.username}, password: {self.password} }}'
 
+    def shared_with_me(self, id=None):
+        if id:
+            # return full user model
+            pass
+        return User.query.filter(User.username == self.username)\
+            .with_entities(User.username, User.id)\
+            .all()
+
     def json(self):
         return {
             'id': self.id,
             'username': self.username,
             'habitica_user_id': self.habitica_user_id,
-            'habitica_api_token': self.habitica_api_token
+            'habitica_api_token': self.habitica_api_token,
+            'shared_with_me': [{'id': x.id, 'username': x.username} for x in self.shared_with_me()]
         }
 
 
@@ -235,3 +248,26 @@ class FamilyIssue(Base):
     __tablename__ = 'family_issues'
     family_id = Column(UUID, ForeignKey('family.id'), primary_key=True)
     family_issue_type_id = Column(UUID, ForeignKey('family_issue_types.id'), primary_key=True)
+
+
+class Share(Base):
+    __tablename__ = 'shares'
+    user_id = Column(UUID, ForeignKey('users.id'), primary_key=True)
+    email = Column(EmailType, primary_key=True)
+
+    entries = Column(Boolean)
+    summaries = Column(Boolean)
+    fields = Column(Boolean)
+    themes = Column(Boolean)
+    profile = Column(Boolean)
+
+    def json(self):
+        return {
+            'user_id': self.user_id,
+            'email': self.email,
+            'entries': self.entries,
+            'summaries': self.summaries,
+            'fields': self.fields,
+            'themes': self.themes,
+            'profile': self.profile
+        }

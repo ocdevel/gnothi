@@ -1,22 +1,21 @@
 import React, {useEffect, useState} from "react";
-import {fetch_} from "./utils";
 import {Modal, Table} from "react-bootstrap";
 import _ from "lodash";
 import ReactMarkdown from "react-markdown";
 import {CartesianGrid, Line, LineChart, Tooltip, XAxis, YAxis} from "recharts";
 
-export default function ChartModal({jwt, close, field=null, overall=false}) {
+export default function ChartModal({fetch_, close, field=null, overall=false}) {
   const [influencers, setInfluencers] = useState({})
   const [fields, setFields] = useState([])
 
   const fetchTargets = async () => {
-    let res = await fetch_('fields', 'GET', null, jwt)
+    let res = await fetch_('fields', 'GET')
     setFields(res)
     if (overall) {
-      res = await fetch_(`influencers`, 'GET', null, jwt)
+      res = await fetch_(`influencers`, 'GET')
       setInfluencers(res.overall)
     } else {
-      res = await fetch_(`influencers?target=${field.id}`, 'GET', null, jwt)
+      res = await fetch_(`influencers?target=${field.id}`, 'GET')
       setInfluencers(res.per_target[field.id])
     }
   }

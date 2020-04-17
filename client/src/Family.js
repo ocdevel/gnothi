@@ -1,7 +1,7 @@
 import React, {useState} from "react";
 import {Button, Form, Table} from "react-bootstrap";
 
-export default function Family({jwt}) {
+export default function Family({fetch_}) {
   const [form, setForm] = useState({})
   const [family, setFamily] = useState([
     {name: 'Tyler', type: 'Self', issues: ['Depression']},

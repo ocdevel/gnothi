@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from "react";
-import {fetch_, spinner} from "./utils";
+import {spinner} from "./utils";
 import _ from "lodash";
 import {Accordion, Alert, Button, Card, Form, Table} from "react-bootstrap";
 import ReactMarkdown from "react-markdown";
@@ -8,7 +8,7 @@ import SetupHabitica from "./SetupHabitica";
 import FieldModal from "./FieldModal";
 import ChartModal from "./ChartModal";
 
-export default function Fields({jwt}) {
+export default function Fields({fetch_}) {
   const [fetchingSvc, setFetchingSvc] = useState(false)
   const [fields, setFields] = useState({})
   const [fieldEntries, setFieldEntries] = useState({})
@@ -17,7 +17,7 @@ export default function Fields({jwt}) {
 
   const fetchFieldEntries = async (fields) => {
     // FIXME shouldn't need to pass in fields, but fields=={} even after fetchFields..
-    const res = await fetch_(`field-entries`, 'GET', null, jwt)
+    const res = await fetch_(`field-entries`, 'GET')
     _.each(res, (val, fid) => {
       if (val) {return}
       const f = fields[fid]
@@ -36,7 +36,7 @@ export default function Fields({jwt}) {
   }
 
   const fetchFields = async () => {
-    const res = await fetch_(`fields`, 'GET', null, jwt)
+    const res = await fetch_(`fields`, 'GET')
     setFields(res)
     await fetchFieldEntries(res)
   }
@@ -45,7 +45,7 @@ export default function Fields({jwt}) {
 
   const fetchService = async (service) => {
     setFetchingSvc(true)
-    await fetch_(`${service}/sync`, 'POST', null, jwt)
+    await fetch_(`${service}/sync`, 'POST')
     await fetchFields()
     setFetchingSvc(false)
   }
@@ -55,7 +55,7 @@ export default function Fields({jwt}) {
     v = parseFloat(v)  // until we support strings
     setFieldEntries({...fieldEntries, [fid]: v})
     const body = {value: v}
-    fetch_(`field-entries/${fid}`, 'POST', body, jwt)
+    fetch_(`field-entries/${fid}`, 'POST', body)
   }
 
   const changeCheck = fid => e => {
@@ -167,7 +167,7 @@ export default function Fields({jwt}) {
   return <div>
     {showForm && (
       <FieldModal
-        jwt={jwt}
+        fetch_={fetch_}
         close={onFormClose}
         field={showForm === true ? {} : fields[showForm]}
       />
@@ -175,7 +175,7 @@ export default function Fields({jwt}) {
 
     {showChart && (
       <ChartModal
-        jwt={jwt}
+        fetch_={fetch_}
         field={showChart === true ? null : fields[showChart]}
         overall={showChart === true}
         close={onChartClose}
@@ -206,7 +206,7 @@ export default function Fields({jwt}) {
                   className='bottom-margin'
                 >New Field</Button>
               )}
-              {g.service === 'habitica' && <SetupHabitica jwt={jwt}/>}
+              {g.service === 'habitica' && <SetupHabitica fetch_={fetch_}/>}
             </Card.Body>
           </Accordion.Collapse>
         </Card>

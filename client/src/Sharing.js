@@ -1,38 +1,88 @@
-import {Badge, Button, Form} from "react-bootstrap";
-import React from "react";
+import {Badge, Button, Form} from "react-bootstrap"
+import React, {useEffect, useState} from "react"
+import _ from 'lodash'
 
-export default function Sharing({jwt}) {
+const feature_map = {
+  entries: 'Entries',
+  summaries: 'Summaries',
+  fields: 'Fields',
+  themes: 'Themes',
+  profile: 'Profile & Family'
+}
+
+export default function Sharing({fetch_}) {
+  const [form, setForm] = useState('')
+  const [shared, setShared] = useState([])
+
+  const fetchShared = async () => {
+    const res = await fetch_('share', 'GET')
+    setShared(res)
+  }
+
+  useEffect(() => {fetchShared()}, [])
+
+  const submit = async e => {
+    e.preventDefault()
+    await fetch_('share', 'POST', form)
+    setForm({})
+    await fetchShared()
+  }
+
+  const changeEmail = e => {
+    setForm({...form, email: e.target.value})
+  }
+
+  const chooseFeature = k => e => {
+    const v = e.target.checked
+    setForm({...form, [k]: v})
+  }
+
+  const renderSharing = () => {
+    if (_.isEmpty(shared)) {return null}
+    return <>
+      <hr/>
+      <p>Sharing with</p>
+      {shared.map(s => (
+        <div>
+          <Badge variant="secondary">{s.email} x</Badge><br/>
+          {/*feature-selec*/}
+        </div>
+      ))}
+    </>
+  }
+
   return <div>
-    <Form>
+    <Form onSubmit={submit}>
       <Form.Group controlId="formBasicEmail">
-        <Form.Label>Therapist Email address</Form.Label>
-        <Form.Control type="email" placeholder="Enter email" />
+        <Form.Label>Email address</Form.Label>
+        <Form.Control
+          type="email"
+          required
+          placeholder="Enter email"
+          value={form.email}
+          onChange={changeEmail}
+        />
         <Form.Text className="text-muted">
           Email of person you'll share data with
         </Form.Text>
       </Form.Group>
 
-      <Form.Group controlId="exampleForm.ControlSelect2">
-        <Form.Label>Share</Form.Label>
-        <Form.Control as="select" multiple>
-          <option>Summaries</option>
-          <option>Themes</option>
-          <option>Sentiment</option>
-          <option>Field Charts</option>
-          <option>Family</option>
-          <option>Entries (specified per entry)</option>
-        </Form.Control>
+      <Form.Group controlId='formFeatures'>
+      {_.map(feature_map, (v, k) => (
+          <Form.Check
+            id={`formFeature-${k}`}
+            type="checkbox"
+            label={v}
+            value={form[k]}
+            onChange={chooseFeature(k)}
+          />
+      ))}
       </Form.Group>
 
       <Button variant="primary" type="submit">
         Submit
       </Button>
     </Form>
-    <hr/>
-    <div>
-      <p>Sharing with:</p>
-      <Badge variant="secondary">megantherapy@gmail.com x</Badge><br/>
-      <Badge variant="secondary">lisarenelle@gmail.com x</Badge>
-    </div>
+    {renderSharing()}
   </div>
 }

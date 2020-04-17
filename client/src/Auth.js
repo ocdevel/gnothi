@@ -5,10 +5,9 @@ import {
   Tab,
   Tabs
 } from "react-bootstrap";
-import {fetch_, spinner} from './utils'
-import {Link} from "react-router-dom";
+import {spinner} from './utils'
 
-export default function Auth({onAuth}) {
+export default function Auth({fetch_, onAuth}) {
   const [submitting, setSubmitting] = useState(false)
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -19,7 +18,7 @@ export default function Auth({onAuth}) {
   const changePasswordConfirm = e => setPasswordConfirm(e.target.value)
 
   const login = async () => {
-    const res = await fetch_('auth','POST', {username, password}, null, false)
+    const res = await fetch_('auth', 'POST', {username, password})
     const jwt = res.access_token;
     localStorage.setItem('jwt', jwt);
     setSubmitting(false)
@@ -37,7 +36,7 @@ export default function Auth({onAuth}) {
     e.preventDefault();
     setSubmitting(true)
     // assert password = passwordConfirm. See react-bootstrap, use yup library or something for form stuff
-    const res = await fetch_('register','POST',{username, password})
+    const res = await fetch_('register', 'POST', {username, password})
     login();
   };
 

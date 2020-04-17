@@ -1,14 +1,14 @@
 import React, {useEffect, useState} from "react";
-import {fetch_, spinner} from "./utils";
+import {spinner} from "./utils";
 import {Table} from "react-bootstrap";
 
-export default function Books({jwt}) {
+export default function Books({fetch_}) {
   const [books, setBooks] = useState([])
   const [fetching, setFetching] = useState(false)
 
   const fetchBooks = async () => {
     setFetching(true)
-    const res = await fetch_('books', 'GET', null, jwt)
+    const res = await fetch_('books', 'GET')
     setBooks(res)
     setFetching(false)
   }
