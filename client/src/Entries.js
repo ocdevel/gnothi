@@ -11,6 +11,7 @@ import {
 } from "react-bootstrap"
 import moment from "moment"
 import Themes from './Themes'
+import Books from "./Books"
 
 const summaryTip = (
   <Popover>
@@ -23,6 +24,7 @@ const summaryTip = (
 export default function Entries({jwt}) {
   const [entries, setEntries] = useState([])
   const [tab, setTab] = useState('Entries');
+  const [cacheTabs, setCacheTabs] = useState({})
   let history = useHistory()
   let match = useRouteMatch()
 
@@ -38,6 +40,11 @@ export default function Entries({jwt}) {
   const gotoForm = (entry_id=null) => {
     const p = match.url + "/" + (entry_id ? `entry/${entry_id}` : 'entry')
     history.push(p)
+  }
+
+  const clickTab = (k) => {
+    setCacheTabs({...cacheTabs, [k]: true})
+    setTab(k)
   }
 
   const renderEntry = e => {
@@ -80,7 +87,7 @@ export default function Entries({jwt}) {
       <Tabs
         variant='pills'
         activeKey={tab}
-        onSelect={(k) => setTab(k)}
+        onSelect={clickTab}
       >
         <Tab eventKey="Entries" title="Entries">
           <Table>
@@ -90,7 +97,10 @@ export default function Entries({jwt}) {
           </Table>
         </Tab>
         <Tab eventKey="Themes" title="Themes">
-          <Themes jwt={jwt} />
+          {cacheTabs['Themes'] && <Themes jwt={jwt} />}
+        </Tab>
+        <Tab eventKey="Books" title="Books">
+          {cacheTabs['Books'] && <Books jwt={jwt} />}
         </Tab>
       </Tabs>
     </div>

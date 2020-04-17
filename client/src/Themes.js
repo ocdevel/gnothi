@@ -22,7 +22,6 @@ export default function Themes({jwt}) {
   const changeAdvanced = e => setAdvanced(e.target.checked)
 
   return <>
-    <h1>Themes</h1>
     <Form.Group controlId="formAdvanced">
       <Form.Check
         type="checkbox"

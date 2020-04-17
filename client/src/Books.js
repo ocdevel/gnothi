@@ -2,7 +2,7 @@ import React, {useEffect, useState} from "react";
 import {fetch_, spinner} from "./utils";
 import {Table} from "react-bootstrap";
 
-export default function Resources({jwt}) {
+export default function Books({jwt}) {
   const [books, setBooks] = useState([])
   const [fetching, setFetching] = useState(false)
 
@@ -18,7 +18,6 @@ export default function Resources({jwt}) {
   }, [])
 
   return <>
-    <h1>Books</h1>
     {fetching ? (
       <>
         {spinner}
