@@ -3,7 +3,7 @@ from flask import Flask
 from flask_cors import CORS
 from jwtauthtest.database import init_db, shutdown_db_session
 
-app = Flask(__name__, static_folder='build')
+app = Flask(__name__)
 CORS(app)
 
 

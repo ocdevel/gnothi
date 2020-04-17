@@ -2,7 +2,8 @@ import {OverlayTrigger, Popover, Spinner} from "react-bootstrap";
 import React from "react";
 
 let host = window.location.origin.split(':')
-host = host[0] + ':' + host[1] + ':' + (host[2] === "3002" ? "5002" : host[2])
+// host = host[0] + ':' + host[1] + ':' + 3001
+host = host[0] + ':' + host[1] + ':' + (host[2] === "3002" ? "5002" : "5001")
 
 const fetch_ = async (route, method='GET', body=null, jwt=null, api=true) => {
   const obj = {

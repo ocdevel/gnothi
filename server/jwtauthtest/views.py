@@ -5,21 +5,11 @@ from jwtauthtest import app
 from jwtauthtest.database import db_session, engine
 from jwtauthtest.models import User, Entry, Field, FieldEntry
 from passlib.hash import pbkdf2_sha256
-from flask import request, jsonify, send_from_directory
+from flask import request, jsonify
 from jwtauthtest.utils import vars
 from jwtauthtest import ml
 import requests
 from dateutil.parser import parse as dparse
-
-
-# https://stackoverflow.com/questions/44209978/serving-a-front-end-created-with-create-react-app-with-flask
-@app.route('/', defaults={'path': ''})
-@app.route('/<path:path>')
-def serve(path):
-    if path != "" and os.path.exists(app.static_folder + '/' + path):
-        return send_from_directory(app.static_folder, path)
-    else:
-        return send_from_directory(app.static_folder, 'index.html')
 
 
 def useradd(username, password):
