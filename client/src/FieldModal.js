@@ -87,6 +87,7 @@ export default function FieldModal({jwt, close, field= {}}) {
           >
             <option>number</option>
             <option>fivestar</option>
+            <option>check</option>
           </Form.Control>
         </Form.Group>
 

@@ -58,6 +58,10 @@ export default function Fields({jwt}) {
     fetch_(`field-entries/${fid}`, 'POST', body, jwt)
   }
 
+  const changeCheck = fid => e => {
+    changeFieldVal(fid, true)(~~!fieldEntries[fid])
+  }
+
   const renderSyncButton = (service) => {
     if (!~['habitica'].indexOf(service)) {return null}
     if (fetchingSvc) {return spinner}
@@ -98,6 +102,23 @@ export default function Fields({jwt}) {
               size={25}
               onChange={changeFieldVal(f.id, true)}
             />
+          ) : f.type === 'check' ? (
+            <>
+              <Form.Check
+                type='radio'
+                label='Yes'
+                inline
+                checked={fieldEntries[f.id] > 0}
+                onChange={changeCheck(f.id)}
+              />
+              <Form.Check
+                type='radio'
+                label='No'
+                inline
+                checked={fieldEntries[f.id] < 1}
+                onChange={changeCheck(f.id)}
+              />
+            </>
           ) : (
             <Form.Control
               disabled={!!f.service}

@@ -135,7 +135,7 @@ def entries_to_data(entries, propn=True):
     def lemmas(txt):
         if not txt: return txt
 
-        postags = ['NOUN', 'ADJ', 'VERB', 'ADV', 'X']
+        postags = ['NOUN', 'ADJ', 'VERB', 'ADV']
         if propn: postags.append('PROPN')
 
         tokens = []
@@ -148,7 +148,7 @@ def entries_to_data(entries, propn=True):
             elif t.pos_ not in postags:
                 continue
             else:
-                tokens.append(t._.inflect(t.pos_))
+                tokens.append(t._.lemma())
         return " ".join(tokens)
 
     filters = [
@@ -244,13 +244,6 @@ def query(question, entries):
 
     context = ' '.join([unmark(e) for e in entries])
     answer = cache.qa(question=question, context=context)
-
-    # {'score': 0.622232091629833, 'start': 34, 'end': 96, 'answer': 'the task of extracting an answer from a text given a question.'}
-    # {'score': 0.5115299158662765, 'start': 147, 'end': 161, 'answer': 'SQuAD dataset,'}
-    # answer = '\n\n'.join([
-    #     context[a['start']:a['end']] + a['answer']
-    #     for a in answer
-    # ])
 
     return answer['answer']
 
