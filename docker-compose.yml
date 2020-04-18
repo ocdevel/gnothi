@@ -23,7 +23,8 @@ services:
   server-dev:
     build: server
     container_name: jserver-dev
-    entrypoint: /bin/bash
+    entrypoint: flask run --host=0.0.0.0
+#    entrypoint: /bin/bash
     environment:
       ENVIRONMENT: development
       FLASK_ENV: development
@@ -45,7 +46,7 @@ services:
     command: serve -s build -l tcp://0.0.0.0:3001
     container_name: jclient
     ports:
-      - 3001
+      - 3001:3001
     stdin_open: true
     volumes:
       - ./client:/client
@@ -56,7 +57,7 @@ services:
     #    command: /bin/bash
     container_name: jclient-dev
     ports:
-      - 3002
+      - 3002:3002
     stdin_open: true
     volumes:
       - ./client:/client
