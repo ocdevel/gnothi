@@ -23,8 +23,8 @@ services:
   server-dev:
     build: server
     container_name: jserver-dev
-    entrypoint: flask run --host=0.0.0.0
-#    entrypoint: /bin/bash
+#    entrypoint: flask run --host=0.0.0.0
+    entrypoint: /bin/bash
     environment:
       ENVIRONMENT: development
       FLASK_ENV: development

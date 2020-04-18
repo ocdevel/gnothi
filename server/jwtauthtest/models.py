@@ -37,7 +37,7 @@ class User(Base):
 
     entries = relationship("Entry", order_by='Entry.created_at.desc()')
     field_entries = relationship("FieldEntry", order_by='FieldEntry.created_at.desc()')
-    fields = relationship("Field")
+    fields = relationship("Field", order_by='Field.created_at.asc()')
     family_members = relationship("Family")
 
     def __init__(self, username, password):
