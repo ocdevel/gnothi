@@ -140,6 +140,8 @@ def setup_habitica():
 
 
 def sync_habitica_for(user):
+    if not (user.habitica_user_id and user.habitica_api_token):
+        return
     # https://habitica.com/apidoc/#api-Task-GetUserTasks
     app.logger.info("Calling Habitica")
     headers = {
@@ -278,10 +280,14 @@ def summarize():
     now = datetime.datetime.utcnow()
     days, words = int(data['days']), int(data['words'])*5
     x_days_ago = now - datetime.timedelta(days=days)
+
+    # order by asc to paint a story from start to finish, since we're summarizing
     entries = Entry.query.filter(
-        Entry.user_id==current_identity.id,
-        Entry.created_at > x_days_ago
-    ).all()
+            Entry.user_id==current_identity.id,
+            Entry.created_at > x_days_ago
+        )\
+        .order_by(Entry.created_at.asc())\
+        .all()
     entries = ' '.join(e.text for e in entries)
     entries = re.sub('\s+', ' ', entries)  # mult new-lines
     min_ = int(words*2/3)
@@ -299,7 +305,8 @@ scheduler = APScheduler()
 def job1():
     with app.app_context():
         print("Running cron")
-        for u in User.query.filter(User.habitica_user_id != None).all():
+        q = User.query.filter(User.habitica_user_id != None, User.habitica_user_id != '')
+        for u in q.all():
             sync_habitica_for(u)
 
 app.config.from_object(Config())
