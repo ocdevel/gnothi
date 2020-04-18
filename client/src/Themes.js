@@ -13,7 +13,7 @@ export default function Themes({fetch_}) {
     let url = 'gensim'
     if (advanced) {url += '?advanced=1'}
     const res = await fetch_(url, 'GET')
-    setTopics(res)
+    setTopics(res.ok ? res : {})
     setFetching(false)
   }
 

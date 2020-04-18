@@ -8,7 +8,7 @@ import SetupHabitica from "./SetupHabitica";
 import FieldModal from "./FieldModal";
 import ChartModal from "./ChartModal";
 
-export default function Fields({fetch_}) {
+export default function Fields({fetch_, as}) {
   const [fetchingSvc, setFetchingSvc] = useState(false)
   const [fields, setFields] = useState({})
   const [fieldEntries, setFieldEntries] = useState({})
@@ -64,6 +64,7 @@ export default function Fields({fetch_}) {
 
   const renderSyncButton = (service) => {
     if (!~['habitica'].indexOf(service)) {return null}
+    if (as) {return null}
     if (fetchingSvc) {return spinner}
     return <>
       <Button onClick={() => fetchService(service)}>Sync</Button>
@@ -198,7 +199,7 @@ export default function Fields({fetch_}) {
                 </tbody>
                 {renderSyncButton(g.service)}
               </Table>
-              {g.service === 'custom' && (
+              {g.service === 'custom' && !as && (
                 <Button
                   variant="success"
                   onClick={() => setShowForm(true)}
@@ -206,7 +207,9 @@ export default function Fields({fetch_}) {
                   className='bottom-margin'
                 >New Field</Button>
               )}
-              {g.service === 'habitica' && <SetupHabitica fetch_={fetch_}/>}
+              {g.service === 'habitica' && !as && (
+                <SetupHabitica fetch_={fetch_}/>
+              )}
             </Card.Body>
           </Accordion.Collapse>
         </Card>

@@ -17,10 +17,28 @@ def useradd(username, password):
     db_session.commit()
 
 
+def as_user():
+    # return [as_user, is_snooping]
+    as_user = request.args.get('as', None)
+    if as_user and as_user != current_identity.id:
+        user = current_identity.shared_with_me(as_user)
+        if user:
+            user.share_data = Share.query\
+                .filter_by(user_id=user.id, email=current_identity.username)\
+                .first()
+            return user, True
+    return current_identity, False
+
+
+def cant_snoop():
+    return jsonify({'ok': False}), 401
+
+
 @app.route('/api/user', methods=['GET'])
 @jwt_required()
 def get_user():
-    return jsonify(current_identity.json())
+    user = current_identity  # as_user()
+    return jsonify(user.json())
 
 
 @app.route('/api/register', methods=['POST'])
@@ -33,12 +51,15 @@ def register():
 @app.route('/api/shares', methods=['GET', 'POST'])
 @jwt_required()
 def shares():
+    user, snooping = as_user()
+    if snooping: return cant_snoop()
+
     if request.method == 'GET':
-        shared = Share.query.filter_by(user_id=current_identity.id).all()
+        shared = Share.query.filter_by(user_id=user.id).all()
         return jsonify([x.json() for x in shared])
     if request.method == 'POST':
         data = request.get_json()
-        db_session.add(Share(user_id=current_identity.id, **data))
+        db_session.add(Share(user_id=user.id, **data))
         db_session.commit()
         return jsonify({'ok': True})
 
@@ -46,10 +67,13 @@ def shares():
 @app.route('/api/entries', methods=['GET', 'POST'])
 @jwt_required()
 def entries():
-    user = current_identity
+    user, snooping = as_user()
     if request.method == 'GET':
+        if snooping and not user.share_data.entries:
+            return cant_snoop()
         return jsonify({'entries': [e.json() for e in user.entries]})
     elif request.method == 'POST':
+        if snooping: return cant_snoop()
         data = request.get_json()
         entry = Entry(title=data['title'], text=data['text'])
         entry.run_models()
@@ -61,10 +85,13 @@ def entries():
 @app.route('/api/entries/<entry_id>', methods=['GET', 'PUT', 'DELETE'])
 @jwt_required()
 def entry(entry_id):
-    user = current_identity
+    user, snooping = as_user()
     entry = Entry.query.filter_by(user_id=user.id, id=entry_id)
     if request.method == 'GET':
+        if snooping and not user.share_data.entries:
+            return cant_snoop()
         return jsonify(entry.first().json())
+    if snooping: return cant_snoop()
     if request.method == 'PUT':
         data = request.get_json()
         entry = entry.first()
@@ -82,9 +109,12 @@ def entry(entry_id):
 @app.route('/api/fields', methods=['GET', 'POST'])
 @jwt_required()
 def fields():
-    user = current_identity
+    user, snooping = as_user()
     if request.method == 'GET':
+        if snooping and not user.share_data.fields:
+            return cant_snoop()
         return jsonify({f.id: f.json() for f in user.fields})
+    if snooping: return cant_snoop()
     if request.method == 'POST':
         data = request.get_json()
         f = Field(**data)
@@ -96,7 +126,8 @@ def fields():
 @app.route('/api/fields/<field_id>', methods=['PUT', 'DELETE'])
 @jwt_required()
 def field(field_id):
-    user = current_identity
+    user, snooping = as_user()
+    if snooping: return cant_snoop()
     if request.method == 'PUT':
         f = Field.query.filter_by(user_id=user.id, id=field_id).first()
         data = request.get_json()
@@ -114,7 +145,10 @@ def field(field_id):
 @app.route('/api/field-entries')
 @jwt_required()
 def field_entries():
-    res = FieldEntry.get_today_entries(current_identity.id).all()
+    user, snooping = as_user()
+    if snooping and not user.share_data.fields:
+        return cant_snoop()
+    res = FieldEntry.get_today_entries(user.id).all()
     res = {f.field_id: f.value for f in res}
     return jsonify(res)
 
@@ -122,7 +156,8 @@ def field_entries():
 @app.route('/api/field-entries/<field_id>', methods=['POST'])
 @jwt_required()
 def field_entry(field_id):
-    user = current_identity
+    user, snooping = as_user()
+    if snooping: return cant_snoop()
     data = request.get_json()
     fe = FieldEntry.get_today_entries(user.id, field_id).first()
     v = float(data['value'])
@@ -138,7 +173,8 @@ def field_entry(field_id):
 @app.route('/api/habitica', methods=['POST'])
 @jwt_required()
 def setup_habitica():
-    user = current_identity
+    user, snooping = as_user()
+    if snooping: return cant_snoop()
     data = request.get_json()
     user.habitica_user_id = data['habitica_user_id']
     user.habitica_api_token = data['habitica_api_token']
@@ -237,7 +273,8 @@ def sync_habitica_for(user):
 @app.route('/api/habitica/sync', methods=['POST'])
 @jwt_required()
 def sync_habitica():
-    user = current_identity
+    user, snooping = as_user()
+    if snooping: return cant_snoop()
     if not user.habitica_user_id:
         return jsonify({'ok': False})
     sync_habitica_for(user)
@@ -247,9 +284,12 @@ def sync_habitica():
 @app.route('/api/influencers', methods=['GET'])
 @jwt_required()
 def influencers():
+    user, snooping = as_user()
+    if snooping and not user.share_data.fields:
+        return cant_snoop()
     targets, all_imps = ml.influencers(
         engine,
-        current_identity.id,
+        user.id,
         specific_target=request.args.get('target', None),
         logger=app.logger
     )
@@ -259,15 +299,21 @@ def influencers():
 @app.route('/api/gensim', methods=['GET'])
 @jwt_required()
 def run_gensim():
+    user, snooping = as_user()
+    if snooping and not user.share_data.themes:
+        return cant_snoop()
     advanced = request.args.get('advanced', False)
-    entries = [e.text for e in current_identity.entries]
+    entries = [e.text for e in user.entries]
     return jsonify(ml.themes(entries, advanced=advanced))
 
 
 @app.route('/api/books', methods=['GET'])
 @jwt_required()
 def get_books():
-    entries = [e.text for e in current_identity.entries]
+    user, snooping = as_user()
+    if snooping and not user.share_data.themes:
+        return cant_snoop()
+    entries = [e.text for e in user.entries]
     books = ml.resources(entries, logger=app.logger)
     return jsonify(books)
 
@@ -275,14 +321,18 @@ def get_books():
 @app.route('/api/query', methods=['POST'])
 @jwt_required()
 def query():
+    user, snooping = as_user()
     question = request.get_json()['query']
-    entries = [e.text for e in current_identity.entries]
+    entries = [e.text for e in user.entries]
     res = ml.query(question, entries)
     return jsonify(res)
 
 @app.route('/api/summarize', methods=['POST'])
 @jwt_required()
 def summarize():
+    user, snooping = as_user()
+    if snooping and not user.share_data.summaries:
+        return cant_snoop()
     data = request.get_json()
     now = datetime.datetime.utcnow()
     days, words = int(data['days']), int(data['words'])*5
@@ -290,7 +340,7 @@ def summarize():
 
     # order by asc to paint a story from start to finish, since we're summarizing
     entries = Entry.query.filter(
-            Entry.user_id==current_identity.id,
+            Entry.user_id==user.id,
             Entry.created_at > x_days_ago
         )\
         .order_by(Entry.created_at.asc())\

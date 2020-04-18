@@ -7,7 +7,7 @@ import Summarize from './Summarize'
 import React from "react"
 import {Col, Row} from 'react-bootstrap'
 
-export default function Journal({fetch_}) {
+export default function Journal({fetch_, as}) {
   let match = useRouteMatch()
 
   return (
@@ -18,16 +18,18 @@ export default function Journal({fetch_}) {
             <Route path={`${match.url}/entry/:entry_id`}>
               <Entry fetch_={fetch_} />
             </Route>
-            <Route path={`${match.url}/entry`}>
-              <Entry fetch_={fetch_} />
-            </Route>
+            {!as && (
+              <Route path={`${match.url}/entry`}>
+                <Entry fetch_={fetch_} />
+              </Route>
+            )}
             <Route path={match.url}>
-              <Entries fetch_={fetch_} />
+              <Entries fetch_={fetch_} as={as} />
             </Route>
           </Switch>
         </Col>
         <Col lg={3}>
-          <Fields fetch_={fetch_} />
+          <Fields fetch_={fetch_} as={as} />
           <hr />
           <Summarize fetch_={fetch_} />
           <hr />

@@ -53,10 +53,13 @@ class User(Base):
 
     def shared_with_me(self, id=None):
         if id:
-            # return full user model
-            pass
-        return User.query.filter(User.username == self.username)\
-            .with_entities(User.username, User.id)\
+            return User.query \
+                .join(Share) \
+                .filter(Share.email == self.username, Share.user_id==id) \
+                .first()
+        return User.query\
+            .join(Share)\
+            .filter(Share.email==self.username)\
             .all()
 
     def json(self):
@@ -65,7 +68,7 @@ class User(Base):
             'username': self.username,
             'habitica_user_id': self.habitica_user_id,
             'habitica_api_token': self.habitica_api_token,
-            'shared_with_me': [{'id': x.id, 'username': x.username} for x in self.shared_with_me()]
+            'shared_with_me': [s.json() for s in self.shared_with_me()]
         }
 
 

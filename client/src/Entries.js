@@ -21,7 +21,7 @@ const summaryTip = (
   </Popover>
 );
 
-export default function Entries({fetch_}) {
+export default function Entries({fetch_, as}) {
   const [entries, setEntries] = useState([])
   const [tab, setTab] = useState('Entries');
   const [cacheTabs, setCacheTabs] = useState({})
@@ -30,7 +30,7 @@ export default function Entries({fetch_}) {
 
   const fetchEntries = async () => {
     const res = await fetch_('entries', 'GET')
-    setEntries(res.entries)
+    setEntries(res.entries || [])
   }
 
   useEffect(() => {
@@ -76,13 +76,13 @@ export default function Entries({fetch_}) {
 
   return (
     <div>
-      <Button
+      {!as && <Button
         style={{float: 'right'}}
         variant="success"
         size='lg'
         className='bottom-margin'
         onClick={() => gotoForm()}
-      >New Entry</Button>
+      >New Entry</Button>}
 
       <Tabs
         variant='pills'
