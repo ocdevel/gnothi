@@ -18,6 +18,8 @@ import {
 import Auth from './Auth'
 import Journal from './Journal'
 import Profile from './Profile'
+import Themes from './Themes'
+import Books from './Books'
 
 let host = window.location.origin.split(':')
 // host = host[0] + ':' + host[1] + ':' + 3001
@@ -92,13 +94,19 @@ function App() {
             <LinkContainer exact to="/j">
               <Nav.Link>Journal</Nav.Link>
             </LinkContainer>
+            <LinkContainer exact to="/themes">
+              <Nav.Link>Themes</Nav.Link>
+            </LinkContainer>
+            <LinkContainer exact to="/books">
+              <Nav.Link>Books</Nav.Link>
+            </LinkContainer>
           </Nav>
           <Nav>
             <NavDropdown title={username} id="basic-nav-dropdown">
               {renderAsSelect()}
-              <LinkContainer to="/profile/sharing">
+              {!as && <LinkContainer to="/profile/sharing">
                 <NavDropdown.Item>Sharing</NavDropdown.Item>
-              </LinkContainer>
+              </LinkContainer>}
               <LinkContainer to="/profile/family">
                 <NavDropdown.Item>Family</NavDropdown.Item>
               </LinkContainer>
@@ -123,13 +131,19 @@ function App() {
     <Router>
       {renderNav()}
       <br/>
-      <Container fluid>
+      <Container fluid key={as}>
         <Switch>
           <Route path="/j">
-            <Journal fetch_={fetch_} key={as} as={as} />
+            <Journal fetch_={fetch_} as={as} />
+          </Route>
+          <Route path="/themes">
+            <Themes fetch_={fetch_} as={as} />
+          </Route>
+          <Route path="/books">
+            <Books fetch_={fetch_} as={as} />
           </Route>
           <Route path="/profile">
-            <Profile fetch_={fetch_} key={as} as={as} />
+            <Profile fetch_={fetch_} as={as} />
           </Route>
           <Redirect from="/" to="/j" />
         </Switch>

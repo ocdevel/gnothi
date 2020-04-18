@@ -190,11 +190,9 @@ export default function Fields({fetch_, as}) {
     <Accordion defaultActiveKey="custom">
       {groups.map(g => (
         <Card key={g.service}>
-          <Card.Header>
-            <Accordion.Toggle as={Button} variant="link" eventKey={g.service}>
-              {g.name}
-            </Accordion.Toggle>
-          </Card.Header>
+          <Accordion.Toggle as={Card.Header} variant="link" eventKey={g.service}>
+            {g.name}
+          </Accordion.Toggle>
           <Accordion.Collapse eventKey={g.service}>
             <Card.Body>
               <Table size='sm' borderless>
@@ -203,14 +201,17 @@ export default function Fields({fetch_, as}) {
                 </tbody>
                 {renderSyncButton(g.service)}
               </Table>
-              {g.service === 'custom' && !as && (
-                <Button
+              {g.service === 'custom' && !as && <Button
                   variant="success"
                   onClick={() => setShowForm(true)}
-                  size="lg"
                   className='bottom-margin'
-                >New Field</Button>
-              )}
+                >New Field</Button>}
+              {g.service === 'custom' && <Button
+                variant="outline-primary"
+                style={{float:'right'}}
+                size="sm"
+                onClick={() => setShowChart(true)}
+              >Top Influencers</Button>}
               {g.service === 'habitica' && !as && (
                 <SetupHabitica fetch_={fetch_}/>
               )}
@@ -219,11 +220,5 @@ export default function Fields({fetch_, as}) {
         </Card>
       ))}
     </Accordion>
-    <br/>
-    <Button
-      variant="outline-primary"
-      size="sm"
-      onClick={() => setShowChart(true)}
-    >Top Influencers</Button>
   </div>
 }

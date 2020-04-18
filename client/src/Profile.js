@@ -8,11 +8,9 @@ export default function Profile({fetch_, as}) {
 
   return (
     <Switch>
-      {!as && (
-        <Route path={`${match.url}/sharing`}>
-          <Sharing fetch_={fetch_} />
-        </Route>
-      )}
+      <Route path={`${match.url}/sharing`}>
+        <Sharing fetch_={fetch_} as={as} />
+      </Route>
       <Route path={`${match.url}/family`}>
         <Family fetch_={fetch_} />
       </Route>

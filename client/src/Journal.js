@@ -16,11 +16,11 @@ export default function Journal({fetch_, as}) {
         <Col>
           <Switch>
             <Route path={`${match.url}/entry/:entry_id`}>
-              <Entry fetch_={fetch_} />
+              <Entry fetch_={fetch_} as={as} />
             </Route>
             {!as && (
               <Route path={`${match.url}/entry`}>
-                <Entry fetch_={fetch_} />
+                <Entry fetch_={fetch_} as={as} />
               </Route>
             )}
             <Route path={match.url}>
@@ -31,9 +31,9 @@ export default function Journal({fetch_, as}) {
         <Col lg={3}>
           <Fields fetch_={fetch_} as={as} />
           <hr />
-          <Summarize fetch_={fetch_} />
+          <Summarize fetch_={fetch_} as={as} />
           <hr />
-          <Query fetch_={fetch_} />
+          <Query fetch_={fetch_} as={as} />
         </Col>
       </Row>
     </div>

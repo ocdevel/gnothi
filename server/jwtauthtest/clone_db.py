@@ -45,7 +45,9 @@ dfs = []
 with from_engine.connect() as from_conn:
     for t in 'users fields entries field_entries family_types family_issue_types family family_issues'.split():
         sql = f"select * from {t}"
-        dfs.append([t, pd.read_sql(t, from_conn)])
+        df = pd.read_sql(t, from_conn)
+        if t == 'entries': df.drop(columns=['show_ml', 'show_therapist'], inplace=True)
+        dfs.append([t, df])
 
 ## Was trying to re-generate local DB from code, but issue. Just start server
 ## to regen localDB with `WIPE=1 flask run` and go from there

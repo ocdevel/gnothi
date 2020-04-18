@@ -43,6 +43,7 @@ class User(Base):
     fields = relationship("Field", order_by='Field.created_at.asc()')
     family_members = relationship("Family")
     shares = relationship("Share")
+    tags = relationship("Tag", order_by='Tag.name.asc()')
 
     def __init__(self, username, password):
         self.username = username
@@ -87,11 +88,8 @@ class Entry(Base):
     text_summary = Column(Text)
     sentiment = Column((String(32)))
 
-    # Static fields (not user-generated)
-    show_therapist = Column(Boolean)
-    show_ml = Column(Boolean)
-
     user_id = Column(UUID, ForeignKey('users.id'))
+    entry_tags = relationship("EntryTag")
 
     def run_models(self):
         self.title_summary = ml.summarize(self.text, 5, 20)
@@ -110,7 +108,8 @@ class Entry(Base):
             'created_at': self.created_at,
             'title_summary': self.title_summary,
             'text_summary': self.text_summary,
-            'sentiment': self.sentiment
+            'sentiment': self.sentiment,
+            'entry_tags': {t.tag_id: True for t in self.entry_tags}
         }
 
 
@@ -226,7 +225,6 @@ class FieldEntry(Base):
         return q
 
 
-
 class FamilyType(Base):
     __tablename__ = 'family_types'
     id = Column(UUID, primary_key=True, default=uuid_)
@@ -247,6 +245,7 @@ class FamilyIssueType(Base):
     id = Column(UUID, primary_key=True, default=uuid_)
     name = Column(String(128), nullable=False)
 
+
 class FamilyIssue(Base):
     __tablename__ = 'family_issues'
     family_id = Column(UUID, ForeignKey('family.id'), primary_key=True)
@@ -255,22 +254,59 @@ class FamilyIssue(Base):
 
 class Share(Base):
     __tablename__ = 'shares'
-    user_id = Column(UUID, ForeignKey('users.id'), primary_key=True)
-    email = Column(EmailType, primary_key=True)
+    id = Column(UUID, primary_key=True, default=uuid_)
+    user_id = Column(UUID, ForeignKey('users.id'), index=True)
+    email = Column(EmailType, index=True)
 
-    entries = Column(Boolean)
-    summaries = Column(Boolean)
     fields = Column(Boolean)
     themes = Column(Boolean)
     profile = Column(Boolean)
 
+    share_tags = relationship("ShareTag")
+
     def json(self):
         return {
+            'id': self.id,
             'user_id': self.user_id,
             'email': self.email,
-            'entries': self.entries,
-            'summaries': self.summaries,
             'fields': self.fields,
             'themes': self.themes,
-            'profile': self.profile
+            'profile': self.profile,
+            'full_tags': {t.tag_id: True for t in self.share_tags if t.type.name == 'full'},
+            'summary_tags': {t.tag_id: True for t in self.share_tags if t.type.name == 'summary'},
         }
+
+class Tag(Base):
+    __tablename__ = 'tags'
+    id = Column(UUID, primary_key=True, default=uuid_)
+    user_id = Column(UUID, ForeignKey('users.id'), index=True)
+    name = Column(String(128), nullable=False)
+    # Save user's selected tags between sessions
+    selected = Column(Boolean)
+
+    def json(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'name': self.name,
+            'selected': self.selected
+        }
+
+
+# FIXME cascade https://www.michaelcho.me/article/many-to-many-relationships-in-sqlalchemy-models-flask
+class EntryTag(Base):
+    __tablename__ = 'entries_tags'
+    entry_id = Column(UUID, ForeignKey('entries.id'), primary_key=True)
+    tag_id = Column(UUID, ForeignKey('tags.id'), primary_key=True)
+
+
+class ShareTagType(enum.Enum):
+    full = 1
+    summary = 2
+
+
+class ShareTag(Base):
+    __tablename__ = 'shares_tags'
+    share_id = Column(UUID, ForeignKey('shares.id'), primary_key=True)
+    tag_id = Column(UUID, ForeignKey('tags.id'), primary_key=True)
+    type = Column(Enum(ShareTagType), nullable=False)

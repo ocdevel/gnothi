@@ -11,7 +11,7 @@ export default function Themes({fetch_}) {
 
   const fetchTopics = async () => {
     setFetching(true)
-    let url = 'gensim'
+    let url = 'themes'
     if (advanced) {url += '?advanced=1'}
     const {data, code, message} = await fetch_(url, 'GET')
     setFetching(false)

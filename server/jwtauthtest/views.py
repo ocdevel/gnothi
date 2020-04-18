@@ -3,7 +3,7 @@ import datetime
 from flask_jwt import jwt_required, current_identity
 from jwtauthtest import app
 from jwtauthtest.database import db_session, engine
-from jwtauthtest.models import User, Entry, Field, FieldEntry, Share
+from jwtauthtest.models import User, Entry, Field, FieldEntry, Share, Tag, EntryTag, ShareTag
 from passlib.hash import pbkdf2_sha256
 from flask import request, jsonify
 from jwtauthtest.utils import vars
@@ -49,6 +49,66 @@ def register():
     return jsonify({})
 
 
+@app.route('/api/tags', methods=['GET', 'POST'])
+@jwt_required()
+def tags():
+    user, snooping = as_user()
+    if request.method == 'GET':
+        if snooping: return jsonify({'data': []})
+        return jsonify({'data': [j.json() for j in user.tags]})
+    if snooping: return cant_snoop()
+    if request.method == 'POST':
+        data = request.get_json()
+        user.tags.append(Tag(name=data['name']))
+        db_session.commit()
+        return jsonify({})
+
+
+@app.route('/api/tags/<tag_id>', methods=['PUT', 'DELETE'])
+@jwt_required()
+def tag(tag_id):
+    user, snooping = as_user()
+    if snooping: return cant_snoop()
+    tag = Tag.query.filter_by(user_id=user.id, id=tag_id)
+    if request.method == 'DELETE':
+        # FIXME cascade
+        EntryTag.query.filter_by(tag_id=tag_id).delete()
+        tag.delete()
+        db_session.commit()
+        return jsonify({})
+    if request.method == 'PUT':
+        data = request.get_json()
+        tag = tag.first()
+        for k, v in data.items():
+            setattr(tag, k, v)
+        db_session.commit()
+        return jsonify({})
+
+
+def shares_put_post(user, share_id=None):
+    data = request.get_json()
+    full = data.pop('full_tags')
+    summary = data.pop('summary_tags')
+    if share_id:
+        s = Share.query.filter_by(user_id=user.id, id=share_id).first()
+        ShareTag.query.filter_by(share_id=s.id).delete()
+        for k, v in data.items():
+            setattr(s, k, v)
+        pdb.set_trace()
+    else:
+        s = Share(user_id=user.id, **data)
+        db_session.add(s)
+    db_session.commit()
+    for tag, v in full.items():
+        if not v: continue
+        db_session.add(ShareTag(share_id=s.id, tag_id=tag, type='full'))
+    for tag, v in summary.items():
+        if not v: continue
+        db_session.add(ShareTag(share_id=s.id, tag_id=tag, type='summary'))
+    db_session.commit()
+    return jsonify({})
+
+
 @app.route('/api/shares', methods=['GET', 'POST'])
 @jwt_required()
 def shares():
@@ -60,10 +120,22 @@ def shares():
         shared = [x.json() for x in shared]
         return jsonify({'data': shared})
     if request.method == 'POST':
-        data = request.get_json()
-        db_session.add(Share(user_id=user.id, **data))
+        return shares_put_post(user)
+
+
+@app.route('/api/shares/<share_id>', methods=['PUT', 'DELETE'])
+@jwt_required()
+def share(share_id):
+    user, snooping = as_user()
+    if snooping: return cant_snoop()
+
+    if request.method == 'DELETE':
+        ShareTag.query.filter_by(share_id=share_id).delete()
+        Share.query.filter_by(user_id=user.id, id=share_id).delete()
         db_session.commit()
         return jsonify({})
+    if request.method == 'PUT':
+        return shares_put_post(user, share_id)
 
 
 @app.route('/api/entries', methods=['GET', 'POST'])
@@ -71,16 +143,24 @@ def shares():
 def entries():
     user, snooping = as_user()
     if request.method == 'GET':
-        if snooping and not user.share_data.entries:
-            return cant_snoop()
-        data = [e.json() for e in user.entries]
+        if snooping:
+            # TODO
+            # entries = Entry.query.filter_by(user_id=user.id)
+            #     .join(EntryTag)
+            data = []
+        else:
+            data = [e.json() for e in user.entries]
         return jsonify({'data': data})
-    elif request.method == 'POST':
-        if snooping: return cant_snoop()
+    if snooping: return cant_snoop()
+    if request.method == 'POST':
         data = request.get_json()
         entry = Entry(title=data['title'], text=data['text'])
         entry.run_models()
         user.entries.append(entry)
+        db_session.commit()
+        for tag, v in data['tags'].items():
+            if not v: continue
+            db_session.add(EntryTag(entry_id=entry.id, tag_id=tag))
         db_session.commit()
         return jsonify({})
 
@@ -99,10 +179,19 @@ def entry(entry_id):
     if request.method == 'PUT':
         data = request.get_json()
         entry = entry.first()
+
+        EntryTag.query.filter_by(entry_id=entry.id).delete()
+        db_session.commit()
+        for tag, v in data['tags'].items():
+            if not v: continue
+            db_session.add(EntryTag(entry_id=entry.id, tag_id=tag))
         entry.title = data['title']
         entry.text = data['text']
+        db_session.commit()
+
         entry.run_models()
         db_session.commit()
+
         return jsonify({})
     if request.method == 'DELETE':
         entry.delete()
@@ -186,6 +275,85 @@ def setup_habitica():
     db_session.commit()
     return jsonify({})
 
+
+@app.route('/api/influencers', methods=['GET'])
+@jwt_required()
+def influencers():
+    user, snooping = as_user()
+    if snooping and not user.share_data.fields:
+        return cant_snoop()
+    targets, all_imps = ml.influencers(
+        engine,
+        user.id,
+        specific_target=request.args.get('target', None),
+        logger=app.logger
+    )
+    data = {'overall': all_imps, 'per_target': targets}
+    return jsonify({'data': data})
+
+
+@app.route('/api/themes', methods=['GET'])
+@jwt_required()
+def run_themes():
+    user, snooping = as_user()
+    if snooping and not user.share_data.themes:
+        return cant_snoop()
+    advanced = request.args.get('advanced', False)
+    entries = [e.text for e in user.entries]
+    data = ml.themes(entries, advanced=advanced)
+    return jsonify({'data': data})
+
+
+@app.route('/api/books', methods=['GET'])
+@jwt_required()
+def get_books():
+    user, snooping = as_user()
+    if snooping and not user.share_data.themes:
+        return cant_snoop()
+    entries = [e.text for e in user.entries]
+    books = ml.resources(entries, logger=app.logger)
+    return jsonify({'data': books})
+
+
+@app.route('/api/query', methods=['POST'])
+@jwt_required()
+def query():
+    user, snooping = as_user()
+    question = request.get_json()['query']
+    entries = [e.text for e in user.entries]
+    res = ml.query(question, entries)
+    return jsonify({'data': res})
+
+
+@app.route('/api/summarize', methods=['POST'])
+@jwt_required()
+def summarize():
+    user, snooping = as_user()
+    if snooping and not user.share_data.summaries:
+        return cant_snoop()
+    data = request.get_json()
+    now = datetime.datetime.utcnow()
+    days, words = int(data['days']), int(data['words'])*5
+    x_days_ago = now - datetime.timedelta(days=days)
+
+    # order by asc to paint a story from start to finish, since we're summarizing
+    entries = Entry.query.filter(
+            Entry.user_id==user.id,
+            Entry.created_at > x_days_ago
+        )\
+        .order_by(Entry.created_at.asc())\
+        .all()
+    entries = ' '.join(e.text for e in entries)
+    entries = re.sub('\s+', ' ', entries)  # mult new-lines
+    min_ = int(words*2/3)
+    summary = ml.summarize(entries, min_, words)
+    sentiment = ml.sentiment(summary)
+    data = {'summary': summary, 'sentiment': sentiment}
+    return jsonify({'data': data})
+
+####
+# Habitica
+####
 
 def sync_habitica_for(user):
     if not (user.habitica_user_id and user.habitica_api_token):
@@ -284,81 +452,6 @@ def sync_habitica():
         return jsonify({})
     sync_habitica_for(user)
     return jsonify({})
-
-
-@app.route('/api/influencers', methods=['GET'])
-@jwt_required()
-def influencers():
-    user, snooping = as_user()
-    if snooping and not user.share_data.fields:
-        return cant_snoop()
-    targets, all_imps = ml.influencers(
-        engine,
-        user.id,
-        specific_target=request.args.get('target', None),
-        logger=app.logger
-    )
-    data = {'overall': all_imps, 'per_target': targets}
-    return jsonify({'data': data})
-
-
-@app.route('/api/gensim', methods=['GET'])
-@jwt_required()
-def run_gensim():
-    user, snooping = as_user()
-    if snooping and not user.share_data.themes:
-        return cant_snoop()
-    advanced = request.args.get('advanced', False)
-    entries = [e.text for e in user.entries]
-    data = ml.themes(entries, advanced=advanced)
-    return jsonify({'data': data})
-
-
-@app.route('/api/books', methods=['GET'])
-@jwt_required()
-def get_books():
-    user, snooping = as_user()
-    if snooping and not user.share_data.themes:
-        return cant_snoop()
-    entries = [e.text for e in user.entries]
-    books = ml.resources(entries, logger=app.logger)
-    return jsonify({'data': books})
-
-
-@app.route('/api/query', methods=['POST'])
-@jwt_required()
-def query():
-    user, snooping = as_user()
-    question = request.get_json()['query']
-    entries = [e.text for e in user.entries]
-    res = ml.query(question, entries)
-    return jsonify({'data': res})
-
-@app.route('/api/summarize', methods=['POST'])
-@jwt_required()
-def summarize():
-    user, snooping = as_user()
-    if snooping and not user.share_data.summaries:
-        return cant_snoop()
-    data = request.get_json()
-    now = datetime.datetime.utcnow()
-    days, words = int(data['days']), int(data['words'])*5
-    x_days_ago = now - datetime.timedelta(days=days)
-
-    # order by asc to paint a story from start to finish, since we're summarizing
-    entries = Entry.query.filter(
-            Entry.user_id==user.id,
-            Entry.created_at > x_days_ago
-        )\
-        .order_by(Entry.created_at.asc())\
-        .all()
-    entries = ' '.join(e.text for e in entries)
-    entries = re.sub('\s+', ' ', entries)  # mult new-lines
-    min_ = int(words*2/3)
-    summary = ml.summarize(entries, min_, words)
-    sentiment = ml.sentiment(summary)
-    data = {'summary': summary, 'sentiment': sentiment}
-    return jsonify({'data': data})
 
 
 # https://github.com/viniciuschiele/flask-apscheduler/blob/master/examples/jobs.py

@@ -136,7 +136,7 @@ export default function FieldModal({fetch_, close, field= {}}) {
               <Button
                 disabled={field.service}
                 variant='danger'
-                onClick={() => destroyField(fid)}
+                onClick={destroyField}
                 size='sm'
               >Delete</Button>
               <br/>
@@ -180,8 +180,8 @@ export default function FieldModal({fetch_, close, field= {}}) {
       </Modal.Body>
 
       <Modal.Footer>
-        <Button variant="secondary" onClick={() => close()}>Cancel</Button>
-        <Button variant="primary" onClick={() => saveField(fid)}>Save</Button>
+        <Button variant="secondary" onClick={close}>Cancel</Button>
+        <Button variant="primary" onClick={saveField}>Save</Button>
       </Modal.Footer>
     </Modal>
   )

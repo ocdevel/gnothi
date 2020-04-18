@@ -1,17 +1,15 @@
 import React, {useEffect, useState} from "react"
 import {useHistory, useRouteMatch} from "react-router-dom"
+import _ from 'lodash'
 import {sent2face} from "./utils"
 import {
   Button,
-  Table,
   Popover,
   OverlayTrigger,
-  Tabs,
-  Tab
+  Form
 } from "react-bootstrap"
 import moment from "moment"
-import Themes from './Themes'
-import Books from "./Books"
+import Tags from "./Tags";
 
 const summaryTip = (
   <Popover>
@@ -19,13 +17,18 @@ const summaryTip = (
       Summary is machine-generated from your entry's text
     </Popover.Content>
   </Popover>
-);
+)
 
 export default function Entries({fetch_, as}) {
   const [entries, setEntries] = useState([])
-  const [tab, setTab] = useState('Entries');
-  const [cacheTabs, setCacheTabs] = useState({})
   const [notShared, setNotShared] = useState(false)
+  const [showSearch, setShowSearch] = useState(false)
+  let [search, setSearch] = useState('')
+  let [tags, setTags] = useState({})
+
+  // clean up
+  tags = _.pickBy(tags, v => v)
+  search = search.toLowerCase()
 
   let history = useHistory()
   let match = useRouteMatch()
@@ -47,10 +50,13 @@ export default function Entries({fetch_, as}) {
     history.push(p)
   }
 
-  const clickTab = (k) => {
-    setCacheTabs({...cacheTabs, [k]: true})
-    setTab(k)
-  }
+  const toggleSearch = () => setShowSearch(!showSearch)
+  const changeSearch = e => setSearch(e.target.value)
+
+  const filtered = _(entries)
+    .filter(e => _.reduce(tags, (m, v, k) => e.entry_tags[k] && m, true))
+    .filter(e => !search.length || ~(e.title + e.text).toLowerCase().indexOf(search))
+    .value()
 
   const renderEntry = e => {
     const gotoForm_ = () => gotoForm(e.id)
@@ -84,30 +90,22 @@ export default function Entries({fetch_, as}) {
       {!as && <Button
         style={{float: 'right'}}
         variant="success"
-        size='lg'
         className='bottom-margin'
         onClick={() => gotoForm()}
       >New Entry</Button>}
 
-      <Tabs
-        variant='pills'
-        activeKey={tab}
-        onSelect={clickTab}
-      >
-        <Tab eventKey="Entries" title="Entries">
-          <Table>
-            <tbody>
-              {entries.map(renderEntry)}
-            </tbody>
-          </Table>
-        </Tab>
-        <Tab eventKey="Themes" title="Themes">
-          {cacheTabs['Themes'] && <Themes fetch_={fetch_} />}
-        </Tab>
-        <Tab eventKey="Books" title="Books">
-          {cacheTabs['Books'] && <Books fetch_={fetch_} />}
-        </Tab>
-      </Tabs>
+      Show:&nbsp;
+      <Tags as={as} fetch_={fetch_} server={false} selected={tags} setSelected={setTags} />
+      {' '}<Button size='sm' variant='light' onClick={toggleSearch}>🔎</Button>
+      {showSearch && <Form.Control
+        inline
+        type="text"
+        value={search}
+        onChange={changeSearch}
+        placeholder="Search"
+      />}
+      <hr />
+      {filtered.map(renderEntry)}
     </div>
   )
 }

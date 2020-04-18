@@ -14,21 +14,24 @@ import {
 import ReactMarkdown from "react-markdown"
 import ReactStars from "react-stars"
 import './Entry.css'
+import Tags from "./Tags";
 
 
-export default function Entry({fetch_}) {
+export default function Entry({fetch_, as}) {
   const {entry_id} = useParams()
   const history = useHistory()
   const [showPreview, setShowPreview] = useState(false)
   const [form, setForm] = useState({title: '', text: ''})
   const [entry, setEntry] = useState({})
   const [submitting, setSubmitting] = useState(false)
+  const [tags, setTags] = useState({})
 
   const fetchEntry = async () => {
     if (!entry_id) { return }
     const {data} = await fetch_(`entries/${entry_id}`, 'GET')
     setForm({title: data.title, text: data.text})
     setEntry(data)
+    setTags(data.entry_tags)
   }
 
   useEffect(() => {
@@ -40,7 +43,11 @@ export default function Entry({fetch_}) {
   const submit = async e => {
     e.preventDefault()
     setSubmitting(true)
-    const body = {title: form.title, text: form.text}
+    const body = {
+      title: form.title,
+      text: form.text,
+      tags
+    }
     if (entry_id) {
       await fetch_(`entries/${entry_id}`, 'PUT', body)
     } else {
@@ -59,6 +66,7 @@ export default function Entry({fetch_}) {
 
   const changeForm = k => e => setForm({...form, [k]: e.target.value})
   const changeShowPreview = e => setShowPreview(e.target.checked)
+  const selectTag = (id, v) => setTags({...tags, [id]: v})
 
   return (
     <Form onSubmit={submit}>
@@ -104,6 +112,16 @@ export default function Entry({fetch_}) {
           onChange={changeShowPreview}
         />
       </Form.Group>
+
+      Tags:&nbsp;
+      <Tags
+        fetch_={fetch_}
+        as={as}
+        selected={tags}
+        setSelected={setTags}
+      />
+
+      <hr/>
 
       {submitting ? (
         <>
