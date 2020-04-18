@@ -25,17 +25,22 @@ export default function Entries({fetch_, as}) {
   const [entries, setEntries] = useState([])
   const [tab, setTab] = useState('Entries');
   const [cacheTabs, setCacheTabs] = useState({})
+  const [notShared, setNotShared] = useState(false)
+
   let history = useHistory()
   let match = useRouteMatch()
 
   const fetchEntries = async () => {
-    const res = await fetch_('entries', 'GET')
-    setEntries(res.entries || [])
+    const {data, code, message} = await fetch_('entries', 'GET')
+    if (code === 401) {return setNotShared(message)}
+    setEntries(data)
   }
 
   useEffect(() => {
     fetchEntries()
   }, [])
+
+  if (notShared) {return <h5>{notShared}</h5>}
 
   const gotoForm = (entry_id=null) => {
     const p = match.url + "/" + (entry_id ? `entry/${entry_id}` : 'entry')

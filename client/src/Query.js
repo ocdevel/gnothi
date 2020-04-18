@@ -6,13 +6,17 @@ export default function Query({fetch_}) {
   const [query, setQuery] = useState('')
   const [answer, setAnswer] = useState('')
   const [fetching, setFetching] = useState(false)
+  const [notShared, setNotShared] = useState(false)
+
+  if (notShared) {return <h5>{notShared}</h5>}
 
   const fetchAnswer = async (e) => {
     setFetching(true)
     e.preventDefault()
-    const res = await fetch_('query', 'POST', {query})
-    setAnswer(res)
+    const {data, code, message} = await fetch_('query', 'POST', {query})
     setFetching(false)
+    if (code === 401) {return setNotShared(message)}
+    setAnswer(data)
   }
 
   const changeQuery = e => setQuery(e.target.value)

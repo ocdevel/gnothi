@@ -5,17 +5,21 @@ import {Table} from "react-bootstrap";
 export default function Books({fetch_}) {
   const [books, setBooks] = useState([])
   const [fetching, setFetching] = useState(false)
+  const [notShared, setNotShared] = useState(false)
 
   const fetchBooks = async () => {
     setFetching(true)
-    const res = await fetch_('books', 'GET')
-    setBooks(res)
+    const {data, code, message} = await fetch_('books', 'GET')
     setFetching(false)
+    if (code === 401) {return setNotShared(message)}
+    setBooks(data)
   }
 
   useEffect(() => {
     fetchBooks()
   }, [])
+
+  if (notShared) {return <h5>{notShared}</h5>}
 
   return <>
     {fetching ? (

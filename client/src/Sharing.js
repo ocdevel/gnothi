@@ -15,8 +15,8 @@ export default function Sharing({fetch_}) {
   const [shared, setShared] = useState([])
 
   const fetchShared = async () => {
-    const res = await fetch_('share', 'GET')
-    setShared(res)
+    const {data} = await fetch_('share', 'GET')
+    setShared(data)
   }
 
   useEffect(() => {fetchShared()}, [])

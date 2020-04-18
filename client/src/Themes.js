@@ -7,17 +7,21 @@ export default function Themes({fetch_}) {
   const [topics, setTopics] = useState({})
   const [advanced, setAdvanced] = useState(false)
   const [fetching, setFetching] = useState(false)
+  const [notShared, setNotShared] = useState(false)
 
   const fetchTopics = async () => {
     setFetching(true)
     let url = 'gensim'
     if (advanced) {url += '?advanced=1'}
-    const res = await fetch_(url, 'GET')
-    setTopics(res.ok ? res : {})
+    const {data, code, message} = await fetch_(url, 'GET')
     setFetching(false)
+    if (code === 401) {return setNotShared(message)}
+    setTopics(data)
   }
 
   useEffect(() => {fetchTopics()}, [advanced])
+
+  if (notShared) {return <h5>{notShared}</h5>}
 
   const changeAdvanced = e => setAdvanced(e.target.checked)
 

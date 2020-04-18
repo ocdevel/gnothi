@@ -26,9 +26,9 @@ export default function Entry({fetch_}) {
 
   const fetchEntry = async () => {
     if (!entry_id) { return }
-    const res = await fetch_(`entries/${entry_id}`, 'GET')
-    setForm({title: res.title, text: res.text})
-    setEntry(res)
+    const {data} = await fetch_(`entries/${entry_id}`, 'GET')
+    setForm({title: data.title, text: data.text})
+    setEntry(data)
   }
 
   useEffect(() => {

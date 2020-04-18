@@ -30,22 +30,23 @@ def as_user():
     return current_identity, False
 
 
-def cant_snoop():
-    return jsonify({'ok': False}), 401
+def cant_snoop(feature=None):
+    message = f"{feature} isn't shared" if feature else "This feature isn't shared"
+    return jsonify({'data': None, 'message': message}), 401
 
 
 @app.route('/api/user', methods=['GET'])
 @jwt_required()
 def get_user():
     user = current_identity  # as_user()
-    return jsonify(user.json())
+    return jsonify({'data': user.json()})
 
 
 @app.route('/api/register', methods=['POST'])
 def register():
     data = request.get_json()
     useradd(data['username'], data['password'])
-    return jsonify({'ok': True})
+    return jsonify({})
 
 
 @app.route('/api/shares', methods=['GET', 'POST'])
@@ -56,12 +57,13 @@ def shares():
 
     if request.method == 'GET':
         shared = Share.query.filter_by(user_id=user.id).all()
-        return jsonify([x.json() for x in shared])
+        shared = [x.json() for x in shared]
+        return jsonify({'data': shared})
     if request.method == 'POST':
         data = request.get_json()
         db_session.add(Share(user_id=user.id, **data))
         db_session.commit()
-        return jsonify({'ok': True})
+        return jsonify({})
 
 
 @app.route('/api/entries', methods=['GET', 'POST'])
@@ -71,7 +73,8 @@ def entries():
     if request.method == 'GET':
         if snooping and not user.share_data.entries:
             return cant_snoop()
-        return jsonify({'entries': [e.json() for e in user.entries]})
+        data = [e.json() for e in user.entries]
+        return jsonify({'data': data})
     elif request.method == 'POST':
         if snooping: return cant_snoop()
         data = request.get_json()
@@ -79,7 +82,7 @@ def entries():
         entry.run_models()
         user.entries.append(entry)
         db_session.commit()
-        return jsonify({'ok': True})
+        return jsonify({})
 
 
 @app.route('/api/entries/<entry_id>', methods=['GET', 'PUT', 'DELETE'])
@@ -90,7 +93,8 @@ def entry(entry_id):
     if request.method == 'GET':
         if snooping and not user.share_data.entries:
             return cant_snoop()
-        return jsonify(entry.first().json())
+        data = entry.first().json()
+        return jsonify({'data': data})
     if snooping: return cant_snoop()
     if request.method == 'PUT':
         data = request.get_json()
@@ -99,11 +103,11 @@ def entry(entry_id):
         entry.text = data['text']
         entry.run_models()
         db_session.commit()
-        return jsonify({'ok': True})
+        return jsonify({})
     if request.method == 'DELETE':
         entry.delete()
         db_session.commit()
-        return jsonify({'ok': True})
+        return jsonify({})
 
 
 @app.route('/api/fields', methods=['GET', 'POST'])
@@ -113,14 +117,15 @@ def fields():
     if request.method == 'GET':
         if snooping and not user.share_data.fields:
             return cant_snoop()
-        return jsonify({f.id: f.json() for f in user.fields})
+        data = {f.id: f.json() for f in user.fields}
+        return jsonify({'data': data})
     if snooping: return cant_snoop()
     if request.method == 'POST':
         data = request.get_json()
         f = Field(**data)
         user.fields.append(f)
         db_session.commit()
-        return jsonify({'ok': True})
+        return jsonify({})
 
 
 @app.route('/api/fields/<field_id>', methods=['PUT', 'DELETE'])
@@ -134,12 +139,12 @@ def field(field_id):
         for k, v in data.items():
             setattr(f, k, v)
         db_session.commit()
-        return jsonify({'ok': True})
+        return jsonify({})
     if request.method == 'DELETE':
         FieldEntry.query.filter_by(user_id=user.id, field_id=field_id).delete()
         Field.query.filter_by(user_id=user.id, id=field_id).delete()
         db_session.commit()
-        return jsonify({'ok': True})
+        return jsonify({})
 
 
 @app.route('/api/field-entries')
@@ -150,7 +155,7 @@ def field_entries():
         return cant_snoop()
     res = FieldEntry.get_today_entries(user.id).all()
     res = {f.field_id: f.value for f in res}
-    return jsonify(res)
+    return jsonify({'data': res})
 
 
 @app.route('/api/field-entries/<field_id>', methods=['POST'])
@@ -167,7 +172,7 @@ def field_entry(field_id):
         fe = FieldEntry(value=v, field_id=field_id)
         user.field_entries.append(fe)
     db_session.commit()
-    return jsonify({'ok': True})
+    return jsonify({})
 
 
 @app.route('/api/habitica', methods=['POST'])
@@ -179,7 +184,7 @@ def setup_habitica():
     user.habitica_user_id = data['habitica_user_id']
     user.habitica_api_token = data['habitica_api_token']
     db_session.commit()
-    return jsonify({'ok': True})
+    return jsonify({})
 
 
 def sync_habitica_for(user):
@@ -276,9 +281,9 @@ def sync_habitica():
     user, snooping = as_user()
     if snooping: return cant_snoop()
     if not user.habitica_user_id:
-        return jsonify({'ok': False})
+        return jsonify({})
     sync_habitica_for(user)
-    return jsonify({'ok': True})
+    return jsonify({})
 
 
 @app.route('/api/influencers', methods=['GET'])
@@ -293,7 +298,8 @@ def influencers():
         specific_target=request.args.get('target', None),
         logger=app.logger
     )
-    return jsonify({'overall': all_imps, 'per_target': targets})
+    data = {'overall': all_imps, 'per_target': targets}
+    return jsonify({'data': data})
 
 
 @app.route('/api/gensim', methods=['GET'])
@@ -304,7 +310,8 @@ def run_gensim():
         return cant_snoop()
     advanced = request.args.get('advanced', False)
     entries = [e.text for e in user.entries]
-    return jsonify(ml.themes(entries, advanced=advanced))
+    data = ml.themes(entries, advanced=advanced)
+    return jsonify({'data': data})
 
 
 @app.route('/api/books', methods=['GET'])
@@ -315,7 +322,7 @@ def get_books():
         return cant_snoop()
     entries = [e.text for e in user.entries]
     books = ml.resources(entries, logger=app.logger)
-    return jsonify(books)
+    return jsonify({'data': books})
 
 
 @app.route('/api/query', methods=['POST'])
@@ -325,7 +332,7 @@ def query():
     question = request.get_json()['query']
     entries = [e.text for e in user.entries]
     res = ml.query(question, entries)
-    return jsonify(res)
+    return jsonify({'data': res})
 
 @app.route('/api/summarize', methods=['POST'])
 @jwt_required()
@@ -348,8 +355,10 @@ def summarize():
     entries = ' '.join(e.text for e in entries)
     entries = re.sub('\s+', ' ', entries)  # mult new-lines
     min_ = int(words*2/3)
-    res = ml.summarize(entries, min_, words)
-    return jsonify({'summary': res})
+    summary = ml.summarize(entries, min_, words)
+    sentiment = ml.sentiment(summary)
+    data = {'summary': summary, 'sentiment': sentiment}
+    return jsonify({'data': data})
 
 
 # https://github.com/viniciuschiele/flask-apscheduler/blob/master/examples/jobs.py

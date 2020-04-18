@@ -6,9 +6,9 @@ export default function Habitica({fetch_}) {
   const [habiticaApiToken, setHabiticaApiToken] = useState('')
 
   const fetchUser = async () => {
-    const res = await fetch_(`user`, 'GET')
-    setHabiticaUserId(res.habitica_user_id)
-    setHabiticaApiToken(res.habitica_api_token)
+    const {data} = await fetch_(`user`, 'GET')
+    setHabiticaUserId(data.habitica_user_id)
+    setHabiticaApiToken(data.habitica_api_token)
   }
 
   useEffect(() => {

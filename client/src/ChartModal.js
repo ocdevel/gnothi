@@ -10,13 +10,13 @@ export default function ChartModal({fetch_, close, field=null, overall=false}) {
 
   const fetchTargets = async () => {
     let res = await fetch_('fields', 'GET')
-    setFields(res)
+    setFields(res.data)
     if (overall) {
       res = await fetch_(`influencers`, 'GET')
-      setInfluencers(res.overall)
+      setInfluencers(res.data.overall)
     } else {
       res = await fetch_(`influencers?target=${field.id}`, 'GET')
-      setInfluencers(res.per_target[field.id])
+      setInfluencers(res.data.per_target[field.id])
     }
   }
 

@@ -14,11 +14,12 @@ export default function Fields({fetch_, as}) {
   const [fieldEntries, setFieldEntries] = useState({})
   const [showForm, setShowForm] = useState(false)
   const [showChart, setShowChart] = useState(false)
+  const [notShared, setNotShared] = useState(false)
 
   const fetchFieldEntries = async (fields) => {
     // FIXME shouldn't need to pass in fields, but fields=={} even after fetchFields..
-    const res = await fetch_(`field-entries`, 'GET')
-    _.each(res, (val, fid) => {
+    const {data} = await fetch_(`field-entries`, 'GET')
+    _.each(data, (val, fid) => {
       if (val) {return}
       const f = fields[fid]
       if (f.service) {return}
@@ -26,22 +27,25 @@ export default function Fields({fetch_, as}) {
       // TODO hiding this for now since it will prevent them from clicking, thinking
       // they already have an entry. Reconsider approach
       const recent = _.last(f.history)
-      res[fid] = {
+      data[fid] = {
         value: f.default_value_value,
         ffill: recent ? recent.value : null,
         average: f.avg
       }[f.default_value]
     })
-    setFieldEntries(res)
+    setFieldEntries(data)
   }
 
   const fetchFields = async () => {
-    const res = await fetch_(`fields`, 'GET')
-    setFields(res)
-    await fetchFieldEntries(res)
+    const {data, code, message} = await fetch_(`fields`, 'GET')
+    if (code === 401) {return setNotShared(message)}
+    setFields(data)
+    await fetchFieldEntries(data)
   }
 
   useEffect(() => {fetchFields()}, [])
+
+  if (notShared) {return <h5>{notShared}</h5>}
 
   const fetchService = async (service) => {
     setFetchingSvc(true)

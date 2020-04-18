@@ -41,15 +41,17 @@ function App() {
     if (as && user && as !== user.id) {
       url += (~route.indexOf('?') ? '&' : '?') + `as=${as}`
     }
-    const response = await fetch(url, obj)
-    return await response.json()
+    let res = await fetch(url, obj)
+    const code = res.status
+    res = await res.json()
+    return {...res, code}
   }
 
   const getUser = async () => {
     if (!jwt) {return}
-    const res = await fetch_('user', 'GET')
-    if (res.status_code == 401) { return logout() }
-    setUser(res)
+    const {data, code} = await fetch_('user', 'GET')
+    if (code === 401) { return logout() }
+    setUser(data)
   }
 
   const onAuth = jwt_ => setJwt(jwt_)

@@ -6,15 +6,19 @@ export default function Summarize({fetch_}) {
   const [fetching, setFetching] = useState(false)
   const [summary, setSummary] = useState('')
   const [form, setForm] = useState({days: 7, words: 30})
+  const [notShared, setNotShared] = useState(false)
+
+  if (notShared) {return <h5>{notShared}</h5>}
 
   const submit = async e => {
     setFetching(true)
     e.preventDefault();
-    const res = await fetch_('summarize', 'POST', form
-    )
-    setSummary(res.summary)
+    const {data, code, message} = await fetch_('summarize', 'POST', form)
     setFetching(false)
+    if (code === 401) {return setNotShared(message)}
+    setSummary(data.summary)
   }
+
 
   const changeField = k => e => setForm({...form, [k]: e.target.value})
 

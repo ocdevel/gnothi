@@ -36,7 +36,7 @@ export default function Auth({fetch_, onAuth}) {
     e.preventDefault();
     setSubmitting(true)
     // assert password = passwordConfirm. See react-bootstrap, use yup library or something for form stuff
-    const res = await fetch_('register', 'POST', {username, password})
+    await fetch_('register', 'POST', {username, password})
     login();
   };
 
