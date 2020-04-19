@@ -4,9 +4,12 @@ import _ from "lodash";
 import ReactMarkdown from "react-markdown";
 import {CartesianGrid, Line, LineChart, Tooltip, XAxis, YAxis} from "recharts";
 
+const round_ = (v) => v ? v.toFixed(2) : null
+
 export default function ChartModal({fetch_, close, field=null, overall=false}) {
   const [influencers, setInfluencers] = useState({})
   const [fields, setFields] = useState([])
+  const [nextPreds, setNextPreds] = useState({})
 
   const fetchTargets = async () => {
     let res = await fetch_('fields', 'GET')
@@ -14,9 +17,11 @@ export default function ChartModal({fetch_, close, field=null, overall=false}) {
     if (overall) {
       res = await fetch_(`influencers`, 'GET')
       setInfluencers(res.data.overall)
+      setNextPreds(res.data.next_preds)
     } else {
       res = await fetch_(`influencers?target=${field.id}`, 'GET')
       setInfluencers(res.data.per_target[field.id])
+      setNextPreds(res.data.next_preds)
     }
   }
 
@@ -28,8 +33,10 @@ export default function ChartModal({fetch_, close, field=null, overall=false}) {
     <Table striped size="sm">
       <thead>
         <tr>
-          <th>Importance</th>
           <th>Field</th>
+          <th>Importance</th>
+          <th>Avg</th>
+          <th>Predicted Next</th>
         </tr>
       </thead>
       <tbody>
@@ -39,8 +46,10 @@ export default function ChartModal({fetch_, close, field=null, overall=false}) {
           .orderBy(x => -x[1])
           .value()
           .map(x => <tr key={x[0]}>
-            <td>{x[1]}</td>
             <td><ReactMarkdown source={fields[x[0]].name} /></td>
+            <td>{ round_(x[1]) }</td>
+            <td>{ round_(fields[x[0]].avg) }</td>
+            <td>{ round_(nextPreds[x[0]]) }</td>
           </tr>)}
       </tbody>
     </Table>
@@ -64,10 +73,17 @@ export default function ChartModal({fetch_, close, field=null, overall=false}) {
               <Line type="monotone" dataKey="value" stroke="#8884d8" isAnimationActive={false}/>
             </LineChart>
           )}
-          {field && field.target && <>
-            <h2>Top Influencers</h2>
+          {field && <div>
+            <h5>Stats</h5>
+            <ul>
+              <li>Predicted Next Value: {round_(nextPreds[field.id])}</li>
+              <li>Average/day: {round_(field.avg)}</li>
+            </ul>
+          </div>}
+          {field && field.target && <div>
+            <h5>Top Influencers</h5>
             {renderInfluencers()}
-          </>}
+          </div>}
           {overall && renderInfluencers()}
         </Modal.Body>
       </Modal>

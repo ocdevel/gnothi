@@ -74,6 +74,21 @@ def influencers(engine, user_id, specific_target=None, logger=None):
         elif dv == 'average':
             fes[fid] = fes[fid].fillna(fes[fid].mean())
 
+
+    # predictions
+    next_preds = {}
+    for c in cols:
+        # we keep target column. Yes, likely most predictive; but a rolling
+        # trend is important info
+        X = fes.ewm(span=5).mean()
+        y = X[c]
+        model = XGBRegressor()
+        model.fit(X, y)
+        preds = model.predict(X.iloc[-1:])
+        next_preds[c] = float(preds[0])
+        model.fit(X, y)
+
+    # importances
     targets = {}
     all_imps = []
     for target in target_ids:
@@ -103,9 +118,10 @@ def influencers(engine, user_id, specific_target=None, logger=None):
         dict_ = dict(zip(cols, imps))
         all_imps.append(dict_)
         targets[target] = dict_
+
     all_imps = dict(pd.DataFrame(all_imps).mean())
 
-    return targets, all_imps
+    return targets, all_imps, next_preds
 
 
 """

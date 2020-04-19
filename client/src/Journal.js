@@ -28,7 +28,7 @@ export default function Journal({fetch_, as}) {
             </Route>
           </Switch>
         </Col>
-        <Col lg={3}>
+        <Col lg={4}>
           <Fields fetch_={fetch_} as={as} />
           <hr />
           <Summarize fetch_={fetch_} as={as} />

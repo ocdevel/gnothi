@@ -279,13 +279,13 @@ def influencers():
     user, snooping = as_user()
     if snooping and not user.share_data.fields:
         return cant_snoop('Fields')
-    targets, all_imps = ml.influencers(
+    targets, all_imps, next_preds = ml.influencers(
         engine,
         user.id,
         specific_target=request.args.get('target', None),
         logger=app.logger
     )
-    data = {'overall': all_imps, 'per_target': targets}
+    data = {'overall': all_imps, 'per_target': targets, 'next_preds': next_preds}
     return jsonify({'data': data})
 
 
