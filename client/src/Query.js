@@ -26,8 +26,8 @@ export default function Query({fetch_}) {
      <Form.Group controlId="formQuery">
         <Form.Control
           as="textarea"
-          lines={3}
-          placeholder="Ask a question about yourself. Or enter a word, and see what associations come up."
+          rows={3}
+          placeholder="Ask a question about yourself. Use proper grammar, it makes a difference."
           value={query}
           onChange={changeQuery}
         />
