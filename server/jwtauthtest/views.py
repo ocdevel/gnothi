@@ -54,8 +54,13 @@ def register():
 def tags():
     user, snooping = as_user()
     if request.method == 'GET':
-        if snooping: return jsonify({'data': []})
-        return jsonify({'data': [j.json() for j in user.tags]})
+        if snooping:
+            data = Tag.snoop(current_identity.username, user.id).all()
+        else:
+            data = user.tags
+        data = [j.json() for j in data]
+        return jsonify({'data': data})
+
     if snooping: return cant_snoop()
     if request.method == 'POST':
         data = request.get_json()
@@ -68,6 +73,7 @@ def tags():
 @jwt_required()
 def tag(tag_id):
     user, snooping = as_user()
+
     if snooping: return cant_snoop()
     tag = Tag.query.filter_by(user_id=user.id, id=tag_id)
     if request.method == 'DELETE':
@@ -94,7 +100,6 @@ def shares_put_post(user, share_id=None):
         ShareTag.query.filter_by(share_id=s.id).delete()
         for k, v in data.items():
             setattr(s, k, v)
-        pdb.set_trace()
     else:
         s = Share(user_id=user.id, **data)
         db_session.add(s)
@@ -113,8 +118,8 @@ def shares_put_post(user, share_id=None):
 @jwt_required()
 def shares():
     user, snooping = as_user()
-    if snooping: return cant_snoop()
 
+    if snooping: return cant_snoop()
     if request.method == 'GET':
         shared = Share.query.filter_by(user_id=user.id).all()
         shared = [x.json() for x in shared]
@@ -127,8 +132,8 @@ def shares():
 @jwt_required()
 def share(share_id):
     user, snooping = as_user()
-    if snooping: return cant_snoop()
 
+    if snooping: return cant_snoop()
     if request.method == 'DELETE':
         ShareTag.query.filter_by(share_id=share_id).delete()
         Share.query.filter_by(user_id=user.id, id=share_id).delete()
@@ -138,31 +143,45 @@ def share(share_id):
         return shares_put_post(user, share_id)
 
 
+def entries_put_post(user, entry=None):
+    data = request.get_json()
+    if entry:
+        entry = entry.first()
+        EntryTag.query.filter_by(entry_id=entry.id).delete()
+    else:
+        entry = Entry(user_id=user.id)
+        db_session.add(entry)
+    entry.title = data['title']
+    entry.text = data['text']
+    # entry needs id, prior tags need deleting
+    db_session.commit()
+    for tag, v in data['tags'].items():
+        if not v: continue
+        db_session.add(EntryTag(entry_id=entry.id, tag_id=tag))
+    # commit above first, in case run-models crashes
+    db_session.commit()
+
+    entry.run_models()
+    db_session.commit()
+
+    return jsonify({})
+
+
 @app.route('/api/entries', methods=['GET', 'POST'])
 @jwt_required()
 def entries():
     user, snooping = as_user()
     if request.method == 'GET':
         if snooping:
-            # TODO
-            # entries = Entry.query.filter_by(user_id=user.id)
-            #     .join(EntryTag)
-            data = []
+            data = Entry.snoop(current_identity.username, user.id, ['full']).all()
         else:
-            data = [e.json() for e in user.entries]
+            data = user.entries
+        data = [e.json() for e in data]
         return jsonify({'data': data})
+
     if snooping: return cant_snoop()
     if request.method == 'POST':
-        data = request.get_json()
-        entry = Entry(title=data['title'], text=data['text'])
-        entry.run_models()
-        user.entries.append(entry)
-        db_session.commit()
-        for tag, v in data['tags'].items():
-            if not v: continue
-            db_session.add(EntryTag(entry_id=entry.id, tag_id=tag))
-        db_session.commit()
-        return jsonify({})
+        return entries_put_post(user)
 
 
 @app.route('/api/entries/<entry_id>', methods=['GET', 'PUT', 'DELETE'])
@@ -171,28 +190,15 @@ def entry(entry_id):
     user, snooping = as_user()
     entry = Entry.query.filter_by(user_id=user.id, id=entry_id)
     if request.method == 'GET':
-        if snooping and not user.share_data.entries:
-            return cant_snoop()
-        data = entry.first().json()
-        return jsonify({'data': data})
+        if snooping:
+            entry = Entry.snoop(current_identity.username, user.id, ['full']).first()
+        else:
+            entry = entry.first()
+        return jsonify({'data': entry.json()})
+
     if snooping: return cant_snoop()
     if request.method == 'PUT':
-        data = request.get_json()
-        entry = entry.first()
-
-        EntryTag.query.filter_by(entry_id=entry.id).delete()
-        db_session.commit()
-        for tag, v in data['tags'].items():
-            if not v: continue
-            db_session.add(EntryTag(entry_id=entry.id, tag_id=tag))
-        entry.title = data['title']
-        entry.text = data['text']
-        db_session.commit()
-
-        entry.run_models()
-        db_session.commit()
-
-        return jsonify({})
+        return entries_put_post(user, entry)
     if request.method == 'DELETE':
         entry.delete()
         db_session.commit()
@@ -205,9 +211,10 @@ def fields():
     user, snooping = as_user()
     if request.method == 'GET':
         if snooping and not user.share_data.fields:
-            return cant_snoop()
+            return cant_snoop('Fields')
         data = {f.id: f.json() for f in user.fields}
         return jsonify({'data': data})
+
     if snooping: return cant_snoop()
     if request.method == 'POST':
         data = request.get_json()
@@ -221,6 +228,7 @@ def fields():
 @jwt_required()
 def field(field_id):
     user, snooping = as_user()
+
     if snooping: return cant_snoop()
     if request.method == 'PUT':
         f = Field.query.filter_by(user_id=user.id, id=field_id).first()
@@ -241,7 +249,7 @@ def field(field_id):
 def field_entries():
     user, snooping = as_user()
     if snooping and not user.share_data.fields:
-        return cant_snoop()
+        return cant_snoop('Fields')
     res = FieldEntry.get_today_entries(user.id).all()
     res = {f.field_id: f.value for f in res}
     return jsonify({'data': res})
@@ -251,6 +259,7 @@ def field_entries():
 @jwt_required()
 def field_entry(field_id):
     user, snooping = as_user()
+
     if snooping: return cant_snoop()
     data = request.get_json()
     fe = FieldEntry.get_today_entries(user.id, field_id).first()
@@ -264,24 +273,12 @@ def field_entry(field_id):
     return jsonify({})
 
 
-@app.route('/api/habitica', methods=['POST'])
-@jwt_required()
-def setup_habitica():
-    user, snooping = as_user()
-    if snooping: return cant_snoop()
-    data = request.get_json()
-    user.habitica_user_id = data['habitica_user_id']
-    user.habitica_api_token = data['habitica_api_token']
-    db_session.commit()
-    return jsonify({})
-
-
 @app.route('/api/influencers', methods=['GET'])
 @jwt_required()
 def influencers():
     user, snooping = as_user()
     if snooping and not user.share_data.fields:
-        return cant_snoop()
+        return cant_snoop('Fields')
     targets, all_imps = ml.influencers(
         engine,
         user.id,
@@ -297,7 +294,7 @@ def influencers():
 def run_themes():
     user, snooping = as_user()
     if snooping and not user.share_data.themes:
-        return cant_snoop()
+        return cant_snoop('Themes')
     advanced = request.args.get('advanced', False)
     entries = [e.text for e in user.entries]
     data = ml.themes(entries, advanced=advanced)
@@ -309,7 +306,7 @@ def run_themes():
 def get_books():
     user, snooping = as_user()
     if snooping and not user.share_data.themes:
-        return cant_snoop()
+        return cant_snoop('Books')
     entries = [e.text for e in user.entries]
     books = ml.resources(entries, logger=app.logger)
     return jsonify({'data': books})
@@ -320,7 +317,11 @@ def get_books():
 def query():
     user, snooping = as_user()
     question = request.get_json()['query']
-    entries = [e.text for e in user.entries]
+    if snooping:
+        entries = Entry.snoop(current_identity.username, user.id, ['summary', 'full']).all()
+    else:
+        entries = user.entries
+    entries = [e.text for e in entries]
     res = ml.query(question, entries)
     return jsonify({'data': res})
 
@@ -329,18 +330,18 @@ def query():
 @jwt_required()
 def summarize():
     user, snooping = as_user()
-    if snooping and not user.share_data.summaries:
-        return cant_snoop()
+
     data = request.get_json()
     now = datetime.datetime.utcnow()
     days, words = int(data['days']), int(data['words'])*5
     x_days_ago = now - datetime.timedelta(days=days)
 
+    if snooping:
+        entries = Entry.snoop(current_identity.username, user.id, ['summary', 'full'])
+    else:
+        entries = Entry.query.filter(Entry.user_id == user.id)
     # order by asc to paint a story from start to finish, since we're summarizing
-    entries = Entry.query.filter(
-            Entry.user_id==user.id,
-            Entry.created_at > x_days_ago
-        )\
+    entries = entries.filter(Entry.created_at > x_days_ago)\
         .order_by(Entry.created_at.asc())\
         .all()
     entries = ' '.join(e.text for e in entries)
@@ -354,6 +355,18 @@ def summarize():
 ####
 # Habitica
 ####
+
+
+@app.route('/api/habitica', methods=['POST'])
+@jwt_required()
+def setup_habitica():
+    user, snooping = as_user()
+    if snooping: return cant_snoop()
+    data = request.get_json()
+    user.habitica_user_id = data['habitica_user_id']
+    user.habitica_api_token = data['habitica_api_token']
+    db_session.commit()
+    return jsonify({})
 
 def sync_habitica_for(user):
     if not (user.habitica_user_id and user.habitica_api_token):

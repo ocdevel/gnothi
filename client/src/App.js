@@ -29,6 +29,7 @@ function App() {
   const [jwt, setJwt] = useState(localStorage.getItem('jwt'))
   const [user, setUser] = useState()
   const [as, setAs] = useState()
+  // const [as, setAs] = useState('3694b314-d050-46da-882a-726598bd6abf')
 
   const fetch_ = async (route, method='GET', body=null) => {
     const obj = {

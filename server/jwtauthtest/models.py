@@ -17,7 +17,7 @@ from sqlalchemy import \
     Date, \
     ARRAY, \
     func
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, backref
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy_utils.types import EmailType
 from uuid import uuid4
@@ -90,6 +90,16 @@ class Entry(Base):
 
     user_id = Column(UUID, ForeignKey('users.id'))
     entry_tags = relationship("EntryTag")
+
+    # share_tags = relationship("EntryTag", secondary="shares_tags")
+
+    @staticmethod
+    def snoop(from_email, to_id, type):
+        return Entry.query \
+            .join(EntryTag, Entry.id == EntryTag.entry_id)\
+            .join(ShareTag, EntryTag.tag_id == ShareTag.tag_id)\
+            .join(Share, ShareTag.share_id == Share.id)\
+            .filter(ShareTag.type.in_(type), Share.email == from_email, Share.user_id == to_id)
 
     def run_models(self):
         self.title_summary = ml.summarize(self.text, 5, 20)
@@ -263,6 +273,7 @@ class Share(Base):
     profile = Column(Boolean)
 
     share_tags = relationship("ShareTag")
+    tags = relationship("Tag", secondary="shares_tags")
 
     def json(self):
         return {
@@ -283,6 +294,14 @@ class Tag(Base):
     name = Column(String(128), nullable=False)
     # Save user's selected tags between sessions
     selected = Column(Boolean)
+
+    shares = relationship("Share", secondary="shares_tags")
+
+    @staticmethod
+    def snoop(from_email, to_id):
+        return Tag.query \
+            .join(ShareTag, Share)\
+            .filter(Share.email==from_email, Share.user_id == to_id)
 
     def json(self):
         return {
@@ -310,3 +329,6 @@ class ShareTag(Base):
     share_id = Column(UUID, ForeignKey('shares.id'), primary_key=True)
     tag_id = Column(UUID, ForeignKey('tags.id'), primary_key=True)
     type = Column(Enum(ShareTagType), nullable=False)
+
+    tag = relationship(Tag, backref=backref("tags", cascade="all, delete-orphan"))
+    share = relationship(Share, backref=backref("shares", cascade="all, delete-orphan"))

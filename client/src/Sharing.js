@@ -27,8 +27,10 @@ function ShareForm({fetch_, as, fetchShared, share=null}) {
       await fetch_(`shares/${share.id}`, 'PUT', body)
     } else {
       await fetch_('shares', 'POST', body)
+      setForm({})
+      setFullTags({})
+      setSummaryTags({})
     }
-    setForm({})
     await fetchShared()
   }
 
@@ -141,7 +143,7 @@ export default function Sharing({fetch_, as}) {
     <p>Sharing with</p>
     <Row lg={2}>
       {shared.map(s => (
-        <Col>
+        <Col key={s.id}>
           <Card>
             <Card.Body>
               <Card.Title>{s.email}</Card.Title>
