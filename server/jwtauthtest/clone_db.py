@@ -43,10 +43,9 @@ if method == 'push':
 dfs = []
 # fetch old data, we may be pushing live to a new schema
 with from_engine.connect() as from_conn:
-    for t in 'users fields entries field_entries family_types family_issue_types family family_issues'.split():
+    for t in 'users fields entries field_entries family_types family_issue_types family family_issues tags shares shares_tags entries_tags'.split():
         sql = f"select * from {t}"
         df = pd.read_sql(t, from_conn)
-        if t == 'entries': df.drop(columns=['show_ml', 'show_therapist'], inplace=True)
         dfs.append([t, df])
 
 ## Was trying to re-generate local DB from code, but issue. Just start server
