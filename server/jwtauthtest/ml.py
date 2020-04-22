@@ -230,7 +230,7 @@ Sentiment
 """
 
 GPU_JOBS = True
-from transformers import pipeline, AutoTokenizer, AutoModelWithLMHead
+from transformers import pipeline
 import psycopg2, time
 from uuid import uuid4
 from sqlalchemy import create_engine

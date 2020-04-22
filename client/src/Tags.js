@@ -87,8 +87,15 @@ export default function Tags({fetch_, as, selected=null, setSelected=null, serve
 
   const fetchTags = async () => {
     const {data, code, message} = await fetch_('tags', 'GET')
+
+    let main = _.find(data, t=>t.main)
+    if (!main) {
+      data[0].main = true
+      main = data[0]
+    }
+
     setTags(data)
-    selectTag(_.find(data, {main: true}).id, true)
+    selectTag(main.id, true)
   }
 
   useEffect(() => {fetchTags()}, [])
@@ -106,7 +113,7 @@ export default function Tags({fetch_, as, selected=null, setSelected=null, serve
   const showEditTags = () => setEditTags(true)
   const closeEditTags = () => setEditTags(false)
 
-  const sorted = _.isEmpty(tags) ? [] :
+  let sorted = !tags.length ? [] :
     [_.find(tags, t => t.main), ..._.filter(tags, t => !t.main)]
 
   const renderTag = t => {
