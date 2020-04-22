@@ -17,7 +17,7 @@ import './Entry.css'
 import Tags from "./Tags";
 
 
-export default function Entry({fetch_, as}) {
+export default function Entry({fetch_, as, setServerError}) {
   const {entry_id} = useParams()
   const history = useHistory()
   const [showPreview, setShowPreview] = useState(false)
@@ -42,18 +42,17 @@ export default function Entry({fetch_, as}) {
 
   const submit = async e => {
     e.preventDefault()
+    setServerError(false)
     setSubmitting(true)
     const body = {
       title: form.title,
       text: form.text,
       tags
     }
-    if (entry_id) {
-      await fetch_(`entries/${entry_id}`, 'PUT', body)
-    } else {
-      await fetch_(`entries`, 'POST', body)
-    }
+    const res = entry_id ? await fetch_(`entries/${entry_id}`, 'PUT', body)
+      : await fetch_(`entries`, 'POST', body)
     setSubmitting(false)
+    if (res.code !== 200) {return}
     history.push('/j')
   }
 

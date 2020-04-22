@@ -20,6 +20,7 @@ import Journal from './Journal'
 import Profile from './Profile'
 import Themes from './Themes'
 import Books from './Books'
+import Error from './Error'
 
 let host = window.location.origin.split(':')
 // host = host[0] + ':' + host[1] + ':' + 3001
@@ -29,6 +30,7 @@ function App() {
   const [jwt, setJwt] = useState(localStorage.getItem('jwt'))
   const [user, setUser] = useState()
   const [as, setAs] = useState()
+  const [serverError, setServerError] = useState()
   // const [as, setAs] = useState('3694b314-d050-46da-882a-726598bd6abf')
 
   const fetch_ = async (route, method='GET', body=null) => {
@@ -47,6 +49,10 @@ function App() {
     let res = await fetch(url, obj)
     const code = res.status
     res = await res.json()
+    // Show errors, but not for 401 (we simply restrict access to components)
+    if (code >= 400 && code != 401) {
+      setServerError(res.message || "There was an error")
+    }
     return {...res, code}
   }
 
@@ -122,6 +128,7 @@ function App() {
   if (!user) {
     return (
       <Container fluid>
+        <Error message={serverError} />
         <Auth onAuth={onAuth} fetch_={fetch_} />
       </Container>
     )
@@ -133,9 +140,10 @@ function App() {
       {renderNav()}
       <br/>
       <Container fluid key={as}>
+        <Error message={serverError} />
         <Switch>
           <Route path="/j">
-            <Journal fetch_={fetch_} as={as} />
+            <Journal fetch_={fetch_} as={as} setServerError={setServerError}/>
           </Route>
           <Route path="/themes">
             <Themes fetch_={fetch_} as={as} />

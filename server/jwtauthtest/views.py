@@ -12,11 +12,6 @@ import requests
 from dateutil.parser import parse as dparse
 
 
-def useradd(username, password):
-    db_session.add(User(username, pbkdf2_sha256.hash(password)))
-    db_session.commit()
-
-
 def as_user():
     # return [as_user, is_snooping]
     as_user = request.args.get('as', None)
@@ -35,6 +30,10 @@ def cant_snoop(feature=None):
     return jsonify({'data': None, 'message': message}), 401
 
 
+def send_error(message, code=400):
+    return jsonify({'ok': False, 'message': message}), code
+
+
 @app.route('/api/user', methods=['GET'])
 @jwt_required()
 def get_user():
@@ -45,7 +44,10 @@ def get_user():
 @app.route('/api/register', methods=['POST'])
 def register():
     data = request.get_json()
-    useradd(data['username'], data['password'])
+    u = User(data['username'], pbkdf2_sha256.hash(data['password']))
+    u.tags.append(Tag(main=True, selected=True, name='Main'))
+    db_session.add(u)
+    db_session.commit()
     return jsonify({})
 
 
@@ -75,18 +77,20 @@ def tag(tag_id):
     user, snooping = as_user()
 
     if snooping: return cant_snoop()
-    tag = Tag.query.filter_by(user_id=user.id, id=tag_id)
+    tagq = Tag.query.filter_by(user_id=user.id, id=tag_id)
+    tag = tagq.first()
     if request.method == 'DELETE':
+        if tag.main:
+            return send_error("Can't delete your main journal")
         # FIXME cascade
         EntryTag.query.filter_by(tag_id=tag_id).delete()
-        tag.delete()
+        tagq.delete()
         db_session.commit()
         return jsonify({})
     if request.method == 'PUT':
         data = request.get_json()
-        tag = tag.first()
-        for k, v in data.items():
-            setattr(tag, k, v)
+        for k in ['name', 'selected']:
+            if data.get(k): setattr(tag, k, data[k])
         db_session.commit()
         return jsonify({})
 
@@ -145,6 +149,9 @@ def share(share_id):
 
 def entries_put_post(user, entry=None):
     data = request.get_json()
+    if not any(v for k,v in data['tags'].items()):
+        return send_error('Each entry must belong to at least one journal')
+
     if entry:
         entry = entry.first()
         EntryTag.query.filter_by(entry_id=entry.id).delete()

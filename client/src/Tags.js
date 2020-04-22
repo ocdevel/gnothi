@@ -44,7 +44,7 @@ function TagForm({fetch_, onSubmit, tag=null}) {
           variant={id ? "primary" : "success"}
           onClick={submit}
         >{id ? "Save" : "Add"}</Button>&nbsp;
-        {id && <Button
+        {id && !tag.main && <Button
           size='sm'
           variant='danger'
           onClick={destroyTag}
@@ -58,7 +58,7 @@ function TagModal({fetch_, close, tags, fetchTags}) {
   return (
     <Modal show={true} onHide={close}>
       <Modal.Header>
-        <Modal.Title>Edit Tags</Modal.Title>
+        <Modal.Title>Journals</Modal.Title>
       </Modal.Header>
 
       <Modal.Body>
@@ -74,7 +74,7 @@ function TagModal({fetch_, close, tags, fetchTags}) {
       </Modal.Body>
 
       <Modal.Footer>
-        <Button variant="secondary" onClick={close}>Close</Button>
+        <Button size="sm" variant="secondary" onClick={close}>Close</Button>
       </Modal.Footer>
     </Modal>
   )
@@ -88,6 +88,7 @@ export default function Tags({fetch_, as, selected=null, setSelected=null, serve
   const fetchTags = async () => {
     const {data, code, message} = await fetch_('tags', 'GET')
     setTags(data)
+    selectTag(_.find(data, {main: true}).id, true)
   }
 
   useEffect(() => {fetchTags()}, [])
@@ -105,6 +106,9 @@ export default function Tags({fetch_, as, selected=null, setSelected=null, serve
   const showEditTags = () => setEditTags(true)
   const closeEditTags = () => setEditTags(false)
 
+  const sorted = _.isEmpty(tags) ? [] :
+    [_.find(tags, t => t.main), ..._.filter(tags, t => !t.main)]
+
   const renderTag = t => {
     const selected_ = server ? t.selected : selected[t.id]
     return <>
@@ -120,7 +124,7 @@ export default function Tags({fetch_, as, selected=null, setSelected=null, serve
     {editTags && <TagModal
       fetch_={fetch_}
       fetchTags={fetchTags}
-      tags={tags}
+      tags={sorted}
       close={closeEditTags}
     />}
     {/*<Button
@@ -128,7 +132,7 @@ export default function Tags({fetch_, as, selected=null, setSelected=null, serve
       variant={_.some(tags, 'selected') ? 'outline-primary' : 'primary'}
       onClick={clear}
     >Default</Button>&nbsp;*/}
-    {tags.map(renderTag)}
+    {sorted.map(renderTag)}
     {!as && <Button
       size="sm"
       variant="light"

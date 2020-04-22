@@ -294,6 +294,7 @@ class Tag(Base):
     name = Column(String(128), nullable=False)
     # Save user's selected tags between sessions
     selected = Column(Boolean)
+    main = Column(Boolean, default=False)
 
     shares = relationship("Share", secondary="shares_tags")
 
@@ -308,7 +309,8 @@ class Tag(Base):
             'id': self.id,
             'user_id': self.user_id,
             'name': self.name,
-            'selected': self.selected
+            'selected': self.selected,
+            'main': self.main
         }
 
 

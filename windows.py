@@ -20,16 +20,16 @@ if __name__ == '__main__':
     print('torch.cuda.get_device_name(0)', torch.cuda.get_device_name(0))
     print('torch.cuda.is_available()', torch.cuda.is_available())
 
-    from transformers import pipeline
+    from transformers import pipeline, AutoTokenizer, AutoModelWithLMHead
 
     # tokenizer = AutoTokenizer.from_pretrained("google/electra-large-generator")
     # model = AutoModelWithLMHead.from_pretrained("google/electra-large-generator")
-    # cache['summarizer'] = pipeline("summarization", model=model, tokenizer=tokenizer)
 
     m = Box({
         'sentiment-analysis': pipeline("sentiment-analysis"),
         'question-answering': pipeline("question-answering"),
         'summarization': pipeline("summarization")
+        # 'summarization': pipeline("summarization", model=model, tokenizer=tokenizer)
     })
 
     print("\n\n")

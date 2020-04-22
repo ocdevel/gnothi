@@ -94,7 +94,7 @@ export default function Entries({fetch_, as}) {
         onClick={() => gotoForm()}
       >New Entry</Button>}
 
-      Show:&nbsp;
+      Journals&nbsp;
       <Tags as={as} fetch_={fetch_} server={false} selected={tags} setSelected={setTags} />
       {' '}<Button size='sm' variant='light' onClick={toggleSearch}>🔎</Button>
       {showSearch && <Form.Control
