@@ -17,7 +17,7 @@ import {
 } from "react-router-dom";
 import Auth from './Auth'
 import Journal from './Journal'
-import Profile from './Profile'
+import ProfileRoutes from './ProfileRoutes'
 import Themes from './Themes'
 import Books from './Books'
 import Error from './Error'
@@ -111,12 +111,12 @@ function App() {
           <Nav>
             <NavDropdown title={username} id="basic-nav-dropdown">
               {renderAsSelect()}
+              <LinkContainer to="/profile/profile">
+                <NavDropdown.Item>Profile</NavDropdown.Item>
+              </LinkContainer>
               {!as && <LinkContainer to="/profile/sharing">
                 <NavDropdown.Item>Sharing</NavDropdown.Item>
               </LinkContainer>}
-              <LinkContainer to="/profile/family">
-                <NavDropdown.Item>Family</NavDropdown.Item>
-              </LinkContainer>
               <NavDropdown.Item onClick={logout}>Logout</NavDropdown.Item>
             </NavDropdown>
           </Nav>
@@ -152,7 +152,7 @@ function App() {
             <Books fetch_={fetch_} as={as} />
           </Route>
           <Route path="/profile">
-            <Profile fetch_={fetch_} as={as} />
+            <ProfileRoutes fetch_={fetch_} as={as} />
           </Route>
           <Redirect from="/" to="/j" />
         </Switch>
