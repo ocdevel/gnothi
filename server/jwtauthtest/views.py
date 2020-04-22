@@ -482,6 +482,13 @@ def job1():
             sync_habitica_for(u)
 
 
+@scheduler.task('interval', id='do_job_2', seconds=12*60*60, misfire_grace_time=900)
+def job2():
+    print("Backing up")
+    now = datetime.now().strftime("%Y-%m-%d-%I-%Mp")
+    os.system(f"pg_dump {vars.DB_PROD_URL} > tmp/bk-{now}.sql")
+
+
 app.config.from_object(Config())
 scheduler.init_app(app)
 scheduler.start()

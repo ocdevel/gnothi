@@ -229,23 +229,70 @@ Summarize
 Sentiment
 """
 
-from transformers import pipeline
+from transformers import pipeline, AutoTokenizer, AutoModelWithLMHead
+
+import psycopg2, time
+from uuid import uuid4
+from sqlalchemy import create_engine
+engine = create_engine('postgresql://postgres:mypassword@db/ml_journal')
+
+WIN_GPU = True
+
+
+def run_on_windows(data):
+    # Returns result, was_successful
+    with engine.connect() as conn:
+        sql = f"insert into jobs values (%s, %s, %s)"
+        jid = str(uuid4())
+        conn.execute(sql, (jid, 'new', psycopg2.Binary(pickle.dumps(data))))
+        time.sleep(2)
+        sql = f"select data from jobs where id=%s and state='new'"
+        job = conn.execute(sql, (jid,)).fetchone()
+        if job:
+            print("Job timed out, using CPU")
+            return None, True
+
+        i = 0
+        sql = f"select data from jobs where id=%s and state='done'"
+        while True:
+            job = conn.execute(sql, (jid,)).fetchone()
+            if job: break
+            if i % 60 == 0: print(f"waiting for {i / 60}m")
+            i += 1
+            time.sleep(1)
+        conn.execute("delete from jobs where id=%s", (jid,))
+    return pickle.loads(job.data)['data'], False
+
 
 def summarize(text, min_length=5, max_length=20):
     global cache
-    if not cache.summarizer:
-        cache['summarizer'] = pipeline("summarization")
     if len(text) <= min_length:
         return text
-    s = cache.summarizer(text, min_length=min_length, max_length=max_length)
+
+    if WIN_GPU:
+        s, failed = run_on_windows(dict(method='summarize', text=text, min_length=min_length, max_length=max_length))
+    if not WIN_GPU or failed:
+        if not cache.summarizer:
+            # tokenizer = AutoTokenizer.from_pretrained("google/electra-large-generator")
+            # model = AutoModelWithLMHead.from_pretrained("google/electra-large-generator")
+            # cache['summarizer'] = pipeline("summarization", model=model, tokenizer=tokenizer)
+            cache['summarizer'] = pipeline("summarization")
+        start = time.time()
+        s = cache.summarizer(text, min_length=min_length, max_length=max_length)
+        print('Timing', time.time() - start)
     return s[0]['summary_text']
 
 
 def sentiment(text):
     global cache
-    if not cache.sentimenter:
-        cache['sentimenter'] = pipeline("sentiment-analysis")
-    sentiments = cache.sentimenter(text)
+
+    if WIN_GPU:
+        sentiments, failed = run_on_windows(dict(method='sentiment', text=text))
+    if not WIN_GPU or failed:
+        if not cache.sentimenter:
+            cache['sentimenter'] = pipeline("sentiment-analysis")
+        sentiments = cache.sentimenter(text)
+
     for s in sentiments:
         # numpy can't serialize
         s['score'] = float(s['score'])
@@ -255,11 +302,14 @@ def sentiment(text):
 
 def query(question, entries):
     global cache
-    if not cache.qa:
-        cache['qa'] = pipeline("question-answering")
-
     context = ' '.join([unmark(e) for e in entries])
-    answer = cache.qa(question=question, context=context)
+
+    if WIN_GPU:
+        answer, failed = run_on_windows(dict(method='qa', question=question, context=context))
+    if not WIN_GPU or failed:
+        if not cache.qa:
+            cache['qa'] = pipeline("question-answering")
+        answer = cache.qa(question=question, context=context)
 
     return answer['answer']
 
