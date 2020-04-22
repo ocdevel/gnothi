@@ -81,7 +81,7 @@ function TagModal({fetch_, close, tags, fetchTags}) {
 }
 
 
-export default function Tags({fetch_, as, selected=null, setSelected=null, server=false}) {
+export default function Tags({fetch_, as, selected=null, setSelected=null, server=false, noEdit=false}) {
   const [tags, setTags] = useState([])
   const [editTags, setEditTags] = useState(false)
 
@@ -140,7 +140,7 @@ export default function Tags({fetch_, as, selected=null, setSelected=null, serve
       onClick={clear}
     >Default</Button>&nbsp;*/}
     {sorted.map(renderTag)}
-    {!as && <Button
+    {!as && !noEdit && <Button
       size="sm"
       variant="light"
       onClick={showEditTags}

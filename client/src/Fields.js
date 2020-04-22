@@ -112,6 +112,7 @@ export default function Fields({fetch_, as}) {
               <Form.Check
                 type='radio'
                 label='Yes'
+                id={f.id + '-yes'}
                 inline
                 checked={fieldEntries[f.id] > 0}
                 onChange={changeCheck(f.id)}
@@ -119,6 +120,7 @@ export default function Fields({fetch_, as}) {
               <Form.Check
                 type='radio'
                 label='No'
+                id={f.id + '-no'}
                 inline
                 checked={fieldEntries[f.id] < 1}
                 onChange={changeCheck(f.id)}

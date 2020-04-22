@@ -1,5 +1,6 @@
 import {OverlayTrigger, Popover, Spinner} from "react-bootstrap";
 import React from "react";
+import _ from "lodash";
 
 const spinner = (
   <Spinner animation="border" role="status">
@@ -35,4 +36,6 @@ const sent2face = (sentiment) => {
   )
 }
 
-export {spinner, sent2face}
+const trueKeys = o => _.transform(o, (m,v,k) => {if (v) {m.push(k)}}, [])
+
+export {spinner, sent2face, trueKeys}

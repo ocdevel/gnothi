@@ -11,3 +11,9 @@
 .cursor-pointer {
   cursor: pointer;
 }
+
+.anchor {
+  cursor: pointer;
+  color: #007bff;
+  text-decoration: underline;
+}

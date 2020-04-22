@@ -296,14 +296,19 @@ def influencers():
     return jsonify({'data': data})
 
 
-@app.route('/api/themes', methods=['GET'])
+@app.route('/api/themes', methods=['POST'])
 @jwt_required()
 def run_themes():
     user, snooping = as_user()
     if snooping and not user.share_data.themes:
         return cant_snoop('Themes')
-    advanced = request.args.get('advanced', False)
-    entries = [e.text for e in user.entries]
+    data = request.get_json()
+    advanced = data.get('advanced', False)
+    tags = data.get('tags', False)
+    entries = Entry.query.filter(Entry.user_id==user.id)
+    if tags:
+        entries = entries.join(EntryTag, Tag).filter(Tag.id.in_(tags))
+    entries = [e.text for e in entries.all()]
     data = ml.themes(entries, advanced=advanced)
     return jsonify({'data': data})
 
@@ -347,6 +352,11 @@ def summarize():
         entries = Entry.snoop(current_identity.username, user.id, ['summary', 'full'])
     else:
         entries = Entry.query.filter(Entry.user_id == user.id)
+
+    tags = data.get('tags', None)
+    if tags:
+        entries = entries.join(EntryTag, Tag).filter(Tag.id.in_(tags))
+
     # order by asc to paint a story from start to finish, since we're summarizing
     entries = entries.filter(Entry.created_at > x_days_ago)\
         .order_by(Entry.created_at.asc())\
