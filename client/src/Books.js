@@ -1,49 +1,56 @@
 import React, {useEffect, useState} from "react";
-import {spinner} from "./utils";
-import {Table} from "react-bootstrap";
+import {spinner, trueKeys} from "./utils";
+import {Button, Table} from "react-bootstrap";
+import MLByTag from "./MLByTag";
 
-export default function Books({fetch_}) {
+export default function Books({fetch_, as}) {
   const [books, setBooks] = useState([])
   const [fetching, setFetching] = useState(false)
   const [notShared, setNotShared] = useState(false)
+  const [tags, setTags] = useState({})
 
   const fetchBooks = async () => {
     setFetching(true)
-    const {data, code, message} = await fetch_('books', 'GET')
+    const body = {}
+    const tags_ = trueKeys(tags)
+    if (tags_.length) { body['tags'] = tags_ }
+    const {data, code, message} = await fetch_('books', 'POST', body)
     setFetching(false)
     if (code === 401) {return setNotShared(message)}
     setBooks(data)
   }
 
-  useEffect(() => {
-    fetchBooks()
-  }, [])
-
   if (notShared) {return <h5>{notShared}</h5>}
 
   return <>
+    <MLByTag fetch_={fetch_} as={as} tags={tags} setTags={setTags} />
     {fetching ? (
       <>
         {spinner}
         <p className='text-muted'>Loading book recommendations (1-10seconds)</p>
       </>
     ) : (
-      <Table>
-        <thead>
-          <th>Author</th>
-          <th>Title</th>
-          <th>Description</th>
-          <th>Topic</th>
-        </thead>
-        <tbody>
-          {books.map(b => <tr>
-            <td>{b.author}</td>
-            <td>{b.title}</td>
-            <td>{b.text}</td>
-            <td>{b.topic}</td>
-          </tr>)}
-        </tbody>
-      </Table>
+      <Button
+        className='bottom-margin'
+        variant='primary'
+        onClick={fetchBooks}
+      >Show Themes</Button>
     )}
+    <Table>
+      <thead>
+        <th>Author</th>
+        <th>Title</th>
+        <th>Description</th>
+        <th>Topic</th>
+      </thead>
+      <tbody>
+        {books.map(b => <tr>
+          <td>{b.author}</td>
+          <td>{b.title}</td>
+          <td>{b.text}</td>
+          <td>{b.topic}</td>
+        </tr>)}
+      </tbody>
+    </Table>
   </>
 }

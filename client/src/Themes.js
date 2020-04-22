@@ -2,7 +2,7 @@ import React, {useEffect, useState} from "react";
 import {sent2face, spinner, trueKeys} from "./utils";
 import {Button, Card, Form} from "react-bootstrap";
 import _ from "lodash";
-import Tags from "./Tags";
+import MLByTag from "./MLByTag";
 
 export default function Themes({fetch_, as}) {
   const [topics, setTopics] = useState({})
@@ -10,14 +10,12 @@ export default function Themes({fetch_, as}) {
   const [fetching, setFetching] = useState(false)
   const [notShared, setNotShared] = useState(false)
   const [tags, setTags] = useState({})
-  const [showTags, setShowTags] = useState(false)
 
   const fetchTopics = async () => {
     setFetching(true)
     const body = {advanced}
-    if (showTags) {
-      body['tags'] = trueKeys(tags)
-    }
+    const tags_ = trueKeys(tags)
+    if (tags_.length) { body['tags'] = tags_}
     const {data, code, message} = await fetch_('themes', 'POST', body)
     setFetching(false)
     if (code === 401) {return setNotShared(message)}
@@ -38,27 +36,7 @@ export default function Themes({fetch_, as}) {
       />
       <Form.Text>Uses more advanced algorithm which is more accurate, but MUCH slower</Form.Text>
     </Form.Group>
-    <Form.Group controlId='themes-tags'>
-      <Form.Check
-        type='radio'
-        label='All journals'
-        id='themes-all-tags'
-        inline
-        checked={!showTags}
-        onChange={() => setShowTags(false)}
-      />
-      <Form.Check
-        type='radio'
-        id='themes-specific-tags'
-        label='Specific journals'
-        inline
-        checked={showTags}
-        onChange={() => setShowTags(true)}
-      />
-    </Form.Group>
-    {showTags && <div className='bottom-margin'>
-      <Tags fetch_={fetch_} as={as} selected={tags} setSelected={setTags} noEdit={true} />
-    </div>}
+    <MLByTag fetch_={fetch_} as={as} tags={tags} setTags={setTags} />
     {fetching ? spinner : (
       <Button
         className='bottom-margin'

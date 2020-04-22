@@ -2,14 +2,13 @@ import React, {useState} from 'react'
 import _ from 'lodash'
 import {Form, InputGroup, Button} from "react-bootstrap";
 import {spinner, trueKeys} from "./utils";
-import Tags from "./Tags";
+import MLByTag from "./MLByTag";
 
 export default function Summarize({fetch_, as}) {
   const [fetching, setFetching] = useState(false)
   const [summary, setSummary] = useState('')
   const [form, setForm] = useState({days: 7, words: 30})
   const [notShared, setNotShared] = useState(false)
-  const [showTags, setShowTags] = useState(false)
   const [tags, setTags] = useState({})
 
   if (notShared) {return <h5>{notShared}</h5>}
@@ -17,9 +16,8 @@ export default function Summarize({fetch_, as}) {
   const submit = async e => {
     setFetching(true)
     e.preventDefault();
-    if (showTags) {
-      form['tags'] = trueKeys(tags)
-    }
+    const tags_ = trueKeys(tags)
+    if (tags_.length) { form['tags'] = tags_ }
     const {data, code, message} = await fetch_('summarize', 'POST', form)
     setFetching(false)
     if (code === 401) {return setNotShared(message)}
@@ -55,29 +53,7 @@ export default function Summarize({fetch_, as}) {
         </InputGroup.Append>
       </InputGroup>
     </Form.Group>
-    <p>
-      <>
-        <Form.Check
-          type='radio'
-          label='All journals'
-          id='summarize-all-tags'
-          inline
-          checked={!showTags}
-          onChange={() => setShowTags(false)}
-        />
-        <Form.Check
-          type='radio'
-          id='summarize-specific-tags'
-          label='Specific journals'
-          inline
-          checked={showTags}
-          onChange={() => setShowTags(true)}
-        />
-      </>
-    </p>
-    {showTags && <div className='bottom-margin'>
-      <Tags fetch_={fetch_} as={as} selected={tags} setSelected={setTags} noEdit={true} />
-    </div>}
+    <MLByTag fetch_={fetch_} as={as} tags={tags} setTags={setTags} />
     {fetching ? spinner : <Button type="submit" variant="primary">Submit</Button>}
     {summary && <p>{summary}</p>}
   </Form>

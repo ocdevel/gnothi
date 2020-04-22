@@ -313,13 +313,18 @@ def run_themes():
     return jsonify({'data': data})
 
 
-@app.route('/api/books', methods=['GET'])
+@app.route('/api/books', methods=['POST'])
 @jwt_required()
 def get_books():
     user, snooping = as_user()
     if snooping and not user.share_data.themes:
         return cant_snoop('Books')
-    entries = [e.text for e in user.entries]
+    data = request.get_json()
+    tags = data.get('tags', False)
+    entries = Entry.query.filter(Entry.user_id == user.id)
+    if tags:
+        entries = entries.join(EntryTag, Tag).filter(Tag.id.in_(tags))
+    entries = [e.text for e in entries.all()]
     books = ml.resources(entries, logger=app.logger)
     return jsonify({'data': books})
 
