@@ -72,31 +72,7 @@ with from_engine.connect() as from_conn:
 # import jwtauthtest.models
 # declarative_base().metadata.create_all(bind=from_engine)
 
-from uuid import uuid4
-with to_engine.connect() as c:
+with to_engine.connect() as to_conn:
     for t, df in dfs:
-        df.to_sql(t, c, index=False, if_exists='append')
-
-
-    uids = [x.id for x in c.execute('select id from users').fetchall()]
-    main_tags = [
-        dict(user_id=uid, name='Main', id=str(uuid4()), main=True)
-        for uid in uids
-    ]
-    pd.DataFrame(main_tags).to_sql('tags', c, index=False, if_exists='append')
-
-    sql = """
-    select * from entries
-    where entries.id not in (select entry_id from entries_tags)
-    """
-    entries = c.execute(sql).fetchall()
-    main_tags = {t['user_id']: t['id'] for t in main_tags}
-    entry_tags = [
-        dict(entry_id=e.id, tag_id=main_tags[e.user_id])
-        for e in entries
-    ]
-    pd.DataFrame(entry_tags).to_sql('entries_tags', c, index=False, if_exists='append')
-
-
-
+        df.to_sql(t, to_conn, index=False, if_exists='append')
 
