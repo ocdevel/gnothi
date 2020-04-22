@@ -472,22 +472,20 @@ from flask_apscheduler import APScheduler
 class Config(object):
     SCHEDULER_API_ENABLED = True
 scheduler = APScheduler()
-# interval examples
-@scheduler.task('interval', id='do_job_1', seconds=60*60, misfire_grace_time=900)
-def job1():
+
+@scheduler.task('cron', id='do_job_habitica', hour="*", misfire_grace_time=900)
+def job_habitica():
     with app.app_context():
-        print("Running cron")
+        app.logger.info("Running cron")
         q = User.query.filter(User.habitica_user_id != None, User.habitica_user_id != '')
         for u in q.all():
             sync_habitica_for(u)
 
-
-@scheduler.task('interval', id='do_job_2', seconds=12*60*60, misfire_grace_time=900)
-def job2():
-    print("Backing up")
-    now = datetime.now().strftime("%Y-%m-%d-%I-%Mp")
+@scheduler.task('cron', id='do_job_backup', hour="*/6", misfire_grace_time=900)
+def job_backup():
+    app.logger.info("Backing up")
+    now = datetime.datetime.now().strftime("%Y-%m-%d-%I-%Mp")
     os.system(f"pg_dump {vars.DB_PROD_URL} > tmp/bk-{now}.sql")
-
 
 app.config.from_object(Config())
 scheduler.init_app(app)

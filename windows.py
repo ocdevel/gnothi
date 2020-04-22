@@ -3,7 +3,12 @@ from box import Box
 import torch
 from sqlalchemy import create_engine
 
-engine = create_engine('postgres://postgres:mypassword@localhost:5433/ml_journal')
+engine = create_engine(
+    'postgres://postgres:mypassword@localhost:5433/ml_journal',
+    pool_size=20,
+    # pool_timeout=2,
+    # pool_recycle=2
+)
 
 print('torch.cuda.current_device()', torch.cuda.current_device())
 print('torch.cuda.device(0)', torch.cuda.device(0))
@@ -33,26 +38,21 @@ def run_job(job):
     print('Timing', time.time() - start)
 
     data = pickle.dumps({'data': res})
-    with engine.connect() as conn:
-        sql = f"update jobs set state='done', data=%s where id=%s"
-        conn.execute(sql, (psycopg2.Binary(data), job.id))
+    sql = f"update jobs set state='done', data=%s where id=%s"
+    engine.execute(sql, (psycopg2.Binary(data), job.id))
     print("Job complete")
 
-def check_jobs():
-    with engine.connect() as conn:
-        sql = f"""
-        update jobs set state='working'
-        where id = (select id from jobs where state='new' limit 1)
-        returning *
-        """
-        job = conn.execute(sql).fetchone()
+
+while True:
+    sql = f"""
+    update jobs set state='working'
+    where id = (select id from jobs where state='new' limit 1)
+    returning *
+    """
+    job = engine.execute(sql).fetchone()
     if not job:
         time.sleep(1)
-        return
+        continue
 
     x = threading.Thread(target=run_job, args=(job,), daemon=True)
     x.start()
-
-
-if __name__ == '__main__':
-    while True: check_jobs()

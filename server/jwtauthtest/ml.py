@@ -234,33 +234,31 @@ from transformers import pipeline, AutoTokenizer, AutoModelWithLMHead
 import psycopg2, time
 from uuid import uuid4
 from sqlalchemy import create_engine
-engine = create_engine('postgresql://postgres:mypassword@db/ml_journal')
+engine = create_engine(
+    'postgresql://postgres:mypassword@db/ml_journal',
+    connect_args={'connect_timeout': 5}
+)
 
 WIN_GPU = True
 
 
 def run_on_windows(data):
     # Returns result, was_successful
-    with engine.connect() as conn:
-        sql = f"insert into jobs values (%s, %s, %s)"
-        jid = str(uuid4())
-        conn.execute(sql, (jid, 'new', psycopg2.Binary(pickle.dumps(data))))
-        time.sleep(2)
-        sql = f"select data from jobs where id=%s and state='new'"
-        job = conn.execute(sql, (jid,)).fetchone()
-        if job:
+    sql = f"insert into jobs values (%s, %s, %s)"
+    jid = str(uuid4())
+    engine.execute(sql, (jid, 'new', psycopg2.Binary(pickle.dumps(data))))
+    i = 0
+    while True:
+        job = engine.execute(f"select data from jobs where id=%s and state='done'", (jid,)).fetchone()
+        if job: break
+        # 4 seconds and it still hasn't picked it up? bail
+        if i == 4 and engine.execute(f"select 1 from jobs where id=%s and state='new'", (jid,)).fetchone():
             print("Job timed out, using CPU")
             return None, True
-
-        i = 0
-        sql = f"select data from jobs where id=%s and state='done'"
-        while True:
-            job = conn.execute(sql, (jid,)).fetchone()
-            if job: break
-            if i % 60 == 0: print(f"waiting for {i / 60}m")
-            i += 1
-            time.sleep(1)
-        conn.execute("delete from jobs where id=%s", (jid,))
+        if i % 60 == 0: print(f"waiting for {i / 60}m")
+        i += 1
+        time.sleep(1)
+    engine.execute("delete from jobs where id=%s", (jid,))
     return pickle.loads(job.data)['data'], False
 
 
