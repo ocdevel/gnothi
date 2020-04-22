@@ -21,38 +21,38 @@ if __name__ == '__main__':
     print('torch.cuda.is_available()', torch.cuda.is_available())
 
     from transformers import pipeline
-    sentimenter = pipeline("sentiment-analysis")
-    qa = pipeline("question-answering")
-    summarizer = pipeline("summarization")
 
-    # Kick this one off just to double-check we don't get infinite process spawn
-    qa(question="who is john?", context="john is my friend.")
+    # tokenizer = AutoTokenizer.from_pretrained("google/electra-large-generator")
+    # model = AutoModelWithLMHead.from_pretrained("google/electra-large-generator")
+    # cache['summarizer'] = pipeline("summarization", model=model, tokenizer=tokenizer)
+
+    m = Box({
+        'sentiment-analysis': pipeline("sentiment-analysis"),
+        'question-answering': pipeline("question-answering"),
+        'summarization': pipeline("summarization")
+    })
 
     print("\n\n")
 
-    active_jobs = 0
     def run_job(job):
-        global active_jobs
-        active_jobs += 1
-
         data = Box(pickle.loads(job.data))
 
         print(f"Running job {data.method}")
-
-        start = time.time()
-        if data.method == 'summarize':
-            res = summarizer(data.text, min_length=data.min_length, max_length=data.max_length)
-        elif data.method == 'sentiment':
-            res = sentimenter(data.text)
-        elif data.method == 'qa':
-            res = qa(question=data.question, context=data.context)
-        print('Timing', time.time() - start)
-
-        data = pickle.dumps({'data': res})
-        sql = f"update jobs set state='done', data=%s where id=%s"
-        engine.execute(sql, (psycopg2.Binary(data), job.id))
-        print("Job complete")
-        active_jobs -= 1
+        try:
+            start = time.time()
+            res = m[data.method](*data.args, **data.kwargs)
+            # TODO pass results as byte-encoded json (json.dumps(obj).encode('utf-8') )
+            res = pickle.dumps({'data': res})
+            print('Timing', time.time() - start)
+            sql = f"update jobs set state='done', data=%s where id=%s"
+            engine.execute(sql, (psycopg2.Binary(res), job.id))
+            print("Job complete")
+        except Exception as err:
+            err = str(err)
+            print(err)
+            res = pickle.dumps({"error": err})
+            sql = f"update jobs set state='error', data=%s where id=%s"
+            engine.execute(sql, (psycopg2.Binary(res), job.id))
 
 
     while True:

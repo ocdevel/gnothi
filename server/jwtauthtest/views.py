@@ -479,7 +479,10 @@ def job_habitica():
         app.logger.info("Running cron")
         q = User.query.filter(User.habitica_user_id != None, User.habitica_user_id != '')
         for u in q.all():
-            sync_habitica_for(u)
+            try:
+                sync_habitica_for(u)
+            except Exception as err:
+                app.logger.warning(err)
 
 @scheduler.task('cron', id='do_job_backup', hour="*/6", misfire_grace_time=900)
 def job_backup():

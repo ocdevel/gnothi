@@ -8,9 +8,9 @@ from multiprocessing import cpu_count
 THREADS = cpu_count()
 
 cache = Box({
-    'summarizer': None,
-    'sentimenter': None,
-    'qa': None
+    'summarization': None,
+    'sentiment-analysis': None,
+    'question-answering': None
 })
 
 
@@ -229,8 +229,8 @@ Summarize
 Sentiment
 """
 
+GPU_JOBS = True
 from transformers import pipeline, AutoTokenizer, AutoModelWithLMHead
-
 import psycopg2, time
 from uuid import uuid4
 from sqlalchemy import create_engine
@@ -239,77 +239,68 @@ engine = create_engine(
     connect_args={'connect_timeout': 5}
 )
 
-WIN_GPU = True
+
+def run_cpu_model(data):
+    global cache
+    k = data['method']
+    pipelines = ['summarization', 'sentiment-analysis', 'question-answering']
+    if not cache[k] and k in pipelines:
+        cache[k] = pipeline(k)
+    start = time.time()
+    res = cache[k](*data['args'], **data['kwargs'])
+    print('Timing', time.time() - start)
+    return res
 
 
-def run_on_windows(data):
-    # Returns result, was_successful
+def run_gpu_model(data):
+    if not GPU_JOBS:
+        return run_cpu_model(data)
+
     sql = f"insert into jobs values (%s, %s, %s)"
     jid = str(uuid4())
     engine.execute(sql, (jid, 'new', psycopg2.Binary(pickle.dumps(data))))
     i = 0
     while True:
-        job = engine.execute(f"select data from jobs where id=%s and state='done'", (jid,)).fetchone()
-        if job: break
+        sql = f"select data from jobs where id=%s and state='done'"
+        job = engine.execute(sql, (jid,)).fetchone()
+        if job:
+            engine.execute("delete from jobs where id=%s", (jid,))
+            return pickle.loads(job.data)['data']
+
         # 4 seconds and it still hasn't picked it up? bail
-        if i == 4 and engine.execute(f"select 1 from jobs where id=%s and state='new'", (jid,)).fetchone():
-            print("Job timed out, using CPU")
-            return None, True
-        if i % 60 == 0: print(f"waiting for {i / 60}m")
+        sql = f"select 1 from jobs where id=%s and state in ('new', 'error')"
+        if i == 4 and engine.execute(sql, (jid,)).fetchone():
+            break
         i += 1
         time.sleep(1)
-    engine.execute("delete from jobs where id=%s", (jid,))
-    return pickle.loads(job.data)['data'], False
+
+    print("Job errored or timed out, using CPU")
+    return run_cpu_model(data)
 
 
 def summarize(text, min_length=5, max_length=20):
-    global cache
     if len(text) <= min_length:
         return text
 
-    if WIN_GPU:
-        s, failed = run_on_windows(dict(method='summarize', text=text, min_length=min_length, max_length=max_length))
-    if not WIN_GPU or failed:
-        if not cache.summarizer:
-            # tokenizer = AutoTokenizer.from_pretrained("google/electra-large-generator")
-            # model = AutoModelWithLMHead.from_pretrained("google/electra-large-generator")
-            # cache['summarizer'] = pipeline("summarization", model=model, tokenizer=tokenizer)
-            cache['summarizer'] = pipeline("summarization")
-        start = time.time()
-        s = cache.summarizer(text, min_length=min_length, max_length=max_length)
-        print('Timing', time.time() - start)
-    return s[0]['summary_text']
+    args = [text]
+    kwargs = dict(min_length=min_length, max_length=max_length)
+    res = run_gpu_model(dict(method='summarization', args=args, kwargs=kwargs))
+    return res[0]['summary_text']
 
 
 def sentiment(text):
-    global cache
-
-    if WIN_GPU:
-        sentiments, failed = run_on_windows(dict(method='sentiment', text=text))
-    if not WIN_GPU or failed:
-        if not cache.sentimenter:
-            cache['sentimenter'] = pipeline("sentiment-analysis")
-        sentiments = cache.sentimenter(text)
-
-    for s in sentiments:
+    res = run_gpu_model(dict(method='sentiment-analysis', args=[text], kwargs={}))
+    for s in res:
         # numpy can't serialize
         s['score'] = float(s['score'])
-    print(sentiments)
-    return sentiments[0]['label']
+    return res[0]['label']
 
 
 def query(question, entries):
-    global cache
     context = ' '.join([unmark(e) for e in entries])
-
-    if WIN_GPU:
-        answer, failed = run_on_windows(dict(method='qa', question=question, context=context))
-    if not WIN_GPU or failed:
-        if not cache.qa:
-            cache['qa'] = pipeline("question-answering")
-        answer = cache.qa(question=question, context=context)
-
-    return answer['answer']
+    kwargs = dict(question=question, context=context)
+    res = run_gpu_model(dict(method='question-answering', args=[], kwargs=kwargs))
+    return res['answer']
 
 
 """
