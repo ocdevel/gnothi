@@ -51,6 +51,17 @@ def register():
     return jsonify({})
 
 
+@app.route('/api/user', methods=['PUT'])
+def profile():
+    user, snooping = as_user()
+    if snooping: return cant_snoop()
+    data = request.get_json()
+    for k in 'first_name last_name gender birthday timezone bio'.split():
+        setattr(user, k, data.get(k, None))
+    db_session.commit()
+    return jsonify({})
+
+
 @app.route('/api/tags', methods=['GET', 'POST'])
 @jwt_required()
 def tags():
@@ -506,7 +517,7 @@ def job_habitica():
             except Exception as err:
                 app.logger.warning(err)
 
-@scheduler.task('cron', id='do_job_backup', hour="*/6", misfire_grace_time=900)
+@scheduler.task('cron', id='do_job_backup', hour="*/12", misfire_grace_time=900)
 def job_backup():
     app.logger.info("Backing up")
     now = datetime.datetime.now().strftime("%Y-%m-%d-%I-%Mp")

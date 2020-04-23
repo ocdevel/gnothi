@@ -1,7 +1,8 @@
-import React, {useState} from "react"
+import React, {useEffect, useState} from "react"
 import {Button, Form, Table, Row, Col} from "react-bootstrap"
 import moment from 'moment-timezone'
 import Select from 'react-select';
+import _ from 'lodash'
 import getZodiacSign from "./zodiac"
 
 
@@ -67,12 +68,14 @@ function People({fetch, as}) {
 
     <Table>
       <thead>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Issues</th>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Issues</th>
+        </tr>
       </thead>
       <tbody>
-      {family.map(f => <tr>
+      {family.map(f => <tr key={f.name}>
         <td>{f.name}</td>
         <td>{f.type}</td>
         <td>
@@ -101,7 +104,7 @@ function People({fetch, as}) {
 }
 
 const timezones = moment.tz.names().map(n => ({value: n, label: n}))
-const defaultTz = moment.tz.guess(true);
+const defaultTz = moment.tz.guess(true)
 
 export default function Profile({fetch_, as}) {
   const [profile, setProfile] = useState({
@@ -109,9 +112,17 @@ export default function Profile({fetch_, as}) {
     last_name: '',
     gender: null,
     birthday: '',
-    timezone: defaultTz,
+    timezone: _.find(timezones, t => t.value === defaultTz),
     bio: ''
   })
+
+  const fetchProfile = async () => {
+    const {data} = await fetch_("user")
+    data.timezone = _.find(timezones, t => t.value === data.timezone)
+    setProfile(data)
+  }
+
+  useEffect(() => {fetchProfile()}, [])
 
   let zodiac = null
   if (profile.birthday && profile.birthday.match(/\d{4}-\d{2}-\d{2}/)) {
@@ -124,9 +135,16 @@ export default function Profile({fetch_, as}) {
     setProfile({...profile, [k]: v})
   }
 
+  const submit = async e => {
+    e.preventDefault()
+    profile.timezone = _.get(profile, 'timezone.value', profile.timezone)
+    await fetch_('user', 'PUT', profile)
+    fetchProfile()
+  }
+
   return <div>
     <h2>You</h2>
-    <Form>
+    <Form onSubmit={submit}>
       <Form.Row>
         <Form.Group as={Col} controlId="first_name">
           <Form.Label>First Name</Form.Label>
@@ -149,13 +167,39 @@ export default function Profile({fetch_, as}) {
       </Form.Row>
       <Form.Row>
         <Form.Group as={Col} controlId="gender">
-          <Form.Label>Gender</Form.Label>
-          <Form.Control
-            size='sm'
-            type="text"
-            value={profile.gender}
-            onChange={changeProfile('gender')}
+          <Form.Label>Gender&nbsp;</Form.Label><br/>
+          <Form.Check
+            type='radio'
+            label='Male'
+            id='gender-male'
+            inline
+            checked={profile.gender==='male'}
+            onChange={() => changeProfile('gender', true)('male')}
           />
+          <Form.Check
+            type='radio'
+            id='gender-female'
+            label='Female'
+            inline
+            checked={profile.gender==='female'}
+            onChange={() => changeProfile('gender', true)('female')}
+          />
+          <Form.Check
+            type='radio'
+            id='gender-other'
+            label='Other'
+            inline
+            checked={!~['female', 'male', null].indexOf(profile.gender)}
+            onChange={() => changeProfile('gender', true)('')}
+          />
+          {!~['female', 'male', null].indexOf(profile.gender) && (
+            <Form.Control
+              size='sm'
+              type="text"
+              value={profile.gender}
+              onChange={changeProfile('gender')}
+            />
+          )}
         </Form.Group>
         <Form.Group as={Col} controlId="birthday">
           <Form.Label>Birthday</Form.Label>
@@ -188,6 +232,7 @@ export default function Profile({fetch_, as}) {
         />
         <Form.Text>As much information about yourself as you can provide. This will be used by machine learning and therapists.</Form.Text>
       </Form.Group>
+      <Button variant='primary' type='submit'>Save</Button>
     </Form>
 
     <People />
