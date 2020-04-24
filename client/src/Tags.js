@@ -81,7 +81,7 @@ function TagModal({fetch_, close, tags, fetchTags}) {
 }
 
 
-export default function Tags({fetch_, as, selected=null, setSelected=null, noEdit=false}) {
+export default function Tags({fetch_, as, selected=null, setSelected=null, noEdit=false, noClick=false}) {
   const [tags, setTags] = useState([])
   const [editTags, setEditTags] = useState(false)
 
@@ -114,6 +114,7 @@ export default function Tags({fetch_, as, selected=null, setSelected=null, noEdi
     const selected_ = selected[t.id]
     return <>
       <Button
+        disabled={noClick}
         size="sm"
         variant={selected_ ? 'dark' : 'light'}
         onClick={() => selectTag(t.id, !selected_)}

@@ -21,6 +21,7 @@ export default function Entry({fetch_, as, setServerError}) {
   const {entry_id} = useParams()
   const history = useHistory()
   const [showPreview, setShowPreview] = useState(false)
+  const [onlyPreview, setOnlyPreview] = useState(!!entry_id)
   const [form, setForm] = useState({title: '', text: ''})
   const [entry, setEntry] = useState({})
   const [submitting, setSubmitting] = useState(false)
@@ -65,25 +66,33 @@ export default function Entry({fetch_, as, setServerError}) {
 
   const changeForm = k => e => setForm({...form, [k]: e.target.value})
   const changeShowPreview = e => setShowPreview(e.target.checked)
-  const selectTag = (id, v) => setTags({...tags, [id]: v})
+  const changeOnlyPreview = e => {
+    e.stopPropagation()
+    e.preventDefault()
+    setOnlyPreview(!onlyPreview)
+  }
 
   return (
     <Form onSubmit={submit}>
-      <Form.Group controlId="formTitle">
-        <Form.Label>Title</Form.Label>
-        <Form.Control
-          type="text"
-          placeholder="Title"
-          value={form.title}
-          onChange={changeForm('title')}
-        />
-        <Form.Text>
-          Leave blank to use a machine-generated title based on your entry.
-        </Form.Text>
-      </Form.Group>
+      {onlyPreview ? <>
+        <h2>{form.title}</h2>
+      </> : <>
+        <Form.Group controlId="formTitle">
+          <Form.Label>Title</Form.Label>
+          <Form.Control
+            type="text"
+            placeholder="Title"
+            value={form.title}
+            onChange={changeForm('title')}
+          />
+          <Form.Text>
+            Leave blank to use a machine-generated title based on your entry.
+          </Form.Text>
+        </Form.Group>
+      </>}
 
       <Row>
-        <Col>
+        {!onlyPreview && <Col>
           <Form.Group controlId="formText">
             <Form.Label>Entry</Form.Label>
             <Form.Control
@@ -95,56 +104,63 @@ export default function Entry({fetch_, as, setServerError}) {
               onChange={changeForm('text')}
             />
           </Form.Group>
-        </Col>
-        {showPreview && (
+        </Col>}
+        {(showPreview || onlyPreview) && (
           <Col className='markdown-render'>
             <ReactMarkdown source={form.text} linkTarget='_blank' />
           </Col>
         )}
       </Row>
 
-      <Form.Group controlId="formShowPreview">
+      {!onlyPreview && <Form.Group controlId="formShowPreview">
         <Form.Check
           type="checkbox"
           label="Show Preview"
           checked={showPreview}
           onChange={changeShowPreview}
         />
-      </Form.Group>
+      </Form.Group>}
 
-      Tags:&nbsp;
+      Journals&nbsp;
       <Tags
         fetch_={fetch_}
         as={as}
         selected={tags}
         setSelected={setTags}
+        noClick={onlyPreview}
+        noEdit={onlyPreview}
       />
 
       <hr/>
 
-      {submitting ? (
-        <>
+      {submitting ? <>
         {spinner}
         <p className='text-muted'>Generating summaries & sentiment</p>
-        </>
-      ) : (
-        <>
-        <Button
-          variant="primary"
-          type="submit"
-        >
-          Submit
-        </Button>&nbsp;
+      </> : <>
+        {!as && <>
+          {onlyPreview ? <>
+            <Button
+              variant='outline-primary'
+              onClick={changeOnlyPreview}
+            >✏ Edit</Button>
+          </> : <>
+            <Button
+              variant="primary"
+              type="submit"
+            >
+              Submit
+            </Button>
+          </>}&nbsp;
+        </>}
         <Button variant='secondary' size="sm" onClick={cancel}>
           Cancel
         </Button>&nbsp;
-        {entry_id && <>
+        {!as && entry_id && <>
           <Button variant='danger' size="sm" onClick={deleteEntry}>
             Delete
           </Button>
         </>}
-        </>
-      )}
+      </>}
     </Form>
   )
 }
