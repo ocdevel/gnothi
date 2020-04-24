@@ -164,7 +164,6 @@ def entries_put_post(user, entry=None):
         return send_error('Each entry must belong to at least one journal')
 
     if entry:
-        entry = entry.first()
         EntryTag.query.filter_by(entry_id=entry.id).delete()
     else:
         entry = Entry(user_id=user.id)
@@ -206,19 +205,19 @@ def entries():
 @jwt_required()
 def entry(entry_id):
     user, snooping = as_user()
-    entry = Entry.query.filter_by(user_id=user.id, id=entry_id)
+    entryq = Entry.query.filter_by(user_id=user.id, id=entry_id)
+    entry = entryq.first()
     if request.method == 'GET':
         if snooping:
             entry = Entry.snoop(current_identity.username, user.id, ['full']).first()
-        else:
-            entry = entry.first()
         return jsonify({'data': entry.json()})
 
     if snooping: return cant_snoop()
     if request.method == 'PUT':
         return entries_put_post(user, entry)
     if request.method == 'DELETE':
-        entry.delete()
+        EntryTag.query.filter_by(entry_id=entry.id).delete()
+        entryq.delete()
         db_session.commit()
         return jsonify({})
 
