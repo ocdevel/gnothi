@@ -62,6 +62,8 @@ export default function Themes({fetch_, as}) {
           <Card.Text>
             {sent2face(obj.sentiment)}
             {obj.terms.join(', ')}
+
+            {obj.summary && <p><hr/><b>Summary</b>: {obj.summary}</p>}
           </Card.Text>
         </Card.Body>
       </Card>

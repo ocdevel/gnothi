@@ -20,16 +20,22 @@ if __name__ == '__main__':
     print('torch.cuda.get_device_name(0)', torch.cuda.get_device_name(0))
     print('torch.cuda.is_available()', torch.cuda.is_available())
 
-    from transformers import pipeline, AutoTokenizer, AutoModelWithLMHead
+    from transformers import pipeline, ModelCard
+    from sentence_transformers import SentenceTransformer
 
+    # from transformers import AutoTokenizer, AutoModelWithLMHead
     # tokenizer = AutoTokenizer.from_pretrained("google/electra-large-generator")
     # model = AutoModelWithLMHead.from_pretrained("google/electra-large-generator")
 
+    sentence_encode = SentenceTransformer('roberta-base-nli-mean-tokens')
+
     m = Box({
-        'sentiment-analysis': pipeline("sentiment-analysis"),
-        'question-answering': pipeline("question-answering"),
-        'summarization': pipeline("summarization")
-        # 'summarization': pipeline("summarization", model=model, tokenizer=tokenizer)
+        'sentiment-analysis': pipeline("sentiment-analysis", device=0),
+        'question-answering': pipeline("question-answering", device=0),
+        # 'summarization': pipeline("summarization", model="t5-base", tokenizer="t5-base", device=0),
+        'summarization': pipeline("summarization", device=0),
+
+        'sentence-encode': sentence_encode.encode
     })
 
     print("\n\n")
@@ -40,6 +46,7 @@ if __name__ == '__main__':
         print(f"Running job {data.method}")
         try:
             start = time.time()
+            torch.cuda.empty_cache()
             res = m[data.method](*data.args, **data.kwargs)
             # TODO pass results as byte-encoded json (json.dumps(obj).encode('utf-8') )
             res = pickle.dumps({'data': res})

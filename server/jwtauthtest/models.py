@@ -35,12 +35,12 @@ class User(Base):
     username = Column(EmailType, nullable=False, unique=True)
     password = Column(String(200), nullable=False)
 
-    first_name = Column(String(128))
-    last_name = Column(String(128))
-    gender = Column(String(32))
-    birthday = Column(Date)
-    timezone = Column(String(128))
-    bio = Column(Text)
+    # first_name = Column(String(128))
+    # last_name = Column(String(128))
+    # gender = Column(String(32))
+    # birthday = Column(Date)
+    # timezone = Column(String(128))
+    # bio = Column(Text)
 
     habitica_user_id = Column(String(200))
     habitica_api_token = Column(String(200))
@@ -77,12 +77,12 @@ class User(Base):
             'habitica_user_id': self.habitica_user_id,
             'habitica_api_token': self.habitica_api_token,
             'shared_with_me': [s.json() for s in self.shared_with_me()],
-            'first_name': self.first_name,
-            'last_name': self.last_name,
-            'gender': self.gender,
-            'birthday': self.birthday,
-            'timezone': self.timezone,
-            'bio': self.bio
+            # 'first_name': self.first_name,
+            # 'last_name': self.last_name,
+            # 'gender': self.gender,
+            # 'birthday': self.birthday,
+            # 'timezone': self.timezone,
+            # 'bio': self.bio
         }
 
 

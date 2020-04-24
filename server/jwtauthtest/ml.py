@@ -209,8 +209,7 @@ def run_lda(corpus, dictionary, n_topics=None, advanced=False):
     return lda
 
 
-def themes(entries, advanced=False):
-    entries = entries_to_paras(entries)
+def themes_lda(entries, advanced=False):
     _, corpus, dictionary = entries_to_data(entries)
     lda = run_lda(corpus, dictionary, advanced=advanced)
     topics = {}
@@ -223,6 +222,61 @@ def themes(entries, advanced=False):
         topics[str(idx)] = {'terms': terms, 'sentiment': sent}
 
     return topics
+
+
+from sklearn.cluster import KMeans
+from kneed import KneeLocator
+from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
+
+def themes_bert(entries):
+    vecs = run_gpu_model(dict(method='sentence-encode', args=[entries], kwargs={}))
+
+    K = range(2, 15)
+    sum_sq_dist = []
+    for k in K:
+        km = KMeans(n_clusters=k, n_jobs=-1).fit(vecs)
+        sum_sq_dist.append(km.inertia_)
+    knee = KneeLocator(K, sum_sq_dist, curve='convex', direction='decreasing').knee
+    print(knee, 'topics')
+
+    top_terms = 8
+    km = KMeans(n_clusters=knee, n_jobs=-1).fit(vecs)
+
+    tokens, _, _ = entries_to_data(entries)
+    tokens = [' '.join(e) for e in tokens]
+    tokens = pd.Series(tokens)
+    entries = pd.Series(entries)
+
+    # see https://stackoverflow.com/a/34236002/362790
+    topics = {}
+    for i in range(knee):
+        tokens_in_cluster = tokens.iloc[km.labels_ == i].tolist()
+        entries_in_cluster = entries.iloc[km.labels_ == i].tolist()
+        print(len(entries_in_cluster))
+        entries_in_cluster = '. '.join(entries_in_cluster)
+
+        # model = CountVectorizer()
+        model = TfidfVectorizer()
+        res = model.fit_transform(tokens_in_cluster)
+
+        feature_array = np.array(model.get_feature_names())
+        sorting = np.argsort(res.toarray()).flatten()[::-1]
+        top_n = feature_array[sorting][:top_terms]
+
+        print(top_n)
+        terms = top_n.tolist()
+        summary = summarize(entries_in_cluster, min_length=20, max_length=150)
+        sent = sentiment(summary)
+        topics[str(i)] = {'terms': terms, 'sentiment': sent, 'summary': summary}
+        print('\n\n\n')
+    return topics
+
+
+def themes(entries, advanced=False):
+    entries = entries_to_paras(entries)
+    # return themes_lda(entries, advanced)
+    return themes_bert(entries)
+
 
 """
 Summarize

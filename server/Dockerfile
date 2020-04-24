@@ -44,7 +44,8 @@ RUN pip install \
   mysqlclient \
   'scipy==1.3.2' \
   lxml \
-  langdetect
+  langdetect \
+  kneed
 
 #scipy==1.3.2 because https://github.com/scipy/scipy/issues/11325
 
