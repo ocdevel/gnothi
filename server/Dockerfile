@@ -45,7 +45,8 @@ RUN pip install \
   'scipy==1.3.2' \
   lxml \
   langdetect \
-  kneed
+  kneed \
+  hyperopt
 
 #scipy==1.3.2 because https://github.com/scipy/scipy/issues/11325
 

@@ -3,6 +3,7 @@ import {Modal, Table} from "react-bootstrap";
 import _ from "lodash";
 import ReactMarkdown from "react-markdown";
 import {CartesianGrid, Line, LineChart, Tooltip, XAxis, YAxis} from "recharts";
+import {spinner} from './utils'
 
 const round_ = (v) => v ? v.toFixed(2) : null
 
@@ -10,8 +11,10 @@ export default function ChartModal({fetch_, close, field=null, overall=false}) {
   const [influencers, setInfluencers] = useState({})
   const [fields, setFields] = useState([])
   const [nextPreds, setNextPreds] = useState({})
+  const [fetching, setFetching] = useState(false)
 
   const fetchTargets = async () => {
+    setFetching(true)
     let res = await fetch_('fields', 'GET')
     setFields(res.data)
     if (overall) {
@@ -23,6 +26,7 @@ export default function ChartModal({fetch_, close, field=null, overall=false}) {
       setInfluencers(res.data.per_target[field.id])
       setNextPreds(res.data.next_preds)
     }
+    setFetching(false)
   }
 
   useEffect(() => {
@@ -40,7 +44,7 @@ export default function ChartModal({fetch_, close, field=null, overall=false}) {
         </tr>
       </thead>
       <tbody>
-        {_(influencers)
+        {fetching ? spinner : _(influencers)
           .toPairs()
           .filter(x => x[1] > 0)
           .orderBy(x => -x[1])

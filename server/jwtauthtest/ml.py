@@ -74,15 +74,33 @@ def influencers(engine, user_id, specific_target=None, logger=None):
         elif dv == 'average':
             fes[fid] = fes[fid].fillna(fes[fid].mean())
 
+    # This part is important. Rather than say "what today predicts y" (not useful),
+    # or even "what history predicts y" (would be time-series models, which don't have feature_importances_)
+    # we can approximate it a rolling average of activity.
+    # TODO not sure which window fn to use: rolling|expanding|ewm?
+    # https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.rolling.html
+    # http://people.duke.edu/~ccc14/bios-823-2018/S18A_Time_Series_Manipulation_Smoothing.html#Window-functions
+    def roll(df_):
+        span = 5
+        return df_.rolling(span, min_periods=1).mean()
+
+    # hyper-opt (TODO cache params)
+    from jwtauthtest.xgb_hyperopt import run_opt
+    t = specific_target or target_ids[0]
+    X_opt = roll(fes.drop(columns=[t]))
+    y_opt = fes[t]
+    hypers, _ = run_opt(X_opt, y_opt)
+    print(hypers)
+    hypers = {}
 
     # predictions
     next_preds = {}
     for c in cols:
         # we keep target column. Yes, likely most predictive; but a rolling
         # trend is important info
-        X = fes.ewm(span=5).mean()
+        X = roll(fes)
         y = X[c]
-        model = XGBRegressor()
+        model = XGBRegressor(**hypers)
         model.fit(X, y)
         preds = model.predict(X.iloc[-1:])
         next_preds[c] = float(preds[0])
@@ -91,20 +109,13 @@ def influencers(engine, user_id, specific_target=None, logger=None):
     # importances
     targets = {}
     all_imps = []
-    for target in target_ids:
-        if specific_target and specific_target != target:
+    for t in target_ids:
+        if specific_target and specific_target != t:
             continue
-        X = fes.drop(columns=[target])
-        y = fes[target]
-        model = XGBRegressor()
-        # This part is important. Rather than say "what today predicts y" (not useful),
-        # or even "what history predicts y" (would be time-series models, which don't have feature_importances_)
-        # we can approximate it a rolling average of activity.
-        # TODO not sure which window fn to use: rolling|expanding|ewm?
-        # https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.rolling.html
-        # http://people.duke.edu/~ccc14/bios-823-2018/S18A_Time_Series_Manipulation_Smoothing.html#Window-functions
-        mult_day_avg = X.ewm(span=5).mean()
-        model.fit(mult_day_avg, y)
+        X = roll(fes.drop(columns=[t]))
+        y = fes[t]
+        model = XGBRegressor(**hypers)
+        model.fit(X, y)
         imps = [float(x) for x in model.feature_importances_]
 
         # FIXME
@@ -114,10 +125,10 @@ def influencers(engine, user_id, specific_target=None, logger=None):
         imps = [0. if np.isnan(imp) else imp for imp in imps]
 
         # put target col back in
-        imps.insert(cols.index(target), 0.0)
+        imps.insert(cols.index(t), 0.0)
         dict_ = dict(zip(cols, imps))
         all_imps.append(dict_)
-        targets[target] = dict_
+        targets[t] = dict_
 
     all_imps = dict(pd.DataFrame(all_imps).mean())
 
