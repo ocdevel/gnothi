@@ -205,11 +205,15 @@ def entries():
 @jwt_required()
 def entry(entry_id):
     user, snooping = as_user()
-    entryq = Entry.query.filter_by(user_id=user.id, id=entry_id)
+
+    if snooping:
+        entryq = Entry.snoop(current_identity.username, user.id, ['full'])\
+            .filter(Entry.id==entry_id)
+    else:
+        entryq = Entry.query.filter_by(user_id=user.id, id=entry_id)
     entry = entryq.first()
+
     if request.method == 'GET':
-        if snooping:
-            entry = Entry.snoop(current_identity.username, user.id, ['full']).first()
         return jsonify({'data': entry.json()})
 
     if snooping: return cant_snoop()
