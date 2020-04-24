@@ -1,14 +1,17 @@
 # Windows spawns recursive processes on question_answering() (bug?). Wrap whole script in
 # __main__ to prevent this.
 if __name__ == '__main__':
-    import time, psycopg2, pickle, pdb, threading
+    import time, psycopg2, pickle, pdb, threading, os, json
     from box import Box
     import GPUtil
     import torch
     from sqlalchemy import create_engine
 
+    def join_(paths):
+        return os.path.join(os.path.dirname(__file__), *paths)
+    config_json = json.load(open(join_(['server', 'jwtauthtest', 'config.json'])))
     engine = create_engine(
-        'postgres://postgres:mypassword@localhost:5433/ml_journal',
+        config_json['DB_JOBS'].replace('host.docker.internal', 'localhost'),
         pool_size=20,
         # pool_timeout=2,
         # pool_recycle=2

@@ -1,3 +1,4 @@
+from jwtauthtest.utils import vars
 import re, math, pdb, os
 from pprint import pprint
 import pandas as pd
@@ -299,10 +300,7 @@ from transformers import pipeline
 import psycopg2, time
 from uuid import uuid4
 from sqlalchemy import create_engine
-engine = create_engine(
-    'postgresql://postgres:mypassword@db/ml_journal',
-    connect_args={'connect_timeout': 5}
-)
+engine = create_engine(vars.DB_JOBS, connect_args={'connect_timeout': 5})
 
 
 def run_cpu_model(data):
@@ -379,7 +377,7 @@ from langdetect import detect
 from langdetect import DetectorFactory
 DetectorFactory.seed = 0
 from sqlalchemy import create_engine
-book_engine = create_engine('mysql://root:mypassword@mysqldb/libgen')
+book_engine = create_engine(vars.DB_BOOKS)
 
 def jensen_shannon(query, matrix):
     """
@@ -451,7 +449,6 @@ def resources(entries, logger=None):
 
             books = pd.read_sql(sql, conn)
             books = books.drop_duplicates(['Title', 'Author'])
-
 
 
         logger.info("Removing HTML")

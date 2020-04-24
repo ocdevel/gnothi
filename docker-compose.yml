@@ -9,16 +9,11 @@ services:
       FLASK_ENV: production
       JWT_SECRET_KEY: my jwt secret key
       FLASK_APP: jwtauthtest
-    networks:
-      - jnet
     ports:
       - 5001:5000
     stdin_open: true
     volumes:
       - ./server/:/app
-    links:
-      - "db"
-      - "mysqldb"
 
   server-dev:
     build: server
@@ -30,16 +25,11 @@ services:
       FLASK_ENV: development
       JWT_SECRET_KEY: my jwt secret key
       FLASK_APP: jwtauthtest
-    networks:
-      - jnet
     ports:
       - 5002:5000
     stdin_open: true
     volumes:
       - ./server/:/app
-    links:
-      - "db"
-      - "mysqldb"
 
   client:
     build: client
@@ -61,28 +51,3 @@ services:
     stdin_open: true
     volumes:
       - ./client:/client
-
-  db:
-    image: postgres
-    container_name: jdb
-    networks:
-      - jnet
-    ports:
-      - 5433:5432
-    environment:
-      POSTGRES_PASSWORD: mypassword
-
-  mysqldb:
-    image: mysql
-    container_name: mysqldb
-    command: --default-authentication-plugin=mysql_native_password
-    restart: always
-    environment:
-      MYSQL_ROOT_PASSWORD: mypassword
-    networks:
-      - jnet
-    ports:
-      - 3307:3306
-
-networks:
-  jnet:

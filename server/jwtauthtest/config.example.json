@@ -1,0 +1,12 @@
+{
+  "DB_PROD_URL": "postgres://postgres:password@host.docker.internal:5432",
+  "DB_PROD_NAME": "gnothi_prod",
+  "DB_URL": "postgres://postgres:password@host.docker.internal:5432",
+  "DB_NAME": "gnothi_dev",
+  "DB_JOBS": "postgres://postgres:password@host.docker.internal:5432/ml_jobs",
+  "HABIT": {
+    "USER": "",
+    "KEY": "",
+    "APP": ""
+  }
+}
