@@ -2,7 +2,7 @@ import React, {useEffect, useState} from "react";
 import {sent2face, spinner, trueKeys} from "./utils";
 import {Button, Card, Form} from "react-bootstrap";
 import _ from "lodash";
-import MLByTag from "./MLByTag";
+import Tags from "./Tags";
 
 export default function Themes({fetch_, as}) {
   const [topics, setTopics] = useState({})
@@ -36,7 +36,17 @@ export default function Themes({fetch_, as}) {
       />
       <Form.Text>Uses more advanced algorithm which is more accurate, but MUCH slower</Form.Text>
     </Form.Group>
-    <MLByTag fetch_={fetch_} as={as} tags={tags} setTags={setTags} />
+
+    <div className='bottom-margin'>
+      <Tags
+        fetch_={fetch_}
+        as={as}
+        selected={tags}
+        setSelected={setTags}
+        noEdit={true}
+      />
+    </div>
+
     {fetching ? spinner : (
       <Button
         className='bottom-margin'

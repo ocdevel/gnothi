@@ -81,7 +81,7 @@ function TagModal({fetch_, close, tags, fetchTags}) {
 }
 
 
-export default function Tags({fetch_, as, selected=null, setSelected=null, server=false, noEdit=false}) {
+export default function Tags({fetch_, as, selected=null, setSelected=null, noEdit=false}) {
   const [tags, setTags] = useState([])
   const [editTags, setEditTags] = useState(false)
 
@@ -100,13 +100,7 @@ export default function Tags({fetch_, as, selected=null, setSelected=null, serve
 
   useEffect(() => {fetchTags()}, [])
 
-  const selectTag = async (id, v) => {
-    if (server) {
-      await fetch_(`tags/${id}`, 'PUT', {selected: v})
-      fetchTags()
-    }
-    setSelected({...selected, [id]: v})
-  }
+  const selectTag = (id, v) => setSelected({...selected, [id]: v})
   // const clear = async () => {
   //   _.each(tags, t => {selectTag(t.id,false)})
   // }
@@ -117,11 +111,11 @@ export default function Tags({fetch_, as, selected=null, setSelected=null, serve
     [_.find(tags, t => t.main), ..._.filter(tags, t => !t.main)]
 
   const renderTag = t => {
-    const selected_ = server ? t.selected : selected[t.id]
+    const selected_ = selected[t.id]
     return <>
       <Button
         size="sm"
-        variant={selected_ ? 'primary' : 'outline-primary'}
+        variant={selected_ ? 'dark' : 'light'}
         onClick={() => selectTag(t.id, !selected_)}
       >{t.name}</Button>&nbsp;
     </>

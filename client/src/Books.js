@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from "react";
 import {spinner, trueKeys} from "./utils";
 import {Button, Table} from "react-bootstrap";
-import MLByTag from "./MLByTag";
+import Tags from "./Tags";
 
 export default function Books({fetch_, as}) {
   const [books, setBooks] = useState([])
@@ -23,7 +23,15 @@ export default function Books({fetch_, as}) {
   if (notShared) {return <h5>{notShared}</h5>}
 
   return <>
-    <MLByTag fetch_={fetch_} as={as} tags={tags} setTags={setTags} />
+    <div className='bottom-margin'>
+      <Tags
+        fetch_={fetch_}
+        as={as}
+        selected={tags}
+        setSelected={setTags}
+        noEdit={true}
+      />
+    </div>
     {fetching ? (
       <>
         {spinner}

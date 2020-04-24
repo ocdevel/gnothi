@@ -2,7 +2,7 @@ import React, {useState} from 'react'
 import _ from 'lodash'
 import {Form, InputGroup, Button} from "react-bootstrap";
 import {spinner, trueKeys} from "./utils";
-import MLByTag from "./MLByTag";
+import Tags from "./Tags";
 
 export default function Summarize({fetch_, as}) {
   const [fetching, setFetching] = useState(false)
@@ -53,7 +53,15 @@ export default function Summarize({fetch_, as}) {
         </InputGroup.Append>
       </InputGroup>
     </Form.Group>
-    <MLByTag fetch_={fetch_} as={as} tags={tags} setTags={setTags} />
+    <div className='bottom-margin'>
+      <Tags
+        fetch_={fetch_}
+        as={as}
+        selected={tags}
+        setSelected={setTags}
+        noEdit={true}
+      />
+    </div>
     {fetching ? spinner : <Button type="submit" variant="primary">Submit</Button>}
     {summary && <p>{summary}</p>}
   </Form>
