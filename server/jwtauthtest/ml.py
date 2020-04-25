@@ -142,9 +142,6 @@ Themes
 
 # from gensim.utils import simple_preprocess
 from gensim.parsing import preprocessing as pp
-from gensim.corpora.dictionary import Dictionary
-from gensim.models import LdaModel
-from gensim.models.wrappers import LdaMallet
 import spacy
 import lemminflect
 from jwtauthtest.unmarkdown import unmark
@@ -159,7 +156,7 @@ def entries_to_paras(entries):
     ]
 
 
-def entries_to_data(entries, propn=True):
+def strip_text(entries, propn=True):
     def lemmas(txt):
         if not txt: return txt
 
@@ -188,65 +185,20 @@ def entries_to_data(entries, propn=True):
         lambda x: pp.strip_short(x, 2),
         lemmas
     ]
-    texts = [pp.preprocess_string(e, filters=filters) for e in entries]
-    dictionary = Dictionary(texts)
-
-    # Create a corpus from a list of texts
-    corpus = [dictionary.doc2bow(text) for text in texts]
-
-    return texts, corpus, dictionary
-
-
-def run_lda(corpus, dictionary, n_topics=None, advanced=False):
-
-    # figure this out later, just a quick idea
-    if not n_topics:
-        n_topics = math.ceil(len(corpus)/20)
-        n_topics = max(min(15, n_topics), 5)
-
-    # Train the model on the corpus
-    if advanced:
-        os.environ['MALLET_HOME'] = os.getcwd() + '/mallet-2.0.8'
-        mallet_path = os.environ['MALLET_HOME'] + '/bin/mallet'  # update this path
-        lda = LdaMallet(
-            mallet_path,
-            corpus=corpus,
-            num_topics=n_topics,
-            id2word=dictionary,
-            workers=THREADS
-        )
-    else:
-        lda = LdaModel(corpus, num_topics=n_topics)
-
-    return lda
-
-
-def themes_lda(entries, advanced=False):
-    _, corpus, dictionary = entries_to_data(entries)
-    lda = run_lda(corpus, dictionary, advanced=advanced)
-    topics = {}
-    for idx, topic in lda.show_topics(formatted=False, num_words=10):
-        terms = [
-            w[0] if advanced else dictionary[int(w[0])]
-            for w in topic
-        ]
-        sent = sentiment(' '.join(terms))
-        topics[str(idx)] = {'terms': terms, 'sentiment': sent}
-
-    return topics
+    tokenized = [pp.preprocess_string(e, filters=filters) for e in entries]
+    return [' '.join(e) for e in tokenized]
 
 
 from sklearn.cluster import KMeans
 from sklearn.manifold import TSNE
-from kneed import KneeLocator
 from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
-
 import hdbscan
 
-def themes_bert(entries):
+def themes(entries):
+    entries = entries_to_paras(entries)
     vecs = run_gpu_model(dict(method='sentence-encode', args=[entries], kwargs={}))
     # tsne = TSNE(init='random', random_state=10, perplexity=100, n_jobs=-1)
-    tsne = TSNE(n_components=1)
+    tsne = TSNE()
     vecs = tsne.fit_transform(vecs)
 
     clusterer = hdbscan.HDBSCAN()
@@ -254,9 +206,7 @@ def themes_bert(entries):
     labels = np.unique(clusterer.labels_)
     print('n_labels', len(labels))
 
-    tokens, _, _ = entries_to_data(entries)
-    tokens = [' '.join(e) for e in tokens]
-    tokens = pd.Series(tokens)
+    stripped = pd.Series(strip_text(entries))
     entries = pd.Series(entries)
 
     # see https://stackoverflow.com/a/34236002/362790
@@ -264,14 +214,14 @@ def themes_bert(entries):
     topics = {}
     for l in labels:
         if l == -1: continue  # assuming means no cluster?
-        tokens_in_cluster = tokens.iloc[clusterer.labels_ == l].tolist()
+        stripped_in_cluster = stripped.iloc[clusterer.labels_ == l].tolist()
         entries_in_cluster = entries.iloc[clusterer.labels_ == l].tolist()
         print('n_entries', len(entries_in_cluster))
         entries_in_cluster = '. '.join(entries_in_cluster)
 
         # model = CountVectorizer()
         model = TfidfVectorizer()
-        res = model.fit_transform(tokens_in_cluster)
+        res = model.fit_transform(stripped_in_cluster)
 
         # https://medium.com/@cristhianboujon/how-to-list-the-most-common-words-from-text-corpus-using-scikit-learn-dad4d0cab41d
         sum_words = res.sum(axis=0)
@@ -285,12 +235,6 @@ def themes_bert(entries):
         topics[str(l)] = {'terms': terms, 'sentiment': sent, 'summary': summary}
         print('\n\n\n')
     return topics
-
-
-def themes(entries, advanced=False):
-    entries = entries_to_paras(entries)
-    # return themes_lda(entries, advanced)
-    return themes_bert(entries)
 
 
 """
@@ -391,31 +335,15 @@ from sqlalchemy import create_engine
 # https://stackoverflow.com/a/49935803/362790
 book_engine = create_engine(vars.DB_BOOKS)
 
-def jensen_shannon(query, matrix):
-    """
-    This function implements a Jensen-Shannon similarity
-    between the input query (an LDA topic distribution for a document)
-    and the entire corpus of topic distributions.
-    It returns an array of length M where M is the number of documents in the corpus
-    """
-    # lets keep with the p,q notation above
-    p = query[None, :].T  # take transpose
-    q = matrix.T  # transpose matrix
-    m = 0.5 * (p + q)
-    return np.sqrt(0.5 * (entropy(p, m) + entropy(q, m)))
 
-
-def resources(entries, logger=None, use_bert=True):
+def resources(entries, logger=None):
     e_user = entries_to_paras(entries)
 
     path_ = 'tmp/libgen.pkl'
     if os.path.exists(path_):
         logger.info("Loading cached book data")
         with open(path_, 'rb') as pkl:
-            if use_bert:
-                vecs_books, books = pickle.load(pkl)
-            else:
-                lda, corpus, dictionary, books = pickle.load(pkl)
+            vecs_books, books = pickle.load(pkl)
     else:
         logger.info("Fetching books")
 
@@ -474,24 +402,13 @@ def resources(entries, logger=None, use_bert=True):
         books = books[books.clean.apply(lambda x: detect(x) == 'en')]
         e_books = books.clean.tolist()
 
-        if use_bert:
-            logger.info(f"Running BERT on {len(e_books)} entries")
-            vecs_books = run_gpu_model(dict(method='sentence-encode', args=[e_books], kwargs={}))
-            with open(path_, 'wb') as pkl:
-                pickle.dump([vecs_books, books], pkl)
-        else:
-            logger.info(f"Running LDA on {len(e_books)} entries")
-            _, corpus, dictionary = entries_to_data(e_books, propn=False)
-            lda = run_lda(corpus, dictionary, n_topics=20, advanced=True)
-            with open(path_, 'wb') as pkl:
-                pickle.dump([lda, corpus, dictionary, books], pkl)
+        logger.info(f"Running BERT on {len(e_books)} entries")
+        vecs_books = run_gpu_model(dict(method='sentence-encode', args=[e_books], kwargs={}))
+        with open(path_, 'wb') as pkl:
+            pickle.dump([vecs_books, books], pkl)
 
-    if use_bert:
-        vecs_user = run_gpu_model(dict(method='sentence-encode', args=[e_user], kwargs={}))
-        vecs = vecs_user + vecs_books
-    if not use_bert:
-        texts_user, _, _ = entries_to_data(e_user, propn=False)
-        corpus = [dictionary.doc2bow(e) for e in texts_user] + corpus
+    vecs_user = run_gpu_model(dict(method='sentence-encode', args=[e_user], kwargs={}))
+    vecs = vecs_user + vecs_books
 
     user_fillers = ['' for _ in e_user]
     rows = pd.DataFrame({
@@ -502,22 +419,10 @@ def resources(entries, logger=None, use_bert=True):
     })
 
     logger.info("Finding similars")
-    if not use_bert:
-        doc_topic_dist = np.array([
-            [tup[1] for tup in lst]
-            for lst in lda[corpus]
-        ])
-
 
     product = {}
     for mine in range(len(entries)):
-        if use_bert:
-            sims = scipy.spatial.distance.cdist([ vecs[mine] ], vecs, "cosine")[0]
-        else:
-            sims = jensen_shannon(
-                doc_topic_dist[mine],
-                doc_topic_dist
-            )
+        sims = scipy.spatial.distance.cdist([ vecs[mine] ], vecs, "cosine")[0]
         product[str(mine)] = sims
     rows['sim_prod'] = pd.DataFrame(product).product(axis=1).values
     # remove already-reads (0 is equal-distance, and product of 0 is still 0)

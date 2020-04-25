@@ -17,9 +17,7 @@ RUN pip install transformers &&\
   pip install torch==1.4.0+cpu torchvision==0.5.0+cpu -f https://download.pytorch.org/whl/torch_stable.html &&\
   python -c "from transformers import pipeline;pipeline('summarization');pipeline('sentiment-analysis');pipeline('question-answering')"
 
-RUN apt-get install -y htop unzip wget default-jre
-
-RUN wget http://mallet.cs.umass.edu/dist/mallet-2.0.8.zip && unzip mallet-2.0.8.zip -d /app
+RUN apt-get install -y htop unzip wget
 
 RUN pip install \
   flask \
@@ -42,10 +40,9 @@ RUN pip install \
   python-box \
   lemminflect \
   mysqlclient \
-  'scipy==1.3.2' \
+  scipy \
   lxml \
   langdetect \
-  kneed \
   hyperopt \
   hdbscan
 

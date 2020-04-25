@@ -317,14 +317,13 @@ def run_themes():
     if snooping and not user.share_data.themes:
         return cant_snoop('Themes')
     data = request.get_json()
-    advanced = data.get('advanced', False)
     tags = data.get('tags', False)
     entries = Entry.query.filter(Entry.user_id==user.id)
     if tags:
         entries = entries.join(EntryTag, Tag).filter(Tag.id.in_(tags))
     entries = entries.order_by(Entry.created_at.asc())  # build a beginning-to-end story if using BERT
     entries = [e.text for e in entries.all()]
-    data = ml.themes(entries, advanced=advanced)
+    data = ml.themes(entries)
     return jsonify({'data': data})
 
 
