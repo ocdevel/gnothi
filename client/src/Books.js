@@ -42,7 +42,7 @@ export default function Books({fetch_, as}) {
         className='bottom-margin'
         variant='primary'
         onClick={fetchBooks}
-      >Show Themes</Button>
+      >Show Books</Button>
     )}
     <Table>
       <thead>

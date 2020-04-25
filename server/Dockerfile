@@ -46,7 +46,8 @@ RUN pip install \
   lxml \
   langdetect \
   kneed \
-  hyperopt
+  hyperopt \
+  hdbscan
 
 #scipy==1.3.2 because https://github.com/scipy/scipy/issues/11325
 

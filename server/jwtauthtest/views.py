@@ -322,6 +322,7 @@ def run_themes():
     entries = Entry.query.filter(Entry.user_id==user.id)
     if tags:
         entries = entries.join(EntryTag, Tag).filter(Tag.id.in_(tags))
+    entries = entries.order_by(Entry.created_at.asc())  # build a beginning-to-end story if using BERT
     entries = [e.text for e in entries.all()]
     data = ml.themes(entries, advanced=advanced)
     return jsonify({'data': data})

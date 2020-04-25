@@ -237,22 +237,22 @@ def themes_lda(entries, advanced=False):
 
 
 from sklearn.cluster import KMeans
+from sklearn.manifold import TSNE
 from kneed import KneeLocator
 from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
 
+import hdbscan
+
 def themes_bert(entries):
     vecs = run_gpu_model(dict(method='sentence-encode', args=[entries], kwargs={}))
+    # tsne = TSNE(init='random', random_state=10, perplexity=100, n_jobs=-1)
+    tsne = TSNE(n_components=1)
+    vecs = tsne.fit_transform(vecs)
 
-    K = range(2, 15)
-    sum_sq_dist = []
-    for k in K:
-        km = KMeans(n_clusters=k, n_jobs=-1).fit(vecs)
-        sum_sq_dist.append(km.inertia_)
-    knee = KneeLocator(K, sum_sq_dist, curve='convex', direction='decreasing').knee
-    print(knee, 'topics')
-
-    top_terms = 8
-    km = KMeans(n_clusters=knee, n_jobs=-1).fit(vecs)
+    clusterer = hdbscan.HDBSCAN()
+    clusterer.fit(vecs)
+    labels = np.unique(clusterer.labels_)
+    print('n_labels', len(labels))
 
     tokens, _, _ = entries_to_data(entries)
     tokens = [' '.join(e) for e in tokens]
@@ -260,26 +260,29 @@ def themes_bert(entries):
     entries = pd.Series(entries)
 
     # see https://stackoverflow.com/a/34236002/362790
+    top_terms = 8
     topics = {}
-    for i in range(knee):
-        tokens_in_cluster = tokens.iloc[km.labels_ == i].tolist()
-        entries_in_cluster = entries.iloc[km.labels_ == i].tolist()
-        print(len(entries_in_cluster))
+    for l in labels:
+        if l == -1: continue  # assuming means no cluster?
+        tokens_in_cluster = tokens.iloc[clusterer.labels_ == l].tolist()
+        entries_in_cluster = entries.iloc[clusterer.labels_ == l].tolist()
+        print('n_entries', len(entries_in_cluster))
         entries_in_cluster = '. '.join(entries_in_cluster)
 
         # model = CountVectorizer()
         model = TfidfVectorizer()
         res = model.fit_transform(tokens_in_cluster)
 
-        feature_array = np.array(model.get_feature_names())
-        sorting = np.argsort(res.toarray()).flatten()[::-1]
-        top_n = feature_array[sorting][:top_terms]
+        # https://medium.com/@cristhianboujon/how-to-list-the-most-common-words-from-text-corpus-using-scikit-learn-dad4d0cab41d
+        sum_words = res.sum(axis=0)
+        words_freq = [(word, sum_words[0, idx]) for word, idx in model.vocabulary_.items()]
+        words_freq = sorted(words_freq, key=lambda x: x[1], reverse=True)
+        terms = [x[0] for x in words_freq[:top_terms]]
 
-        print(top_n)
-        terms = top_n.tolist()
-        summary = summarize(entries_in_cluster, min_length=20, max_length=150)
+        print(terms)
+        summary = summarize(entries_in_cluster, min_length=100, max_length=200)
         sent = sentiment(summary)
-        topics[str(i)] = {'terms': terms, 'sentiment': sent, 'summary': summary}
+        topics[str(l)] = {'terms': terms, 'sentiment': sent, 'summary': summary}
         print('\n\n\n')
     return topics
 
@@ -300,7 +303,11 @@ from transformers import pipeline
 import psycopg2, time
 from uuid import uuid4
 from sqlalchemy import create_engine
-engine = create_engine(vars.DB_JOBS, connect_args={'connect_timeout': 5})
+engine = create_engine(
+    vars.DB_JOBS,
+    pool_pre_ping=True,
+    pool_recycle=300,
+)
 
 
 def run_cpu_model(data):
