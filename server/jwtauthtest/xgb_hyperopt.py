@@ -86,4 +86,4 @@ from sklearn.model_selection import train_test_split
 def run_opt(X, y):
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
     obj = HPOpt(X_train, X_test, y_train, y_test)
-    return obj.process(fn_name='xgb_reg', space=xgb_para, trials=Trials(), algo=tpe.suggest, max_evals=200)
+    return obj.process(fn_name='xgb_reg', space=xgb_para, trials=Trials(), algo=tpe.suggest, max_evals=300)

@@ -373,10 +373,15 @@ Resources
 from scipy.stats import entropy
 from bs4 import BeautifulSoup
 import pickle
+import scipy
 from langdetect import detect
 from langdetect import DetectorFactory
 DetectorFactory.seed = 0
 from sqlalchemy import create_engine
+
+# if Plugin caching_sha2_password could not be loaded:
+# ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'youpassword';
+# https://stackoverflow.com/a/49935803/362790
 book_engine = create_engine(vars.DB_BOOKS)
 
 def jensen_shannon(query, matrix):
@@ -393,14 +398,17 @@ def jensen_shannon(query, matrix):
     return np.sqrt(0.5 * (entropy(p, m) + entropy(q, m)))
 
 
-def resources(entries, logger=None):
+def resources(entries, logger=None, use_bert=True):
     e_user = entries_to_paras(entries)
 
     path_ = 'tmp/libgen.pkl'
     if os.path.exists(path_):
-        logger.info("Loading LDA")
+        logger.info("Loading cached book data")
         with open(path_, 'rb') as pkl:
-            lda, corpus, dictionary, books = pickle.load(pkl)
+            if use_bert:
+                vecs_books, books = pickle.load(pkl)
+            else:
+                lda, corpus, dictionary, books = pickle.load(pkl)
     else:
         logger.info("Fetching books")
 
@@ -459,14 +467,24 @@ def resources(entries, logger=None):
         books = books[books.clean.apply(lambda x: detect(x) == 'en')]
         e_books = books.clean.tolist()
 
-        logger.info(f"Running LDA on {len(e_books)} entries")
-        _, corpus, dictionary = entries_to_data(e_books, propn=False)
-        lda = run_lda(corpus, dictionary, n_topics=20, advanced=True)
-        with open(path_, 'wb') as pkl:
-            pickle.dump([lda, corpus, dictionary, books], pkl)
+        if use_bert:
+            logger.info(f"Running BERT on {len(e_books)} entries")
+            vecs_books = run_gpu_model(dict(method='sentence-encode', args=[e_books], kwargs={}))
+            with open(path_, 'wb') as pkl:
+                pickle.dump([vecs_books, books], pkl)
+        else:
+            logger.info(f"Running LDA on {len(e_books)} entries")
+            _, corpus, dictionary = entries_to_data(e_books, propn=False)
+            lda = run_lda(corpus, dictionary, n_topics=20, advanced=True)
+            with open(path_, 'wb') as pkl:
+                pickle.dump([lda, corpus, dictionary, books], pkl)
 
-    texts_user, _, _ = entries_to_data(e_user, propn=False)
-    corpus = [dictionary.doc2bow(e) for e in texts_user] + corpus
+    if use_bert:
+        vecs_user = run_gpu_model(dict(method='sentence-encode', args=[e_user], kwargs={}))
+        vecs = vecs_user + vecs_books
+    if not use_bert:
+        texts_user, _, _ = entries_to_data(e_user, propn=False)
+        corpus = [dictionary.doc2bow(e) for e in texts_user] + corpus
 
     user_fillers = ['' for _ in e_user]
     rows = pd.DataFrame({
@@ -477,17 +495,22 @@ def resources(entries, logger=None):
     })
 
     logger.info("Finding similars")
-    doc_topic_dist = np.array([
-        [tup[1] for tup in lst]
-        for lst in lda[corpus]
-    ])
+    if not use_bert:
+        doc_topic_dist = np.array([
+            [tup[1] for tup in lst]
+            for lst in lda[corpus]
+        ])
+
 
     product = {}
     for mine in range(len(entries)):
-        sims = jensen_shannon(
-            doc_topic_dist[mine],
-            doc_topic_dist
-        )
+        if use_bert:
+            sims = scipy.spatial.distance.cdist([ vecs[mine] ], vecs, "cosine")[0]
+        else:
+            sims = jensen_shannon(
+                doc_topic_dist[mine],
+                doc_topic_dist
+            )
         product[str(mine)] = sims
     rows['sim_prod'] = pd.DataFrame(product).product(axis=1).values
     # remove already-reads (0 is equal-distance, and product of 0 is still 0)

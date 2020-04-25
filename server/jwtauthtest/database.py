@@ -5,7 +5,17 @@ from sqlalchemy.orm import scoped_session, sessionmaker
 from jwtauthtest.utils import vars, DROP_SQL
 
 print(vars.DB_URL)
-engine = create_engine(vars.DB_URL, convert_unicode=True)
+engine = create_engine(
+    vars.DB_URL,
+    convert_unicode=True,
+
+    # TODO getting timout errors, trying some solutions
+    # https://stackoverflow.com/a/60614871/362790
+    # https://docs.sqlalchemy.org/en/13/core/pooling.html#dealing-with-disconnects
+    # https://medium.com/@heyjcmc/controlling-the-flask-sqlalchemy-engine-a0f8fae15b47
+    pool_pre_ping=True,
+    pool_recycle=300,
+)
 
 db_session = scoped_session(sessionmaker(autocommit=False,
                                          autoflush=False,
