@@ -5,6 +5,7 @@ import pandas as pd
 import numpy as np
 from box import Box
 from multiprocessing import cpu_count
+from tqdm import tqdm
 
 THREADS = cpu_count()
 
@@ -328,7 +329,7 @@ import scipy
 from langdetect import detect
 from langdetect import DetectorFactory
 DetectorFactory.seed = 0
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 
 # if Plugin caching_sha2_password could not be loaded:
 # ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'youpassword';
@@ -348,62 +349,73 @@ def resources(entries, logger=None):
         logger.info("Fetching books")
 
         with book_engine.connect() as conn:
-            sql = """
-            -- select u.ID, u.MD5
-            select u.Title, 
-                u.Author, 
-                d.descr,
-                t.topic_descr
-            from updated u
-                inner join description d on d.md5=u.MD5
-                inner join topics t on u.Topic=t.topic_id
-                    and t.lang='en'
-                    and t.topic_descr regexp 'psychology|self-help|therapy'
-            where u.Language = 'English'
-                and title not regexp 'sams|teach yourself'  -- comes from self-help; most are tech, figure this out
-                and (length(d.descr) + length(u.Title)) > 200
-                and u.MD5 not in (
-                    '96b2d80d4c9ccdca9a2c828f784adcfd',
-                    'f2d6bdc57b366f14b3ae4d664107f0a6',
-                    'b5acb277ad50a6585bc8b45e8c0bce4b',
-                    '3099eb8029a990cf0f9506fe04af4e77',
-                    '4a0178fdc4a9c46cf02fe59d79b19127',
-                    '30b71108a8636e1128602fa5a183f68d',
-                    '20e320bab753680cbfd7580c0cbd2709',
-                    '3204c90e2b8168f082a93653cbe00b20',
-                    '28f89c1cff1b1d696b6667d59d4c756d'
-                )
-            """
+            sql = Box(
+                select="select u.Title, u.Author, d.descr, t.topic_descr",
+                body="""
+                from updated u
+                    inner join description d on d.md5=u.MD5
+                    inner join topics t on u.Topic=t.topic_id
+                        and t.lang='en'
+                where u.Language = 'English'
+                    and title not regexp 'sams|teach yourself'  -- remove junk
+                    and (length(d.descr) + length(u.Title)) > 200
+                and u.ID not in ('62056','72779','111551','165602','165606','239835','240399','272945','310202','339718','390651','530739','570667','581466','862274','862275','879029','935149','1157279','1204687','1210652','1307307','1410416','1517634','1568907','1592543','2103755','2128089','2130515','2187329','2270690','2270720','2275684','2275804','2277017','2284616','2285559','2314405','2325313','2329959','2340421','2347272','2374055','2397307','2412259','2420958','2421152','2421413','2423975')
+                """,
 
-            # Those MD5s: UnicodeDecodeError: 'charmap' codec can't decode byte 0x9d in position 636: character maps to <undefined>
-            # -- and d.descr not rlike '[^\x00-\x7F]'
-            # for row in conn.execute(sql):
-            #     sql = f"""
-            #     select u.MD5, u.Title, u.Author, d.descr, t.topic_descr
-            #     from updated u
-            #         inner join description d on d.md5=u.MD5
-            #         inner join topics t on u.Topic=t.topic_id
-            #     where u.ID={row.ID}
-            #     """
-            #     try:
-            #         x = conn.execute(sql).fetchone()
-            #     except:
-            #         logger.info(row.MD5)
+                # handle u.Topic='' (1326526 rows)
+                just_psych = "and t.topic_descr regexp 'psychology|self-help|therapy|anthropology'",
 
-            books = pd.read_sql(sql, conn)
+                # find_problems
+                just_ids="select distinct u.ID",
+                where_id="and u.ID=:id"
+            )
+
+            FIND_PROBLEMS = False
+            ALL_BOOKS = True
+
+            if FIND_PROBLEMS:
+                # # Those MD5s: UnicodeDecodeError: 'charmap' codec can't decode byte 0x9d in position 636: character maps to <undefined>
+                ids = ' '.join([sql.just_ids, sql.body])
+                ids = [x.ID for x in conn.execute(ids).fetchall()]
+                problem_ids = []
+                for i, id in enumerate(tqdm(ids)):
+                    if i%10000==0:
+                        print(len(problem_ids)/len(ids)*100, '% problems')
+                    try:
+                        row = ' '.join([sql.select, sql.body, sql.where_id])
+                        conn.execute(text(row), id=id)
+                    except:
+                        problem_ids.append(id)
+                problem_ids = ','.join([f"'{id}'" for id in problem_ids])
+                print(f"and u.ID not in ({problem_ids})")
+                exit(0)
+
+            sql_ = [sql.select, sql.body]
+            if not ALL_BOOKS: sql_ += [sql.just_psych]
+            sql_ = ' '.join(sql_)
+            books = pd.read_sql(sql_, conn)
             books = books.drop_duplicates(['Title', 'Author'])
 
-
+        print('n_books before cleanup', books.shape[0])
         logger.info("Removing HTML")
         broken = '(\?\?\?|\#\#\#)'  # russian / other FIXME better way to handle
         books = books[~(books.Title + books.descr).str.contains(broken)]
         books['descr'] = books.descr.apply(lambda x: BeautifulSoup(x, "lxml").text)
         books['clean'] = books.Title + ' ' + books.descr
-        books = books[books.clean.apply(lambda x: detect(x) == 'en')]
+        # books = books[books.clean.apply(lambda x: detect(x) == 'en')]
+        print('n_books after cleanup', books.shape[0])
         e_books = books.clean.tolist()
 
         logger.info(f"Running BERT on {len(e_books)} entries")
-        vecs_books = run_gpu_model(dict(method='sentence-encode', args=[e_books], kwargs={}))
+        if ALL_BOOKS:
+            books_pkl = 'tmp/all_books.pkl'
+            with open(books_pkl, 'wb') as f:
+                pickle.dump(e_books, f)
+            run_gpu_model(dict(method='sentence-encode-pkl', args=[books_pkl], kwargs={}))
+            with open(books_pkl, 'rb') as f:
+                vecs_books = pickle.load(f)
+        else:
+            vecs_books = run_gpu_model(dict(method='sentence-encode', args=[e_books], kwargs={}))
         with open(path_, 'wb') as pkl:
             pickle.dump([vecs_books, books], pkl)
 

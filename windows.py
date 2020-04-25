@@ -32,13 +32,22 @@ if __name__ == '__main__':
 
     sentence_encode = SentenceTransformer('roberta-base-nli-mean-tokens')
 
+    def encode_pkl(path_):
+        with open('server/' + path_, 'rb') as pkl:
+            txts = pickle.load(pkl)
+        vecs = sentence_encode.encode(txts)
+        with open('server/' + path_, 'wb') as pkl:
+            pickle.dump(vecs, pkl)
+        return {'ok': True}
+
     m = Box({
         'sentiment-analysis': pipeline("sentiment-analysis", device=0),
         'question-answering': pipeline("question-answering", device=0),
         # 'summarization': pipeline("summarization", model="t5-base", tokenizer="t5-base", device=0),
         'summarization': pipeline("summarization", device=0),
 
-        'sentence-encode': sentence_encode.encode
+        'sentence-encode': sentence_encode.encode,
+        'sentence-encode-pkl': encode_pkl,
     })
 
     print("\n\n")
