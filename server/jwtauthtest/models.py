@@ -27,7 +27,12 @@ def uuid_():
     return str(uuid4())
 
 
-class User(Base):
+class CustomBase():
+    def json(self):
+        return {k: getattr(self, k) for k in self.json_fields.split()}
+
+
+class User(Base, CustomBase):
     __tablename__ = 'users'
 
     id = Column(UUID, primary_key=True, default=uuid_)
@@ -35,12 +40,13 @@ class User(Base):
     username = Column(EmailType, nullable=False, unique=True)
     password = Column(String(200), nullable=False)
 
-    # first_name = Column(String(128))
-    # last_name = Column(String(128))
-    # gender = Column(String(32))
-    # birthday = Column(Date)
-    # timezone = Column(String(128))
-    # bio = Column(Text)
+    first_name = Column(String(128))
+    last_name = Column(String(128))
+    gender = Column(String(32))
+    orientation = Column(String(32))
+    birthday = Column(Date)
+    timezone = Column(String(128))
+    bio = Column(Text)
 
     habitica_user_id = Column(String(200))
     habitica_api_token = Column(String(200))
@@ -51,6 +57,20 @@ class User(Base):
     family_members = relationship("Family")
     shares = relationship("Share")
     tags = relationship("Tag", order_by='Tag.name.asc()')
+
+    json_fields = """
+    id
+    username
+    habitica_user_id
+    habitica_api_token
+    first_name
+    last_name
+    gender
+    orientation
+    birthday
+    timezone
+    bio
+    """
 
     def __init__(self, username, password):
         self.username = username
@@ -72,21 +92,12 @@ class User(Base):
 
     def json(self):
         return {
-            'id': self.id,
-            'username': self.username,
-            'habitica_user_id': self.habitica_user_id,
-            'habitica_api_token': self.habitica_api_token,
+            **super().json(),
             'shared_with_me': [s.json() for s in self.shared_with_me()],
-            # 'first_name': self.first_name,
-            # 'last_name': self.last_name,
-            # 'gender': self.gender,
-            # 'birthday': self.birthday,
-            # 'timezone': self.timezone,
-            # 'bio': self.bio
         }
 
 
-class Entry(Base):
+class Entry(Base, CustomBase):
     __tablename__ = 'entries'
 
     id = Column(UUID, primary_key=True, default=uuid_)
@@ -105,6 +116,16 @@ class Entry(Base):
     entry_tags = relationship("EntryTag")
 
     # share_tags = relationship("EntryTag", secondary="shares_tags")
+
+    json_fields = """
+    id
+    title
+    text
+    created_at
+    title_summary
+    text_summary
+    sentiment
+    """
 
     @staticmethod
     def snoop(from_email, to_id, type):
@@ -125,14 +146,8 @@ class Entry(Base):
     # Marshmallow    https://marshmallow-sqlalchemy.readthedocs.io/en/latest/
     def json(self):
         return {
-            'id': self.id,
-            'title': self.title,
-            'text': self.text,
-            'created_at': self.created_at,
-            'title_summary': self.title_summary,
-            'text_summary': self.text_summary,
-            'sentiment': self.sentiment,
-            'entry_tags': {t.tag_id: True for t in self.entry_tags}
+            **super().json(),
+            'entry_tags': {t.tag_id: True for t in self.entry_tags},
         }
 
 
@@ -161,7 +176,7 @@ class DefaultValueTypes(enum.Enum):
     ffill = 3
 
 
-class Field(Base):
+class Field(Base, CustomBase):
     """Entries that change over time. Uses:
     * Charts
     * Effects of sentiment, topics on entries
@@ -189,6 +204,17 @@ class Field(Base):
 
     user_id = Column(UUID, ForeignKey('users.id'))
 
+    json_fields = """
+    id
+    name
+    created_at
+    excluded_at
+    default_value_value
+    target
+    service
+    service_id
+    """
+
     def json(self):
         history = FieldEntry.query\
             .with_entities(FieldEntry.value, FieldEntry.created_at)\
@@ -202,23 +228,15 @@ class Field(Base):
         ]
 
         return {
-            'id': self.id,
+            **super().json(),
             'type': self.type.name,
-            'name': self.name,
-            'created_at': self.created_at,
-            'excluded_at': self.excluded_at,
             'default_value': self.default_value.name if self.default_value else "value",
-            'default_value_value': self.default_value_value,
-            'target': self.target,
-            'service': self.service,
-            'service_id': self.service_id,
-
             'avg': sum(x['value'] for x in history)/len(history) if history else 0.,
             'history': history
         }
 
 
-class FieldEntry(Base):
+class FieldEntry(Base, CustomBase):
     __tablename__ = 'field_entries'
     id = Column(UUID, primary_key=True, default=uuid_)
     value = Column(Float)  # TODO Can everything be a number? reconsider
@@ -248,13 +266,13 @@ class FieldEntry(Base):
         return q
 
 
-class FamilyType(Base):
+class FamilyType(Base, CustomBase):
     __tablename__ = 'family_types'
     id = Column(UUID, primary_key=True, default=uuid_)
     name = Column(String(128))
 
 
-class Family(Base):
+class Family(Base, CustomBase):
     __tablename__ = 'family'
     id = Column(UUID, primary_key=True, default=uuid_)
     name = Column(String(128))  # Brett, Lara, ..
@@ -263,19 +281,19 @@ class Family(Base):
     notes = Column(Text)
 
 
-class FamilyIssueType(Base):
+class FamilyIssueType(Base, CustomBase):
     __tablename__ = 'family_issue_types'
     id = Column(UUID, primary_key=True, default=uuid_)
     name = Column(String(128), nullable=False)
 
 
-class FamilyIssue(Base):
+class FamilyIssue(Base, CustomBase):
     __tablename__ = 'family_issues'
     family_id = Column(UUID, ForeignKey('family.id'), primary_key=True)
     family_issue_type_id = Column(UUID, ForeignKey('family_issue_types.id'), primary_key=True)
 
 
-class Share(Base):
+class Share(Base, CustomBase):
     __tablename__ = 'shares'
     id = Column(UUID, primary_key=True, default=uuid_)
     user_id = Column(UUID, ForeignKey('users.id'), index=True)
@@ -288,19 +306,23 @@ class Share(Base):
     share_tags = relationship("ShareTag")
     tags = relationship("Tag", secondary="shares_tags")
 
+    json_fields = """
+    id
+    user_id
+    email
+    fields
+    themes
+    profile
+    """
+
     def json(self):
         return {
-            'id': self.id,
-            'user_id': self.user_id,
-            'email': self.email,
-            'fields': self.fields,
-            'themes': self.themes,
-            'profile': self.profile,
+            **super().json(),
             'full_tags': {t.tag_id: True for t in self.share_tags if t.type.name == 'full'},
             'summary_tags': {t.tag_id: True for t in self.share_tags if t.type.name == 'summary'},
         }
 
-class Tag(Base):
+class Tag(Base, CustomBase):
     __tablename__ = 'tags'
     id = Column(UUID, primary_key=True, default=uuid_)
     user_id = Column(UUID, ForeignKey('users.id'), index=True)
@@ -311,24 +333,23 @@ class Tag(Base):
 
     shares = relationship("Share", secondary="shares_tags")
 
+    json_fields = """
+    id
+    user_id
+    name
+    selected
+    main
+    """
+
     @staticmethod
     def snoop(from_email, to_id):
         return Tag.query \
             .join(ShareTag, Share)\
             .filter(Share.email==from_email, Share.user_id == to_id)
 
-    def json(self):
-        return {
-            'id': self.id,
-            'user_id': self.user_id,
-            'name': self.name,
-            'selected': self.selected,
-            'main': self.main
-        }
-
 
 # FIXME cascade https://www.michaelcho.me/article/many-to-many-relationships-in-sqlalchemy-models-flask
-class EntryTag(Base):
+class EntryTag(Base, CustomBase):
     __tablename__ = 'entries_tags'
     entry_id = Column(UUID, ForeignKey('entries.id'), primary_key=True)
     tag_id = Column(UUID, ForeignKey('tags.id'), primary_key=True)
@@ -339,7 +360,7 @@ class ShareTagType(enum.Enum):
     summary = 2
 
 
-class ShareTag(Base):
+class ShareTag(Base, CustomBase):
     __tablename__ = 'shares_tags'
     share_id = Column(UUID, ForeignKey('shares.id'), primary_key=True)
     tag_id = Column(UUID, ForeignKey('tags.id'), primary_key=True)
