@@ -23,13 +23,7 @@ if __name__ == '__main__':
     print('torch.cuda.get_device_name(0)', torch.cuda.get_device_name(0))
     print('torch.cuda.is_available()', torch.cuda.is_available())
 
-    from transformers import pipeline, ModelCard
     from sentence_transformers import SentenceTransformer
-
-    # from transformers import AutoTokenizer, AutoModelWithLMHead
-    # tokenizer = AutoTokenizer.from_pretrained("google/electra-large-generator")
-    # model = AutoModelWithLMHead.from_pretrained("google/electra-large-generator")
-
     sentence_encode = SentenceTransformer('roberta-base-nli-mean-tokens')
 
     def encode_pkl(path_):
@@ -40,12 +34,32 @@ if __name__ == '__main__':
             pickle.dump(vecs, pkl)
         return {'ok': True}
 
-    m = Box({
-        'sentiment-analysis': pipeline("sentiment-analysis", device=0),
-        'question-answering': pipeline("question-answering", device=0),
-        # 'summarization': pipeline("summarization", model="t5-base", tokenizer="t5-base", device=0),
-        'summarization': pipeline("summarization", device=0),
+    from transformers import pipeline, ModelCard
+    from transformers import AutoTokenizer, AutoModelWithLMHead, AutoModelForQuestionAnswering
 
+    # models that have been fine-tuned on a sequence classification task
+    sent_args = dict(
+        
+    )
+
+    sum_args = dict(
+        # tokenizer=AutoTokenizer.from_pretrained("google/electra-large-generator")
+        # model=AutoModelWithLMHead.from_pretrained("google/electra-large-generator")
+        # model="t5-base",
+        # tokenizer="t5-base"
+    )
+
+    qa_args = dict(
+        tokenizer=AutoTokenizer.from_pretrained("twmkn9/albert-base-v2-squad2"),
+        model=AutoModelForQuestionAnswering.from_pretrained("twmkn9/albert-base-v2-squad2"),
+        # tokenizer=AutoTokenizer.from_pretrained("ktrapeznikov/albert-xlarge-v2-squad-v2"),
+        # model=AutoModelForQuestionAnswering.from_pretrained("ktrapeznikov/albert-xlarge-v2-squad-v2")
+    )
+
+    m = Box({
+        'sentiment-analysis': pipeline("sentiment-analysis", device=0, **sent_args),
+        'question-answering': pipeline("question-answering", device=0, **qa_args),
+        'summarization': pipeline("summarization", device=0, **sum_args),
         'sentence-encode': sentence_encode.encode,
         'sentence-encode-pkl': encode_pkl,
     })

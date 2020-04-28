@@ -198,8 +198,25 @@ import hdbscan
 def themes(entries):
     entries = entries_to_paras(entries)
     vecs = run_gpu_model(dict(method='sentence-encode', args=[entries], kwargs={}))
-    # tsne = TSNE(init='random', random_state=10, perplexity=100, n_jobs=-1)
-    tsne = TSNE()
+
+    HYPEROPT = False
+    if HYPEROPT:
+        n = vecs.shape[0]
+        max_ = int(n/2)
+        step = int(max_/20)
+        perps = range(5, max_, step)
+        best = []
+        for p in perps:
+            # Find best perplexity equation:
+            # S = 2KL(P||Q) + log(n)(Perp/n)
+            tsne = TSNE(n_components=3, perplexity=p, n_jobs=-1)
+            tsne.fit(vecs)
+            s = 2 * tsne.kl_divergence_ + np.log(n) * (p / n)
+            if s > best[0]:
+                best = [s, tsne]
+        tsne = best[1]
+    else:
+        tsne = TSNE(n_components=3)
     vecs = tsne.fit_transform(vecs)
 
     clusterer = hdbscan.HDBSCAN()
