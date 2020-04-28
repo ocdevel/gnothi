@@ -6,8 +6,6 @@ import {
   Tabs
 } from "react-bootstrap";
 import {spinner} from './utils'
-import moment from "moment-timezone";
-import _ from "lodash";
 
 export default function Auth({fetch_, onAuth}) {
   const [submitting, setSubmitting] = useState(false)

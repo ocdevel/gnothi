@@ -54,7 +54,7 @@ class User(Base, CustomBase):
     entries = relationship("Entry", order_by='Entry.created_at.desc()')
     field_entries = relationship("FieldEntry", order_by='FieldEntry.created_at.desc()')
     fields = relationship("Field", order_by='Field.created_at.asc()')
-    family_members = relationship("Family")
+    people = relationship("Person")
     shares = relationship("Share")
     tags = relationship("Tag", order_by='Tag.name.asc()')
 
@@ -275,31 +275,23 @@ class FieldEntry(Base, CustomBase):
         return q
 
 
-class FamilyType(Base, CustomBase):
-    __tablename__ = 'family_types'
+class Person(Base, CustomBase):
+    __tablename__ = 'people'
     id = Column(UUID, primary_key=True, default=uuid_)
     name = Column(String(128))
+    relation = Column(String(128))
+    issues = Column(Text)
+    bio = Column(Text)
 
-
-class Family(Base, CustomBase):
-    __tablename__ = 'family'
-    id = Column(UUID, primary_key=True, default=uuid_)
-    name = Column(String(128))  # Brett, Lara, ..
-    family_type_id = Column(UUID, ForeignKey('family_types.id'), nullable=False)
     user_id = Column(UUID, ForeignKey('users.id'), nullable=False)
-    notes = Column(Text)
 
-
-class FamilyIssueType(Base, CustomBase):
-    __tablename__ = 'family_issue_types'
-    id = Column(UUID, primary_key=True, default=uuid_)
-    name = Column(String(128), nullable=False)
-
-
-class FamilyIssue(Base, CustomBase):
-    __tablename__ = 'family_issues'
-    family_id = Column(UUID, ForeignKey('family.id'), primary_key=True)
-    family_issue_type_id = Column(UUID, ForeignKey('family_issue_types.id'), primary_key=True)
+    json_fields = """
+    id
+    name
+    relation
+    issues
+    bio
+    """
 
 
 class Share(Base, CustomBase):

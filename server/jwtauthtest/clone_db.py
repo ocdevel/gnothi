@@ -48,10 +48,6 @@ with from_engine.connect() as from_conn:
     fields 
     entries 
     field_entries 
-    family_types
-    family_issue_types 
-    family
-    family_issues
     tags
     shares
     shares_tags

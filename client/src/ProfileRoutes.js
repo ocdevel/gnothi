@@ -9,7 +9,7 @@ export default function ProfileRoutes({fetch_, as}) {
   return (
     <Switch>
       <Route path={`${match.url}/profile`}>
-        <Profile fetch_={fetch_} />
+        <Profile fetch_={fetch_} as={as} />
       </Route>
       <Route path={`${match.url}/sharing`}>
         <Sharing fetch_={fetch_} as={as} />

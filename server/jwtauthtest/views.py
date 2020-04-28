@@ -3,7 +3,7 @@ import datetime
 from flask_jwt import jwt_required, current_identity
 from jwtauthtest import app
 from jwtauthtest.database import db_session, engine
-from jwtauthtest.models import User, Entry, Field, FieldEntry, Share, Tag, EntryTag, ShareTag
+from jwtauthtest.models import User, Entry, Field, FieldEntry, Share, Tag, EntryTag, ShareTag, Person
 from passlib.hash import pbkdf2_sha256
 from flask import request, jsonify
 from jwtauthtest.utils import vars
@@ -37,7 +37,7 @@ def send_error(message, code=400):
 @app.route('/api/user', methods=['GET'])
 @jwt_required()
 def get_user():
-    user = current_identity  # as_user()
+    user, snooping = as_user()
     return jsonify({'data': user.json()})
 
 
@@ -62,6 +62,45 @@ def profile():
     db_session.commit()
     return jsonify({})
 
+
+@app.route('/api/people', methods=['GET', 'POST'])
+@jwt_required()
+def people():
+    user, snooping = as_user()
+    if request.method == 'GET':
+        if snooping and not user.share_data.profile:
+            return cant_snoop()
+        res = [p.json() for p in user.people]
+        return jsonify({'data': res})
+
+    if snooping: return cant_snoop()
+    if request.method == 'POST':
+        data = request.get_json()
+        p = Person(**data)
+        user.people.append(p)
+        db_session.commit()
+        return jsonify({})
+
+
+@app.route('/api/people/<person_id>', methods=['PUT', 'DELETE'])
+@jwt_required()
+def person(person_id):
+    user, snooping = as_user()
+    if snooping: return cant_snoop()
+
+    # TODO and share_id = ...
+    pq = Person.query.filter_by(user_id=user.id, id=person_id)
+    p = pq.first()
+    if request.method == 'PUT':
+        data = request.get_json()
+        for k, v in data.items():
+            setattr(p, k, v)
+        db_session.commit()
+        return jsonify({})
+    if request.method == 'DELETE':
+        pq.delete()
+        db_session.commit()
+        return jsonify({})
 
 @app.route('/api/tags', methods=['GET', 'POST'])
 @jwt_required()
