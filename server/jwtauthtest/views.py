@@ -52,11 +52,12 @@ def register():
 
 
 @app.route('/api/user', methods=['PUT'])
+@jwt_required()
 def profile():
     user, snooping = as_user()
     if snooping: return cant_snoop()
     data = request.get_json()
-    for k in 'first_name last_name gender birthday timezone bio'.split():
+    for k in User.profile_fields.split():
         setattr(user, k, data.get(k, None))
     db_session.commit()
     return jsonify({})

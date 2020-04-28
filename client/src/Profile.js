@@ -104,15 +104,15 @@ function People({fetch, as}) {
 }
 
 const timezones = moment.tz.names().map(n => ({value: n, label: n}))
-const defaultTz = moment.tz.guess(true)
 
 export default function Profile({fetch_, as}) {
   const [profile, setProfile] = useState({
     first_name: '',
     last_name: '',
     gender: null,
+    orientation: null,
     birthday: '',
-    timezone: _.find(timezones, t => t.value === defaultTz),
+    timezone:null,
     bio: ''
   })
 
@@ -142,96 +142,50 @@ export default function Profile({fetch_, as}) {
     fetchProfile()
   }
 
+  const textField = ({k, v, attrs, children}) => (
+    <Form.Group as={Col} controlId={k}>
+      <Form.Label>{v}</Form.Label>
+      <Form.Control
+        size='sm'
+        type="text"
+        value={profile[k]}
+        onChange={changeProfile(k)}
+        {...attrs}
+      />
+      {children}
+    </Form.Group>
+  )
+
   return <div>
     <h2>You</h2>
     <Form onSubmit={submit}>
       <Form.Row>
-        <Form.Group as={Col} controlId="first_name">
-          <Form.Label>First Name</Form.Label>
-          <Form.Control
-            size='sm'
-            type="text"
-            value={profile.first_name}
-            onChange={changeProfile('first_name')}
-          />
-        </Form.Group>
-        <Form.Group as={Col} controlId="last_name">
-          <Form.Label>Last Name</Form.Label>
-          <Form.Control
-            size='sm'
-            type="text"
-            value={profile.last_name}
-            onChange={changeProfile('last_name')}
+        {textField({k: 'first_name', v: 'First Name'})}
+        {textField({k: 'last_name', v: 'Last Name'})}
+      </Form.Row>
+      <Form.Row>
+        {textField({k: 'gender', v: 'Gender'})}
+        {textField({k: 'orientation', v: 'Orientation'})}
+      </Form.Row>
+      <Form.Row>
+        {textField({k: 'birthday', v: 'Birthday', children: <>
+          <Form.Text>YYYY-MM-DD like 1984-02-19</Form.Text>
+          {zodiac && <Form.Text>{zodiac}</Form.Text>}
+        </>})}
+        <Form.Group as={Col} controlId="timezone">
+          <Form.Label>Timezone</Form.Label>
+          <Select
+            value={profile.timezone}
+            onChange={changeProfile('timezone', true)}
+            options={timezones}
           />
         </Form.Group>
       </Form.Row>
       <Form.Row>
-        <Form.Group as={Col} controlId="gender">
-          <Form.Label>Gender&nbsp;</Form.Label><br/>
-          <Form.Check
-            type='radio'
-            label='Male'
-            id='gender-male'
-            inline
-            checked={profile.gender==='male'}
-            onChange={() => changeProfile('gender', true)('male')}
-          />
-          <Form.Check
-            type='radio'
-            id='gender-female'
-            label='Female'
-            inline
-            checked={profile.gender==='female'}
-            onChange={() => changeProfile('gender', true)('female')}
-          />
-          <Form.Check
-            type='radio'
-            id='gender-other'
-            label='Other'
-            inline
-            checked={!~['female', 'male', null].indexOf(profile.gender)}
-            onChange={() => changeProfile('gender', true)('')}
-          />
-          {!~['female', 'male', null].indexOf(profile.gender) && (
-            <Form.Control
-              size='sm'
-              type="text"
-              value={profile.gender}
-              onChange={changeProfile('gender')}
-            />
-          )}
-        </Form.Group>
-        <Form.Group as={Col} controlId="birthday">
-          <Form.Label>Birthday</Form.Label>
-          <Form.Control
-            size='sm'
-            type="text"
-            value={profile.birthday}
-            onChange={changeProfile('birthday')}
-          />
-          <Form.Text>YYYY-MM-DD like 1984-02-19</Form.Text>
-          {zodiac && <Form.Text>{zodiac}</Form.Text>}
-        </Form.Group>
+        {textField({k: 'bio', v: 'About You', attrs: {as: 'textarea', rows: 4}, children: <>
+          <Form.Text>As much information about yourself as you can provide. This will be used by machine learning and therapists.</Form.Text>
+        </>})}
       </Form.Row>
-      <Form.Group controlId="timezone">
-        <Form.Label>Timezone</Form.Label>
-        <Select
-          value={profile.timezone}
-          onChange={changeProfile('timezone', true)}
-          options={timezones}
-        />
-      </Form.Group>
-      <Form.Group controlId="bio">
-        <Form.Label>About You</Form.Label>
-        <Form.Control
-          size='sm'
-          as="textarea"
-          rows={4}
-          value={profile.bio}
-          onChange={changeProfile('bio')}
-        />
-        <Form.Text>As much information about yourself as you can provide. This will be used by machine learning and therapists.</Form.Text>
-      </Form.Group>
       <Button variant='primary' type='submit'>Save</Button>
     </Form>
 

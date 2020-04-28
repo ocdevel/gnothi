@@ -42,8 +42,8 @@ class User(Base, CustomBase):
 
     first_name = Column(String(128))
     last_name = Column(String(128))
-    gender = Column(String(32))
-    orientation = Column(String(32))
+    gender = Column(String(64))
+    orientation = Column(String(64))
     birthday = Column(Date)
     timezone = Column(String(128))
     bio = Column(Text)
@@ -58,11 +58,7 @@ class User(Base, CustomBase):
     shares = relationship("Share")
     tags = relationship("Tag", order_by='Tag.name.asc()')
 
-    json_fields = """
-    id
-    username
-    habitica_user_id
-    habitica_api_token
+    profile_fields = """
     first_name
     last_name
     gender
@@ -71,6 +67,13 @@ class User(Base, CustomBase):
     timezone
     bio
     """
+
+    json_fields = """
+    id
+    username
+    habitica_user_id
+    habitica_api_token
+    """ + profile_fields
 
     def __init__(self, username, password):
         self.username = username
@@ -95,6 +98,9 @@ class User(Base, CustomBase):
             **super().json(),
             'shared_with_me': [s.json() for s in self.shared_with_me()],
         }
+
+    def profile_json(self):
+        return {k: getattr(self, k) for k in self.profile_fields.split()}
 
 
 class Entry(Base, CustomBase):
@@ -251,9 +257,12 @@ class FieldEntry(Base, CustomBase):
 
     @staticmethod
     def get_day_entries(day, user_id, field_id=None):
-        # FIXME handle this automatically, or as user timzeone preference, or such
-        timezoned = func.Date(func.timezone('America/Los_Angeles', FieldEntry.created_at))
-        day = day.astimezone(tz.gettz('America/Los_Angeles'))
+        tz_ = User.query.filter_by(id=user_id)\
+            .with_entities(User.timezone)\
+            .first().timezone
+        tz_ = tz_ or 'America/Los_Angeles'
+        timezoned = func.Date(func.timezone(tz_, FieldEntry.created_at))
+        day = day.astimezone(tz.gettz(tz_))
         # timezoned = func.Date(FieldEntry.created_at)
 
         q = FieldEntry.query\

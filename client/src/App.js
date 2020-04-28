@@ -21,6 +21,7 @@ import ProfileRoutes from './ProfileRoutes'
 import Themes from './Themes'
 import Books from './Books'
 import Error from './Error'
+import moment from "moment-timezone";
 
 let host = window.location.origin.split(':')
 // host = host[0] + ':' + host[1] + ':' + 3001
@@ -61,6 +62,12 @@ function App() {
     const {data, code} = await fetch_('user', 'GET')
     if (code === 401) { return logout() }
     setUser(data)
+
+    if (!data.timezone && !as) {
+       // Guess their default timezone (TODO should call this out?)
+      const timezone = moment.tz.guess(true)
+      fetch_('user', 'PUT', {timezone})
+    }
   }
 
   const onAuth = jwt_ => setJwt(jwt_)

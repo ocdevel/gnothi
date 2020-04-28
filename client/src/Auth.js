@@ -6,6 +6,8 @@ import {
   Tabs
 } from "react-bootstrap";
 import {spinner} from './utils'
+import moment from "moment-timezone";
+import _ from "lodash";
 
 export default function Auth({fetch_, onAuth}) {
   const [submitting, setSubmitting] = useState(false)
@@ -37,7 +39,7 @@ export default function Auth({fetch_, onAuth}) {
     setSubmitting(true)
     // assert password = passwordConfirm. See react-bootstrap, use yup library or something for form stuff
     await fetch_('register', 'POST', {username, password})
-    login();
+    await login();
   };
 
   const renderLogin = () => {
