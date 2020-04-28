@@ -1,4 +1,4 @@
-import enum, pdb
+import enum, pdb, re
 from datetime import date, datetime
 from dateutil import tz
 from jwtauthtest.database import Base
@@ -102,6 +102,20 @@ class User(Base, CustomBase):
     def profile_json(self):
         return {k: getattr(self, k) for k in self.profile_fields.split()}
 
+    def profile_to_text(self):
+        txt = ''
+        if self.gender or self.orientation:
+            txt += f"My gender is {self.orientation}. "
+        if self.orientation:
+            txt += f"My sexual orientation is {self.gender}. "
+        if self.bio:
+            txt += self.bio
+        for p in self.people:
+            txt += f"{p.name} is my {p.relation}. "
+            if p.bio: txt += f"{p.name} is {p.bio} "
+            if p.issues: txt += f" {p.name} has these issues: {p.issues} "
+        print(txt)
+        return re.sub('\s+', ' ', txt)
 
 class Entry(Base, CustomBase):
     __tablename__ = 'entries'

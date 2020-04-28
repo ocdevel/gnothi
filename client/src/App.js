@@ -66,7 +66,7 @@ function App() {
     if (!data.timezone && !as) {
        // Guess their default timezone (TODO should call this out?)
       const timezone = moment.tz.guess(true)
-      fetch_('user', 'PUT', {timezone})
+      fetch_('profile', 'PUT', {timezone})
     }
   }
 
@@ -120,6 +120,9 @@ function App() {
               {renderAsSelect()}
               <LinkContainer to="/profile/profile">
                 <NavDropdown.Item>Profile</NavDropdown.Item>
+              </LinkContainer>
+              <LinkContainer to="/profile/people">
+                <NavDropdown.Item>People</NavDropdown.Item>
               </LinkContainer>
               {!as && <LinkContainer to="/profile/sharing">
                 <NavDropdown.Item>Sharing</NavDropdown.Item>

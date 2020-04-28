@@ -51,14 +51,21 @@ def register():
     return jsonify({})
 
 
-@app.route('/api/user', methods=['PUT'])
+@app.route('/api/profile', methods=['GET', 'PUT'])
 @jwt_required()
 def profile():
     user, snooping = as_user()
+    if snooping and not user.share_data.profile:
+        return cant_snoop()
+    if request.method == 'GET':
+        return jsonify({'data': user.profile_json()})
+
     if snooping: return cant_snoop()
     data = request.get_json()
-    for k in User.profile_fields.split():
-        setattr(user, k, data.get(k, None))
+    for k, v in data.items():
+        if k not in User.profile_fields.split(): continue
+        v = v or None  # remove empty strings
+        setattr(user, k, v)
     db_session.commit()
     return jsonify({})
 
@@ -363,6 +370,8 @@ def run_themes():
         entries = entries.join(EntryTag, Tag).filter(Tag.id.in_(tags))
     entries = entries.order_by(Entry.created_at.asc())  # build a beginning-to-end story if using BERT
     entries = [e.text for e in entries.all()]
+    if len(entries) < 10:
+        return send_error("Not enough entries to work with, come back later")
     data = ml.themes(entries)
     return jsonify({'data': data})
 
@@ -393,6 +402,10 @@ def query():
     else:
         entries = user.entries
     entries = [e.text for e in entries]
+
+    if (not snooping) or user.share_data.profile:
+        entries = [user.profile_to_text()] + entries
+
     res = ml.query(question, entries)
     return jsonify({'data': res})
 
@@ -422,6 +435,7 @@ def summarize():
         .all()
     entries = ' '.join(e.text for e in entries)
     entries = re.sub('\s+', ' ', entries)  # mult new-lines
+
     min_ = int(words*2/3)
     summary = ml.summarize(entries, min_, words)
     sentiment = ml.sentiment(summary)
