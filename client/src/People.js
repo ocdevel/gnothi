@@ -51,7 +51,7 @@ function Person({fetch_, as, onSubmit=null, person=null}) {
       <Form.Row>
         {textField({k: 'name', v: 'Name', ...req})}
         {textField({k: 'relation', v: 'Relation', ...req})}
-        {textField({k: 'issues', v: 'Issues'})}
+        {/*textField({k: 'issues', v: 'Issues'})*/}
       </Form.Row>
       <Form.Row>
         {textField({k: 'bio', v: 'Bio', attrs: {as: 'textarea', cols: 3}})}
@@ -102,7 +102,7 @@ export default function People({fetch_, as}) {
         <tr>
           <th>Name</th>
           <th>Relation</th>
-          <th>Issues</th>
+          {/*<th>Issues</th>*/}
           <th>Bio</th>
         </tr>
       </thead>
@@ -114,7 +114,7 @@ export default function People({fetch_, as}) {
         >
           <td>{p.name}</td>
           <td>{p.relation}</td>
-          <td>{p.issues}</td>
+          {/*<td>{p.issues}</td>*/}
           <td>{p.bio}</td>
         </tr>
       ))}

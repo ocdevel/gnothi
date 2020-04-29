@@ -54,7 +54,7 @@ class User(Base, CustomBase):
     entries = relationship("Entry", order_by='Entry.created_at.desc()')
     field_entries = relationship("FieldEntry", order_by='FieldEntry.created_at.desc()')
     fields = relationship("Field", order_by='Field.created_at.asc()')
-    people = relationship("Person")
+    people = relationship("Person", order_by='Person.name.asc()')
     shares = relationship("Share")
     tags = relationship("Tag", order_by='Tag.name.asc()')
 
@@ -104,18 +104,20 @@ class User(Base, CustomBase):
 
     def profile_to_text(self):
         txt = ''
-        if self.gender or self.orientation:
-            txt += f"My gender is {self.orientation}. "
-        if self.orientation:
-            txt += f"My sexual orientation is {self.gender}. "
+        if self.gender:
+            txt += f"I am {self.gender}. "
+        if self.orientation and not re.match("straight", self.orientation, re.IGNORECASE):
+            txt += f"I am {self.orientation}. "
         if self.bio:
             txt += self.bio
         for p in self.people:
-            txt += f"{p.name} is my {p.relation}. "
-            if p.bio: txt += f"{p.name} is {p.bio} "
-            if p.issues: txt += f" {p.name} has these issues: {p.issues} "
-        print(txt)
-        return re.sub('\s+', ' ', txt)
+            whose = "" if "'" in p.relation.split(' ')[0] else "my "
+            txt += f"{p.name} is {whose}{p.relation}. "
+            if p.bio: txt += p.bio
+            # if p.issues: txt += f" {p.name} has these issues: {p.issues} "
+        txt = re.sub(r'\s+', ' ', txt)
+        # print(txt)
+        return txt
 
 class Entry(Base, CustomBase):
     __tablename__ = 'entries'

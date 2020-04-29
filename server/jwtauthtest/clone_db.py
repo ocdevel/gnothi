@@ -45,6 +45,7 @@ dfs = []
 with from_engine.connect() as from_conn:
     tables = """
     users
+    people
     fields 
     entries 
     field_entries 
