@@ -63,7 +63,6 @@ class User(Base, CustomBase):
     last_name
     gender
     orientation
-    birthday
     timezone
     bio
     """
@@ -100,7 +99,9 @@ class User(Base, CustomBase):
         }
 
     def profile_json(self):
-        return {k: getattr(self, k) for k in self.profile_fields.split()}
+        obj = {k: getattr(self, k) for k in self.profile_fields.split()}
+        obj['birthday'] = self.birthday.strftime('%Y-%m-%d') if self.birthday else None
+        return obj
 
     def profile_to_text(self):
         txt = ''

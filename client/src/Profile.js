@@ -23,6 +23,7 @@ export default function Profile({fetch_, as}) {
     timezone:null,
     bio: ''
   })
+  const [dirty, setDirty] = useState({dirty: false, saved: false})
 
   const fetchProfile = async () => {
     const {data} = await fetch_("profile")
@@ -40,6 +41,7 @@ export default function Profile({fetch_, as}) {
   }
 
   const changeProfile = (k, direct=false) => e => {
+    setDirty({dirty: true, saved: false})
     const v = direct ? e : e.target.value
     setProfile({...profile, [k]: v})
   }
@@ -48,6 +50,7 @@ export default function Profile({fetch_, as}) {
     e.preventDefault()
     profile.timezone = _.get(profile, 'timezone.value', profile.timezone)
     await fetch_('profile', 'PUT', profile)
+    setDirty({dirty: false, saved: true})
     fetchProfile()
   }
 
@@ -95,7 +98,12 @@ export default function Profile({fetch_, as}) {
           <Form.Text>As much information about yourself as you can provide. This will be used by machine learning and therapists.</Form.Text>
         </>})}
       </Form.Row>
-      <Button variant='primary' type='submit'>Save</Button>
+      <Button
+        disabled={!dirty.dirty}
+        variant='primary'
+        type='submit'
+      >Save</Button>&nbsp;
+      {dirty.saved && "Saved"}
     </Form>
   </div>
 }
