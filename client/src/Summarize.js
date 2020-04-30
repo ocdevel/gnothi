@@ -1,12 +1,11 @@
 import React, {useState} from 'react'
-import _ from 'lodash'
 import {Form, InputGroup, Button} from "react-bootstrap";
-import {spinner, trueKeys} from "./utils";
+import {spinner, trueKeys, sent2face} from "./utils";
 import Tags from "./Tags";
 
 export default function Summarize({fetch_, as}) {
   const [fetching, setFetching] = useState(false)
-  const [summary, setSummary] = useState('')
+  const [res, setRes] = useState({summary: '', sentiment: ''})
   const [form, setForm] = useState({days: 7, words: 30})
   const [notShared, setNotShared] = useState(false)
   const [tags, setTags] = useState({})
@@ -21,7 +20,7 @@ export default function Summarize({fetch_, as}) {
     const {data, code, message} = await fetch_('summarize', 'POST', form)
     setFetching(false)
     if (code === 401) {return setNotShared(message)}
-    setSummary(data.summary)
+    setRes(data)
   }
 
   const changeField = k => e => setForm({...form, [k]: e.target.value})
@@ -62,7 +61,7 @@ export default function Summarize({fetch_, as}) {
         noEdit={true}
       />
     </div>
-    {fetching ? spinner : <Button type="submit" variant="primary">Submit</Button>}
-    {summary && <p>{summary}</p>}
+    {fetching ? spinner : <Button type="submit" variant="primary" className='bottom-margin'>Submit</Button>}
+    {res && <p>{sent2face(res.sentiment)} {res.summary}</p>}
   </Form>
 }
