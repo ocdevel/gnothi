@@ -11,6 +11,9 @@ from jwtauthtest import ml
 import requests
 from dateutil.parser import parse as dparse
 
+import nltk
+nltk.download('punkt')
+
 
 def as_user():
     # return [as_user, is_snooping]
@@ -370,9 +373,18 @@ def run_themes():
         entries = entries.join(EntryTag, Tag).filter(Tag.id.in_(tags))
     entries = entries.order_by(Entry.created_at.asc())  # build a beginning-to-end story if using BERT
     entries = [e.text for e in entries.all()]
+
+    # For dreams, special handle: process every sentence. TODO make note in UI
+    if tags and len(tags) == 1:
+        tag_name = Tag.query.get(tags[0]).name
+        if re.match('dream(s|ing)?', tag_name, re.IGNORECASE):
+            entries = nltk.tokenize.sent_tokenize('. '.join(entries))
+
     if len(entries) < 10:
         return send_error("Not enough entries to work with, come back later")
     data = ml.themes(entries)
+    if len(data) == 0:
+        return send_error("No patterns found in your entries yet, come back later")
     return jsonify({'data': data})
 
 

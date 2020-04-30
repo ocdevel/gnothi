@@ -216,7 +216,7 @@ def themes(entries):
                 best = [s, tsne]
         tsne = best[1]
     else:
-        tsne = TSNE(n_components=3)
+        tsne = TSNE()
     vecs = tsne.fit_transform(vecs)
 
     clusterer = hdbscan.HDBSCAN()
