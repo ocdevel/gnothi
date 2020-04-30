@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from "react";
-import {Button, Col, Form, Table} from "react-bootstrap";
+import {Button, Col, Form, Modal, Table} from "react-bootstrap";
 
-function Person({fetch_, as, onSubmit=null, person=null}) {
+function Person({fetch_, as, close, person=null}) {
   const default_form = {name: '', relation: '', issues: '', bio: ''}
   const [form, setForm] = useState(person ? person : default_form)
 
@@ -12,13 +12,12 @@ function Person({fetch_, as, onSubmit=null, person=null}) {
 
   const submit = async (e) => {
     e.preventDefault()
-    e.stopPropagation()
     if (person) {
       await fetch_(`people/${person.id}`, 'PUT', form)
     } else {
       await fetch_('people', 'POST', form)
     }
-    onSubmit()
+    close()
   }
 
   const destroy = async () => {
@@ -26,7 +25,7 @@ function Person({fetch_, as, onSubmit=null, person=null}) {
     if (window.confirm("Delete person, are you sure?")) {
       await fetch_(`people/${person.id}`, 'DELETE')
     }
-    onSubmit()
+    close()
   }
 
   const textField = ({k, v, attrs, children}) => (
@@ -47,26 +46,37 @@ function Person({fetch_, as, onSubmit=null, person=null}) {
   const req = {attrs: {required: true}}
 
   return <>
-    <Form onSubmit={submit} className='bottom-margin'>
-      <Form.Row>
-        {textField({k: 'name', v: 'Name', ...req})}
-        {textField({k: 'relation', v: 'Relation', ...req})}
-        {/*textField({k: 'issues', v: 'Issues'})*/}
-      </Form.Row>
-      <Form.Row>
-        {textField({k: 'bio', v: 'Bio', attrs: {as: 'textarea', cols: 3}})}
-      </Form.Row>
-      <Button
-        variant={person ? "primary" : "success"}
-        type="submit"
-      >
-        {person ? "Save": "Add"}
-      </Button>&nbsp;
-      {person && <>
-        <Button size='sm' variant='secondary' onClick={onSubmit}>Cancel</Button>&nbsp;
-        <Button size='sm' variant='danger' onClick={destroy}>Delete</Button>
-      </>}
-    </Form>
+    <Modal size="lg" show={true} onHide={close}>
+      <Modal.Header>
+        <Modal.Title>{person ? "Edit Person" : "New Person"}</Modal.Title>
+      </Modal.Header>
+
+      <Modal.Body>
+        <Form className='bottom-margin'>
+          <Form.Row>
+            {textField({k: 'name', v: 'Name', ...req})}
+            {textField({k: 'relation', v: 'Relation', ...req})}
+            {/*textField({k: 'issues', v: 'Issues'})*/}
+          </Form.Row>
+          <Form.Row>
+            {textField({k: 'bio', v: 'Bio', attrs: {as: 'textarea', rows: 6}})}
+          </Form.Row>
+        </Form>
+      </Modal.Body>
+      <Modal.Footer>
+        <Button
+          onClick={submit}
+          variant={person ? "primary" : "success"}
+          type="submit"
+        >
+          {person ? "Save": "Add"}
+        </Button>&nbsp;
+        {person && <>
+          <Button size='sm' variant='secondary' onClick={close}>Cancel</Button>&nbsp;
+          <Button size='sm' variant='danger' onClick={destroy}>Delete</Button>
+        </>}
+      </Modal.Footer>
+    </Modal>
   </>
 }
 
@@ -84,19 +94,23 @@ export default function People({fetch_, as}) {
 
   const choosePerson = p => setPerson(p)
 
-  const onSubmit = () => {
+  const onClose = () => {
     setPerson(null)
     fetchPeople()
   }
 
   return <>
-    <Person
-      key={person ? person.id : +new Date}
+    {person && <Person
       fetch_={fetch_}
       as={as}
-      onSubmit={onSubmit}
-      person={person}
-    />
+      close={onClose}
+      person={person === true ? null : person}
+    />}
+    <Button
+      variant="success"
+      className='bottom-margin'
+      onClick={() => choosePerson(true)}
+    >Add Person</Button>
     <Table>
       <thead>
         <tr>
