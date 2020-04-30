@@ -1,3 +1,4 @@
+import datetime
 from flask_jwt import JWT
 from jwtauthtest import app
 from jwtauthtest.models import User
@@ -17,5 +18,10 @@ def identity(payload):
 
 
 app.config['SECRET_KEY'] = environ.get('JWT_SECRET_KEY')
-app.config['JWT_LEEWAY'] = 30000  # FIXME figure this out
+
+# - https://github.com/jpadilla/django-jwt-auth/blob/master/README.md#additional-settings
+# - https://pythonhosted.org/Flask-JWT/#configuration-options
+# app.config['JWT_LEEWAY'] = 30000  # what's difference w JWT_EXPIRATION_DELTA?
+app.config['JWT_EXPIRATION_DELTA'] = datetime.timedelta(seconds=60 * 60 * 24 * 7)  # 1 week
+
 jwt = JWT(app, authenticate, identity)
