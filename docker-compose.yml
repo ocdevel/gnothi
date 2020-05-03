@@ -7,7 +7,6 @@ services:
     environment:
       ENVIRONMENT: production
       FLASK_ENV: production
-      JWT_SECRET_KEY: my jwt secret key
       FLASK_APP: jwtauthtest
     ports:
       - 5001:5000
@@ -23,7 +22,6 @@ services:
     environment:
       ENVIRONMENT: development
       FLASK_ENV: development
-      JWT_SECRET_KEY: my jwt secret key
       FLASK_APP: jwtauthtest
     ports:
       - 5002:5000

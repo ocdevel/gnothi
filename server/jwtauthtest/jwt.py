@@ -2,8 +2,8 @@ import datetime
 from flask_jwt import JWT
 from jwtauthtest import app
 from jwtauthtest.models import User
+from jwtauthtest.utils import vars
 from passlib.hash import pbkdf2_sha256
-from os import environ
 
 
 def authenticate(username, password):
@@ -17,7 +17,7 @@ def identity(payload):
     return User.query.get(user_id)
 
 
-app.config['SECRET_KEY'] = environ.get('JWT_SECRET_KEY')
+app.config['JWT_SECRET_KEY'] = vars.FLASK_KEY
 
 # - https://github.com/jpadilla/django-jwt-auth/blob/master/README.md#additional-settings
 # - https://pythonhosted.org/Flask-JWT/#configuration-options

@@ -400,6 +400,8 @@ def get_books():
     if tags:
         entries = entries.join(EntryTag, Tag).filter(Tag.id.in_(tags))
     entries = [e.text for e in entries.all()]
+    if (not snooping) or user.share_data.profile:
+        entries = [user.profile_to_text()] + entries
     books = ml.resources(entries, logger=app.logger)
     return jsonify({'data': books})
 
