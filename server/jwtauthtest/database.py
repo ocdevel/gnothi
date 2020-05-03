@@ -4,7 +4,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import scoped_session, sessionmaker
 from jwtauthtest.utils import vars, DROP_SQL
 
-print(vars.DB_URL)
+#print(vars.DB_URL)
 engine = create_engine(
     vars.DB_URL,
     convert_unicode=True,

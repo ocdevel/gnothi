@@ -8,6 +8,14 @@ app.secret_key = vars.FLASK_KEY
 CORS(app)
 
 
+# Remove sessions since we're using JWT. See https://flask-login.readthedocs.io/en/latest/#disabling-session-cookie-for-apis
+from flask.sessions import SecureCookieSessionInterface
+class CustomSessionInterface(SecureCookieSessionInterface):
+    """Prevent creating session from API requests."""
+    def save_session(self, *args, **kwargs): return
+app.session_interface = CustomSessionInterface()
+
+
 @app.teardown_appcontext
 def shutdown_session(exception=None):
     shutdown_db_session()
