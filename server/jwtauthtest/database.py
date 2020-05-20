@@ -32,7 +32,8 @@ Base.query = db_session.query_property()
 def init_db():
     import jwtauthtest.models
     Base.metadata.create_all(bind=engine)
-
+    # since connections are lazy, kick it off
+    engine.execute('select 1')
 
 def shutdown_db_session():
     db_session.remove()

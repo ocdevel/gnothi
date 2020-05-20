@@ -52,6 +52,8 @@ if __name__ == '__main__':
     qa_args = dict(
         tokenizer=AutoTokenizer.from_pretrained("twmkn9/albert-base-v2-squad2"),
         model=AutoModelForQuestionAnswering.from_pretrained("twmkn9/albert-base-v2-squad2"),
+        # tokenizer="albert-large-v2",
+        # model="albert-large-v2",
         # tokenizer=AutoTokenizer.from_pretrained("ktrapeznikov/albert-xlarge-v2-squad-v2"),
         # model=AutoModelForQuestionAnswering.from_pretrained("ktrapeznikov/albert-xlarge-v2-squad-v2")
     )

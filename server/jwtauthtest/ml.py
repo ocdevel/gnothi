@@ -49,6 +49,7 @@ def influencers(engine, user_id, specific_target=None, logger=None):
         select id, target, default_value, default_value_value
         from fields
         where user_id=%(user_id)s
+            and f.excluded_at is null
         """, conn, params={'user_id': user_id})
         fs['id'] = fs.id.apply(str)
 
@@ -216,10 +217,10 @@ def themes(entries):
                 best = [s, tsne]
         tsne = best[1]
     else:
-        tsne = TSNE()
+        tsne = TSNE(perplexity=5, n_jobs=-1)
     vecs = tsne.fit_transform(vecs)
 
-    clusterer = hdbscan.HDBSCAN()
+    clusterer = hdbscan.HDBSCAN(min_cluster_size=5)
     clusterer.fit(vecs)
     labels = np.unique(clusterer.labels_)
     print('n_labels', len(labels))
@@ -392,6 +393,8 @@ def resources(entries, logger=None):
 
             if FIND_PROBLEMS:
                 # # Those MD5s: UnicodeDecodeError: 'charmap' codec can't decode byte 0x9d in position 636: character maps to <undefined>
+                # TODO try instead create_engine(convert_unicode=True)
+
                 ids = ' '.join([sql.just_ids, sql.body])
                 ids = [x.ID for x in conn.execute(ids).fetchall()]
                 problem_ids = []
