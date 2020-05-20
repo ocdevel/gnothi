@@ -101,19 +101,12 @@ function App() {
       "🕵️" + _.find(user.shared_with_me, {id: as}).username
     return (
       <Navbar bg="dark" variant="dark">
-        <Navbar.Brand href="/">Gnothi</Navbar.Brand>
+        <LinkContainer to="/">
+          <Navbar.Brand>Gnothi</Navbar.Brand>
+        </LinkContainer>
         <Navbar.Toggle aria-controls="responsive-navbar-nav" />
         <Navbar.Collapse id="responsive-navbar-nav">
           <Nav className="mr-auto">
-            <LinkContainer exact to="/j">
-              <Nav.Link>Journal</Nav.Link>
-            </LinkContainer>
-            <LinkContainer exact to="/themes">
-              <Nav.Link>Themes</Nav.Link>
-            </LinkContainer>
-            <LinkContainer exact to="/books">
-              <Nav.Link>Books</Nav.Link>
-            </LinkContainer>
           </Nav>
           <Nav>
             <NavDropdown title={username} id="basic-nav-dropdown">
@@ -148,18 +141,11 @@ function App() {
   return (
     <Router>
       {renderNav()}
-      <br/>
       <Container fluid key={as}>
         <Error message={serverError} />
         <Switch>
           <Route path="/j">
             <Journal fetch_={fetch_} as={as} setServerError={setServerError}/>
-          </Route>
-          <Route path="/themes">
-            <Themes fetch_={fetch_} as={as} />
-          </Route>
-          <Route path="/books">
-            <Books fetch_={fetch_} as={as} />
           </Route>
           <Route path="/profile">
             <ProfileRoutes fetch_={fetch_} as={as} />

@@ -1,20 +1,16 @@
 import {useHistory, useParams} from "react-router-dom"
 import React, {useEffect, useState} from "react"
-import {spinner} from "./utils"
+import {spinner, SimplePopover} from "./utils"
 import {
-  Accordion,
   Button,
-  Card,
   Col,
   Form,
   Row,
-  Alert,
-  Table
 } from "react-bootstrap"
 import ReactMarkdown from "react-markdown"
-import ReactStars from "react-stars"
 import './Entry.css'
-import Tags from "./Tags";
+import {FaTags, FaPen} from "react-icons/fa"
+import Tags from "./Tags"
 
 
 export default function Entry({fetch_, as, setServerError}) {
@@ -121,7 +117,10 @@ export default function Entry({fetch_, as, setServerError}) {
         />
       </Form.Group>}
 
-      Journals&nbsp;
+      <SimplePopover text='Tags'>
+        <FaTags />
+      </SimplePopover>
+      <span className='tools-divider' />
       <Tags
         fetch_={fetch_}
         as={as}
@@ -142,7 +141,9 @@ export default function Entry({fetch_, as, setServerError}) {
             <Button
               variant='outline-primary'
               onClick={changeOnlyPreview}
-            >✏ Edit</Button>
+            >
+              <FaPen /> Edit
+            </Button>
           </> : <>
             <Button
               variant="primary"

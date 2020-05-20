@@ -1,13 +1,11 @@
 import React, {useEffect, useState} from "react";
 import {spinner, trueKeys} from "./utils";
 import {Button, Table} from "react-bootstrap";
-import Tags from "./Tags";
 
-export default function Books({fetch_, as}) {
+export default function Books({fetch_, as, tags}) {
   const [books, setBooks] = useState([])
   const [fetching, setFetching] = useState(false)
   const [notShared, setNotShared] = useState(false)
-  const [tags, setTags] = useState({})
 
   const fetchBooks = async () => {
     setFetching(true)
@@ -23,15 +21,6 @@ export default function Books({fetch_, as}) {
   if (notShared) {return <h5>{notShared}</h5>}
 
   return <>
-    <div className='bottom-margin'>
-      <Tags
-        fetch_={fetch_}
-        as={as}
-        selected={tags}
-        setSelected={setTags}
-        noEdit={true}
-      />
-    </div>
     {fetching ? (
       <>
         {spinner}

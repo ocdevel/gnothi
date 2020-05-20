@@ -2,13 +2,11 @@ import React, {useEffect, useState} from "react";
 import {sent2face, spinner, trueKeys} from "./utils";
 import {Button, Card, Form} from "react-bootstrap";
 import _ from "lodash";
-import Tags from "./Tags";
 
-export default function Themes({fetch_, as}) {
+export default function Themes({fetch_, as, tags}) {
   const [topics, setTopics] = useState({})
   const [fetching, setFetching] = useState(false)
   const [notShared, setNotShared] = useState(false)
-  const [tags, setTags] = useState({})
 
   const fetchTopics = async () => {
     setFetching(true)
@@ -24,16 +22,6 @@ export default function Themes({fetch_, as}) {
   if (notShared) {return <h5>{notShared}</h5>}
 
   return <>
-    <div className='bottom-margin'>
-      <Tags
-        fetch_={fetch_}
-        as={as}
-        selected={tags}
-        setSelected={setTags}
-        noEdit={true}
-      />
-    </div>
-
     {fetching ? spinner : (
       <Button
         className='bottom-margin'

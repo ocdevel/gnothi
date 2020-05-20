@@ -1,28 +1,32 @@
 import React, {useEffect, useState} from "react"
 import {useHistory, useRouteMatch} from "react-router-dom"
 import _ from 'lodash'
-import {sent2face} from "./utils"
+import {sent2face, SimplePopover} from "./utils"
 import {
   Button,
-  Popover,
-  OverlayTrigger,
   Form
 } from "react-bootstrap"
 import moment from "moment"
-import Tags from "./Tags";
-
-const summaryTip = (
-  <Popover>
-    <Popover.Content>
-      Summary is machine-generated from your entry's text
-    </Popover.Content>
-  </Popover>
-)
+import Tags from "./Tags"
+import Summarize from "./Summarize"
+import Books from "./Books"
+import Themes from "./Themes"
+import Query from "./Query"
+import {
+  FaSearch,
+  FaTags,
+  FaToolbox,
+  FaRobot,
+  FaQuestion,
+  FaCubes,
+  FaBook,
+  FaRegNewspaper
+} from 'react-icons/fa'
 
 export default function Entries({fetch_, as}) {
   const [entries, setEntries] = useState([])
   const [notShared, setNotShared] = useState(false)
-  const [showSearch, setShowSearch] = useState(false)
+  const [tool, setTool] = useState()
   let [search, setSearch] = useState('')
   let [tags, setTags] = useState({})
 
@@ -50,7 +54,10 @@ export default function Entries({fetch_, as}) {
     history.push(p)
   }
 
-  const toggleSearch = () => setShowSearch(!showSearch)
+  const toggleTool = t => {
+    setTool(tool === t ? null : t)
+    setSearch('')
+  }
   const changeSearch = e => setSearch(e.target.value)
 
   const filtered = _(entries)
@@ -75,14 +82,101 @@ export default function Entries({fetch_, as}) {
           <p>
             {sentiment}
             {e.text_summary === e.text ? textSummary : (
-              <OverlayTrigger overlay={summaryTip} trigger={["hover","focus"]}>
+              <SimplePopover text="Summary is machine-generated from your entry's text">
                 {textSummary}
-              </OverlayTrigger>
+              </SimplePopover>
             )}
           </p>
         </td>
       </tr>
     )
+  }
+
+  const renderTool = t => {
+    const popover = {
+      search: "Search entries",
+      query: "Ask a question about entries",
+      summarize: "Generate summaries of entries",
+      themes: "Common themes across entries",
+      books: "Self-help book recommendations based on entries"
+    }[t]
+    return (
+      <SimplePopover text={popover}>
+        <Button
+          size='sm'
+          variant={t === tool ? 'dark' : 'outline-dark'}
+          onClick={() => toggleTool(t)}
+        >
+          {{
+            search: <FaSearch />,
+            query: <FaQuestion />,
+            summarize: <FaRegNewspaper />,
+            themes: <FaCubes />,
+            books: <FaBook />
+          }[t]}
+        </Button>
+      </SimplePopover>
+    )
+  }
+
+  const renderTools = () => {
+    return <>
+      <div>
+        <SimplePopover text="Tags">
+          <FaTags />
+        </SimplePopover>
+        <span className='tools-divider' />
+        <Tags
+          as={as}
+          fetch_={fetch_}
+          server={false}
+          selected={tags}
+          setSelected={setTags}
+        />{' '}
+      </div>
+      <div style={{marginTop:5}}>
+        <SimplePopover text="AI Tools">
+          <FaRobot />
+        </SimplePopover>
+        <span className='tools-divider' />
+        {renderTool('search')}{' '}
+        {renderTool('query')}{' '}
+        {renderTool('summarize')}{' '}
+        {renderTool('themes')}{' '}
+        {renderTool('books')}
+        {tool === 'search' && <Form.Control
+          style={{marginTop:5}}
+          inline
+          type="text"
+          value={search}
+          onChange={changeSearch}
+          placeholder="Search"
+        />}
+      </div>
+    </>
+  }
+
+  const renderMain = () => {
+    if (!tool || tool === 'search') {
+      return filtered.map(renderEntry)
+    }
+    const desc = {
+      query: `Ask a question about your entries (eg "how do I feel about _?"). Use proper English/grammar, it makes a difference.`,
+      themes: `Show common recurring themes across your entries. Select tags above to limit entries.`,
+      summarize: `Summarize your entries for an overview. Select tags above to limit entries.`,
+      books: `Generate a list of recommended self-help books which might help you, based on your entries. Select tags above to limit entries.`,
+    }[tool]
+    const args = {fetch_, as, tags}
+    const comp = {
+      query: <Query {...args} />,
+      themes: <Themes {...args} />,
+      summarize: <Summarize {...args} />,
+      books: <Books {...args} />
+    }[tool]
+    return <>
+      <p>{desc}</p>
+      {comp}
+    </>
   }
 
   return (
@@ -94,18 +188,9 @@ export default function Entries({fetch_, as}) {
         onClick={() => gotoForm()}
       >New Entry</Button>}
 
-      Journals&nbsp;
-      <Tags as={as} fetch_={fetch_} server={false} selected={tags} setSelected={setTags} />
-      {' '}<Button size='sm' variant='light' onClick={toggleSearch}>🔎</Button>
-      {showSearch && <Form.Control
-        inline
-        type="text"
-        value={search}
-        onChange={changeSearch}
-        placeholder="Search"
-      />}
+      {renderTools()}
       <hr />
-      {filtered.map(renderEntry)}
+      {renderMain()}
     </div>
   )
 }

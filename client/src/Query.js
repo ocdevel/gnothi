@@ -27,7 +27,6 @@ export default function Query({fetch_}) {
         <Form.Control
           as="textarea"
           rows={3}
-          placeholder="Ask a question about yourself. Use proper grammar, it makes a difference."
           value={query}
           onChange={changeQuery}
         />

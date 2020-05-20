@@ -35,16 +35,6 @@ services:
     container_name: jclient
     ports:
       - 3001:3001
-    stdin_open: true
-    volumes:
-      - ./client:/client
-
-  client-dev:
-    build: client
-    command: yarn start
-    #    command: /bin/bash
-    container_name: jclient-dev
-    ports:
       - 3002:3002
     stdin_open: true
     volumes:

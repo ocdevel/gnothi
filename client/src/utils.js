@@ -8,13 +8,18 @@ const spinner = (
   </Spinner>
 )
 
-const sentimentTip = (
-  <Popover>
-    <Popover.Content>
-      Sentiment is machine-generated from your entry's text
-    </Popover.Content>
-  </Popover>
-);
+const SimplePopover = ({children, text}) => (
+  <OverlayTrigger
+    overlay={<Popover>
+      <Popover.Content>
+        {text}
+      </Popover.Content>
+    </Popover>}
+    trigger={['hover', 'focus']}
+  >
+    {children}
+  </OverlayTrigger>
+)
 
 const sent2face = (sentiment) => {
   if (!sentiment) {return null}
@@ -26,16 +31,12 @@ const sent2face = (sentiment) => {
   style.padding = 5
   style.marginRight = 5
   return (
-    <OverlayTrigger
-      trigger={["hover", "focus"]}
-      placement="right"
-      overlay={sentimentTip}
-    >
+    <SimplePopover text="Sentiment is machine-generated from your entry's text">
       <span style={style}>{{POSITIVE: '🙂', NEGATIVE: '🙁'}[sentiment]}</span>
-    </OverlayTrigger>
+    </SimplePopover>
   )
 }
 
 const trueKeys = o => _.transform(o, (m,v,k) => {if (v) {m.push(k)}}, [])
 
-export {spinner, sent2face, trueKeys}
+export {spinner, sent2face, trueKeys, SimplePopover}

@@ -1,6 +1,7 @@
-import {Button, Col, Form, Modal} from "react-bootstrap";
-import _ from "lodash";
-import React, {useEffect, useState} from "react";
+import {Button, Col, Form, Modal} from "react-bootstrap"
+import _ from "lodash"
+import React, {useEffect, useState} from "react"
+import { FaPen } from 'react-icons/fa'
 
 function TagForm({fetch_, onSubmit, tag=null}) {
   const [name, setName] = useState(tag ? tag.name : '')
@@ -58,7 +59,7 @@ function TagModal({fetch_, close, tags, fetchTags}) {
   return (
     <Modal show={true} onHide={close}>
       <Modal.Header>
-        <Modal.Title>Journals</Modal.Title>
+        <Modal.Title>Tags</Modal.Title>
       </Modal.Header>
 
       <Modal.Body>
@@ -116,7 +117,7 @@ export default function Tags({fetch_, as, selected=null, setSelected=null, noEdi
       <Button
         disabled={noClick}
         size="sm"
-        variant={selected_ ? 'dark' : 'light'}
+        variant={selected_ ? 'dark' : 'outline-dark'}
         onClick={() => selectTag(t.id, !selected_)}
       >{t.name}</Button>&nbsp;
     </>
@@ -139,6 +140,6 @@ export default function Tags({fetch_, as, selected=null, setSelected=null, noEdi
       size="sm"
       variant="light"
       onClick={showEditTags}
-    >✏</Button>}
+    ><FaPen /></Button>}
   </>
 }

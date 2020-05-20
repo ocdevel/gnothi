@@ -1,14 +1,12 @@
 import React, {useState} from 'react'
 import {Form, InputGroup, Button} from "react-bootstrap";
 import {spinner, trueKeys, sent2face} from "./utils";
-import Tags from "./Tags";
 
-export default function Summarize({fetch_, as}) {
+export default function Summarize({fetch_, as, tags}) {
   const [fetching, setFetching] = useState(false)
   const [res, setRes] = useState({summary: '', sentiment: ''})
   const [form, setForm] = useState({days: 7, words: 30})
   const [notShared, setNotShared] = useState(false)
-  const [tags, setTags] = useState({})
 
   if (notShared) {return <h5>{notShared}</h5>}
 
@@ -52,15 +50,6 @@ export default function Summarize({fetch_, as}) {
         </InputGroup.Append>
       </InputGroup>
     </Form.Group>
-    <div className='bottom-margin'>
-      <Tags
-        fetch_={fetch_}
-        as={as}
-        selected={tags}
-        setSelected={setTags}
-        noEdit={true}
-      />
-    </div>
     {fetching ? spinner : <Button type="submit" variant="primary" className='bottom-margin'>Submit</Button>}
     {res && <p>{sent2face(res.sentiment)} {res.summary}</p>}
   </Form>

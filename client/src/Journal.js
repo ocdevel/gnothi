@@ -2,8 +2,6 @@ import {Link, Route, Switch, useRouteMatch} from "react-router-dom"
 import Entries from "./Entries"
 import Entry from "./Entry"
 import Fields from './Fields'
-import Query from './Query'
-import Summarize from './Summarize'
 import React from "react"
 import {Col, Row} from 'react-bootstrap'
 
@@ -30,10 +28,6 @@ export default function Journal({fetch_, as, setServerError}) {
         </Col>
         <Col lg={4}>
           <Fields fetch_={fetch_} as={as} />
-          <hr />
-          <Summarize fetch_={fetch_} as={as} />
-          <hr />
-          <Query fetch_={fetch_} as={as} />
         </Col>
       </Row>
     </div>
