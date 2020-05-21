@@ -128,6 +128,7 @@ export default function Entry({fetch_, as, setServerError}) {
         setSelected={setTags}
         noClick={onlyPreview}
         noEdit={onlyPreview}
+        preSelectMain={true}
       />
 
       <hr/>

@@ -82,21 +82,29 @@ function TagModal({fetch_, close, tags, fetchTags}) {
 }
 
 
-export default function Tags({fetch_, as, selected=null, setSelected=null, noEdit=false, noClick=false}) {
+export default function Tags({
+  fetch_,
+  as,
+  selected=null,
+  setSelected=null,
+  noEdit=false,
+  noClick=false,
+  preSelectMain=false
+}) {
   const [tags, setTags] = useState([])
   const [editTags, setEditTags] = useState(false)
 
   const fetchTags = async () => {
     const {data, code, message} = await fetch_('tags', 'GET')
-
-    let main = _.find(data, t=>t.main)
-    if (!main) {
-      data[0].main = true
-      main = data[0]
-    }
-
     setTags(data)
-    selectTag(main.id, true)
+    if (preSelectMain) {
+      let main = _.find(data, t=>t.main)
+      if (!main) {
+        data[0].main = true
+        main = data[0]
+      }
+      selectTag(main.id, true)
+    }
   }
 
   useEffect(() => {fetchTags()}, [])
