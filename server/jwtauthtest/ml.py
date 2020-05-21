@@ -49,7 +49,7 @@ def influencers(engine, user_id, specific_target=None, logger=None):
         select id, target, default_value, default_value_value
         from fields
         where user_id=%(user_id)s
-            and f.excluded_at is null
+            and excluded_at is null
         """, conn, params={'user_id': user_id})
         fs['id'] = fs.id.apply(str)
 
