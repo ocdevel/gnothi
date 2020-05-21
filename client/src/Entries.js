@@ -4,6 +4,7 @@ import _ from 'lodash'
 import {sent2face, SimplePopover} from "./utils"
 import {
   Button,
+  ButtonGroup,
   Form
 } from "react-bootstrap"
 import moment from "moment"
@@ -27,6 +28,8 @@ export default function Entries({fetch_, as}) {
   const [entries, setEntries] = useState([])
   const [notShared, setNotShared] = useState(false)
   const [tool, setTool] = useState()
+  const [garble, setGarble] = useState(false)
+  const [page, setPage] = useState(0)
   let [search, setSearch] = useState('')
   let [tags, setTags] = useState({})
 
@@ -60,15 +63,19 @@ export default function Entries({fetch_, as}) {
   }
   const changeSearch = e => setSearch(e.target.value)
 
-  const filtered = _(entries)
-    .filter(e => _.reduce(tags, (m, v, k) => e.entry_tags[k] && m, true))
-    .filter(e => !search.length || ~(e.title + e.text).toLowerCase().indexOf(search))
-    .value()
+  const setTags_ = (tags_) => {
+    setTags(tags_)
+    setPage(0)
+  }
 
   const renderEntry = e => {
     const gotoForm_ = () => gotoForm(e.id)
     const sentiment = sent2face(e.sentiment)
-    const textSummary = <span>{e.text_summary}</span>
+    const title = garble ? "pretium fusce id velit ut tortor pretium viverra suspendisse potenti"
+        : (e.title || e.title_summary);
+    let summary = garble ? "scelerisque eu ultrices vitae auctor eu augue ut lectus arcu bibendum at varius vel pharetra vel turpis nunc eget lorem dolor sed viverra ipsum nunc aliquet bibendum enim facilisis gravida neque convallis a cras semper auctor neque vitae tempus quam pellentesque nec nam aliquam sem et tortor consequat id porta nibh venenatis cras sed felis eget velit aliquet sagittis id consectetur purus ut faucibus"
+        : e.text_summary;
+    summary = <span>{summary}</span>
     return (
       <tr key={e.id}>
         <td>
@@ -77,13 +84,13 @@ export default function Entries({fetch_, as}) {
             className='cursor-pointer'
           >
             <h5>{moment(e.created_at).format('MM/DD/YYYY ha')}</h5>
-            <h6>{e.title || e.title_summary}</h6>
+            <h6>{title}</h6>
           </div>
           <p>
             {sentiment}
-            {e.text_summary === e.text ? textSummary : (
+            {e.text_summary === e.text ? summary : (
               <SimplePopover text="Summary is machine-generated from your entry's text">
-                {textSummary}
+                {summary}
               </SimplePopover>
             )}
           </p>
@@ -131,7 +138,7 @@ export default function Entries({fetch_, as}) {
           fetch_={fetch_}
           server={false}
           selected={tags}
-          setSelected={setTags}
+          setSelected={setTags_}
         />{' '}
       </div>
       <div style={{marginTop:5}}>
@@ -156,9 +163,44 @@ export default function Entries({fetch_, as}) {
     </>
   }
 
+  const renderEntries = () => {
+    let filtered = _(entries)
+      .filter(e => _.reduce(tags, (m, v, k) => e.entry_tags[k] && m, true))
+      .filter(e => !search.length || ~(e.title + e.text).toLowerCase().indexOf(search))
+      .value()
+
+    const pageSize = 7
+    const usePaging = !search.length && filtered.length > pageSize
+    const filteredPage = !usePaging ? filtered :
+        filtered.slice(page*pageSize, page*pageSize + pageSize)
+    return <>
+      {filteredPage.map(renderEntry)}
+      {usePaging && (
+        <ButtonGroup aria-label="Page">
+          {_.times(_.ceil(filtered.length / pageSize), p => (
+            <Button
+              variant={p === page ? 'dark' : 'outline-dark'}
+              onClick={() => setPage(p)}
+            >{p}</Button>
+          ))}
+        </ButtonGroup>
+      )}
+      <hr />
+      <Form.Group controlId="garble">
+        <Form.Check
+          type="checkbox"
+          label="Garble Entries"
+          checked={garble}
+          onChange={() => setGarble(!garble)}
+        />
+        <Form.Text>You're showing someone this app, but don't want them to see the entries.</Form.Text>
+      </Form.Group>
+    </>
+  }
+
   const renderMain = () => {
     if (!tool || tool === 'search') {
-      return filtered.map(renderEntry)
+      return renderEntries()
     }
     const desc = {
       query: `Ask a question about your entries (eg "how do I feel about _?"). Use proper English/grammar, it makes a difference.`,
@@ -190,7 +232,9 @@ export default function Entries({fetch_, as}) {
 
       {renderTools()}
       <hr />
-      {renderMain()}
+      <div>
+        {renderMain()}
+      </div>
     </div>
   )
 }
