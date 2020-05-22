@@ -83,14 +83,13 @@ def influencers(engine, user_id, specific_target=None, logger=None):
     # TODO not sure which window fn to use: rolling|expanding|ewm?
     # https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.rolling.html
     # http://people.duke.edu/~ccc14/bios-823-2018/S18A_Time_Series_Manipulation_Smoothing.html#Window-functions
-    def roll(df_):
-        span = 5
-        return df_.rolling(span, min_periods=1).mean()
+    span = 3
+    fes = fes.rolling(span, min_periods=1).mean()
 
     # hyper-opt (TODO cache params)
     from jwtauthtest.xgb_hyperopt import run_opt
     t = specific_target or target_ids[0]
-    X_opt = roll(fes.drop(columns=[t]))
+    X_opt = fes.drop(columns=[t])
     y_opt = fes[t]
     hypers, _ = run_opt(X_opt, y_opt)
     print(hypers)
@@ -101,7 +100,7 @@ def influencers(engine, user_id, specific_target=None, logger=None):
     for c in cols:
         # we keep target column. Yes, likely most predictive; but a rolling
         # trend is important info
-        X = roll(fes)
+        X = fes
         y = X[c]
         model = XGBRegressor(**hypers)
         model.fit(X, y)
@@ -115,7 +114,7 @@ def influencers(engine, user_id, specific_target=None, logger=None):
     for t in target_ids:
         if specific_target and specific_target != t:
             continue
-        X = roll(fes.drop(columns=[t]))
+        X = fes.drop(columns=[t])
         y = fes[t]
         model = XGBRegressor(**hypers)
         model.fit(X, y)
@@ -249,7 +248,7 @@ def themes(entries):
         terms = [x[0] for x in words_freq[:top_terms]]
 
         print(terms)
-        summary = summarize(entries_in_cluster, min_length=100, max_length=200)
+        summary = summarize(entries_in_cluster)
         sent = sentiment(summary)
         topics[str(l)] = {'terms': terms, 'sentiment': sent, 'summary': summary}
         print('\n\n\n')
@@ -311,12 +310,14 @@ def run_gpu_model(data):
     return run_cpu_model(data)
 
 
-def summarize(text, min_length=5, max_length=20):
-    if len(text) <= min_length:
+def summarize(text, min_length=None, max_length=None):
+    if len(text) <= (min_length or 5):
         return text
 
     args = [text]
-    kwargs = dict(min_length=min_length, max_length=max_length)
+    kwargs = {}
+    if min_length: kwargs['min_length'] = min_length
+    if max_length: kwargs['max_length'] = max_length
     res = run_gpu_model(dict(method='summarization', args=args, kwargs=kwargs))
     return res[0]['summary_text']
 
