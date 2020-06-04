@@ -368,6 +368,12 @@ def resources(entries, logger=None):
         logger.info("Fetching books")
 
         with book_engine.connect() as conn:
+            # for-sure psych. See tmp/topics.txt, or libgen.sql topics(lang='en')
+            psych_topics = 'psychology|self-help|therapy'
+            # good other psych topics, either mis-categorized or other
+            psych_topics += '|anthropology|social|religion'
+            psych_topics += '|^history|^education'
+
             sql = Box(
                 select="select u.Title, u.Author, d.descr, t.topic_descr",
                 body="""
@@ -382,7 +388,7 @@ def resources(entries, logger=None):
                 """,
 
                 # handle u.Topic='' (1326526 rows)
-                just_psych = "and t.topic_descr regexp 'psychology|self-help|therapy|anthropology'",
+                just_psych = f"and t.topic_descr regexp '{psych_topics}'",
 
                 # find_problems
                 just_ids="select distinct u.ID",
@@ -390,7 +396,7 @@ def resources(entries, logger=None):
             )
 
             FIND_PROBLEMS = False
-            ALL_BOOKS = True
+            ALL_BOOKS = False
 
             if FIND_PROBLEMS:
                 # # Those MD5s: UnicodeDecodeError: 'charmap' codec can't decode byte 0x9d in position 636: character maps to <undefined>

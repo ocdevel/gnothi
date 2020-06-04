@@ -34,7 +34,7 @@ services:
     command: serve -s build -l tcp://0.0.0.0:3001
     container_name: jclient
     ports:
-      - 3001:3001
+      - 80:3001
       - 3002:3002
     stdin_open: true
     volumes:

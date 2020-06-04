@@ -1,6 +1,7 @@
 import React, {useEffect, useState} from "react";
 import {spinner, trueKeys} from "./utils";
 import {Button, Table} from "react-bootstrap";
+import {FaTags, FaUser} from "react-icons/fa"
 
 export default function Books({fetch_, as, tags}) {
   const [books, setBooks] = useState([])
@@ -33,21 +34,15 @@ export default function Books({fetch_, as, tags}) {
         onClick={fetchBooks}
       >Show Books</Button>
     )}
-    <Table>
-      <thead>
-        <th>Author</th>
-        <th>Title</th>
-        <th>Description</th>
-        <th>Topic</th>
-      </thead>
-      <tbody>
-        {books.map(b => <tr>
-          <td>{b.author}</td>
-          <td>{b.title}</td>
-          <td>{b.text}</td>
-          <td>{b.topic}</td>
-        </tr>)}
-      </tbody>
-    </Table>
+    <div>
+      {books.map(b => <div>
+        <h5>{b.title}</h5>
+        <p>
+          <FaUser /> {b.author}<br/>
+          <FaTags /> {b.topic}</p>
+        <p>{b.text}</p>
+        <hr />
+      </div>)}
+    </div>
   </>
 }
