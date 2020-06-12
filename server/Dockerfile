@@ -42,6 +42,7 @@ RUN pip install \
   mysqlclient \
   scipy \
   lxml \
+  html5lib \
   langdetect \
   hyperopt \
   hdbscan

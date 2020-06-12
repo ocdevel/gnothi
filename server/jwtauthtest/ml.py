@@ -232,8 +232,9 @@ def themes(entries):
     topics = {}
     for l in labels:
         if l == -1: continue  # assuming means no cluster?
-        stripped_in_cluster = stripped.iloc[clusterer.labels_ == l].tolist()
-        entries_in_cluster = entries.iloc[clusterer.labels_ == l].tolist()
+        in_clust_idxs = clusterer.labels_ == l
+        stripped_in_cluster = stripped.iloc[in_clust_idxs].tolist()
+        entries_in_cluster = entries.iloc[in_clust_idxs].tolist()
         print('n_entries', len(entries_in_cluster))
         entries_in_cluster = '. '.join(entries_in_cluster)
 
@@ -250,7 +251,13 @@ def themes(entries):
         print(terms)
         summary = summarize(entries_in_cluster)
         sent = sentiment(summary)
-        topics[str(l)] = {'terms': terms, 'sentiment': sent, 'summary': summary}
+        topics[str(l)] = {
+            'terms': terms,
+            'sentiment': sent,
+            'summary': summary,
+            'entries': in_clust_idxs,
+            'n_entries': sum(in_clust_idxs)
+        }
         print('\n\n\n')
     return topics
 
@@ -375,7 +382,7 @@ def resources(entries, logger=None):
             psych_topics += '|^history|^education'
 
             sql = Box(
-                select="select u.Title, u.Author, d.descr, t.topic_descr",
+                select="select u.ID, u.Title, u.Author, d.descr, t.topic_descr",
                 body="""
                 from updated u
                     inner join description d on d.md5=u.MD5
@@ -427,7 +434,7 @@ def resources(entries, logger=None):
         logger.info("Removing HTML")
         broken = '(\?\?\?|\#\#\#)'  # russian / other FIXME better way to handle
         books = books[~(books.Title + books.descr).str.contains(broken)]
-        books['descr'] = books.descr.apply(lambda x: BeautifulSoup(x, "lxml").text)
+        books['descr'] = books.descr.apply(lambda x: BeautifulSoup(x, "html5lib").text)
         books['clean'] = books.Title + ' ' + books.descr
         # books = books[books.clean.apply(lambda x: detect(x) == 'en')]
         print('n_books after cleanup', books.shape[0])
@@ -451,23 +458,48 @@ def resources(entries, logger=None):
 
     user_fillers = ['' for _ in e_user]
     rows = pd.DataFrame({
+        'ID': user_fillers + books.ID.tolist(),
         'text': e_user + books.descr.tolist(),
         'title': user_fillers + books.Title.tolist(),
         'author': user_fillers + books.Author.tolist(),
         'topic': user_fillers + books.topic_descr.tolist()
     })
 
+    logger.info("Finding themes")
+    themes_ = themes(entries)
+    if len(themes_) < 1:
+        themes_ = {'0': {
+            'entries': [True for _ in e_user],
+            'n_entries': len(e_user)
+        }}
+
+    # since clustering may remove some entries, don't just use len(entries)
+    n_entries = sum(t['n_entries'] for _, t in themes_.items())
+
     logger.info("Finding similars")
+    recs = []
+    send_attrs = ['title', 'author', 'text', 'topic']
+    for _, theme in themes_.items():
+        rows_ = rows.iloc[len(e_user):].copy()
+        vecs_theme = np.array(vecs_user)[theme['entries']]
 
-    product = {}
-    for mine in range(len(entries)):
-        sims = scipy.spatial.distance.cdist([ vecs[mine] ], vecs, "cosine")[0]
-        product[str(mine)] = sims
-    rows['sim_prod'] = pd.DataFrame(product).product(axis=1).values
-    # remove already-reads (0 is equal-distance, and product of 0 is still 0)
-    # rows = rows[rows.sim_prod > 0.].copy()
-    rows = rows.iloc[len(e_user):].copy()
+        BY_CENTROID = True
+        if BY_CENTROID:
+            # Similar by distance to centroid
+            centroid = np.mean(vecs_theme, axis=0)
+            rows_['sims'] = scipy.spatial.distance.cdist([centroid], vecs_books, "cosine")[0]
+        else:
+            # Similar by product
+            sims = scipy.spatial.distance.cdist(vecs_theme, vecs_books, "cosine")
+            rows_['sims'] = np.prod(sims, axis=0)
 
-    # sort by similar, take k
-    recs = rows.sort_values(by='sim_prod').iloc[:30][['title', 'author', 'text', 'topic']]
-    return [x for x in recs.T.to_dict().values()]
+        # sort by similar, take k
+        k = math.ceil(theme['n_entries']/n_entries * 20)  # 20 total recs
+        k = max([k, 4])
+        recs_ = rows_.sort_values(by='sims').iloc[:k][['ID', 'sims', *send_attrs]]
+        recs.append(recs_)
+
+    recs = pd.concat(recs)
+    recs = recs.drop_duplicates('ID').sort_values(by='sims')[send_attrs]
+    recs = [x for x in recs.T.to_dict().values()]
+    return recs
