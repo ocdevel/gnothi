@@ -363,7 +363,7 @@ from sqlalchemy import create_engine, text
 book_engine = create_engine(vars.DB_BOOKS)
 
 
-def resources(entries, logger=None):
+def resources(entries, logger=None, metric="cosine", by_cluster=False, by_centroid=False, n_recs=40):
     e_user = entries_to_paras(entries)
 
     path_ = 'tmp/libgen.pkl'
@@ -454,7 +454,6 @@ def resources(entries, logger=None):
             pickle.dump([vecs_books, books], pkl)
 
     vecs_user = run_gpu_model(dict(method='sentence-encode', args=[e_user], kwargs={}))
-    vecs = vecs_user + vecs_books
 
     user_fillers = ['' for _ in e_user]
     rows = pd.DataFrame({
@@ -464,24 +463,42 @@ def resources(entries, logger=None):
         'author': user_fillers + books.Author.tolist(),
         'topic': user_fillers + books.topic_descr.tolist()
     })
+    if by_cluster:
+        themes_ = themes(entries)
+    else:
+        themes_ = {}
+    if len(themes_) < 1:
+        themes_ = {'0': {
+            'entries': [True for _ in e_user],
+            'n_entries': len(e_user)
+        }}
+    # since clustering may remove some entries, don't just use len(entries)
+    n_entries = sum(t['n_entries'] for _, t in themes_.items())
 
     logger.info("Finding similars")
     send_attrs = ['title', 'author', 'text', 'topic']
+    recs = []
 
-    books_ = rows.iloc[len(e_user):].copy()
-    entries_ = np.array(vecs_user)
+    for _, theme in themes_.items():
+        books_ = rows.iloc[len(e_user):].copy()
+        entries_ = np.array(vecs_user)[theme['entries']]
 
-    BY_CENTROID = True
-    if BY_CENTROID:
-        # Similar by distance to centroid
-        centroid = np.mean(entries_, axis=0)
-        books_['sims'] = scipy.spatial.distance.cdist([centroid], vecs_books, "cosine")[0]
-    else:
-        # Similar by product
-        sims = scipy.spatial.distance.cdist(entries_, vecs_books, "cosine")
-        books_['sims'] = np.prod(sims, axis=0)
+        if by_centroid:
+            # Similar by distance to centroid
+            centroid = np.mean(entries_, axis=0)
+            books_['sims'] = scipy.spatial.distance.cdist([centroid], vecs_books, metric)[0]
+        else:
+            # Similar by product
+            sims = scipy.spatial.distance.cdist(entries_, vecs_books, metric)
+            books_['sims'] = np.prod(sims, axis=0)
 
-    k=40
-    recs = books_.sort_values(by='sims').iloc[:k][send_attrs]
+        # sort by similar, take k
+        k = math.ceil(theme['n_entries'] / n_entries * n_recs)
+        k = max([k, 4])
+        recs_ = books_.sort_values(by='sims').iloc[:k][['ID', 'sims', *send_attrs]]
+        recs.append(recs_)
+
+    recs = pd.concat(recs)
+    recs = recs.drop_duplicates('ID').sort_values(by='sims')[send_attrs]
     recs = [x for x in recs.T.to_dict().values()]
     return recs

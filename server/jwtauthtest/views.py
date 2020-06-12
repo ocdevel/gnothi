@@ -402,7 +402,15 @@ def get_books():
     entries = [e.text for e in entries.all()]
     if (not snooping) or user.share_data.profile:
         entries = [user.profile_to_text()] + entries
-    books = ml.resources(entries, logger=app.logger)
+
+    opts = {
+        'metric': request.args.get('metric', 'cosine'),
+        'by_cluster': request.args.get('by_cluster', False),
+        'by_centroid': request.args.get('by_centroid', False),
+        'n_recs': request.args.get('n_recs', 40)
+    }
+
+    books = ml.resources(entries, logger=app.logger, **opts)
     return jsonify({'data': books})
 
 
