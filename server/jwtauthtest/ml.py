@@ -465,41 +465,23 @@ def resources(entries, logger=None):
         'topic': user_fillers + books.topic_descr.tolist()
     })
 
-    logger.info("Finding themes")
-    themes_ = themes(entries)
-    if len(themes_) < 1:
-        themes_ = {'0': {
-            'entries': [True for _ in e_user],
-            'n_entries': len(e_user)
-        }}
-
-    # since clustering may remove some entries, don't just use len(entries)
-    n_entries = sum(t['n_entries'] for _, t in themes_.items())
-
     logger.info("Finding similars")
-    recs = []
     send_attrs = ['title', 'author', 'text', 'topic']
-    for _, theme in themes_.items():
-        books_ = rows.iloc[len(e_user):].copy()
-        entries_ = np.array(vecs_user)[theme['entries']]
 
-        BY_CENTROID = True
-        if BY_CENTROID:
-            # Similar by distance to centroid
-            centroid = np.mean(entries_, axis=0)
-            books_['sims'] = scipy.spatial.distance.cdist([centroid], vecs_books, "cosine")[0]
-        else:
-            # Similar by product
-            sims = scipy.spatial.distance.cdist(entries_, vecs_books, "cosine")
-            books_['sims'] = np.prod(sims, axis=0)
+    books_ = rows.iloc[len(e_user):].copy()
+    entries_ = np.array(vecs_user)
 
-        # sort by similar, take k
-        k = math.ceil(theme['n_entries']/n_entries * 20)  # 20 total recs
-        k = max([k, 4])
-        recs_ = books_.sort_values(by='sims').iloc[:k][['ID', 'sims', *send_attrs]]
-        recs.append(recs_)
+    BY_CENTROID = True
+    if BY_CENTROID:
+        # Similar by distance to centroid
+        centroid = np.mean(entries_, axis=0)
+        books_['sims'] = scipy.spatial.distance.cdist([centroid], vecs_books, "cosine")[0]
+    else:
+        # Similar by product
+        sims = scipy.spatial.distance.cdist(entries_, vecs_books, "cosine")
+        books_['sims'] = np.prod(sims, axis=0)
 
-    recs = pd.concat(recs)
-    recs = recs.drop_duplicates('ID').sort_values(by='sims')[send_attrs]
+    k=40
+    recs = books_.sort_values(by='sims').iloc[:k][send_attrs]
     recs = [x for x in recs.T.to_dict().values()]
     return recs
