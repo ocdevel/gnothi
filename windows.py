@@ -25,7 +25,6 @@ if __name__ == '__main__':
 
     from sentence_transformers import SentenceTransformer
     sentence_encode = SentenceTransformer('roberta-base-nli-mean-tokens')
-    # sentence_encode = SentenceTransformer('roberta-base-nli-stsb-mean-tokens')
 
     def encode_pkl(path_):
         with open('server/' + path_, 'rb') as pkl:
@@ -37,48 +36,32 @@ if __name__ == '__main__':
 
     from transformers import pipeline, ModelCard
     from transformers import AutoTokenizer, AutoModelWithLMHead, AutoModelForQuestionAnswering
-    from transformers import LongformerTokenizer, LongformerForQuestionAnswering
-
 
     # models that have been fine-tuned on a sequence classification task
-    sent_pipe = pipeline("sentiment-analysis", model="google/electra-base-generator", tokenizer=("google/electra-base-generator", {'model_max_length': 1024}))
+    sent_args = dict(
+        
+    )
 
-    # Keeping Bart for now, max_length=1024 where T5=512. Switch to Longformer or LongBart when available
-    # https://github.com/huggingface/transformers/issues/4406
-    # TODO also not automatically using tokenizer max_length like it used to, getting srcIndex < srcSelectDimSize
-    # when using pipeline()
-    # https://github.com/huggingface/transformers/issues/4501
-    sum_model = AutoModelWithLMHead.from_pretrained("facebook/bart-large-cnn").to("cuda")
-    sum_tokenizer = AutoTokenizer.from_pretrained("facebook/bart-large-cnn")
-    def summarize(text, max_length=None, min_length=None):
-        inputs = sum_tokenizer.encode(text, max_length=1024, return_tensors="pt").to("cuda")
-        outputs = sum_model.generate(inputs, max_length=max_length, min_length=min_length)
-        return sum_tokenizer.decode(outputs)
+    sum_args = dict(
+        # tokenizer=AutoTokenizer.from_pretrained("google/electra-large-generator")
+        # model=AutoModelWithLMHead.from_pretrained("google/electra-large-generator")
+        # model="t5-base",
+        # tokenizer="t5-base"
+    )
 
-
-    qa_tokenizer = LongformerTokenizer.from_pretrained("allenai/longformer-large-4096-finetuned-triviaqa")
-    # qa_tokenizer = LongformerTokenizerFast.from_pretrained("allenai/longformer-large-4096-finetuned-triviaqa")
-    qa_model = LongformerForQuestionAnswering.from_pretrained("allenai/longformer-large-4096-finetuned-triviaqa").to("cuda")
-    # Revert to simple line, delete the rest when fixed: https://github.com/huggingface/transformers/issues/4934
-    # Error: CUDA out of memory. Tried to allocate 3.11 GiB (GPU 0; 11.00 GiB total capacity; 6.97 GiB already allocated; 2.71 GiB free; 7.03 GiB reserved in total by PyTorch)
-    # https://github.com/patrickvonplaten/notebooks/blob/master/How_to_evaluate_Longformer_on_TriviaQA_using_NLP.ipynb
-    def qa_longformer(question, context):
-        # TODO use trailing 4096 sequence, not leading
-        encoding = qa_tokenizer.encode_plus(question, context, return_tensors="pt", max_length=4096)
-        input_ids = encoding["input_ids"].to("cuda")
-        attention_mask = encoding["attention_mask"].to("cuda")
-        with torch.no_grad():
-            start_scores, end_scores = qa_model(input_ids=input_ids, attention_mask=attention_mask)
-        all_tokens = qa_tokenizer.convert_ids_to_tokens(encoding["input_ids"][0].tolist())
-        answer_tokens = all_tokens[torch.argmax(start_scores): torch.argmax(end_scores) + 1]
-        answer = qa_tokenizer.decode(qa_tokenizer.convert_tokens_to_ids(answer_tokens))[1:].replace('"', '')  # remove space prepending space token and remove unnecessary '"'
-        return {'answer': answer}
-
+    qa_args = dict(
+        tokenizer=AutoTokenizer.from_pretrained("twmkn9/albert-base-v2-squad2"),
+        model=AutoModelForQuestionAnswering.from_pretrained("twmkn9/albert-base-v2-squad2"),
+        # tokenizer="albert-large-v2",
+        # model="albert-large-v2",
+        # tokenizer=AutoTokenizer.from_pretrained("ktrapeznikov/albert-xlarge-v2-squad-v2"),
+        # model=AutoModelForQuestionAnswering.from_pretrained("ktrapeznikov/albert-xlarge-v2-squad-v2")
+    )
 
     m = Box({
-        'sentiment-analysis': sent_pipe,
-        'question-answering': qa_longformer,
-        'summarization': summarize,
+        'sentiment-analysis': pipeline("sentiment-analysis", device=0, **sent_args),
+        'question-answering': pipeline("question-answering", device=0, **qa_args),
+        'summarization': pipeline("summarization", device=0, **sum_args),
         'sentence-encode': sentence_encode.encode,
         'sentence-encode-pkl': encode_pkl,
     })
