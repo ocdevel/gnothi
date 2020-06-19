@@ -3,15 +3,15 @@
 if __name__ == '__main__':
     import time, psycopg2, pickle, pdb, threading, os, json
     from box import Box
-    import GPUtil
     import torch
     from sqlalchemy import create_engine
 
     def join_(paths):
         return os.path.join(os.path.dirname(__file__), *paths)
-    config_json = json.load(open(join_(['server', 'jwtauthtest', 'config.json'])))
+    config_json = json.load(open(join_(['config.json'])))
     engine = create_engine(
-        config_json['DB_JOBS'].replace('host.docker.internal', 'localhost'),
+        # config_json['DB_JOBS'].replace('host.docker.internal', 'localhost'),
+        config_json['DB_JOBS'],
         pool_size=20,
         # pool_timeout=2,
         # pool_recycle=2

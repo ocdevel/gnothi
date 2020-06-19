@@ -1,11 +1,9 @@
 FROM python
-
-WORKDIR /app
+RUN apt-get update -y && apt-get install -y wget unzip
 
 # Install postgres-12 client
 # https://computingforgeeks.com/install-postgresql-11-on-ubuntu-18-04-ubuntu-16-04/
-RUN apt-get update &&\
-  apt-get install -y lsb-release &&\
+RUN apt-get install -y lsb-release &&\
   wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - &&\
   RELEASE=$(lsb_release -cs) &&\
   echo "deb http://apt.postgresql.org/pub/repos/apt/ ${RELEASE}"-pgdg main | tee  /etc/apt/sources.list.d/pgdg.list &&\
@@ -13,11 +11,8 @@ RUN apt-get update &&\
 
 # Install transformers & run some init tasks to download files
 RUN pip install spacy ftfy && python -m spacy download en
-RUN pip install transformers &&\
-  pip install torch==1.4.0+cpu torchvision==0.5.0+cpu -f https://download.pytorch.org/whl/torch_stable.html &&\
-  python -c "from transformers import pipeline;pipeline('summarization');pipeline('sentiment-analysis');pipeline('question-answering')"
-
-RUN apt-get install -y htop unzip wget
+RUN pip install torch==1.4.0+cpu torchvision==0.5.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
+RUN pip install transformers
 
 RUN pip install \
   flask \
@@ -46,6 +41,8 @@ RUN pip install \
   langdetect \
   hyperopt \
   hdbscan
+
+WORKDIR /app
 
 #scipy==1.3.2 because https://github.com/scipy/scipy/issues/11325
 
