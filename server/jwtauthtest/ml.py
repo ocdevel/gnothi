@@ -343,7 +343,10 @@ def query(question, entries):
     context = ' '.join([unmark(e) for e in entries])
     kwargs = dict(question=question, context=context)
     res = run_gpu_model(dict(method='question-answering', args=[], kwargs=kwargs))
-    return res['answer']
+    res = res['answer']
+    if len(res) > 128:
+        res = summarize(res, max_length=20)
+    return res
 
 
 """
