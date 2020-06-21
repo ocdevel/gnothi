@@ -382,7 +382,7 @@ def run_themes():
 
     if len(entries) < 10:
         return send_error("Not enough entries to work with, come back later")
-    data = ml.themes(entries)
+    data = ml.themes(entries, with_entries=False)
     if len(data) == 0:
         return send_error("No patterns found in your entries yet, come back later")
     return jsonify({'data': data})

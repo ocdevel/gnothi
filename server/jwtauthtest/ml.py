@@ -195,7 +195,7 @@ from sklearn.manifold import TSNE
 from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
 import hdbscan
 
-def themes(entries):
+def themes(entries, with_entries=True):
     entries = entries_to_paras(entries)
     vecs = run_gpu_model(dict(method='sentence-encode', args=[entries], kwargs={}))
 
@@ -251,13 +251,15 @@ def themes(entries):
         print(terms)
         summary = summarize(entries_in_cluster)
         sent = sentiment(summary)
-        topics[str(l)] = {
+        l = str(l)
+        topics[l] = {
             'terms': terms,
             'sentiment': sent,
-            'summary': summary,
-            'entries': in_clust_idxs,
-            'n_entries': sum(in_clust_idxs)
+            'summary': summary
         }
+        if with_entries:
+            topics[l]['entries'] = in_clust_idxs
+            topics[l]['n_entries'] = sum(in_clust_idxs)
         print('\n\n\n')
     return topics
 
