@@ -35,12 +35,17 @@ if __name__ == '__main__':
             pickle.dump(vecs, pkl)
         return {'ok': True}
 
-    from transformers import pipeline
-    # from transformers import AutoTokenizer, AutoModelWithLMHead, AutoModelForQuestionAnswering, AutoModelForSequenceClassification
-    from transformers import AutoTokenizer, AutoModelForSequenceClassification
+    # from transformers import pipeline
+    from transformers import AutoTokenizer, AutoModelWithLMHead#, AutoModelForQuestionAnswering, AutoModelForSequenceClassification
 
-    # models that have been fine-tuned on a sequence classification task
-    sent_pipe = pipeline("sentiment-analysis")
+    sent_tokenizer = AutoTokenizer.from_pretrained("mrm8488/t5-base-finetuned-emotion")
+    sent_model = AutoModelWithLMHead.from_pretrained("mrm8488/t5-base-finetuned-emotion").to("cuda")
+    def sentiment(text):
+        input_ids = sent_tokenizer.encode(text + '</s>', return_tensors='pt', max_length=512).to("cuda")
+        output = sent_model.generate(input_ids=input_ids, max_length=2)
+        dec = [sent_tokenizer.decode(ids) for ids in output]
+        label = dec[0]
+        return [{"label": label, "score": 1.}]
 
     # Keeping Bart for now, max_length=1024 where T5=512. Switch to Longformer or LongBart when available
     # https://github.com/huggingface/transformers/issues/4406
@@ -84,7 +89,7 @@ if __name__ == '__main__':
 
 
     m = Box({
-        'sentiment-analysis': sent_pipe,
+        'sentiment-analysis': sentiment,
         'question-answering': qa_longformer,
         'summarization': summarize,
         'sentence-encode': sentence_encode.encode,

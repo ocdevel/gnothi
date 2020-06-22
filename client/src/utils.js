@@ -24,15 +24,21 @@ const SimplePopover = ({children, text}) => (
 const sent2face = (sentiment) => {
   if (!sentiment) {return null}
   const style = {}
-  style.backgroundColor = {
-    POSITIVE: '#24cc8f',
-    NEGATIVE: '#ff6165',
-  }[sentiment]
+  style.backgroundColor = ~['joy', 'love', 'surprise'].indexOf(sentiment)
+    ? '#24cc8f' : '#ff6165'
   style.padding = 5
   style.marginRight = 5
+  const emoji = {
+    sadness: "😢",
+    joy: "😃",
+    love: "🥰",
+    anger: "😡",
+    fear: "😱",
+    surprise: "😯",
+  }[sentiment] || "⚠"
   return (
     <SimplePopover text="Sentiment is machine-generated from your entry's text">
-      <span style={style}>{{POSITIVE: '🙂', NEGATIVE: '🙁'}[sentiment]}</span>
+      <span style={style}>{emoji}</span>
     </SimplePopover>
   )
 }
