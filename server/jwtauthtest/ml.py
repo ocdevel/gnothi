@@ -344,6 +344,7 @@ def query(question, entries):
     kwargs = dict(question=question, context=context)
     res = run_gpu_model(dict(method='question-answering', args=[], kwargs=kwargs))
     res = res['answer']
+    if not res: res = "No answer"
     if len(res) > 128:
         res = summarize(res, max_length=20)
     return res
