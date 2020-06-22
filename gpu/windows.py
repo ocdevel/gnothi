@@ -1,7 +1,7 @@
 # Windows spawns recursive processes on question_answering() (bug?). Wrap whole script in
 # __main__ to prevent this.
 if __name__ == '__main__':
-    import time, psycopg2, pickle, pdb, threading, os, json
+    import time, psycopg2, pickle, pdb, threading, os, json, math
     from box import Box
     import torch
     from sqlalchemy import create_engine
@@ -38,10 +38,12 @@ if __name__ == '__main__':
     # from transformers import pipeline
     from transformers import AutoTokenizer, AutoModelWithLMHead#, AutoModelForQuestionAnswering, AutoModelForSequenceClassification
 
+    # FIXME do part-chunking here too
     sent_tokenizer = AutoTokenizer.from_pretrained("mrm8488/t5-base-finetuned-emotion")
     sent_model = AutoModelWithLMHead.from_pretrained("mrm8488/t5-base-finetuned-emotion").to("cuda")
+    sent_max = 512
     def sentiment(text):
-        input_ids = sent_tokenizer.encode(text + '</s>', return_tensors='pt', max_length=512).to("cuda")
+        input_ids = sent_tokenizer.encode(text + '</s>', return_tensors='pt', max_length=sent_max).to("cuda")
         output = sent_model.generate(input_ids=input_ids, max_length=2)
         dec = [sent_tokenizer.decode(ids) for ids in output]
         label = dec[0]
@@ -56,16 +58,32 @@ if __name__ == '__main__':
     from transformers import BartForConditionalGeneration, BartTokenizer
     sum_tokenizer = BartTokenizer.from_pretrained('facebook/bart-large-cnn')
     sum_model = BartForConditionalGeneration.from_pretrained('facebook/bart-large-cnn').to("cuda")
-    def summarize(text, max_length=None, min_length=None):
-        input_ids = sum_tokenizer.encode(text, return_tensors='pt', max_length=1024, pad_to_max_length=True).to("cuda")
+    sum_max = 1024
+
+    def summarize_(text, max_length=None, min_length=None):
+        input_ids = sum_tokenizer.encode(text, return_tensors='pt', max_length=sum_max, pad_to_max_length=True).to("cuda")
         # input_ids = sum_tokenizer.encode_plus(text, return_tensors='pt', max_length=1024, pad_to_max_length=True)["input_ids"].to("cuda")
         summary_ids = sum_model.generate(input_ids, max_length=max_length, min_length=min_length)
-        summaries = [
+        summary = [
             sum_tokenizer.decode(s, skip_special_tokens=True, clean_up_tokenization_spaces=False)
             for s in summary_ids
         ]
-        summaries = [{"summary_text": x} for x in summaries]
-        return summaries
+        return summary[0]
+
+    def summarize(text, max_length=None, min_length=None):
+        all_inputs = sum_tokenizer.encode(text, return_tensors='pt').to("cuda")[0]
+        parts = []
+        n_parts = math.ceil(len(all_inputs) / sum_max)
+        part_max_length = int(sum_max / n_parts)
+        # FIXME decode_batch & model_batch
+        for i in range(n_parts):
+            # FIXME this cuts mid words, split summaries on tokens somehow (hard with pad_to_max_length)
+            part_text = text[i*sum_max : (i+1)*sum_max]
+            part = summarize_(part_text, min_length=min_length, max_length=part_max_length)
+            parts.append(part)
+        parts = ". ".join(parts)
+        summary = summarize_(parts, min_length=min_length, max_length=max_length)
+        return [{"summary_text": summary}]
 
 
     from transformers import LongformerTokenizer, LongformerForQuestionAnswering
