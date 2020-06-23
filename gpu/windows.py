@@ -77,7 +77,7 @@ if __name__ == '__main__':
             parts = text
         else:
             part_max_tok = int(sum_max / n_parts)
-            part_min_tok = None # int(part_max_tok*2/3)
+            part_min_tok = int(min_length / n_parts) if min_length else None
             part_max_chars = int(len(text) / n_parts)
             parts = []
             # FIXME decode_batch & model_batch
