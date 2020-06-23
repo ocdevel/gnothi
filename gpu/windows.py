@@ -72,16 +72,21 @@ if __name__ == '__main__':
 
     def summarize(text, max_length=None, min_length=None):
         all_inputs = sum_tokenizer.encode(text, return_tensors='pt').to("cuda")[0]
-        parts = []
         n_parts = math.ceil(len(all_inputs) / sum_max)
-        part_max_length = int(sum_max / n_parts)
-        # FIXME decode_batch & model_batch
-        for i in range(n_parts):
-            # FIXME this cuts mid words, split summaries on tokens somehow (hard with pad_to_max_length)
-            part_text = text[i*sum_max : (i+1)*sum_max]
-            part = summarize_(part_text, min_length=min_length, max_length=part_max_length)
-            parts.append(part)
-        parts = ". ".join(parts)
+        if n_parts == 1:
+            parts = text
+        else:
+            part_max_tok = int(sum_max / n_parts)
+            part_min_tok = None # int(part_max_tok*2/3)
+            part_max_chars = int(len(text) / n_parts)
+            parts = []
+            # FIXME decode_batch & model_batch
+            for i in range(n_parts):
+                # FIXME this cuts mid words, split summaries on tokens somehow (hard with pad_to_max_length)
+                part_text = text[i*part_max_chars : (i+1)*part_max_chars]
+                part = summarize_(part_text, min_length=part_min_tok, max_length=part_max_tok)
+                parts.append(part)
+            parts = ". ".join(parts)
         summary = summarize_(parts, min_length=min_length, max_length=max_length)
         return [{"summary_text": summary}]
 
