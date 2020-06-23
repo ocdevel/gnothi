@@ -249,7 +249,7 @@ def themes(entries, with_entries=True):
         terms = [x[0] for x in words_freq[:top_terms]]
 
         print(terms)
-        summary = summarize(entries_in_cluster)
+        summary = summarize(entries_in_cluster, min_length=10, max_length=100)
         sent = sentiment(summary)
         l = str(l)
         topics[l] = {

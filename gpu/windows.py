@@ -78,7 +78,7 @@ if __name__ == '__main__':
                 if min_length and i < (n_parts - 1):
                     min_part = int(min_length / n_parts)
                 tokens_part = tokens_all[:, i * sum_max: (i + 1) * sum_max]
-                # FIXME decode_batch & model_batch
+                # FIXME generate as batch ([batch_size, tokens])
                 summary_ids += sum_model.generate(tokens_part, max_length=max_part, min_length=min_part)
             summary_ids = torch.cat(summary_ids).unsqueeze(0)
             ## Min/max size already accounted for above
