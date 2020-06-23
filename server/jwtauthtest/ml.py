@@ -320,9 +320,6 @@ def run_gpu_model(data):
 
 
 def summarize(text, min_length=None, max_length=None):
-    if len(text) <= (min_length or 5):
-        return text
-
     args = [text]
     kwargs = {}
     if min_length: kwargs['min_length'] = min_length

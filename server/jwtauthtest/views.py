@@ -439,7 +439,7 @@ def summarize():
 
     data = request.get_json()
     now = datetime.datetime.utcnow()
-    days, words = int(data['days']), int(data['words'])*5
+    days, words = int(data['days']), int(data['words'])
     x_days_ago = now - datetime.timedelta(days=days)
 
     if snooping:
@@ -452,14 +452,14 @@ def summarize():
         entries = entries.join(EntryTag, Tag).filter(Tag.id.in_(tags))
 
     # order by asc to paint a story from start to finish, since we're summarizing
-    entries = entries.filter(Entry.created_at > x_days_ago)\
-        .order_by(Entry.created_at.asc())\
+    entries = entries.filter(Entry.created_at > x_days_ago) \
+        .order_by(Entry.created_at.asc()) \
         .all()
     entries = ' '.join(e.text for e in entries)
     entries = re.sub('\s+', ' ', entries)  # mult new-lines
 
-    min_ = int(words*2/3)
-    summary = ml.summarize(entries, min_, words)
+    min_ = int(words / 2)
+    summary = ml.summarize(entries, min_length=min_, max_length=words)
     sentiment = ml.sentiment(summary)
     data = {'summary': summary, 'sentiment': sentiment}
     return jsonify({'data': data})

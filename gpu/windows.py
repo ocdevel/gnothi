@@ -60,35 +60,34 @@ if __name__ == '__main__':
     sum_model = BartForConditionalGeneration.from_pretrained('facebook/bart-large-cnn').to("cuda")
     sum_max = 1024
 
-    def summarize_(text, max_length=None, min_length=None):
-        input_ids = sum_tokenizer.encode(text, return_tensors='pt', max_length=sum_max, pad_to_max_length=True).to("cuda")
-        # input_ids = sum_tokenizer.encode_plus(text, return_tensors='pt', max_length=1024, pad_to_max_length=True)["input_ids"].to("cuda")
-        summary_ids = sum_model.generate(input_ids, max_length=max_length, min_length=min_length)
+    def summarize(text, max_length=None, min_length=None):
+        print(max_length, min_length)
+        tokens_all = sum_tokenizer.encode(text, return_tensors='pt').to("cuda")
+        if max_length and tokens_all.shape[1] <= max_length:
+            return [{"summary_text": text}]
+        n_parts = math.ceil(tokens_all.shape[1] / sum_max)
+        tokens_all = sum_tokenizer.encode(text, return_tensors='pt', max_length=sum_max * n_parts,
+                                          pad_to_max_length=True).to("cuda")
+        if n_parts == 1:
+            summary_ids = sum_model.generate(tokens_all, max_length=max_length, min_length=min_length)
+        else:
+            max_part = int(max_length / n_parts) if max_length else None
+            summary_ids = []
+            for i in range(n_parts):
+                min_part = None
+                if min_length and i < (n_parts - 1):
+                    min_part = int(min_length / n_parts)
+                tokens_part = tokens_all[:, i * sum_max: (i + 1) * sum_max]
+                # FIXME decode_batch & model_batch
+                summary_ids += sum_model.generate(tokens_part, max_length=max_part, min_length=min_part)
+            summary_ids = torch.cat(summary_ids).unsqueeze(0)
+            ## Min/max size already accounted for above
+            # summary_ids = sum_model.generate(summary_ids, max_length=max_length, min_length=min_length)
         summary = [
             sum_tokenizer.decode(s, skip_special_tokens=True, clean_up_tokenization_spaces=False)
             for s in summary_ids
         ]
-        return summary[0]
-
-    def summarize(text, max_length=None, min_length=None):
-        all_inputs = sum_tokenizer.encode(text, return_tensors='pt').to("cuda")[0]
-        n_parts = math.ceil(len(all_inputs) / sum_max)
-        if n_parts == 1:
-            parts = text
-        else:
-            part_max_tok = int(sum_max / n_parts)
-            part_min_tok = int(min_length / n_parts) if min_length else None
-            part_max_chars = int(len(text) / n_parts)
-            parts = []
-            # FIXME decode_batch & model_batch
-            for i in range(n_parts):
-                # FIXME this cuts mid words, split summaries on tokens somehow (hard with pad_to_max_length)
-                part_text = text[i*part_max_chars : (i+1)*part_max_chars]
-                part = summarize_(part_text, min_length=part_min_tok, max_length=part_max_tok)
-                parts.append(part)
-            parts = ". ".join(parts)
-        summary = summarize_(parts, min_length=min_length, max_length=max_length)
-        return [{"summary_text": summary}]
+        return [{"summary_text": summary[0]}]
 
 
     from transformers import LongformerTokenizer, LongformerForQuestionAnswering
