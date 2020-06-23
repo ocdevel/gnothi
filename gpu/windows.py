@@ -98,15 +98,28 @@ if __name__ == '__main__':
     # Error: CUDA out of memory. Tried to allocate 3.11 GiB (GPU 0; 11.00 GiB total capacity; 6.97 GiB already allocated; 2.71 GiB free; 7.03 GiB reserved in total by PyTorch)
     # https://github.com/patrickvonplaten/notebooks/blob/master/How_to_evaluate_Longformer_on_TriviaQA_using_NLP.ipynb
     def qa_longformer(question, context):
-        # TODO use trailing 4096 sequence, not leading
-        encoding = qa_tokenizer.encode_plus(question, context, return_tensors="pt", max_length=4096)
-        input_ids = encoding["input_ids"].to("cuda")
-        attention_mask = encoding["attention_mask"].to("cuda")
-        with torch.no_grad():
-            start_scores, end_scores = qa_model(input_ids=input_ids, attention_mask=attention_mask)
-        all_tokens = qa_tokenizer.convert_ids_to_tokens(encoding["input_ids"][0].tolist())
-        answer_tokens = all_tokens[torch.argmax(start_scores): torch.argmax(end_scores) + 1]
-        answer = qa_tokenizer.decode(qa_tokenizer.convert_tokens_to_ids(answer_tokens))[1:].replace('"', '')  # remove space prepending space token and remove unnecessary '"'
+        # FIXME use smarter 4096 recent tokens here
+        answers = []
+        max_chars = 4096 * 5
+        for i in range(int(len(context) / max_chars)):
+            context_ = context[i * max_chars:(i + 1) * max_chars]
+            encoding = qa_tokenizer.encode_plus(question, context_, return_tensors="pt", max_length=4096)
+            input_ids = encoding["input_ids"].to("cuda")
+            attention_mask = encoding["attention_mask"].to("cuda")
+            with torch.no_grad():
+                start_scores, end_scores = qa_model(input_ids=input_ids, attention_mask=attention_mask)
+            all_tokens = qa_tokenizer.convert_ids_to_tokens(encoding["input_ids"][0].tolist())
+            answer_tokens = all_tokens[torch.argmax(start_scores): torch.argmax(end_scores) + 1]
+            answer = qa_tokenizer.decode(qa_tokenizer.convert_tokens_to_ids(answer_tokens))[1:].replace('"',
+                                                                                                        '')  # remove space prepending space token and remove unnecessary '"'
+            if len(answer) > 128:
+                answer = summarize(answer, max_length=20)[0]["summary_text"]
+            if answer not in answers:
+                answers.append(answer)
+        if len(answers) == 1:
+            answer = answers[0]
+        else:
+            answer = "Multiple answers: " + "\n\n".join(f"({i}) {answer}" for i, answer in enumerate(answers))
         return {'answer': answer}
 
 
