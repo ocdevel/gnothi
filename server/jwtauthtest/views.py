@@ -596,12 +596,6 @@ def job_habitica():
             except Exception as err:
                 app.logger.warning(err)
 
-@scheduler.task('cron', id='do_job_backup', hour="*/12", misfire_grace_time=900)
-def job_backup():
-    app.logger.info("Backing up")
-    now = datetime.datetime.now().strftime("%Y-%m-%d-%I-%Mp")
-    os.system(f"pg_dump {vars.DB_PROD_URL} > tmp/bk-{now}.sql")
-
 app.config.from_object(Config())
 scheduler.init_app(app)
 scheduler.start()
