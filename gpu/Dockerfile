@@ -16,10 +16,13 @@ RUN pip install \
     python-box \
     sqlalchemy \
     sentence-transformers \
-    transformers==2.8.0
+    transformers==2.11.0
 
+COPY . /app
 WORKDIR /app
 
-ENTRYPOINT /bin/bash
-#ENTRYPOINT python windows.py
+RUN python install_models.py
+
+#ENTRYPOINT /bin/bash
+ENTRYPOINT python windows.py
 # tf.test.gpu_device_name() to test
