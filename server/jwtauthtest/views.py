@@ -4,25 +4,32 @@ from flask_jwt import jwt_required, current_identity
 from jwtauthtest import app
 from jwtauthtest.database import db_session, engine
 from jwtauthtest.models import User, Entry, Field, FieldEntry, Share, Tag, EntryTag, ShareTag, Person
+from jwtauthtest.ec2_updown import ec2_up, ec2_down
 from passlib.hash import pbkdf2_sha256
-from flask import request, jsonify
+from flask import request, jsonify, g
 from jwtauthtest.utils import vars
 from jwtauthtest import ml
 import requests
 from dateutil.parser import parse as dparse
 
 import nltk
+
 nltk.download('punkt')
+
+ec2_up()
 
 
 def as_user():
+    if current_identity:
+        g.last_request = datetime.datetime.now()
+        ec2_up()
     # return [as_user, is_snooping]
     as_user = request.args.get('as', None)
     if as_user and as_user != current_identity.id:
         user = current_identity.shared_with_me(as_user)
         if user:
-            user.share_data = Share.query\
-                .filter_by(user_id=user.id, email=current_identity.username)\
+            user.share_data = Share.query \
+                .filter_by(user_id=user.id, email=current_identity.username) \
                 .first()
             return user, True
     return current_identity, False
@@ -585,6 +592,7 @@ class Config(object):
     SCHEDULER_API_ENABLED = True
 scheduler = APScheduler()
 
+
 @scheduler.task('cron', id='do_job_habitica', hour="*", misfire_grace_time=900)
 def job_habitica():
     with app.app_context():
@@ -595,6 +603,15 @@ def job_habitica():
                 sync_habitica_for(u)
             except Exception as err:
                 app.logger.warning(err)
+
+
+@scheduler.task('cron', id='do_job_ec2', minute="*", misfire_grace_time=900)
+def job_ec2():
+    with app.app_context():
+        diff = datetime.datetime.now() - g.last_request
+        if diff.total_seconds() > (60 * 30):  # 30m
+            ec2_down()
+
 
 app.config.from_object(Config())
 scheduler.init_app(app)
