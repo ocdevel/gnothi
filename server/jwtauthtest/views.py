@@ -13,15 +13,13 @@ import requests
 from dateutil.parser import parse as dparse
 
 import nltk
-
 nltk.download('punkt')
-
-ec2_up()
-
+last_request = datetime.datetime.now()
 
 def as_user():
+    global last_request
     if current_identity:
-        g.last_request = datetime.datetime.now()
+        last_request = datetime.datetime.now()
         ec2_up()
     # return [as_user, is_snooping]
     as_user = request.args.get('as', None)
@@ -607,8 +605,9 @@ def job_habitica():
 
 @scheduler.task('cron', id='do_job_ec2', minute="*", misfire_grace_time=900)
 def job_ec2():
+    global last_request
     with app.app_context():
-        diff = datetime.datetime.now() - g.last_request
+        diff = datetime.datetime.now() - last_request
         if diff.total_seconds() > (60 * 30):  # 30m
             ec2_down()
 
