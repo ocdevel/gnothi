@@ -36,7 +36,9 @@ def jobs_status():
 # already threaded since in cron job
 def ec2_down_maybe():
     res = _fetch_status()
-    if res.elapsed_sec / 60 < 30:
+    # turn off after 5 minutes of inactivity. Note the client setInterval will keep the activity fresh while
+    # using even if idling, so no need to wait long after
+    if res.elapsed_sec / 60 < 5:
         return
     engine.execute("update jobs_status set status='off', ts=now()")
     try:
