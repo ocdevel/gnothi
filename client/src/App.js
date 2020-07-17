@@ -114,7 +114,8 @@ function App() {
       "🕵️" + _.find(user.shared_with_me, {id: as}).username
     let jobsStatusIcon = {
       off: "🔴",
-      on: "🟢"
+      on: "🟢",
+      pending: "🟡"
     }[jobsStatus]
     return (
       <Navbar bg="dark" variant="dark">

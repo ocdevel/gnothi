@@ -157,8 +157,8 @@ if __name__ == '__main__':
     while True:
         # if active_jobs: GPUtil.showUtilization()
 
-        # Notify is online. Don't save ts=now(), server handles it (need to know when to shutdown ec2)
-        sql = "update jobs_status set status='on'"
+        # Notify is online.
+        sql = "update jobs_status set status='on', ts_svc=now()"
         engine.execute(sql)
 
         # Find jobs
