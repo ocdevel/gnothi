@@ -29,7 +29,7 @@ def _batch_up():
         if response['jobSummaryList']: any_ = True
     if any_: return
     batch_client.submit_job(
-        jobName='ml up',
+        jobName='ml-up',
         jobQueue=JQ,
         jobDefinition=JD,
     )
@@ -55,9 +55,9 @@ def _batch_down():
 
 
 def ec2_up():
-    x = threading.Thread(target=_batch_up, daemon=True)
+    x = threading.Thread(target=_ec2_up, daemon=True)
     x.start()
 
 def ec2_down():
-    x = threading.Thread(target=_batch_down, daemon=True)
+    x = threading.Thread(target=_ec2_down, daemon=True)
     x.start()

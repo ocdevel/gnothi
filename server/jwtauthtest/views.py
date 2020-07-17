@@ -16,14 +16,18 @@ import nltk
 nltk.download('punkt')
 
 last_request = datetime.datetime.now()
-def minutes_since_last_request():
+def since_last_request(f='s'):
     diff = datetime.datetime.now() - last_request
-    return diff.total_seconds() / 60
+    diff = diff.total_seconds()
+    if f == 's': return diff
+    if f == 'm': return diff / 60
+    if f == 'h': return diff / 60 / 60
 
 def as_user():
     global last_request
     if current_identity:
-        if minutes_since_last_request() > 1:
+        # just a simple debounce, ec2_up handles "check if should"
+        if since_last_request('s') > 5:
             ec2_up()
         last_request = datetime.datetime.now()
     # return [as_user, is_snooping]
@@ -610,9 +614,8 @@ def job_habitica():
 
 @scheduler.task('cron', id='do_job_ec2', minute="*", misfire_grace_time=900)
 def job_ec2():
-    global last_request
     with app.app_context():
-        if minutes_since_last_request() > 30:
+        if since_last_request('m') > 30:
             ec2_down()
 
 
