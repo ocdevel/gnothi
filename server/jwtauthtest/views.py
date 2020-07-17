@@ -4,7 +4,7 @@ from flask_jwt import jwt_required, current_identity
 from jwtauthtest import app
 from jwtauthtest.database import db_session
 from jwtauthtest.models import User, Entry, Field, FieldEntry, Share, Tag, EntryTag, ShareTag, Person
-from jwtauthtest.ec2_updown import ec2_up, ec2_down
+from jwtauthtest.ec2_updown import jobs_status, ec2_down_maybe
 from passlib.hash import pbkdf2_sha256
 from flask import request, jsonify, g
 from jwtauthtest.utils import vars
@@ -15,21 +15,8 @@ from dateutil.parser import parse as dparse
 import nltk
 nltk.download('punkt')
 
-last_request = datetime.datetime.now()
-def since_last_request(f='s'):
-    diff = datetime.datetime.now() - last_request
-    diff = diff.total_seconds()
-    if f == 's': return diff
-    if f == 'm': return diff / 60
-    if f == 'h': return diff / 60 / 60
 
 def as_user():
-    global last_request
-    if current_identity:
-        # just a simple debounce, ec2_up handles "check if should"
-        if since_last_request('s') > 5:
-            ec2_up()
-        last_request = datetime.datetime.now()
     # return [as_user, is_snooping]
     as_user = request.args.get('as', None)
     if as_user and as_user != current_identity.id:
@@ -50,6 +37,11 @@ def cant_snoop(feature=None):
 def send_error(message, code=400):
     return jsonify({'ok': False, 'message': message}), code
 
+
+@app.route('/api/jobs-status', methods=['GET'])
+@jwt_required()
+def jobs_status_route():
+    return jsonify({'data': jobs_status()})
 
 @app.route('/api/user', methods=['GET'])
 @jwt_required()
@@ -613,9 +605,7 @@ def job_habitica():
 
 @scheduler.task('cron', id='do_job_ec2', minute="*", misfire_grace_time=900)
 def job_ec2():
-    with app.app_context():
-        if since_last_request('m') > 30:
-            ec2_down()
+    ec2_down_maybe()
 
 
 app.config.from_object(Config())

@@ -32,6 +32,7 @@ function App() {
   const [user, setUser] = useState()
   const [as, setAs] = useState()
   const [serverError, setServerError] = useState()
+  const [jobsStatus, setJobsStatus] = useState('off')
   // const [as, setAs] = useState('3694b314-d050-46da-882a-726598bd6abf')
 
   const fetch_ = async (route, method='GET', body=null) => {
@@ -72,7 +73,19 @@ function App() {
 
   const onAuth = jwt_ => setJwt(jwt_)
 
-  useEffect(() => { getUser() }, [jwt])
+  const checkJobsStatus = () => {
+    return setInterval(async () => {
+      const {data, code} = await fetch_('jobs-status')
+      setJobsStatus(data)
+    }, 1000)
+  }
+
+  useEffect(() => {
+    getUser()
+
+    const timer = checkJobsStatus()
+    return () => clearTimeout(timer)
+  }, [])
 
   const logout = () => {
     localStorage.removeItem('jwt')
@@ -99,10 +112,14 @@ function App() {
   const renderNav = () => {
     let username = !as ? user.username :
       "🕵️" + _.find(user.shared_with_me, {id: as}).username
+    let jobsStatusIcon = {
+      off: "🔴",
+      on: "🟢"
+    }[jobsStatus]
     return (
       <Navbar bg="dark" variant="dark">
         <LinkContainer to="/">
-          <Navbar.Brand>Gnothi</Navbar.Brand>
+          <Navbar.Brand>Gnothi {jobsStatusIcon}</Navbar.Brand>
         </LinkContainer>
         <Navbar.Toggle aria-controls="responsive-navbar-nav" />
         <Navbar.Collapse id="responsive-navbar-nav">

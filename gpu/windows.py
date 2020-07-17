@@ -11,10 +11,9 @@ if __name__ == '__main__':
     config_json = json.load(open(join_(['config.json'])))
     engine = create_engine(
         config_json['DB_JOBS'].replace('host.docker.internal', 'localhost'),
-        # config_json['DB_JOBS'],
-        pool_size=20,
+        pool_pre_ping=True,
+        pool_recycle=300,
         # pool_timeout=2,
-        # pool_recycle=2
     )
 
     print('torch.cuda.current_device()', torch.cuda.current_device())
@@ -157,6 +156,12 @@ if __name__ == '__main__':
 
     while True:
         # if active_jobs: GPUtil.showUtilization()
+
+        # Notify is online. Don't save ts=now(), server handles it (need to know when to shutdown ec2)
+        sql = "update jobs_status set status='on'"
+        engine.execute(sql)
+
+        # Find jobs
         sql = f"""
         update jobs set state='working'
         where id = (select id from jobs where state='new' limit 1)
@@ -164,7 +169,7 @@ if __name__ == '__main__':
         """
         job = engine.execute(sql).fetchone()
         if not job:
-            time.sleep(1)
+            time.sleep(.5)
             continue
 
         threading.Thread(target=run_job, args=(job,), daemon=True).start()
