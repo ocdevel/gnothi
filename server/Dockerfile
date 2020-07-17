@@ -11,8 +11,6 @@ RUN apt-get install -y lsb-release &&\
 
 # Install transformers & run some init tasks to download files
 RUN pip install spacy ftfy && python -m spacy download en
-RUN pip install torch==1.4.0+cpu torchvision==0.5.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
-RUN pip install transformers
 
 RUN pip install \
   flask \

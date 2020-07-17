@@ -2,7 +2,7 @@ import pdb, logging, math, os, re
 import datetime
 from flask_jwt import jwt_required, current_identity
 from jwtauthtest import app
-from jwtauthtest.database import db_session, engine
+from jwtauthtest.database import db_session
 from jwtauthtest.models import User, Entry, Field, FieldEntry, Share, Tag, EntryTag, ShareTag, Person
 from jwtauthtest.ec2_updown import ec2_up, ec2_down
 from passlib.hash import pbkdf2_sha256
@@ -365,7 +365,6 @@ def influencers():
     if snooping and not user.share_data.fields:
         return cant_snoop('Fields')
     targets, all_imps, next_preds = ml.influencers(
-        engine,
         user.id,
         specific_target=request.args.get('target', None),
         logger=app.logger

@@ -1,4 +1,5 @@
 from jwtauthtest.utils import vars
+from jwtauthtest.database import engine
 import re, math, pdb, os
 from pprint import pprint
 import pandas as pd
@@ -9,12 +10,6 @@ from tqdm import tqdm
 
 THREADS = cpu_count()
 
-cache = Box({
-    'summarization': None,
-    'sentiment-analysis': None,
-    'question-answering': None
-})
-
 
 """
 Influencers
@@ -22,7 +17,7 @@ Influencers
 
 from xgboost import XGBRegressor
 
-def influencers(engine, user_id, specific_target=None, logger=None):
+def influencers(user_id, specific_target=None, logger=None):
     with engine.connect() as conn:
         fes = pd.read_sql("""
         select  
@@ -269,34 +264,12 @@ Summarize
 Sentiment
 """
 
-GPU_JOBS = True
-from transformers import pipeline
 import psycopg2, time
 from uuid import uuid4
-from sqlalchemy import create_engine
-engine = create_engine(
-    vars.DB_JOBS,
-    pool_pre_ping=True,
-    pool_recycle=300,
-)
-
-
-def run_cpu_model(data):
-    global cache
-    k = data['method']
-    pipelines = ['summarization', 'sentiment-analysis', 'question-answering']
-    if not cache[k] and k in pipelines:
-        cache[k] = pipeline(k)
-    start = time.time()
-    res = cache[k](*data['args'], **data['kwargs'])
-    print('Timing', time.time() - start)
-    return res
+OFFLINE_MSG = "AI server offline, check back later"
 
 
 def run_gpu_model(data):
-    if not GPU_JOBS:
-        return run_cpu_model(data)
-
     sql = f"insert into jobs values (%s, %s, %s)"
     jid = str(uuid4())
     engine.execute(sql, (jid, 'new', psycopg2.Binary(pickle.dumps(data))))
@@ -315,8 +288,7 @@ def run_gpu_model(data):
         i += 1
         time.sleep(1)
 
-    print("Job errored or timed out, using CPU")
-    return run_cpu_model(data)
+    return False
 
 
 def summarize(text, min_length=None, max_length=None):
@@ -325,11 +297,15 @@ def summarize(text, min_length=None, max_length=None):
     if min_length: kwargs['min_length'] = min_length
     if max_length: kwargs['max_length'] = max_length
     res = run_gpu_model(dict(method='summarization', args=args, kwargs=kwargs))
+    if res is False:
+        return OFFLINE_MSG
     return res[0]['summary_text']
 
 
 def sentiment(text):
     res = run_gpu_model(dict(method='sentiment-analysis', args=[text], kwargs={}))
+    if res is False:
+        return "surprise"
     for s in res:
         # numpy can't serialize
         s['score'] = float(s['score'])
@@ -340,6 +316,8 @@ def query(question, entries):
     context = ' '.join([unmark(e) for e in entries])
     kwargs = dict(question=question, context=context)
     res = run_gpu_model(dict(method='question-answering', args=[], kwargs=kwargs))
+    if res is False:
+        return OFFLINE_MSG
     res = res['answer']
     if not res: res = "No answer"
     return res
@@ -365,6 +343,10 @@ book_engine = create_engine(vars.DB_BOOKS)
 
 
 def resources(entries, logger=None, metric="cosine", by_cluster=False, by_centroid=False, n_recs=40):
+    test = run_gpu_model(dict(method='sentence-encode', args=[["test test test"]], kwargs={}))
+    if test is False:
+        return [{'ID': '', 'sims': 0, 'title': '', 'author': '', 'text': OFFLINE_MSG, 'topic': ''}]
+
     e_user = entries_to_paras(entries)
 
     path_ = 'tmp/libgen.pkl'
