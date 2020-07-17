@@ -14,13 +14,18 @@ from dateutil.parser import parse as dparse
 
 import nltk
 nltk.download('punkt')
+
 last_request = datetime.datetime.now()
+def minutes_since_last_request():
+    diff = datetime.datetime.now() - last_request
+    return diff.total_seconds() / 60
 
 def as_user():
     global last_request
     if current_identity:
+        if minutes_since_last_request() > 1:
+            ec2_up()
         last_request = datetime.datetime.now()
-        ec2_up()
     # return [as_user, is_snooping]
     as_user = request.args.get('as', None)
     if as_user and as_user != current_identity.id:
@@ -607,8 +612,7 @@ def job_habitica():
 def job_ec2():
     global last_request
     with app.app_context():
-        diff = datetime.datetime.now() - last_request
-        if diff.total_seconds() > (60 * 30):  # 30m
+        if minutes_since_last_request() > 30:
             ec2_down()
 
 
