@@ -9,7 +9,7 @@ EC2_ID = 'i-03e8ad4f3cadd4a4e'
 def _fetch_status():
     sql = """
     SELECT status, 
-        EXTRACT(SECOND FROM (now() - ts)) as elapsed_sec
+        EXTRACT(EPOCH FROM (now() - ts)) as elapsed_sec
     FROM jobs_status
     """
     return engine.execute(sql).fetchone()
