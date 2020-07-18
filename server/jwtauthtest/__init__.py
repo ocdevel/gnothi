@@ -7,6 +7,9 @@ app = Flask(__name__)
 app.secret_key = vars.FLASK_KEY
 CORS(app)
 
+import logging
+log = logging.getLogger('werkzeug')
+log.setLevel(logging.WARNING)
 
 # Remove sessions since we're using JWT. See https://flask-login.readthedocs.io/en/latest/#disabling-session-cookie-for-apis
 from flask.sessions import SecureCookieSessionInterface

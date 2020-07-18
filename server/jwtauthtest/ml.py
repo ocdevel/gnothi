@@ -344,8 +344,9 @@ book_engine = create_engine(vars.DB_BOOKS)
 
 def resources(entries, logger=None, metric="cosine", by_cluster=False, by_centroid=False, n_recs=40):
     test = run_gpu_model(dict(method='sentence-encode', args=[["test test test"]], kwargs={}))
+    offline_df = [{'ID': '', 'sims': 0, 'title': '', 'author': '', 'text': OFFLINE_MSG, 'topic': ''}]
     if test is False:
-        return [{'ID': '', 'sims': 0, 'title': '', 'author': '', 'text': OFFLINE_MSG, 'topic': ''}]
+        return offline_df
 
     e_user = entries_to_paras(entries)
 

@@ -15,7 +15,7 @@ RUN pip install \
     psycopg2-binary \
     python-box \
     sqlalchemy \
-    sentence-transformers \
+    sentence-transformers==0.2.6 \
     transformers==2.11.0
 
 COPY . /app
