@@ -1,6 +1,7 @@
-import {OverlayTrigger, Popover, Spinner} from "react-bootstrap";
-import React from "react";
-import _ from "lodash";
+import {OverlayTrigger, Popover, Spinner} from "react-bootstrap"
+import React from "react"
+import _ from "lodash"
+import emoji from 'react-easy-emoji'
 
 const spinner = (
   <Spinner animation="border" role="status">
@@ -28,17 +29,17 @@ const sent2face = (sentiment) => {
     ? '#24cc8f' : '#ff6165'
   style.padding = 5
   style.marginRight = 5
-  const emoji = {
-    sadness: "😢",
-    joy: "😃",
-    love: "🥰",
-    anger: "😡",
-    fear: "😱",
-    surprise: "😯",
-  }[sentiment] || "⚠"
+  const emoji_ = {
+    sadness: emoji("😢"),
+    joy: emoji("😃"),
+    love: emoji("🥰"),
+    anger: emoji("😡"),
+    fear: emoji("😱"),
+    surprise: emoji("😯"),
+  }[sentiment] || emoji("⚠")
   return (
     <SimplePopover text="Sentiment is machine-generated from your entry's text">
-      <span style={style}>{emoji}</span>
+      <span style={style}>{emoji_}</span>
     </SimplePopover>
   )
 }

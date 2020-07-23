@@ -21,7 +21,8 @@ import ProfileRoutes from './ProfileRoutes'
 import Themes from './Themes'
 import Books from './Books'
 import Error from './Error'
-import moment from "moment-timezone";
+import moment from "moment-timezone"
+import emoji from 'react-easy-emoji'
 
 let host = window.location.origin.split(':')
 // host = host[0] + ':' + host[1] + ':' + 3001
@@ -97,12 +98,12 @@ function App() {
     return <>
       {as && (
         <NavDropdown.Item onClick={() => setAs()}>
-          🔀{user.username}
+          emoji(🔀){user.username}
         </NavDropdown.Item>
       )}
       {user.shared_with_me.map(s => s.id != as && (
         <NavDropdown.Item onClick={() => setAs(s.id)}>
-          🔀{s.username}
+          emoji(🔀){s.username}
         </NavDropdown.Item>
       ))}
       <NavDropdown.Divider />
@@ -111,11 +112,11 @@ function App() {
 
   const renderNav = () => {
     let username = !as ? user.username :
-      "🕵️" + _.find(user.shared_with_me, {id: as}).username
+      emoji("🕵️") + _.find(user.shared_with_me, {id: as}).username
     let jobsStatusIcon = {
-      off: "🔴",
-      on: "🟢",
-      pending: "🟡"
+      off: emoji("🔴"),
+      on: emoji("🟢"),
+      pending: emoji("🟡")
     }[jobsStatus]
     return (
       <Navbar bg="dark" variant="dark">
