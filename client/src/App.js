@@ -85,7 +85,7 @@ function App() {
 
     const timer = checkJobsStatus()
     return () => clearTimeout(timer)
-  }, [])
+  }, [jwt])
 
   const logout = () => {
     localStorage.removeItem('jwt')
