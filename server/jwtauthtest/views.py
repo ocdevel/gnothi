@@ -454,7 +454,10 @@ def summarize():
 
     tags = data.get('tags', None)
     if tags:
-        entries = entries.join(EntryTag, Tag).filter(Tag.id.in_(tags))
+        if not snooping:
+            # already joined in Entry.snoop
+            entries = entries.join(EntryTag, Tag)
+        entries = entries.filter(Tag.id.in_(tags))
 
     # order by asc to paint a story from start to finish, since we're summarizing
     entries = entries.filter(Entry.created_at > x_days_ago) \

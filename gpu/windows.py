@@ -41,7 +41,10 @@ if __name__ == '__main__':
     sent_tokenizer = AutoTokenizer.from_pretrained("mrm8488/t5-base-finetuned-emotion")
     sent_model = AutoModelWithLMHead.from_pretrained("mrm8488/t5-base-finetuned-emotion").to("cuda")
     sent_max = 512
+
     def sentiment(text):
+        if not text:
+            return [{"label": "", "score": 1.}]
         input_ids = sent_tokenizer.encode(text + '</s>', return_tensors='pt', max_length=sent_max).to("cuda")
         output = sent_model.generate(input_ids=input_ids, max_length=2)
         dec = [sent_tokenizer.decode(ids) for ids in output]
@@ -60,6 +63,9 @@ if __name__ == '__main__':
     sum_max = 1024
 
     def summarize(text, max_length=None, min_length=None):
+        if not text:
+            return [{"summary_text": "Nothing to summarize (try adjusting date range)"}]
+
         print(max_length, min_length)
         tokens_all = sum_tokenizer.encode(text, return_tensors='pt').to("cuda")
         if max_length and tokens_all.shape[1] <= max_length:
@@ -97,6 +103,9 @@ if __name__ == '__main__':
     # Error: CUDA out of memory. Tried to allocate 3.11 GiB (GPU 0; 11.00 GiB total capacity; 6.97 GiB already allocated; 2.71 GiB free; 7.03 GiB reserved in total by PyTorch)
     # https://github.com/patrickvonplaten/notebooks/blob/master/How_to_evaluate_Longformer_on_TriviaQA_using_NLP.ipynb
     def qa_longformer(question, context):
+        if not context:
+            return {'answer': "No text to work with for answers"}
+
         # FIXME use smarter 4096 recent tokens here
         answers = []
         max_chars = 4096 * 5
