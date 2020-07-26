@@ -3,6 +3,9 @@ from box import Box
 
 DROP_SQL = 'DROP SCHEMA public CASCADE;CREATE SCHEMA public;'
 
+def is_dev():
+    return os.environ['ENVIRONMENT'] == 'development'
+
 def join_(paths):
     return os.path.join(os.path.dirname(__file__), *paths)
 

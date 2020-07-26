@@ -116,8 +116,12 @@ export default function Tags({
   const showEditTags = () => setEditTags(true)
   const closeEditTags = () => setEditTags(false)
 
-  let sorted = !tags.length ? [] :
-    [_.find(tags, t => t.main), ..._.filter(tags, t => !t.main)]
+  let sorted = []
+  if (tags.length) {
+    const main = _.find(tags, t => t.main)
+    sorted = main ? [main] : []
+    sorted = [...sorted, ..._.filter(tags, t => !t.main)]
+  }
 
   const renderTag = t => {
     const selected_ = selected[t.id]

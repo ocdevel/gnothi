@@ -98,12 +98,12 @@ function App() {
     return <>
       {as && (
         <NavDropdown.Item onClick={() => setAs()}>
-          emoji(🔀){user.username}
+          {emoji("🔀")}{user.username}
         </NavDropdown.Item>
       )}
       {user.shared_with_me.map(s => s.id != as && (
         <NavDropdown.Item onClick={() => setAs(s.id)}>
-          emoji(🔀){s.username}
+          {emoji("🔀")}{s.username}
         </NavDropdown.Item>
       ))}
       <NavDropdown.Divider />
@@ -111,12 +111,17 @@ function App() {
   }
 
   const renderNav = () => {
-    let username = !as ? user.username :
-      emoji("🕵️") + _.find(user.shared_with_me, {id: as}).username
+    let username = user.username
+    if (as) {
+      username = _.find(user.shared_with_me, {id: as}).username
+      username = <>{emoji("🕵️")} {username}</>
+    }
+
+    const statusOpts = {props: {width: 16, height: 16}}
     let jobsStatusIcon = {
-      off: emoji("🔴"),
-      on: emoji("🟢"),
-      pending: emoji("🟡")
+      off: emoji("🔴", statusOpts),
+      on: emoji("🟢", statusOpts),
+      pending: emoji("🟡", statusOpts)
     }[jobsStatus]
     return (
       <Navbar bg="dark" variant="dark">

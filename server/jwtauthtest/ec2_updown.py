@@ -1,5 +1,6 @@
-import boto3, time, threading
+import boto3, time, threading, os
 from jwtauthtest.database import engine
+from jwtauthtest.utils import is_dev
 
 # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/ec2.html
 ec2_client = boto3.client('ec2')
@@ -21,14 +22,13 @@ def ec2_up():
         ec2_client.start_instances(InstanceIds=[EC2_ID])
     except: pass
 
-
 def jobs_status():
     res = _fetch_status()
+    if is_dev(): pass
     # job service is fresh
-    if res.elapsed_svc < 5:
-        return res.status
+    elif res.elapsed_svc < 5: pass
     # jobs svc stale (pending|off), decide if should turn ec2 on (debounce for race condition)
-    if res.elapsed_client > 2:
+    elif res.elapsed_client > 2:
         # status=on if server not turned off via ec2_down_maybe
         if res.status in ['off', 'on']:
             x = threading.Thread(target=ec2_up, daemon=True)
@@ -40,6 +40,7 @@ def jobs_status():
 # already threaded since in cron job
 def ec2_down_maybe():
     res = _fetch_status()
+    if is_dev(): return
     # turn off after 5 minutes of inactivity. Note the client setInterval will keep the activity fresh while
     # using even if idling, so no need to wait long after
     if res.elapsed_client / 60 < 5 or res.status == 'off':

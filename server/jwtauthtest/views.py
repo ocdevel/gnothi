@@ -7,7 +7,7 @@ from jwtauthtest.models import User, Entry, Field, FieldEntry, Share, Tag, Entry
 from jwtauthtest.ec2_updown import jobs_status, ec2_down_maybe
 from passlib.hash import pbkdf2_sha256
 from flask import request, jsonify, g
-from jwtauthtest.utils import vars
+from jwtauthtest.utils import vars, is_dev
 from jwtauthtest import ml
 import requests
 from dateutil.parser import parse as dparse
@@ -486,6 +486,7 @@ def setup_habitica():
     return jsonify({})
 
 def sync_habitica_for(user):
+    if is_dev(): return
     if not (user.habitica_user_id and user.habitica_api_token):
         return
     # https://habitica.com/apidoc/#api-Task-GetUserTasks
