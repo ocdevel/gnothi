@@ -9,8 +9,10 @@ RUN apt-get install -y lsb-release &&\
   echo "deb http://apt.postgresql.org/pub/repos/apt/ ${RELEASE}"-pgdg main | tee  /etc/apt/sources.list.d/pgdg.list &&\
   apt update && apt -y install postgresql-client-12
 
-# Install transformers & run some init tasks to download files
-RUN pip install spacy ftfy && python -m spacy download en
+RUN pip install spacy ftfy && python -m spacy download en_core_web_sm
+RUN pip install nltk && python -m nltk.downloader punkt
+RUN apt-get install -y default-jre &&\
+    wget http://mallet.cs.umass.edu/dist/mallet-2.0.8.zip -O /mallet-2.0.8.zip && unzip /mallet-2.0.8.zip -d /
 
 RUN pip install \
   flask \
@@ -27,7 +29,6 @@ RUN pip install \
   sklearn \
   flask-apscheduler \
   gensim \
-  nltk \
   beautifulsoup4 \
   markdown \
   python-box \
@@ -39,7 +40,10 @@ RUN pip install \
   langdetect \
   hyperopt \
   hdbscan \
-  boto3
+  boto3 \
+  kneed
+
+# might need 'scipy==1.3.2' for jensen
 
 COPY .aws /root/.aws
 COPY . /app

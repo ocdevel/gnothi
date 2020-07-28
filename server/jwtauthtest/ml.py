@@ -138,6 +138,9 @@ Themes
 
 # from gensim.utils import simple_preprocess
 from gensim.parsing import preprocessing as pp
+from gensim.corpora.dictionary import Dictionary
+#from gensim.models import LdaModel
+from gensim.models.wrappers import LdaMallet
 import spacy
 import lemminflect
 from jwtauthtest.unmarkdown import unmark
@@ -152,7 +155,13 @@ def entries_to_paras(entries):
     ]
 
 
-def strip_text(entries, propn=True):
+def clean_text(entries, propn=True, for_lda=False):
+    def simple_cleanup(s):
+        s = s.lower()
+        # Fix punctuation
+        s = re.sub(r"([.,!;?])([a-z])", r"\1 \2", s)
+        return s
+
     def lemmas(txt):
         if not txt: return txt
 
@@ -164,7 +173,7 @@ def strip_text(entries, propn=True):
         for t in doc:
             if t.pos_ == 'NUM':
                 tokens.append('number')
-            elif t.is_stop:
+            elif t.is_stop or t.is_punct:
                 continue
             elif t.pos_ not in postags:
                 continue
@@ -172,92 +181,50 @@ def strip_text(entries, propn=True):
                 tokens.append(t._.lemma())
         return " ".join(tokens)
 
+    # punctuation, numeric, stopwords handled in lemminflect
     filters = [
-        lambda x: x.lower(),
+        simple_cleanup,
         pp.strip_non_alphanum,
-        pp.strip_punctuation,
         pp.strip_multiple_whitespaces,
-        pp.strip_numeric,
-        lambda x: pp.strip_short(x, 2),
         lemmas
     ]
     tokenized = [pp.preprocess_string(e, filters=filters) for e in entries]
+    if for_lda:
+        return tokenized
     return [' '.join(e) for e in tokenized]
 
 
-from sklearn.cluster import KMeans
-from sklearn.manifold import TSNE
-from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
-import hdbscan
-
 def themes(entries, with_entries=True):
-    entries = entries_to_paras(entries)
-    vecs = run_gpu_model(dict(method='sentence-encode', args=[entries], kwargs={}))
+    paras = entries_to_paras(entries)
+    texts = clean_text(paras, for_lda=True)
+    dictionary = Dictionary(texts)
+    corpus = [dictionary.doc2bow(text) for text in texts]
 
-    HYPEROPT = False
-    if HYPEROPT:
-        n = vecs.shape[0]
-        max_ = int(n/2)
-        step = int(max_/20)
-        perps = range(5, max_, step)
-        best = []
-        for p in perps:
-            # Find best perplexity equation:
-            # S = 2KL(P||Q) + log(n)(Perp/n)
-            tsne = TSNE(n_components=3, perplexity=p, n_jobs=-1)
-            tsne.fit(vecs)
-            s = 2 * tsne.kl_divergence_ + np.log(n) * (p / n)
-            if s > best[0]:
-                best = [s, tsne]
-        tsne = best[1]
-    else:
-        tsne = TSNE(perplexity=5, n_jobs=-1)
-    vecs = tsne.fit_transform(vecs)
+    # TODO run KneeLocator to find optimal coherence for n_topics, cache per user
+    # https://www.desmos.com/calculator/ysj6inumvc
+    # 1-5 entries should be about 1-3 topics; 200 entries about 8
+    n_topics = math.floor(1 + 3 * math.log10(len(paras)))
+    print('n_topics', n_topics, 'paras', len(paras))
 
-    clusterer = hdbscan.HDBSCAN(min_cluster_size=5)
-    clusterer.fit(vecs)
-    labels = np.unique(clusterer.labels_)
-    print('n_labels', len(labels))
+    # Train the model on the corpus
+    os.environ['MALLET_HOME'] = '/mallet-2.0.8'
+    mallet_path = os.environ['MALLET_HOME'] + '/bin/mallet'  # update this path
+    lda = LdaMallet(
+        mallet_path,
+        corpus=corpus,
+        num_topics=n_topics,
+        id2word=dictionary,
+        workers=THREADS
+    )
 
-    stripped = pd.Series(strip_text(entries))
-    entries = pd.Series(entries)
-
-    # see https://stackoverflow.com/a/34236002/362790
-    top_terms = 8
     topics = {}
-    for l in labels:
-        if l == -1: continue  # assuming means no cluster?
-        in_clust_idxs = clusterer.labels_ == l
-        stripped_in_cluster = stripped.iloc[in_clust_idxs].tolist()
-        entries_in_cluster = entries.iloc[in_clust_idxs].tolist()
-        print('n_entries', len(entries_in_cluster))
-        entries_in_cluster = '. '.join(entries_in_cluster)
+    for idx, topic in lda.show_topics(formatted=False, num_words=7):
+        terms = [w[0] for w in topic]
+        sent = sentiment(' '.join(terms))
+        # summary = summarize(entries_in_cluster, min_length=100, max_length=200)
+        topics[str(idx)] = {'terms': terms, 'sentiment': sent, 'summary': ''}
 
-        # model = CountVectorizer()
-        model = TfidfVectorizer()
-        res = model.fit_transform(stripped_in_cluster)
-
-        # https://medium.com/@cristhianboujon/how-to-list-the-most-common-words-from-text-corpus-using-scikit-learn-dad4d0cab41d
-        sum_words = res.sum(axis=0)
-        words_freq = [(word, sum_words[0, idx]) for word, idx in model.vocabulary_.items()]
-        words_freq = sorted(words_freq, key=lambda x: x[1], reverse=True)
-        terms = [x[0] for x in words_freq[:top_terms]]
-
-        print(terms)
-        summary = summarize(entries_in_cluster, min_length=10, max_length=100)
-        sent = sentiment(summary)
-        l = str(l)
-        topics[l] = {
-            'terms': terms,
-            'sentiment': sent,
-            'summary': summary
-        }
-        if with_entries:
-            topics[l]['entries'] = in_clust_idxs
-            topics[l]['n_entries'] = sum(in_clust_idxs)
-        print('\n\n\n')
     return topics
-
 
 """
 Summarize

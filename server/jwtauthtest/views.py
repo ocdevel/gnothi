@@ -11,9 +11,7 @@ from jwtauthtest.utils import vars, is_dev
 from jwtauthtest import ml
 import requests
 from dateutil.parser import parse as dparse
-
 import nltk
-nltk.download('punkt')
 
 
 def as_user():
@@ -385,7 +383,7 @@ def run_themes():
         if re.match('dream(s|ing)?', tag_name, re.IGNORECASE):
             entries = nltk.tokenize.sent_tokenize('. '.join(entries))
 
-    if len(entries) < 10:
+    if len(entries) < 2:
         return send_error("Not enough entries to work with, come back later")
     data = ml.themes(entries, with_entries=False)
     if len(data) == 0:
