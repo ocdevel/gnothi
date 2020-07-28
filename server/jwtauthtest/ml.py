@@ -136,6 +136,7 @@ def influencers(user_id, specific_target=None, logger=None):
 Themes
 """
 
+import string
 # from gensim.utils import simple_preprocess
 from gensim.parsing import preprocessing as pp
 from gensim.corpora.dictionary import Dictionary
@@ -147,64 +148,121 @@ from jwtauthtest.unmarkdown import unmark
 nlp = spacy.load('en_core_web_sm', disable=['parser', 'ner'])
 
 
-def entries_to_paras(entries):
-    return [
-        unmark(para)
-        for entry in entries
-        for para in re.split('\n{2,}', entry)
-    ]
+class Clean():
+    # TODO use RE_PUNCT inserts for proper punctuation handling. See gensim.parsing.preprocessing.RE_PUNCT
+    # RE_PUNCT = re.compile(r'([%s])+' % re.escape(string.punctuation), re.UNICODE)
+    RE_PUNCT = "[.,!;?]"
 
+    @staticmethod
+    def fix_punct(s):
+        return re.sub(rf"({Clean.RE_PUNCT})([a-zA-Z])", r"\1 \2", s)
 
-def clean_text(entries, propn=True, for_lda=False):
-    def simple_cleanup(s):
-        s = s.lower()
-        # Fix punctuation
-        s = re.sub(r"([.,!;?])([a-z])", r"\1 \2", s)
-        return s
+    @staticmethod
+    def only_ascii(s):
+        return re.sub(r"[^\x00-\x7F\xA9]+", "", s)
 
-    def lemmas(txt):
-        if not txt: return txt
+    @staticmethod
+    def ends_w_punct(s):
+        return re.search(rf"{Clean.RE_PUNCT}$", s)
 
-        postags = ['NOUN', 'ADJ', 'VERB', 'ADV']
-        if propn: postags.append('PROPN')
+    @staticmethod
+    def is_markup_block(i, lines):
+        s = lines[i]
+        s_next = lines[i+1] if i+1 < len(lines) else ''
+        RE_LI =  r"^\s*([*\-+]|[0-9]+\.)"
+        is_block = False
 
-        tokens = []
-        doc = nlp(txt)
-        for t in doc:
-            if t.pos_ == 'NUM':
-                tokens.append('number')
-            elif t.is_stop or t.is_punct:
+        # heading
+        if re.search(r"^[#]+", s):
+            is_block = True
+            end_with = "."
+        # li (come before UL for inline replacement)
+        elif re.search(RE_LI, s):
+            s = re.sub("^\s*", "", s)  # unmark doesn't like spaces before li's
+            is_block = True
+            end_with = ";"
+        # ul
+        elif re.search(RE_LI, s_next):
+            is_block = True
+            end_with = ":"
+
+        if not is_block: return False, ""
+        s = unmark(s)
+        s = s if Clean.ends_w_punct(s) else s + end_with
+        return True, s
+
+    @staticmethod
+    def entries_to_paras(entries):
+        # Convert entries into paragraphs. Do some basic cleanup
+        paras = []
+        def clean_append(p):
+            p = unmark(p)
+
+            if len(p) < 128: return
+            p = Clean.fix_punct(p)
+            p = Clean.only_ascii(p)
+            p = pp.strip_multiple_whitespaces(p)
+            if not Clean.ends_w_punct(p):
+                p = p + "."
+            paras.append(p)
+
+        entries = "\n\n".join(entries)
+        lines = re.split('\n+', entries)
+        block_agg = []
+        for i, line in enumerate(lines):
+            # For consistent markdown blocks (title, list-header, list-items) group them all into one paragraph.
+            # Once no more block detected, bust it.
+            is_block, block_txt = Clean.is_markup_block(i, lines)
+            if is_block:
+                block_agg.append(block_txt)
                 continue
-            elif t.pos_ not in postags:
-                continue
-            else:
-                tokens.append(t._.lemma())
-        return " ".join(tokens)
+            elif len(block_agg) > 0:
+                block = " ".join(block_agg)
+                block_agg.clear()
+                clean_append(block)
+            clean_append(line)
+        return paras
 
-    # punctuation, numeric, stopwords handled in lemminflect
-    filters = [
-        simple_cleanup,
-        pp.strip_non_alphanum,
-        pp.strip_multiple_whitespaces,
-        lemmas
-    ]
-    tokenized = [pp.preprocess_string(e, filters=filters) for e in entries]
-    if for_lda:
-        return tokenized
-    return [' '.join(e) for e in tokenized]
+    @staticmethod
+    def lda_texts(entries, propn=True):
+        def lemma(s):
+            if not s: return s
+
+            postags = ['NOUN', 'ADJ', 'VERB', 'ADV']
+            # Should only be true for user viewing their account (eg, not for book-rec sor other features)
+            if propn: postags.append('PROPN')
+
+            tokens = []
+            doc = nlp(s)
+            for t in doc:
+                if t.pos_ == 'NUM': tokens.append('number')
+                elif t.is_stop or t.is_punct: continue
+                elif t.pos_ not in postags: continue
+                else: tokens.append(t._.lemma())
+            return " ".join(tokens)
+
+        # punctuation, numeric, stopwords handled in lemminflect
+        filters = [
+            lambda s: s.lower(),
+            # _fix_punct, _only_ascii, # handled by strip_non_alphanum
+            pp.strip_non_alphanum,
+            pp.strip_multiple_whitespaces, # should be last, since pp.x() leaves whitespaces in removal
+            lemma
+        ]
+        return [pp.preprocess_string(e, filters=filters) for e in entries]
 
 
 def themes(entries, with_entries=True):
-    paras = entries_to_paras(entries)
-    texts = clean_text(paras, for_lda=True)
+    paras = Clean.entries_to_paras(entries)
+    texts = Clean.lda_texts(paras)
     dictionary = Dictionary(texts)
     corpus = [dictionary.doc2bow(text) for text in texts]
 
     # TODO run KneeLocator to find optimal coherence for n_topics, cache per user
     # https://www.desmos.com/calculator/ysj6inumvc
     # 1-5 entries should be about 1-3 topics; 200 entries about 8
-    n_topics = math.floor(1 + 3 * math.log10(len(paras)))
-    print('n_topics', n_topics, 'paras', len(paras))
+    n_topics = math.floor(1 + 3 * math.log10(len(texts)))
+    print('n_topics', n_topics, 'paras', len(texts))
 
     # Train the model on the corpus
     os.environ['MALLET_HOME'] = '/mallet-2.0.8'
@@ -217,12 +275,18 @@ def themes(entries, with_entries=True):
         workers=THREADS
     )
 
+    for_summary = {i: [] for i in range(n_topics)}
+    for i, a in enumerate(lda[corpus]):
+        topic = np.argmax([x[1] for x in a])  # (topic, score)
+        for_summary[topic].append(paras[i])
+
     topics = {}
-    for idx, topic in lda.show_topics(formatted=False, num_words=7):
+    for i, topic in lda.show_topics(formatted=False, num_words=7):
         terms = [w[0] for w in topic]
-        sent = sentiment(' '.join(terms))
-        # summary = summarize(entries_in_cluster, min_length=100, max_length=200)
-        topics[str(idx)] = {'terms': terms, 'sentiment': sent, 'summary': ''}
+        blob = (' ').join(for_summary[i])
+        sent = sentiment(blob)
+        summary = summarize(blob, min_length=64, max_length=128)
+        topics[str(i)] = {'terms': terms, 'sentiment': sent, 'summary': summary}
 
     return topics
 
@@ -315,7 +379,7 @@ def resources(entries, logger=None, metric="cosine", by_cluster=False, by_centro
     if test is False:
         return offline_df
 
-    e_user = entries_to_paras(entries)
+    e_user = Clean.entries_to_paras(entries)
 
     path_ = 'tmp/libgen.pkl'
     if os.path.exists(path_):
