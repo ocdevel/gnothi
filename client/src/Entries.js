@@ -219,7 +219,7 @@ export default function Entries({fetch_, as}) {
     return <>
       <Alert variant='info'>
         <div>{desc}</div>
-        <small className="text-muted">Select <FaTags /> tags above to limit entries.</small>
+        <small className="text-muted">Select <FaTags /> tags above to limit entries, or all tags are used.</small>
       </Alert>
       {comp}
     </>

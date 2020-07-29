@@ -345,7 +345,7 @@ def query(question, entries):
     kwargs = dict(question=question, context=context)
     res = run_gpu_model(dict(method='question-answering', args=[], kwargs=kwargs))
     if res is False:
-        return OFFLINE_MSG
+        return [{'answer': OFFLINE_MSG}]
     return res
 
 

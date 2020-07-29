@@ -30,6 +30,11 @@ export default function Summarize({fetch_, as, tags}) {
       feature={'summarization'}
     />
     {fetching ? spinner : <Button type="submit" variant="primary" className='bottom-margin'>Submit</Button>}
-    {res && <p>{sent2face(res.sentiment)} {res.summary}</p>}
+    {res && <>
+      <hr/>
+      <p>
+        {sent2face(res.sentiment)} {res.summary}
+      </p>
+    </>}
   </Form>
 }

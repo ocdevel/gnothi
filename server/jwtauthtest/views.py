@@ -372,6 +372,18 @@ def limit_days(entries_q):
     return entries_q.filter(Entry.created_at > x_days)\
         .order_by(Entry.created_at.asc())
 
+def limit_by_tags(entries_q):
+    tags = request.get_json().get('tags', None)
+    # no tags selected uses all entries
+    if not tags: return entries_q
+
+    joins = [mapper.class_ for mapper in entries_q._join_entities]
+    # already joined in Entry.snoop
+    if EntryTag not in joins:
+        entries_q = entries_q.join(EntryTag, Tag)
+    entries_q = entries_q.filter(Tag.id.in_(tags))
+    return entries_q
+
 
 @app.route('/api/themes', methods=['POST'])
 @jwt_required()
@@ -379,15 +391,13 @@ def run_themes():
     user, snooping = as_user()
     if snooping and not user.share_data.themes:
         return cant_snoop('Themes')
-    data = request.get_json()
-    tags = data.get('tags', False)
     entries = Entry.query.filter(Entry.user_id==user.id)
-    if tags:
-        entries = entries.join(EntryTag, Tag).filter(Tag.id.in_(tags))
     entries = limit_days(entries)
+    entries = limit_by_tags(entries)
     entries = [e.text for e in entries.all()]
 
     # For dreams, special handle: process every sentence. TODO make note in UI
+    tags = request.get_json().get('tags', None)
     if tags and len(tags) == 1:
         tag_name = Tag.query.get(tags[0]).name
         if re.match('dream(s|ing)?', tag_name, re.IGNORECASE):
@@ -407,12 +417,9 @@ def get_books():
     user, snooping = as_user()
     if snooping and not user.share_data.themes:
         return cant_snoop('Books')
-    data = request.get_json()
-    tags = data.get('tags', False)
     entries = Entry.query.filter(Entry.user_id == user.id)
-    if tags:
-        entries = entries.join(EntryTag, Tag).filter(Tag.id.in_(tags))
     entries = limit_days(entries)
+    entries = limit_by_tags(entries)
     entries = [e.text for e in entries.all()]
     if (not snooping) or user.share_data.profile:
         entries = [user.profile_to_text()] + entries
@@ -439,6 +446,7 @@ def query():
     else:
         entries = Entry.query.filter(Entry.user_id == user.id)
     entries = limit_days(entries)
+    entries = limit_by_tags(entries)
     entries = [e.text for e in entries]
 
     if (not snooping) or user.share_data.profile:
@@ -461,14 +469,8 @@ def summarize():
     else:
         entries = Entry.query.filter(Entry.user_id == user.id)
 
-    tags = data.get('tags', None)
-    if tags:
-        if not snooping:
-            # already joined in Entry.snoop
-            entries = entries.join(EntryTag, Tag)
-        entries = entries.filter(Tag.id.in_(tags))
-
     entries = limit_days(entries)
+    entries = limit_by_tags(entries)
     entries = ' '.join(e.text for e in entries)
     entries = re.sub('\s+', ' ', entries)  # mult new-lines
 

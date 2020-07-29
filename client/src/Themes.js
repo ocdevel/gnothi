@@ -39,10 +39,11 @@ export default function Themes({fetch_, as, tags}) {
       >Show Themes</Button>
     )}
     </Form>
+    {_.size(topics) > 0 && <hr/>}
     {_.map(topics, (obj, topic)=>(
       <Card key={topic} className='bottom-margin'>
         <Card.Body>
-          <Card.Title>Topic {topic}</Card.Title>
+          <Card.Title>Theme {topic+1}</Card.Title>
           {/*<Card.Subtitle className="mb-2 text-muted">Card Subtitle</Card.Subtitle>*/}
           <Card.Text>
             {sent2face(obj.sentiment)}

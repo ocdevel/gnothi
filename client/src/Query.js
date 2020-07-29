@@ -30,7 +30,7 @@ export default function Query({fetch_}) {
     return <>
       <hr/>
       {n_answers > 1 && <>
-        <Alert variant='info'>More entries than AI can likes, splitting into chunks by time period.</Alert>
+        <Alert variant='info'>Too many entries, splitting into chunks by time period.</Alert>
       </>}
       {answers.map((a, i) => <>
         <Card style={{marginTop: 10}}>

@@ -44,6 +44,7 @@ export default function Books({fetch_, as, tags}) {
       )}
     </div>
     <div>
+      {books.length > 0 && <hr/>}
       {books.map(b => <div>
         <h5>{b.title}</h5>
         <p>
