@@ -1,17 +1,19 @@
-import React, {useEffect, useState} from "react";
-import {sent2face, spinner, trueKeys} from "./utils";
-import {Button, Card, Form} from "react-bootstrap";
-import _ from "lodash";
+import React, {useEffect, useState} from "react"
+import {sent2face, spinner, trueKeys} from "./utils"
+import {Button, Card, Form} from "react-bootstrap"
+import _ from "lodash"
+import ForXDays from "./ForXDays"
 
 export default function Themes({fetch_, as, tags}) {
   const [topics, setTopics] = useState({})
   const [fetching, setFetching] = useState(false)
   const [notShared, setNotShared] = useState(false)
+  const [form, setForm] = useState({days: 200})
 
   const fetchTopics = async () => {
     setFetching(true)
-    const body = {}
     const tags_ = trueKeys(tags)
+    const body = {...form}
     if (tags_.length) { body['tags'] = tags_}
     const {data, code, message} = await fetch_('themes', 'POST', body)
     setFetching(false)
@@ -22,6 +24,13 @@ export default function Themes({fetch_, as, tags}) {
   if (notShared) {return <h5>{notShared}</h5>}
 
   return <>
+    <Form onSubmit={_.noop}>
+    <ForXDays
+      form={form}
+      setForm={setForm}
+      feature={'themes'}
+    />
+
     {fetching ? spinner : (
       <Button
         className='bottom-margin'
@@ -29,6 +38,7 @@ export default function Themes({fetch_, as, tags}) {
         onClick={fetchTopics}
       >Show Themes</Button>
     )}
+    </Form>
     {_.map(topics, (obj, topic)=>(
       <Card key={topic} className='bottom-margin'>
         <Card.Body>

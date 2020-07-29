@@ -363,6 +363,16 @@ def influencers():
     return jsonify({'data': data})
 
 
+def limit_days(entries_q):
+    days = int(request.get_json()['days'])
+    print(days)
+    now = datetime.datetime.utcnow()
+    x_days = now - datetime.timedelta(days=days)
+    # build a beginning-to-end story
+    return entries_q.filter(Entry.created_at > x_days)\
+        .order_by(Entry.created_at.asc())
+
+
 @app.route('/api/themes', methods=['POST'])
 @jwt_required()
 def run_themes():
@@ -374,7 +384,7 @@ def run_themes():
     entries = Entry.query.filter(Entry.user_id==user.id)
     if tags:
         entries = entries.join(EntryTag, Tag).filter(Tag.id.in_(tags))
-    entries = entries.order_by(Entry.created_at.asc())  # build a beginning-to-end story if using BERT
+    entries = limit_days(entries)
     entries = [e.text for e in entries.all()]
 
     # For dreams, special handle: process every sentence. TODO make note in UI
@@ -402,6 +412,7 @@ def get_books():
     entries = Entry.query.filter(Entry.user_id == user.id)
     if tags:
         entries = entries.join(EntryTag, Tag).filter(Tag.id.in_(tags))
+    entries = limit_days(entries)
     entries = [e.text for e in entries.all()]
     if (not snooping) or user.share_data.profile:
         entries = [user.profile_to_text()] + entries
@@ -420,12 +431,14 @@ def get_books():
 @app.route('/api/query', methods=['POST'])
 @jwt_required()
 def query():
+    # FIXME not using tags!
     user, snooping = as_user()
     question = request.get_json()['query']
     if snooping:
-        entries = Entry.snoop(current_identity.username, user.id, ['summary', 'full']).all()
+        entries = Entry.snoop(current_identity.username, user.id, ['summary', 'full'])
     else:
-        entries = user.entries
+        entries = Entry.query.filter(Entry.user_id == user.id)
+    entries = limit_days(entries)
     entries = [e.text for e in entries]
 
     if (not snooping) or user.share_data.profile:
@@ -441,9 +454,7 @@ def summarize():
     user, snooping = as_user()
 
     data = request.get_json()
-    now = datetime.datetime.utcnow()
-    days, words = int(data['days']), int(data['words'])
-    x_days_ago = now - datetime.timedelta(days=days)
+    words = int(data['words'])
 
     if snooping:
         entries = Entry.snoop(current_identity.username, user.id, ['summary', 'full'])
@@ -457,10 +468,7 @@ def summarize():
             entries = entries.join(EntryTag, Tag)
         entries = entries.filter(Tag.id.in_(tags))
 
-    # order by asc to paint a story from start to finish, since we're summarizing
-    entries = entries.filter(Entry.created_at > x_days_ago) \
-        .order_by(Entry.created_at.asc()) \
-        .all()
+    entries = limit_days(entries)
     entries = ' '.join(e.text for e in entries)
     entries = re.sub('\s+', ' ', entries)  # mult new-lines
 

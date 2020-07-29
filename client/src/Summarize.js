@@ -1,11 +1,12 @@
 import React, {useState} from 'react'
-import {Form, InputGroup, Button} from "react-bootstrap";
-import {spinner, trueKeys, sent2face} from "./utils";
+import {Form, InputGroup, Button} from "react-bootstrap"
+import {spinner, trueKeys, sent2face} from "./utils"
+import ForXDays from "./ForXDays"
 
 export default function Summarize({fetch_, as, tags}) {
   const [fetching, setFetching] = useState(false)
   const [res, setRes] = useState({summary: '', sentiment: ''})
-  const [form, setForm] = useState({days: 7, words: 30})
+  const [form, setForm] = useState({days: 14, words: 300})
   const [notShared, setNotShared] = useState(false)
 
   if (notShared) {return <h5>{notShared}</h5>}
@@ -14,42 +15,20 @@ export default function Summarize({fetch_, as, tags}) {
     setFetching(true)
     e.preventDefault();
     const tags_ = trueKeys(tags)
-    if (tags_.length) { form['tags'] = tags_ }
-    const {data, code, message} = await fetch_('summarize', 'POST', form)
+    const body = {...form}
+    if (tags_.length) { body['tags'] = tags_ }
+    const {data, code, message} = await fetch_('summarize', 'POST', body)
     setFetching(false)
     if (code === 401) {return setNotShared(message)}
     setRes(data)
   }
 
-  const changeField = k => e => setForm({...form, [k]: e.target.value})
-
   return <Form onSubmit={submit}>
-    <Form.Group controlId="summarizeDays">
-      <Form.Label>Summarize</Form.Label>
-      <InputGroup>
-        <Form.Control
-          type="number"
-          min={1}
-          value={form.days}
-          onChange={changeField('days')}
-        />
-        <InputGroup.Append>
-          <InputGroup.Text id="inputGroupPrepend">Days</InputGroup.Text>
-        </InputGroup.Append>
-      </InputGroup>
-      <Form.Label>In</Form.Label>
-      <InputGroup>
-        <Form.Control
-          type="number"
-          min={5}
-          value={form.words}
-          onChange={changeField('words')}
-        />
-        <InputGroup.Append>
-          <InputGroup.Text id="inputGroupPrepend">Words</InputGroup.Text>
-        </InputGroup.Append>
-      </InputGroup>
-    </Form.Group>
+    <ForXDays
+      setForm={setForm}
+      form={form}
+      feature={'summarization'}
+    />
     {fetching ? spinner : <Button type="submit" variant="primary" className='bottom-margin'>Submit</Button>}
     {res && <p>{sent2face(res.sentiment)} {res.summary}</p>}
   </Form>

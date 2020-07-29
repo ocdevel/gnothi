@@ -5,7 +5,8 @@ import {sent2face, SimplePopover} from "./utils"
 import {
   Button,
   ButtonGroup,
-  Form
+  Form,
+  Alert
 } from "react-bootstrap"
 import moment from "moment"
 import Tags from "./Tags"
@@ -203,10 +204,10 @@ export default function Entries({fetch_, as}) {
       return renderEntries()
     }
     const desc = {
-      query: `Ask a question about your entries (eg "how do I feel about _?"). Use proper English/grammar, it makes a difference.`,
-      themes: `Show common recurring themes across your entries. Select tags above to limit entries.`,
-      summarize: `Summarize your entries for an overview. Select tags above to limit entries.`,
-      books: `Generate a list of recommended self-help books which might help you, based on your entries. Select tags above to limit entries.`,
+      query: `Ask a question about your entries.`,
+      themes: `Show common recurring themes across your entries.`,
+      summarize: `Summarize your entries for an overview.`,
+      books: `Generate a list of recommended self-help books which might help you, based on your entries.`,
     }[tool]
     const args = {fetch_, as, tags}
     const comp = {
@@ -216,7 +217,10 @@ export default function Entries({fetch_, as}) {
       books: <Books {...args} />
     }[tool]
     return <>
-      <p>{desc}</p>
+      <Alert variant='info'>
+        <div>{desc}</div>
+        <small className="text-muted">Select <FaTags /> tags above to limit entries.</small>
+      </Alert>
       {comp}
     </>
   }
