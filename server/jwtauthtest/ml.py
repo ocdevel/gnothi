@@ -308,25 +308,29 @@ OFFLINE_MSG = "AI server offline, check back later"
 
 
 def run_gpu_model(data):
+    # AI offline (it's spinning up from views.py->ec2_updown.py)
+    res = engine.execute("select status from jobs_status limit 1").fetchone()
+    if res.status != 'on':
+        return False
+
     sql = f"insert into jobs values (%s, %s, %s)"
     jid = str(uuid4())
     engine.execute(sql, (jid, 'new', psycopg2.Binary(pickle.dumps(data))))
     i = 0
     while True:
-        sql = f"select data from jobs where id=%s and state='done'"
-        job = engine.execute(sql, (jid,)).fetchone()
-        if job:
+        time.sleep(1)
+        res = engine.execute("select state from jobs where id=%s", (jid,))
+        state = res.fetchone().state
+
+        # 5 seconds, still not picked up; something's wrong
+        if i > 4 and state in ['new', 'error']:
+            return False
+
+        if state == 'done':
+            job = engine.execute(f"select data from jobs where id=%s", (jid,)).fetchone()
             engine.execute("delete from jobs where id=%s", (jid,))
             return pickle.loads(job.data)['data']
-
-        # 4 seconds and it still hasn't picked it up? bail
-        sql = f"select 1 from jobs where id=%s and state in ('new', 'error')"
-        if i == 4 and engine.execute(sql, (jid,)).fetchone():
-            break
         i += 1
-        time.sleep(1)
-
-    return False
 
 
 def summarize(text, min_length=None, max_length=None):

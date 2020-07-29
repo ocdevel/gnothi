@@ -18,15 +18,15 @@ def _fetch_status():
 
 
 def ec2_up():
+    if is_dev(): return
     try:
         ec2_client.start_instances(InstanceIds=[EC2_ID])
     except: pass
 
 def jobs_status():
     res = _fetch_status()
-    if is_dev(): pass
     # job service is fresh
-    elif res.elapsed_svc < 5: pass
+    if res.elapsed_svc < 5: pass
     # jobs svc stale (pending|off), decide if should turn ec2 on (debounce for race condition)
     elif res.elapsed_client > 2:
         # status=on if server not turned off via ec2_down_maybe
@@ -40,12 +40,12 @@ def jobs_status():
 # already threaded since in cron job
 def ec2_down_maybe():
     res = _fetch_status()
-    if is_dev(): return
     # turn off after 5 minutes of inactivity. Note the client setInterval will keep the activity fresh while
     # using even if idling, so no need to wait long after
     if res.elapsed_client / 60 < 5 or res.status == 'off':
         return
     engine.execute("update jobs_status set status='off', ts_client=now()")
+    if is_dev(): return
     try:
         ec2_client.stop_instances(InstanceIds=[EC2_ID])
     except: pass

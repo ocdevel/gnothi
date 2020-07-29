@@ -1,7 +1,7 @@
-import enum, pdb, re
+import enum, pdb, re, threading, time
 from datetime import date, datetime
 from dateutil import tz
-from jwtauthtest.database import Base
+from jwtauthtest.database import Base, engine, db_session
 from jwtauthtest import ml
 from sqlalchemy import \
     Column, \
@@ -158,11 +158,28 @@ class Entry(Base, CustomBase):
             .join(Share, ShareTag.share_id == Share.id)\
             .filter(ShareTag.type.in_(type), Share.email == from_email, Share.user_id == to_id)
 
-    def run_models(self):
-        self.title_summary = ml.summarize(self.text, 5, 20)
-        self.text_summary = ml.summarize(self.text, 32, 128)
-        self.sentiment = ml.sentiment(self.text)
+    @staticmethod
+    def run_models_(id):
+        while True:
+            res = engine.execute("select status from jobs_status").fetchone()
+            if res.status != 'on':
+                time.sleep(1)
+                continue
+            entry = Entry.query.get(id)
+            entry.title_summary = ml.summarize(entry.text, 5, 20)
+            entry.text_summary = ml.summarize(entry.text, 32, 128)
+            entry.sentiment = ml.sentiment(entry.text)
+            db_session.commit()
+            return
 
+    def run_models(self):
+        # Run summarization/sentiment in background thread, so (a) user can get back to business;
+        # (b) if AI server offline, wait till online
+        self.title_summary = "🕒 AI is generating a title"
+        self.text_summary = "🕒 AI is generating a summary"
+        t = threading.Thread(target=Entry.run_models_, args=(self.id,))
+        t.start()
+        # Entry.run_models_(self.id)  # debug w/o threading
 
     # TODO look into https://stackoverflow.com/questions/7102754/jsonify-a-sqlalchemy-result-set-in-flask
     #                https://stackoverflow.com/questions/5022066/how-to-serialize-sqlalchemy-result-to-json
