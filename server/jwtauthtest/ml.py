@@ -337,9 +337,6 @@ def sentiment(text):
     res = run_gpu_model(dict(method='sentiment-analysis', args=[text], kwargs={}))
     if res is False:
         return "surprise"
-    for s in res:
-        # numpy can't serialize
-        s['score'] = float(s['score'])
     return res[0]['label']
 
 
@@ -349,8 +346,6 @@ def query(question, entries):
     res = run_gpu_model(dict(method='question-answering', args=[], kwargs=kwargs))
     if res is False:
         return OFFLINE_MSG
-    res = res['answer']
-    if not res: res = "No answer"
     return res
 
 

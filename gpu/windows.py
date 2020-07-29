@@ -5,6 +5,9 @@ if __name__ == '__main__':
     from box import Box
     import torch
     from sqlalchemy import create_engine
+    from sentence_transformers import SentenceTransformer
+
+    AVG_WORD_SIZE = 5
 
     def join_(paths):
         return os.path.join(os.path.dirname(__file__), *paths)
@@ -22,7 +25,6 @@ if __name__ == '__main__':
     print('torch.cuda.get_device_name(0)', torch.cuda.get_device_name(0))
     print('torch.cuda.is_available()', torch.cuda.is_available())
 
-    from sentence_transformers import SentenceTransformer
     # sentence_encode = SentenceTransformer('roberta-base-nli-mean-tokens')
     sentence_encode = SentenceTransformer('roberta-base-nli-stsb-mean-tokens')
 
@@ -37,11 +39,10 @@ if __name__ == '__main__':
     # from transformers import pipeline
     from transformers import AutoTokenizer, AutoModelWithLMHead#, AutoModelForQuestionAnswering, AutoModelForSequenceClassification
 
-    # FIXME do part-chunking here too
+    # TODO chunk sentiment? (or is it fine with chunked summaries?)
     sent_tokenizer = AutoTokenizer.from_pretrained("mrm8488/t5-base-finetuned-emotion")
     sent_model = AutoModelWithLMHead.from_pretrained("mrm8488/t5-base-finetuned-emotion").to("cuda")
     sent_max = 512
-
     def sentiment(text):
         if not text:
             return [{"label": "", "score": 1.}]
@@ -61,7 +62,6 @@ if __name__ == '__main__':
     sum_tokenizer = BartTokenizer.from_pretrained('facebook/bart-large-cnn')
     sum_model = BartForConditionalGeneration.from_pretrained('facebook/bart-large-cnn').to("cuda")
     sum_max = 1024
-
     def summarize(text, max_length=None, min_length=None):
         if not text:
             return [{"summary_text": "Nothing to summarize (try adjusting date range)"}]
@@ -102,33 +102,31 @@ if __name__ == '__main__':
     # Revert to simple line, delete the rest when fixed: https://github.com/huggingface/transformers/issues/4934
     # Error: CUDA out of memory. Tried to allocate 3.11 GiB (GPU 0; 11.00 GiB total capacity; 6.97 GiB already allocated; 2.71 GiB free; 7.03 GiB reserved in total by PyTorch)
     # https://github.com/patrickvonplaten/notebooks/blob/master/How_to_evaluate_Longformer_on_TriviaQA_using_NLP.ipynb
+    qa_max = 4096
     def qa_longformer(question, context):
         if not context:
-            return {'answer': "No text to work with for answers"}
+            return [{'answer': "Not enough entries to use this feature."}]
 
         # FIXME use smarter 4096 recent tokens here
         answers = []
-        max_chars = 4096 * 5
+        max_chars = qa_max * AVG_WORD_SIZE
         for i in range(int(len(context) / max_chars)):
             context_ = context[i * max_chars:(i + 1) * max_chars]
-            encoding = qa_tokenizer.encode_plus(question, context_, return_tensors="pt", max_length=4096)
+            encoding = qa_tokenizer.encode_plus(question, context_, return_tensors="pt", max_length=qa_max)
             input_ids = encoding["input_ids"].to("cuda")
             attention_mask = encoding["attention_mask"].to("cuda")
             with torch.no_grad():
                 start_scores, end_scores = qa_model(input_ids=input_ids, attention_mask=attention_mask)
             all_tokens = qa_tokenizer.convert_ids_to_tokens(encoding["input_ids"][0].tolist())
             answer_tokens = all_tokens[torch.argmax(start_scores): torch.argmax(end_scores) + 1]
-            answer = qa_tokenizer.decode(qa_tokenizer.convert_tokens_to_ids(answer_tokens))[1:].replace('"',
-                                                                                                        '')  # remove space prepending space token and remove unnecessary '"'
-            if len(answer) > 128:
+            # remove space prepending space token and remove unnecessary '"'
+            answer = qa_tokenizer.decode(qa_tokenizer.convert_tokens_to_ids(answer_tokens))[1:].replace('"', '')
+            if len(answer) > 200:
                 answer = summarize(answer, max_length=20)[0]["summary_text"]
             if answer not in answers:
                 answers.append(answer)
-        if len(answers) == 1:
-            answer = answers[0]
-        else:
-            answer = "Multiple answers: " + "\n\n".join(f"({i}) {answer}" for i, answer in enumerate(answers))
-        return {'answer': answer}
+        if not answers: return [{'answer': 'No answer'}]
+        return [{'answer': a} for a in answers]
 
 
     m = Box({
