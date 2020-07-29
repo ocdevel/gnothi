@@ -23,6 +23,7 @@ import Books from './Books'
 import Error from './Error'
 import moment from "moment-timezone"
 import emoji from 'react-easy-emoji'
+import {aiStatusEmoji} from "./utils"
 
 let host = window.location.origin.split(':')
 // host = host[0] + ':' + host[1] + ':' + 3001
@@ -33,7 +34,7 @@ function App() {
   const [user, setUser] = useState()
   const [as, setAs] = useState()
   const [serverError, setServerError] = useState()
-  const [jobsStatus, setJobsStatus] = useState('off')
+  const [aiStatus, setAiStatus] = useState('off')
   // const [as, setAs] = useState('3694b314-d050-46da-882a-726598bd6abf')
 
   const fetch_ = async (route, method='GET', body=null) => {
@@ -74,17 +75,17 @@ function App() {
 
   const onAuth = jwt_ => setJwt(jwt_)
 
-  const checkJobsStatus = () => {
+  const checkAiStatus = () => {
     return setInterval(async () => {
       const {data, code} = await fetch_('jobs-status')
-      setJobsStatus(data)
+      setAiStatus(data)
     }, 1000)
   }
 
   useEffect(() => {
     getUser()
 
-    const timer = checkJobsStatus()
+    const timer = checkAiStatus()
     return () => clearTimeout(timer)
   }, [jwt])
 
@@ -117,16 +118,10 @@ function App() {
       username = <>{emoji("🕵️")} {username}</>
     }
 
-    const statusOpts = {props: {width: 16, height: 16}}
-    let jobsStatusIcon = {
-      off: emoji("🔴", statusOpts),
-      on: emoji("🟢", statusOpts),
-      pending: emoji("🟡", statusOpts)
-    }[jobsStatus]
     return (
       <Navbar bg="dark" variant="dark">
         <LinkContainer to="/">
-          <Navbar.Brand>Gnothi {jobsStatusIcon}</Navbar.Brand>
+          <Navbar.Brand>Gnothi {aiStatusEmoji(aiStatus)}</Navbar.Brand>
         </LinkContainer>
         <Navbar.Toggle aria-controls="responsive-navbar-nav" />
         <Navbar.Collapse id="responsive-navbar-nav">
@@ -169,7 +164,12 @@ function App() {
         <Error message={serverError} />
         <Switch>
           <Route path="/j">
-            <Journal fetch_={fetch_} as={as} setServerError={setServerError}/>
+            <Journal
+              fetch_={fetch_}
+              as={as}
+              setServerError={setServerError}
+              aiStatus={aiStatus}
+            />
           </Route>
           <Route path="/profile">
             <ProfileRoutes fetch_={fetch_} as={as} />

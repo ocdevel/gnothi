@@ -1,9 +1,9 @@
 import React, {useEffect, useState} from "react";
 import {Col, Form, Card, Button, Alert} from "react-bootstrap";
-import {spinner} from './utils'
+import {spinner, AiStatusMsg} from './utils'
 import ForXDays from "./ForXDays"
 
-export default function Query({fetch_}) {
+export default function Query({fetch_, aiStatus}) {
   const [query, setQuery] = useState('')
   const [answers, setAnswers] = useState([])
   const [fetching, setFetching] = useState(false)
@@ -64,10 +64,14 @@ export default function Query({fetch_}) {
         setForm={setForm}
         feature={'question-answering'}
       />
-      {fetching ? spinner : <Button
-        variant="primary"
-        type="submit"
-      >Ask</Button>}
+      {fetching ? spinner : <>
+        <Button
+          disabled={aiStatus !== 'on'}
+          variant="primary"
+          type="submit"
+        >Ask</Button>
+        <AiStatusMsg status={aiStatus} />
+      </>}
     </Form>
     {renderAnswers()}
   </>

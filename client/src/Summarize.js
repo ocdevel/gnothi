@@ -1,9 +1,9 @@
 import React, {useState} from 'react'
 import {Form, InputGroup, Button} from "react-bootstrap"
-import {spinner, trueKeys, sent2face} from "./utils"
+import {spinner, trueKeys, sent2face, AiStatusMsg} from "./utils"
 import ForXDays from "./ForXDays"
 
-export default function Summarize({fetch_, as, tags}) {
+export default function Summarize({fetch_, as, tags, aiStatus}) {
   const [fetching, setFetching] = useState(false)
   const [res, setRes] = useState({summary: '', sentiment: ''})
   const [form, setForm] = useState({days: 14, words: 300})
@@ -29,8 +29,16 @@ export default function Summarize({fetch_, as, tags}) {
       form={form}
       feature={'summarization'}
     />
-    {fetching ? spinner : <Button type="submit" variant="primary" className='bottom-margin'>Submit</Button>}
-    {res && <>
+    {fetching ? spinner : <>
+      <Button
+        disabled={aiStatus !== 'on'}
+        type="submit"
+        variant="primary"
+        className='bottom-margin'
+      >Submit</Button>
+      <AiStatusMsg status={aiStatus} />
+    </>}
+    {res.summary && <>
       <hr/>
       <p>
         {sent2face(res.sentiment)} {res.summary}

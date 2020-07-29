@@ -1,10 +1,10 @@
 import React, {useEffect, useState} from "react"
-import {sent2face, spinner, trueKeys} from "./utils"
+import {AiStatusMsg, sent2face, spinner, trueKeys} from "./utils"
 import {Button, Card, Form} from "react-bootstrap"
 import _ from "lodash"
 import ForXDays from "./ForXDays"
 
-export default function Themes({fetch_, as, tags}) {
+export default function Themes({fetch_, as, tags, aiStatus}) {
   const [topics, setTopics] = useState({})
   const [fetching, setFetching] = useState(false)
   const [notShared, setNotShared] = useState(false)
@@ -36,10 +36,12 @@ export default function Themes({fetch_, as, tags}) {
       <Form.Text muted>Takes a long time. Will fix later.</Form.Text>
     </> : <>
       <Button
+        disabled={aiStatus !== 'on'}
         className='bottom-margin'
         variant='primary'
         onClick={fetchTopics}
       >Show Themes</Button>
+      <AiStatusMsg status={aiStatus} />
     </>}
     </Form>
     {_.size(topics) > 0 && <hr/>}

@@ -1,10 +1,10 @@
 import React, {useEffect, useState} from "react";
-import {spinner, trueKeys} from "./utils";
+import {AiStatusMsg, spinner, trueKeys} from "./utils";
 import {Button, Table, Form} from "react-bootstrap";
 import {FaTags, FaUser} from "react-icons/fa"
 import ForXDays from "./ForXDays"
 
-export default function Books({fetch_, as, tags}) {
+export default function Books({fetch_, as, tags, aiStatus}) {
   const [books, setBooks] = useState([])
   const [fetching, setFetching] = useState(false)
   const [notShared, setNotShared] = useState(false)
@@ -35,10 +35,12 @@ export default function Books({fetch_, as, tags}) {
         <Form.Text muted>Loading book recommendations (1-10seconds)</Form.Text>
       </> : <>
         <Button
+          disabled={aiStatus !== 'on'}
           className='bottom-margin'
           variant='primary'
           onClick={fetchBooks}
         >Show Books</Button>
+        <AiStatusMsg status={aiStatus} />
       </>}
     </div>
     <div>

@@ -25,7 +25,7 @@ import {
   FaRegNewspaper
 } from 'react-icons/fa'
 
-export default function Entries({fetch_, as}) {
+export default function Entries({fetch_, as, aiStatus}) {
   const [entries, setEntries] = useState([])
   const [notShared, setNotShared] = useState(false)
   const [tool, setTool] = useState()
@@ -209,7 +209,7 @@ export default function Entries({fetch_, as}) {
       summarize: `Summarize your entries for an overview.`,
       books: `Generate a list of recommended self-help books which might help you, based on your entries.`,
     }[tool]
-    const args = {fetch_, as, tags}
+    const args = {fetch_, as, tags, aiStatus}
     const comp = {
       query: <Query {...args} />,
       themes: <Themes {...args} />,

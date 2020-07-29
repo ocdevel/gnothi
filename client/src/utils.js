@@ -1,5 +1,5 @@
-import {OverlayTrigger, Popover, Spinner} from "react-bootstrap"
-import React from "react"
+import React, {useEffect, useState} from "react"
+import {OverlayTrigger, Popover, Spinner, Form} from "react-bootstrap"
 import _ from "lodash"
 import emoji from 'react-easy-emoji'
 
@@ -44,6 +44,37 @@ const sent2face = (sentiment) => {
   )
 }
 
+const aiStatusEmoji = (status) => {
+  const statusOpts = {props: {width: 16, height: 16}}
+  return {
+    off: emoji("🔴", statusOpts),
+    on: emoji("🟢", statusOpts),
+    pending: emoji("🟡", statusOpts)
+  }[status]
+}
+
+const AiStatusMsg = ({status}) => {
+  const [showMore, setShowMore] = useState(false)
+  if (status === 'on') {return null}
+  const doShowMore = () => setShowMore(true)
+
+  return <>
+    <Form.Text muted>
+      {aiStatusEmoji(status)} AI server waking up, check back in 3 minutes. <a href='#' onClick={doShowMore}>Why?</a>
+      {showMore && <p>
+        The AI-based features require expensive servers. I have them turned off when nobody's using the site, and on when someone's back. It takes about 3 minutes to wake. The status {aiStatusEmoji(status)} icon is always visible top-left of website.
+      </p>}
+    </Form.Text>
+  </>
+}
+
 const trueKeys = o => _.transform(o, (m,v,k) => {if (v) {m.push(k)}}, [])
 
-export {spinner, sent2face, trueKeys, SimplePopover}
+export {
+  spinner,
+  sent2face,
+  trueKeys,
+  SimplePopover,
+  aiStatusEmoji,
+  AiStatusMsg
+}
