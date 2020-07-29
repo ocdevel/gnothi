@@ -5,12 +5,6 @@ export default function ForXDays({setForm, form, feature}) {
   // feature = question-answering|summarization|themes|resources
   const changeField = k => e => setForm({...form, [k]: e.target.value})
 
-  let daysHelp = "Number of days' worth of entries (from today) to include. Eg, 7 if you're checking weekly."
-  if (~['summarization', 'question-answering'].indexOf(feature)) {
-    const n_words = {summarization: 512, 'question-answering': 4096}[feature]
-    daysHelp += ` This AI feature has text limits (${n_words} words), so too far back could give poor results.`
-  }
-
   return <>
   <Form.Row>
     <Form.Group as={Col}>
@@ -27,7 +21,9 @@ export default function ForXDays({setForm, form, feature}) {
           <InputGroup.Text>Days</InputGroup.Text>
         </InputGroup.Append>
       </InputGroup>
-      <Form.Text muted>{daysHelp}</Form.Text>
+      <Form.Text muted>
+        Number of days' worth of entries (from today) to include. Eg, 7 if you're checking weekly.
+      </Form.Text>
     </Form.Group>
     {feature === 'summarization' && <>
       <Form.Group as={Col}>
