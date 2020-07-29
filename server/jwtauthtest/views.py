@@ -397,11 +397,11 @@ def run_themes():
     entries = [e.text for e in entries.all()]
 
     # For dreams, special handle: process every sentence. TODO make note in UI
-    tags = request.get_json().get('tags', None)
-    if tags and len(tags) == 1:
-        tag_name = Tag.query.get(tags[0]).name
-        if re.match('dream(s|ing)?', tag_name, re.IGNORECASE):
-            entries = nltk.tokenize.sent_tokenize('. '.join(entries))
+    # tags = request.get_json().get('tags', None)
+    # if tags and len(tags) == 1:
+    #     tag_name = Tag.query.get(tags[0]).name
+    #     if re.match('dream(s|ing)?', tag_name, re.IGNORECASE):
+    #         entries = nltk.tokenize.sent_tokenize('. '.join(entries))
 
     if len(entries) < 2:
         return send_error("Not enough entries to work with, come back later")
