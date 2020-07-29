@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from "react";
 import {spinner, trueKeys} from "./utils";
-import {Button, Table} from "react-bootstrap";
+import {Button, Table, Form} from "react-bootstrap";
 import {FaTags, FaUser} from "react-icons/fa"
 import ForXDays from "./ForXDays"
 
@@ -30,18 +30,16 @@ export default function Books({fetch_, as, tags}) {
       feature={'resources'}
     />
     <div>
-      {fetching ? (
-        <>
-          {spinner}
-          <p className='text-muted'>Loading book recommendations (1-10seconds)</p>
-        </>
-      ) : (
+      {fetching ? <>
+        <div>{spinner}</div>
+        <Form.Text muted>Loading book recommendations (1-10seconds)</Form.Text>
+      </> : <>
         <Button
           className='bottom-margin'
           variant='primary'
           onClick={fetchBooks}
         >Show Books</Button>
-      )}
+      </>}
     </div>
     <div>
       {books.length > 0 && <hr/>}

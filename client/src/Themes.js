@@ -31,13 +31,16 @@ export default function Themes({fetch_, as, tags}) {
       feature={'themes'}
     />
 
-    {fetching ? spinner : (
+    {fetching ? <>
+      <div>{spinner}</div>
+      <Form.Text muted>Takes a long time. Will fix later.</Form.Text>
+    </> : <>
       <Button
         className='bottom-margin'
         variant='primary'
         onClick={fetchTopics}
       >Show Themes</Button>
-    )}
+    </>}
     </Form>
     {_.size(topics) > 0 && <hr/>}
     {_.map(topics, (obj, topic)=>(

@@ -166,6 +166,11 @@ class Clean():
         return re.search(rf"{Clean.RE_PUNCT}$", s)
 
     @staticmethod
+    def remove_apos(s):
+        # call this before removing punctuation via gensim/spacy, since they're replaced with space
+        return re.sub(r"'", "", s)
+
+    @staticmethod
     def is_markup_block(i, lines):
         s = lines[i]
         s_next = lines[i+1] if i+1 < len(lines) else ''
@@ -245,6 +250,7 @@ class Clean():
         filters = [
             lambda s: s.lower(),
             # _fix_punct, _only_ascii, # handled by strip_non_alphanum
+            Clean.remove_apos,
             pp.strip_non_alphanum,
             pp.strip_multiple_whitespaces, # should be last, since pp.x() leaves whitespaces in removal
             lemma
@@ -281,11 +287,12 @@ def themes(entries, with_entries=True):
         for_summary[topic].append(paras[i])
 
     topics = {}
+    # TODO multi-thread this
     for i, topic in lda.show_topics(formatted=False, num_words=7):
         terms = [w[0] for w in topic]
         blob = (' ').join(for_summary[i])
-        sent = sentiment(blob)
         summary = summarize(blob, min_length=64, max_length=128)
+        sent = sentiment(summary)
         topics[str(i)] = {'terms': terms, 'sentiment': sent, 'summary': summary}
 
     return topics
