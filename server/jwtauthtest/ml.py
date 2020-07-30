@@ -272,7 +272,6 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from kneed import KneeLocator
 from sklearn.decomposition import PCA
 # from sklearn.manifold import TSNE
-import hdbscan
 
 
 def _knee(X):
@@ -292,7 +291,7 @@ def _knee(X):
         return guess.good
     distortions = []
     for k in K:
-        kmeanModel = KMeans(n_clusters=k, batch_size=300).fit(X)
+        kmeanModel = KMeans(n_clusters=k).fit(X)
         distortion = cdist(X, kmeanModel.cluster_centers_, 'euclidean')
         distortion = sum(np.min(distortion, axis=1)) / X.shape[0]
         distortions.append(distortion)
@@ -305,11 +304,9 @@ def _knee(X):
 
 def cluster(vecs):
     num_clusters = _knee(vecs)
-    clusterer = KMeans(n_clusters=num_clusters)
+    clusterer = KMeans(n_clusters=num_clusters, batch_size=300)
     clusterer.fit(vecs)
-
-    # clusterer = hdbscan.HDBSCAN(min_cluster_size=5)
-    # clusterer.fit(vecs)
+    # 315461d5 hdbscan (doesn't work worth crap)
 
     labels = np.unique(clusterer.labels_)
     print('n_labels', len(labels))
@@ -320,14 +317,20 @@ def cluster(vecs):
         if l != -1  # outlier in hdbscan
     }
 
+def dim_reduce(vecs):
+    ae = AutoEncoder(load=True)
+    if ae.loaded:
+        # If available (only after we run on books), use AutoEncoder; more accurate
+        return ae.encode(vecs)
+    # Otherwise just use PCA for now; we'll train later (during books)
+    n_components = min(vecs.shape[0], 32)
+    return PCA(n_components=n_components).fit_transform(vecs)
 
 def themes(entries, with_entries=False, with_summaries=True):
     entries = Clean.entries_to_paras(entries)
     vecs = run_gpu_model(dict(method='sentence-encode', args=[entries], kwargs={}))
     vecs = np.array(vecs)
-
-    n_components = min(vecs.shape[0], 32)
-    vecs = PCA(n_components=n_components).fit_transform(vecs)
+    vecs = dim_reduce(vecs)
     clusters = cluster(vecs)
 
     stripped = [' '.join(e) for e in Clean.lda_texts(entries)]
@@ -451,7 +454,6 @@ from sqlalchemy import create_engine, text
 # https://stackoverflow.com/a/49935803/362790
 book_engine = create_engine(vars.DB_BOOKS)
 
-
 def load_books(logger):
     path_ = 'tmp/libgen.pkl'
     if os.path.exists(path_):
@@ -569,7 +571,14 @@ def resources(entries, logger=None, metric="cosine", by_cluster=True, by_centroi
     vecs_all = np.vstack([vecs_user, vecs_books])
 
     ae = AutoEncoder(load=True)
-    vecs_books = ae.fit_transform(vecs_books)
+    if not ae.loaded:
+        # Hasn't run yet, and we need to train it for themes too. Train on everything we have.
+        all_db = engine.execute("select text from entries").fetchall()
+        all_db = Clean.entries_to_paras([x.text for x in all_db])
+        all_db = run_gpu_model(dict(method='sentence-encode', args=[all_db], kwargs={}))
+        ae.fit(np.vstack([vecs_books, all_db]))
+
+    vecs_books = ae.encode(vecs_books)
     vecs_user = ae.encode(vecs_user)
 
     user_fillers = ['' for _ in e_user]

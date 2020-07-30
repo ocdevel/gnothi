@@ -1,10 +1,29 @@
 import os, pickle, time
+import keras
+import tensorflow as tf
 from keras import backend as K
-from keras.layers import Input, Dense
+from keras.layers import Layer, Input, Dense
 from keras.models import Model, load_model
 from keras.callbacks import EarlyStopping
-from keras.optimizers import Adam
+from keras.optimizers import Adam, SGD
 from sklearn.model_selection import train_test_split
+
+
+# https://mc.ai/a-beginners-guide-to-build-stacked-autoencoder-and-tying-weights-with-it/
+class DenseTied(Layer):
+    def __init__(self, dense, activation=None, **kwargs):
+        self.dense = dense
+        self.activation = keras.activations.get(activation)
+        super().__init__(**kwargs)
+
+    def build(self, batch_input_shape):
+        self.biases = self.add_weight(name="bias", initializer="zeros", shape=[self.dense.input_shape[-1]])
+        super().build(batch_input_shape)
+
+    def call(self, inputs):
+        z = tf.matmul(inputs, self.dense.weights[0], transpose_b=True)
+        return self.activation(z + self.biases)
+
 
 class AutoEncoder():
     def __init__(self, load=False):
@@ -20,24 +39,27 @@ class AutoEncoder():
 
     def model(self):
         # See https://github.com/maxfrenzel/CompressionVAE/blob/master/cvae/cvae.py
+        # More complex boilerplate https://towardsdatascience.com/build-the-right-autoencoder-tune-and-optimize-using-pca-principles-part-ii-24b9cca69bd6
         # it likes [512, 512] -> 64 (for 768->32)
         input = Input(shape=(768,))
-        encoded = Dense(256, activation='relu')(input)
-        encoded = Dense(32, activation='relu')(encoded)
+        dense1 = Dense(512, activation='selu')
+        dense2 = Dense(32, activation='linear')
 
-        decoded = Dense(256, activation='relu')(encoded)
-        decoded = Dense(768, activation=None)(decoded)
+        enco1 = dense1(input)
+        enco2 = dense2(enco1)
 
-        autoencoder = Model(input, decoded)
-        encoder = Model(input, encoded)
+        deco1 = DenseTied(dense2, activation='selu')(enco2)
+        deco2 = DenseTied(dense1, activation='linear')(deco1)
+
+        autoencoder = Model(input, deco2)
+        encoder = Model(input, enco2)
 
         adam = Adam(learning_rate=1e-3)
-        autoencoder.compile(optimizer=adam, loss='mse')
+        autoencoder.compile(metrics=['accuracy'], optimizer=adam, loss='mse')
         return autoencoder, encoder
 
-    def fit(self, X):
-        if self.loaded: return
 
+    def fit(self, X):
         x_train, x_test = train_test_split(X, shuffle=True)
         es = EarlyStopping(monitor='val_loss', mode='min', patience=4, min_delta=.001)
         self.autoencoder.fit(
@@ -53,7 +75,3 @@ class AutoEncoder():
 
     def encode(self, X):
         return self.encoder.predict(X)
-
-    def fit_transform(self, X):
-        self.fit(X)
-        return self.encode(X)
