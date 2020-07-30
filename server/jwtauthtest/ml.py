@@ -166,9 +166,17 @@ class Clean():
         return re.search(rf"{Clean.RE_PUNCT}$", s)
 
     @staticmethod
+    def strip_html(s):
+        return BeautifulSoup(s, "html5lib").text
+
+    @staticmethod
     def remove_apos(s):
         # call this before removing punctuation via gensim/spacy, since they're replaced with space
         return re.sub(r"'", "", s)
+
+    @staticmethod
+    def urls(s):
+        return re.sub(r"http[s]?://\S+", "url", s)
 
     @staticmethod
     def is_markup_block(i, lines):
@@ -257,44 +265,86 @@ class Clean():
         ]
         return [pp.preprocess_string(e, filters=filters) for e in entries]
 
+from sklearn.cluster import KMeans
+from sklearn.feature_extraction.text import TfidfVectorizer
+from kneed import KneeLocator
+# from sklearn.manifold import TSNE
+# import hdbscan
 
-def themes(entries, with_entries=True):
-    paras = Clean.entries_to_paras(entries)
-    texts = Clean.lda_texts(paras)
-    dictionary = Dictionary(texts)
-    corpus = [dictionary.doc2bow(text) for text in texts]
 
-    # TODO run KneeLocator to find optimal coherence for n_topics, cache per user
-    # https://www.desmos.com/calculator/ysj6inumvc
-    # 1-5 entries should be about 1-3 topics; 200 entries about 8
-    n_topics = math.floor(1 + 3 * math.log10(len(texts)))
-    print('n_topics', n_topics, 'paras', len(texts))
+def _knee(X):
+    # TODO hyper cache this
+    # Code from https://github.com/arvkevi/kneed/blob/master/notebooks/decreasing_function_walkthrough.ipynb
+    distortions = []
+    guess_max = math.floor(1 + 5 * math.log10(X.shape[0]))
+    guess_good = math.floor(1 + 3 * math.log10(X.shape[0]))
+    K = range(1, guess_max)
+    if len(K) == 1:
+        return guess_good
+    for k in K:
+        kmeanModel = KMeans(n_clusters=k).fit(X)
+        kmeanModel.fit(X)
+        distortion = scipy.spatial.distance.cdist(X, kmeanModel.cluster_centers_, 'euclidean')
+        distortion = sum(np.min(distortion, axis=1)) / X.shape[0]
+        distortions.append(distortion)
+    kn = KneeLocator(list(K), distortions, S=1.0, curve='convex', direction='decreasing')
+    return kn.knee or guess_good
 
-    # Train the model on the corpus
-    os.environ['MALLET_HOME'] = '/mallet-2.0.8'
-    mallet_path = os.environ['MALLET_HOME'] + '/bin/mallet'  # update this path
-    lda = LdaMallet(
-        mallet_path,
-        corpus=corpus,
-        num_topics=n_topics,
-        id2word=dictionary,
-        workers=THREADS
-    )
 
-    for_summary = {i: [] for i in range(n_topics)}
-    for i, a in enumerate(lda[corpus]):
-        topic = np.argmax([x[1] for x in a])  # (topic, score)
-        for_summary[topic].append(paras[i])
+def themes(entries, with_entries=False, with_summaries=True):
+    entries = Clean.entries_to_paras(entries)
+    vecs = run_gpu_model(dict(method='sentence-encode', args=[entries], kwargs={}))
 
+    num_clusters = _knee(np.array(vecs))
+    clusterer = KMeans(n_clusters=num_clusters)
+    clusterer.fit(vecs)
+
+    # clusterer = hdbscan.HDBSCAN(min_cluster_size=5)
+    # clusterer.fit(vecs)
+
+    labels = np.unique(clusterer.labels_)
+    print('n_labels', len(labels))
+
+    stripped = [' '.join(e) for e in Clean.lda_texts(entries)]
+    stripped = pd.Series(stripped)
+    entries = pd.Series(entries)
+
+    # see https://stackoverflow.com/a/34236002/362790
+    top_terms = 8
     topics = {}
-    # TODO multi-thread this
-    for i, topic in lda.show_topics(formatted=False, num_words=7):
-        terms = [w[0] for w in topic]
-        blob = (' ').join(for_summary[i])
-        summary = summarize(blob, min_length=64, max_length=128)
-        sent = sentiment(summary)
-        topics[str(i)] = {'terms': terms, 'sentiment': sent, 'summary': summary}
+    for l in labels:
+        if l == -1: continue  # assuming means no cluster?
+        in_clust_idxs = clusterer.labels_ == l
+        stripped_in_cluster = stripped.iloc[in_clust_idxs].tolist()
+        entries_in_cluster = entries.iloc[in_clust_idxs].tolist()
+        print('n_entries', len(entries_in_cluster))
+        entries_in_cluster = '. '.join(entries_in_cluster)
 
+        # model = CountVectorizer()
+        model = TfidfVectorizer()
+        res = model.fit_transform(stripped_in_cluster)
+
+        # https://medium.com/@cristhianboujon/how-to-list-the-most-common-words-from-text-corpus-using-scikit-learn-dad4d0cab41d
+        sum_words = res.sum(axis=0)
+        words_freq = [(word, sum_words[0, idx]) for word, idx in model.vocabulary_.items()]
+        words_freq = sorted(words_freq, key=lambda x: x[1], reverse=True)
+        terms = [x[0] for x in words_freq[:top_terms]]
+
+        print(terms)
+        summary, sent = '', ''
+        if with_summaries:
+            summary = summarize(entries_in_cluster, min_length=10, max_length=100)
+            sent = sentiment(summary)
+        l = str(l)
+        topics[l] = {
+            'terms': terms,
+            'sentiment': sent,
+            'summary': summary
+        }
+        if with_entries:
+            topics[l]['entries'] = in_clust_idxs
+            topics[l]['n_entries'] = sum(in_clust_idxs)
+        print('\n\n\n')
     return topics
 
 """
@@ -379,7 +429,7 @@ from sqlalchemy import create_engine, text
 book_engine = create_engine(vars.DB_BOOKS)
 
 
-def resources(entries, logger=None, metric="cosine", by_cluster=False, by_centroid=False, n_recs=40):
+def resources(entries, logger=None, metric="euclidean", by_cluster=True, by_centroid=True, n_recs=30):
     test = run_gpu_model(dict(method='sentence-encode', args=[["test test test"]], kwargs={}))
     offline_df = [{'ID': '', 'sims': 0, 'title': '', 'author': '', 'text': OFFLINE_MSG, 'topic': ''}]
     if test is False:
@@ -455,7 +505,14 @@ def resources(entries, logger=None, metric="cosine", by_cluster=False, by_centro
         logger.info("Removing HTML")
         broken = '(\?\?\?|\#\#\#)'  # russian / other FIXME better way to handle
         books = books[~(books.Title + books.descr).str.contains(broken)]
-        books['descr'] = books.descr.apply(lambda x: BeautifulSoup(x, "html5lib").text)
+
+        books['descr'] = books.descr.apply(Clean.strip_html)\
+            .apply(Clean.fix_punct)\
+            .apply(Clean.only_ascii)\
+            .apply(pp.strip_multiple_whitespaces)\
+            .apply(Clean.urls)\
+            .apply(unmark)
+
         books['clean'] = books.Title + ' ' + books.descr
         # books = books[books.clean.apply(lambda x: detect(x) == 'en')]
         print('n_books after cleanup', books.shape[0])
@@ -485,7 +542,7 @@ def resources(entries, logger=None, metric="cosine", by_cluster=False, by_centro
         'topic': user_fillers + books.topic_descr.tolist()
     })
     if by_cluster:
-        themes_ = themes(entries)
+        themes_ = themes(entries, with_entries=True, with_summaries=False)
     else:
         themes_ = {}
     if len(themes_) < 1:

@@ -405,7 +405,7 @@ def run_themes():
 
     if len(entries) < 2:
         return send_error("Not enough entries to work with, come back later")
-    data = ml.themes(entries, with_entries=False)
+    data = ml.themes(entries)
     if len(data) == 0:
         return send_error("No patterns found in your entries yet, come back later")
     return jsonify({'data': data})
@@ -424,14 +424,7 @@ def get_books():
     if (not snooping) or user.share_data.profile:
         entries = [user.profile_to_text()] + entries
 
-    opts = {
-        'metric': request.args.get('metric', 'cosine'),
-        'by_cluster': request.args.get('by_cluster', False),
-        'by_centroid': request.args.get('by_centroid', False),
-        'n_recs': request.args.get('n_recs', 40)
-    }
-
-    books = ml.resources(entries, logger=app.logger, **opts)
+    books = ml.resources(entries, logger=app.logger)
     return jsonify({'data': books})
 
 
