@@ -28,6 +28,7 @@ class DenseTied(Layer):
 class AutoEncoder():
     def __init__(self, load=False):
         K.clear_session()
+        # load = False
         self.load = load
         self.loaded = False
 
@@ -41,23 +42,30 @@ class AutoEncoder():
         # See https://github.com/maxfrenzel/CompressionVAE/blob/master/cvae/cvae.py
         # More complex boilerplate https://towardsdatascience.com/build-the-right-autoencoder-tune-and-optimize-using-pca-principles-part-ii-24b9cca69bd6
         # it likes [512, 512] -> 64 (for 768->32)
+        layers = [
+            (384, 'selu'),
+            (64, 'linear')
+        ]
+        denses = [Dense(l[0], activation=l[1]) for l in layers]
+        encos, decos = [], []
         input = Input(shape=(768,))
-        dense1 = Dense(512, activation='selu')
-        dense2 = Dense(32, activation='linear')
+        for i, d in enumerate(denses):
+            prev = input if i == 0 else encos[-1]
+            encos.append(d(prev))
+        for i, d in enumerate(denses[::-1]):
+            mirror = -(i+1)
+            act = layers[mirror][1]
+            deco = encos[-1] if i == 0 else decos[-1]
+            deco = DenseTied(d, activation=act)(deco)
+            decos.append(deco)
 
-        enco1 = dense1(input)
-        enco2 = dense2(enco1)
-
-        deco1 = DenseTied(dense2, activation='selu')(enco2)
-        deco2 = DenseTied(dense1, activation='linear')(deco1)
-
-        autoencoder = Model(input, deco2)
-        encoder = Model(input, enco2)
+        autoencoder = Model(input, decos[-1])
+        encoder = Model(input, encos[-1])
 
         adam = Adam(learning_rate=1e-3)
         autoencoder.compile(metrics=['accuracy'], optimizer=adam, loss='mse')
+        #autoencoder.summary()
         return autoencoder, encoder
-
 
     def fit(self, X):
         x_train, x_test = train_test_split(X, shuffle=True)

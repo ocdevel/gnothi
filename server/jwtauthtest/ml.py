@@ -276,7 +276,7 @@ from sklearn.decomposition import PCA
 
 def _knee(X):
     # FIXME manually found this for books; handle better
-    if X.shape[0] > 5000: return 17
+    if X.shape[0] > 5000: return 20
 
     # TODO hyper cache this
     # Code from https://github.com/arvkevi/kneed/blob/master/notebooks/decreasing_function_walkthrough.ipynb
