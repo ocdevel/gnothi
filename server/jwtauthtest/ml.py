@@ -267,7 +267,7 @@ class Clean():
         ]
         return [pp.preprocess_string(e, filters=filters) for e in entries]
 
-from sklearn.cluster import KMeans
+from sklearn.cluster import MiniBatchKMeans as KMeans
 from sklearn.feature_extraction.text import TfidfVectorizer
 from kneed import KneeLocator
 from sklearn.decomposition import PCA
@@ -277,11 +277,11 @@ import hdbscan
 
 def _knee(X):
     # FIXME manually found this for books; handle better
-    if X.shape[0] > 5000: return 20
+    if X.shape[0] > 5000: return 17
 
     # TODO hyper cache this
     # Code from https://github.com/arvkevi/kneed/blob/master/notebooks/decreasing_function_walkthrough.ipynb
-    guess = Box(min=1, max=5, good=3)
+    guess = Box(min=1, max=10, good=3)
     guess = Box({
         k: math.floor(1 + v * math.log10(X.shape[0]))
         for k, v in guess.items()
@@ -292,7 +292,7 @@ def _knee(X):
         return guess.good
     distortions = []
     for k in K:
-        kmeanModel = KMeans(n_clusters=k).fit(X)
+        kmeanModel = KMeans(n_clusters=k, batch_size=300).fit(X)
         distortion = cdist(X, kmeanModel.cluster_centers_, 'euclidean')
         distortion = sum(np.min(distortion, axis=1)) / X.shape[0]
         distortions.append(distortion)
