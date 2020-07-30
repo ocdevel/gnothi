@@ -1,5 +1,6 @@
 from jwtauthtest.utils import vars
 from jwtauthtest.database import engine
+from jwtauthtest.autoencoder import AutoEncoder
 import re, math, pdb, os
 from pprint import pprint
 import pandas as pd
@@ -271,23 +272,25 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from kneed import KneeLocator
 from sklearn.decomposition import PCA
 # from sklearn.manifold import TSNE
-# import hdbscan
+import hdbscan
 
 
 def _knee(X):
+    # FIXME manually found this for books; handle better
+    if X.shape[0] > 5000: return 20
+
     # TODO hyper cache this
     # Code from https://github.com/arvkevi/kneed/blob/master/notebooks/decreasing_function_walkthrough.ipynb
-    distortions = []
-    guess = Box(min=1, max=10, good=3)
+    guess = Box(min=1, max=5, good=3)
     guess = Box({
         k: math.floor(1 + v * math.log10(X.shape[0]))
         for k, v in guess.items()
     })
-    step = 2 #  math.ceil(guess.max/10)
+    step = math.ceil(guess.max/10)
     K = range(guess.min, guess.max, step)
     if len(K) == 1:
         return guess.good
-    print(K)
+    distortions = []
     for k in K:
         kmeanModel = KMeans(n_clusters=k).fit(X)
         distortion = cdist(X, kmeanModel.cluster_centers_, 'euclidean')
@@ -298,11 +301,6 @@ def _knee(X):
     kn = KneeLocator(list(K), distortions, S=S, curve='convex', direction='decreasing')
     print('knee', kn.knee)
     return kn.knee or guess.good
-
-
-def dim_reduce(vecs):
-    n_components = min(vecs.shape[0], 96)
-    return PCA(n_components=n_components).fit_transform(vecs)
 
 
 def cluster(vecs):
@@ -326,7 +324,10 @@ def cluster(vecs):
 def themes(entries, with_entries=False, with_summaries=True):
     entries = Clean.entries_to_paras(entries)
     vecs = run_gpu_model(dict(method='sentence-encode', args=[entries], kwargs={}))
-    vecs = dim_reduce(np.array(vecs))
+    vecs = np.array(vecs)
+
+    n_components = min(vecs.shape[0], 32)
+    vecs = PCA(n_components=n_components).fit_transform(vecs)
     clusters = cluster(vecs)
 
     stripped = [' '.join(e) for e in Clean.lda_texts(entries)]
@@ -451,7 +452,109 @@ from sqlalchemy import create_engine, text
 book_engine = create_engine(vars.DB_BOOKS)
 
 
-def resources(entries, logger=None, metric="euclidean", by_cluster=True, by_centroid=True, n_recs=30):
+def load_books(logger):
+    path_ = 'tmp/libgen.pkl'
+    if os.path.exists(path_):
+        logger.info("Loading cached book data")
+        with open(path_, 'rb') as pkl:
+            return pickle.load(pkl)
+
+    logger.info("Fetching books")
+    # for-sure psych. See tmp/topics.txt, or libgen.sql topics(lang='en')
+    psych_topics = 'psychology|self-help|therapy'
+    # good other psych topics, either mis-categorized or other
+    psych_topics += '|anthropology|social|religion'
+    psych_topics += '|^history|^education'
+
+    sql = Box(
+        select="select u.ID, u.Title, u.Author, d.descr, t.topic_descr",
+        body="""
+        from updated u
+            inner join description d on d.md5=u.MD5
+            inner join topics t on u.Topic=t.topic_id
+                and t.lang='en'
+        where u.Language = 'English'
+            and title not regexp 'sams|teach yourself'  -- remove junk
+            and (length(d.descr) + length(u.Title)) > 200
+        and u.ID not in ('62056','72779','111551','165602','165606','239835','240399','272945','310202','339718','390651','530739','570667','581466','862274','862275','879029','935149','1157279','1204687','1210652','1307307','1410416','1517634','1568907','1592543','2103755','2128089','2130515','2187329','2270690','2270720','2275684','2275804','2277017','2284616','2285559','2314405','2325313','2329959','2340421','2347272','2374055','2397307','2412259','2420958','2421152','2421413','2423975')
+        """,
+
+        # handle u.Topic='' (1326526 rows)
+        just_psych = f"and t.topic_descr regexp '{psych_topics}'",
+
+        # find_problems
+        just_ids="select distinct u.ID",
+        where_id="and u.ID=:id"
+    )
+
+    FIND_PROBLEMS = False
+    ALL_BOOKS = False
+
+    if FIND_PROBLEMS:
+        # # Those MD5s: UnicodeDecodeError: 'charmap' codec can't decode byte 0x9d in position 636: character maps to <undefined>
+        # TODO try instead create_engine(convert_unicode=True)
+
+        ids = ' '.join([sql.just_ids, sql.body])
+        ids = [x.ID for x in engine.execute(ids).fetchall()]
+        problem_ids = []
+        for i, id in enumerate(tqdm(ids)):
+            if i%10000==0:
+                print(len(problem_ids)/len(ids)*100, '% problems')
+            try:
+                row = ' '.join([sql.select, sql.body, sql.where_id])
+                engine.execute(text(row), id=id)
+            except:
+                problem_ids.append(id)
+        problem_ids = ','.join([f"'{id}'" for id in problem_ids])
+        print(f"and u.ID not in ({problem_ids})")
+        exit(0)
+
+    sql_ = [sql.select, sql.body]
+    if not ALL_BOOKS: sql_ += [sql.just_psych]
+    sql_ = ' '.join(sql_)
+    with book_engine.connect() as conn:
+        books = pd.read_sql(sql_, conn)
+    books = books.drop_duplicates(['Title', 'Author'])
+
+    print('n_books before cleanup', books.shape[0])
+    logger.info("Removing HTML")
+    broken = '(\?\?\?|\#\#\#)'  # russian / other FIXME better way to handle
+    books = books[~(books.Title + books.descr).str.contains(broken)]
+
+    books['descr'] = books.descr.apply(Clean.strip_html)\
+        .apply(Clean.fix_punct)\
+        .apply(Clean.only_ascii)\
+        .apply(pp.strip_multiple_whitespaces)\
+        .apply(Clean.urls)\
+        .apply(unmark)
+
+    books['clean'] = books.Title + ' ' + books.descr
+    # books = books[books.clean.apply(lambda x: detect(x) == 'en')]
+    print('n_books after cleanup', books.shape[0])
+    e_books = books.clean.tolist()
+
+    logger.info(f"Running BERT on {len(e_books)} entries")
+    if ALL_BOOKS:
+        books_pkl = 'tmp/all_books.pkl'
+        with open(books_pkl, 'wb') as f:
+            pickle.dump(e_books, f)
+        run_gpu_model(dict(method='sentence-encode-pkl', args=[books_pkl], kwargs={}))
+        with open(books_pkl, 'rb') as f:
+            vecs_books = pickle.load(f)
+    else:
+        vecs_books = run_gpu_model(dict(method='sentence-encode', args=[e_books], kwargs={}))
+    with open(path_, 'wb') as pkl:
+        pickle.dump([vecs_books, books], pkl)
+    return vecs_books, books
+
+
+def resources(entries, logger=None, metric="cosine", by_cluster=True, by_centroid=False, n_recs=30):
+    """
+    metric=cosine is what's recommended in papers, but euclidean is used in our dim_reduce/cluster; and bert is normalized..
+    by_cluster=True to prevent washing out opposite recommends
+    by_centroid=False for a middle-ground between by_cluster=True|False (product within clusters, but not globally)
+    """
+
     test = run_gpu_model(dict(method='sentence-encode', args=[["test test test"]], kwargs={}))
     offline_df = [{'ID': '', 'sims': 0, 'title': '', 'author': '', 'text': OFFLINE_MSG, 'topic': ''}]
     if test is False:
@@ -460,106 +563,14 @@ def resources(entries, logger=None, metric="euclidean", by_cluster=True, by_cent
     e_user = Clean.entries_to_paras(entries)
     n_user = len(e_user)
 
-    path_ = 'tmp/libgen.pkl'
-    if os.path.exists(path_):
-        logger.info("Loading cached book data")
-        with open(path_, 'rb') as pkl:
-            vecs_books, books = pickle.load(pkl)
-    else:
-        logger.info("Fetching books")
-
-        with book_engine.connect() as conn:
-            # for-sure psych. See tmp/topics.txt, or libgen.sql topics(lang='en')
-            psych_topics = 'psychology|self-help|therapy'
-            # good other psych topics, either mis-categorized or other
-            psych_topics += '|anthropology|social|religion'
-            psych_topics += '|^history|^education'
-
-            sql = Box(
-                select="select u.ID, u.Title, u.Author, d.descr, t.topic_descr",
-                body="""
-                from updated u
-                    inner join description d on d.md5=u.MD5
-                    inner join topics t on u.Topic=t.topic_id
-                        and t.lang='en'
-                where u.Language = 'English'
-                    and title not regexp 'sams|teach yourself'  -- remove junk
-                    and (length(d.descr) + length(u.Title)) > 200
-                and u.ID not in ('62056','72779','111551','165602','165606','239835','240399','272945','310202','339718','390651','530739','570667','581466','862274','862275','879029','935149','1157279','1204687','1210652','1307307','1410416','1517634','1568907','1592543','2103755','2128089','2130515','2187329','2270690','2270720','2275684','2275804','2277017','2284616','2285559','2314405','2325313','2329959','2340421','2347272','2374055','2397307','2412259','2420958','2421152','2421413','2423975')
-                """,
-
-                # handle u.Topic='' (1326526 rows)
-                just_psych = f"and t.topic_descr regexp '{psych_topics}'",
-
-                # find_problems
-                just_ids="select distinct u.ID",
-                where_id="and u.ID=:id"
-            )
-
-            FIND_PROBLEMS = False
-            ALL_BOOKS = False
-
-            if FIND_PROBLEMS:
-                # # Those MD5s: UnicodeDecodeError: 'charmap' codec can't decode byte 0x9d in position 636: character maps to <undefined>
-                # TODO try instead create_engine(convert_unicode=True)
-
-                ids = ' '.join([sql.just_ids, sql.body])
-                ids = [x.ID for x in conn.execute(ids).fetchall()]
-                problem_ids = []
-                for i, id in enumerate(tqdm(ids)):
-                    if i%10000==0:
-                        print(len(problem_ids)/len(ids)*100, '% problems')
-                    try:
-                        row = ' '.join([sql.select, sql.body, sql.where_id])
-                        conn.execute(text(row), id=id)
-                    except:
-                        problem_ids.append(id)
-                problem_ids = ','.join([f"'{id}'" for id in problem_ids])
-                print(f"and u.ID not in ({problem_ids})")
-                exit(0)
-
-            sql_ = [sql.select, sql.body]
-            if not ALL_BOOKS: sql_ += [sql.just_psych]
-            sql_ = ' '.join(sql_)
-            books = pd.read_sql(sql_, conn)
-            books = books.drop_duplicates(['Title', 'Author'])
-
-        print('n_books before cleanup', books.shape[0])
-        logger.info("Removing HTML")
-        broken = '(\?\?\?|\#\#\#)'  # russian / other FIXME better way to handle
-        books = books[~(books.Title + books.descr).str.contains(broken)]
-
-        books['descr'] = books.descr.apply(Clean.strip_html)\
-            .apply(Clean.fix_punct)\
-            .apply(Clean.only_ascii)\
-            .apply(pp.strip_multiple_whitespaces)\
-            .apply(Clean.urls)\
-            .apply(unmark)
-
-        books['clean'] = books.Title + ' ' + books.descr
-        # books = books[books.clean.apply(lambda x: detect(x) == 'en')]
-        print('n_books after cleanup', books.shape[0])
-        e_books = books.clean.tolist()
-
-        logger.info(f"Running BERT on {len(e_books)} entries")
-        if ALL_BOOKS:
-            books_pkl = 'tmp/all_books.pkl'
-            with open(books_pkl, 'wb') as f:
-                pickle.dump(e_books, f)
-            run_gpu_model(dict(method='sentence-encode-pkl', args=[books_pkl], kwargs={}))
-            with open(books_pkl, 'rb') as f:
-                vecs_books = pickle.load(f)
-        else:
-            vecs_books = run_gpu_model(dict(method='sentence-encode', args=[e_books], kwargs={}))
-            vecs_books = np.array(vecs_books)
-        with open(path_, 'wb') as pkl:
-            pickle.dump([vecs_books, books], pkl)
-
+    vecs_books, books = load_books(logger=logger)
     vecs_user = run_gpu_model(dict(method='sentence-encode', args=[e_user], kwargs={}))
-
     vecs_user, vecs_books = np.array(vecs_user), np.array(vecs_books)
-    vecs_all = dim_reduce(np.vstack([vecs_user, vecs_books]))
-    vecs_user, vecs_books = vecs_all[:n_user], vecs_all[n_user:]
+    vecs_all = np.vstack([vecs_user, vecs_books])
+
+    ae = AutoEncoder(load=True)
+    vecs_books = ae.fit_transform(vecs_books)
+    vecs_user = ae.encode(vecs_user)
 
     user_fillers = ['' for _ in e_user]
     rows = pd.DataFrame({
@@ -569,17 +580,18 @@ def resources(entries, logger=None, metric="euclidean", by_cluster=True, by_cent
         'author': user_fillers + books.Author.tolist(),
         'topic': user_fillers + books.topic_descr.tolist()
     })
+
     if by_cluster:
         # cluster everything, want books & entries in same fit_transform
         clusters = cluster(vecs_all)
         # then remove books
         clusters = {
             i: clust[:n_user]
-            for clust in clusters.items()
+            for i, clust in clusters.items()
         }
     else:
         # 1 cluster (so can iterate below anyway)
-        clusters = [True for _ in e_user]
+        clusters = {0: [True for _ in e_user]}
     # if not clusters: pass # empty/size=1; but should be handled in cluster()
 
     # since hdbscan may remove some entries, don't just use len(entries)
