@@ -7,6 +7,7 @@ import numpy as np
 from box import Box
 from multiprocessing import cpu_count
 from tqdm import tqdm
+from scipy.spatial.distance import cdist
 
 THREADS = cpu_count()
 
@@ -268,6 +269,7 @@ class Clean():
 from sklearn.cluster import KMeans
 from sklearn.feature_extraction.text import TfidfVectorizer
 from kneed import KneeLocator
+from sklearn.decomposition import PCA
 # from sklearn.manifold import TSNE
 # import hdbscan
 
@@ -276,26 +278,35 @@ def _knee(X):
     # TODO hyper cache this
     # Code from https://github.com/arvkevi/kneed/blob/master/notebooks/decreasing_function_walkthrough.ipynb
     distortions = []
-    guess_max = math.floor(1 + 5 * math.log10(X.shape[0]))
-    guess_good = math.floor(1 + 3 * math.log10(X.shape[0]))
-    K = range(1, guess_max)
+    guess = Box(min=1, max=10, good=3)
+    guess = Box({
+        k: math.floor(1 + v * math.log10(X.shape[0]))
+        for k, v in guess.items()
+    })
+    step = 2 #  math.ceil(guess.max/10)
+    K = range(guess.min, guess.max, step)
     if len(K) == 1:
-        return guess_good
+        return guess.good
+    print(K)
     for k in K:
         kmeanModel = KMeans(n_clusters=k).fit(X)
-        kmeanModel.fit(X)
-        distortion = scipy.spatial.distance.cdist(X, kmeanModel.cluster_centers_, 'euclidean')
+        distortion = cdist(X, kmeanModel.cluster_centers_, 'euclidean')
         distortion = sum(np.min(distortion, axis=1)) / X.shape[0]
         distortions.append(distortion)
-    kn = KneeLocator(list(K), distortions, S=1.0, curve='convex', direction='decreasing')
-    return kn.knee or guess_good
+        print(k, distortion)
+    S = 1.5  # 1.0
+    kn = KneeLocator(list(K), distortions, S=S, curve='convex', direction='decreasing')
+    print('knee', kn.knee)
+    return kn.knee or guess.good
 
 
-def themes(entries, with_entries=False, with_summaries=True):
-    entries = Clean.entries_to_paras(entries)
-    vecs = run_gpu_model(dict(method='sentence-encode', args=[entries], kwargs={}))
+def dim_reduce(vecs):
+    n_components = min(vecs.shape[0], 96)
+    return PCA(n_components=n_components).fit_transform(vecs)
 
-    num_clusters = _knee(np.array(vecs))
+
+def cluster(vecs):
+    num_clusters = _knee(vecs)
     clusterer = KMeans(n_clusters=num_clusters)
     clusterer.fit(vecs)
 
@@ -305,6 +316,19 @@ def themes(entries, with_entries=False, with_summaries=True):
     labels = np.unique(clusterer.labels_)
     print('n_labels', len(labels))
 
+    return {
+        l: clusterer.labels_ == l
+        for l in labels
+        if l != -1  # outlier in hdbscan
+    }
+
+
+def themes(entries, with_entries=False, with_summaries=True):
+    entries = Clean.entries_to_paras(entries)
+    vecs = run_gpu_model(dict(method='sentence-encode', args=[entries], kwargs={}))
+    vecs = dim_reduce(np.array(vecs))
+    clusters = cluster(vecs)
+
     stripped = [' '.join(e) for e in Clean.lda_texts(entries)]
     stripped = pd.Series(stripped)
     entries = pd.Series(entries)
@@ -312,9 +336,7 @@ def themes(entries, with_entries=False, with_summaries=True):
     # see https://stackoverflow.com/a/34236002/362790
     top_terms = 8
     topics = {}
-    for l in labels:
-        if l == -1: continue  # assuming means no cluster?
-        in_clust_idxs = clusterer.labels_ == l
+    for l, in_clust_idxs in clusters.items():
         stripped_in_cluster = stripped.iloc[in_clust_idxs].tolist()
         entries_in_cluster = entries.iloc[in_clust_idxs].tolist()
         print('n_entries', len(entries_in_cluster))
@@ -436,6 +458,7 @@ def resources(entries, logger=None, metric="euclidean", by_cluster=True, by_cent
         return offline_df
 
     e_user = Clean.entries_to_paras(entries)
+    n_user = len(e_user)
 
     path_ = 'tmp/libgen.pkl'
     if os.path.exists(path_):
@@ -528,10 +551,15 @@ def resources(entries, logger=None, metric="euclidean", by_cluster=True, by_cent
                 vecs_books = pickle.load(f)
         else:
             vecs_books = run_gpu_model(dict(method='sentence-encode', args=[e_books], kwargs={}))
+            vecs_books = np.array(vecs_books)
         with open(path_, 'wb') as pkl:
             pickle.dump([vecs_books, books], pkl)
 
     vecs_user = run_gpu_model(dict(method='sentence-encode', args=[e_user], kwargs={}))
+
+    vecs_user, vecs_books = np.array(vecs_user), np.array(vecs_books)
+    vecs_all = dim_reduce(np.vstack([vecs_user, vecs_books]))
+    vecs_user, vecs_books = vecs_all[:n_user], vecs_all[n_user:]
 
     user_fillers = ['' for _ in e_user]
     rows = pd.DataFrame({
@@ -542,36 +570,43 @@ def resources(entries, logger=None, metric="euclidean", by_cluster=True, by_cent
         'topic': user_fillers + books.topic_descr.tolist()
     })
     if by_cluster:
-        themes_ = themes(entries, with_entries=True, with_summaries=False)
+        # cluster everything, want books & entries in same fit_transform
+        clusters = cluster(vecs_all)
+        # then remove books
+        clusters = {
+            i: clust[:n_user]
+            for clust in clusters.items()
+        }
     else:
-        themes_ = {}
-    if len(themes_) < 1:
-        themes_ = {'0': {
-            'entries': [True for _ in e_user],
-            'n_entries': len(e_user)
-        }}
-    # since clustering may remove some entries, don't just use len(entries)
-    n_entries = sum(t['n_entries'] for _, t in themes_.items())
+        # 1 cluster (so can iterate below anyway)
+        clusters = [True for _ in e_user]
+    # if not clusters: pass # empty/size=1; but should be handled in cluster()
+
+    # since hdbscan may remove some entries, don't just use len(entries)
+    n_entries = sum(
+        sum(idx_mask)
+        for _, idx_mask in clusters.items()
+    )
 
     logger.info("Finding similars")
     send_attrs = ['title', 'author', 'text', 'topic']
     recs = []
 
-    for _, theme in themes_.items():
-        books_ = rows.iloc[len(e_user):].copy()
-        entries_ = np.array(vecs_user)[theme['entries']]
+    for _, idx_mask in clusters.items():
+        books_ = rows.iloc[n_user:].copy()
+        entries_ = vecs_user[idx_mask]
 
         if by_centroid:
             # Similar by distance to centroid
             centroid = np.mean(entries_, axis=0)
-            books_['sims'] = scipy.spatial.distance.cdist([centroid], vecs_books, metric)[0]
+            books_['sims'] = cdist([centroid], vecs_books, metric)[0]
         else:
             # Similar by product
-            sims = scipy.spatial.distance.cdist(entries_, vecs_books, metric)
+            sims = cdist(entries_, vecs_books, metric)
             books_['sims'] = np.prod(sims, axis=0)
 
         # sort by similar, take k
-        k = math.ceil(theme['n_entries'] / n_entries * n_recs)
+        k = math.ceil(sum(idx_mask) / n_entries * n_recs)
         k = max([k, 4])
         recs_ = books_.sort_values(by='sims').iloc[:k][['ID', 'sims', *send_attrs]]
         recs.append(recs_)
