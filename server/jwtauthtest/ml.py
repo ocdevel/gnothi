@@ -308,6 +308,7 @@ def themes(entries, with_entries=False, with_summaries=True):
     vecs = np.array(vecs)
 
     clusterer = Clusterer()
+    clusterer.load()
     assert(clusterer.loaded)
     clusters = clusterer.cluster(vecs)
 
