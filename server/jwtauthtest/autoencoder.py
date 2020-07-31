@@ -8,78 +8,51 @@ from keras.callbacks import EarlyStopping
 from keras.optimizers import Adam, SGD
 from sklearn.model_selection import train_test_split
 
-
-# https://mc.ai/a-beginners-guide-to-build-stacked-autoencoder-and-tying-weights-with-it/
-class DenseTied(Layer):
-    def __init__(self, dense, activation=None, **kwargs):
-        self.dense = dense
-        self.activation = keras.activations.get(activation)
-        super().__init__(**kwargs)
-
-    def build(self, batch_input_shape):
-        self.biases = self.add_weight(name="bias", initializer="zeros", shape=[self.dense.input_shape[-1]])
-        super().build(batch_input_shape)
-
-    def call(self, inputs):
-        z = tf.matmul(inputs, self.dense.weights[0], transpose_b=True)
-        return self.activation(z + self.biases)
+import n2d
 
 
-class AutoEncoder():
-    def __init__(self, load=False):
-        K.clear_session()
-        # load = False
-        self.load = load
+class Clusterer():
+    ae_id = "tmp/n2d_ae.h5"
+    encoder_id = "tmp/n2d_encoder"
+    manifold_id = "tmp/n2d_manifold"
+
+    def __init__(self, input_dim=768, latent_dim=32, n_clusters=20):
+        self.n_clusters = n_clusters
+        self.input_dim = input_dim
+        self.latent_dim = latent_dim
         self.loaded = False
-
-        self.autoencoder, self.encoder = self.model()
-        self.model_path = 'tmp/encoder.tf'
-        if self.load and os.path.exists(self.model_path + '.index'):
-            self.autoencoder.load_weights(self.model_path)
+        if os.path.exists(self.ae_id):
+            self.model = self.load_model()
             self.loaded = True
+        else:
+            self.model = self.init_model()
 
-    def model(self):
-        # See https://github.com/maxfrenzel/CompressionVAE/blob/master/cvae/cvae.py
-        # More complex boilerplate https://towardsdatascience.com/build-the-right-autoencoder-tune-and-optimize-using-pca-principles-part-ii-24b9cca69bd6
-        # it likes [512, 512] -> 64 (for 768->32)
-        layers = [
-            (384, 'selu'),
-            (64, 'linear')
-        ]
-        denses = [Dense(l[0], activation=l[1]) for l in layers]
-        encos, decos = [], []
-        input = Input(shape=(768,))
-        for i, d in enumerate(denses):
-            prev = input if i == 0 else encos[-1]
-            encos.append(d(prev))
-        for i, d in enumerate(denses[::-1]):
-            mirror = -(i+1)
-            act = layers[mirror][1]
-            deco = encos[-1] if i == 0 else decos[-1]
-            deco = DenseTied(d, activation=act)(deco)
-            decos.append(deco)
+    def init_ae(self):
+        return n2d.AutoEncoder(
+            self.input_dim,
+            self.latent_dim,
+            architecture=[384]
+        )
 
-        autoencoder = Model(input, decos[-1])
-        encoder = Model(input, encos[-1])
-
-        adam = Adam(learning_rate=1e-3)
-        autoencoder.compile(metrics=['accuracy'], optimizer=adam, loss='mse')
-        #autoencoder.summary()
-        return autoencoder, encoder
+    def init_model(self):
+        ae = self.init_ae()
+        manifold_clusterer = n2d.UmapGMM(self.n_clusters)
+        return n2d.n2d(ae, manifold_clusterer)
 
     def fit(self, X):
-        x_train, x_test = train_test_split(X, shuffle=True)
-        es = EarlyStopping(monitor='val_loss', mode='min', patience=4, min_delta=.001)
-        self.autoencoder.fit(
-            x_train, x_train,
-            epochs=50,
-            batch_size=256,
-            shuffle=True,
-            callbacks=[es],
-            validation_data=(x_test, x_test)
-        )
-        # model.save() giving me trouble. just use pickle for now
-        self.autoencoder.save_weights(self.model_path)
+        self.model.fit(X, patience=3, epochs=15, weight_id=self.ae_id)
+        n2d.save_n2d(self.model, 'tmp/n2d_encoder', 'tmp/n2d_manifold')
+
+    def load_model(self):
+        # n2d.load_n2d is broken: n2d(10,man)??
+        ae = self.init_ae()
+        ae.Model.load_weights(self.ae_id)
+        man = pickle.load(open(self.manifold_id, "rb"))
+        # encoder = load_model(self.encoder_id, compile=False)
+        return n2d.n2d(ae, man)
 
     def encode(self, X):
-        return self.encoder.predict(X)
+        return self.model.encoder.predict(X)
+
+    def cluster(self, X):
+        return self.model.predict(X)

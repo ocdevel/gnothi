@@ -1,6 +1,6 @@
 from jwtauthtest.utils import vars
 from jwtauthtest.database import engine
-from jwtauthtest.autoencoder import AutoEncoder
+from jwtauthtest.autoencoder import Clusterer
 import re, math, pdb, os
 from pprint import pprint
 import pandas as pd
@@ -302,36 +302,14 @@ def _knee(X):
     return kn.knee or guess.good
 
 
-def cluster(vecs):
-    num_clusters = _knee(vecs)
-    clusterer = KMeans(n_clusters=num_clusters, batch_size=300)
-    clusterer.fit(vecs)
-    # 315461d5 hdbscan (doesn't work worth crap)
-
-    labels = np.unique(clusterer.labels_)
-    print('n_labels', len(labels))
-
-    return {
-        l: clusterer.labels_ == l
-        for l in labels
-        if l != -1  # outlier in hdbscan
-    }
-
-def dim_reduce(vecs):
-    ae = AutoEncoder(load=True)
-    if ae.loaded:
-        # If available (only after we run on books), use AutoEncoder; more accurate
-        return ae.encode(vecs)
-    # Otherwise just use PCA for now; we'll train later (during books)
-    n_components = min(vecs.shape[0], 32)
-    return PCA(n_components=n_components).fit_transform(vecs)
-
 def themes(entries, with_entries=False, with_summaries=True):
     entries = Clean.entries_to_paras(entries)
     vecs = run_gpu_model(dict(method='sentence-encode', args=[entries], kwargs={}))
     vecs = np.array(vecs)
-    vecs = dim_reduce(vecs)
-    clusters = cluster(vecs)
+
+    clusterer = Clusterer()
+    assert(clusterer.loaded)
+    clusters = clusterer.cluster(vecs)
 
     stripped = [' '.join(e) for e in Clean.lda_texts(entries)]
     stripped = pd.Series(stripped)
@@ -340,7 +318,10 @@ def themes(entries, with_entries=False, with_summaries=True):
     # see https://stackoverflow.com/a/34236002/362790
     top_terms = 8
     topics = {}
-    for l, in_clust_idxs in clusters.items():
+    for l in range(clusterer.n_clusters):
+        in_clust_idxs = clusters == l
+        if not in_clust_idxs.any():
+            continue
         stripped_in_cluster = stripped.iloc[in_clust_idxs].tolist()
         entries_in_cluster = entries.iloc[in_clust_idxs].tolist()
         print('n_entries', len(entries_in_cluster))
@@ -568,66 +549,43 @@ def resources(entries, logger=None, metric="cosine", by_cluster=True, by_centroi
     vecs_books, books = load_books(logger=logger)
     vecs_user = run_gpu_model(dict(method='sentence-encode', args=[e_user], kwargs={}))
     vecs_user, vecs_books = np.array(vecs_user), np.array(vecs_books)
-    vecs_all = np.vstack([vecs_user, vecs_books])
 
-    ae = AutoEncoder(load=True)
-    if not ae.loaded:
-        # Hasn't run yet, and we need to train it for themes too. Train on everything we have.
+    clusterer = Clusterer()
+    if not clusterer.loaded:
         all_db = engine.execute("select text from entries").fetchall()
         all_db = Clean.entries_to_paras([x.text for x in all_db])
         all_db = run_gpu_model(dict(method='sentence-encode', args=[all_db], kwargs={}))
-        ae.fit(np.vstack([vecs_books, all_db]))
+        all_db = np.vstack([vecs_books, all_db])
+        clusterer.fit(all_db)
+    enco_books = clusterer.encode(vecs_books)
+    clust_books = clusterer.cluster(vecs_books)
+    enco_user = clusterer.encode(vecs_user)
+    clust_user = clusterer.cluster(vecs_user)
 
-    vecs_books = ae.encode(vecs_books)
-    vecs_user = ae.encode(vecs_user)
-
-    user_fillers = ['' for _ in e_user]
-    rows = pd.DataFrame({
-        'ID': user_fillers + books.ID.tolist(),
-        'text': e_user + books.descr.tolist(),
-        'title': user_fillers + books.Title.tolist(),
-        'author': user_fillers + books.Author.tolist(),
-        'topic': user_fillers + books.topic_descr.tolist()
-    })
-
-    if by_cluster:
-        # cluster everything, want books & entries in same fit_transform
-        clusters = cluster(vecs_all)
-        # then remove books
-        clusters = {
-            i: clust[:n_user]
-            for i, clust in clusters.items()
-        }
-    else:
-        # 1 cluster (so can iterate below anyway)
-        clusters = {0: [True for _ in e_user]}
-    # if not clusters: pass # empty/size=1; but should be handled in cluster()
-
-    # since hdbscan may remove some entries, don't just use len(entries)
-    n_entries = sum(
-        sum(idx_mask)
-        for _, idx_mask in clusters.items()
-    )
+    send_attrs = ['title', 'author', 'text', 'topic']
+    books = books.rename(columns=dict(
+        descr='text',
+        Title='title',
+        Author='author',
+        topic_descr='topic'
+    ))
 
     logger.info("Finding similars")
-    send_attrs = ['title', 'author', 'text', 'topic']
     recs = []
 
-    for _, idx_mask in clusters.items():
-        books_ = rows.iloc[n_user:].copy()
-        entries_ = vecs_user[idx_mask]
+    for l in range(clusterer.n_clusters):
+        idx_books = clust_books == l
+        idx_user = clust_user == l
+        books_ = books[idx_books].copy()
+        enco_books_ = enco_books[idx_books]
+        enco_user_ = enco_user[idx_user]
 
-        if by_centroid:
-            # Similar by distance to centroid
-            centroid = np.mean(entries_, axis=0)
-            books_['sims'] = cdist([centroid], vecs_books, metric)[0]
-        else:
-            # Similar by product
-            sims = cdist(entries_, vecs_books, metric)
-            books_['sims'] = np.prod(sims, axis=0)
+        # Similar by product
+        sims = cdist(enco_user_, enco_books_, metric)
+        books_['sims'] = np.prod(sims, axis=0)
 
         # sort by similar, take k
-        k = math.ceil(sum(idx_mask) / n_entries * n_recs)
+        k = math.ceil(sum(idx_user) / n_user * n_recs)
         k = max([k, 4])
         recs_ = books_.sort_values(by='sims').iloc[:k][['ID', 'sims', *send_attrs]]
         recs.append(recs_)
