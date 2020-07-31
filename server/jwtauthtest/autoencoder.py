@@ -1,4 +1,6 @@
-import os, pickle, time
+import os, pickle, time, math, pdb
+from box import Box
+import numpy as np
 import keras
 import tensorflow as tf
 from keras import backend as K
@@ -7,8 +9,11 @@ from keras.models import Model, load_model
 from keras.callbacks import EarlyStopping
 from keras.optimizers import Adam, SGD
 from sklearn.model_selection import train_test_split
-import n2d
+from scipy.spatial.distance import cdist
+from kneed import KneeLocator
 
+# umap needs https://github.com/lmcinnes/umap/issues/416
+import n2d
 
 
 # https://mc.ai/a-beginners-guide-to-build-stacked-autoencoder-and-tying-weights-with-it/
@@ -39,8 +44,9 @@ class AutoEncoder():
         # More complex boilerplate https://towardsdatascience.com/build-the-right-autoencoder-tune-and-optimize-using-pca-principles-part-ii-24b9cca69bd6
         # it likes [512, 512] -> 64 (for 768->32)
         layers = [
-            (384, 'selu'),
-            (64, 'linear')
+            # (500, 'relu'),
+            (500, 'relu'),
+            (64, 'relu')  # linear
         ]
         denses = [Dense(l[0], activation=l[1]) for l in layers]
         encos, decos = [], []
@@ -50,6 +56,7 @@ class AutoEncoder():
             encos.append(d(prev))
         for i, d in enumerate(denses[::-1]):
             mirror = -(i+1)
+            # act = 'linear' if i == len(layers)-1 else layers[mirror][1]
             act = layers[mirror][1]
             deco = encos[-1] if i == 0 else decos[-1]
             deco = DenseTied(d, activation=act)(deco)
@@ -94,11 +101,12 @@ class AutoEncoder():
 class Clusterer():
     manifold_path = "tmp/n2d_manifold"
 
-    def __init__(self, n_clusters=20):
+    def __init__(self, n_clusters=30, load=True):
         self.n_clusters = n_clusters
         self.loaded = False
-        if os.path.exists(AutoEncoder.model_path + ".index")\
-            and os.path.exists(Clusterer.manifold_path):
+        if load and\
+            os.path.exists(AutoEncoder.model_path + ".index") and\
+            os.path.exists(Clusterer.manifold_path):
             self.model = self.load()
             self.loaded = True
         else:
@@ -106,7 +114,11 @@ class Clusterer():
 
     def init_model(self):
         ae = AutoEncoder()
-        manifold_clusterer = n2d.UmapGMM(self.n_clusters)
+        manifold_clusterer = n2d.UmapGMM(
+            self.n_clusters,
+            umap_dim=5,
+            umap_neighbors=20
+        )
         return n2d.n2d(ae, manifold_clusterer)
 
     def fit(self, x):
@@ -126,3 +138,25 @@ class Clusterer():
 
     def cluster(self, X):
         return self.model.predict(X)
+
+
+def hypersearch_n_clusters(X):
+    # Code from https://github.com/arvkevi/kneed/blob/master/notebooks/decreasing_function_walkthrough.ipynb
+    guess = Box(min=14, max=100, good=30)
+    step = 3
+    K = list(range(guess.min, guess.max, step))
+    ks, bics = [], []
+    for k in K:
+        c = Clusterer(k, load=False)
+        c.fit(X)
+        umapgmm = c.model.manifold_learner
+        gmm = umapgmm.cluster_manifold
+        bics.append(gmm.bic(umapgmm.hle)/X.shape[0])
+        print("bics")
+        ks.append(k)
+        print("\n\n")
+        print(list(zip(ks, bics)))
+        print("\n\n")
+    kn = KneeLocator(K, bics, S=1.5, curve='convex', direction='decreasing', interp_method='interp1d')
+    print('knee', kn.knee)
+    return kn.knee or guess.good

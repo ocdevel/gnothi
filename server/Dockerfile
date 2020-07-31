@@ -41,7 +41,9 @@ RUN pip install \
   boto3 \
   kneed \
   keras \
-  tensorflow
+  tensorflow \
+  pynndescent \
+  n2d
 
 # might need 'scipy==1.3.2' for jensen
 

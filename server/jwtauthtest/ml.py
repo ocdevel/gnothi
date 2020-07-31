@@ -1,6 +1,6 @@
 from jwtauthtest.utils import vars
 from jwtauthtest.database import engine
-from jwtauthtest.autoencoder import Clusterer
+from jwtauthtest.autoencoder import Clusterer, hypersearch_n_clusters
 import re, math, pdb, os
 from pprint import pprint
 import pandas as pd
@@ -267,48 +267,17 @@ class Clean():
         ]
         return [pp.preprocess_string(e, filters=filters) for e in entries]
 
-from sklearn.cluster import MiniBatchKMeans as KMeans
 from sklearn.feature_extraction.text import TfidfVectorizer
-from kneed import KneeLocator
-from sklearn.decomposition import PCA
-# from sklearn.manifold import TSNE
 
 
-def _knee(X):
-    # FIXME manually found this for books; handle better
-    if X.shape[0] > 5000: return 20
-
-    # TODO hyper cache this
-    # Code from https://github.com/arvkevi/kneed/blob/master/notebooks/decreasing_function_walkthrough.ipynb
-    guess = Box(min=1, max=10, good=3)
-    guess = Box({
-        k: math.floor(1 + v * math.log10(X.shape[0]))
-        for k, v in guess.items()
-    })
-    step = math.ceil(guess.max/10)
-    K = range(guess.min, guess.max, step)
-    if len(K) == 1:
-        return guess.good
-    distortions = []
-    for k in K:
-        kmeanModel = KMeans(n_clusters=k).fit(X)
-        distortion = cdist(X, kmeanModel.cluster_centers_, 'euclidean')
-        distortion = sum(np.min(distortion, axis=1)) / X.shape[0]
-        distortions.append(distortion)
-        print(k, distortion)
-    S = 1.5  # 1.0
-    kn = KneeLocator(list(K), distortions, S=S, curve='convex', direction='decreasing')
-    print('knee', kn.knee)
-    return kn.knee or guess.good
-
-
-def themes(entries, with_entries=False, with_summaries=True):
+def themes(entries):
     entries = Clean.entries_to_paras(entries)
     vecs = run_gpu_model(dict(method='sentence-encode', args=[entries], kwargs={}))
     vecs = np.array(vecs)
 
     clusterer = Clusterer()
     clusterer.load()
+    # clusterer.fit(vecs)  # TODO <--good? continue training?
     assert(clusterer.loaded)
     clusters = clusterer.cluster(vecs)
 
@@ -339,19 +308,14 @@ def themes(entries, with_entries=False, with_summaries=True):
         terms = [x[0] for x in words_freq[:top_terms]]
 
         print(terms)
-        summary, sent = '', ''
-        if with_summaries:
-            summary = summarize(entries_in_cluster, min_length=10, max_length=100)
-            sent = sentiment(summary)
+        summary = summarize(entries_in_cluster, min_length=10, max_length=100)
+        sent = sentiment(summary)
         l = str(l)
         topics[l] = {
             'terms': terms,
             'sentiment': sent,
             'summary': summary
         }
-        if with_entries:
-            topics[l]['entries'] = in_clust_idxs
-            topics[l]['n_entries'] = sum(in_clust_idxs)
         print('\n\n\n')
     return topics
 
@@ -553,10 +517,13 @@ def resources(entries, logger=None, metric="cosine", by_cluster=True, by_centroi
 
     clusterer = Clusterer()
     if not clusterer.loaded:
+    # if True:
         all_db = engine.execute("select text from entries").fetchall()
         all_db = Clean.entries_to_paras([x.text for x in all_db])
         all_db = run_gpu_model(dict(method='sentence-encode', args=[all_db], kwargs={}))
         all_db = np.vstack([vecs_books, all_db])
+        # n_clust = hypersearch_n_clusters(all_db)
+        # clusterer = Clusterer(n_clust)
         clusterer.fit(all_db)
     enco_books = clusterer.encode(vecs_books)
     clust_books = clusterer.cluster(vecs_books)
