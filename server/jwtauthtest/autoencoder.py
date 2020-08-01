@@ -13,7 +13,8 @@ from scipy.spatial.distance import cdist
 from kneed import KneeLocator
 
 # umap needs https://github.com/lmcinnes/umap/issues/416
-import n2d
+import umap
+import joblib
 
 
 # https://mc.ai/a-beginners-guide-to-build-stacked-autoencoder-and-tying-weights-with-it/
@@ -70,17 +71,7 @@ class AutoEncoder():
         #ae.summary()
         return ae, encoder
 
-    def fit(self,
-            x,
-            batch_size=None,
-            epochs=None,
-            loss=None,
-            optimizer=None,
-            weights=None,
-            verbose=None,
-            weight_id=None,
-            patience=None,
-    ):
+    def fit(self, x):
         x_train, x_test = train_test_split(x, shuffle=True)
         es = EarlyStopping(monitor='val_loss', mode='min', patience=4, min_delta=.001)
         self.Model.fit(
@@ -97,66 +88,87 @@ class AutoEncoder():
     def load(self):
         self.Model.load_weights(self.model_path)
 
+from sklearn.cluster import MiniBatchKMeans as KMeans
+
 
 class Clusterer():
-    manifold_path = "tmp/n2d_manifold"
+    umap_path = "tmp/umap.joblib"
+    kmeans_path = "tmp/kmeans.joblib"
+    AE = True
+    UMAP = False
 
-    def __init__(self, n_clusters=30, load=True):
-        self.n_clusters = n_clusters
+    def __init__(self, load=True):
         self.loaded = False
-        if load and\
-            os.path.exists(AutoEncoder.model_path + ".index") and\
-            os.path.exists(Clusterer.manifold_path):
-            self.model = self.load()
-            self.loaded = True
+        self.ae = None
+        self.umap = None
+        self.clust = None
+
+        # just check if one exists (fixme?)
+        if load and os.path.exists(AutoEncoder.model_path + ".index"):
+            self.load()
         else:
-            self.model = self.init_model()
+            self.init_models()
 
-    def init_model(self):
-        ae = AutoEncoder()
-        manifold_clusterer = n2d.UmapGMM(
-            self.n_clusters,
-            umap_dim=5,
-            umap_neighbors=20
-        )
-        return n2d.n2d(ae, manifold_clusterer)
-
-    def fit(self, x):
-        self.model.fit(x)
-        with open(Clusterer.manifold_path, "wb") as f:
-            pickle.dump(self.model.manifold_learner, f)
+    def init_models(self):
+        if self.AE:
+            self.ae = AutoEncoder()
+        if self.UMAP:
+            self.umap = umap.UMAP(
+                n_components=32,
+                n_neighbors=20
+            )
 
     def load(self):
-        ae = AutoEncoder()
-        ae.load()
-        with open(Clusterer.manifold_path, "rb") as f:
-            man = pickle.load(f)
-        return n2d.n2d(ae, man)
+        if self.AE:
+            self.ae = AutoEncoder()
+            self.ae.load()
+        if self.UMAP:
+            self.umap = joblib.load(self.umap_path)
+        self.clust = joblib.load(self.kmeans_path)
+        self.n_clusters = self.clust.cluster_centers_.shape[0]
+        self.loaded=True
 
-    def encode(self, X):
-        return self.model.encoder.predict(X)
+    def _knee(self, x):
+        # TODO hyper cache this
+        # Code from https://github.com/arvkevi/kneed/blob/master/notebooks/decreasing_function_walkthrough.ipynb
+        guess = Box(min=1, max=10, good=3)
+        guess = Box({
+            k: math.floor(1 + v * math.log10(x.shape[0]))
+            for k, v in guess.items()
+        })
+        step = 2  # math.ceil(guess.max / 10)
+        K = range(guess.min, 100, step)
+        distortions = []
+        for k in K:
+            kmeanModel = KMeans(n_clusters=k).fit(x)
+            distortion = cdist(x, kmeanModel.cluster_centers_, 'euclidean')
+            distortion = sum(np.min(distortion, axis=1)) / x.shape[0]
+            distortions.append(distortion)
+            print(k, distortion)
+        S = math.floor(math.log(x.shape[0])) # 1=default; 100entries->S=2, 8k->3
+        kn = KneeLocator(list(K), distortions, S=S, curve='convex', direction='decreasing', interp_method='polynomial')
+        return kn.knee or guess.good
 
-    def cluster(self, X):
-        return self.model.predict(X)
+    def encode(self, x):
+        if self.AE:
+            x = self.ae.encoder.predict(x)
+        if self.UMAP:
+            x = self.umap.transform(x)
+        return x
 
+    def fit(self, x):
+        if self.AE:
+            self.ae.fit(x)
+            x = self.ae.encoder.predict(x)
+        if self.UMAP:
+            x = self.umap.fit_transform(x)
+            # del self.umap._rp_trees  # https://github.com/lmcinnes/umap/issues/273
+            joblib.dump(self.umap, self.umap_path)
+        self.n_clusters = self._knee(x)
+        print('n_clusters', self.n_clusters)
+        self.clust = KMeans(n_clusters=self.n_clusters).fit(x)
+        joblib.dump(self.clust, self.kmeans_path)
 
-def hypersearch_n_clusters(X):
-    # Code from https://github.com/arvkevi/kneed/blob/master/notebooks/decreasing_function_walkthrough.ipynb
-    guess = Box(min=14, max=100, good=30)
-    step = 3
-    K = list(range(guess.min, guess.max, step))
-    ks, bics = [], []
-    for k in K:
-        c = Clusterer(k, load=False)
-        c.fit(X)
-        umapgmm = c.model.manifold_learner
-        gmm = umapgmm.cluster_manifold
-        bics.append(gmm.bic(umapgmm.hle)/X.shape[0])
-        print("bics")
-        ks.append(k)
-        print("\n\n")
-        print(list(zip(ks, bics)))
-        print("\n\n")
-    kn = KneeLocator(K, bics, S=1.5, curve='convex', direction='decreasing', interp_method='interp1d')
-    print('knee', kn.knee)
-    return kn.knee or guess.good
+    def cluster(self, x):
+        x = self.encode(x)
+        return self.clust.predict(x)

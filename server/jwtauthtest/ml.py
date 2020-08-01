@@ -1,6 +1,6 @@
 from jwtauthtest.utils import vars
 from jwtauthtest.database import engine
-from jwtauthtest.autoencoder import Clusterer, hypersearch_n_clusters
+from jwtauthtest.autoencoder import Clusterer
 import re, math, pdb, os
 from pprint import pprint
 import pandas as pd
@@ -496,7 +496,7 @@ def load_books(logger):
     return vecs_books, books
 
 
-def resources(entries, logger=None, metric="cosine", by_cluster=True, by_centroid=False, n_recs=30):
+def resources(entries, logger=None, n_recs=30):
     """
     metric=cosine is what's recommended in papers, but euclidean is used in our dim_reduce/cluster; and bert is normalized..
     by_cluster=True to prevent washing out opposite recommends
@@ -522,8 +522,6 @@ def resources(entries, logger=None, metric="cosine", by_cluster=True, by_centroi
         all_db = Clean.entries_to_paras([x.text for x in all_db])
         all_db = run_gpu_model(dict(method='sentence-encode', args=[all_db], kwargs={}))
         all_db = np.vstack([vecs_books, all_db])
-        # n_clust = hypersearch_n_clusters(all_db)
-        # clusterer = Clusterer(n_clust)
         clusterer.fit(all_db)
     enco_books = clusterer.encode(vecs_books)
     clust_books = clusterer.cluster(vecs_books)
@@ -549,7 +547,7 @@ def resources(entries, logger=None, metric="cosine", by_cluster=True, by_centroi
         enco_user_ = enco_user[idx_user]
 
         # Similar by product
-        sims = cdist(enco_user_, enco_books_, metric)
+        sims = cdist(enco_user_, enco_books_, "cosine")
         books_['sims'] = np.prod(sims, axis=0)
 
         # sort by similar, take k
