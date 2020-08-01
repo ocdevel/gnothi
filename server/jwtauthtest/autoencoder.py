@@ -11,7 +11,7 @@ from keras.optimizers import Adam, SGD
 from sklearn.model_selection import train_test_split
 from scipy.spatial.distance import cdist
 from kneed import KneeLocator
-from sklearn.preprocessing import minmax_scale
+from sklearn import preprocessing as pp
 
 # umap needs https://github.com/lmcinnes/umap/issues/416
 import umap
@@ -46,16 +46,19 @@ class AutoEncoder():
         # More complex boilerplate https://towardsdatascience.com/build-the-right-autoencoder-tune-and-optimize-using-pca-principles-part-ii-24b9cca69bd6
         input = Input(shape=(768,))
         d1 = Dense(500, activation='elu')
-        d2 = Dense(40, activation='elu')
+        d2 = Dense(200, activation='elu')
+        d3 = Dense(10, activation='linear')
 
         enc1 = d1(input)
         enc2 = d2(enc1)
+        enc3 = d3(enc2)
 
-        dec1 = DenseTied(d2, activation='elu')(enc2)
-        dec2 = DenseTied(d1, activation='linear')(dec1)
+        dec1 = DenseTied(d3, activation='elu')(enc3)
+        dec2 = DenseTied(d2, activation='elu')(dec1)
+        dec3 = DenseTied(d1, activation='linear')(dec2)
 
-        ae = Model(input, dec2)
-        encoder = Model(input, enc2)
+        ae = Model(input, dec3)
+        encoder = Model(input, enc3)
 
         adam = Adam(learning_rate=.0005)  # 1e-3
         ae.compile(metrics=['accuracy'], optimizer=adam, loss='mse')
@@ -64,7 +67,7 @@ class AutoEncoder():
         return ae, encoder
 
     def fit(self, x):
-        # x = minmax_scale(x)
+        # x = pp.minmax_scale(x)
         x_train, x_test = train_test_split(x, shuffle=True)
         es = EarlyStopping(monitor='val_loss', mode='min', patience=4, min_delta=.0001)
         self.Model.fit(
@@ -116,13 +119,9 @@ class Clusterer():
             self.umap = joblib.load(self.umap_path)
             load_ct -=1
         else:
-            self.umap = umap.UMAP(
-                n_components=5,
-                n_neighbors=20,
-                min_dist=0.
-            )
+            self.umap = umap.UMAP(n_components=5, n_neighbors=20, min_dist=0.)
 
-        self.n_clusters = 27  # default without fitting/loading
+        self.n_clusters = 25  # default without fitting/loading
         if self.GMM:
             if e_(self.gmm_path):
                 self.clust = joblib.load(self.gmm_path)
@@ -138,13 +137,17 @@ class Clusterer():
                 self.clust = KMeans(n_clusters=self.n_clusters)
         self.loaded = load_ct == 0
 
-    def knee(self, x):
+    def knee(self, x, search=True):
         # TODO hyper cache this
-        guess = Box(min=1, max=10, good=3)
-        guess = Box({
-            k: math.floor(1 + v * math.log10(x.shape[0]))
-            for k, v in guess.items()
-        })
+        log_ = lambda v: math.floor(1 + v * math.log10(x.shape[0]))
+        guess = Box(
+            min=log_(1),
+            max=log_(10),
+            good=log_(3)
+        )
+        if not search:
+            return guess.good
+
         step = math.ceil(guess.max / 10)
         K = range(guess.min, guess.max, step)
         scores = []
@@ -183,7 +186,7 @@ class Clusterer():
             joblib.dump(self.umap, self.umap_path)
 
         if self.FIND_KNEE:
-            self.n_clusters = self.knee(x)
+            self.n_clusters = self.knee(x, search=True)
         if self.GMM:
             self.clust = GaussianMixture(n_components=self.n_clusters).fit(x)
             joblib.dump(self.clust, self.gmm_path)
@@ -191,8 +194,20 @@ class Clusterer():
             self.clust = KMeans(n_clusters=self.n_clusters).fit(x)
             joblib.dump(self.clust, self.kmeans_path)
 
+    def _cluster_small(self, x):
+        # new clusterer, not trained one
+        knee = self.knee(x, search=False)
+        if self.GMM:
+            return GaussianMixture(n_components=knee).fit_predict(x)
+        return KMeans(n_clusters=knee).fit_predict(x)
+
     def cluster(self, x):
         x = self.encode(x)
+
+        # fit/predict the simple stuff for now
+        if x.shape[0] < 500:
+            return self._cluster_small(x)
+
         if self.GMM:
             y_pred_prob = self.clust.predict_proba(x)
             return y_pred_prob.argmax(1)
