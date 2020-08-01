@@ -43,7 +43,7 @@ RUN pip install \
   keras \
   tensorflow \
   pynndescent \
-  n2d
+  umap-learn
 
 # might need 'scipy==1.3.2' for jensen
 

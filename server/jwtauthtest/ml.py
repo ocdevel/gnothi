@@ -276,7 +276,6 @@ def themes(entries):
     vecs = np.array(vecs)
 
     clusterer = Clusterer()
-    clusterer.load()
     # clusterer.fit(vecs)  # TODO <--good? continue training?
     assert(clusterer.loaded)
     clusters = clusterer.cluster(vecs)
@@ -290,7 +289,7 @@ def themes(entries):
     topics = {}
     for l in range(clusterer.n_clusters):
         in_clust_idxs = clusters == l
-        if not in_clust_idxs.any():
+        if np.sum(in_clust_idxs) < 2:
             continue
         stripped_in_cluster = stripped.iloc[in_clust_idxs].tolist()
         entries_in_cluster = entries.iloc[in_clust_idxs].tolist()
@@ -517,7 +516,6 @@ def resources(entries, logger=None, n_recs=30):
 
     clusterer = Clusterer()
     if not clusterer.loaded:
-    # if True:
         all_db = engine.execute("select text from entries").fetchall()
         all_db = Clean.entries_to_paras([x.text for x in all_db])
         all_db = run_gpu_model(dict(method='sentence-encode', args=[all_db], kwargs={}))
