@@ -4,18 +4,12 @@ import numpy as np
 import keras
 import tensorflow as tf
 from keras import backend as K
+from keras import activations
 from keras.layers import Layer, Input, Dense
 from keras.models import Model, load_model
 from keras.callbacks import EarlyStopping
 from keras.optimizers import Adam, SGD
 from sklearn.model_selection import train_test_split
-from scipy.spatial.distance import cdist
-from kneed import KneeLocator
-from sklearn import preprocessing as pp
-
-# umap needs https://github.com/lmcinnes/umap/issues/416
-import umap
-import joblib
 
 
 # https://mc.ai/a-beginners-guide-to-build-stacked-autoencoder-and-tying-weights-with-it/
@@ -32,6 +26,7 @@ class DenseTied(Layer):
     def call(self, inputs):
         z = tf.matmul(inputs, self.dense.weights[0], transpose_b=True)
         return self.activation(z + self.biases)
+        # return BN(z + self.biases, act=self.activation)
 
 
 class AutoEncoder():
@@ -86,73 +81,94 @@ class AutoEncoder():
 
 from sklearn.cluster import MiniBatchKMeans as KMeans
 from sklearn.mixture import GaussianMixture
+from sklearn.manifold import TSNE
+# umap needs https://github.com/lmcinnes/umap/issues/416
+import umap
+import joblib
+from scipy.spatial.distance import cdist
+from kneed import KneeLocator
+from sklearn import preprocessing as pp
+
+
+# https://github.com/lmcinnes/umap/issues/15#issuecomment-538744559
+def save_umap(umap):
+    for attr in ["_tree_init", "_search", "_random_init"]:
+        if hasattr(umap, attr):
+            delattr(umap, attr)
+    return pickle.dumps(umap, pickle.HIGHEST_PROTOCOL)
+
+def load_umap(s):
+    umap = pickle.loads(s)
+    from umap.nndescent import make_initialisations, make_initialized_nnd_search
+    umap._random_init, umap._tree_init = make_initialisations(
+        umap._distance_func, umap._dist_args
+    )
+    umap._search = make_initialized_nnd_search(
+        umap._distance_func, umap._dist_args
+    )
+    return umap
 
 
 class Clusterer():
-    umap_path = "tmp/umap.joblib"
-    gmm_path = "tmp/gmm.joblib"
-    kmeans_path = "tmp/kmeans.joblib"
+    clust_path = "tmp/clust.joblib"
+    umap_path = "tmp/umap.pkl"
 
-    AE = True
-    UMAP = False
-    GMM = True
-    FIND_KNEE = False
+    AE = False
+    MAN = 'umap'  # tsne|umap|None   # tsne=no (can't transform() with fitted model).
+    CLUST = 'gmm' # gmm|kmeans
+    FIND_KNEE = True
+    DEFAULT_NCLUST = 30
 
     def __init__(self):
         self.loaded = False
 
         self.ae = None
-        self.umap = None
+        self.man = None
         self.clust = None
+        self.pipeline = [self.AE, self.MAN, self.CLUST]
         self.init_models()
 
     def init_models(self):
-        load_ct = np.sum([self.AE, self.UMAP, True])  # clust either GMM|Kmeans, either needs loading
-
         e_ = os.path.exists
+
+        models = {}
+        if e_(self.clust_path):
+            models = joblib.load(self.clust_path)
+            if models['pipeline'] == self.pipeline:
+                self.loaded = True
+                # umap handled separately for now
+                if self.MAN == 'umap':
+                    models['man'] = load_umap(self.umap_path)
+            else:
+                models = {}  # start over
+
         self.ae = AutoEncoder()
         if self.AE and e_(AutoEncoder.model_path + ".index"):
             self.ae.load()
-            load_ct -= 1
 
-        if self.UMAP and e_(self.umap_path):
-            self.umap = joblib.load(self.umap_path)
-            load_ct -=1
-        else:
-            self.umap = umap.UMAP(n_components=5, n_neighbors=20, min_dist=0.)
+        if self.MAN:
+            self.man = models.get('man', None) or\
+                umap.UMAP(n_components=5, n_neighbors=20, min_dist=0.) if self.MAN == 'umap' \
+                else TSNE(n_components=3)
 
-        self.n_clusters = 25  # default without fitting/loading
-        if self.GMM:
-            if e_(self.gmm_path):
-                self.clust = joblib.load(self.gmm_path)
-                load_ct -=1
-            else:
-                self.clust = GaussianMixture(n_components=self.n_clusters)
-        else:
-            if e_(self.kmeans_path):
-                self.clust = joblib.load(self.kmeans_path)
-                self.n_clusters = self.clust.cluster_centers_.shape[0]
-                load_ct -= 1
-            else:
-                self.clust = KMeans(n_clusters=self.n_clusters)
-        self.loaded = load_ct == 0
+        self.clust = models.get('clust', None)  # initialized in fit()
 
     def knee(self, x, search=True):
         # TODO hyper cache this
         log_ = lambda v: math.floor(1 + v * math.log10(x.shape[0]))
         guess = Box(
             min=log_(1),
-            max=log_(10),
+            max=100, # log_(10),
             good=log_(3)
         )
         if not search:
             return guess.good
 
-        step = math.ceil(guess.max / 10)
+        step = 2  # math.ceil(guess.max / 10)
         K = range(guess.min, guess.max, step)
         scores = []
         for k in K:
-            if self.GMM:
+            if self.CLUST == 'gmm':
                 gmm = GaussianMixture(n_components=k).fit(x)
                 score = gmm.bic(x)
                 scores.append(score)
@@ -169,37 +185,41 @@ class Clusterer():
         print('knee', knee)
         return knee
 
-    def encode(self, x):
-        if self.AE:
-            x = self.ae.encoder.predict(x)
-        if self.UMAP:
-            x = self.umap.transform(x)
-        return x
-
     def fit(self, x):
         if self.AE:
             self.ae.fit(x)
             x = self.ae.encoder.predict(x)
-        if self.UMAP:
-            x = self.umap.fit_transform(x)
-            del self.umap._rp_forest  # https://github.com/lmcinnes/umap/issues/273
-            joblib.dump(self.umap, self.umap_path)
+        if self.MAN:
+            x = self.man.fit_transform(x)
+            # del self.umap._rp_forest  # https://github.com/lmcinnes/umap/issues/273
 
-        if self.FIND_KNEE:
-            self.n_clusters = self.knee(x, search=True)
-        if self.GMM:
-            self.clust = GaussianMixture(n_components=self.n_clusters).fit(x)
-            joblib.dump(self.clust, self.gmm_path)
-        else:
-            self.clust = KMeans(n_clusters=self.n_clusters).fit(x)
-            joblib.dump(self.clust, self.kmeans_path)
+        self.n_clusters = self.knee(x, search=True) if self.FIND_KNEE else self.DEFAULT_NCLUST
+        self.clust = GaussianMixture(n_components=self.n_clusters).fit(x) if self.CLUST == 'gmm'\
+            else KMeans(n_clusters=self.n_clusters).fit(x)
+        joblib.dump(dict(
+            pipeline=self.pipeline,
+            # self.man,  # neither tsne nor umap can be saved. umap has bug above, tsne doesn't have post-fitted transform()
+            man=None,
+            clust=self.clust,
+            n_clusters=self.n_clusters
+        ), self.clust_path)
+        if self.MAN == 'umap':
+            save_umap(self.man)
+
+    def encode(self, x):
+        if self.AE:
+            x = self.ae.encoder.predict(x)
+        if self.MAN:
+            meth = self.man.transform if self.MAN == 'umap' \
+                else self.man.fit_transform  # tsne doesn't have transform!
+            x = meth(x)
+        return x
 
     def _cluster_small(self, x):
         # new clusterer, not trained one
         knee = self.knee(x, search=False)
-        if self.GMM:
-            return GaussianMixture(n_components=knee).fit_predict(x)
-        return KMeans(n_clusters=knee).fit_predict(x)
+        return GaussianMixture(n_components=knee).fit_predict(x) if self.CLUST == 'gmm'\
+            else KMeans(n_clusters=knee).fit_predict(x)
 
     def cluster(self, x):
         x = self.encode(x)
@@ -208,7 +228,7 @@ class Clusterer():
         if x.shape[0] < 500:
             return self._cluster_small(x)
 
-        if self.GMM:
+        if self.CLUST == 'gmm':
             y_pred_prob = self.clust.predict_proba(x)
             return y_pred_prob.argmax(1)
         return self.clust.predict(x)
