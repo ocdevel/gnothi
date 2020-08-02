@@ -40,9 +40,10 @@ class AutoEncoder():
     def model(self):
         # See https://github.com/maxfrenzel/CompressionVAE/blob/master/cvae/cvae.py
         # More complex boilerplate https://towardsdatascience.com/build-the-right-autoencoder-tune-and-optimize-using-pca-principles-part-ii-24b9cca69bd6
+        # playing between 500-200-10; 500-10
         input = Input(shape=(768,))
         d1 = Dense(500, activation='elu')
-        d2 = Dense(100, activation='linear')
+        d2 = Dense(64, activation='linear')
 
         enc1 = d1(input)
         enc2 = d2(enc1)
@@ -90,9 +91,10 @@ from kneed import KneeLocator
 class Clusterer():
     clust_path = "tmp/clust.joblib"
 
-    AE = False
-    MAN = 'umap'  # tsne|umap|None   # tsne bad (can't transform w fitted model)
-    CLUST = 'gmm' # gmm|kmeans
+    AE = True
+    # Can't save tsne|umap (see comments below), so don't use this anymore
+    MAN = None  # tsne|umap|None
+    CLUST = 'kmeans' # gmm|kmeans
     FIND_KNEE = False
     DEFAULT_NCLUST = 25
 
@@ -121,10 +123,7 @@ class Clusterer():
             self.ae.load()
 
         if self.MAN:
-            man = models.get('man', None)
-            if self.MAN == 'umap' and man:
-                man = self._unserialize_umap(man)
-            self.man = man or\
+            self.man = models.get('man', None) or\
                 umap.UMAP(n_components=5, n_neighbors=20, min_dist=0.) if self.MAN == 'umap' \
                 else TSNE(n_components=3)
 
@@ -146,7 +145,7 @@ class Clusterer():
         scores = []
         for k in K:
             if self.CLUST == 'gmm':
-                gmm = GaussianMixture(n_components=k).fit(x)
+                gmm = GaussianMixture(n_components=k, covariance_type='full').fit(x)
                 score = gmm.bic(x)
                 scores.append(score)
             else:
@@ -201,31 +200,10 @@ class Clusterer():
         return self.clust.predict(x)
 
     def save(self):
-        # self.man,  # umap needs special save-handling; tsne doesn't keep fitted model
-        man = self._serialize_umap(self.man) if self.MAN == 'umap' else None
         joblib.dump(dict(
             pipeline=self.pipeline,
-            man=man,
+            # self.man,  # umap saving bug (see 182353fe); tsne doesn't keep fitted model
+            man=None,
             clust=self.clust,
             n_clusters=self.n_clusters
         ), self.clust_path)
-
-
-    # https://github.com/lmcinnes/umap/issues/15#issuecomment-538744559
-    # https://github.com/lmcinnes/umap/issues/273
-    def _serialize_umap(self, umap):
-        for attr in ["_tree_init", "_search", "_random_init"]:
-            if hasattr(umap, attr):
-                delattr(umap, attr)
-        return pickle.dumps(umap, pickle.HIGHEST_PROTOCOL)
-
-    def _unserialize_umap(self, s):
-        umap = pickle.loads(s)
-        from umap.nndescent import make_initialisations, make_initialized_nnd_search
-        umap._random_init, umap._tree_init = make_initialisations(
-            umap._distance_func, umap._dist_args
-        )
-        umap._search = make_initialized_nnd_search(
-            umap._distance_func, umap._dist_args
-        )
-        return umap
