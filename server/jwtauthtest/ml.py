@@ -540,6 +540,7 @@ def resources(entries, logger=None, n_recs=30):
     for l in range(clusterer.n_clusters):
         idx_books = clust_books == l
         idx_user = clust_user == l
+        if idx_user.sum() < 2: continue # not enough entries
         books_ = books[idx_books].copy()
         enco_books_ = enco_books[idx_books]
         enco_user_ = enco_user[idx_user]
@@ -549,8 +550,8 @@ def resources(entries, logger=None, n_recs=30):
         books_['sims'] = np.prod(sims, axis=0)
 
         # sort by similar, take k
-        k = math.ceil(sum(idx_user) / n_user * n_recs)
-        k = max([k, 4])
+        k = math.ceil(idx_user.sum() / n_user * n_recs)
+        # k = max([k, 4])
         recs_ = books_.sort_values(by='sims').iloc[:k][['ID', 'sims', *send_attrs]]
         recs.append(recs_)
 

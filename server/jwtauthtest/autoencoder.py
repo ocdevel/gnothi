@@ -27,7 +27,6 @@ class DenseTied(Layer):
     def call(self, inputs):
         z = tf.matmul(inputs, self.dense.weights[0], transpose_b=True)
         return self.activation(z + self.biases)
-        # return BN(z + self.biases, act=self.activation)
 
 
 class AutoEncoder():
@@ -43,16 +42,19 @@ class AutoEncoder():
         # playing between 500-200-10; 500-10
         input = Input(shape=(768,))
         d1 = Dense(500, activation='elu')
-        d2 = Dense(64, activation='linear')
+        d2 = Dense(100, activation='elu')
+        d3 = Dense(10, activation='linear')
 
         enc1 = d1(input)
         enc2 = d2(enc1)
+        enc3 = d3(enc2)
 
-        dec1 = DenseTied(d2, activation='elu')(enc2)
-        dec2 = DenseTied(d1, activation='linear')(dec1)
+        dec1 = DenseTied(d3, activation='elu')(enc3)
+        dec2 = DenseTied(d2, activation='elu')(dec1)
+        dec3 = DenseTied(d1, activation='linear')(dec2)
 
-        ae = Model(input, dec2)
-        encoder = Model(input, enc2)
+        ae = Model(input, dec3)
+        encoder = Model(input, enc3)
 
         adam = Adam(learning_rate=.0005)  # 1e-3
         ae.compile(metrics=['accuracy'], optimizer=adam, loss='mse')
@@ -66,7 +68,7 @@ class AutoEncoder():
         es = EarlyStopping(monitor='val_loss', mode='min', patience=4, min_delta=.0001)
         self.Model.fit(
             x_train, x_train,
-            epochs=50,
+            epochs=100,
             batch_size=256,
             shuffle=True,
             callbacks=[es],
@@ -128,6 +130,7 @@ class Clusterer():
                 else TSNE(n_components=3)
 
         self.clust = models.get('clust', None)  # initialized in fit()
+        self.n_clusters = models.get('n_clusters', self.DEFAULT_NCLUST)
 
     def knee(self, x, search=True):
         # TODO hyper cache this
@@ -156,7 +159,7 @@ class Clusterer():
                 scores.append(score)
             print(k, score)
         S = math.floor(math.log(x.shape[0])) # 1=default; 100entries->S=2, 8k->3
-        kn = KneeLocator(list(K), scores, S=S, curve='convex', direction='decreasing', interp_method='polynomial')
+        kn = KneeLocator(list(K), scores, S=S, curve='convex', direction='decreasing')
         knee = kn.knee or guess.good
         print('knee', knee)
         return knee
