@@ -5,28 +5,13 @@ import keras
 import tensorflow as tf
 from keras import backend as K
 from keras import activations
-from keras.layers import Layer, Input, Dense
+from keras.layers import Layer, Input, Dense, Lambda
 from keras.models import Model, load_model
 from keras.callbacks import EarlyStopping
 from keras.optimizers import Adam, SGD
 from sklearn.model_selection import train_test_split
 from sklearn import preprocessing as pp
-
-
-# https://mc.ai/a-beginners-guide-to-build-stacked-autoencoder-and-tying-weights-with-it/
-class DenseTied(Layer):
-    def __init__(self, dense, activation=None, **kwargs):
-        self.dense = dense
-        self.activation = keras.activations.get(activation)
-        super().__init__(**kwargs)
-
-    def build(self, batch_input_shape):
-        self.biases = self.add_weight(name="bias", initializer="zeros", shape=[self.dense.input_shape[-1]])
-        super().build(batch_input_shape)
-
-    def call(self, inputs):
-        z = tf.matmul(inputs, self.dense.weights[0], transpose_b=True)
-        return self.activation(z + self.biases)
+from jwtauthtest.tied_autoencoder_keras import DenseLayerAutoencoder
 
 
 class AutoEncoder():
@@ -37,35 +22,32 @@ class AutoEncoder():
         self.Model, self.encoder = self.model()
 
     def model(self):
-        # See https://github.com/maxfrenzel/CompressionVAE/blob/master/cvae/cvae.py
-        # More complex boilerplate https://towardsdatascience.com/build-the-right-autoencoder-tune-and-optimize-using-pca-principles-part-ii-24b9cca69bd6
-        # playing between 500-200-10; 500-10
-        input = Input(shape=(768,))
-        d1 = Dense(500, activation='elu')
-        d2 = Dense(100, activation='elu')
-        d3 = Dense(10, activation='linear')
-
-        enc1 = d1(input)
-        enc2 = d2(enc1)
-        enc3 = d3(enc2)
-
-        dec1 = DenseTied(d3, activation='elu')(enc3)
-        dec2 = DenseTied(d2, activation='elu')(dec1)
-        dec3 = DenseTied(d1, activation='linear')(dec2)
-
-        ae = Model(input, dec3)
-        encoder = Model(input, enc3)
-
-        adam = Adam(learning_rate=.0005)  # 1e-3
-        ae.compile(metrics=['accuracy'], optimizer=adam, loss='mse')
+        latent = 10
+        inputs = Input(shape=(768,))
+        x = DenseLayerAutoencoder(
+            [500, 100, latent],
+            enco_act='linear',
+            activation='elu'
+        )(inputs)
+        ae = Model(inputs=inputs, outputs=x)
+        ae.compile(metrics=['accuracy'], optimizer=Adam(learning_rate=.0005), loss='mse')
         # ae.summary()
 
-        return ae, encoder
+        embedded = Lambda(lambda x: ae.layers[1].encode(x),
+                          output_shape=(latent,), name='encode')(inputs)
+        # embedded._uses_learning_phase = True  # Dropout ops use learning phase
+        embedder = Model(inputs, embedded)
+        # print(embedder.summary())
+
+        return ae, embedder
+
+    def encode(self, x):
+        return self.encoder.predict(x)
 
     def fit(self, x):
         # x = pp.minmax_scale(x)
         x_train, x_test = train_test_split(x, shuffle=True)
-        es = EarlyStopping(monitor='val_loss', mode='min', patience=4, min_delta=.0001)
+        es = EarlyStopping(monitor='val_loss', mode='min', patience=3, min_delta=.0001)
         self.Model.fit(
             x_train, x_train,
             epochs=100,
@@ -98,7 +80,7 @@ class Clusterer():
     MAN = None  # tsne|umap|None
     CLUST = 'kmeans' # gmm|kmeans
     FIND_KNEE = False
-    DEFAULT_NCLUST = 25
+    DEFAULT_NCLUST = 30
 
     def __init__(self):
         self.loaded = False
@@ -136,14 +118,14 @@ class Clusterer():
         # TODO hyper cache this
         log_ = lambda v: math.floor(1 + v * math.log10(x.shape[0]))
         guess = Box(
-            min=log_(1),
-            max=60, # log_(10),
+            min=1,
+            max=50, # log_(10),
             good=log_(3)
         )
         if not search:
             return guess.good
 
-        step = 2  # math.ceil(guess.max / 10)
+        step = 1  # math.ceil(guess.max / 10)
         K = range(guess.min, guess.max, step)
         scores = []
         for k in K:
@@ -167,7 +149,7 @@ class Clusterer():
     def fit(self, x):
         if self.AE:
             self.ae.fit(x)
-            x = self.ae.encoder.predict(x)
+            x = self.ae.encode(x)
         if self.MAN:
             x = self.man.fit_transform(x)
         self.n_clusters = self.knee(x, search=True) if self.FIND_KNEE else self.DEFAULT_NCLUST
@@ -177,7 +159,7 @@ class Clusterer():
 
     def encode(self, x):
         if self.AE:
-            x = self.ae.encoder.predict(x)
+            x = self.ae.encode(x)
         if self.MAN:
             meth = self.man.transform if self.MAN == 'umap' \
                 else self.man.fit_transform  # tsne doesn't have transform!
