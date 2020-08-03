@@ -519,12 +519,12 @@ def resources(entries, logger=None, n_recs=30):
         all_db = engine.execute("select text from entries").fetchall()
         all_db = Clean.entries_to_paras([x.text for x in all_db])
         all_db = run_gpu_model(dict(method='sentence-encode', args=[all_db], kwargs={}))
-        all_db = np.vstack([vecs_books, all_db])
-        clusterer.fit(all_db)
-    enco_books = clusterer.encode(vecs_books)
+        x = np.vstack([all_db, vecs_books])
+        clusterer.fit(x, n_users=vecs_user.shape[0])
     clust_books = clusterer.cluster(vecs_books)
-    enco_user = clusterer.encode(vecs_user)
     clust_user = clusterer.cluster(vecs_user)
+    enco_books = vecs_books  # clusterer.encode(vecs_books)
+    enco_user = vecs_user  # clusterer.encode(vecs_user)
 
     send_attrs = ['title', 'author', 'text', 'topic']
     books = books.rename(columns=dict(

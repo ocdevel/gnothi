@@ -63,32 +63,26 @@ class AutoEncoder():
         self.Model.load_weights(self.model_path)
 
 from sklearn.cluster import MiniBatchKMeans as KMeans
-from sklearn.mixture import GaussianMixture
-from sklearn.manifold import TSNE
-# umap needs https://github.com/lmcinnes/umap/issues/416
-import umap
 import joblib
 from scipy.spatial.distance import cdist
 from kneed import KneeLocator
+from sklearn_extra.cluster import KMedoids
 
 
 class Clusterer():
     clust_path = "tmp/clust.joblib"
 
-    AE = True
-    # Can't save tsne|umap (see comments below), so don't use this anymore
-    MAN = None  # tsne|umap|None
-    CLUST = 'kmeans' # gmm|kmeans
-    FIND_KNEE = False
-    DEFAULT_NCLUST = 30
+    AE = False
+    CLUST = 'kmedoid' # kmeans|kmedoid
+    FIND_KNEE = True
+    DEFAULT_NCLUST = 25
 
     def __init__(self):
         self.loaded = False
 
         self.ae = None
-        self.man = None
         self.clust = None
-        self.pipeline = [self.AE, self.MAN, self.CLUST]
+        self.pipeline = [self.AE, self.CLUST, self.FIND_KNEE]
         self.init_models()
 
     def init_models(self):
@@ -102,14 +96,13 @@ class Clusterer():
             else:
                 models = {}  # start over
 
+        # Uncomment when testing
+        # self.loaded = False
+        # models = {}
+
         self.ae = AutoEncoder()
         if self.AE and self.loaded:
             self.ae.load()
-
-        if self.MAN:
-            self.man = models.get('man', None) or\
-                umap.UMAP(n_components=5, n_neighbors=20, min_dist=0.) if self.MAN == 'umap' \
-                else TSNE(n_components=3)
 
         self.clust = models.get('clust', None)  # initialized in fit()
         self.n_clusters = models.get('n_clusters', self.DEFAULT_NCLUST)
@@ -129,16 +122,10 @@ class Clusterer():
         K = range(guess.min, guess.max, step)
         scores = []
         for k in K:
-            if self.CLUST == 'gmm':
-                gmm = GaussianMixture(n_components=k, covariance_type='full').fit(x)
-                score = gmm.bic(x)
-                scores.append(score)
-            else:
-                # distortion score. https://github.com/arvkevi/kneed/blob/master/notebooks/decreasing_function_walkthrough.ipynb
-                km = KMeans(n_clusters=k).fit(x)
-                score = cdist(x, km.cluster_centers_, 'euclidean')
-                score = sum(np.min(score, axis=1)) / x.shape[0]
-                scores.append(score)
+            m = KMedoids(n_clusters=k) if self.CLUST == 'kmedoid'\
+                else KMeans(n_clusters=k)
+            score = m.fit(x).inertia_
+            scores.append(score)
             print(k, score)
         S = math.floor(math.log(x.shape[0])) # 1=default; 100entries->S=2, 8k->3
         kn = KneeLocator(list(K), scores, S=S, curve='convex', direction='decreasing')
@@ -146,31 +133,46 @@ class Clusterer():
         print('knee', knee)
         return knee
 
-    def fit(self, x):
+    def fit(self, x, n_users=None):
         if self.AE:
             self.ae.fit(x)
             x = self.ae.encode(x)
-        if self.MAN:
-            x = self.man.fit_transform(x)
-        self.n_clusters = self.knee(x, search=True) if self.FIND_KNEE else self.DEFAULT_NCLUST
-        self.clust = GaussianMixture(n_components=self.n_clusters).fit(x) if self.CLUST == 'gmm'\
-            else KMeans(n_clusters=self.n_clusters).fit(x)
+
+        # in case a model's fit() can't handle too many; we wanna make sure users prioritized
+        if self.CLUST == 'kmedoid':
+            n_idxs = x.shape[0]
+            while True:
+                rand_books = np.arange(x.shape[0])[n_users:]
+                np.random.shuffle(rand_books)
+                try:
+                    x_ = np.vstack([
+                        x[:n_users],
+                        x[rand_books][:n_idxs]
+                    ])
+                    KMedoids(n_clusters=self.DEFAULT_NCLUST).fit(x_)
+                    print(n_idxs, 'worked for kmedoid')
+                    break  # worked
+                except:
+                    print(n_idxs, 'did not work, reducing')
+                    n_idxs = math.ceil(n_idxs/2)
+            x = x_
+
+        self.n_clusters = nc = self.knee(x, search=True) if self.FIND_KNEE else self.DEFAULT_NCLUST
+        if self.CLUST == 'kmedoid':
+            self.clust = KMedoids(n_clusters=nc, metric='cosine').fit(x)
+        else:
+            self.clust = KMeans(n_clusters=nc).fit(x)
         self.save()
 
     def encode(self, x):
         if self.AE:
             x = self.ae.encode(x)
-        if self.MAN:
-            meth = self.man.transform if self.MAN == 'umap' \
-                else self.man.fit_transform  # tsne doesn't have transform!
-            x = meth(x)
         return x
 
     def _cluster_small(self, x):
         # new clusterer, not trained one
         knee = self.knee(x, search=False)
-        return GaussianMixture(n_components=knee).fit_predict(x) if self.CLUST == 'gmm'\
-            else KMeans(n_clusters=knee).fit_predict(x)
+        return KMedoids(n_clusters=knee).fit_predict(x)
 
     def cluster(self, x):
         x = self.encode(x)
@@ -179,16 +181,11 @@ class Clusterer():
         if x.shape[0] < 500:
             return self._cluster_small(x)
 
-        if self.CLUST == 'gmm':
-            y_pred_prob = self.clust.predict_proba(x)
-            return y_pred_prob.argmax(1)
         return self.clust.predict(x)
 
     def save(self):
         joblib.dump(dict(
             pipeline=self.pipeline,
-            # self.man,  # umap saving bug (see 182353fe); tsne doesn't keep fitted model
-            man=None,
             clust=self.clust,
             n_clusters=self.n_clusters
         ), self.clust_path)
