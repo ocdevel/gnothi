@@ -9,6 +9,7 @@ from box import Box
 from multiprocessing import cpu_count
 from tqdm import tqdm
 from scipy.spatial.distance import cdist
+import joblib
 
 THREADS = cpu_count()
 
@@ -142,13 +143,14 @@ import string
 # from gensim.utils import simple_preprocess
 from gensim.parsing import preprocessing as pp
 from gensim.corpora.dictionary import Dictionary
-#from gensim.models import LdaModel
+from gensim.models import LdaModel, CoherenceModel
 from gensim.models.wrappers import LdaMallet
 import spacy
 import lemminflect
 from jwtauthtest.unmarkdown import unmark
 nlp = spacy.load('en_core_web_sm', disable=['parser', 'ner'])
-
+from tqdm import tqdm
+from kneed import KneeLocator
 
 class Clean():
     # TODO use RE_PUNCT inserts for proper punctuation handling. See gensim.parsing.preprocessing.RE_PUNCT
@@ -239,48 +241,103 @@ class Clean():
         return paras
 
     @staticmethod
-    def lda_texts(entries, propn=True):
-        def lemma(s):
-            if not s: return s
+    def lda_texts(entries, propn=False):
+        entries = [s.lower() for s in entries]
 
-            postags = ['NOUN', 'ADJ', 'VERB', 'ADV']
-            # Should only be true for user viewing their account (eg, not for book-rec sor other features)
-            if propn: postags.append('PROPN')
-
+        pbar = tqdm(total=len(entries))
+        entries_ = []
+        postags = ['NOUN', 'ADJ', 'VERB', 'ADV']
+        # Should only be true for user viewing their account (eg, not for book-rec sor other features)
+        if propn: postags.append('PROPN')
+        # for doc in tqdm(nlp.pipe(entries, n_process=THREADS, batch_size=1000)):
+        for doc in tqdm(nlp.pipe(entries, n_threads=THREADS, batch_size=1000)):
+            pbar.update(1)
+            if not doc: continue
             tokens = []
-            doc = nlp(s)
             for t in doc:
-                if t.pos_ == 'NUM': tokens.append('number')
-                elif t.is_stop or t.is_punct: continue
-                elif t.pos_ not in postags: continue
-                else: tokens.append(t._.lemma())
-            return " ".join(tokens)
+                if t.pos_ == 'NUM':
+                    tokens.append('number')
+                elif t.is_stop or t.is_punct:
+                    continue
+                elif t.pos_ not in postags:
+                    continue
+                else:
+                    token = t._.lemma()
+                    # token = pp.strip_non_alphanum(token)
+                    token = Clean.only_ascii(token)
+                    tokens.append(token)
+            entries_.append(tokens)
+        pbar.close()
+        return entries_
 
-        # punctuation, numeric, stopwords handled in lemminflect
-        filters = [
-            lambda s: s.lower(),
-            # _fix_punct, _only_ascii, # handled by strip_non_alphanum
-            Clean.remove_apos,
-            pp.strip_non_alphanum,
-            pp.strip_multiple_whitespaces, # should be last, since pp.x() leaves whitespaces in removal
-            lemma
-        ]
-        return [pp.preprocess_string(e, filters=filters) for e in entries]
+
+def lda_topics(paras, load=False, knee=False):
+    lda_path = 'tmp/lda.pkl'
+    texts = []
+    if load:
+        try: texts = joblib.load(lda_path)['texts']
+        except: pass
+    if not texts:
+        texts = Clean.lda_texts(paras)
+        joblib.dump({'texts': texts}, lda_path)
+
+    dictionary = Dictionary(texts)
+    corpus = [dictionary.doc2bow(text) for text in texts]
+
+    os.environ['MALLET_HOME'] = '/mallet-2.0.8'
+    mallet_path = os.environ['MALLET_HOME'] + '/bin/mallet'  # update this path
+    def lda_(n_topics_):
+        os.system('rm tmp/*') # delete unused lda tmp files, VERY large
+        return LdaMallet(
+            mallet_path,
+            corpus=corpus,
+            num_topics=n_topics_,
+            id2word=dictionary,
+            workers=THREADS
+        )
+
+    if knee:
+        step = 2
+        K = range(10, 40, step)
+        scores = []
+        k_scores = []
+        for k in K:
+            lda = lda_(k)
+            cm = CoherenceModel(model=lda, corpus=corpus, texts=texts, coherence='c_v')
+            score = cm.get_coherence()  # get coherence value
+            scores.append(score)
+            k_scores.append((k, score))
+            print(k_scores)
+        kn = KneeLocator(list(K), scores, S=2., curve='concave', direction='increasing')
+        print('knee', kn.knee)
+
+    lda = None
+    if load:
+        try: lda = joblib.load(lda_path)['lda']
+        except: pass
+    if not lda:
+        lda = lda_(Clusterer.DEFAULT_NCLUST)
+        joblib.dump({'texts': texts, 'lda': lda}, lda_path)
+
+    # e7237051 for topics with terms
+    topics = np.array([
+        np.argmax([x[1] for x in a])  # (topic, score)
+        for a in lda[corpus]
+    ])
+    return topics
+
 
 from sklearn.feature_extraction.text import TfidfVectorizer
-
 
 def themes(entries):
     entries = Clean.entries_to_paras(entries)
     vecs = run_gpu_model(dict(method='sentence-encode', args=[entries], kwargs={}))
-    vecs = np.array(vecs)
 
     clusterer = Clusterer()
-    # clusterer.fit(vecs)  # TODO <--good? continue training?
     assert(clusterer.loaded)
-    clusters = clusterer.cluster(vecs)
+    _, clusters = clusterer.cluster(vecs)
 
-    stripped = [' '.join(e) for e in Clean.lda_texts(entries)]
+    stripped = [' '.join(e) for e in Clean.lda_texts(entries, propn=True)]
     stripped = pd.Series(stripped)
     entries = pd.Series(entries)
 
@@ -350,7 +407,10 @@ def run_gpu_model(data):
         if state == 'done':
             job = engine.execute(f"select data from jobs where id=%s", (jid,)).fetchone()
             engine.execute("delete from jobs where id=%s", (jid,))
-            return pickle.loads(job.data)['data']
+            res = pickle.loads(job.data)['data']
+            if data['method'] == 'sentence-encode':
+                res = np.array(res)
+            return res
         i += 1
 
 
@@ -507,24 +567,25 @@ def resources(entries, logger=None, n_recs=30):
     if test is False:
         return offline_df
 
-    e_user = Clean.entries_to_paras(entries)
-    n_user = len(e_user)
+    entries = Clean.entries_to_paras(entries)
+    n_user = len(entries)
 
     vecs_books, books = load_books(logger=logger)
-    vecs_user = run_gpu_model(dict(method='sentence-encode', args=[e_user], kwargs={}))
-    vecs_user, vecs_books = np.array(vecs_user), np.array(vecs_books)
+    vecs_user = run_gpu_model(dict(method='sentence-encode', args=[entries], kwargs={}))
 
     clusterer = Clusterer()
     if not clusterer.loaded:
-        all_db = engine.execute("select text from entries").fetchall()
-        all_db = Clean.entries_to_paras([x.text for x in all_db])
-        all_db = run_gpu_model(dict(method='sentence-encode', args=[all_db], kwargs={}))
-        x = np.vstack([all_db, vecs_books])
-        clusterer.fit(x, n_users=vecs_user.shape[0])
-    clust_books = clusterer.cluster(vecs_books)
-    clust_user = clusterer.cluster(vecs_user)
-    enco_books = vecs_books  # clusterer.encode(vecs_books)
-    enco_user = vecs_user  # clusterer.encode(vecs_user)
+        entries_all_users = engine.execute("select text from entries").fetchall()
+        entries_all_users = Clean.entries_to_paras([x.text for x in entries_all_users])
+        vecs_all_users = run_gpu_model(dict(method='sentence-encode', args=[entries_all_users], kwargs={}))
+        x = np.vstack([vecs_all_users, vecs_books])
+        book_txts = (books.Title + ' ' + books.descr).tolist()
+        topics = lda_topics(entries_all_users + book_txts)
+        clusterer.fit(x, topics)
+    x = np.vstack([vecs_user, vecs_books])
+    enco, clusters = clusterer.cluster(x)
+    clust_user, clust_books = clusters[:n_user], clusters[n_user:]
+    enco_user, enco_books = enco[:n_user], enco[n_user:]
 
     send_attrs = ['title', 'author', 'text', 'topic']
     books = books.rename(columns=dict(
