@@ -12,6 +12,10 @@ from keras.callbacks import EarlyStopping
 from keras.optimizers import Adam
 from sklearn.model_selection import train_test_split
 from sklearn import preprocessing as pp
+from sklearn.cluster import MiniBatchKMeans as KMeans, DBSCAN
+import umap
+import hdbscan
+from sklearn.mixture import GaussianMixture
 
 from scipy.spatial.distance import cdist
 from kneed import KneeLocator
@@ -20,6 +24,8 @@ from kneed import KneeLocator
 class Clusterer():
     model_path = 'tmp/ae.tf'
     DEFAULT_NCLUST = 20
+    LATENT = 20
+    INPUT = 768
 
     def __init__(self, n_clusters=None):
         K.clear_session()
@@ -30,34 +36,34 @@ class Clusterer():
             self.load()
 
     def init_model(self):
-        input_dim, latent = 768, 200
-
-        x_input = Input(shape=(input_dim,), name='x_input')
+        x_input = Input(shape=(self.INPUT,), name='x_input')
         e1 = Dense(500, activation='elu')(x_input)
-        e2 = Dense(latent, activation='linear')(e1)
-        topic_out = Dense(self.n_clusters, activation='softmax', name='topic_out')(e2)
+        e2 = Dense(200, activation='elu')(e1)
+        e3 = Dense(self.LATENT, activation='linear')(e2)
+        label_out = Dense(self.n_clusters, activation='softmax', name='label_out')(e3)
 
-        x_other_input = Input(shape=(input_dim,), name='x_other_input')
-        merged = concatenate([e2, x_other_input])
-        d1 = Dense(500, activation='elu')(merged)
-        d2 = Dense(input_dim, activation='linear', name='decoder_out')(d1)
-        cdist_out = Dense(1, activation='tanh', name='cidst_out')(d2)
+        x_other_input = Input(shape=(self.INPUT,), name='x_other_input')
+        merged = concatenate([e3, x_other_input])
+        d1 = Dense(200, activation='elu')(merged)
+        d2 = Dense(500, activation='elu')(d1)
+        d3 = Dense(self.INPUT, activation='linear', name='decoder_out')(d2)
+        dist_out = Dense(1, activation='tanh', name='dist_out')(d3)
 
         decoder = Model(
             inputs=[x_input, x_other_input],
-            outputs=[d2, cdist_out, topic_out]
+            outputs=[d3, dist_out, label_out]
         )
         encoder = Model(
             inputs=x_input,
-            outputs=[e2, topic_out]
+            outputs=[e3, label_out]
         )
 
         decoder.compile(
             # metrics=['accuracy'],
             loss={
                 'decoder_out': 'mse',
-                'topic_out': 'sparse_categorical_crossentropy',
-                'cidst_out': 'mse'
+                'label_out': 'sparse_categorical_crossentropy',
+                'dist_out': 'mse'
             },
             # loss_weights={'decoder_out': 1., 'topic_out': 0.2},
             optimizer=Adam(learning_rate=.0005),
@@ -66,27 +72,41 @@ class Clusterer():
 
         self.decoder, self.encoder = decoder, encoder
 
-    def cluster(self, x):
-        x, topics = self.encoder.predict(x)
-        return x, topics.argmax(axis=1)
+    def fit(self, x):
+        # FIXME x_train, x_test = train_test_split(x, shuffle=True)
+        other_idx = np.arange(x.shape[0])
+        np.random.shuffle(other_idx)
 
-    def fit(self, x, topics):
-        # x_train, x_test = train_test_split(x, shuffle=True)
-        x_train = x
-        x_other = x.copy()
-        np.random.shuffle(x_other)
+        metric = 'euclidean'
+        print("UMAP")
+        um = umap.UMAP(n_components=self.LATENT, min_dist=0., n_neighbors=20, metric=metric).fit(x)
+        x_umap = um.transform(x)
+        if metric == 'euclidean':
+            print("GaussianMixture")
+            labels = GaussianMixture(n_components=self.n_clusters, covariance_type='full').fit_predict(x_umap)
+        else:
+            print("DBSCAN")
+            dbs = DBSCAN(metric='cosine', algorithm='brute').fit(x_umap)
+            labels = dbs.labels_
+            print("DBSCAN", np.unique(labels)) # TODO store n_clusters somewhere to use in init_models()
 
-        cdists = np.array([
-            cdist([x_train[i]], [x_other[i]], "cosine")[0]
-            for i in range(x.shape[0])
-        ])
+        # hdb = hdbscan.HDBSCAN(metric=metric).fit(x_umap)
+        # print("HDBSCAN", np.unique(hdb.labels_))
+
+        print("Computing Distances")
+        def dist_(i):
+            if metric == 'euclidean':
+                return cdist([x_umap[i]], [x_umap[other_idx][i]], "euclidean")[0]
+            return cdist([x[i]], [x[other_idx][i]], "cosine")[0]
+        dists = np.array([dist_(i) for i in range(x.shape[0])])
+
 
         # https://wizardforcel.gitbooks.io/deep-learning-keras-tensorflow/content/8.2%20Multi-Modal%20Networks.html
         # es = EarlyStopping(monitor='val_loss', mode='min', patience=3, min_delta=.0001)
         es = EarlyStopping(monitor='loss', mode='min', patience=3, min_delta=.0001)
         self.decoder.fit(
-            {'x_input': x_train, 'x_other_input': x_other},
-            {'decoder_out': x_train, 'topic_out': topics, 'cidst_out': cdists},
+            {'x_input': x, 'x_other_input': x[other_idx]},
+            {'decoder_out': x, 'label_out': labels, 'dist_out': dists},
             # x_train, x_train,
             epochs=100,
             batch_size=256,
@@ -100,3 +120,14 @@ class Clusterer():
     def load(self):
         self.decoder.load_weights(self.model_path)
         self.loaded = True
+
+    def cluster(self, x, ae_cluster=True):
+        x, labels = self.encoder.predict(x)
+        if ae_cluster:
+            labels = labels.argmax(axis=1)
+        else:
+            # can use now, since AE was trained to preserve euclidean distance and x is dim-reduced
+            nc = math.floor(1*3*math.log10(x.shape[0]))
+            labels = KMeans(n_clusters=nc).fit_predict(x)
+            # TODO try hdbscan
+        return x, labels
