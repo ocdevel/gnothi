@@ -12,19 +12,14 @@ from keras.callbacks import EarlyStopping
 from keras.optimizers import Adam
 from sklearn.model_selection import train_test_split
 from sklearn import preprocessing as pp
-from sklearn.cluster import MiniBatchKMeans as KMeans, DBSCAN
-import umap
-import hdbscan
-from sklearn.mixture import GaussianMixture
-
+from sklearn_extra.cluster import KMedoids
 from scipy.spatial.distance import cdist
-from kneed import KneeLocator
-
+from tqdm import tqdm
 
 class Clusterer():
     model_path = 'tmp/ae.tf'
     DEFAULT_NCLUST = 20
-    LATENT = 20
+    LATENT = 100
     INPUT = 768
 
     def __init__(self, n_clusters=None):
@@ -62,7 +57,7 @@ class Clusterer():
             # metrics=['accuracy'],
             loss={
                 'decoder_out': 'mse',
-                'label_out': 'sparse_categorical_crossentropy',
+                'label_out': 'categorical_crossentropy',
                 'dist_out': 'mse'
             },
             # loss_weights={'decoder_out': 1., 'topic_out': 0.2},
@@ -72,34 +67,19 @@ class Clusterer():
 
         self.decoder, self.encoder = decoder, encoder
 
-    def fit(self, x):
+    def fit(self, x, labels):
         # FIXME x_train, x_test = train_test_split(x, shuffle=True)
         other_idx = np.arange(x.shape[0])
         np.random.shuffle(other_idx)
 
-        metric = 'euclidean'
-        print("UMAP")
-        um = umap.UMAP(n_components=self.LATENT, min_dist=0., n_neighbors=20, metric=metric).fit(x)
-        x_umap = um.transform(x)
-        if metric == 'euclidean':
-            print("GaussianMixture")
-            labels = GaussianMixture(n_components=self.n_clusters, covariance_type='full').fit_predict(x_umap)
-        else:
-            print("DBSCAN")
-            dbs = DBSCAN(metric='cosine', algorithm='brute').fit(x_umap)
-            labels = dbs.labels_
-            print("DBSCAN", np.unique(labels)) # TODO store n_clusters somewhere to use in init_models()
-
-        # hdb = hdbscan.HDBSCAN(metric=metric).fit(x_umap)
-        # print("HDBSCAN", np.unique(hdb.labels_))
-
         print("Computing Distances")
-        def dist_(i):
-            if metric == 'euclidean':
-                return cdist([x_umap[i]], [x_umap[other_idx][i]], "euclidean")[0]
-            return cdist([x[i]], [x[other_idx][i]], "cosine")[0]
-        dists = np.array([dist_(i) for i in range(x.shape[0])])
-
+        # x_norm = pp.normalize(x, axis=0)
+        # dists = np.dot(x_norm, x_norm[other_idx].T)[:,0].squeeze()
+        # gotta for-loop it. (x * x) doesn't fit into memory
+        dists = np.array([
+            cdist([x[i]], [x[other_idx][i]], "cosine")
+            for i in tqdm(range(x.shape[0]))
+        ]).squeeze()
 
         # https://wizardforcel.gitbooks.io/deep-learning-keras-tensorflow/content/8.2%20Multi-Modal%20Networks.html
         # es = EarlyStopping(monitor='val_loss', mode='min', patience=3, min_delta=.0001)
@@ -128,6 +108,5 @@ class Clusterer():
         else:
             # can use now, since AE was trained to preserve euclidean distance and x is dim-reduced
             nc = math.floor(1*3*math.log10(x.shape[0]))
-            labels = KMeans(n_clusters=nc).fit_predict(x)
-            # TODO try hdbscan
+            labels = m = KMedoids(n_clusters=nc, metric='cosine').fit(x).labels_
         return x, labels

@@ -270,6 +270,60 @@ class Clean():
         pbar.close()
         return entries_
 
+def lda_topics(paras, load=True, knee=False):
+    lda_path = 'tmp/lda.joblib'
+    texts = []
+    if load:
+        try: texts = joblib.load(lda_path)['texts']
+        except: pass
+    if not texts:
+        texts = Clean.lda_texts(paras)
+        joblib.dump({'texts': texts}, lda_path)
+
+    dictionary = Dictionary(texts)
+    corpus = [dictionary.doc2bow(text) for text in texts]
+
+    os.environ['MALLET_HOME'] = '/mallet-2.0.8'
+    mallet_path = os.environ['MALLET_HOME'] + '/bin/mallet'  # update this path
+    def lda_(n_topics_):
+        os.system('rm /tmp/*') # delete unused lda tmp files, VERY large
+        return LdaMallet(
+            mallet_path,
+            corpus=corpus,
+            num_topics=n_topics_,
+            id2word=dictionary,
+            workers=THREADS
+        )
+
+    if knee:
+        step = 2
+        K = range(10, 40, step)
+        scores = []
+        k_scores = []
+        for k in K:
+            lda = lda_(k)
+            cm = CoherenceModel(model=lda, corpus=corpus, texts=texts, coherence='c_v')
+            score = cm.get_coherence()  # get coherence value
+            scores.append(score)
+            k_scores.append((k, score))
+            print(k_scores)
+        kn = KneeLocator(list(K), scores, S=2., curve='concave', direction='increasing')
+        print('knee', kn.knee)
+
+    lda = None
+    if load:
+        try: lda = joblib.load(lda_path)['lda']
+        except: pass
+    if not lda:
+        lda = lda_(Clusterer.DEFAULT_NCLUST)
+        joblib.dump({'texts': texts, 'lda': lda}, lda_path)
+
+    # e7237051 for topics with terms
+    topics = np.array(lda[corpus])
+    topics = topics[:,:,1] # (topic, score)
+    # topics = scipy.special.softmax(topics, axis=1)  # actually already softmax
+    return topics
+
 from sklearn.feature_extraction.text import TfidfVectorizer
 
 def themes(entries):
@@ -278,7 +332,7 @@ def themes(entries):
 
     clusterer = Clusterer()
     assert(clusterer.loaded)
-    _, clusters = clusterer.cluster(vecs)  # , ae_cluster=False)
+    _, clusters = clusterer.cluster(vecs, ae_cluster=False)
 
     stripped = [' '.join(e) for e in Clean.lda_texts(entries, propn=True)]
     stripped = pd.Series(stripped)
@@ -513,16 +567,20 @@ def resources(entries, logger=None, n_recs=30):
     entries = Clean.entries_to_paras(entries)
     n_user = len(entries)
 
+    print("Loading books")
     vecs_books, books = load_books(logger=logger)
     vecs_user = run_gpu_model(dict(method='sentence-encode', args=[entries], kwargs={}))
 
     clusterer = Clusterer()
     if not clusterer.loaded:
+        print("Fitting clusterer")
         entries_all_users = engine.execute("select text from entries").fetchall()
         entries_all_users = Clean.entries_to_paras([x.text for x in entries_all_users])
         vecs_all_users = run_gpu_model(dict(method='sentence-encode', args=[entries_all_users], kwargs={}))
         x = np.vstack([vecs_all_users, vecs_books])
-        clusterer.fit(x)
+        book_txts = (books.Title + ' ' + books.descr).tolist()
+        topics = lda_topics(entries_all_users + book_txts)
+        clusterer.fit(x, topics)
     x = np.vstack([vecs_user, vecs_books])
     enco, clusters = clusterer.cluster(x)
     clust_user, clust_books = clusters[:n_user], clusters[n_user:]

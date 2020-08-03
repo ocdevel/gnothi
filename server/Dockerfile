@@ -45,7 +45,9 @@ RUN pip install \
   keras \
   tensorflow \
   pynndescent \
-  umap-learn
+  umap-learn \
+  scikit-learn-extra \
+  tqdm
 
 # might need 'scipy==1.3.2' for jensen
 
