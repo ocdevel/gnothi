@@ -602,8 +602,9 @@ def resources(entries, logger=None, n_recs=30):
         idx_user = clust_user == l
         if idx_user.sum() < 2: continue # not enough entries
         books_ = books[idx_books].copy()
-        enco_books_ = enco_books[idx_books]
-        enco_user_ = enco_user[idx_user]
+        # Just use orig vecs for cosine. we encode/compress for things that need it (clustering, etc)
+        enco_books_ = vecs_books[idx_books]  # enco_books[idx_books]
+        enco_user_ = vecs_user[idx_user]  # enco_user[idx_user]
 
         # Similar by product
         sims = cdist(enco_user_, enco_books_, "cosine")

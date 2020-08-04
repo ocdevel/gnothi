@@ -13,7 +13,8 @@ from keras.optimizers import Adam
 from sklearn.model_selection import train_test_split
 from sklearn import preprocessing as pp
 from sklearn_extra.cluster import KMedoids
-from scipy.spatial.distance import cdist
+from scipy.spatial.distance import cdist, cosine, pdist, squareform
+from sklearn.metrics import pairwise_distances_chunked
 from tqdm import tqdm
 
 class Clusterer():
@@ -69,23 +70,24 @@ class Clusterer():
 
     def fit(self, x, labels):
         # FIXME x_train, x_test = train_test_split(x, shuffle=True)
-        other_idx = np.arange(x.shape[0])
-        np.random.shuffle(other_idx)
+        shuffle_idx = np.arange(x.shape[0])
+        np.random.shuffle(shuffle_idx)
 
-        print("Computing Distances")
-        # x_norm = pp.normalize(x, axis=0)
-        # dists = np.dot(x_norm, x_norm[other_idx].T)[:,0].squeeze()
-        # gotta for-loop it. (x * x) doesn't fit into memory
-        dists = np.array([
-            cdist([x[i]], [x[other_idx][i]], "cosine")
-            for i in tqdm(range(x.shape[0]))
-        ]).squeeze()
+        print("Chunked Distances")
+        dists = []
+        pdc = pairwise_distances_chunked(x, metric='cosine', working_memory=64)
+        for i, chunk in enumerate(pdc):
+            sz = chunk.shape[0]
+            start, stop = i*sz, (i+1)*sz
+            dist = chunk[np.arange(sz), shuffle_idx[start:stop]]
+            dists.append(dist)
+        dists = np.concatenate(dists)
 
         # https://wizardforcel.gitbooks.io/deep-learning-keras-tensorflow/content/8.2%20Multi-Modal%20Networks.html
         # es = EarlyStopping(monitor='val_loss', mode='min', patience=3, min_delta=.0001)
         es = EarlyStopping(monitor='loss', mode='min', patience=3, min_delta=.0001)
         self.decoder.fit(
-            {'x_input': x, 'x_other_input': x[other_idx]},
+            {'x_input': x, 'x_other_input': x[shuffle_idx]},
             {'decoder_out': x, 'label_out': labels, 'dist_out': dists},
             # x_train, x_train,
             epochs=100,
