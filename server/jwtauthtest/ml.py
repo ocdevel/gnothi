@@ -1,15 +1,13 @@
 from jwtauthtest.utils import vars
 from jwtauthtest.database import engine
-from jwtauthtest.autoencoder import Clusterer
 import re, math, pdb, os
 from pprint import pprint
 import pandas as pd
 import numpy as np
 from box import Box
 from multiprocessing import cpu_count
-from tqdm import tqdm
 from scipy.spatial.distance import cdist
-import joblib
+from sklearn_extra.cluster import KMedoids
 
 THREADS = cpu_count()
 
@@ -139,12 +137,45 @@ def influencers(user_id, specific_target=None, logger=None):
 Themes
 """
 
+def cluster(x, save_to=None, knee=False):
+    sample, sampled = x.copy(), False
+    np.random.shuffle(sample)
+    # Don't overwhelm RAM, take sample if necessary
+    while True:
+        try:
+            np.empty((sample.shape[0], sample.shape[0]))  # will raise if can't fit
+            sampled = True
+            break
+        except:
+            sample = sample[:math.ceil(sample.shape[0] * 2 / 3)]
+
+    if knee:
+        step = 1
+        K = range(1, 60, step)
+        scores = []
+        for k in K:
+            km = KMedoids(n_clusters=k, metric='cosine').fit(sample)
+            scores.append((k,km.inertia_))
+        print(scores)
+        scores = [s[1] for s in scores]
+        kn = KneeLocator(list(K), scores, S=1., curve='convex', direction='decreasing')
+        knee = kn.knee
+        print('knee', knee)
+
+    nc = knee or math.floor(1 + 3 * math.log10(x.shape[0]))
+
+    if save_to:
+        pass
+        # TODO save this per user for later use
+
+    km = KMedoids(n_clusters=nc, metric='cosine').fit(sample)
+    labels = km.predict(x) if sampled else km.labels_
+    return km, labels
+
+
 import string
 # from gensim.utils import simple_preprocess
 from gensim.parsing import preprocessing as pp
-from gensim.corpora.dictionary import Dictionary
-from gensim.models import LdaModel, CoherenceModel
-from gensim.models.wrappers import LdaMallet
 import spacy
 import lemminflect
 from jwtauthtest.unmarkdown import unmark
@@ -270,69 +301,13 @@ class Clean():
         pbar.close()
         return entries_
 
-def lda_topics(paras, load=True, knee=False):
-    lda_path = 'tmp/lda.joblib'
-    texts = []
-    if load:
-        try: texts = joblib.load(lda_path)['texts']
-        except: pass
-    if not texts:
-        texts = Clean.lda_texts(paras)
-        joblib.dump({'texts': texts}, lda_path)
-
-    dictionary = Dictionary(texts)
-    corpus = [dictionary.doc2bow(text) for text in texts]
-
-    os.environ['MALLET_HOME'] = '/mallet-2.0.8'
-    mallet_path = os.environ['MALLET_HOME'] + '/bin/mallet'  # update this path
-    def lda_(n_topics_):
-        os.system('rm /tmp/*') # delete unused lda tmp files, VERY large
-        return LdaMallet(
-            mallet_path,
-            corpus=corpus,
-            num_topics=n_topics_,
-            id2word=dictionary,
-            workers=THREADS
-        )
-
-    if knee:
-        step = 2
-        K = range(10, 40, step)
-        scores = []
-        k_scores = []
-        for k in K:
-            lda = lda_(k)
-            cm = CoherenceModel(model=lda, corpus=corpus, texts=texts, coherence='c_v')
-            score = cm.get_coherence()  # get coherence value
-            scores.append(score)
-            k_scores.append((k, score))
-            print(k_scores)
-        kn = KneeLocator(list(K), scores, S=2., curve='concave', direction='increasing')
-        print('knee', kn.knee)
-
-    lda = None
-    if load:
-        try: lda = joblib.load(lda_path)['lda']
-        except: pass
-    if not lda:
-        lda = lda_(Clusterer.DEFAULT_NCLUST)
-        joblib.dump({'texts': texts, 'lda': lda}, lda_path)
-
-    # e7237051 for topics with terms
-    topics = np.array(lda[corpus])
-    topics = topics[:,:,1] # (topic, score)
-    # topics = scipy.special.softmax(topics, axis=1)  # actually already softmax
-    return topics
-
 from sklearn.feature_extraction.text import TfidfVectorizer
 
 def themes(entries):
     entries = Clean.entries_to_paras(entries)
     vecs = run_gpu_model(dict(method='sentence-encode', args=[entries], kwargs={}))
 
-    clusterer = Clusterer()
-    assert(clusterer.loaded)
-    _, clusters = clusterer.cluster(vecs, ae_cluster=False)
+    km, labels = cluster(vecs)
 
     stripped = [' '.join(e) for e in Clean.lda_texts(entries, propn=True)]
     stripped = pd.Series(stripped)
@@ -341,8 +316,8 @@ def themes(entries):
     # see https://stackoverflow.com/a/34236002/362790
     top_terms = 8
     topics = {}
-    for l in range(clusterer.n_clusters):
-        in_clust_idxs = clusters == l
+    for l in np.unique(labels):
+        in_clust_idxs = labels == l
         if np.sum(in_clust_idxs) < 2:
             continue
         stripped_in_cluster = stripped.iloc[in_clust_idxs].tolist()
@@ -571,21 +546,6 @@ def resources(entries, logger=None, n_recs=30):
     vecs_books, books = load_books(logger=logger)
     vecs_user = run_gpu_model(dict(method='sentence-encode', args=[entries], kwargs={}))
 
-    clusterer = Clusterer()
-    if not clusterer.loaded:
-        print("Fitting clusterer")
-        entries_all_users = engine.execute("select text from entries").fetchall()
-        entries_all_users = Clean.entries_to_paras([x.text for x in entries_all_users])
-        vecs_all_users = run_gpu_model(dict(method='sentence-encode', args=[entries_all_users], kwargs={}))
-        x = np.vstack([vecs_all_users, vecs_books])
-        book_txts = (books.Title + ' ' + books.descr).tolist()
-        topics = lda_topics(entries_all_users + book_txts)
-        clusterer.fit(x, topics)
-    x = np.vstack([vecs_user, vecs_books])
-    enco, clusters = clusterer.cluster(x)
-    clust_user, clust_books = clusters[:n_user], clusters[n_user:]
-    enco_user, enco_books = enco[:n_user], enco[n_user:]
-
     send_attrs = ['title', 'author', 'text', 'topic']
     books = books.rename(columns=dict(
         descr='text',
@@ -597,22 +557,19 @@ def resources(entries, logger=None, n_recs=30):
     logger.info("Finding similars")
     recs = []
 
-    for l in range(clusterer.n_clusters):
-        idx_books = clust_books == l
-        idx_user = clust_user == l
+    km, labels = cluster(vecs_user)
+
+    for l, center in enumerate(km.cluster_centers_):
+        idx_user = labels == l
         if idx_user.sum() < 2: continue # not enough entries
-        books_ = books[idx_books].copy()
-        # Just use orig vecs for cosine. we encode/compress for things that need it (clustering, etc)
-        enco_books_ = vecs_books[idx_books]  # enco_books[idx_books]
-        enco_user_ = vecs_user[idx_user]  # enco_user[idx_user]
+        books_ = books.copy()
 
         # Similar by product
-        sims = cdist(enco_user_, enco_books_, "cosine")
-        books_['sims'] = np.prod(sims, axis=0)
+        sims = cdist([center], vecs_books, "cosine").squeeze()
+        books_['sims'] = np.absolute(sims)
 
         # sort by similar, take k
         k = math.ceil(idx_user.sum() / n_user * n_recs)
-        # k = max([k, 4])
         recs_ = books_.sort_values(by='sims').iloc[:k][['ID', 'sims', *send_attrs]]
         recs.append(recs_)
 
