@@ -11,16 +11,16 @@ from sklearn_extra.cluster import KMedoids
 from sklearn.cluster import KMeans
 from sklearn.cluster import AgglomerativeClustering
 from scipy.spatial.distance import cdist
-from sklearn.metrics import pairwise_distances_chunked
+from sklearn.metrics import pairwise_distances_chunked, pairwise_distances
 from jwtauthtest.cleantext import Clean
 from kneed import KneeLocator
-
 
 class Clusterer():
     model_path = 'tmp/ae.tf'
     DEFAULT_NCLUST = 20
 
     def __init__(self,
+        ae=True,
         n_clusters=None,
         with_topics=False,
         input_dim=768,
@@ -31,6 +31,7 @@ class Clusterer():
     ):
         K.clear_session()
         self.n_clusters = n_clusters or self.DEFAULT_NCLUST
+        self.ae = ae
         self.with_topics = with_topics
         self.input_dim = input_dim
         self.latent = latent
@@ -39,10 +40,11 @@ class Clusterer():
 
         self.loaded = False
         self.init_model()
-        if os.path.exists(self.model_path + '.index'):
-            self.load()
+        self.load()
 
     def init_model(self):
+        if not self.ae: return
+
         x_input = Input(shape=(self.input_dim,), name='x_input')
         e1 = Dense(500, activation='elu')(x_input)
         e2 = Dense(150, activation='elu')(e1)
@@ -93,6 +95,7 @@ class Clusterer():
         self.decoder, self.encoder = decoder, encoder
 
     def fit(self, x, texts=None):
+        if not self.ae: return
         np.random.shuffle(x)  # shuffle all data first, since validation_split happens before shuffle
 
         shuffle = np.arange(x.shape[0])
@@ -140,10 +143,27 @@ class Clusterer():
         self.decoder.save_weights(self.model_path)
 
     def load(self):
-        self.decoder.load_weights(self.model_path)
-        self.loaded = True
+        if not self.ae:
+            self.loaded = True
+            return
+        if os.path.exists(self.model_path + '.index'):
+            self.decoder.load_weights(self.model_path)
+            self.loaded = True
+
+    def simple_cluster(self, x, nc):
+        # dists = np.dot(x, x.T)
+        dists = pairwise_distances(x, metric='cosine')
+        dists = pp.minmax_scale(dists)
+        agg = AgglomerativeClustering(n_clusters=nc, affinity='precomputed', linkage='average')
+        labels = agg.fit_predict(dists)
+        return x, labels
 
     def cluster(self, x, knee=False, topics_as_clusters=False):
+        knee_fallback = math.floor(1+3*math.log10(x.shape[0]))
+
+        if not self.ae:
+            return self.simple_cluster(x, knee_fallback)
+
         klass, args = {
             'agglomorative': (AgglomerativeClustering, {}),
             'kmeans': (KMeans, {}),
@@ -164,7 +184,7 @@ class Clusterer():
             print(scores)
             print('knee', kn.knee)
             knee = kn.knee
-        knee = knee or math.floor(1+3*math.log10(x.shape[0]))
+        knee = knee or knee_fallback
 
         if self.with_topics:
             x, topics = x  # 2 outputs

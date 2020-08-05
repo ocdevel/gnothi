@@ -396,7 +396,6 @@ def resources(entries, logger=None, n_recs=30):
             book_txts = (books.Title + ' ' + books.descr).tolist()
             texts = entries_all_users + book_txts
         clusterer.fit(x, texts=texts)
-    enco_books = clusterer.encoder.predict(vecs_books)
     enco_user, labels = clusterer.cluster(vecs_user)
 
     send_attrs = ['title', 'author', 'text', 'topic']
