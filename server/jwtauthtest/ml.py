@@ -307,21 +307,19 @@ def themes(entries):
     entries = Clean.entries_to_paras(entries)
     vecs = run_gpu_model(dict(method='sentence-encode', args=[entries], kwargs={}))
 
-    km, labels = cluster(vecs)
-
     stripped = [' '.join(e) for e in Clean.lda_texts(entries, propn=True)]
     stripped = pd.Series(stripped)
     entries = pd.Series(entries)
 
     # see https://stackoverflow.com/a/34236002/362790
+    km, labels = cluster(vecs)
     top_terms = 8
     topics = {}
-    for l in np.unique(labels):
-        in_clust_idxs = labels == l
-        if np.sum(in_clust_idxs) < 2:
-            continue
-        stripped_in_cluster = stripped.iloc[in_clust_idxs].tolist()
-        entries_in_cluster = entries.iloc[in_clust_idxs].tolist()
+    for l, center in enumerate(km.cluster_centers_):
+        in_clust = labels == l
+        if in_clust.sum() < 2: continue
+        stripped_in_cluster = stripped.iloc[in_clust].tolist()
+        entries_in_cluster = entries.iloc[in_clust].tolist()
         print('n_entries', len(entries_in_cluster))
         entries_in_cluster = '. '.join(entries_in_cluster)
 
@@ -338,8 +336,10 @@ def themes(entries):
         print(terms)
         summary = summarize(entries_in_cluster, min_length=10, max_length=100)
         sent = sentiment(summary)
+        # summary = sent = None
         l = str(l)
         topics[l] = {
+            'n_entries': in_clust.sum().item(),
             'terms': terms,
             'sentiment': sent,
             'summary': summary

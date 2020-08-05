@@ -48,7 +48,7 @@ export default function Themes({fetch_, as, tags, aiStatus}) {
     {_.map(topics, (obj, topic)=>(
       <Card key={topic} className='bottom-margin'>
         <Card.Body>
-          <Card.Title>Theme {topic}</Card.Title>
+          <Card.Title>{obj.n_entries} Entries</Card.Title>
           {/*<Card.Subtitle className="mb-2 text-muted">Card Subtitle</Card.Subtitle>*/}
           <Card.Text>
             {sent2face(obj.sentiment)}
