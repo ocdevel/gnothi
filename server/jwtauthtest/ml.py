@@ -1,15 +1,15 @@
-from jwtauthtest.utils import vars
+from jwtauthtest.utils import vars, THREADS
 from jwtauthtest.database import engine
+from jwtauthtest.cleantext import Clean
+from jwtauthtest.clusterer import Clusterer
+from jwtauthtest.xgb_hyperopt import run_opt
 import re, math, pdb, os
 from pprint import pprint
 import pandas as pd
 import numpy as np
 from box import Box
-from multiprocessing import cpu_count
 from scipy.spatial.distance import cdist
-from sklearn_extra.cluster import KMedoids
-
-THREADS = cpu_count()
+from tqdm import tqdm
 
 
 """
@@ -83,7 +83,6 @@ def influencers(user_id, specific_target=None, logger=None):
     fes = fes.rolling(span, min_periods=1).mean()
 
     # hyper-opt (TODO cache params)
-    from jwtauthtest.xgb_hyperopt import run_opt
     t = specific_target or target_ids[0]
     X_opt = fes.drop(columns=[t])
     y_opt = fes[t]
@@ -137,189 +136,29 @@ def influencers(user_id, specific_target=None, logger=None):
 Themes
 """
 
-def cluster(x, save_to=None, knee=False):
-    sample, sampled = x.copy(), False
-    np.random.shuffle(sample)
-    # Don't overwhelm RAM, take sample if necessary
-    while True:
-        try:
-            np.empty((sample.shape[0], sample.shape[0]))  # will raise if can't fit
-            sampled = True
-            break
-        except:
-            sample = sample[:math.ceil(sample.shape[0] * 2 / 3)]
-
-    if knee:
-        step = 1
-        K = range(1, 60, step)
-        scores = []
-        for k in K:
-            km = KMedoids(n_clusters=k, metric='cosine').fit(sample)
-            scores.append((k,km.inertia_))
-        print(scores)
-        scores = [s[1] for s in scores]
-        kn = KneeLocator(list(K), scores, S=1., curve='convex', direction='decreasing')
-        knee = kn.knee
-        print('knee', knee)
-
-    nc = knee or math.floor(1 + 3 * math.log10(x.shape[0]))
-
-    if save_to:
-        pass
-        # TODO save this per user for later use
-
-    km = KMedoids(n_clusters=nc, metric='cosine').fit(sample)
-    labels = km.predict(x) if sampled else km.labels_
-    return km, labels
-
-
-import string
-# from gensim.utils import simple_preprocess
-from gensim.parsing import preprocessing as pp
-import spacy
-import lemminflect
-from jwtauthtest.unmarkdown import unmark
-nlp = spacy.load('en_core_web_sm', disable=['parser', 'ner'])
-from tqdm import tqdm
-from kneed import KneeLocator
-
-class Clean():
-    # TODO use RE_PUNCT inserts for proper punctuation handling. See gensim.parsing.preprocessing.RE_PUNCT
-    # RE_PUNCT = re.compile(r'([%s])+' % re.escape(string.punctuation), re.UNICODE)
-    RE_PUNCT = "[.,!;?]"
-
-    @staticmethod
-    def fix_punct(s):
-        return re.sub(rf"({Clean.RE_PUNCT})([a-zA-Z])", r"\1 \2", s)
-
-    @staticmethod
-    def only_ascii(s):
-        return re.sub(r"[^\x00-\x7F\xA9]+", "", s)
-
-    @staticmethod
-    def ends_w_punct(s):
-        return re.search(rf"{Clean.RE_PUNCT}$", s)
-
-    @staticmethod
-    def strip_html(s):
-        return BeautifulSoup(s, "html5lib").text
-
-    @staticmethod
-    def remove_apos(s):
-        # call this before removing punctuation via gensim/spacy, since they're replaced with space
-        return re.sub(r"'", "", s)
-
-    @staticmethod
-    def urls(s):
-        return re.sub(r"http[s]?://\S+", "url", s)
-
-    @staticmethod
-    def is_markup_block(i, lines):
-        s = lines[i]
-        s_next = lines[i+1] if i+1 < len(lines) else ''
-        RE_LI =  r"^\s*([*\-+]|[0-9]+\.)"
-        is_block = False
-
-        # heading
-        if re.search(r"^[#]+", s):
-            is_block = True
-            end_with = "."
-        # li (come before UL for inline replacement)
-        elif re.search(RE_LI, s):
-            s = re.sub("^\s*", "", s)  # unmark doesn't like spaces before li's
-            is_block = True
-            end_with = ";"
-        # ul
-        elif re.search(RE_LI, s_next):
-            is_block = True
-            end_with = ":"
-
-        if not is_block: return False, ""
-        s = unmark(s)
-        s = s if Clean.ends_w_punct(s) else s + end_with
-        return True, s
-
-    @staticmethod
-    def entries_to_paras(entries):
-        # Convert entries into paragraphs. Do some basic cleanup
-        paras = []
-        def clean_append(p):
-            p = unmark(p)
-
-            if len(p) < 128: return
-            p = Clean.fix_punct(p)
-            p = Clean.only_ascii(p)
-            p = pp.strip_multiple_whitespaces(p)
-            if not Clean.ends_w_punct(p):
-                p = p + "."
-            paras.append(p)
-
-        entries = "\n\n".join(entries)
-        lines = re.split('\n+', entries)
-        block_agg = []
-        for i, line in enumerate(lines):
-            # For consistent markdown blocks (title, list-header, list-items) group them all into one paragraph.
-            # Once no more block detected, bust it.
-            is_block, block_txt = Clean.is_markup_block(i, lines)
-            if is_block:
-                block_agg.append(block_txt)
-                continue
-            elif len(block_agg) > 0:
-                block = " ".join(block_agg)
-                block_agg.clear()
-                clean_append(block)
-            clean_append(line)
-        return paras
-
-    @staticmethod
-    def lda_texts(entries, propn=False):
-        entries = [s.lower() for s in entries]
-
-        pbar = tqdm(total=len(entries))
-        entries_ = []
-        postags = ['NOUN', 'ADJ', 'VERB', 'ADV']
-        # Should only be true for user viewing their account (eg, not for book-rec sor other features)
-        if propn: postags.append('PROPN')
-        # for doc in tqdm(nlp.pipe(entries, n_process=THREADS, batch_size=1000)):
-        for doc in tqdm(nlp.pipe(entries, n_threads=THREADS, batch_size=1000)):
-            pbar.update(1)
-            if not doc: continue
-            tokens = []
-            for t in doc:
-                if t.pos_ == 'NUM':
-                    tokens.append('number')
-                elif t.is_stop or t.is_punct:
-                    continue
-                elif t.pos_ not in postags:
-                    continue
-                else:
-                    token = t._.lemma()
-                    # token = pp.strip_non_alphanum(token)
-                    token = Clean.only_ascii(token)
-                    tokens.append(token)
-            entries_.append(tokens)
-        pbar.close()
-        return entries_
-
 from sklearn.feature_extraction.text import TfidfVectorizer
 
 def themes(entries):
     entries = Clean.entries_to_paras(entries)
     vecs = run_gpu_model(dict(method='sentence-encode', args=[entries], kwargs={}))
 
+    clusterer = Clusterer()
+    assert(clusterer.loaded)
+    _, clusters = clusterer.cluster(vecs)
+
     stripped = [' '.join(e) for e in Clean.lda_texts(entries, propn=True)]
     stripped = pd.Series(stripped)
     entries = pd.Series(entries)
 
     # see https://stackoverflow.com/a/34236002/362790
-    km, labels = cluster(vecs)
     top_terms = 8
     topics = {}
-    for l, center in enumerate(km.cluster_centers_):
-        in_clust = labels == l
-        if in_clust.sum() < 2: continue
-        stripped_in_cluster = stripped.iloc[in_clust].tolist()
-        entries_in_cluster = entries.iloc[in_clust].tolist()
+    for l in range(clusters.max()):
+        in_clust_idxs = clusters == l
+        if np.sum(in_clust_idxs) < 2:
+            continue
+        stripped_in_cluster = stripped.iloc[in_clust_idxs].tolist()
+        entries_in_cluster = entries.iloc[in_clust_idxs].tolist()
         print('n_entries', len(entries_in_cluster))
         entries_in_cluster = '. '.join(entries_in_cluster)
 
@@ -334,12 +173,12 @@ def themes(entries):
         terms = [x[0] for x in words_freq[:top_terms]]
 
         print(terms)
-        summary = summarize(entries_in_cluster, min_length=10, max_length=100)
-        sent = sentiment(summary)
-        # summary = sent = None
+        # summary = summarize(entries_in_cluster, min_length=10, max_length=100)
+        # sent = sentiment(summary)
+        summary = sent = None
         l = str(l)
         topics[l] = {
-            'n_entries': in_clust.sum().item(),
+            'n_entries': in_clust_idxs.sum().item(),
             'terms': terms,
             'sentiment': sent,
             'summary': summary
@@ -405,7 +244,7 @@ def sentiment(text):
 
 
 def query(question, entries):
-    context = ' '.join([unmark(e) for e in entries])
+    context = ' '.join([Clean.unmark(e) for e in entries])
     kwargs = dict(question=question, context=context)
     res = run_gpu_model(dict(method='question-answering', args=[], kwargs=kwargs))
     if res is False:
@@ -418,7 +257,6 @@ Resources
 """
 
 from scipy.stats import entropy
-from bs4 import BeautifulSoup
 import pickle
 import scipy
 from langdetect import detect
@@ -503,9 +341,9 @@ def load_books(logger):
     books['descr'] = books.descr.apply(Clean.strip_html)\
         .apply(Clean.fix_punct)\
         .apply(Clean.only_ascii)\
-        .apply(pp.strip_multiple_whitespaces)\
         .apply(Clean.urls)\
-        .apply(unmark)
+        .apply(Clean.multiple_whitespace)\
+        .apply(Clean.unmark)
 
     books['clean'] = books.Title + ' ' + books.descr
     # books = books[books.clean.apply(lambda x: detect(x) == 'en')]
@@ -546,6 +384,21 @@ def resources(entries, logger=None, n_recs=30):
     vecs_books, books = load_books(logger=logger)
     vecs_user = run_gpu_model(dict(method='sentence-encode', args=[entries], kwargs={}))
 
+    clusterer = Clusterer()
+    if not clusterer.loaded:
+        print("Fitting clusterer")
+        entries_all_users = engine.execute("select text from entries").fetchall()
+        entries_all_users = Clean.entries_to_paras([x.text for x in entries_all_users])
+        vecs_all_users = run_gpu_model(dict(method='sentence-encode', args=[entries_all_users], kwargs={}))
+        x = np.vstack([vecs_all_users, vecs_books])
+        texts = None
+        if clusterer.with_topics:
+            book_txts = (books.Title + ' ' + books.descr).tolist()
+            texts = entries_all_users + book_txts
+        clusterer.fit(x, texts=texts)
+    enco_books = clusterer.encoder.predict(vecs_books)
+    enco_user, labels = clusterer.cluster(vecs_user)
+
     send_attrs = ['title', 'author', 'text', 'topic']
     books = books.rename(columns=dict(
         descr='text',
@@ -557,16 +410,24 @@ def resources(entries, logger=None, n_recs=30):
     logger.info("Finding similars")
     recs = []
 
-    km, labels = cluster(vecs_user)
-
-    for l, center in enumerate(km.cluster_centers_):
+    for l in range(labels.max()):
         idx_user = labels == l
         if idx_user.sum() < 2: continue # not enough entries
+        # Just use orig vecs for cosine. we encode/compress for things that need it (clustering, etc)
         books_ = books.copy()
+        x_user, x_books = vecs_user[idx_user], vecs_books
+        # x_user, x_books = enco_user[idx_user], enco_books
 
-        # Similar by product
-        sims = cdist([center], vecs_books, "cosine").squeeze()
-        books_['sims'] = np.absolute(sims)
+        center = x_user.mean(axis=0)[np.newaxis,:]
+        metric = clusterer.preserve or 'dot'  # default to cosine?
+        if metric == 'cosine':
+            sims = cdist(center, x_books, "cosine").squeeze()
+            sims = np.absolute(sims)
+        else:
+            sims = np.dot(center, x_books.T).squeeze()
+            # TODO in my mind, dot should be as-is and cdist should be 1 - dist (for find-minimum); but it's opposite.
+            sims = 1. - np.absolute(sims)
+        books_['sims'] = sims
 
         # sort by similar, take k
         k = math.ceil(idx_user.sum() / n_user * n_recs)

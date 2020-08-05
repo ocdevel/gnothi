@@ -22,3 +22,6 @@ vars = Box(vars)
 vars['DB_URL'] = f"{vars.DB_URL}/{vars.DB_NAME}"
 vars['DB_PROD_URL'] = f"{vars.DB_PROD_URL}/{vars.DB_PROD_NAME}"
 #print(vars.DB_URL)
+
+from multiprocessing import cpu_count
+THREADS = cpu_count()
