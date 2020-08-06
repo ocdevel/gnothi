@@ -1,4 +1,4 @@
-import math, os
+import math, os, pdb
 import numpy as np
 from keras import backend as K
 from keras.layers import Layer, Input, Dense, Lambda
@@ -20,7 +20,7 @@ class Clusterer():
     DEFAULT_NCLUST = 20
 
     def __init__(self,
-        ae=True,
+        ae=False,
         n_clusters=None,
         with_topics=False,
         input_dim=768,
@@ -94,8 +94,14 @@ class Clusterer():
 
         self.decoder, self.encoder = decoder, encoder
 
+    def _print_dists(self, dists):
+        # wanna make sure our distances are normalized after xyz
+        print('dists.min', dists.min(), 'dists.max', dists.max())
+
     def fit(self, x, texts=None):
         if not self.ae: return
+
+        x = pp.normalize(x)
         np.random.shuffle(x)  # shuffle all data first, since validation_split happens before shuffle
 
         shuffle = np.arange(x.shape[0])
@@ -104,6 +110,7 @@ class Clusterer():
         if self.preserve == 'dot':
             # dot product fast & intuitive, but too hard to optimize
             dists = np.array([ np.dot(x[i], x[shuffle[i]]) for i in range(x.shape[0]) ])
+            self._print_dists(dists)
             dists = pp.minmax_scale(dists)
         if self.preserve == 'cosine':
             print("Calc distances")
@@ -116,7 +123,7 @@ class Clusterer():
                 dists.append(dist)
             # cosine values bw [-1 1], no loss function for that (well, mse..) Scale to [0 1] and use binary_xentropy
             dists = np.concatenate(dists)
-            print(dists.min(), dists.max())
+            self._print_dists(dists)
             dists = pp.minmax_scale(dists) # (dists + 1) / 2
 
         # https://wizardforcel.gitbooks.io/deep-learning-keras-tensorflow/content/8.2%20Multi-Modal%20Networks.html
@@ -151,9 +158,9 @@ class Clusterer():
             self.loaded = True
 
     def simple_cluster(self, x, nc):
-        # dists = np.dot(x, x.T)
-        dists = pairwise_distances(x, metric='cosine')
-        dists = pp.minmax_scale(dists)
+        x = pp.normalize(x)  # unecessary for cosine?
+        dists = pairwise_distances(x, metric='cosine')  # cosine > dot
+        self._print_dists(dists)
         agg = AgglomerativeClustering(n_clusters=nc, affinity='precomputed', linkage='average')
         labels = agg.fit_predict(dists)
         return x, labels
