@@ -10,6 +10,7 @@ import numpy as np
 from box import Box
 from scipy.spatial.distance import cdist
 from scipy.stats import percentileofscore
+import sklearn.preprocessing as pp
 from tqdm import tqdm
 
 
@@ -386,25 +387,10 @@ def resources(entries, logger=None, n_recs=30):
         return offline_df
 
     entries = Clean.entries_to_paras(entries)
-    n_user = len(entries)
 
     print("Loading books")
     vecs_books, books = load_books(logger=logger)
     vecs_user = run_gpu_model(dict(method='sentence-encode', args=[entries], kwargs={}))
-
-    clusterer = Clusterer()
-    if not clusterer.loaded:
-        print("Fitting clusterer")
-        entries_all_users = engine.execute("select text from entries").fetchall()
-        entries_all_users = Clean.entries_to_paras([x.text for x in entries_all_users])
-        vecs_all_users = run_gpu_model(dict(method='sentence-encode', args=[entries_all_users], kwargs={}))
-        x = np.vstack([vecs_all_users, vecs_books])
-        texts = None
-        if clusterer.with_topics:
-            book_txts = (books.Title + ' ' + books.descr).tolist()
-            texts = entries_all_users + book_txts
-        clusterer.fit(x, texts=texts)
-    enco_user, labels = clusterer.cluster(vecs_user)
 
     send_attrs = ['title', 'author', 'text', 'topic']
     books = books.rename(columns=dict(
@@ -415,46 +401,17 @@ def resources(entries, logger=None, n_recs=30):
     )).set_index('ID', drop=False)
 
     logger.info("Finding similars")
-    recs = []
-    BY_CENTROID = False
+    dists = cdist(vecs_user, vecs_books, "cosine")
+    dists = np.absolute(dists)
+    r = pd.DataFrame({
+        'ID': books.ID.tolist() * dists.shape[0],
+        'dist': np.hstack(dists)
+    })
+    r = r.sort_values(by='dist')\
+        .drop_duplicates('ID', keep='first')\
+        .iloc[:n_recs].ID
 
-    for l in range(labels.max()):
-        idx_user = labels == l
-        n_idx = idx_user.sum()
-        if n_idx < 2: continue # not enough entries
-        k = math.ceil(n_idx / n_user * n_recs)
-
-        # Just use orig vecs for cosine. we encode/compress for things that need it (clustering, etc)
-        x_user, x_books = vecs_user[idx_user], vecs_books
-        # x_user, x_books = enco_user[idx_user], enco_books
-
-        if BY_CENTROID:
-            x_user = x_user.mean(axis=0)[np.newaxis,:]
-
-        metric = clusterer.preserve or 'dot'  # default to cosine?
-        if metric == 'cosine':
-            dists = cdist(x_user, x_books, "cosine").squeeze()
-            dists = np.absolute(dists)
-        else:
-            dists = np.dot(x_user, x_books.T).squeeze()
-            # TODO in my mind, dot should be as-is and cdist should be 1 - dist (for find-minimum); but it's opposite.
-            dists = 1. - np.absolute(dists)
-        if BY_CENTROID:
-            r = pd.DataFrame({'ID': books.ID, 'dist': dists})
-        else:
-            r = pd.DataFrame({
-                'ID': books.ID.tolist() * dists.shape[0],
-                'dist': np.hstack(dists)
-            })
-        # r['dist'] = [percentileofscore(r.dist, s) for s in r.dist]
-        r = r.sort_values(by='dist')\
-            .drop_duplicates('ID', keep='first')\
-            .iloc[:k]
-        recs.append(r)
-    recs = pd.concat(recs, ignore_index=True)\
-        .sort_values('dist')\
-        .drop_duplicates('ID', keep='first').ID
-    recs = books.loc[recs][send_attrs]\
+    recs = books.loc[r][send_attrs]\
         .drop_duplicates('title', keep='first')  # dupes in libgen
     recs = [x for x in recs.T.to_dict().values()]
     return recs
