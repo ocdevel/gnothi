@@ -154,17 +154,24 @@ def themes(entries):
     top_terms = 8
     topics = {}
     for l in range(clusters.max()):
-        in_clust_idxs = clusters == l
-        if np.sum(in_clust_idxs) < 2:
+        in_clust = clusters == l
+        n_entries = in_clust.sum().item()
+        print('n_entries', n_entries)
+        if n_entries < 2:
+            print('skipping')
             continue
-        stripped_in_cluster = stripped.iloc[in_clust_idxs].tolist()
-        entries_in_cluster = entries.iloc[in_clust_idxs].tolist()
-        print('n_entries', len(entries_in_cluster))
-        entries_in_cluster = '. '.join(entries_in_cluster)
+
+        vecs_, stripped_, entries_ = vecs[in_clust],\
+            stripped.iloc[in_clust], entries.iloc[in_clust]
+
+        center = vecs_.mean(axis=0)[np.newaxis,:]
+        dists = cdist(center, vecs_, metric='cosine').squeeze()
+        entries_ = entries_.iloc[dists.argsort()].tolist()[:5]
+        entries_ = '\n'.join(entries_)  # todo smarter sentence-joiner?
 
         # model = CountVectorizer()
         model = TfidfVectorizer()
-        res = model.fit_transform(stripped_in_cluster)
+        res = model.fit_transform(stripped_.tolist())
 
         # https://medium.com/@cristhianboujon/how-to-list-the-most-common-words-from-text-corpus-using-scikit-learn-dad4d0cab41d
         sum_words = res.sum(axis=0)
@@ -173,17 +180,17 @@ def themes(entries):
         terms = [x[0] for x in words_freq[:top_terms]]
 
         print(terms)
-        # summary = summarize(entries_in_cluster, min_length=10, max_length=100)
-        # sent = sentiment(summary)
-        summary = sent = None
+        summary = summarize(entries_, min_length=50, max_length=300)
+        sent = sentiment(summary)
+        # summary = sent = None
         l = str(l)
         topics[l] = {
-            'n_entries': in_clust_idxs.sum().item(),
+            'n_entries': n_entries,
             'terms': terms,
             'sentiment': sent,
             'summary': summary
         }
-        print('\n\n\n')
+        print('\n\n')
     return topics
 
 """

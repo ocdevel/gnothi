@@ -9,6 +9,7 @@ import joblib
 from gensim.parsing import preprocessing as pp
 from gensim.corpora.dictionary import Dictionary
 from gensim.models import LdaModel, CoherenceModel
+from gensim.models.phrases import Phrases, Phraser
 from gensim.models.wrappers import LdaMallet
 
 import spacy
@@ -136,10 +137,10 @@ class Clean():
 
     @staticmethod
     def lda_texts(entries, propn=False):
-        entries = [s.lower() for s in entries]
+        # entries = [s.lower() for s in entries]
 
         pbar = tqdm(total=len(entries))
-        entries_ = []
+        docs = []
         postags = ['NOUN', 'ADJ', 'VERB', 'ADV']
         # Should only be true for user viewing their account (eg, not for book-rec sor other features)
         if propn: postags.append('PROPN')
@@ -149,20 +150,26 @@ class Clean():
             if not doc: continue
             tokens = []
             for t in doc:
-                if t.pos_ == 'NUM':
-                    tokens.append('number')
-                elif t.is_stop or t.is_punct:
-                    continue
-                elif t.pos_ not in postags:
-                    continue
+                if t.pos_ == 'NUM': tokens.append('number')
+                # elif t.pos_ == 'SYM': tokens.append('symbol')
+                elif t.is_stop or t.is_punct: continue
+                elif t.pos_ not in postags: continue
                 else:
-                    token = t._.lemma()
-                    # token = pp.strip_non_alphanum(token)
-                    token = Clean.only_ascii(token)
+                    token = t._.lemma().lower()
+                    token = pp.strip_non_alphanum(token)
+                    # token = Clean.only_ascii(token)
+                    if len(token) < 2: continue
                     tokens.append(token)
-            entries_.append(tokens)
+            docs.append(tokens)
         pbar.close()
-        return entries_
+
+        # Bigrams
+        thresh = 2  # 1000 # higher threshold fewer phrases.
+        phrases = Phrases(docs, min_count=1, threshold=thresh)
+        bigram = Phraser(phrases)
+        docs = [bigram[doc] for doc in docs]
+
+        return docs
 
     @staticmethod
     def lda_topics(paras, load=True, knee=False, default_n_topics=None):

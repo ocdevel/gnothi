@@ -26,7 +26,7 @@ class Clusterer():
         input_dim=768,
         latent=20,
         # dot preserves topology; cosine preserves angle distances; None is raw AE. Based on your downstream clusterer
-        preserve='dot',  # dot|cosine|None,
+        preserve='cosine',  # dot|cosine|None,
         clusterer='agglomorative'  # kmedoids|kmeans|agglomorative
     ):
         K.clear_session()
