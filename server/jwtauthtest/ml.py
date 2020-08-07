@@ -9,6 +9,7 @@ import pandas as pd
 import numpy as np
 from box import Box
 from scipy.spatial.distance import cdist
+from scipy.stats import percentileofscore
 from tqdm import tqdm
 
 
@@ -411,36 +412,49 @@ def resources(entries, logger=None, n_recs=30):
         Title='title',
         Author='author',
         topic_descr='topic'
-    ))
+    )).set_index('ID', drop=False)
 
     logger.info("Finding similars")
     recs = []
+    BY_CENTROID = False
 
     for l in range(labels.max()):
         idx_user = labels == l
-        if idx_user.sum() < 2: continue # not enough entries
+        n_idx = idx_user.sum()
+        if n_idx < 2: continue # not enough entries
+        k = math.ceil(n_idx / n_user * n_recs)
+
         # Just use orig vecs for cosine. we encode/compress for things that need it (clustering, etc)
-        books_ = books.copy()
         x_user, x_books = vecs_user[idx_user], vecs_books
         # x_user, x_books = enco_user[idx_user], enco_books
 
-        center = x_user.mean(axis=0)[np.newaxis,:]
+        if BY_CENTROID:
+            x_user = x_user.mean(axis=0)[np.newaxis,:]
+
         metric = clusterer.preserve or 'dot'  # default to cosine?
         if metric == 'cosine':
-            sims = cdist(center, x_books, "cosine").squeeze()
-            sims = np.absolute(sims)
+            dists = cdist(x_user, x_books, "cosine").squeeze()
+            dists = np.absolute(dists)
         else:
-            sims = np.dot(center, x_books.T).squeeze()
+            dists = np.dot(x_user, x_books.T).squeeze()
             # TODO in my mind, dot should be as-is and cdist should be 1 - dist (for find-minimum); but it's opposite.
-            sims = 1. - np.absolute(sims)
-        books_['sims'] = sims
-
-        # sort by similar, take k
-        k = math.ceil(idx_user.sum() / n_user * n_recs)
-        recs_ = books_.sort_values(by='sims').iloc[:k][['ID', 'sims', *send_attrs]]
-        recs.append(recs_)
-
-    recs = pd.concat(recs)
-    recs = recs.drop_duplicates('ID').sort_values(by='sims')[send_attrs]
+            dists = 1. - np.absolute(dists)
+        if BY_CENTROID:
+            r = pd.DataFrame({'ID': books.ID, 'dist': dists})
+        else:
+            r = pd.DataFrame({
+                'ID': books.ID.tolist() * dists.shape[0],
+                'dist': np.hstack(dists)
+            })
+        # r['dist'] = [percentileofscore(r.dist, s) for s in r.dist]
+        r = r.sort_values(by='dist')\
+            .drop_duplicates('ID', keep='first')\
+            .iloc[:k]
+        recs.append(r)
+    recs = pd.concat(recs, ignore_index=True)\
+        .sort_values('dist')\
+        .drop_duplicates('ID', keep='first').ID
+    recs = books.loc[recs][send_attrs]\
+        .drop_duplicates('title', keep='first')  # dupes in libgen
     recs = [x for x in recs.T.to_dict().values()]
     return recs

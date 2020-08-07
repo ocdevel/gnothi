@@ -158,8 +158,12 @@ class Clusterer():
             self.loaded = True
 
     def simple_cluster(self, x, nc):
-        x = pp.normalize(x)  # unecessary for cosine?
-        dists = pairwise_distances(x, metric='cosine')  # cosine > dot
+        # cosine > dot
+        if self.preserve == 'dot':
+            x = pp.normalize(x)  # unecessary for cosine?
+            dists = np.dot(x, x.T)
+        else:
+            dists = pairwise_distances(x, metric='cosine')
         self._print_dists(dists)
         agg = AgglomerativeClustering(n_clusters=nc, affinity='precomputed', linkage='average')
         labels = agg.fit_predict(dists)
