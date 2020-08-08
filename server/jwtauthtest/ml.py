@@ -1,7 +1,6 @@
 from jwtauthtest.utils import vars, THREADS
 from jwtauthtest.database import engine
 from jwtauthtest.cleantext import Clean
-from jwtauthtest.clusterer import Clusterer
 from jwtauthtest.xgb_hyperopt import run_opt
 import re, math, pdb, os
 from pprint import pprint
@@ -138,15 +137,23 @@ def influencers(user_id, specific_target=None, logger=None):
 Themes
 """
 
+from sklearn.cluster import AgglomerativeClustering
+
+def cluster(x):
+    nc = math.floor(1+5*math.log10(x.shape[0]))
+    dists = run_gpu_model(dict(method='cosine', args=[x, x], kwargs={}))
+    print('dists.min', dists.min(), 'dists.max', dists.max())
+    agg = AgglomerativeClustering(n_clusters=nc, affinity='precomputed', linkage='average')
+    labels = agg.fit_predict(dists)
+    return labels
+
 from sklearn.feature_extraction.text import TfidfVectorizer
 
 def themes(entries):
     entries = Clean.entries_to_paras(entries)
     vecs = run_gpu_model(dict(method='sentence-encode', args=[entries], kwargs={}))
 
-    clusterer = Clusterer()
-    assert(clusterer.loaded)
-    _, clusters = clusterer.cluster(vecs)
+    clusters = cluster(vecs)
 
     stripped = [' '.join(e) for e in Clean.lda_texts(entries, propn=True)]
     stripped = pd.Series(stripped)
@@ -167,6 +174,7 @@ def themes(entries):
             stripped.iloc[in_clust], entries.iloc[in_clust]
 
         center = vecs_.mean(axis=0)[np.newaxis,:]
+        # TODO do on gpu(cosine)?
         dists = cdist(center, vecs_, metric='cosine').squeeze()
         entries_ = entries_.iloc[dists.argsort()].tolist()[:5]
         entries_ = '\n'.join(entries_)  # todo smarter sentence-joiner?
@@ -401,7 +409,7 @@ def resources(entries, logger=None, n_recs=30):
     )).set_index('ID', drop=False)
 
     logger.info("Finding similars")
-    dists = cdist(vecs_user, vecs_books, "cosine")
+    dists = run_gpu_model(dict(method='cosine', args=[vecs_user, vecs_books], kwargs={}))
     dists = np.absolute(dists)
     r = pd.DataFrame({
         'ID': books.ID.tolist() * dists.shape[0],
