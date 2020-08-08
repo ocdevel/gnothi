@@ -11,7 +11,7 @@ def join_(paths):
 
 config_json = json.load(open(join_(['config.json'])))
 vars = {}
-for k in 'DB_URL DB_PROD_URL DB_NAME DB_PROD_NAME HABIT DB_JOBS DB_BOOKS FLASK_KEY'.split():
+for k in 'DB_URL DB_PROD_URL DB_NAME DB_PROD_NAME HABIT DB_BOOKS FLASK_KEY'.split():
     vars[k] = os.environ.get(k, config_json.get(k, None))
 
 if os.environ['ENVIRONMENT'] == 'production':

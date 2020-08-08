@@ -1,7 +1,6 @@
 from sentence_transformers import SentenceTransformer
 
-# sentence_encode = SentenceTransformer('roberta-base-nli-mean-tokens')
-sentence_encode = SentenceTransformer('roberta-base-nli-stsb-mean-tokens')
+sentence_encode = SentenceTransformer('roberta-large-nli-stsb-mean-tokens')
 
 from transformers import AutoTokenizer, AutoModelWithLMHead
 

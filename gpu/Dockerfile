@@ -9,14 +9,37 @@ RUN apt-get install -y lsb-release &&\
   echo "deb http://apt.postgresql.org/pub/repos/apt/ ${RELEASE}"-pgdg main | tee  /etc/apt/sources.list.d/pgdg.list &&\
   apt update && apt -y install postgresql-client-12
 
-RUN pip install torch==1.5.1+cu101 torchvision==0.6.1+cu101 -f https://download.pytorch.org/whl/torch_stable.html
+RUN pip install spacy && python -m spacy download en_core_web_sm
+RUN apt-get install -y default-jre &&\
+    wget http://mallet.cs.umass.edu/dist/mallet-2.0.8.zip -O /mallet-2.0.8.zip && unzip /mallet-2.0.8.zip -d /
+
+RUN pip install torch==1.6.0+cu101 torchvision==0.7.0+cu101 -f https://download.pytorch.org/whl/torch_stable.html
+
+# needed for mysql?
+RUN apt-get install -y --fix-missing default-libmysqlclient-dev
 
 RUN pip install \
     psycopg2-binary \
     python-box \
-    sqlalchemy \
     sentence-transformers==0.2.6.2 \
-    transformers==2.11.0
+    transformers==2.11.0 \
+    pandas \
+    xgboost \
+    sklearn \
+    gensim \
+    beautifulsoup4 \
+    markdown \
+    lemminflect \
+    mysqlclient \
+    scipy \
+    html5lib \
+    langdetect \
+    hyperopt \
+    kneed \
+    keras \
+    scikit-learn-extra \
+    tqdm \
+    sqlalchemy
 
 COPY . /app
 WORKDIR /app
@@ -24,5 +47,5 @@ WORKDIR /app
 RUN python install_models.py
 
 #ENTRYPOINT /bin/bash
-ENTRYPOINT python windows.py
+ENTRYPOINT python run.py
 # tf.test.gpu_device_name() to test

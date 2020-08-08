@@ -11,7 +11,6 @@ from jwtauthtest.utils import vars, is_dev
 from jwtauthtest import ml
 import requests
 from dateutil.parser import parse as dparse
-import nltk
 
 
 def as_user():
@@ -357,7 +356,6 @@ def influencers():
     targets, all_imps, next_preds = ml.influencers(
         user.id,
         specific_target=request.args.get('target', None),
-        logger=app.logger
     )
     data = {'overall': all_imps, 'per_target': targets, 'next_preds': next_preds}
     return jsonify({'data': data})
@@ -424,7 +422,7 @@ def get_books():
     if (not snooping) or user.share_data.profile:
         entries = [user.profile_to_text()] + entries
 
-    books = ml.resources(entries, logger=app.logger)
+    books = ml.books(entries)
     return jsonify({'data': books})
 
 

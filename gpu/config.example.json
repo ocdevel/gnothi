@@ -1,0 +1,4 @@
+{
+  "DB": "postgres://postgres:password@host.docker.internal:5432/gnothi",
+  "DB_BOOKS": "mysql://root:password@host.docker.internal:3306/books"
+}
