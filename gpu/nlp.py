@@ -1,7 +1,7 @@
 import math, time
 import torch
 import numpy as np
-from sentence_transformers import SentenceTransformer
+from sentence_transformers import SentenceTransformer, models
 # from transformers import pipeline
 from transformers import AutoTokenizer, AutoModelWithLMHead#, AutoModelForQuestionAnswering, AutoModelForSequenceClassification
 
@@ -20,7 +20,10 @@ def sentence_encode(x):
     if encoder is None:
         encoder = -1
         encoder = SentenceTransformer('roberta-large-nli-stsb-mean-tokens')
-    return np.array(encoder.encode(x))
+        # word_embedding_model = models.Transformer('allenai/longformer-base-4096')
+        # pooling_model = models.Pooling(word_embedding_model.get_word_embedding_dimension())
+        # encoder = SentenceTransformer(modules=[word_embedding_model, pooling_model])
+    return np.array(encoder.encode(x, batch_size=32, show_progress_bar=True))
 
 # TODO chunk sentiment? (or is it fine with chunked summaries?)
 sent_tokenizer = None
@@ -63,15 +66,15 @@ def summarize(text, max_length=None, min_length=None):
         sum_tokenizer = BartTokenizer.from_pretrained('facebook/bart-large-cnn')
         sum_model = BartForConditionalGeneration.from_pretrained('facebook/bart-large-cnn').to("cuda")
 
-    print(max_length, min_length)
     tokens_all = sum_tokenizer.encode(text, return_tensors='pt').to("cuda")
     if max_length and tokens_all.shape[1] <= max_length:
         return [{"summary_text": text}]
     n_parts = math.ceil(tokens_all.shape[1] / sum_max)
     tokens_all = sum_tokenizer.encode(text, return_tensors='pt', max_length=sum_max * n_parts,
                                       pad_to_max_length=True).to("cuda")
+    sum_args = dict(num_beams=4, early_stopping=True)
     if n_parts == 1:
-        summary_ids = sum_model.generate(tokens_all, max_length=max_length, min_length=min_length)
+        summary_ids = sum_model.generate(tokens_all, max_length=max_length, min_length=min_length, **sum_args)
     else:
         max_part = int(max_length / n_parts) if max_length else None
         summary_ids = []
@@ -81,7 +84,7 @@ def summarize(text, max_length=None, min_length=None):
                 min_part = int(min_length / n_parts)
             tokens_part = tokens_all[:, i * sum_max: (i + 1) * sum_max]
             # FIXME generate as batch ([batch_size, tokens])
-            summary_ids += sum_model.generate(tokens_part, max_length=max_part, min_length=min_part)
+            summary_ids += sum_model.generate(tokens_part, max_length=max_part, min_length=min_part, **sum_args)
         summary_ids = torch.cat(summary_ids).unsqueeze(0)
         ## Min/max size already accounted for above
         # summary_ids = sum_model.generate(summary_ids, max_length=max_length, min_length=min_length)

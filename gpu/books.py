@@ -53,14 +53,14 @@ def load_books():
         # TODO try instead create_engine(convert_unicode=True)
 
         ids = ' '.join([sql.just_ids, sql.body])
-        ids = [x.ID for x in engine.execute(ids).fetchall()]
+        ids = [x.ID for x in book_engine.execute(ids).fetchall()]
         problem_ids = []
         for i, id in enumerate(tqdm(ids)):
             if i%10000==0:
                 print(len(problem_ids)/len(ids)*100, '% problems')
             try:
                 row = ' '.join([sql.select, sql.body, sql.where_id])
-                engine.execute(text(row), id=id)
+                book_engine.execute(text(row), id=id)
             except:
                 problem_ids.append(id)
         problem_ids = ','.join([f"'{id}'" for id in problem_ids])
@@ -80,8 +80,8 @@ def load_books():
     books_ = books_[~(books_.Title + books_.descr).str.contains(broken)]\
         .drop_duplicates(['Title', 'Author'])  # TODO reconsider
 
-    # .apply(Clean.fix_punct)\
     books_['descr'] = books_.descr.apply(Clean.strip_html)\
+        .apply(Clean.fix_punct)\
         .apply(Clean.only_ascii)\
         .apply(Clean.urls)\
         .apply(Clean.multiple_whitespace)\
@@ -115,11 +115,9 @@ def books(entries, n_recs=30):
     )).set_index('ID', drop=False)
 
     print("Finding similars")
-    r = cosine(vecs_user, vecs_books)  # dists
-    r = np.hstack(np.absolute(r))
     r = pd.DataFrame({
         'ID': books_.ID.tolist() * vecs_user.shape[0],
-        'dist': r
+        'dist': cosine(vecs_user, vecs_books, abs=True).flatten()
     })
     r = r.sort_values(by='dist')\
         .drop_duplicates('ID', keep='first')\
