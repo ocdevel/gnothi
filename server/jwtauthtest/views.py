@@ -243,7 +243,9 @@ def entries():
     user, snooping = as_user()
     if request.method == 'GET':
         if snooping:
-            data = Entry.snoop(current_identity.username, user.id, ['full']).all()
+            data = Entry.snoop(current_identity.username, user.id, ['full']) \
+                .order_by(Entry.created_at.desc())\
+                .all()
         else:
             data = user.entries
         data = [e.json() for e in data]

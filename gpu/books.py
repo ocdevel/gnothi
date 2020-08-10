@@ -17,7 +17,7 @@ def load_books():
         with open(path_, 'rb') as pkl:
             return pickle.load(pkl)
 
-    print("Fetching books_")
+    print("Fetching books")
     # for-sure psych. See tmp/topics.txt, or libgen.sql topics(lang='en')
     psych_topics = 'psychology|self-help|therapy'
     # good other psych topics, either mis-categorized or other
@@ -46,7 +46,7 @@ def load_books():
     )
 
     FIND_PROBLEMS = False
-    ALL_books_ = False
+    ALL_BOOKS = False
 
     if FIND_PROBLEMS:
         # # Those MD5s: UnicodeDecodeError: 'charmap' codec can't decode byte 0x9d in position 636: character maps to <undefined>
@@ -68,41 +68,42 @@ def load_books():
         exit(0)
 
     sql_ = [sql.select, sql.body]
-    if not ALL_books_: sql_ += [sql.just_psych]
+    if not ALL_BOOKS: sql_ += [sql.just_psych]
     sql_ = ' '.join(sql_)
     with book_engine.connect() as conn:
         books_ = pd.read_sql(sql_, conn)
     books_ = books_.drop_duplicates(['Title', 'Author'])
 
-    print('n_books_ before cleanup', books_.shape[0])
+    print('n_books before cleanup', books_.shape[0])
     print("Removing HTML")
     broken = '(\?\?\?|\#\#\#)'  # russian / other FIXME better way to handle
-    books_ = books_[~(books_.Title + books_.descr).str.contains(broken)]
+    books_ = books_[~(books_.Title + books_.descr).str.contains(broken)]\
+        .drop_duplicates(['Title', 'Author'])  # TODO reconsider
 
+    # .apply(Clean.fix_punct)\
     books_['descr'] = books_.descr.apply(Clean.strip_html)\
-        .apply(Clean.fix_punct)\
         .apply(Clean.only_ascii)\
         .apply(Clean.urls)\
         .apply(Clean.multiple_whitespace)\
         .apply(Clean.unmark)
 
-    books_['clean'] = books_.Title + ' ' + books_.descr
+    books_['clean'] = books_.Title + '\n' + books_.descr
     # books_ = books_[books_.clean.apply(lambda x: detect(x) == 'en')]
-    print('n_books_ after cleanup', books_.shape[0])
-    e_books_ = books_.clean.tolist()
+    print('n_books after cleanup', books_.shape[0])
+    e_books = books_.clean.tolist()
 
-    print(f"Running BERT on {len(e_books_)} entries")
-    vecs_books_ = sentence_encode(e_books_)
+    print(f"Running BERT on {len(e_books)} entries")
+    vecs_books = sentence_encode(e_books)
     with open(path_, 'wb') as pkl:
-        pickle.dump([vecs_books_, books_], pkl)
-    return vecs_books_, books_
+        pickle.dump([vecs_books, books_], pkl)
+    return vecs_books, books_
 
 
 def books(entries, n_recs=30):
     entries = Clean.entries_to_paras(entries)
 
-    print("Loading books_")
-    vecs_books_, books_ = load_books()
+    print("Loading books")
+    vecs_books, books_ = load_books()
     vecs_user = sentence_encode(entries)
 
     send_attrs = ['title', 'author', 'text', 'topic']
@@ -114,7 +115,7 @@ def books(entries, n_recs=30):
     )).set_index('ID', drop=False)
 
     print("Finding similars")
-    r = cosine(vecs_user, vecs_books_)  # dists
+    r = cosine(vecs_user, vecs_books)  # dists
     r = np.hstack(np.absolute(r))
     r = pd.DataFrame({
         'ID': books_.ID.tolist() * vecs_user.shape[0],
