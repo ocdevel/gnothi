@@ -96,7 +96,6 @@ export default function Tags({
 
   const fetchTags = async () => {
     const {data, code, message} = await fetch_('tags', 'GET')
-    setTags(data)
     if (preSelectMain) {
       let main = _.find(data, t=>t.main)
       if (!main) {
@@ -105,6 +104,7 @@ export default function Tags({
       }
       selectTag(main.id, true)
     }
+    setTags(data)
   }
 
   useEffect(() => {fetchTags()}, [])

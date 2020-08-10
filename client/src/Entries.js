@@ -134,12 +134,14 @@ export default function Entries({fetch_, as, aiStatus}) {
           <FaTags />
         </SimplePopover>
         <span className='tools-divider' />
+        {/*TODO reconsider preSelectMain for !!as. Eg, currently don't want therapist seeing Dream by default.*/}
         <Tags
           as={as}
           fetch_={fetch_}
           server={false}
           selected={tags}
           setSelected={setTags_}
+          preSelectMain={!!as}
         />{' '}
       </div>
       <div style={{marginTop:5}}>
