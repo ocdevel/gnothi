@@ -14,6 +14,11 @@ RUN apt-get install -y default-jre &&\
     wget http://mallet.cs.umass.edu/dist/mallet-2.0.8.zip -O /mallet-2.0.8.zip && unzip /mallet-2.0.8.zip -d /
 
 RUN pip install torch==1.6.0+cu101 torchvision==0.7.0+cu101 -f https://download.pytorch.org/whl/torch_stable.html
+RUN pip install transformers sentence-transformers &&\
+    transformers-cli download mrm8488/t5-base-finetuned-emotion &&\
+    transformers-cli download facebook/bart-large-cnn &&\
+    transformers-cli download allenai/longformer-large-4096-finetuned-triviaqa &&\
+    python -c "from sentence_transformers import SentenceTransformer;SentenceTransformer('roberta-large-nli-stsb-mean-tokens')"
 
 # needed for mysql?
 RUN apt-get install -y --fix-missing default-libmysqlclient-dev
@@ -21,8 +26,6 @@ RUN apt-get install -y --fix-missing default-libmysqlclient-dev
 RUN pip install \
     psycopg2-binary \
     python-box \
-    sentence-transformers \
-    transformers \
     pandas \
     xgboost \
     sklearn \
@@ -43,8 +46,6 @@ RUN pip install \
 
 COPY . /app
 WORKDIR /app
-
-RUN python install_models.py
 
 #ENTRYPOINT /bin/bash
 ENTRYPOINT python run.py
