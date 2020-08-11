@@ -12,19 +12,9 @@ export default function Journal({fetch_, as, setServerError, aiStatus}) {
     <div>
       <Row>
         <Col>
-          <Switch>
-            <Route path={`${match.url}/entry/:entry_id`}>
-              <Entry fetch_={fetch_} as={as} setServerError={setServerError} />
-            </Route>
-            {!as && (
-              <Route path={`${match.url}/entry`}>
-                <Entry fetch_={fetch_} as={as} setServerError={setServerError} />
-              </Route>
-            )}
-            <Route path={match.url}>
-              <Entries fetch_={fetch_} as={as} aiStatus={aiStatus}/>
-            </Route>
-          </Switch>
+          <Route path={match.url}>
+            <Entries fetch_={fetch_} as={as} aiStatus={aiStatus} setServerError={setServerError}/>
+          </Route>
         </Col>
         <Col lg={4}>
           <Fields fetch_={fetch_} as={as} />

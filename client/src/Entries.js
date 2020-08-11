@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from "react"
-import {useHistory, useRouteMatch} from "react-router-dom"
+import {Route, Switch, useHistory, useRouteMatch} from "react-router-dom"
 import _ from 'lodash'
-import {sent2face, SimplePopover} from "./utils"
+import {sent2face, SimplePopover, fmtDate} from "./utils"
 import {
   Button,
   ButtonGroup,
@@ -25,8 +25,9 @@ import {
   FaBook,
   FaRegFileArchive
 } from 'react-icons/fa'
+import Entry from "./Entry";
 
-export default function Entries({fetch_, as, aiStatus}) {
+export default function Entries({fetch_, as, aiStatus, setServerError}) {
   const [entries, setEntries] = useState([])
   const [notShared, setNotShared] = useState(false)
   const [tool, setTool] = useState('entries')
@@ -80,12 +81,12 @@ export default function Entries({fetch_, as, aiStatus}) {
     summary = <span>{summary}</span>
     return (
       <tr key={e.id}>
-        <td>
-          <div
-            onClick={gotoForm_}
-            className='cursor-pointer'
-          >
-            <h5>{moment(e.created_at).format('MM/DD/YYYY ha')}</h5>
+        <td
+          onClick={gotoForm_}
+          className='cursor-pointer'
+        >
+          <div>
+            <h5>{fmtDate(e.created_at)}</h5>
             <h6>{title}</h6>
           </div>
           <p>
@@ -232,6 +233,17 @@ export default function Entries({fetch_, as, aiStatus}) {
 
   return (
     <div>
+      <Switch>
+        <Route path={`${match.url}/entry/:entry_id`}>
+          <Entry fetch_={fetch_} as={as} setServerError={setServerError} />
+        </Route>
+        {!as && (
+          <Route path={`${match.url}/entry`}>
+            <Entry fetch_={fetch_} as={as} setServerError={setServerError} />
+          </Route>
+        )}
+      </Switch>
+
       {!as && <Button
         style={{float: 'right'}}
         variant="success"

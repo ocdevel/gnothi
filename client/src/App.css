@@ -21,3 +21,7 @@
   margin-right: 6px;
   border-left: #eee 1px solid;
 }
+
+.full-width-modal {
+  max-width: none !important;
+}

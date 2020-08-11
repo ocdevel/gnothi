@@ -2,6 +2,7 @@ import React, {useEffect, useState} from "react"
 import {OverlayTrigger, Popover, Spinner, Form} from "react-bootstrap"
 import _ from "lodash"
 import emoji from 'react-easy-emoji'
+import moment from "moment";
 
 const spinner = (
   <Spinner animation="border" role="status">
@@ -70,11 +71,14 @@ const AiStatusMsg = ({status}) => {
 
 const trueKeys = o => _.transform(o, (m,v,k) => {if (v) {m.push(k)}}, [])
 
+const fmtDate = d => moment(d).format('MM/DD/YYYY ha')
+
 export {
   spinner,
   sent2face,
   trueKeys,
   SimplePopover,
   aiStatusEmoji,
-  AiStatusMsg
+  AiStatusMsg,
+  fmtDate
 }

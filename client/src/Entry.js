@@ -1,15 +1,15 @@
 import {useHistory, useParams} from "react-router-dom"
 import React, {useEffect, useState} from "react"
-import {spinner, SimplePopover} from "./utils"
+import {spinner, SimplePopover, fmtDate} from "./utils"
 import {
   Button,
   Col,
-  Form,
+  Form, Modal,
   Row,
 } from "react-bootstrap"
 import ReactMarkdown from "react-markdown"
 import './Entry.css'
-import {FaTags, FaPen} from "react-icons/fa"
+import {FaTags, FaPen, FaExpandAlt} from "react-icons/fa"
 import Tags from "./Tags"
 
 
@@ -22,6 +22,7 @@ export default function Entry({fetch_, as, setServerError}) {
   const [entry, setEntry] = useState({})
   const [submitting, setSubmitting] = useState(false)
   const [tags, setTags] = useState({})
+  const [maximize, setMaximize] = useState(false)
 
   const fetchEntry = async () => {
     if (!entry_id) { return }
@@ -68,7 +69,37 @@ export default function Entry({fetch_, as, setServerError}) {
     setOnlyPreview(!onlyPreview)
   }
 
-  return (
+  const renderButtons = () => <>
+    {submitting ? spinner : <>
+      {!as && <>
+        {onlyPreview ? <>
+          <Button
+            variant='outline-primary'
+            onClick={changeOnlyPreview}
+          >
+            <FaPen /> Edit
+          </Button>
+        </> : <>
+          <Button
+            variant="primary"
+            onClick={submit}
+          >
+            Submit
+          </Button>
+        </>}{' '}
+      </>}
+      <Button variant='secondary' size="sm" onClick={cancel}>
+        Cancel
+      </Button>{' '}
+      {!as && entry_id && <>
+        <Button variant='danger' size="sm" onClick={deleteEntry}>
+          Delete
+        </Button>
+      </>}
+    </>}
+  </>
+
+  const renderForm = () => <>
     <Form onSubmit={submit}>
       {onlyPreview ? <>
         <h2>{form.title}</h2>
@@ -130,39 +161,33 @@ export default function Entry({fetch_, as, setServerError}) {
         noEdit={onlyPreview}
         preSelectMain={true}
       />
-
-      <hr/>
-
-      {submitting ? <>
-        {spinner}
-        <p className='text-muted'>Generating summaries & sentiment</p>
-      </> : <>
-        {!as && <>
-          {onlyPreview ? <>
-            <Button
-              variant='outline-primary'
-              onClick={changeOnlyPreview}
-            >
-              <FaPen /> Edit
-            </Button>
-          </> : <>
-            <Button
-              variant="primary"
-              type="submit"
-            >
-              Submit
-            </Button>
-          </>}&nbsp;
-        </>}
-        <Button variant='secondary' size="sm" onClick={cancel}>
-          Cancel
-        </Button>&nbsp;
-        {!as && entry_id && <>
-          <Button variant='danger' size="sm" onClick={deleteEntry}>
-            Delete
-          </Button>
-        </>}
-      </>}
     </Form>
-  )
+  </>
+
+  return <>
+    <Modal
+      show={true}
+      size='lg'
+      onHide={cancel}
+      scrollable={true}
+      dialogClassName={maximize && 'full-width-modal'}
+    >
+      <Modal.Header>
+        <Modal.Title>{fmtDate(entry_id ? form.created_at : Date.now())}</Modal.Title>
+        <FaExpandAlt
+          style={{top:5,right:0}}
+          className='cursor-pointer'
+          onClick={() => setMaximize(!maximize)}
+        />
+      </Modal.Header>
+
+      <Modal.Body>
+        {renderForm()}
+      </Modal.Body>
+
+      <Modal.Footer>
+        {renderButtons()}
+      </Modal.Footer>
+    </Modal>
+  </>
 }
