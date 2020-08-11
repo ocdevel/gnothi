@@ -17,20 +17,21 @@ import Query from "./Query"
 import {
   FaSearch,
   FaTags,
-  FaToolbox,
+  FaRegListAlt,
+  FaTextHeight,
   FaRobot,
   FaQuestion,
   FaCubes,
   FaBook,
-  FaRegNewspaper
+  FaRegFileArchive
 } from 'react-icons/fa'
 
 export default function Entries({fetch_, as, aiStatus}) {
   const [entries, setEntries] = useState([])
   const [notShared, setNotShared] = useState(false)
-  const [tool, setTool] = useState()
-  const [garble, setGarble] = useState(false)
+  const [tool, setTool] = useState('entries')
   const [page, setPage] = useState(0)
+  let [searchEnabled, setSearchEnabled] = useState(false)
   let [search, setSearch] = useState('')
   let [tags, setTags] = useState({})
 
@@ -58,10 +59,6 @@ export default function Entries({fetch_, as, aiStatus}) {
     history.push(p)
   }
 
-  const toggleTool = t => {
-    setTool(tool === t ? null : t)
-    setSearch('')
-  }
   const changeSearch = e => setSearch(e.target.value)
 
   const setTags_ = (tags_) => {
@@ -69,13 +66,17 @@ export default function Entries({fetch_, as, aiStatus}) {
     setPage(0)
   }
 
+  const toggleSearch = () => {
+    if (tool !== 'entries') {setTool('entries')}
+    if (searchEnabled) {setSearch('')}
+    setSearchEnabled(!searchEnabled)
+  }
+
   const renderEntry = e => {
     const gotoForm_ = () => gotoForm(e.id)
     const sentiment = sent2face(e.sentiment)
-    const title = garble ? "pretium fusce id velit ut tortor pretium viverra suspendisse potenti"
-        : (e.title || e.title_summary);
-    let summary = garble ? "scelerisque eu ultrices vitae auctor eu augue ut lectus arcu bibendum at varius vel pharetra vel turpis nunc eget lorem dolor sed viverra ipsum nunc aliquet bibendum enim facilisis gravida neque convallis a cras semper auctor neque vitae tempus quam pellentesque nec nam aliquam sem et tortor consequat id porta nibh venenatis cras sed felis eget velit aliquet sagittis id consectetur purus ut faucibus"
-        : e.text_summary;
+    const title = e.title || e.title_summary;
+    let summary = e.text_summary;
     summary = <span>{summary}</span>
     return (
       <tr key={e.id}>
@@ -102,29 +103,40 @@ export default function Entries({fetch_, as, aiStatus}) {
 
   const renderTool = t => {
     const popover = {
-      search: "Search entries",
       query: "Ask a question about entries",
       summarize: "Generate summaries of entries",
       themes: "Common themes across entries",
       books: "Self-help book recommendations based on entries"
     }[t]
-    return (
-      <SimplePopover text={popover}>
-        <Button
-          size='sm'
-          variant={t === tool ? 'dark' : 'outline-dark'}
-          onClick={() => toggleTool(t)}
-        >
-          {{
-            search: <FaSearch />,
-            query: <FaQuestion />,
-            summarize: <FaRegNewspaper />,
-            themes: <FaCubes />,
-            books: <FaBook />
-          }[t]}
-        </Button>
-      </SimplePopover>
-    )
+
+    const btnOpts = {
+      size: 'sm',
+      variant: t === tool ? 'dark' : 'outline-dark',
+      onClick: () => setTool(t)
+    }
+    if (t === 'entries') {
+      return <ButtonGroup>
+        <Button {...btnOpts}><FaRegListAlt /> Entries</Button>
+        <SimplePopover text="Search entries">
+          <Button
+            size='sm'
+            variant={searchEnabled ? 'dark' : 'outline-dark'}
+            onClick={toggleSearch}
+          ><FaSearch /></Button>
+        </SimplePopover>
+      </ButtonGroup>
+    }
+    return <SimplePopover text={popover}>
+      <Button {...btnOpts}>
+        {{
+          query: <><FaQuestion /> Ask</>,
+          summarize: <><FaTextHeight /> Summarize</>,
+          //summarize: <><FaRegFileArchive /> Summarize</>,
+          themes: <><FaCubes /> Themes</>,
+          books: <><FaBook /> Books</>
+        }[t]}
+      </Button>
+    </SimplePopover>
   }
 
   const renderTools = () => {
@@ -149,12 +161,13 @@ export default function Entries({fetch_, as, aiStatus}) {
           <FaRobot />
         </SimplePopover>
         <span className='tools-divider' />
-        {renderTool('search')}{' '}
-        {renderTool('query')}{' '}
+        {renderTool('entries')}{' '}
         {renderTool('summarize')}{' '}
         {renderTool('themes')}{' '}
+        {renderTool('query')}{' '}
         {renderTool('books')}
-        {tool === 'search' && <Form.Control
+        {searchEnabled && tool === 'entries' && <Form.Control
+          ref={c => c && c.focus()}
           style={{marginTop:5}}
           inline
           type="text"
@@ -188,21 +201,11 @@ export default function Entries({fetch_, as, aiStatus}) {
           ))}
         </ButtonGroup>
       )}
-      <hr />
-      <Form.Group controlId="garble">
-        <Form.Check
-          type="checkbox"
-          label="Garble Entries"
-          checked={garble}
-          onChange={() => setGarble(!garble)}
-        />
-        <Form.Text>You're showing someone this app, but don't want them to see the entries.</Form.Text>
-      </Form.Group>
     </>
   }
 
   const renderMain = () => {
-    if (!tool || tool === 'search') {
+    if (tool === 'entries') {
       return renderEntries()
     }
     const desc = {
