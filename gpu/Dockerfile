@@ -21,8 +21,8 @@ RUN apt-get install -y --fix-missing default-libmysqlclient-dev
 RUN pip install \
     psycopg2-binary \
     python-box \
-    sentence-transformers==0.2.6.2 \
-    transformers==2.11.0 \
+    sentence-transformers \
+    transformers \
     pandas \
     xgboost \
     sklearn \

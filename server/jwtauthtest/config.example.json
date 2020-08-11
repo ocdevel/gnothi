@@ -5,7 +5,7 @@
   "DB_URL": "postgres://postgres:password@host.docker.internal:5432",
   "DB_NAME": "gnothi_dev",
 
-  "DB_BOOKS": "mysql://root:password@host.docker.internal:3306/books",
+  "GPU_INSTANCE": "ec2-instance-id",
 
   "FLASK_KEY": "super secret",
 

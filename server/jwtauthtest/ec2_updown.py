@@ -1,10 +1,9 @@
 import boto3, time, threading, os
 from jwtauthtest.database import engine
-from jwtauthtest.utils import is_dev
+from jwtauthtest.utils import is_dev, vars
 
 # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/ec2.html
 ec2_client = boto3.client('ec2')
-EC2_ID = 'i-03e8ad4f3cadd4a4e'
 
 
 def _fetch_status():
@@ -20,7 +19,7 @@ def _fetch_status():
 def ec2_up():
     if is_dev(): return
     try:
-        ec2_client.start_instances(InstanceIds=[EC2_ID])
+        ec2_client.start_instances(InstanceIds=[vars.GPU_INSTANCE])
     except: pass
 
 def jobs_status():
@@ -47,5 +46,5 @@ def ec2_down_maybe():
     engine.execute("update jobs_status set status='off', ts_client=now()")
     if is_dev(): return
     try:
-        ec2_client.stop_instances(InstanceIds=[EC2_ID])
+        ec2_client.stop_instances(InstanceIds=[vars.GPU_INSTANCE])
     except: pass
