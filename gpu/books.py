@@ -1,6 +1,6 @@
-import os, pdb
+import os, pdb, math
 from tqdm import tqdm
-from utils import engine, cosine, book_engine
+from utils import engine, cosine, book_engine, cluster
 from cleantext import Clean
 from box import Box
 import numpy as np
@@ -8,6 +8,7 @@ import pandas as pd
 import pickle
 from nlp import sentence_encode
 from sqlalchemy import text
+from sklearn import preprocessing as pp
 
 
 def load_books():
@@ -99,12 +100,13 @@ def load_books():
     return vecs_books, books_
 
 
-def books(entries, n_recs=30):
+def books(entries, n_recs=30, by_cluster=True):
     entries = Clean.entries_to_paras(entries)
 
     print("Loading books")
     vecs_books, books_ = load_books()
     vecs_user = sentence_encode(entries)
+    n_user = vecs_user.shape[0]
 
     send_attrs = ['title', 'author', 'text', 'topic']
     books_ = books_.rename(columns=dict(
@@ -115,14 +117,28 @@ def books(entries, n_recs=30):
     )).set_index('ID', drop=False)
 
     print("Finding similars")
-    r = pd.DataFrame({
-        'ID': books_.ID.tolist() * vecs_user.shape[0],
-        'dist': cosine(vecs_user, vecs_books, abs=True).flatten()
-    })
+    r = []
+    if by_cluster:
+        x = pp.normalize(np.vstack([vecs_user, vecs_books]))[:n_user]
+        labels = cluster(x)
+        for l in range(labels.max()):
+            idx_user = labels == l
+            n_idx = idx_user.sum()
+            if n_idx < 2: continue  # not enough entries
+            k = math.ceil(n_idx / n_user * n_recs)
+            x_ = vecs_user[idx_user].mean(axis=0)[np.newaxis,:]
+            dists = cosine(x_, vecs_books, abs=True).flatten()
+            r.append(pd.DataFrame({'ID': books_.ID, 'dist': dists}).sort_values(by='dist').iloc[:k])
+        r = pd.concat(r, ignore_index=True)
+    else:
+        r = pd.DataFrame({
+            'ID': books_.ID.tolist() * vecs_user.shape[0],
+            'dist': cosine(vecs_user, vecs_books, abs=True).flatten()
+        })
+
     r = r.sort_values(by='dist')\
         .drop_duplicates('ID', keep='first')\
         .iloc[:n_recs].ID
-
     r = books_.loc[r][send_attrs]\
         .drop_duplicates('title', keep='first')  # dupes in libgen
     r = [x for x in r.T.to_dict().values()]
