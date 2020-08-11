@@ -154,7 +154,7 @@ export default function Entries({fetch_, as, aiStatus, setServerError}) {
           server={false}
           selected={tags}
           setSelected={setTags_}
-          preSelectMain={!!as}
+          preSelectMain={true}
         />{' '}
       </div>
       <div style={{marginTop:5}}>
@@ -182,9 +182,13 @@ export default function Entries({fetch_, as, aiStatus, setServerError}) {
 
   const renderEntries = () => {
     let filtered = _(entries)
-      .filter(e => _.reduce(tags, (m, v, k) => e.entry_tags[k] && m, true))
+      .filter(e => _.reduce(tags, (m, v, k) => e.entry_tags[k] || m, false))
       .filter(e => !search.length || ~(e.title + e.text).toLowerCase().indexOf(search))
       .value()
+
+    if (!filtered.length) {
+      return <Alert variant='info'>No entries. If you're a new user, click <Button variant="success" size='sm' disabled>New Entry</Button> above. If you're a therapist, click your email top-right and select a client; you'll then be in that client's shoes.</Alert>
+    }
 
     const pageSize = 7
     const usePaging = !search.length && filtered.length > pageSize
@@ -235,11 +239,11 @@ export default function Entries({fetch_, as, aiStatus, setServerError}) {
     <div>
       <Switch>
         <Route path={`${match.url}/entry/:entry_id`}>
-          <Entry fetch_={fetch_} as={as} setServerError={setServerError} />
+          <Entry fetch_={fetch_} as={as} setServerError={setServerError} update={fetchEntries} />
         </Route>
         {!as && (
           <Route path={`${match.url}/entry`}>
-            <Entry fetch_={fetch_} as={as} setServerError={setServerError} />
+            <Entry fetch_={fetch_} as={as} setServerError={setServerError} update={fetchEntries} />
           </Route>
         )}
       </Switch>

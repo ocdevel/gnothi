@@ -13,7 +13,7 @@ import {FaTags, FaPen, FaExpandAlt} from "react-icons/fa"
 import Tags from "./Tags"
 
 
-export default function Entry({fetch_, as, setServerError}) {
+export default function Entry({fetch_, as, setServerError, update}) {
   const {entry_id} = useParams()
   const history = useHistory()
   const [showPreview, setShowPreview] = useState(false)
@@ -36,7 +36,10 @@ export default function Entry({fetch_, as, setServerError}) {
     fetchEntry()
   }, [entry_id])
 
-  const cancel = () => history.push('/j')
+  const goBack = () => {
+    update()
+    history.push('/j')
+  }
 
   const submit = async e => {
     e.preventDefault()
@@ -51,13 +54,13 @@ export default function Entry({fetch_, as, setServerError}) {
       : await fetch_(`entries`, 'POST', body)
     setSubmitting(false)
     if (res.code !== 200) {return}
-    history.push('/j')
+    goBack()
   }
 
   const deleteEntry = async () => {
     if (window.confirm(`Delete "${entry.title}"`)) {
       await fetch_(`entries/${entry_id}`, 'DELETE')
-      history.push('/j')
+      goBack()
     }
   }
 
@@ -88,7 +91,7 @@ export default function Entry({fetch_, as, setServerError}) {
           </Button>
         </>}{' '}
       </>}
-      <Button variant='secondary' size="sm" onClick={cancel}>
+      <Button variant='secondary' size="sm" onClick={goBack}>
         Cancel
       </Button>{' '}
       {!as && entry_id && <>
@@ -168,7 +171,7 @@ export default function Entry({fetch_, as, setServerError}) {
     <Modal
       show={true}
       size='lg'
-      onHide={cancel}
+      onHide={goBack}
       scrollable={true}
       dialogClassName={maximize && 'full-width-modal'}
     >
