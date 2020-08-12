@@ -29,26 +29,34 @@ engine = create_engine(
 book_engine = create_engine(config_json['DB_BOOKS'], **engine_args)
 
 
-def cosine(x, y, norm=False, abs=False):
-    x = torch.tensor(x)
-    y = torch.tensor(y)
+def tnormalize(x, y=None, numpy=True):
+    combine = y is not None
+    x = x if torch.is_tensor(x) else torch.tensor(x)
+    if combine:
+        y = y if torch.is_tensor(y) else torch.tensor(y)
+    n = torch.cat((x, y), 0) if combine else x
+    n = n / n.norm(dim=1)[:, None]
+    if combine:
+        x, y = n[:x.shape[0]], n[x.shape[0]:]
+        if numpy: x, y = x.numpy(), y.numpy()
+        return x, y
+    if numpy: n = n.numpy()
+    return n
 
-    # x = x / x.norm(dim=1)[:, None]
-    # y = y / y.norm(dim=1)[:, None]
-    # normalize together first
-    both = torch.cat((x, y), 0)
-    both = both / both.norm(dim=1)[:, None]
-    x, y = both[:x.shape[0]], both[x.shape[0]:]
 
+def cosine(x, y, abs=True, norm_in=True, norm_out=False):
+    x, y = torch.tensor(x), torch.tensor(y)
+    if norm_in: x, y = tnormalize(x, y, numpy=False)
     dist = 1. - torch.mm(x, y.T)
-    if norm: dist = dist / dist.norm(dim=1)[:, None]
+    if norm_out: dist = tnormalize(dist, numpy=False)
     if abs: dist = dist.abs()
     return dist.numpy()
 
 
 def cluster(x):
     nc = math.floor(1 + 3.5 * math.log10(x.shape[0]))
-    dists = cosine(x, x, norm=True, abs=True)
+    x = tnormalize(x)
+    dists = cosine(x, x, norm_in=False, norm_out=True)  # TODO minmax_scale out?
     agg = AgglomerativeClustering(n_clusters=nc, affinity='precomputed', linkage='average')
     labels = agg.fit_predict(dists)
     return labels

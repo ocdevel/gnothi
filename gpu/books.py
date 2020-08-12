@@ -1,6 +1,6 @@
 import os, pdb, math
 from tqdm import tqdm
-from utils import engine, cosine, book_engine, cluster
+from utils import engine, cosine, book_engine, cluster, tnormalize
 from cleantext import Clean
 from box import Box
 import numpy as np
@@ -99,22 +99,59 @@ def load_books():
         pickle.dump([vecs_books, books_], pkl)
     return vecs_books, books_
 
+from keras import backend as K
+from keras.layers import Input, Dense
+from keras.models import Model
+from keras.callbacks import EarlyStopping
+from keras.optimizers import Adam
+
+def predict_dists(books_, vecs_books, shelf, shelf_idx):
+    # Run DNN prediction
+    input = Input(shape=(vecs_books.shape[1],))
+    m = Dense(400, activation='elu')(input)
+    m = Dense(1, activation='sigmoid')(m)
+    m = Model(input, m)
+    m.compile(
+        # metrics=['accuracy'],
+        loss='binary_crossentropy',
+        optimizer=Adam(learning_rate=.0001),
+    )
+
+    x = vecs_books
+    # y = books_.dist
+    y = pp.minmax_scale(books_.dist)
+    es = EarlyStopping(monitor='val_loss', mode='min', patience=3, min_delta=.0001)
+    m.fit(
+        x, y,
+        epochs=50,
+        batch_size=128,
+        shuffle=True,
+        callbacks=[es],
+        validation_split=.3,
+    )
+
+    shelf['dist'] = shelf.shelf.apply(lambda v: {'liked': 0., 'disliked': 1., 'already_read': 0.}[v])
+    books_['dist'] = shelf.dist  # indexes(id) match, so assigns correctly
+    x2 = x[shelf_idx]
+    y2 = books_[shelf_idx].dist
+    # Train harder on thumbed books
+    # K.set_value(m.optimizer.learning_rate, 0.001)  # alternatively https://stackoverflow.com/a/60420156/362790
+    m.fit(
+        x2, y2,
+        epochs=30,
+        batch_size=8,
+        callbacks=[es],
+        validation_split=.1  # might not have much data. maybe even remove
+    )
+    return m.predict(x)
 
 def books(user_id, entries, n_recs=30, by_cluster=False):
     entries = Clean.entries_to_paras(entries)
-
-    shelf = engine.execute(text('select * from bookshelf where user_id=:user_id'), user_id=user_id)
-    shelf = [b.book_id for b in shelf.fetchall()]
-
-    print("Loading books")
-    vecs_books, books_ = load_books()
     vecs_user = sentence_encode(entries)
     n_user = vecs_user.shape[0]
 
-    remove_idx = books_.ID.isin(shelf)
-    vecs_books, books_ = vecs_books[~remove_idx], books_[~remove_idx]
-
-    send_attrs = ['id', 'title', 'author', 'text', 'topic']
+    print("Loading books")
+    vecs_books, books_ = load_books()
     books_ = books_.rename(columns=dict(
         ID='id',
         descr='text',
@@ -123,9 +160,12 @@ def books(user_id, entries, n_recs=30, by_cluster=False):
         topic_descr='topic'
     )).set_index('id', drop=False)
 
+    vecs_user, vecs_books = tnormalize(vecs_user, vecs_books)
+
     print("Finding similars")
     r = []
     if by_cluster:
+        raise Exception("Fix by_cluster")
         x = pp.normalize(np.vstack([vecs_user, vecs_books]))[:n_user]
         labels = cluster(x)
         for l in range(labels.max()):
@@ -140,13 +180,26 @@ def books(user_id, entries, n_recs=30, by_cluster=False):
     else:
         r = pd.DataFrame({
             'id': books_.id.tolist() * vecs_user.shape[0],
-            'dist': cosine(vecs_user, vecs_books, abs=True).flatten()
+            'dist': cosine(vecs_user, vecs_books, norm_in=False, abs=True).flatten()
         })
-
-    r = r.sort_values(by='dist')\
+    # Take best score for every book
+    # then map back onto books, so they're back in order
+    books_['dist'] = r.sort_values('dist')\
         .drop_duplicates('id', keep='first')\
-        .iloc[:n_recs].id
-    r = books_.loc[r][send_attrs]\
-        .drop_duplicates('title', keep='first')  # dupes in libgen
+        .set_index('id').dist
+
+    with engine.connect() as conn:
+        sql = "select book_id as id, user_id, shelf from bookshelf where user_id=%(uid)s"
+        shelf = pd.read_sql(sql, conn, params={'uid': user_id}).set_index('id', drop=False)
+    shelf_idx = books_.id.isin(shelf.id)
+
+    if shelf.shape[0] > 5:
+        books_['dist'] = predict_dists(books_, vecs_books, shelf, shelf_idx)
+
+    # dupes by title in libgen
+    # r = books_.sort_values('dist')\
+    r = books_[~shelf_idx].sort_values('dist')\
+        .drop_duplicates('title', keep='first')\
+        .iloc[:n_recs]
     r = [x for x in r.T.to_dict().values()]
     return r

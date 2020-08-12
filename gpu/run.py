@@ -2,6 +2,7 @@ if __name__ == '__main__':
     import time, psycopg2, pickle, pdb, threading
     from box import Box
     import torch
+    import keras.backend as K
     from books import books
     from themes import themes
     from influencers import influencers
@@ -30,7 +31,6 @@ if __name__ == '__main__':
         print(f"Running job {data.method}")
         try:
             start = time.time()
-            torch.cuda.empty_cache()
             res = m[data.method](*data.args, **data.kwargs)
             # TODO pass results as byte-encoded json (json.dumps(obj).encode('utf-8') )
             res = pickle.dumps({'data': res})
@@ -44,6 +44,8 @@ if __name__ == '__main__':
             res = pickle.dumps({"error": err})
             sql = f"update jobs set state='error', data=%s where id=%s"
             engine.execute(sql, (psycopg2.Binary(res), job.id))
+        torch.cuda.empty_cache()
+        K.clear_session()
 
 
     while True:
