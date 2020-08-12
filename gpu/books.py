@@ -108,19 +108,24 @@ def load_books():
 
 def predict_dists(books_, vecs_books, shelf_idx, fine_tune=True):
     # TODO cache this, re-train every x new entries / votes.
+
+    # linear+mse for smoother distances, what we have here? where sigmoid+xentropy for
+    # harder decision boundaries, which we don't have?
+    act, loss = 'linear', 'mse'
+    # act, loss = 'sigmoid', 'binary_crossentropy'
+
     input = Input(shape=(vecs_books.shape[1],))
     m = Dense(400, activation='elu')(input)
-    m = Dense(1, activation='sigmoid')(m)
+    m = Dense(1, activation=act)(m)
     m = Model(input, m)
     m.compile(
         # metrics=['accuracy'],
-        loss='binary_crossentropy',
+        loss=loss,
         optimizer=Adam(learning_rate=.0001),
     )
 
     x = vecs_books
-    # y = books_.dist
-    y = pp.minmax_scale(books_.dist)
+    y = books_.dist
     es = EarlyStopping(monitor='val_loss', mode='min', patience=3, min_delta=.0001)
     m.fit(
         x, y,
@@ -134,12 +139,12 @@ def predict_dists(books_, vecs_books, shelf_idx, fine_tune=True):
         return m.predict(x)
 
     # Train harder on shelved books
-    # K.set_value(m.optimizer.learning_rate, 0.001)  # alternatively https://stackoverflow.com/a/60420156/362790
+    # K.set_value(m.optimizer.learning_rate, 0.0001)  # alternatively https://stackoverflow.com/a/60420156/362790
     x2 = x[shelf_idx]
     y2 = books_[shelf_idx].dist
     m.fit(
         x2, y2,
-        epochs=10,  # minimize this!
+        epochs=5,  # too many epochs overfits (eg to CBT). Maybe adjust LR *down*, or other?
         batch_size=8,
         callbacks=[es],
         validation_split=.3  # might not have enough data?
@@ -160,19 +165,23 @@ def books(user_id, entries, n_recs=30):
         topic_descr='topic'
     )).set_index('id', drop=False)
 
+    # normalize for cosine, and downstream DNN
     vecs_user, vecs_books = tnormalize(vecs_user, vecs_books)
 
     print("Finding similars")
+    # 5fe7b3e2: cluster centroids (removed since DNN will act as clusterer)
     r = pd.DataFrame({
         'id': books_.id.tolist() * vecs_user.shape[0],
         'dist': cosine(vecs_user, vecs_books, norm_in=False, abs=True).flatten()
     })
     # Take best score for every book
-    # then map back onto books, so they're back in order
-    # 5fe7b3e2: cluster centroids (removed since DNN will act as clusterer)
-    books_['dist'] = r.sort_values('dist')\
+    r = r.sort_values('dist')\
         .drop_duplicates('id', keep='first')\
-        .set_index('id').dist
+        .set_index('id')
+    # scale 0-1 (before we apply shelves, which are 0-1). Apply here to maintain index
+    r['dist'] = pp.minmax_scale(r.dist)
+    # then map back onto books, so they're back in order (pandas index-matching)
+    books_['dist'] = r.dist
 
     with engine.connect() as conn:
         sql = "select book_id as id, user_id, shelf from bookshelf where user_id=%(uid)s"
@@ -181,6 +190,7 @@ def books(user_id, entries, n_recs=30):
     shelf['dist'] = shelf.shelf.apply(lambda v: {'liked': 0., 'disliked': 1., 'already_read': 0.}[v])
     books_.loc[shelf.index, 'dist'] = shelf.dist  # indexes(id) match, so assigns correctly
 
+    # apply DNN anyway? Kinda acts like a clusterer/smoother
     if shelf.shape[0] > 5:
         books_['dist'] = predict_dists(books_, vecs_books, shelf_idx)
 
