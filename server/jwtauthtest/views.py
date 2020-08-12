@@ -2,8 +2,8 @@ import pdb, logging, math, os, re
 import datetime
 from flask_jwt import jwt_required, current_identity
 from jwtauthtest import app
-from jwtauthtest.database import db_session
-from jwtauthtest.models import User, Entry, Field, FieldEntry, Share, Tag, EntryTag, ShareTag, Person
+from jwtauthtest.database import db_session, engine
+from jwtauthtest.models import User, Entry, Field, FieldEntry, Share, Tag, EntryTag, ShareTag, Person, Bookshelf
 from jwtauthtest.ec2_updown import jobs_status, ec2_down_maybe
 from passlib.hash import pbkdf2_sha256
 from flask import request, jsonify, g
@@ -424,7 +424,7 @@ def get_books():
     if (not snooping) or user.share_data.profile:
         entries = [user.profile_to_text()] + entries
 
-    books = ml.books(entries)
+    books = ml.books(user.id, entries)
     return jsonify({'data': books})
 
 
@@ -472,6 +472,17 @@ def summarize():
     sentiment = ml.sentiment(summary)
     data = {'summary': summary, 'sentiment': sentiment}
     return jsonify({'data': data})
+
+
+@app.route('/api/books/<bid>/<shelf>', methods=['POST'])
+@jwt_required()
+def shelf_book(bid, shelf):
+    user, snooping = as_user()
+    if snooping: return cant_snoop('')
+
+    # action: liked|already_read|disliked
+    Bookshelf.upsert(user.id, bid, shelf)
+    return jsonify({'data': None})
 
 ####
 # Habitica

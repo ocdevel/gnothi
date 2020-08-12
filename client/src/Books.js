@@ -1,7 +1,8 @@
 import React, {useEffect, useState} from "react";
-import {AiStatusMsg, spinner, trueKeys} from "./utils";
-import {Button, Table, Form} from "react-bootstrap";
-import {FaTags, FaUser} from "react-icons/fa"
+import _ from 'lodash'
+import {AiStatusMsg, spinner, trueKeys, SimplePopover} from "./utils";
+import {Button, Table, Form, ButtonGroup} from "react-bootstrap";
+import {FaTags, FaUser, FaThumbsUp, FaThumbsDown, FaCheck} from "react-icons/fa"
 import ForXDays from "./ForXDays"
 
 export default function Books({fetch_, as, tags, aiStatus}) {
@@ -22,6 +23,13 @@ export default function Books({fetch_, as, tags, aiStatus}) {
   }
 
   if (notShared) {return <h5>{notShared}</h5>}
+
+  const shelve = async (bid, shelf) => {
+    await fetch_(`books/${bid}/${shelf}`, 'POST')
+    _.remove(books, {id: bid})
+    setBooks(_.reject(books, {id: bid}))
+    // fetchBooks()
+  }
 
   return <>
     <ForXDays
@@ -51,6 +59,25 @@ export default function Books({fetch_, as, tags, aiStatus}) {
           <FaUser /> {b.author}<br/>
           <FaTags /> {b.topic}</p>
         <p>{b.text}</p>
+        <div>
+          <ButtonGroup>
+            <SimplePopover text="Like and save for later">
+              <Button variant='outline-dark' onClick={() => shelve(b.id, 'liked')}>
+                <FaThumbsUp />
+              </Button>
+            </SimplePopover>
+            <SimplePopover text="Dislike, remove from list">
+              <Button variant='outline-dark' onClick={() => shelve(b.id, 'disliked')}>
+                <FaThumbsDown />
+              </Button>
+            </SimplePopover>
+            <SimplePopover text="I've already read this; like it, but don't save">
+              <Button variant='outline-dark' onClick={() => shelve(b.id, 'already_read')}>
+                <FaCheck />
+              </Button>
+            </SimplePopover>
+          </ButtonGroup>
+        </div>
         <hr />
       </div>)}
     </div>

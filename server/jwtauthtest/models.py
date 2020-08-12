@@ -4,6 +4,7 @@ from dateutil import tz
 from jwtauthtest.database import Base, engine, db_session
 from jwtauthtest import ml
 from sqlalchemy import \
+    text, \
     Column, \
     Integer, \
     String, \
@@ -403,3 +404,23 @@ class ShareTag(Base, CustomBase):
 
     tag = relationship(Tag, backref=backref("tags", cascade="all, delete-orphan"))
     share = relationship(Share, backref=backref("shares", cascade="all, delete-orphan"))
+
+
+class Shelves(enum.Enum):
+    liked = 1
+    already_read = 2
+    disliked = 3
+
+class Bookshelf(Base, CustomBase):
+    __tablename__ = 'bookshelf'
+    book_id = Column(Integer, primary_key=True)
+    user_id = Column(UUID, ForeignKey('users.id'), primary_key=True)
+    shelf = Column(Enum(Shelves), nullable=False)
+
+    @staticmethod
+    def upsert(user_id, book_id, shelf):
+        sql = """
+        insert into bookshelf(book_id, user_id, shelf)  
+        values (:book_id, :user_id, :shelf)
+        on conflict (book_id, user_id) do update set shelf=:shelf"""
+        engine.execute(text(sql), user_id=user_id, book_id=int(book_id), shelf=shelf)

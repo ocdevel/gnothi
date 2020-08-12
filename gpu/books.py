@@ -100,21 +100,28 @@ def load_books():
     return vecs_books, books_
 
 
-def books(entries, n_recs=30, by_cluster=True):
+def books(user_id, entries, n_recs=30, by_cluster=False):
     entries = Clean.entries_to_paras(entries)
+
+    shelf = engine.execute(text('select * from bookshelf where user_id=:user_id'), user_id=user_id)
+    shelf = [b.book_id for b in shelf.fetchall()]
 
     print("Loading books")
     vecs_books, books_ = load_books()
     vecs_user = sentence_encode(entries)
     n_user = vecs_user.shape[0]
 
-    send_attrs = ['title', 'author', 'text', 'topic']
+    remove_idx = books_.ID.isin(shelf)
+    vecs_books, books_ = vecs_books[~remove_idx], books_[~remove_idx]
+
+    send_attrs = ['id', 'title', 'author', 'text', 'topic']
     books_ = books_.rename(columns=dict(
+        ID='id',
         descr='text',
         Title='title',
         Author='author',
         topic_descr='topic'
-    )).set_index('ID', drop=False)
+    )).set_index('id', drop=False)
 
     print("Finding similars")
     r = []
@@ -128,17 +135,17 @@ def books(entries, n_recs=30, by_cluster=True):
             k = math.ceil(n_idx / n_user * n_recs)
             x_ = vecs_user[idx_user].mean(axis=0)[np.newaxis,:]
             dists = cosine(x_, vecs_books, abs=True).flatten()
-            r.append(pd.DataFrame({'ID': books_.ID, 'dist': dists}).sort_values(by='dist').iloc[:k])
+            r.append(pd.DataFrame({'id': books_.id, 'dist': dists}).sort_values(by='dist').iloc[:k])
         r = pd.concat(r, ignore_index=True)
     else:
         r = pd.DataFrame({
-            'ID': books_.ID.tolist() * vecs_user.shape[0],
+            'id': books_.id.tolist() * vecs_user.shape[0],
             'dist': cosine(vecs_user, vecs_books, abs=True).flatten()
         })
 
     r = r.sort_values(by='dist')\
-        .drop_duplicates('ID', keep='first')\
-        .iloc[:n_recs].ID
+        .drop_duplicates('id', keep='first')\
+        .iloc[:n_recs].id
     r = books_.loc[r][send_attrs]\
         .drop_duplicates('title', keep='first')  # dupes in libgen
     r = [x for x in r.T.to_dict().values()]
