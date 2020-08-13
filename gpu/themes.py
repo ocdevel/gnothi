@@ -1,3 +1,4 @@
+import pdb
 from sklearn.feature_extraction.text import TfidfVectorizer
 from nlp import sentence_encode, summarize, sentiment
 from cleantext import Clean
@@ -5,6 +6,7 @@ from utils import cosine, cluster
 import pandas as pd
 import numpy as np
 import threading
+from scipy.stats import percentileofscore as pos
 
 
 def top_terms(texts, k=8):
@@ -14,9 +16,12 @@ def top_terms(texts, k=8):
 
     # https://medium.com/@cristhianboujon/how-to-list-the-most-common-words-from-text-corpus-using-scikit-learn-dad4d0cab41d
     sum_words = res.sum(axis=0)
-    words_freq = [(word, sum_words[0, idx]) for word, idx in model.vocabulary_.items()]
-    words_freq = sorted(words_freq, key=lambda x: x[1], reverse=True)
-    terms = [x[0] for x in words_freq[:k]]
+    tf = pd.DataFrame([
+        (word, sum_words[0, idx])
+        for word, idx in model.vocabulary_.items()
+    ], columns=['term', 'freq'])
+    # tf = tf[freq.apply(lambda x: pos(tf.freq, x) > 90)] # take top 10% (still max @ k)
+    terms = tf.sort_values('freq', ascending=False).iloc[:k].term.tolist()
 
     print(terms)
     return terms
