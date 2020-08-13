@@ -199,7 +199,7 @@ export default function Entries({fetch_, as, aiStatus, setServerError}) {
       {usePaging && (
         <ButtonGroup aria-label="Page">
           {_.times(_.ceil(filtered.length / pageSize), p => (
-            <Button
+            <Button key={p}
               variant={p === page ? 'dark' : 'outline-dark'}
               onClick={() => setPage(p)}
             >{p}</Button>

@@ -1,7 +1,7 @@
 import enum, pdb, re, threading, time
 from datetime import date, datetime
 from dateutil import tz
-from jwtauthtest.database import Base, engine, db_session
+from jwtauthtest.database import Base, engine, db_session, engine_books
 from jwtauthtest import ml
 from sqlalchemy import \
     text, \
@@ -426,3 +426,22 @@ class Bookshelf(Base, CustomBase):
         values (:book_id, :user_id, :shelf)
         on conflict (book_id, user_id) do update set shelf=:shelf"""
         engine.execute(text(sql), user_id=user_id, book_id=int(book_id), shelf=shelf)
+
+    @staticmethod
+    def get_shelf(user_id, shelf):
+        sql = "select book_id from bookshelf where user_id=:uid and shelf=:shelf"
+        ids = engine.execute(text(sql), uid=user_id, shelf=shelf).fetchall()
+        ids = tuple([x.book_id for x in ids])
+        if not ids:
+            return []
+
+        sql = """
+        select u.ID as id, u.Title as title, u.Author as author, d.descr as text, t.topic_descr as topic
+        from updated u
+            inner join description d on d.md5=u.MD5
+            inner join topics t on u.Topic=t.topic_id
+        where u.ID in :ids
+            and t.lang='en' and u.Language = 'English'
+        """
+        books = engine_books.execute(text(sql), ids=ids).fetchall()
+        return [dict(b) for b in books]

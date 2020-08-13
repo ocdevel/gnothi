@@ -482,6 +482,17 @@ def shelf_book(bid, shelf):
     Bookshelf.upsert(user.id, bid, shelf)
     return jsonify({'data': None})
 
+
+@app.route('/api/books/<shelf>', methods=['GET'])
+@jwt_required()
+def get_shelf(shelf):
+    user, snooping = as_user()
+    # FIXME handle snooping
+    # if snooping: return cant_snoop('')
+    data = Bookshelf.get_shelf(user.id, shelf)
+    return jsonify({'data': data})
+
+
 ####
 # Habitica
 ####

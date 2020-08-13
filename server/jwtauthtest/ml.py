@@ -84,7 +84,5 @@ def themes(entries):
 
 def books(user_id, entries):
     res = run_gpu_model(dict(method='books', args=[user_id, entries], kwargs={}))
-    if res is False:
-        offline_df = [{'ID': '', 'sims': 0, 'title': '', 'author': '', 'text': OFFLINE_MSG, 'topic': ''}]
-        return offline_df
+    if res is False: return OFFLINE_MSG
     return res

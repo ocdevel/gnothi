@@ -9,6 +9,9 @@ RUN apt-get install -y lsb-release &&\
   echo "deb http://apt.postgresql.org/pub/repos/apt/ ${RELEASE}"-pgdg main | tee  /etc/apt/sources.list.d/pgdg.list &&\
   apt update && apt -y install postgresql-client-12
 
+# TODO try removing this & see if pip mysqlclient below sufficient
+RUN apt-get install -y --fix-missing default-libmysqlclient-dev
+
 RUN pip install \
   flask \
   flask-cors \
@@ -23,7 +26,8 @@ RUN pip install \
   markdown \
   python-box \
   boto3 \
-  tqdm
+  tqdm \
+  mysqlclient
 
 # might need 'scipy==1.3.2' for jensen
 
