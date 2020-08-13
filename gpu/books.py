@@ -144,7 +144,7 @@ def predict_dists(books, vecs_books, shelf_idx, fine_tune=True):
     y2 = books[shelf_idx].dist
     m.fit(
         x2, y2,
-        epochs=5,  # too many epochs overfits (eg to CBT). Maybe adjust LR *down*, or other?
+        epochs=3,  # too many epochs overfits (eg to CBT). Maybe adjust LR *down*, or other?
         batch_size=8,
         callbacks=[es],
         validation_split=.3  # might not have enough data?

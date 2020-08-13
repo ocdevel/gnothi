@@ -401,7 +401,7 @@ def run_themes():
     # if tags and len(tags) == 1:
     #     tag_name = Tag.query.get(tags[0]).name
     #     if re.match('dream(s|ing)?', tag_name, re.IGNORECASE):
-    #         entries = nltk.tokenize.sent_tokenize('. '.join(entries))
+    #         entries = [s.text for e in entries for s in e.sents]
 
     if len(entries) < 2:
         return send_error("Not enough entries to work with, come back later")
