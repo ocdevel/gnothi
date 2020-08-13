@@ -23,7 +23,7 @@ def sentence_encode(x):
         # word_embedding_model = models.Transformer('allenai/longformer-base-4096')
         # pooling_model = models.Pooling(word_embedding_model.get_word_embedding_dimension())
         # encoder = SentenceTransformer(modules=[word_embedding_model, pooling_model])
-    return np.array(encoder.encode(x, batch_size=32, show_progress_bar=True))
+    return np.array(encoder.encode(x, batch_size=128, show_progress_bar=True))
 
 # TODO chunk sentiment? (or is it fine with chunked summaries?)
 sent_tokenizer = None

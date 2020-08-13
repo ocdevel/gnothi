@@ -407,9 +407,11 @@ class ShareTag(Base, CustomBase):
 
 
 class Shelves(enum.Enum):
-    liked = 1
+    like = 1
     already_read = 2
-    disliked = 3
+    dislike = 3
+    remove = 4
+    recommend = 5
 
 class Bookshelf(Base, CustomBase):
     __tablename__ = 'bookshelf'

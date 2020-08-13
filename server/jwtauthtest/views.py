@@ -479,8 +479,6 @@ def summarize():
 def shelf_book(bid, shelf):
     user, snooping = as_user()
     if snooping: return cant_snoop('')
-
-    # action: liked|already_read|disliked
     Bookshelf.upsert(user.id, bid, shelf)
     return jsonify({'data': None})
 

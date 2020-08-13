@@ -78,35 +78,35 @@ def load_books():
     if not ALL_BOOKS: sql_ += [sql.just_psych]
     sql_ = ' '.join(sql_)
     with book_engine.connect() as conn:
-        books_ = pd.read_sql(sql_, conn)
-    books_ = books_.drop_duplicates(['Title', 'Author'])
+        books = pd.read_sql(sql_, conn)
+    books = books.drop_duplicates(['Title', 'Author'])
 
-    print('n_books before cleanup', books_.shape[0])
+    print('n_books before cleanup', books.shape[0])
     print("Removing HTML")
     broken = '(\?\?\?|\#\#\#)'  # russian / other FIXME better way to handle
-    books_ = books_[~(books_.Title + books_.descr).str.contains(broken)]\
+    books = books[~(books.Title + books.descr).str.contains(broken)]\
         .drop_duplicates(['Title', 'Author'])  # TODO reconsider
 
-    books_['descr'] = books_.descr.apply(Clean.strip_html)\
+    books['descr'] = books.descr.apply(Clean.strip_html)\
         .apply(Clean.fix_punct)\
         .apply(Clean.only_ascii)\
         .apply(Clean.urls)\
         .apply(Clean.multiple_whitespace)\
         .apply(Clean.unmark)
 
-    books_['clean'] = books_.Title + '\n' + books_.descr
-    # books_ = books_[books_.clean.apply(lambda x: detect(x) == 'en')]
-    print('n_books after cleanup', books_.shape[0])
-    e_books = books_.clean.tolist()
+    books['clean'] = books.Title + '\n' + books.descr
+    # books = books[books.clean.apply(lambda x: detect(x) == 'en')]
+    print('n_books after cleanup', books.shape[0])
+    e_books = books.clean.tolist()
 
     print(f"Running BERT on {len(e_books)} entries")
     vecs_books = sentence_encode(e_books)
     with open(path_, 'wb') as pkl:
-        pickle.dump([vecs_books, books_], pkl)
-    return vecs_books, books_
+        pickle.dump([vecs_books, books], pkl)
+    return vecs_books, books
 
 
-def predict_dists(books_, vecs_books, shelf_idx, fine_tune=True):
+def predict_dists(books, vecs_books, shelf_idx, fine_tune=True):
     # TODO cache this, re-train every x new entries / votes.
 
     # linear+mse for smoother distances, what we have here? where sigmoid+xentropy for
@@ -125,7 +125,7 @@ def predict_dists(books_, vecs_books, shelf_idx, fine_tune=True):
     )
 
     x = vecs_books
-    y = books_.dist
+    y = books.dist
     es = EarlyStopping(monitor='val_loss', mode='min', patience=3, min_delta=.0001)
     m.fit(
         x, y,
@@ -141,23 +141,23 @@ def predict_dists(books_, vecs_books, shelf_idx, fine_tune=True):
     # Train harder on shelved books
     # K.set_value(m.optimizer.learning_rate, 0.0001)  # alternatively https://stackoverflow.com/a/60420156/362790
     x2 = x[shelf_idx]
-    y2 = books_[shelf_idx].dist
+    y2 = books[shelf_idx].dist
     m.fit(
         x2, y2,
-        epochs=5,  # too many epochs overfits (eg to CBT). Maybe adjust LR *down*, or other?
+        epochs=2,  # too many epochs overfits (eg to CBT). Maybe adjust LR *down*, or other?
         batch_size=8,
         callbacks=[es],
         validation_split=.3  # might not have enough data?
     )
     return m.predict(x)
 
-def books(user_id, entries, n_recs=30):
+def get_books(user_id, entries, n_recs=30):
     entries = Clean.entries_to_paras(entries)
     vecs_user = sentence_encode(entries)
 
     print("Loading books")
-    vecs_books, books_ = load_books()
-    books_ = books_.rename(columns=dict(
+    vecs_books, books = load_books()
+    books = books.rename(columns=dict(
         ID='id',
         descr='text',
         Title='title',
@@ -171,7 +171,7 @@ def books(user_id, entries, n_recs=30):
     print("Finding similars")
     # 5fe7b3e2: cluster centroids (removed since DNN will act as clusterer)
     r = pd.DataFrame({
-        'id': books_.id.tolist() * vecs_user.shape[0],
+        'id': books.id.tolist() * vecs_user.shape[0],
         'dist': cosine(vecs_user, vecs_books, norm_in=False, abs=True).flatten()
     })
     # Take best score for every book
@@ -181,22 +181,25 @@ def books(user_id, entries, n_recs=30):
     # scale 0-1 (before we apply shelves, which are 0-1). Apply here to maintain index
     r['dist'] = pp.minmax_scale(r.dist)
     # then map back onto books, so they're back in order (pandas index-matching)
-    books_['dist'] = r.dist
+    books['dist'] = r.dist
 
     with engine.connect() as conn:
         sql = "select book_id as id, user_id, shelf from bookshelf where user_id=%(uid)s"
         shelf = pd.read_sql(sql, conn, params={'uid': user_id}).set_index('id', drop=False)
-    shelf_idx = books_.id.isin(shelf.id)
-    shelf['dist'] = shelf.shelf.apply(lambda v: {'liked': 0., 'disliked': 1., 'already_read': 0.}[v])
-    books_.loc[shelf.index, 'dist'] = shelf.dist  # indexes(id) match, so assigns correctly
+    shelf_idx = books.id.isin(shelf.id)
+    shelf_map = dict(like=0., already_read=0., recommend=0., dislike=1., remove=None)
+    shelf['dist'] = shelf.shelf.apply(lambda k: shelf_map[k])
+    shelf.dist.fillna(books.dist, inplace=True)  # fill in "remove"
+    books.loc[shelf.index, 'dist'] = shelf.dist  # indexes(id) match, so assigns correctly
+    assert not books.dist.isna().any(), "Messed up merging shelf/books.dist by index"
 
     # apply DNN anyway? Kinda acts like a clusterer/smoother
-    if shelf.shape[0] > 5:
-        books_['dist'] = predict_dists(books_, vecs_books, shelf_idx)
+    if shelf_idx.sum() > 5:
+        books['dist'] = predict_dists(books, vecs_books, shelf_idx)
 
     # dupes by title in libgen
-    # r = books_.sort_values('dist')\
-    r = books_[~shelf_idx].sort_values('dist')\
+    # r = books.sort_values('dist')\
+    r = books[~shelf_idx].sort_values('dist')\
         .drop_duplicates('title', keep='first')\
         .iloc[:n_recs]
     r = [x for x in r.T.to_dict().values()]

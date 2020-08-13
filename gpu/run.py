@@ -3,7 +3,7 @@ if __name__ == '__main__':
     from box import Box
     import torch
     import keras.backend as K
-    from books import books
+    from books import get_books
     from themes import themes
     from influencers import influencers
     from utils import engine, cluster, cosine
@@ -18,7 +18,7 @@ if __name__ == '__main__':
         'cosine': cosine,
         'influencers': influencers,
         'cluster': cluster,
-        'books': books,
+        'books': get_books,
         'themes': themes,
     })
 
