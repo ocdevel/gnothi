@@ -19,7 +19,7 @@ def sentence_encode(x):
     while encoder == -1: time.sleep(1)  # loading elsewhere
     if encoder is None:
         encoder = -1
-        encoder = SentenceTransformer('roberta-large-nli-stsb-mean-tokens')
+        encoder = SentenceTransformer('roberta-base-nli-stsb-mean-tokens')
         # word_embedding_model = models.Transformer('allenai/longformer-base-4096')
         # pooling_model = models.Pooling(word_embedding_model.get_word_embedding_dimension())
         # encoder = SentenceTransformer(modules=[word_embedding_model, pooling_model])

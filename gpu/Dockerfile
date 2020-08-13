@@ -18,7 +18,7 @@ RUN pip install transformers sentence-transformers &&\
     transformers-cli download mrm8488/t5-base-finetuned-emotion &&\
     transformers-cli download facebook/bart-large-cnn &&\
     transformers-cli download allenai/longformer-large-4096-finetuned-triviaqa &&\
-    python -c "from sentence_transformers import SentenceTransformer;SentenceTransformer('roberta-large-nli-stsb-mean-tokens')"
+    python -c "from sentence_transformers import SentenceTransformer;SentenceTransformer('roberta-base-nli-stsb-mean-tokens')"
 
 # needed for mysql?
 RUN apt-get install -y --fix-missing default-libmysqlclient-dev
