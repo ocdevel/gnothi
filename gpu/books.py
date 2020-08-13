@@ -111,8 +111,8 @@ def predict_dists(books, vecs_books, shelf_idx, fine_tune=True):
 
     # linear+mse for smoother distances, what we have here? where sigmoid+xentropy for
     # harder decision boundaries, which we don't have?
-    act, loss = 'linear', 'mse'
-    # act, loss = 'sigmoid', 'binary_crossentropy'
+    # act, loss = 'linear', 'mse'
+    act, loss = 'sigmoid', 'binary_crossentropy'
 
     input = Input(shape=(vecs_books.shape[1],))
     m = Dense(400, activation='elu')(input)
@@ -144,12 +144,13 @@ def predict_dists(books, vecs_books, shelf_idx, fine_tune=True):
     y2 = books[shelf_idx].dist
     m.fit(
         x2, y2,
-        epochs=2,  # too many epochs overfits (eg to CBT). Maybe adjust LR *down*, or other?
+        epochs=5,  # too many epochs overfits (eg to CBT). Maybe adjust LR *down*, or other?
         batch_size=8,
         callbacks=[es],
         validation_split=.3  # might not have enough data?
     )
     return m.predict(x)
+
 
 def get_books(user_id, entries, n_recs=30):
     entries = Clean.entries_to_paras(entries)
@@ -179,7 +180,7 @@ def get_books(user_id, entries, n_recs=30):
         .drop_duplicates('id', keep='first')\
         .set_index('id')
     # scale 0-1 (before we apply shelves, which are 0-1). Apply here to maintain index
-    r['dist'] = pp.minmax_scale(r.dist)
+    # r['dist'] = pp.minmax_scale(r.dist)
     # then map back onto books, so they're back in order (pandas index-matching)
     books['dist'] = r.dist
 
