@@ -171,9 +171,8 @@ def get_books(user_id, entries, n_recs=30):
     print("Finding similars")
     # 5fe7b3e2: cluster centroids (removed since DNN will act as clusterer)
     # Take best score for every book
-    dist = cosine(vecs_user, vecs_books, norm_in=False, abs=True).min(axis=0)
-    # scale 0-1 (before we apply shelves, which are 0-1). Apply here to maintain index
-    # r['dist'] = pp.minmax_scale(dist)
+    dist = cosine(vecs_user, vecs_books, norm_in=False, norm_out=True).min(axis=0)
+    # 0f29e591: minmax_scale(dist). norm_out=True works better
     # then map back onto books, so they're back in order (pandas index-matching)
     books['dist'] = dist
 
