@@ -90,7 +90,6 @@ def load_books():
     books['descr'] = books.descr.apply(Clean.strip_html)\
         .apply(Clean.fix_punct)\
         .apply(Clean.only_ascii)\
-        .apply(Clean.urls)\
         .apply(Clean.multiple_whitespace)\
         .apply(Clean.unmark)
 
@@ -171,18 +170,12 @@ def get_books(user_id, entries, n_recs=30):
 
     print("Finding similars")
     # 5fe7b3e2: cluster centroids (removed since DNN will act as clusterer)
-    r = pd.DataFrame({
-        'id': books.id.tolist() * vecs_user.shape[0],
-        'dist': cosine(vecs_user, vecs_books, norm_in=False, abs=True).flatten()
-    })
     # Take best score for every book
-    r = r.sort_values('dist')\
-        .drop_duplicates('id', keep='first')\
-        .set_index('id')
+    dist = cosine(vecs_user, vecs_books, norm_in=False, abs=True).min(axis=0)
     # scale 0-1 (before we apply shelves, which are 0-1). Apply here to maintain index
-    # r['dist'] = pp.minmax_scale(r.dist)
+    # r['dist'] = pp.minmax_scale(dist)
     # then map back onto books, so they're back in order (pandas index-matching)
-    books['dist'] = r.dist
+    books['dist'] = dist
 
     with engine.connect() as conn:
         sql = "select book_id as id, user_id, shelf from bookshelf where user_id=%(uid)s"

@@ -8,6 +8,7 @@ from gensim.parsing import preprocessing as pp
 import spacy
 import lemminflect
 nlp = spacy.load('en_core_web_sm', disable=['parser', 'ner'])
+from textacy.preprocessing import replace as treplace
 
 from markdown import Markdown
 from io import StringIO
@@ -55,16 +56,16 @@ class Clean():
 
     @staticmethod
     def strip_html(s):
-        return BeautifulSoup(s, "html5lib").text
+        s = BeautifulSoup(s, "html5lib").text
+        s = treplace.replace_urls(s, 'url')
+        s = treplace.replace_emails(s, 'email')
+        s = treplace.replace_phone_numbers(s, 'phone')
+        return s
 
     @staticmethod
     def remove_apos(s):
         # call this before removing punctuation via gensim/spacy, since they're replaced with space
         return re.sub(r"'", "", s)
-
-    @staticmethod
-    def urls(s):
-        return re.sub(r"http[s]?://\S+", "url", s)
 
     @staticmethod
     def multiple_whitespace(s):
@@ -131,29 +132,28 @@ class Clean():
 
     @staticmethod
     def lda_texts(entries, propn=False):
-        # entries = [s.lower() for s in entries]
-
         pbar = tqdm(total=len(entries))
         docs = []
-        postags = ['NOUN', 'ADJ', 'VERB', 'ADV']
+        postags = ['NOUN', 'ADJ', 'VERB']
         # Should only be true for user viewing their account (eg, not for book-rec sor other features)
         if propn: postags.append('PROPN')
-        # for doc in tqdm(nlp.pipe(entries, n_process=THREADS, batch_size=1000)):
-        for doc in tqdm(nlp.pipe(entries, n_threads=THREADS, batch_size=1000)):
+
+        for doc in nlp.pipe(entries):
             pbar.update(1)
             if not doc: continue
             tokens = []
             for t in doc:
-                if t.pos_ == 'NUM': tokens.append('number')
-                # elif t.pos_ == 'SYM': tokens.append('symbol')
-                elif t.is_stop or t.is_punct: continue
+                if t.is_stop or t.is_punct: continue
+                elif t.like_num: t = 'number'
+                elif t.is_currency: t = 'currency'
+                elif t.pos_ == 'SYM': t = 'symbol'
                 elif t.pos_ not in postags: continue
                 else:
-                    token = t._.lemma().lower()
-                    token = pp.strip_non_alphanum(token)
-                    # token = Clean.only_ascii(token)
-                    if len(token) < 2: continue
-                    tokens.append(token)
+                    t = t.lemma_.lower()
+                    t = pp.strip_non_alphanum(t)
+                    # token = Clean.only_ascii(t)
+                    if len(t) < 2: continue
+                tokens.append(t)
             docs.append(tokens)
         pbar.close()
 
