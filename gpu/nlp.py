@@ -81,7 +81,7 @@ class NLP():
         sum_max = 1024
         tokens_all = tokenizer.encode(text, return_tensors='pt').to("cuda")
         if max_length and tokens_all.shape[1] <= max_length:
-            return [{"summary_text": text}]
+            return [{"summary_text": text, "sentiment": ""}]
         n_parts = math.ceil(tokens_all.shape[1] / sum_max)
         tokens_all = tokenizer.encode(text, return_tensors='pt', max_length=sum_max * n_parts, pad_to_max_length=True).to("cuda")
         sum_args = dict(num_beams=4, early_stopping=True)
@@ -105,8 +105,7 @@ class NLP():
             for s in summary_ids
         ]
         summary = summary[0]
-        if with_sentiment:
-            sentiment = self.sentiment_analysis(summary)[0]["label"]
+        sentiment = self.sentiment_analysis(summary)[0]["label"] if with_sentiment else ""
         return [{"summary_text": summary, "sentiment": sentiment}]
 
     def question_answering(self, question, context):

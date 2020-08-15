@@ -38,14 +38,15 @@ def run_gpu_model(data):
         i += 1
 
 
-def summarize(text, min_length=None, max_length=None):
+def summarize(text, min_length=None, max_length=None, with_sentiment=True):
     args = [text]
     kwargs = {}
     if min_length: kwargs['min_length'] = min_length
     if max_length: kwargs['max_length'] = max_length
+    kwargs['with_sentiment'] = with_sentiment
     res = run_gpu_model(dict(method='summarization', args=args, kwargs=kwargs))
     if res is False:
-        return OFFLINE_MSG
+        return {"summary_text": OFFLINE_MSG, "sentiment": None}
     return res[0]
 
 
