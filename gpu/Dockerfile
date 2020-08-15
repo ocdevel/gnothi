@@ -1,4 +1,4 @@
-FROM tensorflow/tensorflow:2.2.0-gpu
+FROM tensorflow/tensorflow:2.3.0-gpu
 RUN apt-get update -y && apt-get install -y wget unzip
 
 # Install postgres-12 client

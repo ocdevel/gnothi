@@ -1,4 +1,4 @@
-import time, psycopg2, pickle, pdb, threading
+import time, psycopg2, pickle, pdb, multiprocessing
 from box import Box
 import torch
 
@@ -44,11 +44,7 @@ def run_job(jid):
         sql = f"update jobs set state='error', data=%s where id=%s"
         engine.execute(sql, (psycopg2.Binary(res), job.id))
 
-    if k in nlp_.m:
-        nlp_.unload(k)
-    if k == 'themes':
-        nlp_.unload('summarization')
-    nlp_.unload('sentiment-analysis')  # try it anyway, used by themes / summary
+    # 3eb71b3: unloading models. multiprocessing handles better
 
 
 if __name__ == '__main__':
@@ -77,4 +73,6 @@ if __name__ == '__main__':
             time.sleep(.5)
             continue
 
-        threading.Thread(target=run_job, args=(job.id,), daemon=True).start()
+        # multiprocessing better than thread, kills stale tensorflow sessions
+        # https://github.com/tensorflow/tensorflow/issues/36465#issuecomment-582749350
+        multiprocessing.Process(target=run_job, args=(job.id,)).start()
