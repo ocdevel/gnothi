@@ -167,9 +167,10 @@ class Entry(Base, CustomBase):
                 time.sleep(1)
                 continue
             entry = Entry.query.get(id)
-            entry.title_summary = ml.summarize(entry.text, 5, 20)
-            entry.text_summary = ml.summarize(entry.text, 32, 128)
-            entry.sentiment = ml.sentiment(entry.text)
+            entry.title_summary = ml.summarize(entry.text, 5, 20, with_sentiment=False)["summary_text"]
+            summary = ml.summarize(entry.text, 32, 128)
+            entry.text_summary = summary["summary_text"]
+            entry.sentiment = summary["sentiment"]
             db_session.commit()
             return
 

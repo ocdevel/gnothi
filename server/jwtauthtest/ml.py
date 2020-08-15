@@ -46,7 +46,7 @@ def summarize(text, min_length=None, max_length=None):
     res = run_gpu_model(dict(method='summarization', args=args, kwargs=kwargs))
     if res is False:
         return OFFLINE_MSG
-    return res[0]['summary_text']
+    return res[0]
 
 
 def sentiment(text):

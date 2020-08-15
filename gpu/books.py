@@ -6,7 +6,7 @@ from box import Box
 import numpy as np
 import pandas as pd
 import pickle
-from nlp import sentence_encode
+from nlp import nlp_
 from sqlalchemy import text
 from sklearn import preprocessing as pp
 
@@ -99,7 +99,7 @@ def load_books():
     e_books = books.clean.tolist()
 
     print(f"Running BERT on {len(e_books)} entries")
-    vecs_books = sentence_encode(e_books)
+    vecs_books = nlp_.sentence_encode(e_books)
     with open(path_, 'wb') as pkl:
         pickle.dump([vecs_books, books], pkl)
     return vecs_books, books
@@ -153,7 +153,7 @@ def predict_dists(books, vecs_books, shelf_idx, fine_tune=True):
 
 def get_books(user_id, entries, n_recs=30):
     entries = Clean.entries_to_paras(entries)
-    vecs_user = sentence_encode(entries)
+    vecs_user = nlp_.sentence_encode(entries)
 
     print("Loading books")
     vecs_books, books = load_books()

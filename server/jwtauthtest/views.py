@@ -469,8 +469,7 @@ def summarize():
 
     min_ = int(words / 2)
     summary = ml.summarize(entries, min_length=min_, max_length=words)
-    sentiment = ml.sentiment(summary)
-    data = {'summary': summary, 'sentiment': sentiment}
+    data = {'summary': summary["summary_text"], 'sentiment': summary["sentiment"]}
     return jsonify({'data': data})
 
 

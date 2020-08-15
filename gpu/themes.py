@@ -1,6 +1,6 @@
 import pdb
 from sklearn.feature_extraction.text import TfidfVectorizer
-from nlp import sentence_encode, summarize, sentiment
+from nlp import nlp_
 from cleantext import Clean
 from utils import cosine, cluster
 import pandas as pd
@@ -29,7 +29,7 @@ def top_terms(texts, k=8):
 
 def themes(entries):
     entries = Clean.entries_to_paras(entries)
-    vecs = sentence_encode(entries)
+    vecs = nlp_.sentence_encode(entries)
 
     clusters = cluster(vecs)
 
@@ -57,8 +57,8 @@ def themes(entries):
         entries_ = '\n'.join(entries_)  # todo smarter sentence-joiner?
 
         terms = top_terms(stripped_.tolist())
-        summary = summarize(entries_, min_length=50, max_length=300)[0]["summary_text"]
-        sent = sentiment(summary)[0]["label"]
+        summary = nlp_.summarization(entries_, min_length=50, max_length=300)[0]
+        summary, sent = summary["summary_text"], summary["sentiment"]
         # summary = sent = None
         topics.append({
             'n_entries': n_entries,

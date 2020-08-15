@@ -1,5 +1,6 @@
 import os, json, math, pdb
 import torch
+import keras.backend as K
 import numpy as np
 from sqlalchemy import create_engine
 from sklearn.cluster import AgglomerativeClustering
@@ -82,3 +83,8 @@ def cluster(x):
     agg = AgglomerativeClustering(n_clusters=nc, affinity='precomputed', linkage='average')
     labels = agg.fit_predict(dists)
     return labels
+
+
+def clear_gpu():
+    torch.cuda.empty_cache()
+    K.clear_session()
