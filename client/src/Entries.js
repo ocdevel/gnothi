@@ -93,16 +93,17 @@ export default function Entries({fetch_, as, aiStatus, setServerError}) {
             {summary === e.text ? (
                 <>{sentiment}{summary}</>
             ) : (
-                <SimplePopover text="Summary is machine-generated from your entry's text">
-                  <div className='blur-summary'>
-                    <div className='summary-body'>
+                <SimplePopover text="Summary is machine-generated from entry. Click to read the original.">
+                  <div>
+                    <div className='blur-summary'>
                       {sentiment}{summary}
                     </div>
-                    <span className='summary-read-more anchor'>Read More</span>
+                    <span className='anchor'>Read original</span>
                   </div>
                 </SimplePopover>
             )}
           </div>
+          <hr/>
         </td>
       </tr>
     )

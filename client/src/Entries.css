@@ -2,7 +2,7 @@
   position : relative;
 }
 
-.blur-summary .summary-body:after {
+.blur-summary:after {
   content  : "";
   position : absolute;
   z-index  : 1;
@@ -14,11 +14,4 @@
                     rgba(255,255,255, 1) 90%);
   width    : 100%;
   height   : 2em;
-}
-
-.blur-summary .summary-read-more {
-  z-index: 2;
-  position: absolute;
-  bottom: 5px;
-  right: 5px;
 }
