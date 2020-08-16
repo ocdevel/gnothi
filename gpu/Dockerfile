@@ -43,7 +43,8 @@ RUN pip install \
     scikit-learn-extra \
     tqdm \
     sqlalchemy \
-    feather-format
+    feather-format \
+    textacy
 
 COPY . /app
 WORKDIR /app
