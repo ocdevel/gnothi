@@ -1,5 +1,28 @@
 version: "3"
+
 services:
+  traefik:
+    image: traefik:v2.2
+    container_name: traefik
+    command:
+      #- --log.level=DEBUG
+      - --api=false
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:80
+      - --entrypoints.websecure.address=:443
+      - --certificatesresolvers.myresolver.acme.tlschallenge=true
+      #- --certificatesresolvers.myresolver.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory
+      - --certificatesresolvers.myresolver.acme.email=tylerrenelle@gmail.com
+      - --certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json
+    ports:
+      - 80:80
+      - 443:443
+    restart: unless-stopped
+    volumes:
+      - ./letsencrypt:/letsencrypt
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
   server:
     build: server
     container_name: jserver
@@ -7,8 +30,11 @@ services:
       ENVIRONMENT: production
       FLASK_ENV: production
       MODULE_NAME: server.views
-    ports:
-      - 5001:5000
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.server.rule=Host(`api.gnothiai.com`)
+      - traefik.http.routers.server.entrypoints=websecure
+      - traefik.http.routers.server.tls.certresolver=myresolver
     stdin_open: true
     volumes:
       - ./server/:/app
@@ -18,31 +44,26 @@ services:
         max-size: "5m"
         max-file: "3"
 
-  server-dev:
-    build: server
-    container_name: jserver-dev
-    entrypoint: /bin/bash
-    environment:
-      ENVIRONMENT: development
-      FLASK_ENV: development
-      FLASK_APP: server
-    ports:
-      - 5002:5000
-    stdin_open: true
-    volumes:
-      - ./server/:/app
-    logging:
-      options:
-        max-size: "5m"
-        max-file: "3"
-
   client:
     build: client
-    command: serve -s build -l tcp://0.0.0.0:3001
+    command: serve -s build -l tcp://0.0.0.0:3000
     container_name: jclient
-    ports:
-      - 80:3001
-      - 3002:3002
+    labels:
+      - traefik.enable=true
+
+      # redirect http->https. TODO find global https redirect solution
+      - traefik.http.middlewares.client80-redir.redirectscheme.scheme=https
+      - traefik.http.middlewares.client80-redir.redirectscheme.permanent=true
+      - traefik.http.routers.client80.middlewares=client80-redir
+      
+      - traefik.http.routers.client80.rule=Host(`gnothiai.com`,`www.gnothiai.com`)
+      - traefik.http.routers.client80.entrypoints=web      
+      #- traefik.http.services.client80.loadbalancer.server.port=3000
+
+      - traefik.http.routers.client443.rule=Host(`gnothiai.com`,`www.gnothiai.com`)      
+      - traefik.http.routers.client443.entrypoints=websecure
+      - traefik.http.routers.client443.tls.certresolver=myresolver
+      - traefik.http.services.client443.loadbalancer.server.port=3000
     stdin_open: true
     restart: unless-stopped
     volumes:

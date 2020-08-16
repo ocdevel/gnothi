@@ -29,14 +29,6 @@ RUN pip install \
   tqdm \
   mysqlclient
 
-# might need 'scipy==1.3.2' for jensen
-
 COPY .aws /root/.aws
 COPY . /app
 WORKDIR /app
-
-#scipy==1.3.2 because https://github.com/scipy/scipy/issues/11325
-
-#EXPOSE 8080
-
-#ENTRYPOINT ["gunicorn", "-b", ":8080", "main:app"]

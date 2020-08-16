@@ -18,16 +18,18 @@ import {
 import Auth from './Auth'
 import Journal from './Journal'
 import ProfileRoutes from './ProfileRoutes'
-import Themes from './Themes'
-import Books from './Books'
 import Error from './Error'
 import moment from "moment-timezone"
 import emoji from 'react-easy-emoji'
 import {aiStatusEmoji} from "./utils"
 
-let host = window.location.origin.split(':')
-// host = host[0] + ':' + host[1] + ':' + 3001
-host = host[0] + ':' + host[1] + ':' + (host[2] === "3002" ? "5002" : "5001")
+// e52c6629: dynamic host/port
+let host = window.location.host
+if (~host.indexOf('gnothi')) { // prod
+  host = 'https://api.gnothiai.com'
+} else { // dev
+  host = 'http://localhost:5002'
+}
 
 function App() {
   const [jwt, setJwt] = useState(localStorage.getItem('jwt'))
