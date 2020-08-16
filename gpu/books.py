@@ -130,10 +130,11 @@ def load_books():
 
 
 def train_books_predictor(books, vecs_books, shelf_idx, fine_tune=True):
+    print("Training DNN")
     # linear+mse for smoother distances, what we have here? where sigmoid+xentropy for
     # harder decision boundaries, which we don't have?
-    # act, loss = 'linear', 'mse'
-    act, loss = 'sigmoid', 'binary_crossentropy'
+    act, loss = 'linear', 'mse'
+    # act, loss = 'sigmoid', 'binary_crossentropy'
 
     input = Input(shape=(vecs_books.shape[1],))
     m = Dense(400, activation='elu')(input)
@@ -165,15 +166,15 @@ def train_books_predictor(books, vecs_books, shelf_idx, fine_tune=True):
     y2 = books[shelf_idx].dist
     m.fit(
         x2, y2,
-        epochs=3,  # too many epochs overfits (eg to CBT). Maybe adjust LR *down*, or other?
-        batch_size=8,
+        epochs=2,  # too many epochs overfits (eg to CBT). Maybe adjust LR *down*, or other?
+        batch_size=32,
         callbacks=[es],
         validation_split=.3  # might not have enough data?
     )
     return m
 
 
-def predict_books(user_id, entries, bust=False, n_recs=30):
+def predict_books(user_id, entries, bust=False, n_recs=30, centroids=False):
     entries = Clean.entries_to_paras(entries)
     vecs_user = nlp_.sentence_encode(entries)
 
@@ -192,16 +193,24 @@ def predict_books(user_id, entries, bust=False, n_recs=30):
         # normalize for cosine, and downstream DNN
         vecs_user, vecs_books = tnormalize(vecs_user, vecs_books)
 
-        print("Finding similars")
-        # 5fe7b3e2: cluster centroids (removed since DNN will act as clusterer)
-        # Take best score for every book
-        dist = cosine(vecs_user, vecs_books, norm_in=False, norm_out=True).min(axis=0)
+        print("Finding cosine similarities")
+        lhs = vecs_user
+        if centroids:
+            labels = cluster(vecs_user, norm_in=False)
+            lhs = np.vstack([
+                vecs_user[labels == l].mean(0)
+                for l in range(labels.max())
+            ])
+
+        # Take best cluster-score for every book
+        dist = cosine(lhs, vecs_books, abs=True, norm_in=False, norm_out=False).min(axis=0)
         # 0f29e591: minmax_scale(dist). norm_out=True works better
         # then map back onto books, so they're back in order (pandas index-matching)
         books['dist'] = dist
 
         if shelf_idx.sum() > 0:
-            shelf_map = dict(like=0., already_read=0., recommend=0., dislike=1., remove=None)
+            like, dislike = dist.min() - dist.std(), dist.max() + dist.std()
+            shelf_map = dict(like=like, already_read=like, recommend=like, dislike=dislike, remove=None)
             shelf['dist'] = shelf.shelf.apply(lambda k: shelf_map[k])
             shelf.dist.fillna(books.dist, inplace=True)  # fill in "remove"
             books.loc[shelf.index, 'dist'] = shelf.dist  # indexes(id) match, so assigns correctly
