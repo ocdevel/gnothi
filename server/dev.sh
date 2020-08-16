@@ -1,1 +1,0 @@
-ENVIRONMENT=development FLASK_ENV=development FLASK_APP=server flask run --host=0.0.0.0 -p 5002:5000
