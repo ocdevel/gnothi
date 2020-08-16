@@ -25,7 +25,8 @@ import {
   FaBook,
   FaRegFileArchive
 } from 'react-icons/fa'
-import Entry from "./Entry";
+import Entry from "./Entry"
+import './Entries.css'
 
 export default function Entries({fetch_, as, aiStatus, setServerError}) {
   const [entries, setEntries] = useState([])
@@ -76,9 +77,8 @@ export default function Entries({fetch_, as, aiStatus, setServerError}) {
   const renderEntry = e => {
     const gotoForm_ = () => gotoForm(e.id)
     const sentiment = sent2face(e.sentiment)
-    const title = e.title || e.title_summary;
-    let summary = e.text_summary;
-    summary = <span>{summary}</span>
+    const title = e.title || e.title_summary
+    const summary = e.text_summary
     return (
       <tr key={e.id}>
         <td
@@ -89,14 +89,20 @@ export default function Entries({fetch_, as, aiStatus, setServerError}) {
             <h5>{fmtDate(e.created_at)}</h5>
             <h6>{title}</h6>
           </div>
-          <p>
-            {sentiment}
-            {e.text_summary === e.text ? summary : (
-              <SimplePopover text="Summary is machine-generated from your entry's text">
-                {summary}
-              </SimplePopover>
+          <div>
+            {summary === e.text ? (
+                <>{sentiment}{summary}</>
+            ) : (
+                <SimplePopover text="Summary is machine-generated from your entry's text">
+                  <div className='blur-summary'>
+                    <div className='summary-body'>
+                      {sentiment}{summary}
+                    </div>
+                    <span className='summary-read-more anchor'>Read More</span>
+                  </div>
+                </SimplePopover>
             )}
-          </p>
+          </div>
         </td>
       </tr>
     )
