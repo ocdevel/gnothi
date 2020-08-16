@@ -50,13 +50,6 @@ def summarize(text, min_length=None, max_length=None, with_sentiment=True):
     return res[0]
 
 
-def sentiment(text):
-    res = run_gpu_model(dict(method='sentiment-analysis', args=[text], kwargs={}))
-    if res is False:
-        return "surprise"
-    return res[0]['label']
-
-
 def query(question, entries):
     context = ' '.join([unmark(e) for e in entries])
     kwargs = dict(question=question, context=context)
@@ -83,7 +76,9 @@ def themes(entries):
     return res
 
 
-def books(user_id, entries):
-    res = run_gpu_model(dict(method='books', args=[user_id, entries], kwargs={}))
+def books(user, bust=False):
+    entries = [e.text for e in user.entries]
+    entries = [user.profile_to_text()] + entries
+    res = run_gpu_model(dict(method='books', args=[user.id, entries], kwargs={'bust': bust}))
     if res is False: return OFFLINE_MSG
     return res

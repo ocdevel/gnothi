@@ -42,7 +42,8 @@ RUN pip install \
     keras \
     scikit-learn-extra \
     tqdm \
-    sqlalchemy
+    sqlalchemy \
+    feather-format
 
 COPY . /app
 WORKDIR /app

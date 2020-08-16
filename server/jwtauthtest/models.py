@@ -172,6 +172,14 @@ class Entry(Base, CustomBase):
             entry.text_summary = summary["summary_text"]
             entry.sentiment = summary["sentiment"]
             db_session.commit()
+
+            # every x entries, update book recommendations
+            user = User.query.get(entry.user_id)
+            sql = 'select count(*)%2=0 as ct from entries where user_id=:uid'
+            should_update = engine.execute(text(sql), uid=user.id).fetchone().ct
+            if should_update:
+                ml.books(user, bust=True)
+
             return
 
     def run_models(self):
@@ -421,12 +429,22 @@ class Bookshelf(Base, CustomBase):
     shelf = Column(Enum(Shelves), nullable=False)
 
     @staticmethod
+    def update_books(user_id):
+        # every x thumbs, update book recommendations
+        sql = 'select count(*)%8=0 as ct from bookshelf where user_id=:uid'
+        should_update = engine.execute(text(sql), uid=user_id).fetchone().ct
+        if should_update:
+            user = User.query.get(user_id)
+            ml.books(user, bust=True)
+
+    @staticmethod
     def upsert(user_id, book_id, shelf):
         sql = """
         insert into bookshelf(book_id, user_id, shelf)  
         values (:book_id, :user_id, :shelf)
         on conflict (book_id, user_id) do update set shelf=:shelf"""
         engine.execute(text(sql), user_id=user_id, book_id=int(book_id), shelf=shelf)
+        threading.Thread(target=Bookshelf.update_books, args=(user_id,)).start()
 
     @staticmethod
     def get_shelf(user_id, shelf):

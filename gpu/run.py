@@ -2,7 +2,7 @@ import time, psycopg2, pickle, pdb, multiprocessing
 from box import Box
 import torch
 
-from books import get_books
+from books import predict_books
 from themes import themes
 from influencers import influencers
 from utils import engine, cluster, cosine, clear_gpu
@@ -17,7 +17,7 @@ m = Box({
     'cosine': cosine,
     'influencers': influencers,
     'cluster': cluster,
-    'books': get_books,
+    'books': predict_books,
     'themes': themes,
 })
 
@@ -76,3 +76,4 @@ if __name__ == '__main__':
         # multiprocessing better than thread, kills stale tensorflow sessions
         # https://github.com/tensorflow/tensorflow/issues/36465#issuecomment-582749350
         multiprocessing.Process(target=run_job, args=(job.id,)).start()
+        # run_job(job.id)

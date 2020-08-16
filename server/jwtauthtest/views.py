@@ -417,14 +417,9 @@ def get_books():
     user, snooping = as_user()
     if snooping and not user.share_data.themes:
         return cant_snoop('Books')
-    entries = Entry.query.filter(Entry.user_id == user.id)
-    entries = limit_days(entries)
-    entries = limit_by_tags(entries)
-    entries = [e.text for e in entries.all()]
-    if (not snooping) or user.share_data.profile:
-        entries = [user.profile_to_text()] + entries
+    # 5725afba: books limited by tag, date. Hard to balance w dnn-predictor, deferring to their thumbs w/o date/tag
 
-    books = ml.books(user.id, entries)
+    books = ml.books(user)
     return jsonify({'data': books})
 
 
