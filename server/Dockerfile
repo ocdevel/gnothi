@@ -1,4 +1,4 @@
-FROM python
+FROM tiangolo/meinheld-gunicorn-flask:python3.7
 RUN apt-get update -y && apt-get install -y wget unzip
 
 # Install postgres-12 client

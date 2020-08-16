@@ -2,7 +2,7 @@ import os
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import scoped_session, sessionmaker
-from jwtauthtest.utils import vars, DROP_SQL
+from server.utils import vars, DROP_SQL
 
 engine = create_engine(
     vars.DB_URL,
@@ -33,7 +33,7 @@ Base.query = db_session.query_property()
 
 
 def init_db():
-    import jwtauthtest.models
+    import server.models
     Base.metadata.create_all(bind=engine)
     # since connections are lazy, kick it off
     engine.execute('select 1')

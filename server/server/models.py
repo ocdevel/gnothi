@@ -1,8 +1,8 @@
 import enum, pdb, re, threading, time
 from datetime import date, datetime
 from dateutil import tz
-from jwtauthtest.database import Base, engine, db_session, engine_books
-from jwtauthtest import ml
+from server.database import Base, engine, db_session, engine_books
+from server import ml
 from sqlalchemy import \
     text, \
     Column, \

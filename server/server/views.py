@@ -1,14 +1,14 @@
 import pdb, logging, math, os, re
 import datetime
 from flask_jwt import jwt_required, current_identity
-from jwtauthtest import app
-from jwtauthtest.database import db_session, engine
-from jwtauthtest.models import User, Entry, Field, FieldEntry, Share, Tag, EntryTag, ShareTag, Person, Bookshelf
-from jwtauthtest.ec2_updown import jobs_status, ec2_down_maybe
+from server import app
+from server.database import db_session, engine
+from server.models import User, Entry, Field, FieldEntry, Share, Tag, EntryTag, ShareTag, Person, Bookshelf
+from server.ec2_updown import jobs_status, ec2_down_maybe
 from passlib.hash import pbkdf2_sha256
 from flask import request, jsonify, g
-from jwtauthtest.utils import vars, is_dev
-from jwtauthtest import ml
+from server.utils import vars, is_dev
+from server import ml
 import requests
 from dateutil.parser import parse as dparse
 

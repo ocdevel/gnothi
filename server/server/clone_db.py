@@ -66,7 +66,7 @@ with from_engine.connect() as from_conn:
 #     # wipe local database
 #     from_conn.execute(DROP_SQL)
 # # recreate schema
-# import jwtauthtest.models
+# import server.models
 # declarative_base().metadata.create_all(bind=from_engine)
 
 with to_engine.connect() as to_conn:

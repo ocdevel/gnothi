@@ -1,6 +1,6 @@
 import boto3, time, threading, os
-from jwtauthtest.database import engine
-from jwtauthtest.utils import is_dev, vars
+from server.database import engine
+from server.utils import is_dev, vars
 
 # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/ec2.html
 ec2_client = boto3.client('ec2')

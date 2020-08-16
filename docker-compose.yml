@@ -3,16 +3,16 @@ services:
   server:
     build: server
     container_name: jserver
-    entrypoint: flask run --host=0.0.0.0
     environment:
       ENVIRONMENT: production
       FLASK_ENV: production
-      FLASK_APP: jwtauthtest
+      MODULE_NAME: server.views
     ports:
       - 5001:5000
     stdin_open: true
     volumes:
       - ./server/:/app
+    restart: unless-stopped
     logging:
       options:
         max-size: "5m"
@@ -25,7 +25,7 @@ services:
     environment:
       ENVIRONMENT: development
       FLASK_ENV: development
-      FLASK_APP: jwtauthtest
+      FLASK_APP: server
     ports:
       - 5002:5000
     stdin_open: true
@@ -44,5 +44,6 @@ services:
       - 80:3001
       - 3002:3002
     stdin_open: true
+    restart: unless-stopped
     volumes:
       - ./client:/client

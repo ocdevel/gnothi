@@ -1,5 +1,5 @@
-from jwtauthtest.database import engine
-from jwtauthtest.cleantext import unmark
+from server.database import engine
+from server.cleantext import unmark
 import pickle, pdb
 import numpy as np
 
