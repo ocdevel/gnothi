@@ -15,6 +15,14 @@ services:
       #- --certificatesresolvers.myresolver.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory
       - --certificatesresolvers.myresolver.acme.email=tylerrenelle@gmail.com
       - --certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json
+    labels:
+      # global redirect to https
+      - traefik.http.routers.http-catchall.rule=hostregexp(`{host:.+}`)
+      - traefik.http.routers.http-catchall.entrypoints=web
+      - traefik.http.routers.http-catchall.middlewares=redirect-to-https
+
+      # middleware redirect
+      - traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https
     ports:
       - 80:80
       - 443:443
@@ -50,20 +58,10 @@ services:
     container_name: jclient
     labels:
       - traefik.enable=true
-
-      # redirect http->https. TODO find global https redirect solution
-      - traefik.http.middlewares.client80-redir.redirectscheme.scheme=https
-      - traefik.http.middlewares.client80-redir.redirectscheme.permanent=true
-      - traefik.http.routers.client80.middlewares=client80-redir
-      
-      - traefik.http.routers.client80.rule=Host(`gnothiai.com`,`www.gnothiai.com`)
-      - traefik.http.routers.client80.entrypoints=web      
-      #- traefik.http.services.client80.loadbalancer.server.port=3000
-
-      - traefik.http.routers.client443.rule=Host(`gnothiai.com`,`www.gnothiai.com`)      
-      - traefik.http.routers.client443.entrypoints=websecure
-      - traefik.http.routers.client443.tls.certresolver=myresolver
-      - traefik.http.services.client443.loadbalancer.server.port=3000
+      - traefik.http.routers.client.rule=Host(`gnothiai.com`,`www.gnothiai.com`)      
+      - traefik.http.routers.client.entrypoints=websecure
+      - traefik.http.routers.client.tls.certresolver=myresolver
+      - traefik.http.services.client.loadbalancer.server.port=3000
     stdin_open: true
     restart: unless-stopped
     volumes:
