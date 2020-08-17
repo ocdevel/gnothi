@@ -2,13 +2,12 @@ import enum, pdb, re, threading, time
 from datetime import date, datetime
 from dateutil import tz
 from server.database import Base, engine, db_session, engine_books
+from server.utils import vars
 from server import ml
 from sqlalchemy import \
     text, \
     Column, \
     Integer, \
-    String, \
-    Text, \
     Enum, \
     Float, \
     ForeignKey, \
@@ -16,11 +15,13 @@ from sqlalchemy import \
     DateTime, \
     JSON, \
     Date, \
-    ARRAY, \
-    func
+    Unicode, \
+    func, \
+    TIMESTAMP
 from sqlalchemy.orm import relationship, backref
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import UUID, BYTEA
 from sqlalchemy_utils.types import EmailType
+from sqlalchemy_utils.types.encrypted.encrypted_type import StringEncryptedType, FernetEngine
 from uuid import uuid4
 
 
@@ -28,6 +29,14 @@ def uuid_():
     return str(uuid4())
 
 
+# Note: using sa.Unicode for all Text/Varchar columns to be consistent with sqlalchemy_utils examples. Also keeping all
+# text fields unlimited (no varchar(max_length)) as Postgres doesn't incur penalty, unlike MySQL, and we don't know
+# how long str will be after encryption.
+def Encrypt(Col, **args):
+    return Column(StringEncryptedType(Col, vars.FLASK_KEY, FernetEngine), **args)
+
+
+# TODO switch to FastAPI
 class CustomBase():
     def json(self):
         return {k: getattr(self, k) for k in self.json_fields.split()}
@@ -38,19 +47,19 @@ class User(Base, CustomBase):
 
     id = Column(UUID, primary_key=True, default=uuid_)
     # https://stackoverflow.com/a/574698/362790
-    username = Column(EmailType, nullable=False, unique=True)
-    password = Column(String(200), nullable=False)
+    username = Column(EmailType, nullable=False, unique=True)  # TODO encrypt? need to sql-query often
+    password = Column(Unicode, nullable=False)  # TODO encrypting separately; convert to new setup?
 
-    first_name = Column(String(128))
-    last_name = Column(String(128))
-    gender = Column(String(64))
-    orientation = Column(String(64))
-    birthday = Column(Date)
-    timezone = Column(String(128))
-    bio = Column(Text)
+    first_name = Encrypt(Unicode)
+    last_name = Encrypt(Unicode)
+    gender = Encrypt(Unicode)
+    orientation = Encrypt(Unicode)
+    birthday = Column(Date)  # TODO encrypt (how to store/migrate dates?)
+    timezone = Column(Unicode)
+    bio = Encrypt(Unicode)
 
-    habitica_user_id = Column(String(200))
-    habitica_api_token = Column(String(200))
+    habitica_user_id = Encrypt(Unicode)
+    habitica_api_token = Encrypt(Unicode)
 
     entries = relationship("Entry", order_by='Entry.created_at.desc()')
     field_entries = relationship("FieldEntry", order_by='FieldEntry.created_at.desc()')
@@ -121,20 +130,21 @@ class User(Base, CustomBase):
         # print(txt)
         return txt
 
+
 class Entry(Base, CustomBase):
     __tablename__ = 'entries'
 
     id = Column(UUID, primary_key=True, default=uuid_)
     # Title optional, otherwise generated from text. topic-modeled, or BERT summary, etc?
-    title = Column(String(128))
-    text = Column(Text, nullable=False)
+    title = Encrypt(Unicode)
+    text = Encrypt(Unicode, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow)
 
     # Generated
-    title_summary = Column(String(128))
-    text_summary = Column(Text)
-    sentiment = Column((String(32)))
+    title_summary = Encrypt(Unicode)
+    text_summary = Encrypt(Unicode)
+    sentiment = Encrypt(Unicode)
 
     user_id = Column(UUID, ForeignKey('users.id'))
     entry_tags = relationship("EntryTag")
@@ -236,7 +246,7 @@ class Field(Base, CustomBase):
 
     id = Column(UUID, primary_key=True, default=uuid_)
     type = Column(Enum(FieldType))
-    name = Column(String(128))
+    name = Encrypt(Unicode)
     # Start entries/graphs/correlations here
     created_at = Column(DateTime, default=datetime.utcnow)
     # Don't actually delete fields, unless it's the same day. Instead
@@ -249,8 +259,8 @@ class Field(Base, CustomBase):
     # number{float_or_int, ..}
     attributes = Column(JSON)
     # Used if pulling from external service
-    service = Column(String(64))
-    service_id = Column(String(64))
+    service = Column(Unicode)
+    service_id = Column(Unicode)
 
     user_id = Column(UUID, ForeignKey('users.id'))
 
@@ -322,10 +332,10 @@ class FieldEntry(Base, CustomBase):
 class Person(Base, CustomBase):
     __tablename__ = 'people'
     id = Column(UUID, primary_key=True, default=uuid_)
-    name = Column(String(128))
-    relation = Column(String(128))
-    issues = Column(Text)
-    bio = Column(Text)
+    name = Encrypt(Unicode)
+    relation = Encrypt(Unicode)
+    issues = Encrypt(Unicode)
+    bio = Encrypt(Unicode)
 
     user_id = Column(UUID, ForeignKey('users.id'), nullable=False)
 
@@ -342,7 +352,7 @@ class Share(Base, CustomBase):
     __tablename__ = 'shares'
     id = Column(UUID, primary_key=True, default=uuid_)
     user_id = Column(UUID, ForeignKey('users.id'), index=True)
-    email = Column(EmailType, index=True)
+    email = Column(EmailType, index=True)  # TODO encrypt?
 
     fields = Column(Boolean)
     themes = Column(Boolean)
@@ -371,7 +381,7 @@ class Tag(Base, CustomBase):
     __tablename__ = 'tags'
     id = Column(UUID, primary_key=True, default=uuid_)
     user_id = Column(UUID, ForeignKey('users.id'), index=True)
-    name = Column(String(128), nullable=False)
+    name = Encrypt(Unicode, nullable=False)
     # Save user's selected tags between sessions
     selected = Column(Boolean)
     main = Column(Boolean, default=False)
@@ -464,3 +474,18 @@ class Bookshelf(Base, CustomBase):
         """
         books = engine_books.execute(text(sql), ids=ids).fetchall()
         return [dict(b) for b in books]
+
+
+class Jobs(Base):
+    __tablename__ = 'jobs'
+    id = Column(UUID, primary_key=True)
+    state = Column(Unicode)
+    data = Column(BYTEA)
+
+
+class JobsStatus(Base):
+    __tablename__ = 'jobs_status'
+    id = Column(Integer, primary_key=True)
+    status = Column(Unicode)
+    ts_client = Column(TIMESTAMP)
+    ts_svc = Column(TIMESTAMP)

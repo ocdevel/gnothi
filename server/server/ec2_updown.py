@@ -8,10 +8,14 @@ ec2_client = boto3.client('ec2')
 
 def _fetch_status():
     sql = """
-    SELECT status, 
-        EXTRACT(EPOCH FROM (now() - ts_svc)) as elapsed_svc,
-        EXTRACT(EPOCH FROM (now() - ts_client)) as elapsed_client
-    FROM jobs_status
+    -- Ensure 1 row exists
+    insert into jobs_status (id, status, ts_client, ts_svc) 
+        values (1, 'off', now(), now()) 
+        on conflict (id) do nothing;
+    select status, 
+        extract(epoch FROM (now() - ts_svc)) as elapsed_svc,
+        extract(epoch FROM (now() - ts_client)) as elapsed_client
+    from jobs_status;
     """
     return engine.execute(sql).fetchone()
 

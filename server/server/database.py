@@ -24,10 +24,6 @@ db_session = scoped_session(sessionmaker(autocommit=False,
                                          autoflush=False,
                                          bind=engine))
 
-if os.environ.get('WIPE', False):
-    with engine.connect() as conn:
-        conn.execute(DROP_SQL)
-
 Base = declarative_base()
 Base.query = db_session.query_property()
 
@@ -35,8 +31,9 @@ Base.query = db_session.query_property()
 def init_db():
     import server.models
     Base.metadata.create_all(bind=engine)
-    # since connections are lazy, kick it off
-    engine.execute('select 1')
+    # since connections are lazy, kick it off.
+    engine.execute("select 1")
+
 
 def shutdown_db_session():
     db_session.remove()

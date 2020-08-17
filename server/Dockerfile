@@ -27,7 +27,8 @@ RUN pip install \
   python-box \
   boto3 \
   tqdm \
-  mysqlclient
+  mysqlclient \
+  cryptography
 
 COPY .aws /root/.aws
 COPY . /app
