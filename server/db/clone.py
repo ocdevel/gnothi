@@ -1,11 +1,20 @@
 import os, sys, pdb
 from datetime import datetime
 from sqlalchemy import create_engine
-from utils import vars, DROP_SQL
+from server.utils import vars, DROP_SQL
 import pandas as pd
+import argparse
 
-method = sys.argv[-1]  # push/pull/backup
+parser = argparse.ArgumentParser()
+parser.add_argument("method", help="backup|pull|push")
+# parser.add_argument("--by", help="only applicable for pull, how to do pull (wipe|pandas|?)")
+args = parser.parse_args()
+
+method = args.method
 now = datetime.now().strftime("%Y-%m-%d-%I-%Mp")
+
+if method == 'push' and input("Push to prod, are you sure [yn]?") != 'y':
+    exit(0)
 
 if method == 'backup':
     os.system(f"pg_dump {vars.DB_PROD_URL} > tmp/bk-{now}.sql")
@@ -22,12 +31,21 @@ else:
 
 print('from', from_url)
 from_engine = create_engine(from_url)
-
 print('to', to_url)
 to_engine = create_engine(to_url)
 
-if method == 'push':
-    os.system(f"pg_dump {to_url} > tmp/bk-{now}.sql")
+# backup prod, just in case
+os.system(f"pg_dump {vars.DB_PROD_URL} > tmp/bk-{now}.sql")
+to_engine.execute(DROP_SQL)
+# cmd = f"pg_dump --no-owner --no-acl {from_url}"\
+#       f" | sed 's/{from_name}/{to_name}/g'"\
+#       f" | psql {to_url}"
+cmd = f"pg_dump --no-owner --no-acl {from_url}" \
+      f" | psql {to_url}"
+os.system(cmd)
+exit(0)
+
+if method == 'pull':
     with to_engine.connect() as conn:
         conn.execute(DROP_SQL)
     # cmd = f"pg_dump --no-owner --no-acl {from_url}"\
@@ -38,38 +56,4 @@ if method == 'push':
     os.system(cmd)
     exit(0)
 
-# pull
-
-dfs = []
-# fetch old data, we may be pushing live to a new schema
-with from_engine.connect() as from_conn:
-    tables = """
-    users
-    people
-    fields 
-    entries 
-    field_entries 
-    tags
-    shares
-    shares_tags
-    entries_tags
-    jobs
-    """
-
-    for t in tables.split():
-        sql = f"select * from {t}"
-        df = pd.read_sql(t, from_conn)
-        dfs.append([t, df])
-
-## Was trying to re-generate local DB from code, but issue. Just start server
-## to regen localDB with `WIPE=1 flask run` and go from there
-#     # wipe local database
-#     from_conn.execute(DROP_SQL)
-# # recreate schema
-# import server.models
-# declarative_base().metadata.create_all(bind=from_engine)
-
-with to_engine.connect() as to_conn:
-    for t, df in dfs:
-        df.to_sql(t, to_conn, index=False, if_exists='append')
-
+# 0c942cbb: pandas-style pull (for certain migrations? can't remember)

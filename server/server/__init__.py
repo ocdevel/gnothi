@@ -25,5 +25,3 @@ def shutdown_session(exception=None):
 
 
 init_db()
-
-import server.jwt

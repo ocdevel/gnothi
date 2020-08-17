@@ -14,10 +14,6 @@ vars = {}
 for k in 'DB_URL DB_PROD_URL DB_NAME DB_PROD_NAME DB_BOOKS HABIT FLASK_KEY GPU_INSTANCE'.split():
     vars[k] = os.environ.get(k, config_json.get(k, None))
 
-if os.environ['ENVIRONMENT'] == 'production':
-    vars['DB_URL'] = vars['DB_PROD_URL']
-    vars['DB_NAME'] = vars['DB_PROD_NAME']
-
 vars = Box(vars)
 vars['DB_URL'] = f"{vars.DB_URL}/{vars.DB_NAME}"
 vars['DB_PROD_URL'] = f"{vars.DB_PROD_URL}/{vars.DB_PROD_NAME}"

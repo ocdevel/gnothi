@@ -1,5 +1,6 @@
 import pdb, logging, math, os, re
 import datetime
+import server.jwt
 from flask_jwt import jwt_required, current_identity
 from server import app
 from server.database import db_session, engine
