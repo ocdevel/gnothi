@@ -1,9 +1,9 @@
 import enum, pdb, re, threading, time
 from datetime import date, datetime
 from dateutil import tz
-from server.database import Base, engine, db_session, engine_books
-from server.utils import vars
-from server import ml
+from app.database import Base, engine, db_session, engine_books
+from app.utils import vars
+from app import ml
 from sqlalchemy import \
     text, \
     Column, \

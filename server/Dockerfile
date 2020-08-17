@@ -1,4 +1,4 @@
-FROM tiangolo/meinheld-gunicorn-flask:python3.7
+FROM tiangolo/uwsgi-nginx-flask:python3.7
 RUN apt-get update -y && apt-get install -y wget unzip
 
 # Install postgres-12 client
@@ -13,7 +13,6 @@ RUN apt-get install -y lsb-release &&\
 RUN apt-get install -y --fix-missing default-libmysqlclient-dev
 
 RUN pip install \
-  flask \
   flask-cors \
   flask-jwt \
   flask-sqlalchemy \
@@ -31,5 +30,5 @@ RUN pip install \
   cryptography
 
 COPY .aws /root/.aws
-COPY . /app
+COPY app /app
 WORKDIR /app

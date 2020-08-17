@@ -35,11 +35,12 @@ services:
     build: server
     container_name: jserver
     environment:
-      WORKERS_PER_CORE: 1
-      WEB_CONCURRENCY: 1
+      # menheild-gunicorn-flask settings
+      #WORKERS_PER_CORE: 1
+      #WEB_CONCURRENCY: 1
+      #GUNICORN_CMD_ARGS: '--preload'
       ENVIRONMENT: production
       FLASK_ENV: production
-      MODULE_NAME: server.views
     labels:
       - traefik.enable=true
       - traefik.http.routers.server.rule=Host(`api.gnothiai.com`)

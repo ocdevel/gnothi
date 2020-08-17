@@ -1,15 +1,15 @@
 import pdb, logging, math, os, re
 import datetime
-import server.jwt
+import app.jwt_setup
 from flask_jwt import jwt_required, current_identity
-from server import app
-from server.database import db_session, engine
-from server.models import User, Entry, Field, FieldEntry, Share, Tag, EntryTag, ShareTag, Person, Bookshelf
-from server.ec2_updown import jobs_status, ec2_down_maybe
+from app import app
+from app.database import db_session, engine
+from app.models import User, Entry, Field, FieldEntry, Share, Tag, EntryTag, ShareTag, Person, Bookshelf
+from app.ec2_updown import jobs_status, ec2_down_maybe
 from passlib.hash import pbkdf2_sha256
 from flask import request, jsonify, g
-from server.utils import vars, is_dev
-from server import ml
+from app.utils import vars, is_dev
+from app import ml
 import requests
 from dateutil.parser import parse as dparse
 
@@ -631,3 +631,7 @@ def job_ec2():
 app.config.from_object(Config())
 scheduler.init_app(app)
 scheduler.start()
+
+if __name__ == "__main__":
+    # Only for debugging while developing
+    app.run(host='0.0.0.0', debug=True)

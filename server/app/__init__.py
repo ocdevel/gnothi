@@ -1,7 +1,7 @@
 from flask import Flask
 from flask_cors import CORS
-from server.database import init_db, shutdown_db_session
-from server.utils import vars
+from app.database import init_db, shutdown_db_session
+from app.utils import vars
 
 app = Flask(__name__)
 app.secret_key = vars.FLASK_KEY

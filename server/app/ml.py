@@ -1,5 +1,5 @@
-from server.database import engine
-from server.cleantext import unmark
+from app.database import engine
+from app.cleantext import unmark
 import pickle, pdb
 import numpy as np
 

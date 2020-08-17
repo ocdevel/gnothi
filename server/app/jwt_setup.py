@@ -1,8 +1,8 @@
 import datetime
 from flask_jwt import JWT
-from server import app
-from server.models import User
-from server.utils import vars
+from app import app
+from app.models import User
+from app.utils import vars
 from passlib.hash import pbkdf2_sha256
 
 

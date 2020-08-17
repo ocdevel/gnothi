@@ -1,8 +1,8 @@
 import os, sys, pdb
 from datetime import datetime
 from sqlalchemy import create_engine
-from server.utils import vars, DROP_SQL
-from server.database import init_db, shutdown_db_session
+from app.utils import vars, DROP_SQL
+from app.database import init_db, shutdown_db_session
 import pandas as pd
 import argparse
 
