@@ -7,6 +7,7 @@ from app.utils import vars, DROP_SQL
 engine = create_engine(
     vars.DB_URL,
     convert_unicode=True,
+    pool_size=20,
     # TODO getting timout errors, trying some solutions
     # https://stackoverflow.com/a/60614871/362790
     # https://docs.sqlalchemy.org/en/13/core/pooling.html#dealing-with-disconnects
