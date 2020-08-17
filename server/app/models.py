@@ -489,3 +489,4 @@ class JobsStatus(Base):
     status = Column(Unicode)
     ts_client = Column(TIMESTAMP)
     ts_svc = Column(TIMESTAMP)
+    svc = Column(Unicode)

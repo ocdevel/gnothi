@@ -1,6 +1,8 @@
 import time, psycopg2, pickle, pdb, multiprocessing
 from box import Box
 import torch
+import socket
+from sqlalchemy import text
 
 from books import predict_books
 from themes import themes
@@ -59,8 +61,8 @@ if __name__ == '__main__':
         # if active_jobs: GPUtil.showUtilization()
 
         # Notify is online.
-        sql = "update jobs_status set status='on', ts_svc=now()"
-        engine.execute(sql)
+        sql = "update jobs_status set status='on', ts_svc=now(), svc=:svc"
+        engine.execute(text(sql), svc=socket.gethostname())
 
         # Find jobs
         sql = f"""
