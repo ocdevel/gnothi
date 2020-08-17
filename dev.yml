@@ -6,6 +6,7 @@ services:
     container_name: jserver
     entrypoint: /bin/bash
     environment:
+      PYTHONPATH: .
       ENVIRONMENT: development
       FLASK_ENV: development
       FLASK_APP: server.views

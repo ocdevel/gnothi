@@ -58,7 +58,7 @@ services:
     container_name: jclient
     labels:
       - traefik.enable=true
-      - traefik.http.routers.client.rule=Host(`gnothiai.com`,`www.gnothiai.com`)      
+      - traefik.http.routers.client.rule=Host(`gnothiai.com`,`www.gnothiai.com`,`gnothiapp.com`,`www.gnothiapp.com`)
       - traefik.http.routers.client.entrypoints=websecure
       - traefik.http.routers.client.tls.certresolver=myresolver
       - traefik.http.services.client.loadbalancer.server.port=3000
