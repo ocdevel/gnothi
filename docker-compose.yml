@@ -30,7 +30,7 @@ services:
       # menheild-gunicorn-flask settings
       #WORKERS_PER_CORE: 1
       #WEB_CONCURRENCY: 1
-      GUNICORN_CMD_ARGS: '--preload'
+      GUNICORN_CMD_ARGS: '--preload --timeout=60'
 
       ENVIRONMENT: production
       FLASK_ENV: production

@@ -2,7 +2,7 @@ import os
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import scoped_session, sessionmaker
-from app.utils import vars, DROP_SQL
+from app.utils import vars
 
 engine = create_engine(
     vars.DB_URL,

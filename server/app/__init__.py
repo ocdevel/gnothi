@@ -10,6 +10,7 @@ CORS(app)
 import logging
 log = logging.getLogger('werkzeug')
 log.setLevel(logging.WARNING)
+logger = logging.getLogger(__name__)
 
 # Remove sessions since we're using JWT. See https://flask-login.readthedocs.io/en/latest/#disabling-session-cookie-for-apis
 from flask.sessions import SecureCookieSessionInterface

@@ -9,7 +9,6 @@ services:
       PYTHONPATH: .
       ENVIRONMENT: development
       FLASK_ENV: development
-      FLASK_APP: server.views
     ports:
       - 5002:5000
     stdin_open: true
