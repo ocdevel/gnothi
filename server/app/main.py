@@ -7,6 +7,7 @@ from app.database import db
 from app.models import User, Entry, Field, FieldEntry, Share, Tag, EntryTag, ShareTag, Person, Bookshelf
 from app.habitica import sync_habitica_for
 from app.ec2_updown import jobs_status, ec2_down_maybe
+from app.utils import is_dev
 from passlib.hash import pbkdf2_sha256
 from flask import request, jsonify, g
 from app import ml
@@ -544,5 +545,5 @@ scheduler.init_app(app)
 scheduler.start()
 
 if __name__ == "__main__":
-    # Only for debugging while developing
-    app.run(host='0.0.0.0', debug=True)
+    args_ = {'debug': True} if is_dev() else {'port': 80}
+    app.run(host='0.0.0.0', **args_)

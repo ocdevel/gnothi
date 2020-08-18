@@ -1,4 +1,4 @@
-FROM tiangolo/meinheld-gunicorn-flask:python3.7
+FROM python:3.8
 RUN apt-get update -y && apt-get install -y wget unzip
 
 # Install postgres-12 client
@@ -10,9 +10,10 @@ RUN apt-get install -y lsb-release &&\
   apt update && apt -y install postgresql-client-12
 
 # TODO try removing this & see if pip mysqlclient below sufficient
-RUN apt-get install -y --fix-missing default-libmysqlclient-dev
+#RUN apt-get install -y --fix-missing default-libmysqlclient-dev
 
 RUN pip install \
+  flask \
   flask-cors \
   flask-jwt \
   flask-sqlalchemy \
@@ -32,3 +33,6 @@ RUN pip install \
 COPY .aws /root/.aws
 COPY app /app
 WORKDIR /app
+
+EXPOSE 80
+EXPOSE 443

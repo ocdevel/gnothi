@@ -26,14 +26,16 @@ services:
   server:
     build: server
     container_name: jserver
+    entrypoint: python app/main.py
     environment:
       # menheild-gunicorn-flask settings
       #WORKERS_PER_CORE: 1
       #WEB_CONCURRENCY: 1
-      GUNICORN_CMD_ARGS: '--preload --timeout=60'
+      #GUNICORN_CMD_ARGS: '--preload --timeout=60'
 
       ENVIRONMENT: production
       FLASK_ENV: production
+      PYTHONPATH: .
     labels:
       - traefik.enable=true
       - traefik.http.routers.server.rule=Host(`api.gnothiai.com`)
