@@ -1,11 +1,12 @@
 import requests
 from dateutil.parser import parse as dparse
 from app.utils import is_dev, vars
-from app import logger
+from app.app_app import app, logger
+from app.database import db
 import app.models as M
 
 
-def sync_habitica_for(user, db):
+def sync_for(user, db):
     if is_dev(): return
     if not (user.habitica_user_id and user.habitica_api_token):
         return
@@ -92,3 +93,14 @@ def sync_habitica_for(user, db):
             user.field_entries.append(fe)
         db.commit()
         logger.info(task['text'] + " done")
+
+
+def cron():
+    with app.app_context():
+        logger.info("Running cron")
+        q = M.User.query.filter(M.User.habitica_user_id != None, M.User.habitica_user_id != '')
+        for u in q.all():
+            try:
+                sync_for(u, db)
+            except Exception as err:
+                logger.warning(err)

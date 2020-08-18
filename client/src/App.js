@@ -50,7 +50,7 @@ function App() {
     let url = route === 'auth' ? `${host}/${route}` :
       `${host}/api/${route}`
     if (as && user && as !== user.id) {
-      url += (~route.indexOf('?') ? '&' : '?') + `as=${as}`
+      url += (~route.indexOf('?') ? '&' : '?') + `as_user=${as}`
     }
     let res = await fetch(url, obj)
     const code = res.status

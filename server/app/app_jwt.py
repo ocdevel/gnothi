@@ -1,20 +1,20 @@
 import datetime
 from flask_jwt import JWT
-from app import app
-from app.models import User
+from app.app_app import app
+import app.models as M
 from app.utils import vars
 from passlib.hash import pbkdf2_sha256
 
 
 def authenticate(username, password):
-    user = User.query.filter_by(username=username).first()
+    user = M.User.query.filter_by(username=username).first()
     if user and pbkdf2_sha256.verify(password, user.password):
         return user
 
 
 def identity(payload):
     user_id = payload['identity']
-    return User.query.get(user_id)
+    return M.User.query.get(user_id)
 
 
 app.config['JWT_SECRET_KEY'] = vars.FLASK_KEY
