@@ -18,11 +18,10 @@ export default function Auth({fetch_, onAuth}) {
   const changePasswordConfirm = e => setPasswordConfirm(e.target.value)
 
   const login = async () => {
-    const res = await fetch_('auth', 'POST', {username, password})
-    const jwt = res.access_token;
-    localStorage.setItem('jwt', jwt);
+    const {access_token, code} = await fetch_('auth/token', 'POST', {username, password})
+    localStorage.setItem('jwt', access_token);
     setSubmitting(false)
-    onAuth(jwt);
+    onAuth(access_token);
   }
 
   const submitLogin = async e => {

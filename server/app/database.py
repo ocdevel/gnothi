@@ -4,9 +4,10 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import scoped_session, sessionmaker
 from app.utils import vars
 
+Base = declarative_base()
+
 engine = create_engine(
     vars.DB_URL,
-    convert_unicode=True,
     pool_size=20,
     # TODO getting timout errors, trying some solutions
     # https://stackoverflow.com/a/60614871/362790
@@ -21,22 +22,19 @@ engine_books = create_engine(
     pool_recycle=300,
 )
 
-db = scoped_session(sessionmaker(autocommit=False, autoflush=False, bind=engine))
-dbx = scoped_session(sessionmaker(autocommit=True, autoflush=True, bind=engine))
-db_books = scoped_session(sessionmaker(autocommit=True, autoflush=True, bind=engine_books))
-
-Base = declarative_base()
-Base.query = db.query_property()
+SessLocal = dict(
+    main=scoped_session(sessionmaker(autocommit=False, autoflush=False, bind=engine)),
+    books=scoped_session(sessionmaker(autocommit=True, autoflush=True, bind=engine_books))
+)
 
 
 def init_db():
-    import app.models
+    #import app.models
     Base.metadata.create_all(bind=engine)
     # since connections are lazy, kick it off.
-    dbx.execute("select 1")
+    SessLocal['main'].execute("select 1")
 
 
 def shutdown_db():
-    db.remove()
-    dbx.remove()
-    db_books.remove()
+    for _, sess in SessLocal.items():
+        sess.remove()

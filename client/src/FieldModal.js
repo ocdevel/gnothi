@@ -42,7 +42,7 @@ export default function FieldModal({fetch_, close, field= {}}) {
 
   const excludeField = async (exclude=true) => {
     const body = {excluded_at: exclude ? new Date() : null}
-    await fetch_(`fields/${fid}`, 'PUT', body)
+    await fetch_(`fields/${fid}/exclude`, 'PUT', body)
     close(false)
   }
 

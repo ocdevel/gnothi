@@ -1,4 +1,4 @@
-FROM python:3.8
+FROM tiangolo/uvicorn-gunicorn-fastapi:python3.8
 RUN apt-get update -y && apt-get install -y wget unzip
 
 # Install postgres-12 client
@@ -13,10 +13,9 @@ RUN apt-get install -y lsb-release &&\
 #RUN apt-get install -y --fix-missing default-libmysqlclient-dev
 
 RUN pip install \
-  flask \
-  flask-cors \
-  flask-jwt \
-  flask-sqlalchemy \
+  python-multipart \
+  fastapi-sqlalchemy \
+  fastapi-login \
   passlib \
   psycopg2-binary \
   sqlalchemy_utils \

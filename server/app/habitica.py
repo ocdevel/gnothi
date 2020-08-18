@@ -2,11 +2,12 @@ import requests
 from dateutil.parser import parse as dparse
 from app.utils import is_dev, vars
 from app.app_app import app, logger
-from app.database import db
+from app.database import SessLocal
 import app.models as M
+from fastapi_sqlalchemy import db
 
 
-def sync_for(user, db):
+def sync_for(user):
     if is_dev(): return
     if not (user.habitica_user_id and user.habitica_api_token):
         return
@@ -68,7 +69,7 @@ def sync_for(user, db):
         if f.name != task['text']:
             f.name = task['text']
 
-        db.commit()  # for f to have f.id
+        db.session.commit()  # for f to have f.id
 
         value = 0.
         # Habit
@@ -91,16 +92,16 @@ def sync_for(user, db):
         else:
             fe = M.FieldEntry(field_id=f.id, created_at=lastCron, value=value)
             user.field_entries.append(fe)
-        db.commit()
+        db.session.commit()
         logger.info(task['text'] + " done")
 
 
 def cron():
-    with app.app_context():
+    with db():
         logger.info("Running cron")
-        q = M.User.query.filter(M.User.habitica_user_id != None, M.User.habitica_user_id != '')
+        q = db.session.query(M.User).filter(M.User.habitica_user_id != None, M.User.habitica_user_id != '')
         for u in q.all():
             try:
-                sync_for(u, db)
+                sync_for(u)
             except Exception as err:
                 logger.warning(err)

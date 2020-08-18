@@ -6,11 +6,9 @@ services:
     container_name: jserver
     entrypoint: /bin/bash
     environment:
-      PYTHONPATH: .
       ENVIRONMENT: development
-      FLASK_ENV: development
     ports:
-      - 5002:5000
+      - 5002:8000
     stdin_open: true
     volumes:
       - ./server/:/app

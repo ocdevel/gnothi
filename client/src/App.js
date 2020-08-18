@@ -22,6 +22,7 @@ import Error from './Error'
 import moment from "moment-timezone"
 import emoji from 'react-easy-emoji'
 import {aiStatusEmoji} from "./utils"
+import axios from 'axios'
 
 // e52c6629: dynamic host/port
 let host = window.location.host
@@ -29,6 +30,12 @@ if (~host.indexOf('gnothi')) { // prod
   host = 'https://api.gnothiai.com'
 } else { // dev
   host = 'http://localhost:5002'
+}
+
+function obj2formData(object) {
+    const formData = new FormData();
+    Object.keys(object).forEach(key => formData.append(key, object[key]));
+    return formData;
 }
 
 function App() {
@@ -44,22 +51,32 @@ function App() {
       method,
       headers: {'Content-Type': 'application/json'},
     };
-    if (body) obj['body'] = JSON.stringify(body)
-    if (jwt) obj['headers']['Authorization'] = `JWT ${jwt}`
+
+    if (route === 'auth/token') {
+      // fastapi expects formdata for auth paths
+      obj['data'] = obj2formData(body)
+    } else {
+      if (body) obj['data'] = body
+    }
+
+    if (jwt) obj['headers']['Authorization'] = `Bearer ${jwt}`
     // auth is added by flask-jwt as /auth, all my custom paths are under /api/*
-    let url = route === 'auth' ? `${host}/${route}` :
-      `${host}/api/${route}`
+    let url = `${host}/${route}`
     if (as && user && as !== user.id) {
       url += (~route.indexOf('?') ? '&' : '?') + `as_user=${as}`
     }
-    let res = await fetch(url, obj)
-    const code = res.status
-    res = await res.json()
-    // Show errors, but not for 401 (we simply restrict access to components)
-    if (code >= 400 && code != 401) {
-      setServerError(res.message || "There was an error")
+    obj['url'] = url
+    try {
+      const res = await axios(obj)
+      return {code: res.status, ...res.data}
+    } catch (error) {
+      const code = error.response.status
+      // Show errors, but not for 401 (we simply restrict access to components)
+      if (code >= 400 && code != 401) {
+        setServerError(error.response.statusText || "There was an error")
+      }
+      return {code, ...error.response.data}
     }
-    return {...res, code}
   }
 
   const getUser = async () => {
@@ -71,7 +88,7 @@ function App() {
     if (!data.timezone && !as) {
        // Guess their default timezone (TODO should call this out?)
       const timezone = moment.tz.guess(true)
-      fetch_('profile', 'PUT', {timezone})
+      fetch_('profile/timezone', 'PUT', {timezone})
     }
   }
 

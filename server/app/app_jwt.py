@@ -1,27 +1,37 @@
-import datetime
-from flask_jwt import JWT
-from app.app_app import app
+import datetime, pdb
+from app.app_app import app, SECRET, logger
 import app.models as M
 from app.utils import vars
 from passlib.hash import pbkdf2_sha256
+from sqlalchemy.orm import Session
+from fastapi import Depends
+from fastapi_login import LoginManager
+from fastapi.security import OAuth2PasswordRequestForm
+from fastapi_login.exceptions import InvalidCredentialsException
+from fastapi_sqlalchemy import db  # an object to provide global access to a database session
 
 
-def authenticate(username, password):
-    user = M.User.query.filter_by(username=username).first()
-    if user and pbkdf2_sha256.verify(password, user.password):
-        return user
+manager = LoginManager(SECRET, tokenUrl='/auth/token')
 
 
-def identity(payload):
-    user_id = payload['identity']
-    return M.User.query.get(user_id)
+@manager.user_loader
+def load_user(email: str):  # could also be an asynchronous function
+    return db.session.query(M.User).filter_by(username=email).first()
 
 
-app.config['JWT_SECRET_KEY'] = vars.FLASK_KEY
+@app.post('/auth/token')
+def login(data: OAuth2PasswordRequestForm = Depends()):
+    email = data.username
+    password = data.password
 
-# - https://github.com/jpadilla/django-jwt-auth/blob/master/README.md#additional-settings
-# - https://pythonhosted.org/Flask-JWT/#configuration-options
-# app.config['JWT_LEEWAY'] = 30000  # what's difference w JWT_EXPIRATION_DELTA?
-app.config['JWT_EXPIRATION_DELTA'] = datetime.timedelta(seconds=60 * 60 * 24 * 7)  # 1 week
+    user = load_user(email)  # we are using the same function to retrieve the user
+    if not user:
+        raise InvalidCredentialsException  # you can also use your own HTTPException
+    elif not pbkdf2_sha256.verify(password, user.password):
+        raise InvalidCredentialsException
 
-jwt = JWT(app, authenticate, identity)
+    access_token = manager.create_access_token(
+        expires_delta=datetime.timedelta(seconds=60 * 60 * 24 * 7),  # 1 week
+        data=dict(sub=email)
+    )
+    return {'access_token': access_token, 'token_type': 'bearer'}

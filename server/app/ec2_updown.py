@@ -1,6 +1,6 @@
 import boto3, time, threading, os
-from app.database import dbx
 from app.utils import is_dev, vars
+from fastapi_sqlalchemy import db
 import socket
 
 # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/ec2.html
@@ -18,7 +18,9 @@ def _fetch_status():
         extract(epoch FROM (now() - ts_client)) as elapsed_client
     from jobs_status;
     """
-    return dbx.execute(sql).fetchone()
+    res = db.session.execute(sql)
+    db.session.commit()
+    return res.fetchone()
 
 
 def ec2_up():
@@ -39,19 +41,22 @@ def jobs_status():
         if res.status in ['off', 'on']:
             x = threading.Thread(target=ec2_up, daemon=True)
             x.start()
-        dbx.execute("update jobs_status set status='pending', ts_client=now()")
+        db.session.execute("update jobs_status set status='pending', ts_client=now()")
+        db.session.commit()
     return res.status
 
 
 # already threaded since in cron job
 def ec2_down_maybe():
-    res = _fetch_status()
-    # turn off after 5 minutes of inactivity. Note the client setInterval will keep the activity fresh while
-    # using even if idling, so no need to wait long after
-    if res.elapsed_client / 60 < 5 or res.status == 'off':
-        return
-    dbx.execute("update jobs_status set status='off', ts_client=now()")
-    if is_dev(): return
-    try:
-        ec2_client.stop_instances(InstanceIds=[vars.GPU_INSTANCE])
-    except: pass
+    with db():
+        res = _fetch_status()
+        # turn off after 5 minutes of inactivity. Note the client setInterval will keep the activity fresh while
+        # using even if idling, so no need to wait long after
+        if res.elapsed_client / 60 < 5 or res.status == 'off':
+            return
+        db.session.execute("update jobs_status set status='off', ts_client=now()")
+        db.session.commit()
+        if is_dev(): return
+        try:
+            ec2_client.stop_instances(InstanceIds=[vars.GPU_INSTANCE])
+        except: pass

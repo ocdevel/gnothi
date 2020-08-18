@@ -1,7 +1,7 @@
 import enum, pdb, re, threading, time
 from datetime import date, datetime
 from dateutil import tz
-from app.database import Base, db, db_books, dbx
+from app.database import Base, SessLocal
 from app.utils import vars
 from app import ml
 from sqlalchemy import \
@@ -23,6 +23,7 @@ from sqlalchemy.dialects.postgresql import UUID, BYTEA
 from sqlalchemy_utils.types import EmailType
 from sqlalchemy_utils.types.encrypted.encrypted_type import StringEncryptedType, FernetEngine
 from uuid import uuid4
+from fastapi_sqlalchemy import db  # an object to provide global access to a database session
 
 
 def uuid_():
@@ -93,11 +94,11 @@ class User(Base, CustomBase):
 
     def shared_with_me(self, id=None):
         if id:
-            return User.query \
+            return db.session.query(User)\
                 .join(Share) \
                 .filter(Share.email == self.username, Share.user_id==id) \
                 .first()
-        return User.query\
+        return db.session.query(User)\
             .join(Share)\
             .filter(Share.email==self.username)\
             .all()
@@ -163,7 +164,7 @@ class Entry(Base, CustomBase):
 
     @staticmethod
     def snoop(from_email, to_id, type):
-        return Entry.query \
+        return db.session.query(Entry)\
             .join(EntryTag, Entry.id == EntryTag.entry_id)\
             .join(ShareTag, EntryTag.tag_id == ShareTag.tag_id)\
             .join(Share, ShareTag.share_id == Share.id)\
@@ -171,26 +172,27 @@ class Entry(Base, CustomBase):
 
     @staticmethod
     def run_models_(id):
-        while True:
-            res = dbx.execute("select status from jobs_status").fetchone()
-            if res.status != 'on':
-                time.sleep(1)
-                continue
-            entry = Entry.query.get(id)
-            entry.title_summary = ml.summarize(entry.text, 5, 20, with_sentiment=False)["summary_text"]
-            summary = ml.summarize(entry.text, 32, 128)
-            entry.text_summary = summary["summary_text"]
-            entry.sentiment = summary["sentiment"]
-            db.commit()
+        with db():
+            while True:
+                res = db.session.execute("select status from jobs_status").fetchone()
+                if res.status != 'on':
+                    time.sleep(1)
+                    continue
+                entry = db.session.query(Entry).get(id)
+                entry.title_summary = ml.summarize(entry.text, 5, 20, with_sentiment=False)["summary_text"]
+                summary = ml.summarize(entry.text, 32, 128)
+                entry.text_summary = summary["summary_text"]
+                entry.sentiment = summary["sentiment"]
+                db.session.commit()
 
-            # every x entries, update book recommendations
-            user = User.query.get(entry.user_id)
-            sql = 'select count(*)%2=0 as ct from entries where user_id=:uid'
-            should_update = dbx.execute(text(sql), {'uid':user.id}).fetchone().ct
-            if should_update:
-                ml.books(user, bust=True)
+                # every x entries, update book recommendations
+                user = db.session.query(User).get(entry.user_id)
+                sql = 'select count(*)%2=0 as ct from entries where user_id=:uid'
+                should_update = db.session.execute(text(sql), {'uid':user.id}).fetchone().ct
+                if should_update:
+                    ml.books(user, bust=True)
 
-            return
+                return
 
     def run_models(self):
         # Run summarization/sentiment in background thread, so (a) user can get back to business;
@@ -276,7 +278,7 @@ class Field(Base, CustomBase):
     """
 
     def json(self):
-        history = FieldEntry.query\
+        history = db.session.query(FieldEntry)\
             .with_entities(FieldEntry.value, FieldEntry.created_at)\
             .filter_by(field_id=self.id)\
             .order_by(FieldEntry.created_at.asc())\
@@ -311,7 +313,7 @@ class FieldEntry(Base, CustomBase):
 
     @staticmethod
     def get_day_entries(day, user_id, field_id=None):
-        tz_ = User.query.filter_by(id=user_id)\
+        tz_ = db.session.query(User).filter_by(id=user_id)\
             .with_entities(User.timezone)\
             .first().timezone
         tz_ = tz_ or 'America/Los_Angeles'
@@ -319,7 +321,7 @@ class FieldEntry(Base, CustomBase):
         day = day.astimezone(tz.gettz(tz_))
         # timezoned = func.Date(FieldEntry.created_at)
 
-        q = FieldEntry.query\
+        q = db.session.query(FieldEntry)\
             .filter(
                 FieldEntry.user_id == user_id,
                 timezoned == day.date()
@@ -398,7 +400,7 @@ class Tag(Base, CustomBase):
 
     @staticmethod
     def snoop(from_email, to_id):
-        return Tag.query \
+        return db.session.query(Tag)\
             .join(ShareTag, Share)\
             .filter(Share.email==from_email, Share.user_id == to_id)
 
@@ -442,7 +444,7 @@ class Bookshelf(Base, CustomBase):
     def update_books(user_id):
         # every x thumbs, update book recommendations
         sql = 'select count(*)%8=0 as ct from bookshelf where user_id=:uid'
-        should_update = dbx.execute(text(sql), {'uid':user_id}).fetchone().ct
+        should_update = db.session.execute(text(sql), {'uid':user_id}).fetchone().ct
         if should_update:
             user = User.query.get(user_id)
             ml.books(user, bust=True)
@@ -453,13 +455,14 @@ class Bookshelf(Base, CustomBase):
         insert into bookshelf(book_id, user_id, shelf)  
         values (:book_id, :user_id, :shelf)
         on conflict (book_id, user_id) do update set shelf=:shelf"""
-        dbx.execute(text(sql), dict(user_id=user_id, book_id=int(book_id), shelf=shelf))
+        db.session.execute(text(sql), dict(user_id=user_id, book_id=int(book_id), shelf=shelf))
+        db.session.commit()
         threading.Thread(target=Bookshelf.update_books, args=(user_id,)).start()
 
     @staticmethod
     def get_shelf(user_id, shelf):
         sql = "select book_id from bookshelf where user_id=:uid and shelf=:shelf"
-        ids = dbx.execute(text(sql), dict(uid=user_id, shelf=shelf)).fetchall()
+        ids = db.session.execute(text(sql), dict(uid=user_id, shelf=shelf)).fetchall()
         ids = tuple([x.book_id for x in ids])
         if not ids:
             return []
@@ -472,7 +475,9 @@ class Bookshelf(Base, CustomBase):
         where u.ID in :ids
             and t.lang='en' and u.Language = 'English'
         """
+        db_books = SessLocal['books']()
         books = db_books.execute(text(sql), {'ids':ids}).fetchall()
+        db_books.close()
         return [dict(b) for b in books]
 
 

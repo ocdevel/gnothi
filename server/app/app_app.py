@@ -1,28 +1,39 @@
-from flask import Flask
-from flask_cors import CORS
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi_sqlalchemy import DBSessionMiddleware  # middleware helper
+
+
 from app.database import init_db, shutdown_db
 from app.utils import vars
 import logging
 
-app = Flask(__name__)
-app.secret_key = vars.FLASK_KEY
-CORS(app)
+SECRET = vars.FLASK_KEY
 
-log = logging.getLogger('werkzeug')
-log.setLevel(logging.WARNING)
+app = FastAPI()
+# app.secret_key = SECRET
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+app.add_middleware(DBSessionMiddleware, db_url=vars.DB_URL)
+
+# logging.getLogger('werkzeug').setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
-# Remove sessions since we're using JWT. See https://flask-login.readthedocs.io/en/latest/#disabling-session-cookie-for-apis
-from flask.sessions import SecureCookieSessionInterface
-class CustomSessionInterface(SecureCookieSessionInterface):
-    """Prevent creating session from API requests."""
-    def save_session(self, *args, **kwargs): return
-app.session_interface = CustomSessionInterface()
+class FilterJobsStatus(logging.Filter):
+    def filter(self, record):
+        return False #  "GET /jobs-status" not in record.getMessage()
+logging.getLogger('uvicorn').addFilter(FilterJobsStatus())
 
 
-@app.teardown_appcontext
-def shutdown_session(exception=None):
+@app.on_event("startup")
+def startup():
+    init_db()
+
+
+@app.on_event("shutdown")
+def shutdown_session():
     shutdown_db()
 
-
-init_db()
