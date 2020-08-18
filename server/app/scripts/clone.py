@@ -2,7 +2,7 @@ import os, sys, pdb
 from datetime import datetime
 from sqlalchemy import create_engine
 from app.utils import vars, DROP_SQL
-from app.database import init_db, shutdown_db_session
+from app.database import init_db, shutdown_db
 import pandas as pd
 import argparse
 
@@ -42,7 +42,7 @@ os.system(f"pg_dump {vars.DB_PROD_URL} > tmp/bk-{now}.sql")
 create_engine(to_url).execute(DROP_SQL)
 if args.data_only:
     init_db()
-    shutdown_db_session()
+    shutdown_db()
 # cmd = f"pg_dump --no-owner --no-acl {from_url}"\
 #       f" | sed 's/{from_name}/{to_name}/g'"\
 #       f" | psql {to_url}"

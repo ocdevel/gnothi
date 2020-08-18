@@ -1,7 +1,7 @@
 import enum, pdb, re, threading, time
 from datetime import date, datetime
 from dateutil import tz
-from app.database import Base, engine, db_session, engine_books
+from app.database import Base, db, db_books, dbx
 from app.utils import vars
 from app import ml
 from sqlalchemy import \
@@ -172,7 +172,7 @@ class Entry(Base, CustomBase):
     @staticmethod
     def run_models_(id):
         while True:
-            res = engine.execute("select status from jobs_status").fetchone()
+            res = dbx.execute("select status from jobs_status").fetchone()
             if res.status != 'on':
                 time.sleep(1)
                 continue
@@ -181,12 +181,12 @@ class Entry(Base, CustomBase):
             summary = ml.summarize(entry.text, 32, 128)
             entry.text_summary = summary["summary_text"]
             entry.sentiment = summary["sentiment"]
-            db_session.commit()
+            db.commit()
 
             # every x entries, update book recommendations
             user = User.query.get(entry.user_id)
             sql = 'select count(*)%2=0 as ct from entries where user_id=:uid'
-            should_update = engine.execute(text(sql), uid=user.id).fetchone().ct
+            should_update = dbx.execute(text(sql), {'uid':user.id}).fetchone().ct
             if should_update:
                 ml.books(user, bust=True)
 
@@ -442,7 +442,7 @@ class Bookshelf(Base, CustomBase):
     def update_books(user_id):
         # every x thumbs, update book recommendations
         sql = 'select count(*)%8=0 as ct from bookshelf where user_id=:uid'
-        should_update = engine.execute(text(sql), uid=user_id).fetchone().ct
+        should_update = dbx.execute(text(sql), {'uid':user_id}).fetchone().ct
         if should_update:
             user = User.query.get(user_id)
             ml.books(user, bust=True)
@@ -453,13 +453,13 @@ class Bookshelf(Base, CustomBase):
         insert into bookshelf(book_id, user_id, shelf)  
         values (:book_id, :user_id, :shelf)
         on conflict (book_id, user_id) do update set shelf=:shelf"""
-        engine.execute(text(sql), user_id=user_id, book_id=int(book_id), shelf=shelf)
+        dbx.execute(text(sql), dict(user_id=user_id, book_id=int(book_id), shelf=shelf))
         threading.Thread(target=Bookshelf.update_books, args=(user_id,)).start()
 
     @staticmethod
     def get_shelf(user_id, shelf):
         sql = "select book_id from bookshelf where user_id=:uid and shelf=:shelf"
-        ids = engine.execute(text(sql), uid=user_id, shelf=shelf).fetchall()
+        ids = dbx.execute(text(sql), dict(uid=user_id, shelf=shelf)).fetchall()
         ids = tuple([x.book_id for x in ids])
         if not ids:
             return []
@@ -472,7 +472,7 @@ class Bookshelf(Base, CustomBase):
         where u.ID in :ids
             and t.lang='en' and u.Language = 'English'
         """
-        books = engine_books.execute(text(sql), ids=ids).fetchall()
+        books = db_books.execute(text(sql), {'ids':ids}).fetchall()
         return [dict(b) for b in books]
 
 

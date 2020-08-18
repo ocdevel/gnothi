@@ -1,7 +1,8 @@
-from app.database import engine
+from app.database import db, dbx
 from app.cleantext import unmark
 import pickle, pdb
 import numpy as np
+from sqlalchemy import text
 
 
 import psycopg2, time
@@ -11,17 +12,18 @@ OFFLINE_MSG = "AI server offline, check back later"
 
 def run_gpu_model(data):
     # AI offline (it's spinning up from views.py->ec2_updown.py)
-    res = engine.execute("select status from jobs_status limit 1").fetchone()
+    res = dbx.execute("select status from jobs_status limit 1").fetchone()
     if res.status != 'on':
         return False
 
-    sql = f"insert into jobs values (%s, %s, %s)"
+    sql = f"insert into jobs (id, state, data) values (:jid, 'new', :data)"
     jid = str(uuid4())
-    engine.execute(sql, (jid, 'new', psycopg2.Binary(pickle.dumps(data))))
+    dbx.execute(text(sql), {'jid':jid, 'data':psycopg2.Binary(pickle.dumps(data))})
+    db.commit()
     i = 0
     while True:
         time.sleep(1)
-        res = engine.execute("select state from jobs where id=%s", (jid,))
+        res = dbx.execute(text("select state from jobs where id=:jid"), {'jid':jid})
         state = res.fetchone().state
 
         # 5 seconds, still not picked up; something's wrong
@@ -29,8 +31,8 @@ def run_gpu_model(data):
             return False
 
         if state == 'done':
-            job = engine.execute(f"select data from jobs where id=%s", (jid,)).fetchone()
-            engine.execute("delete from jobs where id=%s", (jid,))
+            job = dbx.execute(text("select data from jobs where id=:jid"), {'jid':jid}).fetchone()
+            dbx.execute(text("delete from jobs where id=:jid"), {'jid':jid})
             res = pickle.loads(job.data)['data']
             if data['method'] == 'sentence-encode':
                 res = np.array(res)

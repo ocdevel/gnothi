@@ -79,6 +79,7 @@ function App() {
 
   const checkAiStatus = () => {
     return setInterval(async () => {
+      if (!jwt) {return}
       const {data, code} = await fetch_('jobs-status')
       setAiStatus(data)
     }, 1000)

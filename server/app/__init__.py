@@ -1,6 +1,6 @@
 from flask import Flask
 from flask_cors import CORS
-from app.database import init_db, shutdown_db_session
+from app.database import init_db, shutdown_db
 from app.utils import vars
 
 app = Flask(__name__)
@@ -21,7 +21,7 @@ app.session_interface = CustomSessionInterface()
 
 @app.teardown_appcontext
 def shutdown_session(exception=None):
-    shutdown_db_session()
+    shutdown_db()
 
 
 init_db()

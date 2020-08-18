@@ -1,5 +1,5 @@
 import boto3, time, threading, os
-from app.database import engine
+from app.database import dbx
 from app.utils import is_dev, vars
 import socket
 
@@ -18,7 +18,7 @@ def _fetch_status():
         extract(epoch FROM (now() - ts_client)) as elapsed_client
     from jobs_status;
     """
-    return engine.execute(sql).fetchone()
+    return dbx.execute(sql).fetchone()
 
 
 def ec2_up():
@@ -39,7 +39,7 @@ def jobs_status():
         if res.status in ['off', 'on']:
             x = threading.Thread(target=ec2_up, daemon=True)
             x.start()
-        engine.execute("update jobs_status set status='pending', ts_client=now()")
+        dbx.execute("update jobs_status set status='pending', ts_client=now()")
     return res.status
 
 
@@ -50,7 +50,7 @@ def ec2_down_maybe():
     # using even if idling, so no need to wait long after
     if res.elapsed_client / 60 < 5 or res.status == 'off':
         return
-    engine.execute("update jobs_status set status='off', ts_client=now()")
+    dbx.execute("update jobs_status set status='off', ts_client=now()")
     if is_dev(): return
     try:
         ec2_client.stop_instances(InstanceIds=[vars.GPU_INSTANCE])

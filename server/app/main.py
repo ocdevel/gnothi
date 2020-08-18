@@ -3,7 +3,7 @@ import datetime
 import app.jwt_setup
 from flask_jwt import jwt_required, current_identity
 from app import app
-from app.database import db_session, engine
+from app.database import db, dbx
 from app.models import User, Entry, Field, FieldEntry, Share, Tag, EntryTag, ShareTag, Person, Bookshelf
 from app.ec2_updown import jobs_status, ec2_down_maybe
 from passlib.hash import pbkdf2_sha256
@@ -53,8 +53,8 @@ def register():
     data = request.get_json()
     u = User(data['username'], pbkdf2_sha256.hash(data['password']))
     u.tags.append(Tag(main=True, selected=True, name='Main'))
-    db_session.add(u)
-    db_session.commit()
+    db.add(u)
+    db.commit()
     return jsonify({})
 
 
@@ -73,7 +73,7 @@ def profile():
         if k not in User.profile_fields.split(): continue
         v = v or None  # remove empty strings
         setattr(user, k, v)
-    db_session.commit()
+    db.commit()
     return jsonify({})
 
 
@@ -92,7 +92,7 @@ def people():
         data = request.get_json()
         p = Person(**data)
         user.people.append(p)
-        db_session.commit()
+        db.commit()
         return jsonify({})
 
 
@@ -109,11 +109,11 @@ def person(person_id):
         data = request.get_json()
         for k, v in data.items():
             setattr(p, k, v)
-        db_session.commit()
+        db.commit()
         return jsonify({})
     if request.method == 'DELETE':
         pq.delete()
-        db_session.commit()
+        db.commit()
         return jsonify({})
 
 @app.route('/api/tags', methods=['GET', 'POST'])
@@ -132,7 +132,7 @@ def tags():
     if request.method == 'POST':
         data = request.get_json()
         user.tags.append(Tag(name=data['name']))
-        db_session.commit()
+        db.commit()
         return jsonify({})
 
 
@@ -150,13 +150,13 @@ def tag(tag_id):
         # FIXME cascade
         EntryTag.query.filter_by(tag_id=tag_id).delete()
         tagq.delete()
-        db_session.commit()
+        db.commit()
         return jsonify({})
     if request.method == 'PUT':
         data = request.get_json()
         for k in ['name', 'selected']:
             if data.get(k): setattr(tag, k, data[k])
-        db_session.commit()
+        db.commit()
         return jsonify({})
 
 
@@ -171,15 +171,15 @@ def shares_put_post(user, share_id=None):
             setattr(s, k, v)
     else:
         s = Share(user_id=user.id, **data)
-        db_session.add(s)
-    db_session.commit()
+        db.add(s)
+    db.commit()
     for tag, v in full.items():
         if not v: continue
-        db_session.add(ShareTag(share_id=s.id, tag_id=tag, type='full'))
+        db.add(ShareTag(share_id=s.id, tag_id=tag, type='full'))
     for tag, v in summary.items():
         if not v: continue
-        db_session.add(ShareTag(share_id=s.id, tag_id=tag, type='summary'))
-    db_session.commit()
+        db.add(ShareTag(share_id=s.id, tag_id=tag, type='summary'))
+    db.commit()
     return jsonify({})
 
 
@@ -206,7 +206,7 @@ def share(share_id):
     if request.method == 'DELETE':
         ShareTag.query.filter_by(share_id=share_id).delete()
         Share.query.filter_by(user_id=user.id, id=share_id).delete()
-        db_session.commit()
+        db.commit()
         return jsonify({})
     if request.method == 'PUT':
         return shares_put_post(user, share_id)
@@ -221,19 +221,19 @@ def entries_put_post(user, entry=None):
         EntryTag.query.filter_by(entry_id=entry.id).delete()
     else:
         entry = Entry(user_id=user.id)
-        db_session.add(entry)
+        db.add(entry)
     entry.title = data['title']
     entry.text = data['text']
     # entry needs id, prior tags need deleting
-    db_session.commit()
+    db.commit()
     for tag, v in data['tags'].items():
         if not v: continue
-        db_session.add(EntryTag(entry_id=entry.id, tag_id=tag))
+        db.add(EntryTag(entry_id=entry.id, tag_id=tag))
     # commit above first, in case run-models crashes
-    db_session.commit()
+    db.commit()
 
     entry.run_models()
-    db_session.commit()
+    db.commit()
 
     return jsonify({})
 
@@ -278,7 +278,7 @@ def entry(entry_id):
     if request.method == 'DELETE':
         EntryTag.query.filter_by(entry_id=entry.id).delete()
         entryq.delete()
-        db_session.commit()
+        db.commit()
         return jsonify({})
 
 
@@ -297,7 +297,7 @@ def fields():
         data = request.get_json()
         f = Field(**data)
         user.fields.append(f)
-        db_session.commit()
+        db.commit()
         return jsonify({})
 
 
@@ -312,12 +312,12 @@ def field(field_id):
         data = request.get_json()
         for k, v in data.items():
             setattr(f, k, v)
-        db_session.commit()
+        db.commit()
         return jsonify({})
     if request.method == 'DELETE':
         FieldEntry.query.filter_by(user_id=user.id, field_id=field_id).delete()
         Field.query.filter_by(user_id=user.id, id=field_id).delete()
-        db_session.commit()
+        db.commit()
         return jsonify({})
 
 
@@ -346,7 +346,7 @@ def field_entry(field_id):
     if not fe:
         fe = FieldEntry(value=v, field_id=field_id)
         user.field_entries.append(fe)
-    db_session.commit()
+    db.commit()
     return jsonify({})
 
 
@@ -501,7 +501,7 @@ def setup_habitica():
     data = request.get_json()
     user.habitica_user_id = data['habitica_user_id']
     user.habitica_api_token = data['habitica_api_token']
-    db_session.commit()
+    db.commit()
     return jsonify({})
 
 def sync_habitica_for(user):
@@ -540,7 +540,7 @@ def sync_habitica_for(user):
         if f.service_id not in t_map:
             # FIXME change models to cascade deletes, remove line below https://dev.to/zchtodd/sqlalchemy-cascading-deletes-8hk
             FieldEntry.query.filter_by(field_id=f.id).delete()
-            db_session.delete(f)
+            db.delete(f)
 
     # Add/update tasks from Habitica
     for task in tasks:
@@ -566,7 +566,7 @@ def sync_habitica_for(user):
         if f.name != task['text']:
             f.name = task['text']
 
-        db_session.commit()  # for f to have f.id
+        db.commit()  # for f to have f.id
 
         value = 0.
         # Habit
@@ -589,7 +589,7 @@ def sync_habitica_for(user):
         else:
             fe = FieldEntry(field_id=f.id, created_at=lastCron, value=value)
             user.field_entries.append(fe)
-        db_session.commit()
+        db.commit()
         app.logger.info(task['text'] + " done")
 
 

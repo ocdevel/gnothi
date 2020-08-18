@@ -21,20 +21,22 @@ engine_books = create_engine(
     pool_recycle=300,
 )
 
-db_session = scoped_session(sessionmaker(autocommit=False,
-                                         autoflush=False,
-                                         bind=engine))
+db = scoped_session(sessionmaker(autocommit=False, autoflush=False, bind=engine))
+dbx = scoped_session(sessionmaker(autocommit=True, autoflush=True, bind=engine))
+db_books = scoped_session(sessionmaker(autocommit=True, autoflush=True, bind=engine_books))
 
 Base = declarative_base()
-Base.query = db_session.query_property()
+Base.query = db.query_property()
 
 
 def init_db():
     import app.models
     Base.metadata.create_all(bind=engine)
     # since connections are lazy, kick it off.
-    engine.execute("select 1")
+    dbx.execute("select 1")
 
 
-def shutdown_db_session():
-    db_session.remove()
+def shutdown_db():
+    db.remove()
+    dbx.remove()
+    db_books.remove()
