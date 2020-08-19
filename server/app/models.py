@@ -1,5 +1,5 @@
-import enum, pdb, re, threading, time
-from datetime import date, datetime
+import enum, pdb, re, threading, time, datetime
+from typing import List
 from dateutil import tz
 from app.database import Base, SessLocal
 from app.utils import vars
@@ -139,8 +139,8 @@ class Entry(Base, CustomBase):
     # Title optional, otherwise generated from text. topic-modeled, or BERT summary, etc?
     title = Encrypt(Unicode)
     text = Encrypt(Unicode, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.datetime.utcnow)
 
     # Generated
     title_summary = Encrypt(Unicode)
@@ -163,12 +163,44 @@ class Entry(Base, CustomBase):
     """
 
     @staticmethod
-    def snoop(from_email, to_id):
-        return db.session.query(Entry)\
-            .join(EntryTag, Entry.id == EntryTag.entry_id)\
-            .join(ShareTag, EntryTag.tag_id == ShareTag.tag_id)\
-            .join(Share, ShareTag.share_id == Share.id)\
-            .filter(Share.email == from_email, Share.user_id == to_id)
+    def snoop(
+        viewer_email: str,
+        target_id: str,
+        snooping: bool = False,
+        entry_id: str = None,
+        order_by=None,
+        tags: List[str] = None,
+        days: int = None
+    ):
+        print(viewer_email, target_id, snooping, entry_id, order_by, tags, days)
+        if not snooping:
+            q = db.session.query(Entry).filter(Entry.user_id == target_id)
+        if snooping:
+            q = db.session.query(Entry)\
+                .join(EntryTag, Entry.id == EntryTag.entry_id)\
+                .join(ShareTag, EntryTag.tag_id == ShareTag.tag_id)\
+                .join(Share, ShareTag.share_id == Share.id)\
+                .filter(Share.email == viewer_email, Share.user_id == target_id)
+
+        if entry_id:
+            q = q.filter(Entry.id == entry_id)
+
+        if tags:
+            if not snooping:
+                # already joined otherwise
+                q = q.join(EntryTag, Tag)
+            q = q.filter(EntryTag.tag_id.in_(tags))
+
+        if days:
+            now = datetime.datetime.utcnow()
+            x_days = now - datetime.timedelta(days=days)
+            # build a beginning-to-end story
+            q = q.filter(Entry.created_at > x_days)
+            order_by = Entry.created_at.asc()
+
+        if order_by is None:
+            order_by = Entry.created_at.desc()
+        return q.order_by(order_by)
 
     @staticmethod
     def run_models_(id):
@@ -250,7 +282,7 @@ class Field(Base, CustomBase):
     type = Column(Enum(FieldType))
     name = Encrypt(Unicode)
     # Start entries/graphs/correlations here
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
     # Don't actually delete fields, unless it's the same day. Instead
     # stop entries/graphs/correlations here
     excluded_at = Column(DateTime)
@@ -302,14 +334,14 @@ class FieldEntry(Base, CustomBase):
     __tablename__ = 'field_entries'
     id = Column(UUID, primary_key=True, default=uuid_)
     value = Column(Float)  # TODO Can everything be a number? reconsider
-    created_at = Column(DateTime(timezone=True), default=datetime.utcnow, index=True)
+    created_at = Column(DateTime(timezone=True), default=datetime.datetime.utcnow, index=True)
 
     user_id = Column(UUID, ForeignKey('users.id'), index=True)
     field_id = Column(UUID, ForeignKey('fields.id'))
 
     @staticmethod
     def get_today_entries(user_id, field_id=None):
-        return FieldEntry.get_day_entries(datetime.now(), user_id, field_id)
+        return FieldEntry.get_day_entries(datetime.datetime.now(), user_id, field_id)
 
     @staticmethod
     def get_day_entries(day, user_id, field_id=None):

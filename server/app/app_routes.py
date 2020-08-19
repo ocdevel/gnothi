@@ -265,12 +265,7 @@ def entries_put_post(response, user, data: S.Entry, entry=None):
 @app.get('/entries')
 def entries_get(as_user: str = None, current_identity=Depends(manager)):
     user, snooping = as_user_(current_identity, as_user)
-    if snooping:
-        data = M.Entry.snoop(current_identity.username, user.id) \
-            .order_by(M.Entry.created_at.desc())\
-            .all()
-    else:
-        data = user.entries
+    data = M.Entry.snoop(current_identity.username, user.id, snooping=snooping).all()
     data = [e.json() for e in data]
     return {'data': data}
 
@@ -282,21 +277,10 @@ def entries_post(data: S.Entry, response: Response, as_user: str = None, current
     return entries_put_post(response, user, data)
 
 
-def entry_q(user_id, entry_id, snooper=None):
-    if snooper:
-        entryq = M.Entry.snoop(snooper, user_id)\
-            .filter(M.Entry.id==entry_id)
-    else:
-        entryq = db.session.query(M.Entry).filter_by(user_id=user_id, id=entry_id)
-    entry = entryq.first()
-    return entryq, entry
-
-
 @app.get('/entries/{entry_id}')
 def entry_get(entry_id, as_user: str = None, current_identity=Depends(manager)):
     user, snooping = as_user_(current_identity, as_user)
-    snooper = snooping and current_identity.username
-    entryq, entry = entry_q(user.id, entry_id, snooper)
+    entry = M.Entry.snoop(current_identity.username, user.id, snooping=snooping, entry_id=entry_id).first()
     return {'data': entry.json()}
 
 
@@ -304,7 +288,7 @@ def entry_get(entry_id, as_user: str = None, current_identity=Depends(manager)):
 def entry_put(entry_id, data: S.Entry, response: Response, as_user: str = None, current_identity=Depends(manager)):
     user, snooping = as_user_(current_identity, as_user)
     if snooping: return cant_snoop(response)
-    entryq, entry = entry_q(user.id, entry_id)
+    entry = M.Entry.snoop(current_identity.username, user.id, entry_id=entry_id).first()
     return entries_put_post(response, user, data, entry)
 
 
@@ -312,8 +296,8 @@ def entry_put(entry_id, data: S.Entry, response: Response, as_user: str = None, 
 def entry_delete(entry_id, response: Response, as_user: str = None, current_identity=Depends(manager)):
     user, snooping = as_user_(current_identity, as_user)
     if snooping: return cant_snoop(response)
-    entryq, entry = entry_q(user.id, entry_id)
-    db.session.query(M.EntryTag).filter_by(entry_id=entry.id).delete()
+    entryq = M.Entry.snoop(current_identity.username, user.id, entry_id=entry_id)
+    db.session.query(M.EntryTag).filter_by(entry_id=entry_id).delete()
     entryq.delete()
     db.session.commit()
     return {}
@@ -411,26 +395,6 @@ def influencers_get(
     return {'data': data}
 
 
-def limit_days(entries_q, days: int):
-    now = datetime.datetime.utcnow()
-    x_days = now - datetime.timedelta(days=days)
-    # build a beginning-to-end story
-    return entries_q.filter(M.Entry.created_at > x_days)\
-        .order_by(M.Entry.created_at.asc())
-
-
-def limit_by_tags(entries_q, tags=None):
-    # no tags selected uses all entries
-    if not tags: return entries_q
-
-    joins = [mapper.class_ for mapper in entries_q._join_entities]
-    # already joined in Entry.snoop
-    if M.EntryTag not in joins:
-        entries_q = entries_q.join(M.EntryTag, M.Tag)
-    entries_q = entries_q.filter(M.Tag.id.in_(tags))
-    return entries_q
-
-
 @app.post('/themes')
 def themes_post(
     data: S.LimitEntries,
@@ -439,12 +403,7 @@ def themes_post(
     current_identity=Depends(manager)
 ):
     user, snooping = as_user_(current_identity, as_user)
-    if snooping:
-        entries = M.Entry.snoop(current_identity.username, user.id)
-    else:
-        entries = db.session.query(M.Entry).filter(M.Entry.user_id == user.id)
-    entries = limit_days(entries, data.days)
-    entries = limit_by_tags(entries, data.tags)
+    entries = M.Entry.snoop(current_identity.username, user.id, snooping=snooping, days=data.days, tags=data.tags)
     entries = [e.text for e in entries.all()]
 
     # For dreams, special handle: process every sentence. TODO make note in UI
@@ -485,12 +444,7 @@ def question_post(
 ):
     user, snooping = as_user_(current_identity, as_user)
     question = data.query
-    if snooping:
-        entries = M.Entry.snoop(current_identity.username, user.id)
-    else:
-        entries = db.session.query(M.Entry).filter(M.Entry.user_id == user.id)
-    entries = limit_days(entries, data.days)
-    entries = limit_by_tags(entries, data.tags)
+    entries = M.Entry.snoop(current_identity.username, user.id, snooping=snooping, days=data.days, tags=data.tags)
     entries = [e.text for e in entries]
 
     if (not snooping) or user.share_data.profile:
@@ -507,19 +461,13 @@ def summarize_post(
     current_identity=Depends(manager)
 ):
     user, snooping = as_user_(current_identity, as_user)
-    if snooping:
-        entries = M.Entry.snoop(current_identity.username, user.id)
-    else:
-        entries = db.session.query(M.Entry).filter(M.Entry.user_id == user.id)
+    entries = M.Entry.snoop(current_identity.username, user.id, snooping=snooping, days=data.days, tags=data.tags)
 
-    words = int(data.words)
-    entries = limit_days(entries, data.days)
-    entries = limit_by_tags(entries, data.tags)
     entries = ' '.join(e.text for e in entries)
     entries = re.sub('\s+', ' ', entries)  # mult new-lines
 
-    min_ = int(words / 2)
-    summary = ml.summarize(entries, min_length=min_, max_length=words)
+    min_ = int(data.words / 2)
+    summary = ml.summarize(entries, min_length=min_, max_length=data.words)
     data = {'summary': summary["summary_text"], 'sentiment': summary["sentiment"]}
     return {'data': data}
 
