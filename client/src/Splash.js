@@ -4,6 +4,7 @@ import {
   FaTextHeight,
   FaRobot,
   FaShare,
+  FaLock,
   FaQuestion,
   FaCubes,
   FaBook,
@@ -23,8 +24,8 @@ export default function Splash({serverError, onAuth, fetch_}) {
       <div className='jumbo-content'>
         <div className='jumbo-text'>
           <h1>Gnothi</h1>
-          <h4>Gnōthi Seauton: Know Thyself.</h4>
-          <p>A journal that uses AI to help you introspect and find resources.</p>
+          <h4>Gnōthi Seauton: Know Thyself</h4>
+          <p>A journal that uses AI to help you introspect and find resources</p>
           {!showAuth && <Button onClick={() => setShowAuth(true)}>Sign In</Button>}
         </div>
         {showAuth && (
@@ -35,21 +36,19 @@ export default function Splash({serverError, onAuth, fetch_}) {
       </div>
     </Jumbotron>
     <Container className='splash-features' fluid>
-      <Row>
+      <Row lg={3} sm={2} xs={1}>
         <Col>
           <h3><FaTextHeight /> Summaries</h3>
           <p>AI summarizes your entries, your week, your year.</p>
         </Col>
         <Col>
           <h3><FaCubes /> Themes</h3>
-          <p>AI shows you your recurring themes & issues. Also valuable for recurring dream themes.</p>
+          <p>AI shows your recurring themes & issues. Also valuable for dream themes.</p>
         </Col>
         <Col>
           <h3><FaQuestion /> Questions</h3>
           <p>Ask AI anything about yourself. The answers and insights may surprise you.</p>
         </Col>
-      </Row>
-      <Row>
         <Col>
           <h3><FaBook /> Books</h3>
           <p>AI recommends self-help books based on your entries.</p>
@@ -61,6 +60,14 @@ export default function Splash({serverError, onAuth, fetch_}) {
         <Col>
           <h3><FaShare /> Share</h3>
           <p>Share journals with therapists, who can use all these tools to catch up since your last session.</p>
+        </Col>
+        <Col>
+          <h3><FaLock /> Security</h3>
+          <p>All text is industry-standard encrypted.</p>
+        </Col>
+        <Col>
+          <h3><FaRobot /> Future</h3>
+          <p>The sky's the limit with <a target='_blank' href='https://huggingface.co/transformers/'>BERT</a> language models! Astrology? Dream analysis? </p>
         </Col>
       </Row>
     </Container></>
