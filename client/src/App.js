@@ -16,6 +16,7 @@ import {
   Redirect
 } from "react-router-dom";
 import Auth from './Auth'
+import Splash from './Splash'
 import Journal from './Journal'
 import ProfileRoutes from './ProfileRoutes'
 import Error from './Error'
@@ -168,12 +169,7 @@ function App() {
   }
 
   if (!user) {
-    return (
-      <Container fluid>
-        <Error message={serverError} />
-        <Auth onAuth={onAuth} fetch_={fetch_} />
-      </Container>
-    )
+    return <Splash serverError={serverError} onAuth={onAuth} fetch_={fetch_} />
   }
 
   // key={as} triggers refresh on these components (triggering fetches)

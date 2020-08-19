@@ -1,0 +1,29 @@
+.gnothi-jumbo {
+}
+.jumbo-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 300px;
+  margin: 0 auto;
+  max-width: 600px;
+}
+.jumbo-text {
+  text-align: center;
+}
+
+.auth-block {
+  /*width: 900px;*/
+  /*display: flex;*/
+  /*align-items: center;*/
+  /*justify-content: center;*/
+}
+
+.splash-features {
+  /*padding-left: 20px;*/
+  /*padding-right: 20px;*/
+}
+
+.splash-features .col {
+  padding: 20px;
+}

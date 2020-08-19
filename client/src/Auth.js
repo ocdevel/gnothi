@@ -117,7 +117,6 @@ export default function Auth({fetch_, onAuth}) {
 
   return (
     <div>
-      <h1>Gnothi</h1>
       <Tabs defaultActiveKey="login">
         <Tab eventKey="login" title="Login">
           {renderLogin()}
