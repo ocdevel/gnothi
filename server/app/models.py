@@ -172,7 +172,6 @@ class Entry(Base, CustomBase):
         tags: List[str] = None,
         days: int = None
     ):
-        print(viewer_email, target_id, snooping, entry_id, order_by, tags, days)
         if not snooping:
             q = db.session.query(Entry).filter(Entry.user_id == target_id)
         if snooping:

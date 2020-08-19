@@ -5,6 +5,7 @@ import {
   Tab,
   Tabs
 } from "react-bootstrap";
+import Error from './Error'
 import {spinner} from './utils'
 
 export default function Auth({fetch_, onAuth}) {
@@ -12,6 +13,7 @@ export default function Auth({fetch_, onAuth}) {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [passwordConfirm, setPasswordConfirm] = useState('')
+  const [error, setError] = useState(null)
 
   const changeUsername = e => setUsername(e.target.value)
   const changePassword = e => setPassword(e.target.value)
@@ -25,17 +27,25 @@ export default function Auth({fetch_, onAuth}) {
   }
 
   const submitLogin = async e => {
-    // TODO switch to Axios https://malcoded.com/posts/react-http-requests-axios/
     e.preventDefault();
+    setError(null)
     setSubmitting(true)
     login()
   };
 
   const submitRegister = async e => {
     e.preventDefault();
+    if (password !== passwordConfirm) {
+      return setError("Password & Confirm don't match")
+    }
+    setError(null)
     setSubmitting(true)
     // assert password = passwordConfirm. See react-bootstrap, use yup library or something for form stuff
-    await fetch_('register', 'POST', {username, password})
+    const {message, code} = await fetch_('register', 'POST', {username, password})
+    if (code !== 200) {
+      setSubmitting(false)
+      return setError(message)
+    }
     await login();
   };
 
@@ -117,6 +127,7 @@ export default function Auth({fetch_, onAuth}) {
 
   return (
     <div>
+      {error && <Error message={error} />}
       <Tabs defaultActiveKey="login">
         <Tab eventKey="login" title="Login">
           {renderLogin()}

@@ -48,7 +48,9 @@ def user_get(response: Response, as_user: str = None,  current_identity=Depends(
 
 
 @app.post('/register')
-def register_post(data: S.Reg):
+def register_post(data: S.Reg, response: Response):
+    if db.session.query(M.User).filter(M.User.username == data.username).first():
+        return send_error(response, "Email already taken")
     u = M.User(data.username, pbkdf2_sha256.hash(data.password))
     u.tags.append(M.Tag(main=True, selected=True, name='Main'))
     db.session.add(u)
