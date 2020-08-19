@@ -16,6 +16,7 @@ import Themes from "./Themes"
 import Query from "./Query"
 import {
   FaSearch,
+  FaThumbsUp,
   FaTags,
   FaRegListAlt,
   FaTextHeight,
@@ -149,11 +150,11 @@ export default function Entries({fetch_, as, aiStatus, setServerError}) {
 
   const renderTools = () => {
     return <>
-      <div>
+      {tool !== 'books' && <div>
         <SimplePopover text="Tags">
-          <FaTags />
+          <FaTags/>
         </SimplePopover>
-        <span className='tools-divider' />
+        <span className='tools-divider'/>
         {/*TODO reconsider preSelectMain for !!as. Eg, currently don't want therapist seeing Dream by default.*/}
         <Tags
           as={as}
@@ -163,7 +164,7 @@ export default function Entries({fetch_, as, aiStatus, setServerError}) {
           setSelected={setTags_}
           preSelectMain={true}
         />{' '}
-      </div>
+      </div>}
       <div style={{marginTop:5}}>
         <SimplePopover text="AI Tools">
           <FaRobot />
@@ -224,7 +225,7 @@ export default function Entries({fetch_, as, aiStatus, setServerError}) {
       query: `Ask a question about your entries.`,
       themes: `Show common recurring themes across your entries.`,
       summarize: `Summarize your entries for an overview.`,
-      books: `Generate a list of recommended self-help books which might help you, based on your entries.`,
+      books: `Generate AI-recommended self-help books, based on your entries.`,
     }[tool]
     const args = {fetch_, as, tags, aiStatus}
     const comp = {
@@ -236,7 +237,13 @@ export default function Entries({fetch_, as, aiStatus, setServerError}) {
     return <>
       <Alert variant='info'>
         <div>{desc}</div>
-        <small className="text-muted">Select <FaTags /> tags above to limit entries, or all tags are used.</small>
+        <small className="text-muted">
+          {tool === 'books' ? <>
+            Use thumbs <FaThumbsUp /> to improve AI's recommendations.
+          </> : <>
+            Select <FaTags /> tags above to limit entries, or all tags are used.
+          </>}
+        </small>
       </Alert>
       {comp}
     </>

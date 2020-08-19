@@ -471,7 +471,6 @@ def books_post(
     user, snooping = as_user_(current_identity, as_user)
     if snooping and not user.share_data.books:
         return cant_snoop(response, 'Books')
-    # 5725afba: books limited by tag, date. Hard to balance w dnn-predictor, deferring to their thumbs w/o date/tag
 
     books = ml.books(user)
     return {'data': books}

@@ -5,11 +5,10 @@ import {Button, Table, Form, ButtonGroup, Nav, NavDropdown} from "react-bootstra
 import {FaTags, FaUser, FaThumbsUp, FaThumbsDown, FaCheck, FaTimes} from "react-icons/fa"
 import ForXDays from "./ForXDays"
 
-export default function Books({fetch_, as, tags, aiStatus}) {
+export default function Books({fetch_, as, aiStatus}) {
   const [books, setBooks] = useState([])
   const [fetching, setFetching] = useState(false)
   const [notShared, setNotShared] = useState(false)
-  const [form, setForm] = useState({days: 365})
   const [tab, setTab] = useState('new')  // like|dislike|already_read|remove|recommend
   const [offline, setOffline] = useState(null)  // like|dislike|already_read|remove|recommend
 
@@ -18,10 +17,7 @@ export default function Books({fetch_, as, tags, aiStatus}) {
   const fetchBooks = async () => {
     setOffline(null)
     setFetching(true)
-    const body = {...form}
-    const tags_ = trueKeys(tags)
-    if (tags_.length) { body['tags'] = tags_ }
-    const {data, code, message} = await fetch_('books', 'POST', body)
+    const {data, code, message} = await fetch_('books', 'POST')
     setFetching(false)
     if (code === 401) {return setNotShared(message)}
     if (typeof data === 'string') {return setOffline(data)}
@@ -98,11 +94,6 @@ export default function Books({fetch_, as, tags, aiStatus}) {
   )
 
   return <>
-    <ForXDays
-      form={form}
-      setForm={setForm}
-      feature={'resources'}
-    />
     <div>
       {renderTabs()}
       {fetching ? <>
