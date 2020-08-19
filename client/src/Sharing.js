@@ -4,32 +4,36 @@ import _ from 'lodash'
 import Tags from './Tags'
 
 const feature_map = {
-  fields: 'Fields & Charts',
-  themes: 'Themes & Books',
-  profile: 'Profile & Family'
+  fields: {
+    label: "Fields & Charts",
+    help: "User can view your fields & field-entries, history, and charts."
+  },
+  profile: {
+    label: 'Profile & People',
+    help: "User can view your profile data and any people you've listed."
+  },
+  books: {
+    label:'Books',
+    help: "User can view your AI-recommended books, your bookshelves (liked, disliked, etc), and can recommend books to you (goes to 'Recommended' shelf)."
+  },
 }
 
 function ShareForm({fetch_, as, fetchShared, share=null}) {
   const [form, setForm] = useState(share ? _.pick(share, ['email', ..._.keys(feature_map)]) : {})
-  const [fullTags, setFullTags] = useState(share ? share.full_tags : {})
-  const [summaryTags, setSummaryTags] = useState(share ? share.summary_tags : {})
-
-  console.log(form)
+  const [tags, setTags] = useState(share ? share.tags : {})
 
   const submit = async e => {
     e.preventDefault()
     const body = {
       ...form,
-      full_tags: fullTags,
-      summary_tags: summaryTags
+      tags: tags,
     }
     if (share) {
       await fetch_(`shares/${share.id}`, 'PUT', body)
     } else {
       await fetch_('shares', 'POST', body)
       setForm({})
-      setFullTags({})
-      setSummaryTags({})
+      setTags({})
     }
     await fetchShared()
   }
@@ -68,40 +72,34 @@ function ShareForm({fetch_, as, fetchShared, share=null}) {
         </Form.Group>
       )}
 
-      <Form.Group controlId={`${ctrlId}-features`}>
       {_.map(feature_map, (v, k) => (
+        <Form.Group>
           <Form.Check
             id={`${ctrlId}-${k}`}
             type="checkbox"
-            label={v}
+            label={v.label}
             checked={form[k]}
             onChange={chooseFeature(k)}
           />
+          <Form.Text className="text-muted">{v.help}</Form.Text>
+        </Form.Group>
       ))}
-      </Form.Group>
 
-      <h5>Full Entries</h5>
-      <p className='text-muted small'>User will have full read-access to your entries with these tags</p>
+      <h5>Entries</h5>
+      <p className='text-muted small'>
+        User can view entries with these tags, and can use features involving these entries:
+        <ul>
+          <li>Summaries</li>
+          <li>Question-answering</li>
+          <li>Themes</li>
+        </ul>
+        Example use: sharing darker entries with a therapist, and lighter entries (eg travel, dreams) with friends.
+      </p>
       <Tags
         fetch_={fetch_}
         as={as}
-        selected={fullTags}
-        setSelected={setFullTags}
-      />
-
-      <br/><br/>
-
-      <h5>Entries Summaries</h5>
-      <p className='text-muted small'>User will have indirect access to entries via<ul>
-        <li>Entry summaries</li>
-        <li>Multi-day summaries</li>
-        <li>Question answering</li>
-      </ul></p>
-      <Tags
-        fetch_={fetch_}
-        as={as}
-        selected={summaryTags}
-        setSelected={setSummaryTags}
+        selected={tags}
+        setSelected={setTags}
       />
 
       <br />

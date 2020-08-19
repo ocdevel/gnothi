@@ -8,7 +8,6 @@ Base = declarative_base()
 
 engine = create_engine(
     vars.DB_URL,
-    pool_size=20,
     # TODO getting timout errors, trying some solutions
     # https://stackoverflow.com/a/60614871/362790
     # https://docs.sqlalchemy.org/en/13/core/pooling.html#dealing-with-disconnects
@@ -29,10 +28,12 @@ SessLocal = dict(
 
 
 def init_db():
-    #import app.models
+    # add `import app.models` in calling code beforehand (after `import database`)
     Base.metadata.create_all(bind=engine)
     # since connections are lazy, kick it off.
-    SessLocal['main'].execute("select 1")
+    # db = SessLocal['main']()
+    # db.execute("select 1")
+    # db.close()
 
 
 def shutdown_db():

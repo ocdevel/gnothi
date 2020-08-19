@@ -58,10 +58,9 @@ class Person(BaseModel):
 class Share(BaseModel):
     email: str
     fields_: Optional[bool] = False
-    themes: Optional[bool] = False
+    books: Optional[bool] = False
     profile: Optional[bool] = False
-    full_tags: Optional[dict] = {}
-    summary_tags: Optional[dict] = {}
+    tags: Optional[dict] = {}
 
     class Config:
         fields = {'fields_': 'fields'}

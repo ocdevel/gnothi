@@ -175,7 +175,7 @@ def tag_delete(tag_id, response: Response, as_user: str = None, current_identity
     if snooping: return cant_snoop(response)
     tagq, tag = tag_q(user.id, tag_id)
     if tag.main:
-        return send_error("Can't delete your main journal")
+        return send_error(response, "Can't delete your main journal")
     # FIXME cascade
     db.session.query(M.EntryTag).filter_by(tag_id=tag_id).delete()
     tagq.delete()
@@ -194,8 +194,7 @@ def shares_get(response: Response, as_user: str = None, current_identity=Depends
 
 def shares_put_post(user, data, share_id=None):
     data = data.dict()
-    full = data.pop('full_tags')
-    summary = data.pop('summary_tags')
+    tags = data.pop('tags')
     data['fields'] = data['fields_']; del data['fields_']  # pydantic conflict
     if share_id:
         s = db.session.query(M.Share).filter_by(user_id=user.id, id=share_id).first()
@@ -206,12 +205,9 @@ def shares_put_post(user, data, share_id=None):
         s = M.Share(user_id=user.id, **data)
         db.session.add(s)
     db.session.commit()
-    for tag, v in full.items():
+    for tag, v in tags.items():
         if not v: continue
-        db.session.add(M.ShareTag(share_id=s.id, tag_id=tag, type='full'))
-    for tag, v in summary.items():
-        if not v: continue
-        db.session.add(M.ShareTag(share_id=s.id, tag_id=tag, type='summary'))
+        db.session.add(M.ShareTag(share_id=s.id, tag_id=tag))
     db.session.commit()
     return {}
 
@@ -240,10 +236,10 @@ def share_delete(share_id, response: Response, as_user: str = None, current_iden
     return {}
 
 
-def entries_put_post(user, data: S.Entry, entry=None):
+def entries_put_post(response, user, data: S.Entry, entry=None):
     data = data.dict()
     if not any(v for k,v in data['tags'].items()):
-        return send_error('Each entry must belong to at least one journal')
+        return send_error(response, 'Each entry must belong to at least one journal')
 
     if entry:
         db.session.query(M.EntryTag).filter_by(entry_id=entry.id).delete()
@@ -270,7 +266,7 @@ def entries_put_post(user, data: S.Entry, entry=None):
 def entries_get(as_user: str = None, current_identity=Depends(manager)):
     user, snooping = as_user_(current_identity, as_user)
     if snooping:
-        data = M.Entry.snoop(current_identity.username, user.id, ['full']) \
+        data = M.Entry.snoop(current_identity.username, user.id) \
             .order_by(M.Entry.created_at.desc())\
             .all()
     else:
@@ -283,12 +279,12 @@ def entries_get(as_user: str = None, current_identity=Depends(manager)):
 def entries_post(data: S.Entry, response: Response, as_user: str = None, current_identity=Depends(manager)):
     user, snooping = as_user_(current_identity, as_user)
     if snooping: return cant_snoop(response)
-    return entries_put_post(user, data)
+    return entries_put_post(response, user, data)
 
 
 def entry_q(user_id, entry_id, snooper=None):
     if snooper:
-        entryq = M.Entry.snoop(snooper, user_id, ['full'])\
+        entryq = M.Entry.snoop(snooper, user_id)\
             .filter(M.Entry.id==entry_id)
     else:
         entryq = db.session.query(M.Entry).filter_by(user_id=user_id, id=entry_id)
@@ -309,7 +305,7 @@ def entry_put(entry_id, data: S.Entry, response: Response, as_user: str = None, 
     user, snooping = as_user_(current_identity, as_user)
     if snooping: return cant_snoop(response)
     entryq, entry = entry_q(user.id, entry_id)
-    return entries_put_post(user, data, entry)
+    return entries_put_post(response, user, data, entry)
 
 
 @app.delete('/entries/{entry_id}')
@@ -443,9 +439,10 @@ def themes_post(
     current_identity=Depends(manager)
 ):
     user, snooping = as_user_(current_identity, as_user)
-    if snooping and not user.share_data.themes:
-        return cant_snoop(response, 'Themes')
-    entries = db.session.query(M.Entry).filter(M.Entry.user_id==user.id)
+    if snooping:
+        entries = M.Entry.snoop(current_identity.username, user.id)
+    else:
+        entries = db.session.query(M.Entry).filter(M.Entry.user_id == user.id)
     entries = limit_days(entries, data.days)
     entries = limit_by_tags(entries, data.tags)
     entries = [e.text for e in entries.all()]
@@ -458,10 +455,10 @@ def themes_post(
     #         entries = [s.text for e in entries for s in e.sents]
 
     if len(entries) < 2:
-        return send_error("Not enough entries to work with, come back later")
+        return send_error(response, "Not enough entries to work with, come back later")
     data = ml.themes(entries)
     if len(data) == 0:
-        return send_error("No patterns found in your entries yet, come back later")
+        return send_error(response, "No patterns found in your entries yet, come back later")
     return {'data': data}
 
 
@@ -472,7 +469,7 @@ def books_post(
     current_identity=Depends(manager)
 ):
     user, snooping = as_user_(current_identity, as_user)
-    if snooping and not user.share_data.themes:
+    if snooping and not user.share_data.books:
         return cant_snoop(response, 'Books')
     # 5725afba: books limited by tag, date. Hard to balance w dnn-predictor, deferring to their thumbs w/o date/tag
 
@@ -490,7 +487,7 @@ def question_post(
     user, snooping = as_user_(current_identity, as_user)
     question = data.query
     if snooping:
-        entries = M.Entry.snoop(current_identity.username, user.id, ['summary', 'full'])
+        entries = M.Entry.snoop(current_identity.username, user.id)
     else:
         entries = db.session.query(M.Entry).filter(M.Entry.user_id == user.id)
     entries = limit_days(entries, data.days)
@@ -512,7 +509,7 @@ def summarize_post(
 ):
     user, snooping = as_user_(current_identity, as_user)
     if snooping:
-        entries = M.Entry.snoop(current_identity.username, user.id, ['summary', 'full'])
+        entries = M.Entry.snoop(current_identity.username, user.id)
     else:
         entries = db.session.query(M.Entry).filter(M.Entry.user_id == user.id)
 
@@ -531,7 +528,8 @@ def summarize_post(
 @app.post('/books/{bid}/{shelf}')
 def bookshelf_post(bid, shelf, response: Response, as_user: str = None, current_identity=Depends(manager)):
     user, snooping = as_user_(current_identity, as_user)
-    if snooping: return cant_snoop(response)
+    if snooping and not user.share_data.books:
+        return cant_snoop(response, 'Books')
     M.Bookshelf.upsert(user.id, bid, shelf)
     return {'data': None}
 
@@ -539,8 +537,8 @@ def bookshelf_post(bid, shelf, response: Response, as_user: str = None, current_
 @app.get('/books/{shelf}')
 def bookshelf_get(shelf, response: Response, as_user: str = None, current_identity=Depends(manager)):
     user, snooping = as_user_(current_identity, as_user)
-    # FIXME handle snooping
-    # if snooping: return cant_snoop('')
+    if snooping and not user.share_data.books:
+        return cant_snoop(response, 'Books')
     data = M.Bookshelf.get_shelf(user.id, shelf)
     return {'data': data}
 

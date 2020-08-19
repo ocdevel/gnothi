@@ -163,12 +163,12 @@ class Entry(Base, CustomBase):
     """
 
     @staticmethod
-    def snoop(from_email, to_id, type):
+    def snoop(from_email, to_id):
         return db.session.query(Entry)\
             .join(EntryTag, Entry.id == EntryTag.entry_id)\
             .join(ShareTag, EntryTag.tag_id == ShareTag.tag_id)\
             .join(Share, ShareTag.share_id == Share.id)\
-            .filter(ShareTag.type.in_(type), Share.email == from_email, Share.user_id == to_id)
+            .filter(Share.email == from_email, Share.user_id == to_id)
 
     @staticmethod
     def run_models_(id):
@@ -357,7 +357,7 @@ class Share(Base, CustomBase):
     email = Column(EmailType, index=True)  # TODO encrypt?
 
     fields = Column(Boolean)
-    themes = Column(Boolean)
+    books = Column(Boolean)
     profile = Column(Boolean)
 
     share_tags = relationship("ShareTag")
@@ -368,16 +368,16 @@ class Share(Base, CustomBase):
     user_id
     email
     fields
-    themes
+    books
     profile
     """
 
     def json(self):
         return {
             **super().json(),
-            'full_tags': {t.tag_id: True for t in self.share_tags if t.type.name == 'full'},
-            'summary_tags': {t.tag_id: True for t in self.share_tags if t.type.name == 'summary'},
+            'tags': {t.tag_id: True for t in self.share_tags},
         }
+
 
 class Tag(Base, CustomBase):
     __tablename__ = 'tags'
@@ -412,16 +412,10 @@ class EntryTag(Base, CustomBase):
     tag_id = Column(UUID, ForeignKey('tags.id'), primary_key=True)
 
 
-class ShareTagType(enum.Enum):
-    full = 1
-    summary = 2
-
-
 class ShareTag(Base, CustomBase):
     __tablename__ = 'shares_tags'
     share_id = Column(UUID, ForeignKey('shares.id'), primary_key=True)
     tag_id = Column(UUID, ForeignKey('tags.id'), primary_key=True)
-    type = Column(Enum(ShareTagType), nullable=False)
 
     tag = relationship(Tag, backref=backref("tags", cascade="all, delete-orphan"))
     share = relationship(Share, backref=backref("shares", cascade="all, delete-orphan"))
@@ -433,6 +427,7 @@ class Shelves(enum.Enum):
     dislike = 3
     remove = 4
     recommend = 5
+
 
 class Bookshelf(Base, CustomBase):
     __tablename__ = 'bookshelf'
