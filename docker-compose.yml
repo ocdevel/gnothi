@@ -26,16 +26,8 @@ services:
   server:
     build: server
     container_name: jserver
-    entrypoint: python app/main.py
     environment:
-      # menheild-gunicorn-flask settings
-      #WORKERS_PER_CORE: 1
-      #WEB_CONCURRENCY: 1
-      #GUNICORN_CMD_ARGS: '--preload --timeout=60'
-
       ENVIRONMENT: production
-      FLASK_ENV: production
-      PYTHONPATH: .
     labels:
       - traefik.enable=true
       - traefik.http.routers.server.rule=Host(`api.gnothiai.com`)
@@ -56,20 +48,15 @@ services:
     container_name: jclient
     labels:
       - traefik.enable=true
+      - traefik.http.routers.client.rule=Host(`gnothiai.com`,`www.gnothiai.com`,`gnothiapp.com`,`www.gnothiapp.com`)
+      - traefik.http.services.client.loadbalancer.server.port=3000
+      - traefik.http.routers.client.tls.certresolver=myresolver
 
-      # redirect http->https. TODO find global https redirect solution
-      - traefik.http.middlewares.client80-redir.redirectscheme.scheme=https
-      - traefik.http.middlewares.client80-redir.redirectscheme.permanent=true
-      - traefik.http.routers.client80.middlewares=client80-redir
-
-      - traefik.http.routers.client80.rule=Host(`gnothiai.com`,`www.gnothiai.com`,`gnothiapp.com`,`www.gnothiapp.com`)
-      - traefik.http.routers.client80.entrypoints=web
-      #- traefik.http.services.client80.loadbalancer.server.port=3000
-
-      - traefik.http.routers.client443.rule=Host(`gnothiai.com`,`www.gnothiai.com`,`gnothiapp.com`,`www.gnothiapp.com`)
-      - traefik.http.routers.client443.entrypoints=websecure
-      - traefik.http.routers.client443.tls.certresolver=myresolver
-      - traefik.http.services.client443.loadbalancer.server.port=3000
+      # using regex to redirect gnothiapp AND http->https (had trouble with built-in https redir)
+      - traefik.http.routers.client.entrypoints=web,websecure
+      - traefik.http.middlewares.redir-gnothi.redirectregex.regex=^(http://.*|.*gnothiapp.com)
+      - traefik.http.middlewares.redir-gnothi.redirectregex.replacement=https://gnothiai.com
+      - traefik.http.routers.client.middlewares=redir-gnothi
     stdin_open: true
     restart: unless-stopped
     volumes:
