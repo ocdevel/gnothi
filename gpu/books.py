@@ -166,7 +166,7 @@ def train_books_predictor(books, vecs_books, shelf_idx, fine_tune=True):
     y2 = books[shelf_idx].dist
     m.fit(
         x2, y2,
-        epochs=3,  # too many epochs overfits (eg to CBT). Maybe adjust LR *down*, or other?
+        epochs=2,  # too many epochs overfits (eg to CBT). Maybe adjust LR *down*, or other?
         batch_size=16,
         callbacks=[es],
         validation_split=.3  # might not have enough data?
