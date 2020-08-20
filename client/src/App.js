@@ -185,6 +185,7 @@ function App() {
               as={as}
               setServerError={setServerError}
               aiStatus={aiStatus}
+              user={user}
             />
           </Route>
           <Route path="/profile">

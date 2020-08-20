@@ -5,7 +5,7 @@ import Fields from './Fields'
 import React from "react"
 import {Col, Row} from 'react-bootstrap'
 
-export default function Journal({fetch_, as, setServerError, aiStatus}) {
+export default function Journal({user, fetch_, as, setServerError, aiStatus}) {
   let match = useRouteMatch()
 
   return (
@@ -17,7 +17,7 @@ export default function Journal({fetch_, as, setServerError, aiStatus}) {
           </Route>
         </Col>
         <Col lg={4}>
-          <Fields fetch_={fetch_} as={as} />
+          <Fields fetch_={fetch_} as={as} user={user} />
         </Col>
       </Row>
     </div>

@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from "react";
-import {spinner} from "./utils";
+import {SimplePopover, spinner} from "./utils";
 import _ from "lodash";
 import {Accordion, Alert, Button, Card, Form, Table} from "react-bootstrap";
 import ReactMarkdown from "react-markdown";
@@ -8,7 +8,7 @@ import SetupHabitica from "./SetupHabitica";
 import FieldModal from "./FieldModal";
 import ChartModal from "./ChartModal";
 
-export default function Fields({fetch_, as}) {
+export default function Fields({fetch_, as, user}) {
   const [fetchingSvc, setFetchingSvc] = useState(false)
   const [fields, setFields] = useState({})
   const [fieldEntries, setFieldEntries] = useState({})
@@ -69,9 +69,12 @@ export default function Fields({fetch_, as}) {
   const renderSyncButton = (service) => {
     if (!~['habitica'].indexOf(service)) {return null}
     if (as) {return null}
+    if (!user.habitica_user_id) {return null}
     if (fetchingSvc) {return spinner}
     return <>
-      <Button onClick={() => fetchService(service)}>Sync</Button>
+      <SimplePopover text='Gnothi auto-syncs every hour'>
+        <Button onClick={() => fetchService(service)}>Sync</Button>
+      </SimplePopover>
     </>
   }
 
@@ -154,22 +157,81 @@ export default function Fields({fetch_, as}) {
     name: 'Fields',
     fields: _(fields)
       .filter(v => !v.service && !v.excluded_at)
-      .sortBy('id').value()
+      .sortBy('id').value(),
+    emptyText: () => <small className='text-muted'>
+      <p>Fields are activity & quality trackers. Mood, sleep, substance, habits, etc. They can be numbers, checkboxes, or fivestar-ratings.<ul>
+        <li>Track your mood, sleep patterns, substance intake, etc</li>
+        <li>See stats (average, graphs, predictions)</li>
+        <li>See how fields interact: correlation. Eg, "sleep most influenced by alcohol".</li>
+        <li>Help long-term decisions by tracking options (fivestar-rate different jobs or moving destinations).</li>
+        <li>Share fields, eg with a therapist who's interested in your mood or substances.</li>
+        <li>For habits specifically, I recommend Habitica (below).</li>
+      </ul></p>
+    </small>
   }, {
     service: 'habitica',
     name: 'Habitica',
     fields: _(fields)
       .filter(v => v.service === 'habitica' && !v.excluded_at)
       .sortBy('id')
-      .value()
+      .value(),
+    emptyText: () => <small className='text-muted'>
+      <p>For habit-tracking (exercise, substance, productivity, etc) I recommend <a href='https://habitica.com/' target='_blank'>Habitica</a>. Gnothi will sync Habitica habits & dailies.</p>
+      <p>Use Gnothi fields for qualitative data (mood, sleep-quality, decisions) and Habitica for habits. Habitica doesn't support arbitrary number entries.</p>
+      <p>Your UserID and API Token are database-encrypted. <em>All</em> sensitive data in Gnothi is encrypted.</p>
+    </small>
   }, {
     service: 'excluded',
     name: 'Excluded',
     fields: _(fields)
       .filter(v => v.excluded_at)
       .sortBy('id')
-      .value()
+      .value(),
+    emptyText: () => <small className='text-muted'>
+      <p>If you stop tracking a field, but keep it around just in case, click "Remove" and it will show up here.</p>
+    </small>
   }]
+
+  const renderButtons = g => {
+    if (g.service === 'custom') {
+      return <>
+        {!as && <Button
+          variant="success"
+          onClick={() => setShowForm(true)}
+          className='bottom-margin'
+        >New Field</Button>}
+        {!!g.fields.length && <Button
+          variant="outline-primary"
+          style={{float:'right'}}
+          size="sm"
+          onClick={() => setShowChart(true)}
+        >Top Influencers</Button>}
+      </>
+    }
+    if (g.service === 'habitica' && !as) {
+      return <SetupHabitica fetch_={fetch_}/>
+    }
+    return null
+  }
+
+  const renderGroup = g => (
+    <Card key={g.service}>
+      <Accordion.Toggle as={Card.Header} variant="link" eventKey={g.service}>
+        {g.name}
+      </Accordion.Toggle>
+      <Accordion.Collapse eventKey={g.service}>
+        <Card.Body>
+          <Table size='sm' borderless>
+            <tbody>
+            {g.fields.length ? g.fields.map(renderField) : g.emptyText()}
+            </tbody>
+            {renderSyncButton(g.service)}
+          </Table>
+          {renderButtons(g)}
+        </Card.Body>
+      </Accordion.Collapse>
+    </Card>
+  )
 
   return <div>
     {showForm && (
@@ -190,37 +252,7 @@ export default function Fields({fetch_, as}) {
     )}
 
     <Accordion defaultActiveKey="custom">
-      {groups.map(g => (
-        <Card key={g.service}>
-          <Accordion.Toggle as={Card.Header} variant="link" eventKey={g.service}>
-            {g.name}
-          </Accordion.Toggle>
-          <Accordion.Collapse eventKey={g.service}>
-            <Card.Body>
-              <Table size='sm' borderless>
-                <tbody>
-                  {g.fields.map(renderField)}
-                </tbody>
-                {renderSyncButton(g.service)}
-              </Table>
-              {g.service === 'custom' && !as && <Button
-                  variant="success"
-                  onClick={() => setShowForm(true)}
-                  className='bottom-margin'
-                >New Field</Button>}
-              {g.service === 'custom' && <Button
-                variant="outline-primary"
-                style={{float:'right'}}
-                size="sm"
-                onClick={() => setShowChart(true)}
-              >Top Influencers</Button>}
-              {g.service === 'habitica' && !as && (
-                <SetupHabitica fetch_={fetch_}/>
-              )}
-            </Card.Body>
-          </Accordion.Collapse>
-        </Card>
-      ))}
+      {groups.map(renderGroup)}
     </Accordion>
   </div>
 }
