@@ -103,10 +103,13 @@ class User(Base, CustomBase):
             .filter(Share.email==self.username)\
             .all()
 
-    def json(self):
+    def json(self, exclude_share=False):
+        # FIXME rethink this, recursion issue (mutual share). Any other possible recursion?
+        shared = [] if exclude_share else \
+            [s.json(exclude_share=True) for s in self.shared_with_me()]
         return {
             **super().json(),
-            'shared_with_me': [s.json() for s in self.shared_with_me()],
+            'shared_with_me': shared,
         }
 
     def profile_json(self):
