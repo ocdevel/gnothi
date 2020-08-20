@@ -471,12 +471,13 @@ class Bookshelf(Base, CustomBase):
 
     @staticmethod
     def update_books(user_id):
-        # every x thumbs, update book recommendations
-        sql = 'select count(*)%8=0 as ct from bookshelf where user_id=:uid'
-        should_update = db.session.execute(text(sql), {'uid':user_id}).fetchone().ct
-        if should_update:
-            user = User.query.get(user_id)
-            ml.books(user, bust=True)
+        with db():
+            # every x thumbs, update book recommendations
+            sql = 'select count(*)%8=0 as ct from bookshelf where user_id=:uid'
+            should_update = db.session.execute(text(sql), {'uid':user_id}).fetchone().ct
+            if should_update:
+                user = db.session.query(User).get(user_id)
+                ml.books(user, bust=True)
 
     @staticmethod
     def upsert(user_id, book_id, shelf):

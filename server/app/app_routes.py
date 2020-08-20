@@ -106,17 +106,12 @@ def people_post(data: S.Person, response: Response, as_user: str = None,  curren
     return {}
 
 
-def person_q(user_id, person_id):
-    # TODO and share_id = ...
-    return db.session.query(M.Person).filter_by(user_id=user_id, id=person_id)
-
-
 @app.put('/people/{person_id}')
 def person_put(data: S.Person, person_id: str, response: Response, as_user: str = None,  current_identity=Depends(manager)):
     user, snooping = as_user_(current_identity, as_user)
     if snooping: return cant_snoop(response)
-    pq = person_q(user.id, person_id)
-    p = pq.first()
+    # TODO and share_id = ...
+    p = db.session.query(M.Person).filter_by(user_id=user.id, id=person_id).first()
     for k, v in data.dict().items():
         setattr(p, k, v)
     db.session.commit()
@@ -127,7 +122,7 @@ def person_put(data: S.Person, person_id: str, response: Response, as_user: str 
 def person_delete(person_id: str, response: Response, as_user: str = None, current_identity=Depends(manager)):
     user, snooping = as_user_(current_identity, as_user)
     if snooping: return cant_snoop(response)
-    pq = person_q(user.id, person_id)
+    pq = db.session.query(M.Person).filter_by(user_id=user.id, id=person_id)
     pq.delete()
     db.session.commit()
     return {}

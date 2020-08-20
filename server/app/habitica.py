@@ -42,8 +42,8 @@ def sync_for(user):
         if f.service != 'habitica': continue
         if f.service_id not in t_map:
             # FIXME change models to cascade deletes, remove line below https://dev.to/zchtodd/sqlalchemy-cascading-deletes-8hk
-            M.FieldEntry.query.filter_by(field_id=f.id).delete()
-            db.delete(f)
+            db.session.query(M.FieldEntry).filter_by(field_id=f.id).delete()
+            db.session.delete(f)
 
     # Add/update tasks from Habitica
     for task in tasks:
