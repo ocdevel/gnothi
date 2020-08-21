@@ -21,6 +21,7 @@ const feature_map = {
 function ShareForm({fetch_, as, fetchShared, share=null}) {
   const [form, setForm] = useState(share ? _.pick(share, ['email', ..._.keys(feature_map)]) : {})
   const [tags, setTags] = useState(share ? share.tags : {})
+  const [saved, setSaved] = useState(false)
 
   const submit = async e => {
     e.preventDefault()
@@ -29,7 +30,9 @@ function ShareForm({fetch_, as, fetchShared, share=null}) {
       tags: tags,
     }
     if (share) {
+      setSaved(true)
       await fetch_(`shares/${share.id}`, 'PUT', body)
+      setTimeout(() => {setSaved(false)}, 2000)
     } else {
       await fetch_('shares', 'POST', body)
       setForm({})
@@ -105,8 +108,12 @@ function ShareForm({fetch_, as, fetchShared, share=null}) {
       <br />
       <br />
 
-      <Button variant="primary" type="submit">
-        {share ? 'Save' : 'Submit'}
+      <Button
+        variant="primary"
+        type="submit"
+        disabled={saved}
+      >
+        {saved ? 'Saved' : share ? 'Save' : 'Submit'}
       </Button>&nbsp;
       {share && <Button variant="danger" size="sm" onClick={unshare}>Unshare</Button>}
     </Form>
@@ -139,8 +146,8 @@ export default function Sharing({fetch_, as}) {
     {newForm}
     <hr/>
     <p>Sharing with</p>
-    <Row lg={2}>
-      {shared.map(s => (
+    <Row lg={3} sm={2} xs={1}>
+      {_.sortBy(shared.slice(), 'id').map(s => (
         <Col key={s.id}>
           <Card>
             <Card.Body>
