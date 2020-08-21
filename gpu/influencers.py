@@ -1,39 +1,40 @@
 from xgb_hyperopt import run_opt
 from xgboost import XGBRegressor
-from utils import engine
+from utils import SessLocal
 import pandas as pd
 import numpy as np
 
 def influencers(user_id, specific_target=None):
-    with engine.connect() as conn:
-        fes = pd.read_sql("""
-        select  
-            fe.created_at::date, -- index 
-            fe.field_id, -- column
-            fe.value -- value
-        from field_entries fe
-        inner join fields f on f.id=fe.field_id
-        where fe.user_id=%(user_id)s
-            -- exclude these to improve model perf
-            -- TODO reconsider for past data
-            and f.excluded_at is null
-        order by fe.created_at asc
-        """, conn, params={'user_id': user_id})
-        # uuid as string
-        fes['field_id'] = fes.field_id.apply(str)
+    sess = SessLocal.main()
+    fes = pd.read_sql("""
+    select  
+        fe.created_at::date, -- index 
+        fe.field_id, -- column
+        fe.value -- value
+    from field_entries fe
+    inner join fields f on f.id=fe.field_id
+    where fe.user_id=%(user_id)s
+        -- exclude these to improve model perf
+        -- TODO reconsider for past data
+        and f.excluded_at is null
+    order by fe.created_at asc
+    """, sess.bind, params={'user_id': user_id})
+    # uuid as string
+    fes['field_id'] = fes.field_id.apply(str)
 
-        before_ct = fes.shape[0]
-        fes = fes.drop_duplicates(['created_at', 'field_id'])
-        if before_ct != fes.shape[0]:
-            print(f"{before_ct - fes.shape[0]} Duplicates")
+    before_ct = fes.shape[0]
+    fes = fes.drop_duplicates(['created_at', 'field_id'])
+    if before_ct != fes.shape[0]:
+        print(f"{before_ct - fes.shape[0]} Duplicates")
 
-        fs = pd.read_sql("""
-        select id, target, default_value, default_value_value
-        from fields
-        where user_id=%(user_id)s
-            and excluded_at is null
-        """, conn, params={'user_id': user_id})
-        fs['id'] = fs.id.apply(str)
+    fs = pd.read_sql("""
+    select id, target, default_value, default_value_value
+    from fields
+    where user_id=%(user_id)s
+        and excluded_at is null
+    """, sess.bind, params={'user_id': user_id})
+    fs['id'] = fs.id.apply(str)
+    sess.close()
 
     target_ids = fs[fs.target == True].id.values
     fs = {str(r.id): r for i, r in fs.iterrows()}

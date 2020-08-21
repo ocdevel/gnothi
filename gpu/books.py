@@ -1,7 +1,7 @@
 import os, pdb, math
 from os.path import exists
 from tqdm import tqdm
-from utils import engine, cosine, book_engine, cluster, tnormalize
+from utils import SessLocal, cosine, cluster, tnormalize
 from cleantext import Clean
 from box import Box
 import numpy as np
@@ -57,19 +57,20 @@ def load_books_df():
         where_id="and u.ID=:id"
     )
 
+    sess = SessLocal.books()
     if FIND_PROBLEMS:
         # # Those MD5s: UnicodeDecodeError: 'charmap' codec can't decode byte 0x9d in position 636: character maps to <undefined>
         # TODO try instead create_engine(convert_unicode=True)
 
         ids = ' '.join([sql.just_ids, sql.body])
-        ids = [x.ID for x in book_engine.execute(ids).fetchall()]
+        ids = [x.ID for x in sess.execute(ids).fetchall()]
         problem_ids = []
         for i, id in enumerate(tqdm(ids)):
             if i % 10000 == 0:
                 print(len(problem_ids) / len(ids) * 100, '% problems')
             try:
                 row = ' '.join([sql.select, sql.body, sql.where_id])
-                book_engine.execute(text(row), id=id)
+                sess.execute(text(row), {'id': id})
             except:
                 problem_ids.append(id)
         problem_ids = ','.join([f"'{id}'" for id in problem_ids])
@@ -79,8 +80,8 @@ def load_books_df():
     sql_ = [sql.select, sql.body]
     if not ALL_BOOKS: sql_ += [sql.just_psych]
     sql_ = ' '.join(sql_)
-    with book_engine.connect() as conn:
-        df = pd.read_sql(sql_, conn)
+    df = pd.read_sql(sql_, sess.bind)
+    sess.close()
     df = df.drop_duplicates(['Title', 'Author'])
 
     print('n_books before cleanup', df.shape[0])
@@ -181,9 +182,10 @@ def predict_books(user_id, entries, bust=False, n_recs=30, centroids=False):
     vecs_books, books = load_books()
     books = books.set_index('id', drop=False)
 
-    with engine.connect() as conn:
-        sql = "select book_id as id, user_id, shelf from bookshelf where user_id=%(uid)s"
-        shelf = pd.read_sql(sql, conn, params={'uid': user_id}).set_index('id', drop=False)
+    sess = SessLocal.main()
+    sql = "select book_id as id, user_id, shelf from bookshelf where user_id=%(uid)s"
+    shelf = pd.read_sql(sql, sess.bind, params={'uid': user_id}).set_index('id', drop=False)
+    sess.close()
     shelf_idx = books.id.isin(shelf.id)
 
     user_path = f"tmp/{user_id}-books.h5"

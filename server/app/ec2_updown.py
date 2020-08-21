@@ -29,20 +29,27 @@ def ec2_up():
         ec2_client.start_instances(InstanceIds=[vars.GPU_INSTANCE])
     except: pass
 
+
 def jobs_status():
     res = _fetch_status()
+    # debounce client (race-condition, perf)
+    # TODO maybe cache it as global var, so not hitting db so much?
+    if res.elapsed_client < 2:
+        return res.status
+    db.session.execute("update jobs_status set ts_client=now()")
+    db.session.commit()
+
     # job service is fresh (5s)
     if res.elapsed_svc < 5: pass
     # desktop was recently active; very likely  will be back soon
     elif res.elapsed_svc < 300 and res.svc == 'DESKTOP-RD4B4G9': pass
-    # jobs svc stale (pending|off), decide if should turn ec2 on (debounce for race condition)
-    elif res.elapsed_client > 2:
+    # jobs svc stale (pending|off), decide if should turn ec2 on
+    else:
         # status=on if server not turned off via ec2_down_maybe
-        if res.status in ['off', 'on']:
-            x = threading.Thread(target=ec2_up, daemon=True)
-            x.start()
-        db.session.execute("update jobs_status set status='pending', ts_client=now()")
+        db.session.execute("update jobs_status set status='pending'")
         db.session.commit()
+        if res.status in ['off', 'on']:
+            threading.Thread(target=ec2_up).start()
     return res.status
 
 

@@ -10,20 +10,20 @@ from uuid import uuid4
 OFFLINE_MSG = "AI server offline, check back later"
 
 
-def run_gpu_model(data):
+def run_gpu_model(method, data):
     # AI offline (it's spinning up from views.py->ec2_updown.py)
     res = db.session.execute("select status from jobs_status limit 1").fetchone()
     if res.status != 'on':
         return False
 
-    sql = f"insert into jobs (id, state, data) values (:jid, 'new', :data)"
+    sql = f"insert into jobs (id, method, state, data) values (:jid, :method, 'new', :data)"
     jid = str(uuid4())
-    db.session.execute(text(sql), {'jid':jid, 'data':psycopg2.Binary(pickle.dumps(data))})
+    db.session.execute(text(sql), dict(jid=jid, method=method, data=psycopg2.Binary(pickle.dumps(data))))
     db.session.commit()
     i = 0
     while True:
         time.sleep(1)
-        res = db.session.execute(text("select state from jobs where id=:jid"), {'jid':jid})
+        res = db.session.execute(text("select state from jobs where id=:jid"), {'jid': jid})
         state = res.fetchone().state
 
         # 5 seconds, still not picked up; something's wrong
@@ -31,12 +31,10 @@ def run_gpu_model(data):
             return False
 
         if state == 'done':
-            job = db.session.execute(text("select data from jobs where id=:jid"), {'jid':jid}).fetchone()
-            db.session.execute(text("delete from jobs where id=:jid"), {'jid':jid})
+            job = db.session.execute(text("delete from jobs where id=:jid returning method, data"), {'jid': jid}).fetchone()
             db.session.commit()
             res = pickle.loads(job.data)['data']
-            if data['method'] == 'sentence-encode':
-                res = np.array(res)
+            if job.method == 'sentence-encode': res = np.array(res)
             return res
         i += 1
 
@@ -47,7 +45,7 @@ def summarize(text, min_length=None, max_length=None, with_sentiment=True):
     if min_length: kwargs['min_length'] = min_length
     if max_length: kwargs['max_length'] = max_length
     kwargs['with_sentiment'] = with_sentiment
-    res = run_gpu_model(dict(method='summarization', args=args, kwargs=kwargs))
+    res = run_gpu_model('summarization', dict(args=args, kwargs=kwargs))
     if res is False:
         return {"summary_text": OFFLINE_MSG, "sentiment": None}
     return res[0]
@@ -56,15 +54,14 @@ def summarize(text, min_length=None, max_length=None, with_sentiment=True):
 def query(question, entries):
     context = ' '.join([unmark(e) for e in entries])
     kwargs = dict(question=question, context=context)
-    res = run_gpu_model(dict(method='question-answering', args=[], kwargs=kwargs))
+    res = run_gpu_model('question-answering', dict(args=[], kwargs=kwargs))
     if res is False:
         return [{'answer': OFFLINE_MSG}]
     return res
 
 
 def influencers(user_id, specific_target=None):
-    res = run_gpu_model(dict(
-        method='influencers',
+    res = run_gpu_model('influencers', dict(
         args=[user_id],
         kwargs={'specific_target': specific_target}
     ))
@@ -73,7 +70,7 @@ def influencers(user_id, specific_target=None):
 
 
 def themes(entries):
-    res = run_gpu_model(dict(method='themes', args=[entries], kwargs={}))
+    res = run_gpu_model('themes', dict(args=[entries], kwargs={}))
     if res is False:
         return []  # fixme
     return res
@@ -82,6 +79,6 @@ def themes(entries):
 def books(user, bust=False):
     entries = [e.text for e in user.entries]
     entries = [user.profile_to_text()] + entries
-    res = run_gpu_model(dict(method='books', args=[user.id, entries], kwargs={'bust': bust}))
+    res = run_gpu_model('books', dict(args=[user.id, entries], kwargs={'bust': bust}))
     if res is False: return OFFLINE_MSG
     return res

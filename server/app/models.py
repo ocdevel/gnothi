@@ -514,6 +514,7 @@ class Bookshelf(Base, CustomBase):
 class Jobs(Base):
     __tablename__ = 'jobs'
     id = Column(UUID, primary_key=True)
+    method = Column(Unicode)
     state = Column(Unicode)
     data = Column(BYTEA)
 

@@ -2,9 +2,11 @@ import os, json, math, pdb
 import torch
 import keras.backend as K
 import numpy as np
+from box import Box
 from sqlalchemy import create_engine
 from sklearn.cluster import AgglomerativeClustering
 from multiprocessing import cpu_count
+from sqlalchemy.orm import scoped_session, sessionmaker
 from sklearn import preprocessing as pp
 
 THREADS = cpu_count()
@@ -27,7 +29,18 @@ engine = create_engine(
 # if Plugin caching_sha2_password could not be loaded:
 # ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'youpassword';
 # https://stackoverflow.com/a/49935803/362790
-book_engine = create_engine(config_json['DB_BOOKS'], **engine_args)
+engine_books = create_engine(config_json['DB_BOOKS'], **engine_args)
+
+SessLocal = Box(
+    main=scoped_session(sessionmaker(autocommit=True, autoflush=True, bind=engine)),
+    books=scoped_session(sessionmaker(autocommit=True, autoflush=True, bind=engine_books))
+)
+
+
+def shutdown_db():
+    # FIXME not being called anywhere currently, need a "ctrl-c" hook or app on exit
+    for _, sess in SessLocal.items():
+        sess.remove()
 
 
 def tnormalize(x, y=None, numpy=True):

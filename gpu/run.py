@@ -1,4 +1,4 @@
-import time, psycopg2, pickle, pdb, multiprocessing
+import time, psycopg2, pickle, pdb, multiprocessing, threading
 from box import Box
 import torch
 import socket
@@ -7,7 +7,7 @@ from sqlalchemy import text
 from books import predict_books
 from themes import themes
 from influencers import influencers
-from utils import engine, cluster, cosine, clear_gpu
+from utils import SessLocal, cluster, cosine, clear_gpu
 from nlp import nlp_
 
 m = Box({
@@ -25,9 +25,10 @@ m = Box({
 
 
 def run_job(jid):
-    job = engine.execute("select * from jobs where id=%s", (jid,)).fetchone()
+    sess = SessLocal.main()
+    job = sess.execute("select * from jobs where id=:jid", {'jid': jid}).fetchone()
+    k = job.method
     data = Box(pickle.loads(job.data))
-    k = data.method
 
     print(f"Running job {k}")
     try:
@@ -36,15 +37,16 @@ def run_job(jid):
         # TODO pass results as byte-encoded json (json.dumps(obj).encode('utf-8') )
         res = pickle.dumps({'data': res})
         print('Timing', time.time() - start)
-        sql = f"update jobs set state='done', data=%s where id=%s"
-        engine.execute(sql, (psycopg2.Binary(res), job.id))
+        sql = text(f"update jobs set state='done', data=:data where id=:jid")
+        sess.execute(sql, {'data': psycopg2.Binary(res), 'jid': job.id})
         print("Job complete")
     except Exception as err:
         err = str(err)
         print(err)
         res = pickle.dumps({"error": err})
-        sql = f"update jobs set state='error', data=%s where id=%s"
-        engine.execute(sql, (psycopg2.Binary(res), job.id))
+        sql = text(f"update jobs set state='error', data=:data where id=:jid")
+        sess.execute(sql, {'data': psycopg2.Binary(res), 'jid': job.id})
+    sess.close()
 
     # 3eb71b3: unloading models. multiprocessing handles better
 
@@ -57,25 +59,39 @@ if __name__ == '__main__':
     print('torch.cuda.is_available()', torch.cuda.is_available())
     print("\n\n")
 
+    sess = SessLocal.main()
+    inactivity = 15 * 60  # 15 minutes
     while True:
         # if active_jobs: GPUtil.showUtilization()
 
         # Notify is online.
         sql = "update jobs_status set status='on', ts_svc=now(), svc=:svc"
-        engine.execute(text(sql), svc=socket.gethostname())
+        sess.execute(text(sql), {'svc': socket.gethostname()})
 
         # Find jobs
         sql = f"""
         update jobs set state='working'
         where id = (select id from jobs where state='new' limit 1)
-        returning id
+        returning id, method
         """
-        job = engine.execute(sql).fetchone()
+        job = sess.execute(sql).fetchone()
         if not job:
+            sql = f"""
+            select extract(epoch FROM (now() - ts_client)) as elapsed_client
+            from jobs_status;
+            """
+            if sess.execute(sql).fetchone().elapsed_client > inactivity:
+                nlp_.clear()
+
             time.sleep(.5)
             continue
 
-        # multiprocessing better than thread, kills stale tensorflow sessions
-        # https://github.com/tensorflow/tensorflow/issues/36465#issuecomment-582749350
-        multiprocessing.Process(target=run_job, args=(job.id,)).start()
+        # Threading keeps models around for re-use (cleared after inactivity)
+        # Multiprocessing fully wipes the process after run. Keras/TF has model-training memleak & can't recover GPU
+        # RAM, so just run books in Process https://github.com/tensorflow/tensorflow/issues/36465#issuecomment-582749350
+        if job.method == 'books':
+            multiprocessing.Process(target=run_job, args=(job.id,)).start()
+        else:
+            threading.Thread(target=run_job, args=(job.id,)).start()
         # run_job(job.id)
+    sess.close()

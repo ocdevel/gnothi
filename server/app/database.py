@@ -30,10 +30,7 @@ SessLocal = dict(
 def init_db():
     # add `import app.models` in calling code beforehand (after `import database`)
     Base.metadata.create_all(bind=engine)
-    # since connections are lazy, kick it off.
-    # db = SessLocal['main']()
-    # db.execute("select 1")
-    # db.close()
+    # e6dfbbd8: kick off create_all with sess.execute()
 
 
 def shutdown_db():

@@ -50,9 +50,10 @@ class NLP():
         self.m[k] = m
         return m
 
-    def unload(self, k):
-        if self.m.get(k, None):
-            del self.m[k]
+    def clear(self):
+        if not self.m: return
+        print("Clearing GPU RAM")
+        self.m = {}
         K.clear_session()
         torch.cuda.empty_cache()
 
