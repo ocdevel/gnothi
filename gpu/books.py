@@ -1,7 +1,7 @@
 import os, pdb, math
 from os.path import exists
 from tqdm import tqdm
-from utils import SessLocal, cosine, cluster, tnormalize
+from utils import SessLocal, cosine, cluster, normalize
 from cleantext import Clean
 from box import Box
 import numpy as np
@@ -193,7 +193,7 @@ def predict_books(user_id, entries, bust=False, n_recs=30, centroids=False):
         dnn = load_model(user_path)
     else:
         # normalize for cosine, and downstream DNN
-        vecs_user, vecs_books = tnormalize(vecs_user, vecs_books)
+        vecs_user, vecs_books = normalize(vecs_user, vecs_books)
 
         print("Finding cosine similarities")
         lhs = vecs_user
@@ -205,7 +205,7 @@ def predict_books(user_id, entries, bust=False, n_recs=30, centroids=False):
             ])
 
         # Take best cluster-score for every book
-        dist = cosine(lhs, vecs_books, abs=True, norm_in=False, norm_out=False).min(axis=0)
+        dist = cosine(lhs, vecs_books, norm_in=False).min(axis=0)
         # 0f29e591: minmax_scale(dist). norm_out=True works better
         # then map back onto books, so they're back in order (pandas index-matching)
         books['dist'] = dist
