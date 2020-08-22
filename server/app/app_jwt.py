@@ -1,7 +1,7 @@
 import datetime, pdb
-from app.app_app import app, SECRET, logger
+from app.app_app import app, logger
 import app.models as M
-from app.utils import vars
+from app.utils import vars, SECRET
 from passlib.hash import pbkdf2_sha256
 from sqlalchemy.orm import Session
 from fastapi import Depends
@@ -16,7 +16,7 @@ manager = LoginManager(SECRET, tokenUrl='/auth/token')
 
 @manager.user_loader
 def load_user(email: str):  # could also be an asynchronous function
-    return db.session.query(M.User).filter_by(username=email).first()
+    return db.session.query(M.User).filter_by(email=email).first()
 
 
 @app.post('/auth/token')
@@ -27,7 +27,7 @@ def login(data: OAuth2PasswordRequestForm = Depends()):
     user = load_user(email)  # we are using the same function to retrieve the user
     if not user:
         raise InvalidCredentialsException  # you can also use your own HTTPException
-    elif not pbkdf2_sha256.verify(password, user.password):
+    elif not pbkdf2_sha256.verify(password, user.hashed_password):
         raise InvalidCredentialsException
 
     access_token = manager.create_access_token(

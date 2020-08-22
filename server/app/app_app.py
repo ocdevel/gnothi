@@ -4,10 +4,8 @@ from fastapi_sqlalchemy import DBSessionMiddleware  # middleware helper
 
 
 from app.database import init_db, shutdown_db
-from app.utils import vars
+from app.utils import vars, SECRET
 import logging
-
-SECRET = vars.FLASK_KEY
 
 app = FastAPI()
 # app.secret_key = SECRET

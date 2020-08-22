@@ -4,21 +4,9 @@ from dateutil import tz
 from app.database import Base, SessLocal
 from app.utils import vars
 from app import ml
-from sqlalchemy import \
-    text, \
-    Column, \
-    Integer, \
-    Enum, \
-    Float, \
-    ForeignKey, \
-    Boolean, \
-    DateTime, \
-    JSON, \
-    Date, \
-    Unicode, \
-    func, \
-    TIMESTAMP
-from sqlalchemy.orm import relationship, backref
+from sqlalchemy import text, Column, Integer, Enum, Float, ForeignKey, Boolean, DateTime, JSON, Date, Unicode, \
+    func, TIMESTAMP
+from sqlalchemy.orm import relationship, backref, object_session
 from sqlalchemy.dialects.postgresql import UUID, BYTEA
 from sqlalchemy_utils.types import EmailType
 from sqlalchemy_utils.types.encrypted.encrypted_type import StringEncryptedType, FernetEngine
@@ -37,19 +25,18 @@ def Encrypt(Col, **args):
     return Column(StringEncryptedType(Col, vars.FLASK_KEY, FernetEngine), **args)
 
 
-# TODO switch to FastAPI
 class CustomBase():
     def json(self):
         return {k: getattr(self, k) for k in self.json_fields.split()}
 
 
-class User(Base, CustomBase):
+class User(Base):
     __tablename__ = 'users'
 
     id = Column(UUID, primary_key=True, default=uuid_)
     # https://stackoverflow.com/a/574698/362790
-    username = Column(EmailType, nullable=False, unique=True)  # TODO encrypt? need to sql-query often
-    password = Column(Unicode, nullable=False)  # TODO encrypting separately; convert to new setup?
+    email = Column(EmailType, nullable=False, unique=True)
+    hashed_password = Column(Unicode, nullable=False)
 
     first_name = Encrypt(Unicode)
     last_name = Encrypt(Unicode)
@@ -69,53 +56,18 @@ class User(Base, CustomBase):
     shares = relationship("Share")
     tags = relationship("Tag", order_by='Tag.name.asc()')
 
-    profile_fields = """
-    first_name
-    last_name
-    gender
-    orientation
-    timezone
-    bio
-    """
+    def as_user(self, id):
+        return db.session.query(User) \
+            .join(Share) \
+            .filter(Share.email == self.email, Share.user_id == id) \
+            .first()
 
-    json_fields = """
-    id
-    username
-    habitica_user_id
-    habitica_api_token
-    """ + profile_fields
-
-    def __init__(self, username, password):
-        self.username = username
-        self.password = password
-
-    def __repr__(self):
-        return f'<User {{ username: {self.username}, password: {self.password} }}'
-
-    def shared_with_me(self, id=None):
-        if id:
-            return db.session.query(User)\
-                .join(Share) \
-                .filter(Share.email == self.username, Share.user_id==id) \
-                .first()
-        return db.session.query(User)\
+    @property
+    def shared_with_me(self):
+        return object_session(self).query(User)\
             .join(Share)\
-            .filter(Share.email==self.username)\
+            .filter(Share.email==self.email)\
             .all()
-
-    def json(self, exclude_share=False):
-        # FIXME rethink this, recursion issue (mutual share). Any other possible recursion?
-        shared = [] if exclude_share else \
-            [s.json(exclude_share=True) for s in self.shared_with_me()]
-        return {
-            **super().json(),
-            'shared_with_me': shared,
-        }
-
-    def profile_json(self):
-        obj = {k: getattr(self, k) for k in self.profile_fields.split()}
-        obj['birthday'] = self.birthday.strftime('%Y-%m-%d') if self.birthday else None
-        return obj
 
     def profile_to_text(self):
         txt = ''
@@ -135,7 +87,7 @@ class User(Base, CustomBase):
         return txt
 
 
-class Entry(Base, CustomBase):
+class Entry(Base):
     __tablename__ = 'entries'
 
     id = Column(UUID, primary_key=True, default=uuid_)
@@ -151,19 +103,13 @@ class Entry(Base, CustomBase):
     sentiment = Encrypt(Unicode)
 
     user_id = Column(UUID, ForeignKey('users.id'))
-    entry_tags = relationship("EntryTag")
+    entry_tags_ = relationship("EntryTag")
 
     # share_tags = relationship("EntryTag", secondary="shares_tags")
 
-    json_fields = """
-    id
-    title
-    text
-    created_at
-    title_summary
-    text_summary
-    sentiment
-    """
+    @property
+    def entry_tags(self):
+        return {t.tag_id: True for t in self.entry_tags_}
 
     @staticmethod
     def snoop(
@@ -236,15 +182,6 @@ class Entry(Base, CustomBase):
         t = threading.Thread(target=Entry.run_models_, args=(self.id,))
         t.start()
         # Entry.run_models_(self.id)  # debug w/o threading
-
-    # TODO look into https://stackoverflow.com/questions/7102754/jsonify-a-sqlalchemy-result-set-in-flask
-    #                https://stackoverflow.com/questions/5022066/how-to-serialize-sqlalchemy-result-to-json
-    # Marshmallow    https://marshmallow-sqlalchemy.readthedocs.io/en/latest/
-    def json(self):
-        return {
-            **super().json(),
-            'entry_tags': {t.tag_id: True for t in self.entry_tags},
-        }
 
 
 class FieldType(enum.Enum):
@@ -332,7 +269,7 @@ class Field(Base, CustomBase):
         }
 
 
-class FieldEntry(Base, CustomBase):
+class FieldEntry(Base):
     __tablename__ = 'field_entries'
     id = Column(UUID, primary_key=True, default=uuid_)
     value = Column(Float)  # TODO Can everything be a number? reconsider
@@ -365,7 +302,7 @@ class FieldEntry(Base, CustomBase):
         return q
 
 
-class Person(Base, CustomBase):
+class Person(Base):
     __tablename__ = 'people'
     id = Column(UUID, primary_key=True, default=uuid_)
     name = Encrypt(Unicode)
@@ -375,16 +312,8 @@ class Person(Base, CustomBase):
 
     user_id = Column(UUID, ForeignKey('users.id'), nullable=False)
 
-    json_fields = """
-    id
-    name
-    relation
-    issues
-    bio
-    """
 
-
-class Share(Base, CustomBase):
+class Share(Base):
     __tablename__ = 'shares'
     id = Column(UUID, primary_key=True, default=uuid_)
     user_id = Column(UUID, ForeignKey('users.id'), index=True)
@@ -395,25 +324,14 @@ class Share(Base, CustomBase):
     profile = Column(Boolean)
 
     share_tags = relationship("ShareTag")
-    tags = relationship("Tag", secondary="shares_tags")
+    tags_ = relationship("Tag", secondary="shares_tags")
 
-    json_fields = """
-    id
-    user_id
-    email
-    fields
-    books
-    profile
-    """
-
-    def json(self):
-        return {
-            **super().json(),
-            'tags': {t.tag_id: True for t in self.share_tags},
-        }
+    @property
+    def tags(self):
+        return {t.tag_id: True for t in self.share_tags}
 
 
-class Tag(Base, CustomBase):
+class Tag(Base):
     __tablename__ = 'tags'
     id = Column(UUID, primary_key=True, default=uuid_)
     user_id = Column(UUID, ForeignKey('users.id'), index=True)
@@ -424,14 +342,6 @@ class Tag(Base, CustomBase):
 
     shares = relationship("Share", secondary="shares_tags")
 
-    json_fields = """
-    id
-    user_id
-    name
-    selected
-    main
-    """
-
     @staticmethod
     def snoop(from_email, to_id):
         return db.session.query(Tag)\
@@ -440,13 +350,13 @@ class Tag(Base, CustomBase):
 
 
 # FIXME cascade https://www.michaelcho.me/article/many-to-many-relationships-in-sqlalchemy-models-flask
-class EntryTag(Base, CustomBase):
+class EntryTag(Base):
     __tablename__ = 'entries_tags'
     entry_id = Column(UUID, ForeignKey('entries.id'), primary_key=True)
     tag_id = Column(UUID, ForeignKey('tags.id'), primary_key=True)
 
 
-class ShareTag(Base, CustomBase):
+class ShareTag(Base):
     __tablename__ = 'shares_tags'
     share_id = Column(UUID, ForeignKey('shares.id'), primary_key=True)
     tag_id = Column(UUID, ForeignKey('tags.id'), primary_key=True)
@@ -463,7 +373,7 @@ class Shelves(enum.Enum):
     recommend = 5
 
 
-class Bookshelf(Base, CustomBase):
+class Bookshelf(Base):
     __tablename__ = 'bookshelf'
     book_id = Column(Integer, primary_key=True)
     user_id = Column(UUID, ForeignKey('users.id'), primary_key=True)

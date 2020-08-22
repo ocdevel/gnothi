@@ -1,6 +1,6 @@
-import pdb, re
-import datetime
-from fastapi import Depends, Response
+import pdb, re, datetime
+from typing import List, Dict, Any
+from fastapi import Depends, Response, HTTPException
 from app.app_app import app, logger
 from app.app_jwt import manager
 from fastapi_sqlalchemy import db  # an object to provide global access to a database session
@@ -13,72 +13,70 @@ import app.schemas as S
 from sqlalchemy.orm import Session
 
 
-def as_user_(current_identity: M.User, as_user: str):
-    if as_user and as_user != current_identity.id:
-        user = current_identity.shared_with_me(as_user)
+def as_user_(viewer: M.User, as_user: str):
+    if as_user and as_user != viewer.id:
+        user = viewer.as_user(as_user)
         if user:
             user.share_data = db.session.query(M.Share)\
-                .filter_by(user_id=user.id, email=current_identity.username)\
+                .filter_by(user_id=user.id, email=viewer.email)\
                 .first()
             return user, True
-    return current_identity, False
+    return viewer, False
 
 
-def cant_snoop(response: Response, feature=None):
+def send_error(message: str, code: int = 400):
+    raise HTTPException(status_code=code, detail=message)
+
+
+def cant_snoop(feature=None):
     message = f"{feature} isn't shared" if feature else "This feature isn't shared"
-    response.status_code = 401
-    return {'data': None, 'message': message}
-
-
-def send_error(response: Response, message, code: int = 400):
-    response.status_code = code
-    return {'ok': False, 'message': message}
+    return send_error(message, 401)
 
 
 @app.get('/jobs-status')
 def jobs_status_get(current_identity=Depends(manager)):
-    return {'data': jobs_status()}
+    return jobs_status()
 
  
-@app.get('/user')
-def user_get(response: Response, as_user: str = None,  current_identity=Depends(manager)):
+@app.get('/user', response_model=S.UserOut)
+def user_get(as_user: str = None,  current_identity=Depends(manager)):
     user, snooping = as_user_(current_identity, as_user)
-    if snooping: return cant_snoop(response)  # FIXME not handling this?
-    return {'data': user.json()}
+    if snooping: return cant_snoop()  # FIXME not handling this?
+    return user
 
 
 @app.post('/register')
-def register_post(data: S.Reg, response: Response):
-    if db.session.query(M.User).filter(M.User.username == data.username).first():
-        return send_error(response, "Email already taken")
-    u = M.User(data.username, pbkdf2_sha256.hash(data.password))
+def register_post(data: S.UserIn):
+    if db.session.query(M.User).filter(M.User.email == data.username).first():
+        return send_error("Email already taken")
+    u = M.User(email=data.username, hashed_password=pbkdf2_sha256.hash(data.password))
     u.tags.append(M.Tag(main=True, selected=True, name='Main'))
     db.session.add(u)
     db.session.commit()
     return {}
 
 
-@app.get('/profile')
-def profile_get(response: Response, as_user: str = None, current_identity=Depends(manager)):
+@app.get('/profile', response_model=S.ProfileOut)
+def profile_get(as_user: str = None, current_identity=Depends(manager)):
     user, snooping = as_user_(current_identity, as_user)
     if snooping and not user.share_data.profile:
-        return cant_snoop(response)
-    return {'data': user.profile_json()}
+        return cant_snoop()
+    return user
 
 
 @app.put('/profile/timezone')
-def profile_timezone_put(data: S.ProfileTimezone, response: Response, as_user: str = None, current_identity=Depends(manager)):
+def profile_timezone_put(data: S.TimezoneIn, as_user: str = None, current_identity=Depends(manager)):
     user, snooping = as_user_(current_identity, as_user)
-    if snooping: return cant_snoop(response)
+    if snooping: return cant_snoop()
     user.timezone = data.timezone
     db.session.commit()
     return {}
 
 
 @app.put('/profile')
-def profile_put(data: S.Profile, response: Response, as_user: str = None, current_identity=Depends(manager)):
+def profile_put(data: S.ProfileIn, as_user: str = None, current_identity=Depends(manager)):
     user, snooping = as_user_(current_identity, as_user)
-    if snooping: return cant_snoop(response)
+    if snooping: return cant_snoop()
     for k, v in data.dict().items():
         if k not in M.User.profile_fields.split(): continue
         v = v or None  # remove empty strings
@@ -87,19 +85,18 @@ def profile_put(data: S.Profile, response: Response, as_user: str = None, curren
     return {}
 
 
-@app.get('/people')
-def people_get(response: Response, as_user: str = None, current_identity=Depends(manager)):
+@app.get('/people', response_model=List[S.PersonOut])
+def people_get(as_user: str = None, current_identity=Depends(manager)):
     user, snooping = as_user_(current_identity, as_user)
     if snooping and not user.share_data.profile:
-        return cant_snoop(response)
-    res = [p.json() for p in user.people]
-    return {'data': res}
+        return cant_snoop()
+    return user.people
 
 
 @app.post('/people')
-def people_post(data: S.Person, response: Response, as_user: str = None,  current_identity=Depends(manager)):
+def people_post(data: S.PersonIn, as_user: str = None,  current_identity=Depends(manager)):
     user, snooping = as_user_(current_identity, as_user)
-    if snooping: return cant_snoop(response)
+    if snooping: return cant_snoop()
     p = M.Person(**data.dict())
     user.people.append(p)
     db.session.commit()
@@ -107,9 +104,9 @@ def people_post(data: S.Person, response: Response, as_user: str = None,  curren
 
 
 @app.put('/people/{person_id}')
-def person_put(data: S.Person, person_id: str, response: Response, as_user: str = None,  current_identity=Depends(manager)):
+def person_put(data: S.PersonIn, person_id: str, as_user: str = None,  current_identity=Depends(manager)):
     user, snooping = as_user_(current_identity, as_user)
-    if snooping: return cant_snoop(response)
+    if snooping: return cant_snoop()
     # TODO and share_id = ...
     p = db.session.query(M.Person).filter_by(user_id=user.id, id=person_id).first()
     for k, v in data.dict().items():
@@ -119,30 +116,29 @@ def person_put(data: S.Person, person_id: str, response: Response, as_user: str 
 
 
 @app.delete('/people/{person_id}')
-def person_delete(person_id: str, response: Response, as_user: str = None, current_identity=Depends(manager)):
+def person_delete(person_id: str, as_user: str = None, current_identity=Depends(manager)):
     user, snooping = as_user_(current_identity, as_user)
-    if snooping: return cant_snoop(response)
+    if snooping: return cant_snoop()
     pq = db.session.query(M.Person).filter_by(user_id=user.id, id=person_id)
     pq.delete()
     db.session.commit()
     return {}
 
 
-@app.get('/tags')
+@app.get('/tags', response_model=List[S.TagOut])
 def tags_get(as_user: str = None, current_identity=Depends(manager)):
     user, snooping = as_user_(current_identity, as_user)
     if snooping:
-        data = M.Tag.snoop(current_identity.username, user.id).all()
+        data = M.Tag.snoop(current_identity.email, user.id).all()
     else:
         data = user.tags
-    data = [j.json() for j in data]
-    return {'data': data}
+    return data
 
 
 @app.post('/tags')
-def tags_post(data: S.Tag, response: Response, as_user: str = None,  current_identity=Depends(manager)):
+def tags_post(data: S.TagIn, as_user: str = None,  current_identity=Depends(manager)):
     user, snooping = as_user_(current_identity, as_user)
-    if snooping: return cant_snoop(response)
+    if snooping: return cant_snoop()
     user.tags.append(M.Tag(name=data.name))
     db.session.commit()
     return {}
@@ -155,9 +151,9 @@ def tag_q(user_id, tag_id):
 
 
 @app.put('/tags/{tag_id}')
-def tag_put(tag_id, data: S.Tag, response: Response, as_user: str = None,  current_identity=Depends(manager)):
+def tag_put(tag_id, data: S.TagIn, as_user: str = None,  current_identity=Depends(manager)):
     user, snooping = as_user_(current_identity, as_user)
-    if snooping: return cant_snoop(response)
+    if snooping: return cant_snoop()
     tagq, tag = tag_q(user.id, tag_id)
     data = data.dict()
     for k in ['name', 'selected']:
@@ -167,12 +163,12 @@ def tag_put(tag_id, data: S.Tag, response: Response, as_user: str = None,  curre
 
 
 @app.delete('/tags/{tag_id}')
-def tag_delete(tag_id, response: Response, as_user: str = None, current_identity=Depends(manager)):
+def tag_delete(tag_id, as_user: str = None, current_identity=Depends(manager)):
     user, snooping = as_user_(current_identity, as_user)
-    if snooping: return cant_snoop(response)
+    if snooping: return cant_snoop()
     tagq, tag = tag_q(user.id, tag_id)
     if tag.main:
-        return send_error(response, "Can't delete your main journal")
+        return send_error("Can't delete your main journal")
     # FIXME cascade
     db.session.query(M.EntryTag).filter_by(tag_id=tag_id).delete()
     tagq.delete()
@@ -180,13 +176,11 @@ def tag_delete(tag_id, response: Response, as_user: str = None, current_identity
     return {}
 
 
-@app.get('/shares')
-def shares_get(response: Response, as_user: str = None, current_identity=Depends(manager)):
+@app.get('/shares', response_model=List[S.ShareOut])
+def shares_get(as_user: str = None, current_identity=Depends(manager)):
     user, snooping = as_user_(current_identity, as_user)
-    if snooping: return cant_snoop(response)
-    shared = db.session.query(M.Share).filter_by(user_id=user.id).all()
-    shared = [x.json() for x in shared]
-    return {'data': shared}
+    if snooping: return cant_snoop()
+    return db.session.query(M.Share).filter_by(user_id=user.id).all()
 
 
 def shares_put_post(user, data, share_id=None):
@@ -210,33 +204,33 @@ def shares_put_post(user, data, share_id=None):
 
 
 @app.post('/shares')
-def shares_post(data: S.Share, response: Response, as_user: str = None, current_identity=Depends(manager)):
+def shares_post(data: S.ShareIn, as_user: str = None, current_identity=Depends(manager)):
     user, snooping = as_user_(current_identity, as_user)
-    if snooping: return cant_snoop(response)
+    if snooping: return cant_snoop()
     return shares_put_post(user, data)
 
 
 @app.put('/shares/{share_id}')
-def share_put(share_id, data: S.Share, response: Response, as_user: str = None, current_identity=Depends(manager)):
+def share_put(share_id, data: S.ShareIn, as_user: str = None, current_identity=Depends(manager)):
     user, snooping = as_user_(current_identity, as_user)
-    if snooping: return cant_snoop(response)
+    if snooping: return cant_snoop()
     return shares_put_post(user, data, share_id)
 
 
 @app.delete('/shares/{share_id}')
-def share_delete(share_id, response: Response, as_user: str = None, current_identity=Depends(manager)):
+def share_delete(share_id, as_user: str = None, current_identity=Depends(manager)):
     user, snooping = as_user_(current_identity, as_user)
-    if snooping: return cant_snoop(response)
+    if snooping: return cant_snoop()
     db.session.query(M.ShareTag).filter_by(share_id=share_id).delete()
     db.session.query(M.Share).filter_by(user_id=user.id, id=share_id).delete()
     db.session.commit()
     return {}
 
 
-def entries_put_post(response, user, data: S.Entry, entry=None):
+def entries_put_post(user, data: S.EntryIn, entry=None):
     data = data.dict()
     if not any(v for k,v in data['tags'].items()):
-        return send_error(response, 'Each entry must belong to at least one journal')
+        return send_error('Each entry must belong to at least one journal')
 
     if entry:
         db.session.query(M.EntryTag).filter_by(entry_id=entry.id).delete()
@@ -259,60 +253,58 @@ def entries_put_post(response, user, data: S.Entry, entry=None):
     return {}
 
 
-@app.get('/entries')
+@app.get('/entries', response_model=List[S.EntryOut])
 def entries_get(as_user: str = None, current_identity=Depends(manager)):
     user, snooping = as_user_(current_identity, as_user)
-    data = M.Entry.snoop(current_identity.username, user.id, snooping=snooping).all()
-    data = [e.json() for e in data]
-    return {'data': data}
+    return M.Entry.snoop(current_identity.email, user.id, snooping=snooping).all()
 
 
 @app.post('/entries')
-def entries_post(data: S.Entry, response: Response, as_user: str = None, current_identity=Depends(manager)):
+def entries_post(data: S.EntryIn, as_user: str = None, current_identity=Depends(manager)):
     user, snooping = as_user_(current_identity, as_user)
-    if snooping: return cant_snoop(response)
-    return entries_put_post(response, user, data)
+    if snooping: return cant_snoop()
+    return entries_put_post(user, data)
 
 
-@app.get('/entries/{entry_id}')
+@app.get('/entries/{entry_id}', response_model=S.EntryOut)
 def entry_get(entry_id, as_user: str = None, current_identity=Depends(manager)):
     user, snooping = as_user_(current_identity, as_user)
-    entry = M.Entry.snoop(current_identity.username, user.id, snooping=snooping, entry_id=entry_id).first()
-    return {'data': entry.json()}
+    entry = M.Entry.snoop(current_identity.email, user.id, snooping=snooping, entry_id=entry_id).first()
+    return entry
 
 
 @app.put('/entries/{entry_id}')
-def entry_put(entry_id, data: S.Entry, response: Response, as_user: str = None, current_identity=Depends(manager)):
+def entry_put(entry_id, data: S.EntryIn, as_user: str = None, current_identity=Depends(manager)):
     user, snooping = as_user_(current_identity, as_user)
-    if snooping: return cant_snoop(response)
-    entry = M.Entry.snoop(current_identity.username, user.id, entry_id=entry_id).first()
-    return entries_put_post(response, user, data, entry)
+    if snooping: return cant_snoop()
+    entry = M.Entry.snoop(current_identity.email, user.id, entry_id=entry_id).first()
+    return entries_put_post(user, data, entry)
 
 
 @app.delete('/entries/{entry_id}')
-def entry_delete(entry_id, response: Response, as_user: str = None, current_identity=Depends(manager)):
+def entry_delete(entry_id, as_user: str = None, current_identity=Depends(manager)):
     user, snooping = as_user_(current_identity, as_user)
-    if snooping: return cant_snoop(response)
-    entryq = M.Entry.snoop(current_identity.username, user.id, entry_id=entry_id)
+    if snooping: return cant_snoop()
+    entryq = M.Entry.snoop(current_identity.email, user.id, entry_id=entry_id)
     db.session.query(M.EntryTag).filter_by(entry_id=entry_id).delete()
     entryq.delete()
     db.session.commit()
     return {}
 
 
-@app.get('/fields')
-def fields_get(response: Response, as_user: str = None, current_identity=Depends(manager)):
+@app.get('/fields') #, response_model=S.FieldsOut)
+def fields_get(as_user: str = None, current_identity=Depends(manager)):
     user, snooping = as_user_(current_identity, as_user)
     if snooping and not user.share_data.fields:
-        return cant_snoop(response, 'Fields')
-    data = {f.id: f.json() for f in user.fields}
-    return {'data': data}
+        return cant_snoop('Fields')
+    return {f.id: f for f in user.fields}
+    # return user.fields
 
 
 @app.post('/fields')
-def fields_post(data: S.Field, response: Response, as_user: str = None, current_identity=Depends(manager)):
+def fields_post(data: S.Field, as_user: str = None, current_identity=Depends(manager)):
     user, snooping = as_user_(current_identity, as_user)
-    if snooping: return cant_snoop(response)
+    if snooping: return cant_snoop()
     f = M.Field(**data.dict())
     user.fields.append(f)
     db.session.commit()
@@ -320,9 +312,9 @@ def fields_post(data: S.Field, response: Response, as_user: str = None, current_
 
 
 @app.put('/fields/{field_id}')
-def field_put(field_id, data: S.Field, response: Response, as_user: str = None, current_identity=Depends(manager)):
+def field_put(field_id, data: S.Field, as_user: str = None, current_identity=Depends(manager)):
     user, snooping = as_user_(current_identity, as_user)
-    if snooping: return cant_snoop(response)
+    if snooping: return cant_snoop()
     f = db.session.query(M.Field).filter_by(user_id=user.id, id=field_id).first()
     for k, v in data.dict().items():
         setattr(f, k, v)
@@ -330,9 +322,9 @@ def field_put(field_id, data: S.Field, response: Response, as_user: str = None, 
     return {}
 
 @app.put('/fields/{field_id}/exclude')
-def field_put(field_id, data: S.FieldExclude, response: Response, as_user: str = None, current_identity=Depends(manager)):
+def field_put(field_id, data: S.FieldExclude, as_user: str = None, current_identity=Depends(manager)):
     user, snooping = as_user_(current_identity, as_user)
-    if snooping: return cant_snoop(response)
+    if snooping: return cant_snoop()
     f = db.session.query(M.Field).filter_by(user_id=user.id, id=field_id).first()
     f.excluded_at = data.excluded_at  # just do datetime.now()?
     db.session.commit()
@@ -340,9 +332,9 @@ def field_put(field_id, data: S.FieldExclude, response: Response, as_user: str =
 
 
 @app.delete('/fields/{field_id}')
-def field_delete(field_id, response: Response, as_user: str = None, current_identity=Depends(manager)):
+def field_delete(field_id, as_user: str = None, current_identity=Depends(manager)):
     user, snooping = as_user_(current_identity, as_user)
-    if snooping: return cant_snoop(response)
+    if snooping: return cant_snoop()
     db.session.query(M.FieldEntry).filter_by(user_id=user.id, field_id=field_id).delete()
     db.session.query(M.Field).filter_by(user_id=user.id, id=field_id).delete()
     db.session.commit()
@@ -350,19 +342,18 @@ def field_delete(field_id, response: Response, as_user: str = None, current_iden
 
 
 @app.get('/field-entries')
-def field_entries_get(response: Response, as_user: str = None, current_identity=Depends(manager)):
+def field_entries_get(as_user: str = None, current_identity=Depends(manager)):
     user, snooping = as_user_(current_identity, as_user)
     if snooping and not user.share_data.fields:
-        return cant_snoop(response, 'Fields')
+        return cant_snoop('Fields')
     res = M.FieldEntry.get_today_entries(user.id).all()
-    res = {f.field_id: f.value for f in res}
-    return {'data': res}
+    return {f.field_id: f.value for f in res}
 
 
 @app.post('/field-entries/{field_id}')
-def field_entries_post(field_id, data: S.FieldEntry, response: Response, as_user: str = None, current_identity=Depends(manager)):
+def field_entries_post(field_id, data: S.FieldEntry, as_user: str = None, current_identity=Depends(manager)):
     user, snooping = as_user_(current_identity, as_user)
-    if snooping: return cant_snoop(response)
+    if snooping: return cant_snoop()
     fe = M.FieldEntry.get_today_entries(user.id, field_id).first()
     v = float(data.value)
     if fe:
@@ -376,31 +367,28 @@ def field_entries_post(field_id, data: S.FieldEntry, response: Response, as_user
 
 @app.get('/influencers')
 def influencers_get(
-    response: Response,
     target: str = None,
     as_user: str = None,
     current_identity=Depends(manager)
 ):
     user, snooping = as_user_(current_identity, as_user)
     if snooping and not user.share_data.fields:
-        return cant_snoop(response, 'Fields')
+        return cant_snoop('Fields')
     targets, all_imps, next_preds = ml.influencers(
         user.id,
         specific_target=target
     )
-    data = {'overall': all_imps, 'per_target': targets, 'next_preds': next_preds}
-    return {'data': data}
+    return {'overall': all_imps, 'per_target': targets, 'next_preds': next_preds}
 
 
 @app.post('/themes')
 def themes_post(
     data: S.LimitEntries,
-    response: Response,
     as_user: str = None,
     current_identity=Depends(manager)
 ):
     user, snooping = as_user_(current_identity, as_user)
-    entries = M.Entry.snoop(current_identity.username, user.id, snooping=snooping, days=data.days, tags=data.tags)
+    entries = M.Entry.snoop(current_identity.email, user.id, snooping=snooping, days=data.days, tags=data.tags)
     entries = [e.text for e in entries.all()]
 
     # For dreams, special handle: process every sentence. TODO make note in UI
@@ -411,44 +399,40 @@ def themes_post(
     #         entries = [s.text for e in entries for s in e.sents]
 
     if len(entries) < 2:
-        return send_error(response, "Not enough entries to work with, come back later")
+        return send_error("Not enough entries to work with, come back later")
     data = ml.themes(entries)
     if len(data) == 0:
-        return send_error(response, "No patterns found in your entries yet, come back later")
-    return {'data': data}
+        return send_error("No patterns found in your entries yet, come back later")
+    return data
 
 
 @app.post('/books')
 def books_post(
-    response: Response,
     as_user: str = None,
     current_identity=Depends(manager)
 ):
     user, snooping = as_user_(current_identity, as_user)
     if snooping and not user.share_data.books:
-        return cant_snoop(response, 'Books')
+        return cant_snoop('Books')
 
-    books = ml.books(user)
-    return {'data': books}
+    return ml.books(user)
 
 
 @app.post('/query')
 def question_post(
     data: S.Question,
-    response: Response,
     as_user: str = None,
     current_identity=Depends(manager)
 ):
     user, snooping = as_user_(current_identity, as_user)
     question = data.query
-    entries = M.Entry.snoop(current_identity.username, user.id, snooping=snooping, days=data.days, tags=data.tags)
+    entries = M.Entry.snoop(current_identity.email, user.id, snooping=snooping, days=data.days, tags=data.tags)
     entries = [e.text for e in entries]
 
     if (not snooping) or user.share_data.profile:
         entries = [user.profile_to_text()] + entries
 
-    res = ml.query(question, entries)
-    return {'data': res}
+    return ml.query(question, entries)
 
 
 @app.post('/summarize')
@@ -458,39 +442,37 @@ def summarize_post(
     current_identity=Depends(manager)
 ):
     user, snooping = as_user_(current_identity, as_user)
-    entries = M.Entry.snoop(current_identity.username, user.id, snooping=snooping, days=data.days, tags=data.tags)
+    entries = M.Entry.snoop(current_identity.email, user.id, snooping=snooping, days=data.days, tags=data.tags)
 
     entries = ' '.join(e.text for e in entries)
     entries = re.sub('\s+', ' ', entries)  # mult new-lines
 
     min_ = int(data.words / 2)
     summary = ml.summarize(entries, min_length=min_, max_length=data.words)
-    data = {'summary': summary["summary_text"], 'sentiment': summary["sentiment"]}
-    return {'data': data}
+    return {'summary': summary["summary_text"], 'sentiment': summary["sentiment"]}
 
 
 @app.post('/books/{bid}/{shelf}')
-def bookshelf_post(bid, shelf, response: Response, as_user: str = None, current_identity=Depends(manager)):
+def bookshelf_post(bid, shelf, as_user: str = None, current_identity=Depends(manager)):
     user, snooping = as_user_(current_identity, as_user)
     if snooping and not user.share_data.books:
-        return cant_snoop(response, 'Books')
+        return cant_snoop('Books')
     M.Bookshelf.upsert(user.id, bid, shelf)
-    return {'data': None}
+    return {}
 
 
 @app.get('/books/{shelf}')
-def bookshelf_get(shelf, response: Response, as_user: str = None, current_identity=Depends(manager)):
+def bookshelf_get(shelf, as_user: str = None, current_identity=Depends(manager)):
     user, snooping = as_user_(current_identity, as_user)
     if snooping and not user.share_data.books:
-        return cant_snoop(response, 'Books')
-    data = M.Bookshelf.get_shelf(user.id, shelf)
-    return {'data': data}
+        return cant_snoop('Books')
+    return M.Bookshelf.get_shelf(user.id, shelf)
 
 
 @app.post('/habitica')
-def habitica_post(data: S.ProfileHabitica, response: Response, as_user: str = None, current_identity=Depends(manager)):
+def habitica_post(data: S.HabiticaIn, as_user: str = None, current_identity=Depends(manager)):
     user, snooping = as_user_(current_identity, as_user)
-    if snooping: return cant_snoop(response)
+    if snooping: return cant_snoop()
     user.habitica_user_id = data.habitica_user_id
     user.habitica_api_token = data.habitica_api_token
     db.session.commit()
@@ -498,9 +480,9 @@ def habitica_post(data: S.ProfileHabitica, response: Response, as_user: str = No
 
 
 @app.post('/habitica/sync')
-def habitica_sync_post(response: Response, as_user: str = None, current_identity=Depends(manager)):
+def habitica_sync_post(as_user: str = None, current_identity=Depends(manager)):
     user, snooping = as_user_(current_identity, as_user)
-    if snooping: return cant_snoop(response)
+    if snooping: return cant_snoop()
     if not user.habitica_user_id:
         return {}
     habitica.sync_for(user)

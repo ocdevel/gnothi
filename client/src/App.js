@@ -68,15 +68,16 @@ function App() {
     }
     obj['url'] = url
     try {
-      const res = await axios(obj)
-      return {code: res.status, ...res.data}
+      const {status: code, data} = await axios(obj)
+      return {code, data}
     } catch (error) {
-      const code = error.response.status
+      let {status: code, statusText: message, data} = error.response
+      message = data.detail || message || "There was an error"
       // Show errors, but not for 401 (we simply restrict access to components)
-      if (code >= 400 && code != 401) {
-        setServerError(error.response.statusText || "There was an error")
+      if (code >= 400 && code !== 401) {
+        setServerError(message)
       }
-      return {code, ...error.response.data}
+      return {code, message, data}
     }
   }
 
@@ -120,12 +121,12 @@ function App() {
     return <>
       {as && (
         <NavDropdown.Item onClick={() => setAs()}>
-          {emoji("🔀")}{user.username}
+          {emoji("🔀")}{user.email}
         </NavDropdown.Item>
       )}
       {user.shared_with_me.map(s => s.id != as && (
         <NavDropdown.Item onClick={() => setAs(s.id)}>
-          {emoji("🔀")}{s.username}
+          {emoji("🔀")}{s.email}
         </NavDropdown.Item>
       ))}
       <NavDropdown.Divider />
@@ -133,10 +134,10 @@ function App() {
   }
 
   const renderNav = () => {
-    let username = user.username
+    let email = user.email
     if (as) {
-      username = _.find(user.shared_with_me, {id: as}).username
-      username = <>{emoji("🕵️")} {username}</>
+      email = _.find(user.shared_with_me, {id: as}).email
+      email = <>{emoji("🕵️")} {email}</>
     }
 
     return (
@@ -149,7 +150,7 @@ function App() {
           <Nav className="mr-auto">
           </Nav>
           <Nav>
-            <NavDropdown title={username} id="basic-nav-dropdown">
+            <NavDropdown title={email} id="basic-nav-dropdown">
               {renderAsSelect()}
               <LinkContainer to="/profile/profile">
                 <NavDropdown.Item>Profile</NavDropdown.Item>

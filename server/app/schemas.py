@@ -1,35 +1,64 @@
 import datetime
-from typing import Optional, List
+from typing import Optional, List, Any, Dict
 from pydantic import BaseModel
+import app.models as M
 
 
-class Reg(BaseModel):
+class Out(BaseModel):
+    class Config:
+        orm_mode = True
+
+
+class UserIn(BaseModel):
     username: str
     password: str
 
 
-class ProfileTimezone(BaseModel):
+class UserOut(Out):
+    id: Any
+    email: Any
+    habitica_user_id: Optional[str] = None
+    habitica_api_token: Optional[str] = None
+    shared_with_me: Any
+
+
+class TimezoneIn(BaseModel):
     timezone: Optional[str] = None
 
 
-class ProfileHabitica(BaseModel):
+class HabiticaIn(BaseModel):
     habitica_user_id: Optional[str] = None
     habitica_api_token: Optional[str] = None
 
 
-class Profile(ProfileHabitica, ProfileTimezone):
+class ProfileIn(TimezoneIn):
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     orientation: Optional[str] = None
     gender: Optional[str] = None
-    birthday: Optional[str] = None
+    birthday: Optional[Any] = None
     bio: Optional[str] = None
 
 
-class Entry(BaseModel):
+class ProfileOut(ProfileIn, Out):
+    pass
+
+
+class EntryIn(BaseModel):
     title: Optional[str] = None
     text: str
     tags: dict
+
+
+class EntryOut(Out):
+    id: str
+    title: Optional[str] = None
+    text: str
+    created_at: Optional[datetime.datetime] = None
+    title_summary: str
+    text_summary: str
+    sentiment: Optional[str] = ''
+    entry_tags: Dict
 
 
 class FieldExclude(BaseModel):
@@ -40,22 +69,44 @@ class Field(FieldExclude):
     type: str
     name: str
     default_value: str
-    default_value_value: Optional[str] = None
+    default_value_value: Optional[float] = None
     target: bool
+
+## TODO can't get __root__ setup working
+# class FieldOut(Out):
+#     id: str
+#     type: M.FieldType
+#     name: str
+#     created_at: Optional[Any] = None
+#     excluded_at: Optional[Any] = None
+#     default_value: Optional[M.DefaultValueTypes] = M.DefaultValueTypes.value
+#     default_value_value: Optional[float] = None
+#     target: Optional[bool] = False
+#     service: Optional[str] = None
+#     service_id: Optional[str] = None
+#     history: Any
+#
+#
+# class FieldsOut(Out):
+#     __root__: Dict[str, FieldOut]
 
 
 class FieldEntry(BaseModel):
     value: float
 
 
-class Person(BaseModel):
+class PersonIn(BaseModel):
     name: Optional[str] = None
     relation: Optional[str] = None
     issues: Optional[str] = None
     bio: Optional[str] = None
 
 
-class Share(BaseModel):
+class PersonOut(PersonIn, Out):
+    pass
+
+
+class ShareIn(BaseModel):
     email: str
     fields_: Optional[bool] = False
     books: Optional[bool] = False
@@ -66,9 +117,25 @@ class Share(BaseModel):
         fields = {'fields_': 'fields'}
 
 
-class Tag(BaseModel):
+class ShareOut(ShareIn):
+    id: str
+
+    class Config:
+        fields = {'fields_': 'fields'}
+        orm_mode = True
+
+
+class TagIn(BaseModel):
     name: str
     selected: Optional[bool] = False
+
+
+class TagOut(TagIn, Out):
+    id: str
+    user_id: str
+    name: str
+    selected: Optional[bool] = False
+    main: Optional[bool] = False
 
 
 class LimitEntries(BaseModel):

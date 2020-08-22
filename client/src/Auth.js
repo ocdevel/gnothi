@@ -19,18 +19,25 @@ export default function Auth({fetch_, onAuth}) {
   const changePassword = e => setPassword(e.target.value)
   const changePasswordConfirm = e => setPasswordConfirm(e.target.value)
 
-  const login = async () => {
-    const {access_token, code} = await fetch_('auth/token', 'POST', {username, password})
-    localStorage.setItem('jwt', access_token);
+  const submit_ = async (url, method, body) => {
+    setError(null)
+    setSubmitting(true)
+    const {code, message, data} = await fetch_(url, method, body)
     setSubmitting(false)
-    onAuth(access_token);
+    console.log(code, message, data)
+    if (code !== 200) {
+      setError(message)
+      return false
+    }
+    return data
   }
 
   const submitLogin = async e => {
     e.preventDefault();
-    setError(null)
-    setSubmitting(true)
-    login()
+    const res = await submit_('auth/token', 'POST', {username, password})
+    if (!res) {return}
+    localStorage.setItem('jwt', res.access_token);
+    onAuth(res.access_token);
   };
 
   const submitRegister = async e => {
@@ -38,15 +45,10 @@ export default function Auth({fetch_, onAuth}) {
     if (password !== passwordConfirm) {
       return setError("Password & Confirm don't match")
     }
-    setError(null)
-    setSubmitting(true)
     // assert password = passwordConfirm. See react-bootstrap, use yup library or something for form stuff
-    const {message, code} = await fetch_('register', 'POST', {username, password})
-    if (code !== 200) {
-      setSubmitting(false)
-      return setError(message)
-    }
-    await login();
+    const res = await submit_('register', 'POST', {username, password})
+    if (!res) {return}
+    await submitLogin(e);
   };
 
   const renderLogin = () => {
