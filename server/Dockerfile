@@ -15,8 +15,6 @@ RUN apt-get install -y lsb-release &&\
 RUN pip install \
   python-multipart \
   fastapi-sqlalchemy \
-  fastapi-login \
-  passlib \
   psycopg2-binary \
   sqlalchemy_utils \
   pandas \
@@ -29,7 +27,6 @@ RUN pip install \
   mysqlclient \
   cryptography \
   fastapi-users[sqlalchemy] \
-  fastapi-mail \
   asyncpg \
   bcrypt
 

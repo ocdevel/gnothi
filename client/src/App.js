@@ -13,9 +13,8 @@ import {
   Switch,
   Route,
   Link,
-  Redirect
+  Redirect,
 } from "react-router-dom";
-import Auth from './Auth'
 import Splash from './Splash'
 import Journal from './Journal'
 import ProfileRoutes from './ProfileRoutes'

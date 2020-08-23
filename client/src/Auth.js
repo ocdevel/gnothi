@@ -3,17 +3,23 @@ import {
   Button,
   Form,
   Tab,
-  Tabs
+  Tabs,
+  Alert
 } from "react-bootstrap";
+import {useLocation, useHistory} from "react-router-dom"
 import Error from './Error'
 import {spinner} from './utils'
 
-export default function Auth({fetch_, onAuth}) {
+function Auth({fetch_, onAuth}) {
   const [submitting, setSubmitting] = useState(false)
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [passwordConfirm, setPasswordConfirm] = useState('')
   const [error, setError] = useState(null)
+  let location = useLocation()
+
+  // Reset password
+  let resetSuccess = location.search.match(/reset=true/i)
 
   const changeUsername = e => setUsername(e.target.value)
   const changePassword = e => setPassword(e.target.value)
@@ -161,6 +167,7 @@ export default function Auth({fetch_, onAuth}) {
   return (
     <div>
       {error && <Error message={error} />}
+      {resetSuccess && <Alert variant='success'>Password successfully reset, now you can log in</Alert>}
       <Tabs defaultActiveKey="login">
         <Tab eventKey="login" title="Login">
           {renderLogin()}
@@ -175,3 +182,69 @@ export default function Auth({fetch_, onAuth}) {
     </div>
   )
 }
+
+function ResetPassword({fetch_}) {
+  const [submitting, setSubmitting] = useState(false)
+  const [password, setPassword] = useState('')
+  const [passwordConfirm, setPasswordConfirm] = useState('')
+  const [error, setError] = useState(null)
+  const history = useHistory()
+  let location = useLocation()
+
+  // Reset password
+  let token = location.search.match(/token=(.*)/i)
+  token = token && token[1]
+
+  const changePassword = e => setPassword(e.target.value)
+  const changePasswordConfirm = e => setPasswordConfirm(e.target.value)
+
+  const submit = async (e) => {
+    e.preventDefault();
+    if (password !== passwordConfirm) {
+      return setError("Password & Confirm don't match")
+    }
+    setError(null)
+    setSubmitting(true)
+    const {code, message, data} = await fetch_('auth/reset-password', 'POST', {token, password})
+    setSubmitting(false)
+    if (code !== 200) {
+      setError(message)
+      return false
+    }
+    history.push('/auth?reset=true')
+  }
+
+  return <>
+    <h1>Reset Password</h1>
+    <Form onSubmit={submit}>
+      {error && <Error message={error} />}
+      <Form.Group controlId="formRegisterPassword">
+        <Form.Label>Password</Form.Label>
+        <Form.Control
+          type="password"
+          placeholder="Password"
+          required
+          value={password}
+          onChange={changePassword}
+        />
+      </Form.Group>
+      <Form.Group controlId="formRegisterPasswordConfirm">
+        <Form.Label>Confirm Password</Form.Label>
+        <Form.Control
+          type="password"
+          placeholder="Confirm Password"
+          required
+          value={passwordConfirm}
+          onChange={changePasswordConfirm}
+        />
+      </Form.Group>
+      {submitting ? spinner : (
+        <Button variant="primary" type="submit">
+          Submit
+        </Button>
+      )}
+    </Form>
+  </>
+}
+
+export {Auth, ResetPassword}

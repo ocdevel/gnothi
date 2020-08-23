@@ -5,18 +5,18 @@ from pydantic import BaseModel, UUID4
 from fastapi_users import models
 
 
+class FU_User(models.BaseUser): pass
+class FU_UserCreate(models.BaseUserCreate): pass
+class FU_UserUpdate(FU_User, models.BaseUserUpdate): pass
+class FU_UserDB(FU_User, models.BaseUserDB): pass
 
 
 class Out(BaseModel):
     class Config:
         orm_mode = True
 
-class User(models.BaseUser):pass
-class UserCreate(models.BaseUserCreate):pass
-class UserUpdate(User, models.BaseUserUpdate):pass
-class UserIn(User, models.BaseUserDB):
-    pass
-class UserOut(User, models.BaseUserDB):
+
+class UserOut(FU_User, models.BaseUserDB):
     timezone: Optional[Any] = None
     habitica_user_id: Optional[str] = None
     habitica_api_token: Optional[str] = None

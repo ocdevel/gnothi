@@ -1,30 +1,23 @@
-from app.utils import vars
-from fastapi_mail import FastMail
+from app.utils import vars, is_dev
+import boto3
 
+url = "http://localhost:3002" if is_dev() else "https://gnothiai.com"
 
-def send_mail(email: str, token):
-    # for more information about background-tasks see the link below
-    # https://fastapi.tiangolo.com/tutorial/background-tasks/
+def send_mail(email, type, data):
+    if type == 'forgot-password':
+        body = f"Click this link to confirm your account: {url}/reset-password?token={data}"
+    elif type == 'welcome':
+        body = f"Thank you for registering a Gnothi account! Start journaling away."
+    else: return
 
-    mail = FastMail(
-        email=vars.EMAIL.EMAIL,
-        password=vars.EMAIL.PASSWORD,
-        tls=True,
-        ssl=True,
-        port="465",
-        custom=True,
-        services=vars.EMAIL.SERVER)
-
-    body = f"""
-    <html> 
-    <body>
-    <p>token: {token}</p> 
-    </body> 
-    </html>
-    """
-
-    mail.send_message(
-        recipient=email,
-        subject="testing HTML",
-        body=body,
-        text_format="html")
+    ses = boto3.client('ses')
+    ses.send_email(
+        Source=vars.EMAIL.SES_EMAIL_SOURCE,
+        Destination={'ToAddresses': [email]},
+        Message={
+            'Subject': {'Data': 'Confirm Your Account'},
+            'Body': {
+                'Text': {'Data': body}
+            }
+        }
+    )

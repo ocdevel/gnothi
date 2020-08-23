@@ -86,7 +86,7 @@ class User(Base, SQLAlchemyBaseUserTable):
         # print(txt)
         return txt
 
-user_db = SQLAlchemyUserDatabase(S.UserOut, fa_users_db, User.__table__)
+user_db = SQLAlchemyUserDatabase(S.FU_UserDB, fa_users_db, User.__table__)
 
 
 class Entry(Base):

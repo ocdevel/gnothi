@@ -1,4 +1,4 @@
-import React, {useState} from 'react'
+import React, {useState, useEffect} from 'react'
 import {Jumbotron, Button, Container, Row, Col} from 'react-bootstrap'
 import {
   FaTextHeight,
@@ -12,13 +12,17 @@ import {
 } from 'react-icons/fa'
 import { IoMdJournal} from "react-icons/io"
 import Error from "./Error";
-import Auth from "./Auth";
+import {Auth, ResetPassword} from "./Auth"
 import './Splash.css'
+import {
+  BrowserRouter as Router,
+  Switch,
+  Route,
+  Link
+} from "react-router-dom"
 
 export default function Splash({serverError, onAuth, fetch_}) {
-  const [showAuth, setShowAuth] = useState(false)
-
-  return <>
+  return <Router>
     <Error message={serverError} />
     <Jumbotron className='gnothi-jumbo'>
       <div className='jumbo-content'>
@@ -26,13 +30,24 @@ export default function Splash({serverError, onAuth, fetch_}) {
           <h1>Gnothi</h1>
           <h4>Gnōthi Seauton: Know Thyself</h4>
           <p>A journal that uses AI to help you introspect and find resources</p>
-          {!showAuth && <Button onClick={() => setShowAuth(true)}>Sign In</Button>}
+          <Route exact path='/'>
+            <Link to='/auth'>
+              <Button>Sign In</Button>
+            </Link>
+          </Route>
         </div>
-        {showAuth && (
-          <div className='auth-block'>
-            <Auth onAuth={onAuth} fetch_={fetch_} />
-          </div>
-        )}
+        <Switch>
+          <Route path='/reset-password'>
+            <div className='auth-block'>
+              <ResetPassword fetch_={fetch_} />
+            </div>
+          </Route>
+          <Route path='/auth'>
+            <div className='auth-block'>
+              <Auth onAuth={onAuth} fetch_={fetch_} />
+            </div>
+          </Route>
+        </Switch>
       </div>
     </Jumbotron>
     <Container className='splash-features' fluid>
@@ -70,5 +85,5 @@ export default function Splash({serverError, onAuth, fetch_}) {
           <p>The sky's the limit with <a target='_blank' href='https://huggingface.co/transformers/'>BERT</a> language models! Astrology? Dream analysis? </p>
         </Col>
       </Row>
-    </Container></>
+    </Container></Router>
 }

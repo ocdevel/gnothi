@@ -7,7 +7,6 @@ from fastapi_sqlalchemy import db  # an object to provide global access to a dat
 import app.models as M
 from app import habitica
 from app.ec2_updown import jobs_status
-from passlib.hash import pbkdf2_sha256
 from app import ml
 import app.schemas as S
 from sqlalchemy.orm import Session
@@ -45,17 +44,6 @@ def user_get(as_user: str = None,  viewer: M.User = Depends(fastapi_users.get_cu
     user, snooping = as_user_(viewer, as_user)
     if snooping: return cant_snoop()  # FIXME not handling this?
     return user
-
-
-# @app.post('/register')
-# def register_post(data: S.UserIn):
-#     if db.session.query(M.User).filter(M.User.email == data.username).first():
-#         return send_error("Email already taken")
-#     u = M.User(email=data.username, hashed_password=pbkdf2_sha256.hash(data.password))
-#     u.tags.append(M.Tag(main=True, selected=True, name='Main'))
-#     db.session.add(u)
-#     db.session.commit()
-#     return {}
 
 
 @app.get('/profile', response_model=S.ProfileOut)
