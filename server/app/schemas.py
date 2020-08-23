@@ -49,6 +49,8 @@ class EntryIn(BaseModel):
     title: Optional[str] = None
     text: str
     tags: dict
+    no_ai: Optional[bool] = False
+    created_at: Optional[datetime.datetime] = None
 
 
 class EntryOut(Out):
@@ -56,9 +58,10 @@ class EntryOut(Out):
     title: Optional[str] = None
     text: str
     created_at: Optional[datetime.datetime] = None
-    title_summary: str
-    text_summary: str
+    title_summary: Optional[str] = None
+    text_summary: Optional[str] = None
     sentiment: Optional[str] = ''
+    no_ai: Optional[bool] = False
     entry_tags: Dict
 
 

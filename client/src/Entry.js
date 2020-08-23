@@ -4,13 +4,17 @@ import {spinner, SimplePopover, fmtDate} from "./utils"
 import {
   Button,
   Col,
-  Form, Modal,
+  Form,
+  Modal,
   Row,
+  Accordion,
+  Card
 } from "react-bootstrap"
 import ReactMarkdown from "react-markdown"
 import './Entry.css'
 import {FaTags, FaPen, FaExpandAlt} from "react-icons/fa"
 import Tags from "./Tags"
+import moment from 'moment'
 
 
 export default function Entry({fetch_, as, setServerError, update}) {
@@ -18,16 +22,18 @@ export default function Entry({fetch_, as, setServerError, update}) {
   const history = useHistory()
   const [showPreview, setShowPreview] = useState(false)
   const [onlyPreview, setOnlyPreview] = useState(!!entry_id)
-  const [form, setForm] = useState({title: '', text: ''})
+  const [form, setForm] = useState({title: '', text: '', no_ai: false, created_at: null})
   const [entry, setEntry] = useState({})
   const [submitting, setSubmitting] = useState(false)
   const [tags, setTags] = useState({})
   const [maximize, setMaximize] = useState(false)
+  const [advanced, setAdvanced] = useState(false)
 
   const fetchEntry = async () => {
     if (!entry_id) { return }
     const {data} = await fetch_(`entries/${entry_id}`, 'GET')
-    setForm({title: data.title, text: data.text})
+    const {title, text, no_ai, created_at} = data
+    setForm({title, text, no_ai, created_at})
     setEntry(data)
     setTags(data.entry_tags)
   }
@@ -45,11 +51,9 @@ export default function Entry({fetch_, as, setServerError, update}) {
     e.preventDefault()
     setServerError(false)
     setSubmitting(true)
-    const body = {
-      title: form.title,
-      text: form.text,
-      tags
-    }
+    let {title, text, no_ai, created_at} = form
+    created_at = created_at ? moment(created_at).toDate() : null
+    const body = {title, text, no_ai, created_at, tags}
     const res = entry_id ? await fetch_(`entries/${entry_id}`, 'PUT', body)
       : await fetch_(`entries`, 'POST', body)
     setSubmitting(false)
@@ -65,6 +69,7 @@ export default function Entry({fetch_, as, setServerError, update}) {
   }
 
   const changeForm = k => e => setForm({...form, [k]: e.target.value})
+  const changeFormBool = k => e => setForm({...form, [k]: e.target.checked})
   const changeShowPreview = e => setShowPreview(e.target.checked)
   const changeOnlyPreview = e => {
     e.stopPropagation()
@@ -142,28 +147,57 @@ export default function Entry({fetch_, as, setServerError, update}) {
         )}
       </Row>
 
-      {!onlyPreview && <Form.Group controlId="formShowPreview">
-        <Form.Check
-          type="checkbox"
-          label="Show Preview"
-          checked={showPreview}
-          onChange={changeShowPreview}
-        />
-      </Form.Group>}
+      {!onlyPreview && <>
+        <Form.Group controlId="formShowPreview">
+          <Form.Check
+            type="checkbox"
+            label="Show Preview"
+            checked={showPreview}
+            onChange={changeShowPreview}
+          />
+        </Form.Group>
+        {advanced ? <div>
+          <Form.Group controlId="formNoAI">
+            <Form.Check
+              type="checkbox"
+              label="Exclude from AI"
+              checked={form.no_ai}
+              onChange={changeFormBool('no_ai')}
+            />
+            <Form.Text>Use rarely, AI can't help with what it doesn't know. Example uses: technical note to a therapist, song lyrics, etc.</Form.Text>
+          </Form.Group>
+          <Form.Group controlId="formDate">
+            <Form.Label>Date</Form.Label>
+            <Form.Control
+              size='sm'
+              type="text"
+              placeholder="YYYY-MM-DD"
+              value={form.created_at}
+              onChange={changeForm('created_at')}
+            />
+            <Form.Text>Manually enter this entry's date (otherwise it's set to time of submission).</Form.Text>
+          </Form.Group>
+        </div> : <div>
+          <span className='anchor' onClick={() => setAdvanced(true)}>Advanced</span>
+        </div>}
+      </>}
+      <br/>
 
-      <SimplePopover text='Tags'>
-        <FaTags />
-      </SimplePopover>
-      <span className='tools-divider' />
-      <Tags
-        fetch_={fetch_}
-        as={as}
-        selected={tags}
-        setSelected={setTags}
-        noClick={onlyPreview}
-        noEdit={onlyPreview}
-        preSelectMain={true}
-      />
+      <div>
+        <SimplePopover text='Tags'>
+          <FaTags />
+        </SimplePopover>
+        <span className='tools-divider' />
+        <Tags
+          fetch_={fetch_}
+          as={as}
+          selected={tags}
+          setSelected={setTags}
+          noClick={onlyPreview}
+          noEdit={onlyPreview}
+          preSelectMain={true}
+        />
+      </div>
     </Form>
   </>
 

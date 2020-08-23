@@ -108,6 +108,7 @@ class Entry(Base):
     # Title optional, otherwise generated from text. topic-modeled, or BERT summary, etc?
     title = Encrypt(Unicode)
     text = Encrypt(Unicode, nullable=False)
+    no_ai = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.datetime.utcnow)
 
@@ -133,7 +134,8 @@ class Entry(Base):
         entry_id: str = None,
         order_by=None,
         tags: List[str] = None,
-        days: int = None
+        days: int = None,
+        for_ai: bool = False
     ):
         if not snooping:
             q = db.session.query(Entry).filter(Entry.user_id == target_id)
@@ -146,6 +148,9 @@ class Entry(Base):
 
         if entry_id:
             q = q.filter(Entry.id == entry_id)
+
+        if for_ai:
+            q = q.filter(Entry.no_ai.isnot(True))
 
         if tags:
             if not snooping:
@@ -189,6 +194,9 @@ class Entry(Base):
                 return
 
     def run_models(self):
+        if self.no_ai:
+            self.title_summary = self.text_summary = self.sentiment = None
+            return db.session.commit()
         # Run summarization/sentiment in background thread, so (a) user can get back to business;
         # (b) if AI server offline, wait till online
         self.title_summary = "🕒 AI is generating a title"

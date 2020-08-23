@@ -224,6 +224,8 @@ def entries_put_post(user, data: S.EntryIn, entry=None):
         db.session.add(entry)
     entry.title = data['title']
     entry.text = data['text']
+    entry.no_ai = data['no_ai'] or False
+    entry.created_at = data['created_at'] or None
     # entry needs id, prior tags need deleting
     db.session.commit()
     for tag, v in data['tags'].items():
@@ -371,7 +373,14 @@ def themes_post(
     viewer: M.User = Depends(fastapi_users.get_current_user)
 ):
     user, snooping = getuser(viewer, as_user)
-    entries = M.Entry.snoop(viewer.email, user.id, snooping=snooping, days=data.days, tags=data.tags)
+    entries = M.Entry.snoop(
+        viewer.email,
+        user.id,
+        snooping=snooping,
+        days=data.days,
+        tags=data.tags,
+        for_ai=True
+    )
     entries = [e.text for e in entries.all()]
 
     # For dreams, special handle: process every sentence. TODO make note in UI
@@ -409,7 +418,14 @@ def question_post(
 ):
     user, snooping = getuser(viewer, as_user)
     question = data.query
-    entries = M.Entry.snoop(viewer.email, user.id, snooping=snooping, days=data.days, tags=data.tags)
+    entries = M.Entry.snoop(
+        viewer.email,
+        user.id,
+        snooping=snooping,
+        days=data.days,
+        tags=data.tags,
+        for_ai=True
+    )
     entries = [e.text for e in entries]
 
     if (not snooping) or user.share_data.profile:
@@ -425,7 +441,14 @@ def summarize_post(
     viewer: M.User = Depends(fastapi_users.get_current_user)
 ):
     user, snooping = getuser(viewer, as_user)
-    entries = M.Entry.snoop(viewer.email, user.id, snooping=snooping, days=data.days, tags=data.tags)
+    entries = M.Entry.snoop(
+        viewer.email,
+        user.id,
+        snooping=snooping,
+        days=data.days,
+        tags=data.tags,
+        for_ai=True
+    )
 
     entries = ' '.join(e.text for e in entries)
     entries = re.sub('\s+', ' ', entries)  # mult new-lines

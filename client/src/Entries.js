@@ -77,9 +77,10 @@ export default function Entries({fetch_, as, aiStatus, setServerError}) {
 
   const renderEntry = e => {
     const gotoForm_ = () => gotoForm(e.id)
-    const sentiment = sent2face(e.sentiment)
     const title = e.title || e.title_summary
-    const summary = e.text_summary
+    const isSummary = e.text_summary && e.text !== e.text_summary
+    const summary = e.text_summary || e.text
+    const sentiment = e.sentiment && sent2face(e.sentiment)
     return (
       <tr key={e.id}>
         <td
@@ -91,9 +92,7 @@ export default function Entries({fetch_, as, aiStatus, setServerError}) {
             <h6>{title}</h6>
           </div>
           <div>
-            {summary === e.text ? (
-                <>{sentiment}{summary}</>
-            ) : (
+            {isSummary ? (
                 <SimplePopover text="Summary is machine-generated from entry. Click to read the original.">
                   <div>
                     <div className='blur-summary'>
@@ -102,6 +101,8 @@ export default function Entries({fetch_, as, aiStatus, setServerError}) {
                     <span className='anchor'>Read original</span>
                   </div>
                 </SimplePopover>
+            ) : (
+                <>{sentiment}{summary}</>
             )}
           </div>
           <hr/>
