@@ -1,4 +1,5 @@
 import pdb, re, datetime, logging
+import dateutil.parser
 from typing import List, Dict, Any
 from fastapi import Depends, Response, HTTPException
 from app.app_app import app
@@ -225,7 +226,13 @@ def entries_put_post(user, data: S.EntryIn, entry=None):
     entry.title = data['title']
     entry.text = data['text']
     entry.no_ai = data['no_ai'] or False
-    entry.created_at = data['created_at'] or None
+
+    # Manual date submission
+    iso_fmt = r"^\d{4}-([0]\d|1[0-2])-([0-2]\d|3[01])$"
+    ca = data['created_at']
+    if ca and re.match(iso_fmt, ca):
+        entry.created_at = dateutil.parser.parse(ca)
+
     # entry needs id, prior tags need deleting
     db.session.commit()
     for tag, v in data['tags'].items():

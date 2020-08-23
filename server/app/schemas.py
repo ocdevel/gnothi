@@ -50,7 +50,7 @@ class EntryIn(BaseModel):
     text: str
     tags: dict
     no_ai: Optional[bool] = False
-    created_at: Optional[datetime.datetime] = None
+    created_at: Optional[str] = None
 
 
 class EntryOut(Out):

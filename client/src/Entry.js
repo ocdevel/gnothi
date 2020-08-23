@@ -52,7 +52,6 @@ export default function Entry({fetch_, as, setServerError, update}) {
     setServerError(false)
     setSubmitting(true)
     let {title, text, no_ai, created_at} = form
-    created_at = created_at ? moment(created_at).toDate() : null
     const body = {title, text, no_ai, created_at, tags}
     const res = entry_id ? await fetch_(`entries/${entry_id}`, 'PUT', body)
       : await fetch_(`entries`, 'POST', body)
