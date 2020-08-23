@@ -29,14 +29,13 @@ def Encrypt(Col, **args):
     return Column(StringEncryptedType(Col, vars.FLASK_KEY, FernetEngine), **args)
 
 
+# https://dev.to/zchtodd/sqlalchemy-cascading-deletes-8hk
+parent_cascade = dict(cascade="all, delete", passive_deletes=True)
+child_cascade = dict(ondelete="cascade")
+
 
 class User(Base, SQLAlchemyBaseUserTable):
     __tablename__ = 'users'
-
-    # id = Column(UUID(as_uuid=True)(as_uuid=True), primary_key=True, default=uuid_)
-    # # https://stackoverflow.com/a/574698/362790
-    # email = Column(EmailType, nullable=False, unique=True)
-    # hashed_password = Column(Unicode, nullable=False)
 
     first_name = Encrypt(Unicode)
     last_name = Encrypt(Unicode)
@@ -49,18 +48,31 @@ class User(Base, SQLAlchemyBaseUserTable):
     habitica_user_id = Encrypt(Unicode)
     habitica_api_token = Encrypt(Unicode)
 
-    entries = relationship("Entry", order_by='Entry.created_at.desc()')
-    field_entries = relationship("FieldEntry", order_by='FieldEntry.created_at.desc()')
-    fields = relationship("Field", order_by='Field.created_at.asc()')
-    people = relationship("Person", order_by='Person.name.asc()')
-    shares = relationship("Share")
-    tags = relationship("Tag", order_by='Tag.name.asc()')
+    entries = relationship("Entry", order_by='Entry.created_at.desc()', **parent_cascade)
+    field_entries = relationship("FieldEntry", order_by='FieldEntry.created_at.desc()', **parent_cascade)
+    fields = relationship("Field", order_by='Field.created_at.asc()', **parent_cascade)
+    people = relationship("Person", order_by='Person.name.asc()', **parent_cascade)
+    shares = relationship("Share", **parent_cascade)
+    tags = relationship("Tag", order_by='Tag.name.asc()', **parent_cascade)
 
-    def as_user(self, id):
-        return db.session.query(User) \
-            .join(Share) \
-            .filter(Share.email == self.email, Share.user_id == id) \
-            .first()
+    @staticmethod
+    def snoop(viewer, as_id):
+        as_user, snooping = None, False
+        if viewer.id != as_id:
+            as_user = db.session.query(User) \
+                .join(Share) \
+                .filter(Share.email == viewer.email, Share.user_id == as_id) \
+                .first()
+        if as_user:
+            as_user.share_data = db.session.query(Share) \
+                .filter_by(user_id=as_id, email=viewer.email) \
+                .first()
+            snooping = True
+        else:
+            # as_user = viewer
+            # fastapi-users giving me beef, re-load from sqlalchemy
+            as_user = db.session.query(User).get(viewer.id)
+        return as_user, snooping
 
     @property
     def shared_with_me(self):
@@ -104,8 +116,8 @@ class Entry(Base):
     text_summary = Encrypt(Unicode)
     sentiment = Encrypt(Unicode)
 
-    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id'))
-    entry_tags_ = relationship("EntryTag")
+    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id', **child_cascade))
+    entry_tags_ = relationship("EntryTag", **parent_cascade)
 
     # share_tags = relationship("EntryTag", secondary="shares_tags")
 
@@ -237,7 +249,7 @@ class Field(Base):
     service = Column(Unicode)
     service_id = Column(Unicode)
 
-    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id'))
+    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id', **child_cascade))
 
     json_fields = """
     id
@@ -278,8 +290,8 @@ class FieldEntry(Base):
     value = Column(Float)  # TODO Can everything be a number? reconsider
     created_at = Column(DateTime(timezone=True), default=datetime.datetime.utcnow, index=True)
 
-    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id'), index=True)
-    field_id = Column(UUID(as_uuid=True), ForeignKey('fields.id'))
+    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id', **child_cascade), index=True)
+    field_id = Column(UUID(as_uuid=True), ForeignKey('fields.id', **child_cascade))
 
     @staticmethod
     def get_today_entries(user_id, field_id=None):
@@ -313,7 +325,7 @@ class Person(Base):
     issues = Encrypt(Unicode)
     bio = Encrypt(Unicode)
 
-    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id'), nullable=False)
+    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id', **child_cascade), nullable=False)
 
 
 class Share(Base):
@@ -326,7 +338,7 @@ class Share(Base):
     books = Column(Boolean)
     profile = Column(Boolean)
 
-    share_tags = relationship("ShareTag")
+    share_tags = relationship("ShareTag", **parent_cascade)
     tags_ = relationship("Tag", secondary="shares_tags")
 
     @property
@@ -357,17 +369,17 @@ class Tag(Base):
 # FIXME cascade https://www.michaelcho.me/article/many-to-many-relationships-in-sqlalchemy-models-flask
 class EntryTag(Base):
     __tablename__ = 'entries_tags'
-    entry_id = Column(UUID(as_uuid=True), ForeignKey('entries.id'), primary_key=True)
-    tag_id = Column(UUID(as_uuid=True), ForeignKey('tags.id'), primary_key=True)
+    entry_id = Column(UUID(as_uuid=True), ForeignKey('entries.id', **child_cascade), primary_key=True)
+    tag_id = Column(UUID(as_uuid=True), ForeignKey('tags.id', **child_cascade), primary_key=True)
 
 
 class ShareTag(Base):
     __tablename__ = 'shares_tags'
-    share_id = Column(UUID(as_uuid=True), ForeignKey('shares.id'), primary_key=True)
-    tag_id = Column(UUID(as_uuid=True), ForeignKey('tags.id'), primary_key=True)
+    share_id = Column(UUID(as_uuid=True), ForeignKey('shares.id', **child_cascade), primary_key=True)
+    tag_id = Column(UUID(as_uuid=True), ForeignKey('tags.id', **child_cascade), primary_key=True)
 
-    tag = relationship(Tag, backref=backref("tags", cascade="all, delete-orphan"))
-    share = relationship(Share, backref=backref("shares", cascade="all, delete-orphan"))
+    tag = relationship(Tag, backref=backref("tags"))
+    share = relationship(Share, backref=backref("shares"))
 
 
 class Shelves(enum.Enum):
@@ -381,7 +393,7 @@ class Shelves(enum.Enum):
 class Bookshelf(Base):
     __tablename__ = 'bookshelf'
     book_id = Column(Integer, primary_key=True)
-    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id'), primary_key=True)
+    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id', **child_cascade), primary_key=True)
     shelf = Column(Enum(Shelves), nullable=False)
 
     @staticmethod
