@@ -28,7 +28,8 @@ RUN pip install \
   cryptography \
   fastapi-users[sqlalchemy] \
   asyncpg \
-  bcrypt
+  bcrypt \
+  passlib
 
 COPY .aws /root/.aws
 COPY app /app

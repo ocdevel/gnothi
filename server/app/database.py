@@ -35,6 +35,7 @@ def init_db():
     # add `import app.models` in calling code beforehand (after `import database`)
     Base.metadata.create_all(bind=engine)
     # e6dfbbd8: kick off create_all with sess.execute()
+    engine.execute("select 1")
 
 
 def shutdown_db():

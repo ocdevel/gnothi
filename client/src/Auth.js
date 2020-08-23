@@ -38,12 +38,17 @@ function Auth({fetch_, onAuth}) {
     return data
   }
 
-  const submitLogin = async e => {
-    e.preventDefault();
+  const login = async () => {
     const res = await submit_('auth/jwt/login', 'POST', {username, password})
     if (!res) {return}
     localStorage.setItem('jwt', res.access_token);
     onAuth(res.access_token);
+  }
+
+  const submitLogin = async e => {
+    e.preventDefault();
+    await submit_('check-pass-remove-this', 'POST', {email: username, password})
+    await login()
   };
 
   const submitRegister = async e => {
@@ -54,7 +59,7 @@ function Auth({fetch_, onAuth}) {
     // assert password = passwordConfirm. See react-bootstrap, use yup library or something for form stuff
     const res = await submit_('auth/register', 'POST', {email: username, password})
     if (!res) {return}
-    await submitLogin(e);
+    await login();
   };
 
   const submitForgot = async e => {

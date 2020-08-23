@@ -3,52 +3,77 @@ from datetime import datetime
 from sqlalchemy import create_engine
 from app.utils import vars, DROP_SQL
 from app.database import init_db, shutdown_db
-import pandas as pd
+from sqlalchemy_utils.functions import drop_database, create_database, database_exists
+from app.scripts.migrate import migrate
 import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument("method", help="backup|pull|push|wipe")
-parser.add_argument("--data-only", action="store_true", help="if running a migration, set this so local creates the schema and we copy in prod data")
+parser.add_argument("--migrate", action="store_true", help="prod->local_prod; local_prod.migrate(); local.init(); local_prod->local")
 args = parser.parse_args()
 
 method = args.method
 now = datetime.now().strftime("%Y-%m-%d-%I-%Mp")
 
-if method == 'push' and input("Push to prod, are you sure [yn]?") != 'y':
-    exit(0)
+engines_ = {}
+def engine(url):
+    engines_[url] = engines_.get(url, create_engine(url))
+    return engines_[url]
+
+
+
+def wipe(url, and_init=False):
+    engine(url).execute(DROP_SQL)
+    if and_init:
+        import app.models  # sets up Base.metadata
+        init_db()
+        shutdown_db()
+
+def backup():
+    os.system(f"pg_dump {vars.DB_PROD_URL} > tmp/bk-{now}.sql")
+
+
+if method == 'push':
+    if input("Push to prod, are you sure [yn]?") != 'y': exit(0)
+    backup()
 
 if method == 'backup':
-    os.system(f"pg_dump {vars.DB_PROD_URL} > tmp/bk-{now}.sql")
+    backup()
     exit(0)
 
 if method == 'wipe':
-    create_engine(vars.DB_URL).execute(DROP_SQL)
+    wipe(vars.DB_URL, True)
     exit(0)
 
 if method == 'push':
     from_url, from_name = vars.DB_URL, vars.DB_NAME
     to_url, to_name = vars.DB_PROD_URL, vars.DB_PROD_NAME
-elif method == 'pull':
+elif method in ['pull', 'migrate']:
     from_url, from_name = vars.DB_PROD_URL, vars.DB_PROD_NAME
     to_url, to_name = vars.DB_URL, vars.DB_NAME
 else:
-    raise("2nd arg must backup|pull|push|wipe")
+    raise Exception("Unrecognized args.method")
 
 print('from', from_url)
 print('to', to_url)
 
-# backup prod, just in case
-os.system(f"pg_dump {vars.DB_PROD_URL} > tmp/bk-{now}.sql")
-create_engine(to_url).execute(DROP_SQL)
-if args.data_only:
-    init_db()
-    shutdown_db()
+
 # cmd = f"pg_dump --no-owner --no-acl {from_url}"\
 #       f" | sed 's/{from_name}/{to_name}/g'"\
 #       f" | psql {to_url}"
 cmd = f"pg_dump --no-owner --no-acl"
-if args.data_only: cmd += " --data-only"
-cmd += f" {from_url} | psql {to_url}"
-os.system(cmd)
 
-# 0c942cbb: pandas-style pull (for certain migrations? can't remember)
+if args.migrate:
+    if method == 'push':
+        raise NotImplemented("push --migrate not yet supported")
+    tmp_url = to_url.replace('dev', 'tmp')
+    if database_exists(tmp_url):
+        drop_database(tmp_url)
+    create_database(tmp_url)
+    os.system(f"{cmd} {from_url} | psql {tmp_url}")
+    wipe(to_url, and_init=True)
+    migrate(tmp_url)
+    os.system(f"{cmd} {tmp_url} --data-only | psql {to_url}")
+else:
+    wipe(to_url, and_init=False)
+    os.system(f"{cmd} {from_url} | psql {to_url}")

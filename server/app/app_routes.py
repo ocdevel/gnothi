@@ -1,7 +1,7 @@
-import pdb, re, datetime
+import pdb, re, datetime, logging
 from typing import List, Dict, Any
 from fastapi import Depends, Response, HTTPException
-from app.app_app import app, logger
+from app.app_app import app
 from app.app_jwt import fastapi_users
 from fastapi_sqlalchemy import db  # an object to provide global access to a database session
 import app.models as M
@@ -9,9 +9,14 @@ from app import habitica
 from app.ec2_updown import jobs_status
 from app import ml
 import app.schemas as S
-from sqlalchemy.orm import Session
+logger = logging.getLogger(__name__)
+
+# Remove this after SES email working
+from passlib.hash import pbkdf2_sha256
+from fastapi_users.password import get_password_hash
 
 getuser = M.User.snoop
+
 
 def send_error(message: str, code: int = 400):
     raise HTTPException(status_code=code, detail=message)
@@ -20,6 +25,22 @@ def send_error(message: str, code: int = 400):
 def cant_snoop(feature=None):
     message = f"{feature} isn't shared" if feature else "This feature isn't shared"
     return send_error(message, 401)
+
+
+@app.post('/check-pass-remove-this')
+def check_pw_post(data: S.FU_UserCreate):
+    user = db.session.query(M.User).filter_by(email=data.email).first()
+    if not user: return {}
+    try:
+        # raises if hashed_password not pbkdf2-style, so piggy-backing on raise
+        if not pbkdf2_sha256.verify(data.password, user.hashed_password): raise
+    except:
+        logger.info("Password not in old system")
+        return {}
+    logger.info("Password in old system, updating")
+    user.hashed_password = get_password_hash(data.password)
+    db.session.commit()
+    return {}
 
 
 @app.get('/jobs-status')
@@ -56,7 +77,6 @@ def profile_put(data: S.ProfileIn, as_user: str = None, viewer: M.User = Depends
     user, snooping = getuser(viewer, as_user)
     if snooping: return cant_snoop()
     for k, v in data.dict().items():
-        if k not in M.User.profile_fields.split(): continue
         v = v or None  # remove empty strings
         setattr(user, k, v)
     db.session.commit()
@@ -106,8 +126,7 @@ def person_delete(person_id: str, as_user: str = None, viewer: M.User = Depends(
 @app.get('/tags', response_model=List[S.TagOut])
 def tags_get(as_user: str = None, viewer: M.User = Depends(fastapi_users.get_current_user)):
     user, snooping = getuser(viewer, as_user)
-    data = M.Tag.snoop(viewer.email, user.id, snooping=snooping).all()
-    return data
+    return M.Tag.snoop(viewer.email, user.id, snooping=snooping).all()
 
 
 @app.post('/tags')
@@ -119,17 +138,11 @@ def tags_post(data: S.TagIn, as_user: str = None,  viewer: M.User = Depends(fast
     return {}
 
 
-def tag_q(user_id, tag_id):
-    tagq = db.session.query(M.Tag).filter_by(user_id=user_id, id=tag_id)
-    tag = tagq.first()
-    return tagq, tag
-
-
 @app.put('/tags/{tag_id}')
 def tag_put(tag_id, data: S.TagIn, as_user: str = None,  viewer: M.User = Depends(fastapi_users.get_current_user)):
     user, snooping = getuser(viewer, as_user)
     if snooping: return cant_snoop()
-    tagq, tag = tag_q(user.id, tag_id)
+    tag = db.session.query(M.Tag).filter_by(user_id=user.id, id=tag_id).first()
     data = data.dict()
     for k in ['name', 'selected']:
         if data.get(k): setattr(tag, k, data[k])
@@ -141,11 +154,9 @@ def tag_put(tag_id, data: S.TagIn, as_user: str = None,  viewer: M.User = Depend
 def tag_delete(tag_id, as_user: str = None, viewer: M.User = Depends(fastapi_users.get_current_user)):
     user, snooping = getuser(viewer, as_user)
     if snooping: return cant_snoop()
-    tagq, tag = tag_q(user.id, tag_id)
-    if tag.main:
+    tagq = db.session.query(M.Tag).filter_by(user_id=user.id, id=tag_id)
+    if tagq.first().main:
         return send_error("Can't delete your main journal")
-    # FIXME cascade
-    db.session.query(M.EntryTag).filter_by(tag_id=tag_id).delete()
     tagq.delete()
     db.session.commit()
     return {}
@@ -196,7 +207,6 @@ def share_put(share_id, data: S.ShareIn, as_user: str = None, viewer: M.User = D
 def share_delete(share_id, as_user: str = None, viewer: M.User = Depends(fastapi_users.get_current_user)):
     user, snooping = getuser(viewer, as_user)
     if snooping: return cant_snoop()
-    db.session.query(M.ShareTag).filter_by(share_id=share_id).delete()
     db.session.query(M.Share).filter_by(user_id=user.id, id=share_id).delete()
     db.session.commit()
     return {}
@@ -261,7 +271,6 @@ def entry_delete(entry_id, as_user: str = None, viewer: M.User = Depends(fastapi
     user, snooping = getuser(viewer, as_user)
     if snooping: return cant_snoop()
     entryq = M.Entry.snoop(viewer.email, user.id, entry_id=entry_id)
-    db.session.query(M.EntryTag).filter_by(entry_id=entry_id).delete()
     entryq.delete()
     db.session.commit()
     return {}
@@ -272,8 +281,7 @@ def fields_get(as_user: str = None, viewer: M.User = Depends(fastapi_users.get_c
     user, snooping = getuser(viewer, as_user)
     if snooping and not user.share_data.fields:
         return cant_snoop('Fields')
-    fields = db.session.query(M.Field).filter_by(user_id=user.id).all()
-    return {f.id: f for f in fields}
+    return {f.id: f.json() for f in user.fields}
     # return user.fields
 
 
@@ -311,7 +319,6 @@ def field_put(field_id, data: S.FieldExclude, as_user: str = None, viewer: M.Use
 def field_delete(field_id, as_user: str = None, viewer: M.User = Depends(fastapi_users.get_current_user)):
     user, snooping = getuser(viewer, as_user)
     if snooping: return cant_snoop()
-    db.session.query(M.FieldEntry).filter_by(user_id=user.id, field_id=field_id).delete()
     db.session.query(M.Field).filter_by(user_id=user.id, id=field_id).delete()
     db.session.commit()
     return {}

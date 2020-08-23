@@ -104,6 +104,7 @@ class PersonIn(BaseModel):
 
 
 class PersonOut(PersonIn, Out):
+    id: UUID4
     pass
 
 
