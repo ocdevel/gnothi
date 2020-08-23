@@ -331,7 +331,7 @@ class Person(Base):
 class Share(Base):
     __tablename__ = 'shares'
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid_)
-    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id'), index=True)
+    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id', **child_cascade), index=True)
     email = Column(EmailType, index=True)  # TODO encrypt?
 
     fields = Column(Boolean)
@@ -349,7 +349,7 @@ class Share(Base):
 class Tag(Base):
     __tablename__ = 'tags'
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid_)
-    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id'), index=True)
+    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id', **child_cascade), index=True)
     name = Encrypt(Unicode, nullable=False)
     # Save user's selected tags between sessions
     selected = Column(Boolean)
