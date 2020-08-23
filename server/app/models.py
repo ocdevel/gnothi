@@ -1,17 +1,21 @@
 import enum, pdb, re, threading, time, datetime
 from typing import List
 from dateutil import tz
-from app.database import Base, SessLocal
+from app.database import Base, SessLocal, fa_users_db
 from app.utils import vars
 from app import ml
 from sqlalchemy import text, Column, Integer, Enum, Float, ForeignKey, Boolean, DateTime, JSON, Date, Unicode, \
-    func, TIMESTAMP
-from sqlalchemy.orm import relationship, backref, object_session
+    func, TIMESTAMP, select
+from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy.orm import relationship, backref, object_session, column_property
 from sqlalchemy.dialects.postgresql import UUID, BYTEA
 from sqlalchemy_utils.types import EmailType
 from sqlalchemy_utils.types.encrypted.encrypted_type import StringEncryptedType, FernetEngine
 from uuid import uuid4
 from fastapi_sqlalchemy import db  # an object to provide global access to a database session
+
+from fastapi_users.db import SQLAlchemyBaseUserTable, SQLAlchemyUserDatabase
+import app.schemas as S
 
 
 def uuid_():
@@ -25,18 +29,14 @@ def Encrypt(Col, **args):
     return Column(StringEncryptedType(Col, vars.FLASK_KEY, FernetEngine), **args)
 
 
-class CustomBase():
-    def json(self):
-        return {k: getattr(self, k) for k in self.json_fields.split()}
 
-
-class User(Base):
+class User(Base, SQLAlchemyBaseUserTable):
     __tablename__ = 'users'
 
-    id = Column(UUID, primary_key=True, default=uuid_)
-    # https://stackoverflow.com/a/574698/362790
-    email = Column(EmailType, nullable=False, unique=True)
-    hashed_password = Column(Unicode, nullable=False)
+    # id = Column(UUID(as_uuid=True)(as_uuid=True), primary_key=True, default=uuid_)
+    # # https://stackoverflow.com/a/574698/362790
+    # email = Column(EmailType, nullable=False, unique=True)
+    # hashed_password = Column(Unicode, nullable=False)
 
     first_name = Encrypt(Unicode)
     last_name = Encrypt(Unicode)
@@ -66,7 +66,7 @@ class User(Base):
     def shared_with_me(self):
         return object_session(self).query(User)\
             .join(Share)\
-            .filter(Share.email==self.email)\
+            .filter(Share.email == self.email)\
             .all()
 
     def profile_to_text(self):
@@ -86,11 +86,13 @@ class User(Base):
         # print(txt)
         return txt
 
+user_db = SQLAlchemyUserDatabase(S.UserOut, fa_users_db, User.__table__)
+
 
 class Entry(Base):
     __tablename__ = 'entries'
 
-    id = Column(UUID, primary_key=True, default=uuid_)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid_)
     # Title optional, otherwise generated from text. topic-modeled, or BERT summary, etc?
     title = Encrypt(Unicode)
     text = Encrypt(Unicode, nullable=False)
@@ -102,7 +104,7 @@ class Entry(Base):
     text_summary = Encrypt(Unicode)
     sentiment = Encrypt(Unicode)
 
-    user_id = Column(UUID, ForeignKey('users.id'))
+    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id'))
     entry_tags_ = relationship("EntryTag")
 
     # share_tags = relationship("EntryTag", secondary="shares_tags")
@@ -209,7 +211,7 @@ class DefaultValueTypes(enum.Enum):
     ffill = 3
 
 
-class Field(Base, CustomBase):
+class Field(Base):
     """Entries that change over time. Uses:
     * Charts
     * Effects of sentiment, topics on entries
@@ -217,7 +219,7 @@ class Field(Base, CustomBase):
     """
     __tablename__ = 'fields'
 
-    id = Column(UUID, primary_key=True, default=uuid_)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid_)
     type = Column(Enum(FieldType))
     name = Encrypt(Unicode)
     # Start entries/graphs/correlations here
@@ -235,7 +237,7 @@ class Field(Base, CustomBase):
     service = Column(Unicode)
     service_id = Column(Unicode)
 
-    user_id = Column(UUID, ForeignKey('users.id'))
+    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id'))
 
     json_fields = """
     id
@@ -249,6 +251,7 @@ class Field(Base, CustomBase):
     """
 
     def json(self):
+        json_fields = {k: getattr(self, k) for k in self.json_fields.split()}
         history = db.session.query(FieldEntry)\
             .with_entities(FieldEntry.value, FieldEntry.created_at)\
             .filter_by(field_id=self.id)\
@@ -261,22 +264,22 @@ class Field(Base, CustomBase):
         ]
 
         return {
-            **super().json(),
+            **json_fields,
             'type': self.type.name,
             'default_value': self.default_value.name if self.default_value else "value",
-            'avg': sum(x['value'] for x in history)/len(history) if history else 0.,
+            'avg': sum(x['value'] for x in history) / len(history) if history else 0.,
             'history': history
         }
 
 
 class FieldEntry(Base):
     __tablename__ = 'field_entries'
-    id = Column(UUID, primary_key=True, default=uuid_)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid_)
     value = Column(Float)  # TODO Can everything be a number? reconsider
     created_at = Column(DateTime(timezone=True), default=datetime.datetime.utcnow, index=True)
 
-    user_id = Column(UUID, ForeignKey('users.id'), index=True)
-    field_id = Column(UUID, ForeignKey('fields.id'))
+    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id'), index=True)
+    field_id = Column(UUID(as_uuid=True), ForeignKey('fields.id'))
 
     @staticmethod
     def get_today_entries(user_id, field_id=None):
@@ -304,19 +307,19 @@ class FieldEntry(Base):
 
 class Person(Base):
     __tablename__ = 'people'
-    id = Column(UUID, primary_key=True, default=uuid_)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid_)
     name = Encrypt(Unicode)
     relation = Encrypt(Unicode)
     issues = Encrypt(Unicode)
     bio = Encrypt(Unicode)
 
-    user_id = Column(UUID, ForeignKey('users.id'), nullable=False)
+    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id'), nullable=False)
 
 
 class Share(Base):
     __tablename__ = 'shares'
-    id = Column(UUID, primary_key=True, default=uuid_)
-    user_id = Column(UUID, ForeignKey('users.id'), index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid_)
+    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id'), index=True)
     email = Column(EmailType, index=True)  # TODO encrypt?
 
     fields = Column(Boolean)
@@ -333,8 +336,8 @@ class Share(Base):
 
 class Tag(Base):
     __tablename__ = 'tags'
-    id = Column(UUID, primary_key=True, default=uuid_)
-    user_id = Column(UUID, ForeignKey('users.id'), index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid_)
+    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id'), index=True)
     name = Encrypt(Unicode, nullable=False)
     # Save user's selected tags between sessions
     selected = Column(Boolean)
@@ -343,23 +346,25 @@ class Tag(Base):
     shares = relationship("Share", secondary="shares_tags")
 
     @staticmethod
-    def snoop(from_email, to_id):
-        return db.session.query(Tag)\
-            .join(ShareTag, Share)\
-            .filter(Share.email==from_email, Share.user_id == to_id)
+    def snoop(from_email, to_id, snooping=False):
+        if snooping:
+            return db.session.query(Tag)\
+                .join(ShareTag, Share)\
+                .filter(Share.email==from_email, Share.user_id == to_id)
+        return db.session.query(Tag).filter_by(user_id=to_id)
 
 
 # FIXME cascade https://www.michaelcho.me/article/many-to-many-relationships-in-sqlalchemy-models-flask
 class EntryTag(Base):
     __tablename__ = 'entries_tags'
-    entry_id = Column(UUID, ForeignKey('entries.id'), primary_key=True)
-    tag_id = Column(UUID, ForeignKey('tags.id'), primary_key=True)
+    entry_id = Column(UUID(as_uuid=True), ForeignKey('entries.id'), primary_key=True)
+    tag_id = Column(UUID(as_uuid=True), ForeignKey('tags.id'), primary_key=True)
 
 
 class ShareTag(Base):
     __tablename__ = 'shares_tags'
-    share_id = Column(UUID, ForeignKey('shares.id'), primary_key=True)
-    tag_id = Column(UUID, ForeignKey('tags.id'), primary_key=True)
+    share_id = Column(UUID(as_uuid=True), ForeignKey('shares.id'), primary_key=True)
+    tag_id = Column(UUID(as_uuid=True), ForeignKey('tags.id'), primary_key=True)
 
     tag = relationship(Tag, backref=backref("tags", cascade="all, delete-orphan"))
     share = relationship(Share, backref=backref("shares", cascade="all, delete-orphan"))
@@ -376,7 +381,7 @@ class Shelves(enum.Enum):
 class Bookshelf(Base):
     __tablename__ = 'bookshelf'
     book_id = Column(Integer, primary_key=True)
-    user_id = Column(UUID, ForeignKey('users.id'), primary_key=True)
+    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id'), primary_key=True)
     shelf = Column(Enum(Shelves), nullable=False)
 
     @staticmethod
@@ -423,7 +428,7 @@ class Bookshelf(Base):
 
 class Jobs(Base):
     __tablename__ = 'jobs'
-    id = Column(UUID, primary_key=True)
+    id = Column(UUID(as_uuid=True), primary_key=True)
     method = Column(Unicode)
     state = Column(Unicode)
     data = Column(BYTEA)

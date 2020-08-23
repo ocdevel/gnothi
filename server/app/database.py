@@ -3,6 +3,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import scoped_session, sessionmaker
 from app.utils import vars
+# just for fastapi-users (I'm using sqlalchemy+engine+session everywhere else)
+import databases
 
 Base = declarative_base()
 
@@ -25,6 +27,8 @@ SessLocal = dict(
     main=scoped_session(sessionmaker(autocommit=False, autoflush=False, bind=engine)),
     books=scoped_session(sessionmaker(autocommit=True, autoflush=True, bind=engine_books))
 )
+
+fa_users_db = databases.Database(vars.DB_URL)
 
 
 def init_db():

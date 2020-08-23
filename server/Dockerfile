@@ -27,7 +27,11 @@ RUN pip install \
   boto3 \
   tqdm \
   mysqlclient \
-  cryptography
+  cryptography \
+  fastapi-users[sqlalchemy] \
+  fastapi-mail \
+  asyncpg \
+  bcrypt
 
 COPY .aws /root/.aws
 COPY app /app

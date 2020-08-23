@@ -53,7 +53,7 @@ function App() {
       headers: {'Content-Type': 'application/json'},
     };
 
-    if (route === 'auth/token') {
+    if (route === 'auth/jwt/login') {
       // fastapi expects formdata for auth paths
       obj['data'] = obj2formData(body)
     } else {

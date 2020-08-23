@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi_sqlalchemy import DBSessionMiddleware  # middleware helper
 
 
-from app.database import init_db, shutdown_db
+from app.database import init_db, shutdown_db, fa_users_db
 from app.utils import vars, SECRET
 import logging
 
@@ -27,11 +27,13 @@ logging.getLogger('uvicorn').addFilter(FilterJobsStatus())
 
 
 @app.on_event("startup")
-def startup():
+async def startup():
+    await fa_users_db.connect()
     init_db()
 
 
 @app.on_event("shutdown")
-def shutdown_session():
+async def shutdown_session():
+    await fa_users_db.disconnect()
     shutdown_db()
 

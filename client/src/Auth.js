@@ -34,7 +34,7 @@ export default function Auth({fetch_, onAuth}) {
 
   const submitLogin = async e => {
     e.preventDefault();
-    const res = await submit_('auth/token', 'POST', {username, password})
+    const res = await submit_('auth/jwt/login', 'POST', {username, password})
     if (!res) {return}
     localStorage.setItem('jwt', res.access_token);
     onAuth(res.access_token);
@@ -46,9 +46,17 @@ export default function Auth({fetch_, onAuth}) {
       return setError("Password & Confirm don't match")
     }
     // assert password = passwordConfirm. See react-bootstrap, use yup library or something for form stuff
-    const res = await submit_('register', 'POST', {username, password})
+    const res = await submit_('auth/register', 'POST', {email: username, password})
     if (!res) {return}
     await submitLogin(e);
+  };
+
+  const submitForgot = async e => {
+    e.preventDefault();
+    // assert password = passwordConfirm. See react-bootstrap, use yup library or something for form stuff
+    const res = await submit_('auth/forgot-password', 'POST', {email: username, password})
+    if (!res) {return}
+    console.log(res)
   };
 
   const renderLogin = () => {
@@ -127,6 +135,29 @@ export default function Auth({fetch_, onAuth}) {
     )
   };
 
+  const renderForgot = () => {
+    return (
+      <Form onSubmit={submitForgot}>
+        <Form.Group controlId="formLoginEmail">
+          <Form.Label>Email address</Form.Label>
+          <Form.Control
+            type="email"
+            placeholder="Enter email"
+            required
+            value={username}
+            onChange={changeUsername}
+          />
+        </Form.Group>
+
+        {submitting ? spinner : (
+          <Button variant="primary" type="submit">
+            Submit
+          </Button>
+        )}
+      </Form>
+    )
+  };
+
   return (
     <div>
       {error && <Error message={error} />}
@@ -136,6 +167,9 @@ export default function Auth({fetch_, onAuth}) {
         </Tab>
         <Tab eventKey="register" title="Register">
           {renderRegister()}
+        </Tab>
+        <Tab eventKey="forgot" title="Forgot Password">
+          {renderForgot()}
         </Tab>
       </Tabs>
     </div>

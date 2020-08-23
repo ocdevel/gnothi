@@ -11,7 +11,18 @@ def join_(paths):
 
 config_json = json.load(open(join_(['config.json'])))
 vars = {}
-for k in 'DB_URL DB_PROD_URL DB_NAME DB_PROD_NAME DB_BOOKS HABIT FLASK_KEY GPU_INSTANCE'.split():
+keys = """
+DB_URL
+DB_PROD_URL
+DB_NAME
+DB_PROD_NAME
+DB_BOOKS
+HABIT
+FLASK_KEY
+GPU_INSTANCE
+EMAIL
+"""
+for k in keys.split():
     vars[k] = os.environ.get(k, config_json.get(k, None))
 
 vars = Box(vars)

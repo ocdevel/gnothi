@@ -1,25 +1,26 @@
 import datetime
 from typing import Optional, List, Any, Dict
-from pydantic import BaseModel
-import app.models as M
+from pydantic import BaseModel, UUID4
+# import app.models as M
+from fastapi_users import models
+
+
 
 
 class Out(BaseModel):
     class Config:
         orm_mode = True
 
-
-class UserIn(BaseModel):
-    username: str
-    password: str
-
-
-class UserOut(Out):
-    id: Any
-    email: Any
+class User(models.BaseUser):pass
+class UserCreate(models.BaseUserCreate):pass
+class UserUpdate(User, models.BaseUserUpdate):pass
+class UserIn(User, models.BaseUserDB):
+    pass
+class UserOut(User, models.BaseUserDB):
+    timezone: Optional[Any] = None
     habitica_user_id: Optional[str] = None
     habitica_api_token: Optional[str] = None
-    shared_with_me: Any
+    shared_with_me: Optional[Any]
 
 
 class TimezoneIn(BaseModel):
@@ -51,7 +52,7 @@ class EntryIn(BaseModel):
 
 
 class EntryOut(Out):
-    id: str
+    id: UUID4
     title: Optional[str] = None
     text: str
     created_at: Optional[datetime.datetime] = None
@@ -118,7 +119,7 @@ class ShareIn(BaseModel):
 
 
 class ShareOut(ShareIn):
-    id: str
+    id: UUID4
 
     class Config:
         fields = {'fields_': 'fields'}
@@ -131,8 +132,8 @@ class TagIn(BaseModel):
 
 
 class TagOut(TagIn, Out):
-    id: str
-    user_id: str
+    id: UUID4
+    user_id: UUID4
     name: str
     selected: Optional[bool] = False
     main: Optional[bool] = False
