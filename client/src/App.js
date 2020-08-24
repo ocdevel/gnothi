@@ -46,11 +46,13 @@ function App() {
   const [aiStatus, setAiStatus] = useState('off')
   // const [as, setAs] = useState('3694b314-d050-46da-882a-726598bd6abf')
 
-  const fetch_ = async (route, method='GET', body=null) => {
+  const fetch_ = async (route, method='GET', body=null, headers={}) => {
     const obj = {
       method,
-      headers: {'Content-Type': 'application/json'},
+      headers: {'Content-Type': 'application/json', ...headers},
     };
+    if (route === 'upload-image'){console.log(obj, headers)}
+
 
     if (route === 'auth/jwt/login') {
       // fastapi expects formdata for auth paths

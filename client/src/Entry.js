@@ -3,30 +3,108 @@ import React, {useEffect, useState} from "react"
 import {spinner, SimplePopover, fmtDate} from "./utils"
 import {
   Button,
-  Col,
   Form,
   Modal,
-  Row,
-  Accordion,
-  Card
 } from "react-bootstrap"
 import ReactMarkdown from "react-markdown"
 import './Entry.css'
 import {FaTags, FaPen, FaExpandAlt} from "react-icons/fa"
 import Tags from "./Tags"
-import moment from 'moment'
+import MarkdownIt from 'markdown-it'
+import MdEditor, {Plugins} from 'react-markdown-editor-lite'
+import 'react-markdown-editor-lite/lib/index.css'
+
+// Initialize a markdown parser
+const mdParser = new MarkdownIt(/* Markdown-it options */);
+
+MdEditor.use(Plugins.AutoResize, {
+  min: 400, // min height
+  // max: 600, // max height
+});
+
+
+function Editor({fetch_, currText, changeText}) {
+  // Register plugins if required
+  // MdEditor.use(YOUR_PLUGINS_HERE);
+
+  const plugins = [
+    'header',
+    'font-bold',
+    'font-italic',
+    'font-underline',
+    'font-strikethrough',
+    'list-unordered',
+    'list-ordered',
+    'block-quote',
+    // 'block-wrap',
+    // 'block-code-inline',
+    // 'block-code-block',
+    // 'table',
+    'image',
+    'link',
+    // 'clear',
+    // 'logger',
+    'mode-toggle',
+    'full-screen',
+    'auto-resize'
+  ]
+
+  const onImageUpload = async (file) => {
+
+    // const file = files[0]; //this will not work.
+    // const file = new Blob([files[0]]); // kind of works and choses stream as content type of file (not request)
+    // const file = new Blob([files[0]], { type: 'image/png' });// WORKS much better (if you know what MIME type you want.
+
+    // return new Promise(resolve => {
+    //   const reader = new FileReader();
+    //   reader.onload = data => {
+    //     resolve(data.target.result);
+    //   };
+    //   reader.readAsDataURL(file);
+    // });
+
+    const formData = new FormData();
+    // formData.append('file', file, file.filename);
+    formData.append('file', file);
+    const headers = {'Content-Type': 'multipart/form-data'}
+    const {data, code} = await fetch_('upload-image', 'POST', formData, headers)
+    return data.filename
+
+
+    // return new Promise(resolve => {
+    //   const reader = new FileReader();
+    //   reader.onload = data => {
+    //     resolve(data.target.result);
+    //   };
+    //   reader.readAsDataURL(file);
+    // });
+  }
+
+  function onChange({html, text}) {
+    changeText(text)
+  }
+
+  return (
+    <MdEditor
+      plugins={plugins}
+      value={currText}
+      style={{ width: '100%' }}
+      renderHTML={(text) => mdParser.render(text)}
+      onChange={onChange}
+      onImageUpload={onImageUpload}
+    />
+  )
+}
 
 
 export default function Entry({fetch_, as, setServerError, update}) {
   const {entry_id} = useParams()
   const history = useHistory()
-  const [showPreview, setShowPreview] = useState(false)
   const [onlyPreview, setOnlyPreview] = useState(!!entry_id)
   const [form, setForm] = useState({title: '', text: '', no_ai: false, created_at: null})
   const [entry, setEntry] = useState({})
   const [submitting, setSubmitting] = useState(false)
   const [tags, setTags] = useState({})
-  const [maximize, setMaximize] = useState(false)
   const [advanced, setAdvanced] = useState(false)
 
   const fetchEntry = async () => {
@@ -53,6 +131,7 @@ export default function Entry({fetch_, as, setServerError, update}) {
     setSubmitting(true)
     let {title, text, no_ai, created_at} = form
     const body = {title, text, no_ai, created_at, tags}
+    debugger
     const res = entry_id ? await fetch_(`entries/${entry_id}`, 'PUT', body)
       : await fetch_(`entries`, 'POST', body)
     setSubmitting(false)
@@ -67,9 +146,10 @@ export default function Entry({fetch_, as, setServerError, update}) {
     }
   }
 
-  const changeForm = k => e => setForm({...form, [k]: e.target.value})
-  const changeFormBool = k => e => setForm({...form, [k]: e.target.checked})
-  const changeShowPreview = e => setShowPreview(e.target.checked)
+  const changeTitle = e => setForm({...form, title: e.target.value})
+  const changeDate = e => setForm({...form, created_at: e.target.value})
+  const changeText = (text) => setForm({...form, text})
+  const changeNoAI = e => setForm({...form, no_ai: e.target.checked})
   const changeOnlyPreview = e => {
     e.stopPropagation()
     e.preventDefault()
@@ -117,7 +197,7 @@ export default function Entry({fetch_, as, setServerError, update}) {
             type="text"
             placeholder="Title"
             value={form.title}
-            onChange={changeForm('title')}
+            onChange={changeTitle}
           />
           <Form.Text>
             Leave blank to use a machine-generated title based on your entry.
@@ -125,43 +205,20 @@ export default function Entry({fetch_, as, setServerError, update}) {
         </Form.Group>
       </>}
 
-      <Row>
-        {!onlyPreview && <Col>
-          <Form.Group controlId="formText">
-            <Form.Label>Entry</Form.Label>
-            <Form.Control
-              as="textarea"
-              placeholder="Entry"
-              required
-              rows={10}
-              value={form.text}
-              onChange={changeForm('text')}
-            />
-          </Form.Group>
-        </Col>}
-        {(showPreview || onlyPreview) && (
-          <Col className='markdown-render'>
-            <ReactMarkdown source={form.text} linkTarget='_blank' />
-          </Col>
-        )}
-      </Row>
+      {onlyPreview ? (
+        <ReactMarkdown source={form.text} linkTarget='_blank' />
+      ) : (
+        <Editor fetch_={fetch_} readOnly={true} currText={form.text} changeText={changeText} />
+      )}
 
       {!onlyPreview && <>
-        <Form.Group controlId="formShowPreview">
-          <Form.Check
-            type="checkbox"
-            label="Show Preview"
-            checked={showPreview}
-            onChange={changeShowPreview}
-          />
-        </Form.Group>
         {advanced ? <div>
           <Form.Group controlId="formNoAI">
             <Form.Check
               type="checkbox"
               label="Exclude from AI"
               checked={form.no_ai}
-              onChange={changeFormBool('no_ai')}
+              onChange={changeNoAI}
             />
             <Form.Text>Use rarely, AI can't help with what it doesn't know. Example uses: technical note to a therapist, song lyrics, etc.</Form.Text>
           </Form.Group>
@@ -172,7 +229,7 @@ export default function Entry({fetch_, as, setServerError, update}) {
               type="text"
               placeholder="YYYY-MM-DD"
               value={form.created_at}
-              onChange={changeForm('created_at')}
+              onChange={changeDate}
             />
             <Form.Text>Manually enter this entry's date (otherwise it's set to time of submission).</Form.Text>
           </Form.Group>
@@ -206,15 +263,9 @@ export default function Entry({fetch_, as, setServerError, update}) {
       size='lg'
       onHide={goBack}
       scrollable={true}
-      dialogClassName={maximize && 'full-width-modal'}
     >
       <Modal.Header>
         <Modal.Title>{fmtDate(entry_id ? form.created_at : Date.now())}</Modal.Title>
-        <FaExpandAlt
-          style={{top:5,right:0}}
-          className='cursor-pointer'
-          onClick={() => setMaximize(!maximize)}
-        />
       </Modal.Header>
 
       <Modal.Body>

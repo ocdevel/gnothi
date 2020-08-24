@@ -1,7 +1,8 @@
-import pdb, re, datetime, logging
+import pdb, re, datetime, logging, boto3
+import shortuuid
 import dateutil.parser
 from typing import List, Dict, Any
-from fastapi import Depends, Response, HTTPException
+from fastapi import Depends, HTTPException, File, UploadFile
 from app.app_app import app
 from app.app_jwt import fastapi_users
 from fastapi_sqlalchemy import db  # an object to provide global access to a database session
@@ -10,6 +11,7 @@ from app import habitica
 from app.ec2_updown import jobs_status
 from app import ml
 import app.schemas as S
+
 logger = logging.getLogger(__name__)
 
 # Remove this after SES email working
@@ -245,6 +247,19 @@ def entries_put_post(user, data: S.EntryIn, entry=None):
     db.session.commit()
 
     return {}
+
+
+@app.post("/upload-image")
+async def upload_image_post(file: UploadFile = File(...)):
+    s3 = boto3.client("s3")
+
+    # https://github.com/tiangolo/fastapi/issues/1152
+    # s3.put_object(Body=file.file, Bucket='gnothiai.com', ContentType=file.content_type, Key=f"images/{file.filename}")
+    key = f"images/{shortuuid.uuid()}-{file.filename}"
+    extra = {"ContentType": file.content_type} # , "ACL": "public-read"}
+    s3.upload_fileobj(file.file, "gnothiai.com", key, ExtraArgs=extra)
+    url = "https://s3.amazonaws.com/gnothiai.com/"
+    return {"filename": f"{url}{key}"}
 
 
 @app.get('/entries', response_model=List[S.EntryOut])
