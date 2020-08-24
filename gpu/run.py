@@ -24,10 +24,10 @@ m = Box({
 })
 
 
-def run_job(jid):
+def run_job(job):
+    jid, k = job.id, job.method
     sess = SessLocal.main()
     job = sess.execute("select * from jobs where id=:jid", {'jid': jid}).fetchone()
-    k = job.method
     data = Box(pickle.loads(job.data))
 
     print(f"Running job {k}")
@@ -72,7 +72,7 @@ if __name__ == '__main__':
         sql = f"""
         update jobs set state='working'
         where id = (select id from jobs where state='new' limit 1)
-        returning id, method
+        returning id, method;
         """
         job = sess.execute(sql).fetchone()
         if not job:
@@ -90,8 +90,8 @@ if __name__ == '__main__':
         # Multiprocessing fully wipes the process after run. Keras/TF has model-training memleak & can't recover GPU
         # RAM, so just run books in Process https://github.com/tensorflow/tensorflow/issues/36465#issuecomment-582749350
         if job.method == 'books':
-            multiprocessing.Process(target=run_job, args=(job.id,)).start()
+            multiprocessing.Process(target=run_job, args=(job,)).start()
         else:
-            threading.Thread(target=run_job, args=(job.id,)).start()
+            threading.Thread(target=run_job, args=(job,)).start()
         # run_job(job.id)
     sess.close()
