@@ -31,7 +31,7 @@ function Auth({fetch_, onAuth}) {
     const {code, message, data} = await fetch_(url, method, body)
     setSubmitting(false)
     console.log(code, message, data)
-    if (code !== 200) {
+    if (code >= 400) {
       setError(message)
       return false
     }
@@ -39,8 +39,12 @@ function Auth({fetch_, onAuth}) {
   }
 
   const login = async () => {
-    const res = await submit_('auth/jwt/login', 'POST', {username, password})
-    if (!res) {return}
+    // auth/jwt/login specifically wants FormData
+    const formData = new FormData()
+    formData.append('username', username)
+    formData.append('password', password)
+    const res = await submit_('auth/jwt/login', 'POST', formData)
+    if (res === false) {return}
     localStorage.setItem('jwt', res.access_token);
     onAuth(res.access_token);
   }
@@ -58,7 +62,7 @@ function Auth({fetch_, onAuth}) {
     }
     // assert password = passwordConfirm. See react-bootstrap, use yup library or something for form stuff
     const res = await submit_('auth/register', 'POST', {email: username, password})
-    if (!res) {return}
+    if (res === false) {return}
     await login();
   };
 

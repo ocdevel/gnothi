@@ -32,12 +32,6 @@ if (~host.indexOf('gnothi')) { // prod
   host = 'http://localhost:5002'
 }
 
-function obj2formData(object) {
-    const formData = new FormData();
-    Object.keys(object).forEach(key => formData.append(key, object[key]));
-    return formData;
-}
-
 function App() {
   const [jwt, setJwt] = useState(localStorage.getItem('jwt'))
   const [user, setUser] = useState()
@@ -51,16 +45,8 @@ function App() {
       method,
       headers: {'Content-Type': 'application/json', ...headers},
     };
-    if (route === 'upload-image'){console.log(obj, headers)}
 
-
-    if (route === 'auth/jwt/login') {
-      // fastapi expects formdata for auth paths
-      obj['data'] = obj2formData(body)
-    } else {
-      if (body) obj['data'] = body
-    }
-
+    if (body) obj['data'] = body
     if (jwt) obj['headers']['Authorization'] = `Bearer ${jwt}`
     // auth is added by flask-jwt as /auth, all my custom paths are under /api/*
     let url = `${host}/${route}`

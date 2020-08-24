@@ -8,7 +8,7 @@ import {
 } from "react-bootstrap"
 import ReactMarkdown from "react-markdown"
 import './Entry.css'
-import {FaTags, FaPen, FaExpandAlt} from "react-icons/fa"
+import {FaTags, FaPen} from "react-icons/fa"
 import Tags from "./Tags"
 import MarkdownIt from 'markdown-it'
 import MdEditor, {Plugins} from 'react-markdown-editor-lite'
@@ -22,62 +22,31 @@ MdEditor.use(Plugins.AutoResize, {
   // max: 600, // max height
 });
 
+// https://github.com/HarryChen0506/react-markdown-editor-lite/blob/master/docs/plugin.md
+const plugins = [
+  'header',
+  'font-bold',
+  'font-italic',
+  'font-underline',
+  'font-strikethrough',
+  'list-unordered',
+  'list-ordered',
+  'block-quote',
+  'image',
+  'link',
+  'mode-toggle',
+  'full-screen',
+  'auto-resize'
+]
 
 function Editor({fetch_, currText, changeText}) {
-  // Register plugins if required
-  // MdEditor.use(YOUR_PLUGINS_HERE);
-
-  const plugins = [
-    'header',
-    'font-bold',
-    'font-italic',
-    'font-underline',
-    'font-strikethrough',
-    'list-unordered',
-    'list-ordered',
-    'block-quote',
-    // 'block-wrap',
-    // 'block-code-inline',
-    // 'block-code-block',
-    // 'table',
-    'image',
-    'link',
-    // 'clear',
-    // 'logger',
-    'mode-toggle',
-    'full-screen',
-    'auto-resize'
-  ]
-
   const onImageUpload = async (file) => {
-
-    // const file = files[0]; //this will not work.
-    // const file = new Blob([files[0]]); // kind of works and choses stream as content type of file (not request)
-    // const file = new Blob([files[0]], { type: 'image/png' });// WORKS much better (if you know what MIME type you want.
-
-    // return new Promise(resolve => {
-    //   const reader = new FileReader();
-    //   reader.onload = data => {
-    //     resolve(data.target.result);
-    //   };
-    //   reader.readAsDataURL(file);
-    // });
-
     const formData = new FormData();
     // formData.append('file', file, file.filename);
     formData.append('file', file);
     const headers = {'Content-Type': 'multipart/form-data'}
     const {data, code} = await fetch_('upload-image', 'POST', formData, headers)
     return data.filename
-
-
-    // return new Promise(resolve => {
-    //   const reader = new FileReader();
-    //   reader.onload = data => {
-    //     resolve(data.target.result);
-    //   };
-    //   reader.readAsDataURL(file);
-    // });
   }
 
   function onChange({html, text}) {
@@ -131,7 +100,6 @@ export default function Entry({fetch_, as, setServerError, update}) {
     setSubmitting(true)
     let {title, text, no_ai, created_at} = form
     const body = {title, text, no_ai, created_at, tags}
-    debugger
     const res = entry_id ? await fetch_(`entries/${entry_id}`, 'PUT', body)
       : await fetch_(`entries`, 'POST', body)
     setSubmitting(false)
