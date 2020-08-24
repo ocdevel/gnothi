@@ -58,6 +58,7 @@ function Editor({fetch_, currText, changeText}) {
       plugins={plugins}
       value={currText}
       style={{ width: '100%' }}
+      config={{view: { menu: true, md: true, html: false }}}
       renderHTML={(text) => mdParser.render(text)}
       onChange={onChange}
       onImageUpload={onImageUpload}
@@ -143,9 +144,6 @@ export default function Entry({fetch_, as, setServerError, update}) {
           </Button>
         </>}{' '}
       </>}
-      <Button variant='secondary' size="sm" onClick={goBack}>
-        Cancel
-      </Button>{' '}
       {!as && entry_id && <>
         <Button variant='danger' size="sm" onClick={deleteEntry}>
           Delete
@@ -232,7 +230,7 @@ export default function Entry({fetch_, as, setServerError, update}) {
       onHide={goBack}
       scrollable={true}
     >
-      <Modal.Header>
+      <Modal.Header closeButton>
         <Modal.Title>{fmtDate(entry_id ? form.created_at : Date.now())}</Modal.Title>
       </Modal.Header>
 

@@ -11,6 +11,7 @@ from app import habitica
 from app.ec2_updown import jobs_status
 from app import ml
 import app.schemas as S
+from urllib.parse import quote as urlencode
 
 logger = logging.getLogger(__name__)
 
@@ -259,7 +260,7 @@ async def upload_image_post(file: UploadFile = File(...)):
     extra = {"ContentType": file.content_type} # , "ACL": "public-read"}
     s3.upload_fileobj(file.file, "gnothiai.com", key, ExtraArgs=extra)
     url = "https://s3.amazonaws.com/gnothiai.com/"
-    return {"filename": f"{url}{key}"}
+    return {"filename": f"{url}{urlencode(key)}"}
 
 
 @app.get('/entries', response_model=List[S.EntryOut])
