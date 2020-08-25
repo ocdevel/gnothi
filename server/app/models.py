@@ -1,25 +1,31 @@
 import enum, pdb, re, threading, time, datetime
-from typing import List
+from typing import Optional, List, Any, Dict
+from pydantic import BaseModel, UUID4
 from dateutil import tz
+from uuid import uuid4
+
 from app.database import Base, SessLocal, fa_users_db
 from app.utils import vars
 from app import ml
+
 from sqlalchemy import text, Column, Integer, Enum, Float, ForeignKey, Boolean, DateTime, JSON, Date, Unicode, \
-    func, TIMESTAMP, select
+    func, TIMESTAMP, select, or_, and_
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship, backref, object_session, column_property
 from sqlalchemy.dialects.postgresql import UUID, BYTEA
 from sqlalchemy_utils.types import EmailType
 from sqlalchemy_utils.types.encrypted.encrypted_type import StringEncryptedType, FernetEngine
-from uuid import uuid4
+
+
 from fastapi_sqlalchemy import db  # an object to provide global access to a database session
-
+from fastapi_users import models as fu_models
 from fastapi_users.db import SQLAlchemyBaseUserTable, SQLAlchemyUserDatabase
-import app.schemas as S
 
 
-def uuid_():
-    return str(uuid4())
+# Schemas naming convention: SOModel for "schema out model", SIModel for "schema in"
+class SOut(BaseModel):
+    class Config:
+        orm_mode = True
 
 
 # Note: using sa.Unicode for all Text/Varchar columns to be consistent with sqlalchemy_utils examples. Also keeping all
@@ -27,6 +33,9 @@ def uuid_():
 # how long str will be after encryption.
 def Encrypt(Col, **args):
     return Column(StringEncryptedType(Col, vars.FLASK_KEY, FernetEngine), **args)
+
+
+def uuid_(): return str(uuid4())
 
 
 # https://dev.to/zchtodd/sqlalchemy-cascading-deletes-8hk
@@ -98,7 +107,41 @@ class User(Base, SQLAlchemyBaseUserTable):
         # print(txt)
         return txt
 
-user_db = SQLAlchemyUserDatabase(S.FU_UserDB, fa_users_db, User.__table__)
+
+class FU_User(fu_models.BaseUser): pass
+class FU_UserCreate(fu_models.BaseUserCreate): pass
+class FU_UserUpdate(FU_User, fu_models.BaseUserUpdate): pass
+class FU_UserDB(FU_User, fu_models.BaseUserDB): pass
+user_db = SQLAlchemyUserDatabase(FU_UserDB, fa_users_db, User.__table__)
+
+
+class SOUser(FU_User, fu_models.BaseUserDB):
+    timezone: Optional[Any] = None
+    habitica_user_id: Optional[str] = None
+    habitica_api_token: Optional[str] = None
+    shared_with_me: Optional[Any]
+
+
+class SITimezone(BaseModel):
+    timezone: Optional[str] = None
+
+
+class SIHabitica(BaseModel):
+    habitica_user_id: Optional[str] = None
+    habitica_api_token: Optional[str] = None
+
+
+class SIProfile(SITimezone):
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    orientation: Optional[str] = None
+    gender: Optional[str] = None
+    birthday: Optional[Any] = None
+    bio: Optional[str] = None
+
+
+class SOProfile(SIProfile, SOut):
+    pass
 
 
 class Entry(Base):
@@ -206,19 +249,84 @@ class Entry(Base):
         # Entry.run_models_(self.id)  # debug w/o threading
 
 
+class SEntry(BaseModel):
+    title: Optional[str] = None
+    text: str
+    no_ai: Optional[bool] = False
+
+
+class SIEntry(SEntry):
+    tags: dict
+    created_at: Optional[str] = None
+
+
+class SOEntry(SEntry, SOut):
+    id: UUID4
+    created_at: Optional[datetime.datetime] = None
+    title_summary: Optional[str] = None
+    text_summary: Optional[str] = None
+    sentiment: Optional[str] = ''
+    entry_tags: Dict
+
+
+class NoteTypes(enum.Enum):
+    label = "label"
+    note = "note"
+    resource = "resource"
+
+
+class Note(Base):
+    __tablename__ = 'notes'
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid_)
+    entry_id = Column(UUID(as_uuid=True), ForeignKey('entries.id', **child_cascade), index=True)
+    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id', **child_cascade), index=True)
+    type = Column(Enum(NoteTypes), nullable=False)
+    text = Encrypt(Unicode, nullable=False)
+    private = Column(Boolean, default=False)
+
+    @staticmethod
+    def snoop(
+        viewer_id: UUID4,
+        target_id: UUID4,
+        entry_id: UUID4,
+    ):
+        # TODO use .join(ShareTag) for non-private permissions?
+        return db.session.query(Note)\
+            .join(Entry)\
+            .filter(
+                Note.entry_id == entry_id,
+                or_(
+                    # My own private note
+                    and_(Note.private.is_(True), Note.user_id == viewer_id),
+                    # Or this user can view it
+                    and_(Note.private.is_(False), Entry.user_id == viewer_id)
+                ))
+
+
+class SINote(BaseModel):
+    type: NoteTypes
+    text: str
+    private: bool
+
+
+class SONote(SOut, SINote):
+    id: UUID4
+    user_id: UUID4
+
+
 class FieldType(enum.Enum):
     # medication changes / substance intake
     # exercise, sleep, diet, weight
-    number = 1
+    number = "number"
 
     # happiness score
-    fivestar = 2
+    fivestar = "fivestar"
 
     # periods
-    check = 3
+    check = "check"
 
     # moods (happy, sad, anxious, wired, bored, ..)
-    option = 4
+    option = "option"
 
     # think of more
     # weather_api?
@@ -226,9 +334,9 @@ class FieldType(enum.Enum):
 
 
 class DefaultValueTypes(enum.Enum):
-    value = 1  # which includes None
-    average = 2
-    ffill = 3
+    value = "value"  # which includes None
+    average = "average"
+    ffill = "ffill"
 
 
 class Field(Base):
@@ -292,6 +400,34 @@ class Field(Base):
         }
 
 
+class SIFieldExclude(BaseModel):
+    excluded_at: Optional[datetime.datetime] = None
+
+
+class SIField(SIFieldExclude):
+    type: FieldType
+    name: str
+    default_value: DefaultValueTypes
+    default_value_value: Optional[float] = None
+    target: bool
+
+## TODO can't get __root__ setup working
+# class SFieldOut(SOut):
+#     id: str
+#     type: FieldType
+#     name: str
+#     created_at: Optional[Any] = None
+#     excluded_at: Optional[Any] = None
+#     default_value: Optional[M.DefaultValueTypes] = M.DefaultValueTypes.value
+#     default_value_value: Optional[float] = None
+#     target: Optional[bool] = False
+#     service: Optional[str] = None
+#     service_id: Optional[str] = None
+#     history: Any
+# class SFieldsOut(SOut):
+#     __root__: Dict[str, SFieldOut]
+
+
 class FieldEntry(Base):
     __tablename__ = 'field_entries'
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid_)
@@ -325,6 +461,10 @@ class FieldEntry(Base):
         return q
 
 
+class SIFieldEntry(BaseModel):
+    value: float
+
+
 class Person(Base):
     __tablename__ = 'people'
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid_)
@@ -334,6 +474,18 @@ class Person(Base):
     bio = Encrypt(Unicode)
 
     user_id = Column(UUID(as_uuid=True), ForeignKey('users.id', **child_cascade), nullable=False)
+
+
+class SIPerson(BaseModel):
+    name: Optional[str] = None
+    relation: Optional[str] = None
+    issues: Optional[str] = None
+    bio: Optional[str] = None
+
+
+class SOPerson(SIPerson, SOut):
+    id: UUID4
+    pass
 
 
 class Share(Base):
@@ -352,6 +504,25 @@ class Share(Base):
     @property
     def tags(self):
         return {t.tag_id: True for t in self.share_tags}
+
+
+class SIShare(BaseModel):
+    email: str
+    fields_: Optional[bool] = False
+    books: Optional[bool] = False
+    profile: Optional[bool] = False
+    tags: Optional[dict] = {}
+
+    class Config:
+        fields = {'fields_': 'fields'}
+
+
+class SOShare(SIShare):
+    id: UUID4
+
+    class Config:
+        fields = {'fields_': 'fields'}
+        orm_mode = True
 
 
 class Tag(Base):
@@ -374,7 +545,19 @@ class Tag(Base):
         return db.session.query(Tag).filter_by(user_id=to_id)
 
 
-# FIXME cascade https://www.michaelcho.me/article/many-to-many-relationships-in-sqlalchemy-models-flask
+class SITag(BaseModel):
+    name: str
+    selected: Optional[bool] = False
+
+
+class SOTag(SITag, SOut):
+    id: UUID4
+    user_id: UUID4
+    name: str
+    selected: Optional[bool] = False
+    main: Optional[bool] = False
+
+
 class EntryTag(Base):
     __tablename__ = 'entries_tags'
     entry_id = Column(UUID(as_uuid=True), ForeignKey('entries.id', **child_cascade), primary_key=True)
@@ -391,11 +574,11 @@ class ShareTag(Base):
 
 
 class Shelves(enum.Enum):
-    like = 1
-    already_read = 2
-    dislike = 3
-    remove = 4
-    recommend = 5
+    like = "like"
+    already_read = "already_read"
+    dislike = "dislike"
+    remove = "remove"
+    recommend = "recommend"
 
 
 class Bookshelf(Base):
@@ -461,3 +644,16 @@ class JobsStatus(Base):
     ts_client = Column(TIMESTAMP)
     ts_svc = Column(TIMESTAMP)
     svc = Column(Unicode)
+
+
+class SILimitEntries(BaseModel):
+    days: int
+    tags: List[str] = None
+
+
+class SIQuestion(SILimitEntries):
+    query: str
+
+
+class SISummarize(SILimitEntries):
+    words: int

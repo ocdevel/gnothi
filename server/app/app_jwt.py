@@ -8,31 +8,30 @@ from fastapi_sqlalchemy import db  # an object to provide global access to a dat
 
 from fastapi_users.authentication import JWTAuthentication
 from fastapi_users import FastAPIUsers
-import app.schemas as S
 import app.models as M
 
 
 jwt_lifetime = 60 * 60 * 24 * 7  # 1wk. TODO implement token refresh
 jwt_authentication = JWTAuthentication(secret=SECRET, lifetime_seconds=jwt_lifetime)
 fastapi_users = FastAPIUsers(
-    M.user_db, [jwt_authentication], S.FU_User, S.FU_UserCreate, S.FU_UserUpdate, S.FU_UserDB,
+    M.user_db, [jwt_authentication], M.FU_User, M.FU_UserCreate, M.FU_UserUpdate, M.FU_UserDB,
 )
 
 @app.post("/auth/jwt/refresh")
 async def refresh_jwt(response: Response, user=Depends(fastapi_users.get_current_user)):
     return await jwt_authentication.get_login_response(user, response)
 
-def on_after_register(user: S.FU_UserDB, request: Request):
+def on_after_register(user: M.FU_UserDB, request: Request):
     with db():
         t = M.Tag(user_id=user.id, main=True, selected=True, name='Main')
         db.session.add(t)
         db.session.commit()
     send_mail(user.email, "welcome", {})
 
-def on_after_forgot_password(user: S.FU_UserDB, token: str, request: Request):
+def on_after_forgot_password(user: M.FU_UserDB, token: str, request: Request):
     send_mail(user.email, "forgot-password", token)
 
-def on_after_update(user: S.FU_UserDB, updated_user_data: Dict[str, Any], request: Request):
+def on_after_update(user: M.FU_UserDB, updated_user_data: Dict[str, Any], request: Request):
     print(f"User {user.id} has been updated with the following data: {updated_user_data}")
 
 app.include_router(
