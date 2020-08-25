@@ -300,7 +300,7 @@ class Note(Base):
                     # My own private note
                     and_(Note.private.is_(True), Note.user_id == viewer_id),
                     # Or this user can view it
-                    and_(Note.private.is_(False), Entry.user_id == viewer_id)
+                    and_(Note.private.is_(False), Entry.user_id.in_((viewer_id, target_id)))
                 ))\
             .order_by(Note.created_at.asc())
 
