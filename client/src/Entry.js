@@ -13,7 +13,7 @@ import Tags from "./Tags"
 import MarkdownIt from 'markdown-it'
 import MdEditor, {Plugins} from 'react-markdown-editor-lite'
 import 'react-markdown-editor-lite/lib/index.css'
-import Notes from './Notes'
+import {Notes} from './Notes'
 
 // Initialize a markdown parser
 const mdParser = new MarkdownIt(/* Markdown-it options */);
@@ -107,6 +107,7 @@ export default function Entry({fetch_, as, setServerError, update}) {
     setSubmitting(false)
     if (res.code !== 200) {return}
     setEditing(false)
+    history.push(`/j/entry/${res.data.id}`)
   }
 
   const deleteEntry = async () => {

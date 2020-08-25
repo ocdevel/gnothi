@@ -4,6 +4,7 @@ import Entry from "./Entry"
 import Fields from './Fields'
 import React from "react"
 import {Col, Row} from 'react-bootstrap'
+import {NotesAll} from './Notes'
 
 export default function Journal({user, fetch_, as, setServerError, aiStatus}) {
   let match = useRouteMatch()
@@ -18,6 +19,7 @@ export default function Journal({user, fetch_, as, setServerError, aiStatus}) {
         </Col>
         <Col lg={4}>
           <Fields fetch_={fetch_} as={as} user={user} />
+          <NotesAll fetch_={fetch_} as={as} />
         </Col>
       </Row>
     </div>

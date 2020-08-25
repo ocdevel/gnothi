@@ -278,6 +278,7 @@ class NoteTypes(enum.Enum):
 class Note(Base):
     __tablename__ = 'notes'
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid_)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
     entry_id = Column(UUID(as_uuid=True), ForeignKey('entries.id', **child_cascade), index=True)
     user_id = Column(UUID(as_uuid=True), ForeignKey('users.id', **child_cascade), index=True)
     type = Column(Enum(NoteTypes), nullable=False)
@@ -300,7 +301,8 @@ class Note(Base):
                     and_(Note.private.is_(True), Note.user_id == viewer_id),
                     # Or this user can view it
                     and_(Note.private.is_(False), Entry.user_id == viewer_id)
-                ))
+                ))\
+            .order_by(Note.created_at.asc())
 
 
 class SINote(BaseModel):
@@ -312,6 +314,7 @@ class SINote(BaseModel):
 class SONote(SOut, SINote):
     id: UUID4
     user_id: UUID4
+    created_at: datetime.datetime
 
 
 class FieldType(enum.Enum):

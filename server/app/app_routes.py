@@ -242,11 +242,12 @@ def entries_put_post(user, data: M.SIEntry, entry=None):
         db.session.add(M.EntryTag(entry_id=entry.id, tag_id=tag))
     # commit above first, in case run-models crashes
     db.session.commit()
+    db.session.refresh(entry)
 
     entry.run_models()
     db.session.commit()
 
-    return {}
+    return entry
 
 
 @app.post("/upload-image")
@@ -268,7 +269,7 @@ def entries_get(as_user: str = None, viewer: M.User = Depends(fastapi_users.get_
     return M.Entry.snoop(viewer.email, user.id, snooping=snooping).all()
 
 
-@app.post('/entries')
+@app.post('/entries', response_model=M.SOEntry)
 def entries_post(data: M.SIEntry, as_user: str = None, viewer: M.User = Depends(fastapi_users.get_current_user)):
     user, snooping = getuser(viewer, as_user)
     if snooping: return cant_snoop()
@@ -282,7 +283,7 @@ def entry_get(entry_id, as_user: str = None, viewer: M.User = Depends(fastapi_us
     return entry
 
 
-@app.put('/entries/{entry_id}')
+@app.put('/entries/{entry_id}', response_model=M.SOEntry)
 def entry_put(entry_id, data: M.SIEntry, as_user: str = None, viewer: M.User = Depends(fastapi_users.get_current_user)):
     user, snooping = getuser(viewer, as_user)
     if snooping: return cant_snoop()
@@ -298,6 +299,14 @@ def entry_delete(entry_id, as_user: str = None, viewer: M.User = Depends(fastapi
     entryq.delete()
     db.session.commit()
     return {}
+
+
+@app.get('/notes', response_model=List[M.SONote])
+def notes_get_all(as_user: str = None, viewer: M.User = Depends(fastapi_users.get_current_user)):
+    return []  # FIXME
+    user, snooping = getuser(viewer, as_user)
+    # TODO handle snooping
+    return db.session.query(M.Note).filter_by(user_id=viewer.id).all()
 
 
 @app.get('/entries/{entry_id}/notes', response_model=List[M.SONote])

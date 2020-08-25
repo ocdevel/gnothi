@@ -2,6 +2,28 @@ import {Accordion, Badge, Button, Card, Col, Form, Row, useAccordionToggle} from
 import _ from "lodash";
 import React, {useEffect, useState} from "react";
 
+export function NotesAll({fetch_, as}) {
+  const [notes, setNotes] = useState([])
+  const fetchNotes = async () => {
+    const {data} = await fetch_(`notes`, 'GET')
+    setNotes(data)
+  }
+  useEffect(() => {
+    fetchNotes()
+  }, [as])
+
+  if (!notes.length) {return null}
+  return <>
+    <h5>Notes</h5>
+    {notes.map(n => <>
+      <Badge variant="primary">{n.type}</Badge>{' '}
+      {n.private ? "[private] " : null}
+      {n.text}
+      <hr/>
+    </>)}
+  </>
+}
+
 function CustomToggle({ children, eventKey }) {
   const decoratedOnClick = useAccordionToggle(eventKey, _.noop)
 
@@ -12,7 +34,7 @@ function CustomToggle({ children, eventKey }) {
   );
 }
 
-export default function Notes({fetch_, as, entry_id}) {
+export function Notes({fetch_, as, entry_id}) {
   const [notes, setNotes] = useState([])
   const [adding, setAdding] = useState(null)
   const [text, setText] = useState('')
