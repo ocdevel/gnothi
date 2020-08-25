@@ -72,7 +72,7 @@ export function Notes({fetch_, as, entry_id}) {
     accordion: [{
       title: "Journal owner",
       body: [
-        "CBT & Zen promote describing your thoughts as an objective observer. It helps you get outside your emotions and assess your thoughts, which has positive cognitive impact. The dispassionate details, the better the effect.",
+        "CBT & Zen promote describing your thoughts as an objective observer. It helps you get outside your emotions and assess your thoughts, which has positive cognitive impact. The more dispassionate details, the better the effect.",
         "Helps AI recommend resources. Also helps AI recommend resources to other users with similar entries.",
         "Might help therapists assess your entries.",
       ]
@@ -109,7 +109,7 @@ export function Notes({fetch_, as, entry_id}) {
         onClick={() => setAdding(obj.key)}
       >+ {obj.name}</Button>
       <Accordion>
-        <CustomToggle eventKey="0">Why add a {obj.key}?</CustomToggle>
+        <CustomToggle eventKey="0"><small>Why add a {obj.key}?</small></CustomToggle>
         <Accordion.Collapse eventKey="0">
           <>
           {obj.accordion.map((a, i) => <Card key={i} className='bottom-margin'>

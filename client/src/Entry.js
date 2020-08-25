@@ -108,6 +108,7 @@ export default function Entry({fetch_, as, setServerError, update}) {
     if (res.code !== 200) {return}
     setEditing(false)
     history.push(`/j/entry/${res.data.id}`)
+    update()
   }
 
   const deleteEntry = async () => {
@@ -238,14 +239,12 @@ export default function Entry({fetch_, as, setServerError, update}) {
 
       <Modal.Body>
         {renderForm()}
-      </Modal.Body>
-
-      {!editing && entry_id && (
-        <Modal.Body>
+        {!editing && entry_id && <>
           <hr/>
           <Notes fetch_={fetch_} entry_id={entry_id} as={as} />
-        </Modal.Body>
-      )}
+        </>}
+      </Modal.Body>
+
 
       <Modal.Footer>
         {renderButtons()}
