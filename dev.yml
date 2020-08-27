@@ -1,4 +1,4 @@
-version: "3"
+version: "3.7"
 
 services:
   server:
@@ -30,3 +30,12 @@ services:
       options:
         max-size: "5m"
         max-file: "3"
+
+#  gpu:
+#    build: gpu
+#    container_name: jgpu
+#    volumes:
+#      - ./gpu:/app
+#    device_requests:
+#      - capabilities:
+#          - "gpu"

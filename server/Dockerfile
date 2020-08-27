@@ -30,7 +30,8 @@ RUN pip install \
   asyncpg \
   bcrypt \
   passlib \
-  shortuuid
+  shortuuid \
+  pytest
 
 COPY .aws /root/.aws
 COPY app /app
