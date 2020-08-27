@@ -295,8 +295,7 @@ def entry_put(entry_id, data: M.SIEntry, as_user: str = None, viewer: M.User = D
 def entry_delete(entry_id, as_user: str = None, viewer: M.User = Depends(fastapi_users.get_current_user)):
     user, snooping = getuser(viewer, as_user)
     if snooping: return cant_snoop()
-    entryq = M.Entry.snoop(viewer.email, user.id, entry_id=entry_id)
-    entryq.delete()
+    db.session.query(M.Entry).filter_by(id=entry_id, user_id=viewer.id).delete()
     db.session.commit()
     return {}
 

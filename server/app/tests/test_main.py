@@ -45,6 +45,22 @@ def setup_users(client):
 
 def test_read_main(client):
     u = 'user@x.com'
-    response = client.get("/user", **header(u))
-    assert response.status_code == 200
-    assert response.json()['email'] == u
+    res = client.get("/user", **header(u))
+    assert res.status_code == 200
+    assert res.json()['email'] == u
+
+
+def test_delete_entry(client):
+    u = 'user@x.com'
+    # TODO get main tag
+    res = client.get('/tags', **header(u))
+    tags = {res.json()[0]['id']: True}
+    data = {'title': 'Title', 'text': 'Text', 'tags': tags}
+    res = client.post("/entries", json=data, **header(u))
+    print(res.text)
+    assert res.status_code == 200
+    eid = res.json()['id']
+    assert D.engine.execute("select count(*) ct from entries").fetchone().ct == 1
+    res = client.delete(f"/entries/{eid}", **header(u))
+    assert res.status_code == 200
+    assert D.engine.execute("select count(*) ct from entries").fetchone().ct == 0
