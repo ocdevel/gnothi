@@ -65,9 +65,10 @@ class User(Base, SQLAlchemyBaseUserTable):
     tags = relationship("Tag", order_by='Tag.name.asc()', **parent_cascade)
 
     @staticmethod
-    def snoop(viewer, as_id):
+    def snoop(viewer, as_id=None):
         as_user, snooping = None, False
-        if viewer.id != as_id:
+        if as_id and viewer.id != as_id:
+            snooping = True
             as_user = db.session.query(User) \
                 .join(Share) \
                 .filter(Share.email == viewer.email, Share.user_id == as_id) \
@@ -76,7 +77,6 @@ class User(Base, SQLAlchemyBaseUserTable):
             as_user.share_data = db.session.query(Share) \
                 .filter_by(user_id=as_id, email=viewer.email) \
                 .first()
-            snooping = True
         else:
             # as_user = viewer
             # fastapi-users giving me beef, re-load from sqlalchemy

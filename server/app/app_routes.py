@@ -280,6 +280,7 @@ def entries_post(data: M.SIEntry, as_user: str = None, viewer: M.User = Depends(
 def entry_get(entry_id, as_user: str = None, viewer: M.User = Depends(fastapi_users.get_current_user)):
     user, snooping = getuser(viewer, as_user)
     entry = M.Entry.snoop(viewer.email, user.id, snooping=snooping, entry_id=entry_id).first()
+    if not entry: return send_error("Entry not found", 404)
     return entry
 
 
@@ -288,6 +289,7 @@ def entry_put(entry_id, data: M.SIEntry, as_user: str = None, viewer: M.User = D
     user, snooping = getuser(viewer, as_user)
     if snooping: return cant_snoop()
     entry = M.Entry.snoop(viewer.email, user.id, entry_id=entry_id).first()
+    if not entry: return send_error("Entry not found", 404)
     return entries_put_post(user, data, entry)
 
 
@@ -295,7 +297,10 @@ def entry_put(entry_id, data: M.SIEntry, as_user: str = None, viewer: M.User = D
 def entry_delete(entry_id, as_user: str = None, viewer: M.User = Depends(fastapi_users.get_current_user)):
     user, snooping = getuser(viewer, as_user)
     if snooping: return cant_snoop()
-    db.session.query(M.Entry).filter_by(id=entry_id, user_id=viewer.id).delete()
+    entry = db.session.query(M.Entry).filter_by(id=entry_id, user_id=viewer.id)
+    if not entry.first():
+        return send_error("Entry not found", 404)
+    entry.delete()
     db.session.commit()
     return {}
 
