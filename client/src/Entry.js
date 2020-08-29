@@ -11,17 +11,11 @@ import './Entry.css'
 import {FaTags, FaPen} from "react-icons/fa"
 import Tags from "./Tags"
 import MarkdownIt from 'markdown-it'
-import MdEditor, {Plugins} from 'react-markdown-editor-lite'
+import MdEditor from 'react-markdown-editor-lite'
 import 'react-markdown-editor-lite/lib/index.css'
 import {Notes} from './Notes'
 
-// Initialize a markdown parser
 const mdParser = new MarkdownIt(/* Markdown-it options */);
-
-MdEditor.use(Plugins.AutoResize, {
-  min: 400, // min height
-  // max: 600, // max height
-});
 
 // https://github.com/HarryChen0506/react-markdown-editor-lite/blob/master/docs/plugin.md
 const plugins = [
@@ -37,10 +31,10 @@ const plugins = [
   'link',
   'mode-toggle',
   'full-screen',
-  'auto-resize'
+  // f3b13052: auto-resize
 ]
 
-function Editor({fetch_, currText, changeText}) {
+function Editor({fetch_, text, changeText}) {
   const onImageUpload = async (file) => {
     const formData = new FormData();
     // formData.append('file', file, file.filename);
@@ -57,8 +51,8 @@ function Editor({fetch_, currText, changeText}) {
   return (
     <MdEditor
       plugins={plugins}
-      value={currText}
-      style={{ width: '100%' }}
+      value={text}
+      style={{ height: 300, width: '100%' }}
       config={{view: { menu: true, md: true, html: false }}}
       renderHTML={(text) => mdParser.render(text)}
       onChange={onChange}
@@ -175,7 +169,7 @@ export default function Entry({fetch_, as, setServerError, update}) {
       </>}
 
       {editing ? (
-        <Editor fetch_={fetch_} readOnly={true} currText={form.text} changeText={changeText} />
+        <Editor fetch_={fetch_} text={form.text} changeText={changeText} />
       ) : (
         <ReactMarkdown source={form.text} linkTarget='_blank' />
       )}
