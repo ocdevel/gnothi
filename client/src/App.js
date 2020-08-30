@@ -41,7 +41,13 @@ function App() {
   const [aiStatus, setAiStatus] = useState('off')
   // const [as, setAs] = useState('3694b314-d050-46da-882a-726598bd6abf')
 
-  const fetch_ = async (route, method='GET', body=null, headers={}) => {
+  const fetch_ = async (
+    route,
+    method='GET',
+    body=null,
+    headers={},
+    useAs=true
+  ) => {
     const obj = {
       method,
       headers: {'Content-Type': 'application/json', ...headers},
@@ -51,7 +57,7 @@ function App() {
     if (jwt) obj['headers']['Authorization'] = `Bearer ${jwt}`
     // auth is added by flask-jwt as /auth, all my custom paths are under /api/*
     let url = `${host}/${route}`
-    if (as && user && as !== user.id) {
+    if (useAs && as && user && as !== user.id) {
       url += (~route.indexOf('?') ? '&' : '?') + `as_user=${as}`
     }
     obj['url'] = url
@@ -99,6 +105,12 @@ function App() {
     return () => clearTimeout(timer)
   }, [jwt])
 
+  const changeAs = async (as=null) => {
+    setAs(as)
+    const {data} = await fetch_('user', 'GET', null, {}, false)
+    setUser(data)
+  }
+
   const logout = () => {
     localStorage.removeItem('jwt')
     window.location.href = "/"
@@ -108,12 +120,12 @@ function App() {
     if (_.isEmpty(user.shared_with_me)) {return}
     return <>
       {as && (
-        <NavDropdown.Item onClick={() => setAs()}>
+        <NavDropdown.Item onClick={() => changeAs()}>
           {emoji("🔀")}{user.email}
         </NavDropdown.Item>
       )}
       {user.shared_with_me.map(s => s.id != as && (
-        <NavDropdown.Item onClick={() => setAs(s.id)}>
+        <NavDropdown.Item onClick={() => changeAs(s.id)}>
           {emoji("🔀")}{s.email}
           {s.new_entries ? <Badge pill variant='danger'>{s.new_entries}</Badge> : null}
         </NavDropdown.Item>
@@ -129,7 +141,7 @@ function App() {
       email = <>{emoji("🕵️")} {email}</>
     } else {
       const ne = _.reduce(user.shared_with_me, (m,v) => m + v.new_entries, 0)
-      email = !ne ? email : <>{email} <Badge pill variant='danger'>{ne}</Badge></>
+      email = !ne ? email : <><Badge pill variant='danger'>{ne}</Badge> {email}</>
     }
 
     return (
