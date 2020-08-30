@@ -85,10 +85,11 @@ class User(Base, SQLAlchemyBaseUserTable):
 
     @property
     def shared_with_me(self):
-        return object_session(self).query(User)\
-            .join(Share)\
-            .filter(Share.email == self.email)\
-            .all()
+        # 9cc44d55: sqlalchemy join. Can't figure out sa select diff cols from join tables
+        return db.session.execute("""
+        select s.*, u.* from users u
+        inner join shares s on s.email=:email and u.id=s.user_id
+        """, {'email': self.email}).fetchall()
 
     def profile_to_text(self):
         txt = ''
@@ -115,13 +116,6 @@ class FU_UserDB(FU_User, fu_models.BaseUserDB): pass
 user_db = SQLAlchemyUserDatabase(FU_UserDB, fa_users_db, User.__table__)
 
 
-class SOUser(FU_User, fu_models.BaseUserDB):
-    timezone: Optional[Any] = None
-    habitica_user_id: Optional[str] = None
-    habitica_api_token: Optional[str] = None
-    shared_with_me: Optional[Any]
-
-
 class SITimezone(BaseModel):
     timezone: Optional[str] = None
 
@@ -142,6 +136,20 @@ class SIProfile(SITimezone):
 
 class SOProfile(SIProfile, SOut):
     pass
+
+
+class SOSharedWithMe(SOProfile):
+    id: UUID4
+    email: str
+    new_entries: Optional[int]
+    # last_seen: Optional[datetime.datetime]
+
+
+class SOUser(FU_User, fu_models.BaseUserDB):
+    timezone: Optional[Any] = None
+    habitica_user_id: Optional[str] = None
+    habitica_api_token: Optional[str] = None
+    shared_with_me: Optional[List[SOSharedWithMe]]
 
 
 class Entry(Base):

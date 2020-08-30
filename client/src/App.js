@@ -5,7 +5,8 @@ import {
   Container,
   Nav,
   Navbar,
-  NavDropdown
+  NavDropdown,
+  Badge
 } from 'react-bootstrap';
 import {LinkContainer} from 'react-router-bootstrap'
 import {
@@ -114,6 +115,7 @@ function App() {
       {user.shared_with_me.map(s => s.id != as && (
         <NavDropdown.Item onClick={() => setAs(s.id)}>
           {emoji("🔀")}{s.email}
+          {s.new_entries ? <Badge pill variant='danger'>{s.new_entries}</Badge> : null}
         </NavDropdown.Item>
       ))}
       <NavDropdown.Divider />
@@ -125,6 +127,9 @@ function App() {
     if (as) {
       email = _.find(user.shared_with_me, {id: as}).email
       email = <>{emoji("🕵️")} {email}</>
+    } else {
+      const ne = _.reduce(user.shared_with_me, (m,v) => m + v.new_entries, 0)
+      email = !ne ? email : <>{email} <Badge pill variant='danger'>{ne}</Badge></>
     }
 
     return (

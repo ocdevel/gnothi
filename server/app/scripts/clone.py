@@ -9,7 +9,7 @@ import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument("method", help="backup|pull|push|wipe")
-parser.add_argument("--migrate", action="store_true", help="prod->local_prod; local_prod.migrate(); local.init(); local_prod->local")
+parser.add_argument("--migrate", help="If/when to apply a migration? before: prod->local_prod; local_prod.migrate(); local.init(); local_prod->local. 'after' (todo type out). None: no migration")
 args = parser.parse_args()
 
 method = args.method
@@ -63,7 +63,7 @@ print('to', to_url)
 #       f" | psql {to_url}"
 cmd = f"pg_dump --no-owner --no-acl"
 
-if args.migrate:
+if args.migrate and args.migrate in ['before','after']:
     if method == 'push':
         raise NotImplemented("push --migrate not yet supported")
     tmp_url = to_url.replace('dev', 'tmp')
@@ -72,8 +72,9 @@ if args.migrate:
     create_database(tmp_url)
     os.system(f"{cmd} {from_url} | psql {tmp_url}")
     wipe(to_url, and_init=True)
-    migrate(tmp_url)
+    if args.migrate == 'before': migrate(tmp_url)
     os.system(f"{cmd} {tmp_url} --data-only | psql {to_url}")
+    if args.migrate == 'after': migrate(to_url)
 else:
     wipe(to_url, and_init=False)
     os.system(f"{cmd} {from_url} | psql {to_url}")
