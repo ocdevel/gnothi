@@ -24,10 +24,46 @@ import {
   FaQuestion,
   FaCubes,
   FaBook,
-  FaRegFileArchive
+  FaLock
 } from 'react-icons/fa'
 import Entry from "./Entry"
 import './Entries.css'
+
+ const tools = {
+  entries: {minEntries: 0},
+  query: {
+    minEntries: 1,
+    label: "Ask",
+    icon: <FaQuestion />,
+    popover: "Ask a question about entries",
+    description: `Ask a question about your entries.`,
+    render: args =>  <Query {...args} />,
+  },
+  summarize: {
+    minEntries: 1,
+    label: "Summarize",
+    icon: <FaTextHeight />,
+    popover: "Generate summaries of entries",
+    description: `Summarize your entries for an overview.`,
+    render: args => <Summarize {...args} />,
+  },
+  themes: {
+    minEntries: 3,
+    popover: "Common themes across entries",
+    label: "Themes",
+    icon: <FaCubes />,
+    description: `Show common recurring themes across your entries.`,
+    render: args => <Themes {...args} />,
+  },
+  books: {
+    minEntries: 3,
+    label: "Books",
+    icon: <FaBook />,
+    popover: "Self-help book recommendations based on entries",
+    description: `Generate AI-recommended self-help books, based on your entries.`,
+    render:  args => <Books {...args} />,
+  },
+}
 
 export default function Entries({fetch_, as, aiStatus, setServerError}) {
   const [entries, setEntries] = useState([])
@@ -41,6 +77,11 @@ export default function Entries({fetch_, as, aiStatus, setServerError}) {
   // clean up
   tags = _.pickBy(tags, v => v)
   search = search.toLowerCase()
+
+  let filtered = _(entries)
+      .filter(e => _.reduce(tags, (m, v, k) => e.entry_tags[k] || m, false))
+      .filter(e => !search.length || ~(e.title + e.text).toLowerCase().indexOf(search))
+      .value()
 
   let history = useHistory()
   let match = useRouteMatch()
@@ -111,13 +152,14 @@ export default function Entries({fetch_, as, aiStatus, setServerError}) {
     )
   }
 
+  let anyLocked = false;
   const renderTool = t => {
-    const popover = {
-      query: "Ask a question about entries",
-      summarize: "Generate summaries of entries",
-      themes: "Common themes across entries",
-      books: "Self-help book recommendations based on entries"
-    }[t]
+    const tObj = tools[t];
+    const locked = filtered.length < tObj.minEntries;
+    anyLocked = anyLocked || locked
+    // const popover = locked ? "This feature unlocks with more entries" : tObj.popover;
+    // const icon = locked ? <FaLock /> : tObj.icon;
+    if (locked) {return null}
 
     const btnOpts = {
       size: 'sm',
@@ -136,15 +178,9 @@ export default function Entries({fetch_, as, aiStatus, setServerError}) {
         </SimplePopover>
       </ButtonGroup>
     }
-    return <SimplePopover text={popover}>
+    return <SimplePopover text={tObj.popover}>
       <Button {...btnOpts}>
-        {{
-          query: <><FaQuestion /> Ask</>,
-          summarize: <><FaTextHeight /> Summarize</>,
-          //summarize: <><FaRegFileArchive /> Summarize</>,
-          themes: <><FaCubes /> Themes</>,
-          books: <><FaBook /> Books</>
-        }[t]}
+        {tObj.icon} {tObj.label}
       </Button>
     </SimplePopover>
   }
@@ -186,15 +222,15 @@ export default function Entries({fetch_, as, aiStatus, setServerError}) {
           placeholder="Search"
         />}
       </div>
+      {anyLocked && <div className='text-muted'>
+          <FaLock />
+          <span className='tools-divider' />
+          <small>More AI tools unlock with more entries</small>
+      </div>}
     </>
   }
 
   const renderEntries = () => {
-    let filtered = _(entries)
-      .filter(e => _.reduce(tags, (m, v, k) => e.entry_tags[k] || m, false))
-      .filter(e => !search.length || ~(e.title + e.text).toLowerCase().indexOf(search))
-      .value()
-
     if (!filtered.length) {
       return <Alert variant='info'>No entries. If you're a new user, click <Button variant="success" size='sm' disabled>New Entry</Button> above. If you're a therapist, click your email top-right and select a client; you'll then be in that client's shoes.</Alert>
     }
@@ -222,19 +258,9 @@ export default function Entries({fetch_, as, aiStatus, setServerError}) {
     if (tool === 'entries') {
       return renderEntries()
     }
-    const desc = {
-      query: `Ask a question about your entries.`,
-      themes: `Show common recurring themes across your entries.`,
-      summarize: `Summarize your entries for an overview.`,
-      books: `Generate AI-recommended self-help books, based on your entries.`,
-    }[tool]
+    const desc = tools[tool].description
     const args = {fetch_, as, tags, aiStatus}
-    const comp = {
-      query: <Query {...args} />,
-      themes: <Themes {...args} />,
-      summarize: <Summarize {...args} />,
-      books: <Books {...args} />
-    }[tool]
+    const comp = tools[tool].render(args)
     return <>
       <Alert variant='info'>
         <div>{desc}</div>

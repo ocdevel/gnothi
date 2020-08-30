@@ -132,3 +132,56 @@ class TestEntries():
     def test_delete(self, client):
         eid = _post_entry(client)
         _crud_with_perms(client.delete, f"/entries/{eid}", 'entries', -1)
+
+
+
+class TestML():
+    def test_influencers(self, client):
+        # TODO no field-entries
+        # TODO few field-entries
+        # TODO enough field-entries
+        # res = client.get("/influencers", **header('user'))
+        pass
+
+    def _ml_jobs(self, c, limit_entries, code):
+        res = c.post("/themes", data=limit_entries, **header('user'))
+        assert res.status_code == code
+        data = {**limit_entries, 'query': "Who am I?"}
+        res = c.post("/query", data=data, **header("user"))
+        assert res.status_code == code
+        data = {**limit_entries, 'words': 300}
+        res = c.post("/summarize", data=data, **header('user'))
+        assert res.status_code == code
+        res = c.post("/books", **header('user'))
+        assert res.status_code == code
+
+    def test_entries_count(self, client):
+        # none
+        main_tag = list(u.user.tags.keys())[0]
+        limit_entries = {'days': 10, 'tags': main_tag}
+        self._ml_jobs(client, limit_entries, 400)
+
+        # 1, still not enough
+        eid = _post_entry(client)
+        self._ml_jobs(client, limit_entries, 400)
+
+        # 2, enough now
+        eid = _post_entry(client)
+        self._ml_jobs(client, limit_entries, 200)
+
+        # 2, enough - but no tags selected
+        limit_entries['tags'] = {}
+        self._ml_jobs(client, limit_entries, 400)
+
+
+    # def test_few_entries(self, client):
+    #     eid = _post_entry(client)
+    #
+    #     # res = client.get("/influencers", **header('user'))
+    #     limit_entries = {'days': 10, 'tags': u.user.tags}
+    #     res = client.post("/themes", json=limit_entries, **header('user'))
+    #     assert res.status_code == 400
+    #     # post /books
+    #     # post /query (M.SIQuestion)
+    #     # post /summarize (M.SISummarize)
+
