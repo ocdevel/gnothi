@@ -249,6 +249,13 @@ class Entry(Base):
                 if should_update:
                     ml.books(user, bust=True)
 
+                # Find any broken entries & clean those up.
+                # TODO https://github.com/kvesteri/sqlalchemy-utils/issues/470
+                entries = db.session.query(Entry).with_entities(Entry.id, Entry.title_summary)
+                for entry in entries:
+                    if entry.title_summary == 'AI server offline, check back later':
+                        return Entry.run_models_(entry.id)
+
                 return
 
     def run_models(self):
