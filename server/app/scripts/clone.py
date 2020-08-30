@@ -13,7 +13,7 @@ parser.add_argument("--migrate", action="store_true", help="prod->local_prod; lo
 args = parser.parse_args()
 
 method = args.method
-now = datetime.now().strftime("%Y-%m-%d-%I-%Mp")
+now = datetime.utcnow().strftime("%Y-%m-%d-%I-%Mp")
 
 engines_ = {}
 def engine(url):

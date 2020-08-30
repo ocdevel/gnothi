@@ -5,7 +5,7 @@ from dateutil import tz
 from uuid import uuid4
 
 from app.database import Base, SessLocal, fa_users_db
-from app.utils import vars
+from app.utils import vars, utcnow
 from app import ml
 
 from sqlalchemy import text, Column, Integer, Enum, Float, ForeignKey, Boolean, DateTime, JSON, Date, Unicode, \
@@ -188,6 +188,13 @@ class Entry(Base):
                 .join(ShareTag, EntryTag.tag_id == ShareTag.tag_id)\
                 .join(Share, ShareTag.share_id == Share.id)\
                 .filter(Share.email == viewer_email, Share.user_id == target_id)
+            # TODO use ORM partial thus far for this query command, not raw sql
+            sql = f"""
+            update shares set last_seen={utcnow}, new_entries=0
+            where email=:email and user_id=:uid
+            """
+            db.session.execute(text(sql), dict(email=viewer_email, uid=target_id))
+            db.session.commit()
 
         if entry_id:
             q = q.filter(Entry.id == entry_id)
@@ -247,6 +254,24 @@ class Entry(Base):
         t = threading.Thread(target=Entry.run_models_, args=(self.id,))
         t.start()
         # Entry.run_models_(self.id)  # debug w/o threading
+
+    def update_snoopers(self):
+        """Updates snoopers with n_new_entries since last_seen"""
+        sql = """
+        with news as (
+          select s.id, count(e.id) ct 
+          from shares s 
+          inner join shares_tags st on st.share_id=s.id
+          inner join entries_tags et on et.tag_id=st.tag_id
+          inner join entries e on e.id=et.entry_id
+          where e.user_id=:uid 
+            and e.created_at > s.last_seen
+          group by s.id
+        )
+        update shares s set new_entries=n.ct from news n where n.id=s.id
+        """
+        db.session.execute(text(sql), {'uid': self.user_id})
+        db.session.commit()
 
 
 class SEntry(BaseModel):
@@ -442,7 +467,7 @@ class FieldEntry(Base):
 
     @staticmethod
     def get_today_entries(user_id, field_id=None):
-        return FieldEntry.get_day_entries(datetime.datetime.now(), user_id, field_id)
+        return FieldEntry.get_day_entries(datetime.datetime.utcnow(), user_id, field_id)
 
     @staticmethod
     def get_day_entries(day, user_id, field_id=None):
@@ -503,6 +528,9 @@ class Share(Base):
 
     share_tags = relationship("ShareTag", **parent_cascade)
     tags_ = relationship("Tag", secondary="shares_tags")
+
+    last_seen = Column(DateTime, default=datetime.datetime.utcnow)
+    new_entries = Column(Integer, default=0)
 
     @property
     def tags(self):

@@ -34,3 +34,7 @@ SECRET = vars.FLASK_KEY
 
 from multiprocessing import cpu_count
 THREADS = cpu_count()
+
+# use this in explicit sql queries instead of "now()". SQLAlchemy models will handle
+# it automatically via datetime.utcnow, but engine.execute("now()") will not be utc
+utcnow = "now() at time zone 'utc'"

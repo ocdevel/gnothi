@@ -7,7 +7,7 @@ from sqlalchemy import text
 from books import predict_books
 from themes import themes
 from influencers import influencers
-from utils import SessLocal, cluster, cosine, clear_gpu
+from utils import SessLocal, cluster, cosine, clear_gpu, utcnow
 from nlp import nlp_
 
 m = Box({
@@ -65,7 +65,7 @@ if __name__ == '__main__':
         # if active_jobs: GPUtil.showUtilization()
 
         # Notify is online.
-        sql = "update jobs_status set status='on', ts_svc=now(), svc=:svc"
+        sql = f"update jobs_status set status='on', ts_svc={utcnow}, svc=:svc"
         sess.execute(text(sql), {'svc': socket.gethostname()})
 
         # Find jobs
@@ -77,7 +77,7 @@ if __name__ == '__main__':
         job = sess.execute(sql).fetchone()
         if not job:
             sql = f"""
-            select extract(epoch FROM (now() - ts_client)) as elapsed_client
+            select extract(epoch FROM ({utcnow} - ts_client)) as elapsed_client
             from jobs_status;
             """
             if sess.execute(sql).fetchone().elapsed_client > inactivity:

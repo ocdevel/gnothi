@@ -132,13 +132,15 @@ def tags_get(as_user: str = None, viewer: M.User = Depends(fastapi_users.get_cur
     return M.Tag.snoop(viewer.email, user.id, snooping=snooping).all()
 
 
-@app.post('/tags')
+@app.post('/tags', response_model=M.SOTag)
 def tags_post(data: M.SITag, as_user: str = None,  viewer: M.User = Depends(fastapi_users.get_current_user)):
     user, snooping = getuser(viewer, as_user)
     if snooping: return cant_snoop()
-    user.tags.append(M.Tag(name=data.name))
+    tag = M.Tag(name=data.name, user_id=user.id)
+    db.session.add(tag)
     db.session.commit()
-    return {}
+    db.session.refresh(tag)
+    return tag
 
 
 @app.put('/tags/{tag_id}')
@@ -244,6 +246,7 @@ def entries_put_post(user, data: M.SIEntry, entry=None):
     db.session.commit()
     db.session.refresh(entry)
 
+    entry.update_snoopers()
     entry.run_models()
     db.session.commit()
 
@@ -367,7 +370,7 @@ def field_put(field_id, data: M.SIFieldExclude, as_user: str = None, viewer: M.U
     user, snooping = getuser(viewer, as_user)
     if snooping: return cant_snoop()
     f = db.session.query(M.Field).filter_by(user_id=user.id, id=field_id).first()
-    f.excluded_at = data.excluded_at  # just do datetime.now()?
+    f.excluded_at = data.excluded_at  # just do datetime.utcnow()?
     db.session.commit()
     return {}
 

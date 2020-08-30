@@ -1,5 +1,5 @@
 import boto3, time, threading, os
-from app.utils import is_dev, vars
+from app.utils import is_dev, vars, utcnow
 from fastapi_sqlalchemy import db
 import socket
 
@@ -8,14 +8,14 @@ ec2_client = boto3.client('ec2')
 
 
 def _fetch_status():
-    sql = """
+    sql = f"""
     -- Ensure 1 row exists
     insert into jobs_status (id, status, ts_client, ts_svc, svc) 
-        values (1, 'off', now(), now(), null) 
+        values (1, 'off', {utcnow}, {utcnow}, null) 
         on conflict (id) do nothing;
     select status, svc,
-        extract(epoch FROM (now() - ts_svc)) as elapsed_svc,
-        extract(epoch FROM (now() - ts_client)) as elapsed_client
+        extract(epoch FROM ({utcnow} - ts_svc)) as elapsed_svc,
+        extract(epoch FROM ({utcnow} - ts_client)) as elapsed_client
     from jobs_status;
     """
     res = db.session.execute(sql)
@@ -36,7 +36,7 @@ def jobs_status():
     # TODO maybe cache it as global var, so not hitting db so much?
     if res.elapsed_client < 3:
         return res.status
-    db.session.execute("update jobs_status set ts_client=now()")
+    db.session.execute(f"update jobs_status set ts_client={utcnow}")
     db.session.commit()
 
     # job service is fresh (5s)
@@ -61,7 +61,7 @@ def ec2_down_maybe():
         # using even if idling, so no need to wait long after
         if res.elapsed_client / 60 < 5 or res.status == 'off':
             return
-        db.session.execute("update jobs_status set status='off', ts_client=now()")
+        db.session.execute(f"update jobs_status set status='off', ts_client={utcnow}")
         db.session.commit()
         if is_dev(): return
         try:
