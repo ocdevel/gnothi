@@ -126,8 +126,9 @@ function App() {
       )}
       {user.shared_with_me.map(s => s.id != as && (
         <NavDropdown.Item onClick={() => changeAs(s.id)}>
-          {emoji("🔀")}{s.email}
+          {emoji("🔀")}
           {s.new_entries ? <Badge pill variant='danger'>{s.new_entries}</Badge> : null}
+          {s.email}
         </NavDropdown.Item>
       ))}
       <NavDropdown.Divider />

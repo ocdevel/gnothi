@@ -71,8 +71,8 @@ if args.migrate and args.migrate in ['before','after']:
         drop_database(tmp_url)
     create_database(tmp_url)
     os.system(f"{cmd} {from_url} | psql {tmp_url}")
-    wipe(to_url, and_init=True)
     if args.migrate == 'before': migrate(tmp_url)
+    wipe(to_url, and_init=True)
     os.system(f"{cmd} {tmp_url} --data-only | psql {to_url}")
     if args.migrate == 'after': migrate(to_url)
 else:
