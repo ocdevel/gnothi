@@ -89,7 +89,8 @@ if __name__ == '__main__':
         # Threading keeps models around for re-use (cleared after inactivity)
         # Multiprocessing fully wipes the process after run. Keras/TF has model-training memleak & can't recover GPU
         # RAM, so just run books in Process https://github.com/tensorflow/tensorflow/issues/36465#issuecomment-582749350
-        if job.method == 'books':
+        # FIXME Running influencers in process too because it crashes sometimes. Find solution
+        if job.method in ['books', 'influencers']:
             multiprocessing.Process(target=run_job, args=(job,)).start()
         else:
             threading.Thread(target=run_job, args=(job,)).start()
