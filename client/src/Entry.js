@@ -2,7 +2,9 @@ import {useHistory, useParams} from "react-router-dom"
 import React, {useEffect, useState, useContext} from "react"
 import {spinner, SimplePopover, fmtDate} from "./utils"
 import {
+  Badge,
   Button,
+  Card,
   Form,
   Modal,
 } from "react-bootstrap"
@@ -13,7 +15,7 @@ import Tags from "./Tags"
 import MarkdownIt from 'markdown-it'
 import MdEditor from 'react-markdown-editor-lite'
 import 'react-markdown-editor-lite/lib/index.css'
-import {Notes} from './Notes'
+import {AddNotes} from './Notes'
 
 const mdParser = new MarkdownIt(/* Markdown-it options */);
 
@@ -70,6 +72,7 @@ export default function Entry({fetch_, as, setServerError, update}) {
   const [submitting, setSubmitting] = useState(false)
   const [tags, setTags] = useState({})
   const [advanced, setAdvanced] = useState(false)
+  const [notes, setNotes] = useState([])
 
   const fetchEntry = async () => {
     if (!entry_id) { return }
@@ -81,8 +84,15 @@ export default function Entry({fetch_, as, setServerError, update}) {
     setTags(data.entry_tags)
   }
 
+  const fetchNotes = async () => {
+    if (!entry_id) { return }
+    const {data} = await fetch_(`entries/${entry_id}/notes`, 'GET')
+    setNotes(data)
+  }
+
   useEffect(() => {
     fetchEntry()
+    fetchNotes()
   }, [entry_id])
 
   const goBack = () => {
@@ -132,7 +142,7 @@ export default function Entry({fetch_, as, setServerError, update}) {
       ><FaPen /> Edit
       </Button>
     </>
-    return <>
+    return <div>
       <Button
         variant="primary"
         onClick={submit}
@@ -146,7 +156,7 @@ export default function Entry({fetch_, as, setServerError, update}) {
           Cancel
         </Button>
       </>}
-    </>
+    </div>
   }
 
   const renderForm = () => <>
@@ -220,6 +230,19 @@ export default function Entry({fetch_, as, setServerError, update}) {
     </Form>
   </>
 
+  const renderNotes = () => {
+    if (editing || !entry_id || notes.length === 0) { return }
+    return <div style={{marginTop: '1rem'}}>
+      {notes.map(n => <Card className='bottom-margin'>
+        <Card.Body>
+          <Badge variant="primary">{n.type}</Badge>{' '}
+          {n.private ? "[private] " : null}
+          {n.text}
+        </Card.Body>
+      </Card>)}
+    </div>
+  }
+
   return <>
     <Modal
       show={true}
@@ -233,14 +256,14 @@ export default function Entry({fetch_, as, setServerError, update}) {
 
       <Modal.Body>
         {renderForm()}
-        {!editing && entry_id && <>
-          <hr/>
-          <Notes fetch_={fetch_} entry_id={entry_id} as={as} />
-        </>}
+        {renderNotes()}
       </Modal.Body>
 
 
       <Modal.Footer>
+        {!editing && entry_id && <div className='mr-auto'>
+          <AddNotes fetch_={fetch_} entry_id={entry_id} as={as} onSubmit={fetchNotes} />
+        </div>}
         {renderButtons()}
       </Modal.Footer>
     </Modal>
