@@ -1,17 +1,13 @@
 import {
-  Accordion,
   Badge,
   Button,
-  Card,
   Col,
   Form,
   Row,
-  useAccordionToggle,
   Modal,
   Tabs,
   Tab
 } from "react-bootstrap";
-import _ from "lodash";
 import React, {useEffect, useState} from "react";
 import {FaQuestionCircle} from "react-icons/all";
 import {SimplePopover} from "./utils";
@@ -38,15 +34,42 @@ export function NotesAll({fetch_, as}) {
   </>
 }
 
-function CustomToggle({ children, eventKey }) {
-  const decoratedOnClick = useAccordionToggle(eventKey, _.noop)
-
-  return (
-    <span className='anchor' onClick={decoratedOnClick}>
-      {children}
-    </span>
-  );
-}
+const noteTypes = [{
+  key: 'label',
+  name: "Label",
+  user: [
+    "CBT & Zen promote labeling your thoughts as an objective observer, called \"thought diffusion\". It gets you outside your emotions to analyze them, which has positive cognitive impact.",
+    "Helps AI recommend resources. Also helps AI recommend resources to other users with similar entries.",
+    "Might help therapists assess your entries."
+  ],
+  therapist: [
+    "Can serve as mini note-taking on entries.",
+    "Helps AI recommend resources to this client."
+  ]
+}, {
+  key: 'note',
+  name: "Note",
+  user: [
+    "CBT & Zen promote labeling your thoughts as an objective observer, called \"thought diffusion\". It gets you outside your emotions to analyze them, which has positive cognitive impact. The more dispassionate details, the better the effect.",
+    "Helps AI recommend resources. Also helps AI recommend resources to other users with similar entries.",
+    "Might help therapists assess your entries.",
+  ],
+  therapist: [
+    "For private notes, consider this an organized note-taking feature for your clients. Private notes will also appear in the sidebar, so you can recall your notes before your session.",
+    "Helps AI recommend resources. Also helps AI recommend resources to other users with similar entries.",
+    "Non-private notes can serve as communication with the client: advice, support, or helping them understand their entries from your perspective.",
+  ]
+}, {
+  key: 'resource',
+  name: "Resource",
+  user: [
+    "Books, web articles, etc you've found relevant and helpful will train AI to recommend such resources to future users with similar entries."
+  ],
+  therapist: [
+    "Recommend resources to this client.",
+    "Books, web articles, etc you've found relevant and helpful will train AI to recommend such resources to future users with similar entries.",
+  ]
+}]
 
 export function AddNotes({fetch_, as, entry_id, onSubmit}) {
   const [adding, setAdding] = useState(null)
@@ -54,43 +77,6 @@ export function AddNotes({fetch_, as, entry_id, onSubmit}) {
   const [private_, setPrivate] = useState(false)
   const [showHelp, setShowHelp] = useState(false)
 
-
-  const noteTypes = React.useMemo(() => [{
-    key: 'label',
-    name: "Label",
-    user: [
-      "CBT & Zen promote labeling your thoughts as an objective observer, called \"thought diffusion\". It gets you outside your emotions to analyze them, which has positive cognitive impact.",
-      "Helps AI recommend resources. Also helps AI recommend resources to other users with similar entries.",
-      "Might help therapists assess your entries."
-    ],
-    therapist: [
-      "Can serve as mini note-taking on entries.",
-      "Helps AI recommend resources to this client."
-    ]
-  }, {
-    key: 'note',
-    name: "Note",
-    user: [
-      "CBT & Zen promote labeling your thoughts as an objective observer, called \"thought diffusion\". It gets you outside your emotions to analyze them, which has positive cognitive impact. The more dispassionate details, the better the effect.",
-      "Helps AI recommend resources. Also helps AI recommend resources to other users with similar entries.",
-      "Might help therapists assess your entries.",
-    ],
-    therapist: [
-      "For private notes, consider this an organized note-taking feature for your clients. Private notes will also appear in the sidebar, so you can recall your notes before your session.",
-      "Helps AI recommend resources. Also helps AI recommend resources to other users with similar entries.",
-      "Non-private notes can serve as communication with the client: advice, support, or helping them understand their entries from your perspective.",
-    ]
-  }, {
-    key: 'resource',
-    name: "Resource",
-    user: [
-      "Books, web articles, etc you've found relevant and helpful will train AI to recommend such resources to future users with similar entries."
-    ],
-    therapist: [
-      "Recommend resources to this client.",
-      "Books, web articles, etc you've found relevant and helpful will train AI to recommend such resources to future users with similar entries.",
-    ]
-  }])
 
   const renderHelpModal = () => {
     return <>
