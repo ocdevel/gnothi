@@ -1,8 +1,8 @@
 import os, sys, pdb
 from datetime import datetime
 from sqlalchemy import create_engine
-from app.utils import vars, DROP_SQL
-from app.database import init_db, shutdown_db
+from common.utils import vars, DROP_SQL
+from common.database import init_db, shutdown_db
 from sqlalchemy_utils.functions import drop_database, create_database, database_exists
 from app.scripts.migrate import migrate
 import argparse
@@ -25,7 +25,7 @@ def engine(url):
 def wipe(url, and_init=False):
     engine(url).execute(DROP_SQL)
     if and_init:
-        import app.models  # sets up Base.metadata
+        import common.models  # sets up Base.metadata
         init_db()
         shutdown_db()
 

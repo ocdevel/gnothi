@@ -12,6 +12,7 @@ services:
     stdin_open: true
     volumes:
       - ./server/:/app
+      - ./common/:/app/common
     logging:
       options:
         max-size: "5m"
@@ -31,11 +32,13 @@ services:
         max-size: "5m"
         max-file: "3"
 
-#  gpu:
-#    build: gpu
-#    container_name: jgpu
-#    volumes:
-#      - ./gpu:/app
-#    device_requests:
-#      - capabilities:
-#          - "gpu"
+  gpu:
+    build: gpu
+    container_name: jgpu
+    restart: unless-stopped
+    volumes:
+      - ./gpu:/app
+      - ./common:/app/common
+    device_requests:
+      - capabilities:
+          - "gpu"

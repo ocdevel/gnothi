@@ -3,8 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi_sqlalchemy import DBSessionMiddleware  # middleware helper
 
 
-from app.database import init_db, shutdown_db, fa_users_db
-from app.utils import vars, SECRET
+from common.database import init_db, shutdown_db, fa_users_db
+from common.utils import vars, SECRET
 import logging
 
 app = FastAPI()

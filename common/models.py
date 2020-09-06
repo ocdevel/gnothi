@@ -4,9 +4,9 @@ from pydantic import BaseModel, UUID4
 from dateutil import tz
 from uuid import uuid4
 
-from app.database import Base, SessLocal, fa_users_db
-from app.utils import vars, utcnow
-from app import ml
+from common.database import Base, SessLocal, fa_users_db
+from common.utils import vars, utcnow
+# from app import ml
 
 from sqlalchemy import text, Column, Integer, Enum, Float, ForeignKey, Boolean, DateTime, JSON, Date, Unicode, \
     func, TIMESTAMP, select, or_, and_
@@ -45,6 +45,9 @@ child_cascade = dict(ondelete="cascade")
 
 class User(Base, SQLAlchemyBaseUserTable):
     __tablename__ = 'users'
+
+    # created_at = Column(TIMESTAMP, default=datetime.datetime.utcnow)
+    # last_login = Column(TIMESTAMP, default=datetime.datetime.utcnow)
 
     first_name = Encrypt(Unicode)
     last_name = Encrypt(Unicode)
@@ -236,10 +239,10 @@ class Entry(Base):
                     time.sleep(1)
                     continue
                 entry = db.session.query(Entry).get(id)
-                entry.title_summary = ml.summarize(entry.text, 5, 20, with_sentiment=False)["summary_text"]
-                summary = ml.summarize(entry.text, 32, 128)
-                entry.text_summary = summary["summary_text"]
-                entry.sentiment = summary["sentiment"]
+                # entry.title_summary = ml.summarize(entry.text, 5, 20, with_sentiment=False)["summary_text"]
+                # summary = ml.summarize(entry.text, 32, 128)
+                # entry.text_summary = summary["summary_text"]
+                # entry.sentiment = summary["sentiment"]
                 db.session.commit()
 
                 # every x entries, update book recommendations
@@ -247,7 +250,8 @@ class Entry(Base):
                 sql = 'select count(*)%2=0 as ct from entries where user_id=:uid'
                 should_update = db.session.execute(text(sql), {'uid':user.id}).fetchone().ct
                 if should_update:
-                    ml.books(user, bust=True)
+                    pass
+                    # ml.books(user, bust=True)
 
                 # Find any broken entries & clean those up.
                 # TODO https://github.com/kvesteri/sqlalchemy-utils/issues/470
@@ -641,7 +645,7 @@ class Bookshelf(Base):
             should_update = db.session.execute(text(sql), {'uid':user_id}).fetchone().ct
             if should_update:
                 user = db.session.query(User).get(user_id)
-                ml.books(user, bust=True)
+                # ml.books(user, bust=True)
 
     @staticmethod
     def upsert(user_id, book_id, shelf):

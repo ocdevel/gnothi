@@ -6,7 +6,7 @@ from fastapi import Depends, HTTPException, File, UploadFile
 from app.app_app import app
 from app.app_jwt import fastapi_users
 from fastapi_sqlalchemy import db  # an object to provide global access to a database session
-import app.models as M
+import common.models as M
 from app import habitica
 from app.ec2_updown import jobs_status
 from app import ml

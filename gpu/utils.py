@@ -2,45 +2,8 @@ import os, json, math, pdb
 import torch
 import keras.backend as K
 import numpy as np
-from box import Box
-from sqlalchemy import create_engine
 from sklearn.cluster import AgglomerativeClustering
-from multiprocessing import cpu_count
-from sqlalchemy.orm import scoped_session, sessionmaker
 from sklearn import preprocessing as pp
-
-THREADS = cpu_count()
-
-def join_(paths):
-    return os.path.join(os.path.dirname(__file__), *paths)
-config_json = json.load(open(join_(['config.json'])))
-
-engine_args = dict(
-    pool_pre_ping=True,
-    pool_recycle=300,
-    # pool_timeout=2,
-)
-
-engine = create_engine(
-    config_json['DB'].replace('host.docker.internal', 'localhost'),
-    **engine_args
-)
-
-# if Plugin caching_sha2_password could not be loaded:
-# ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'youpassword';
-# https://stackoverflow.com/a/49935803/362790
-engine_books = create_engine(config_json['DB_BOOKS'], **engine_args)
-
-SessLocal = Box(
-    main=scoped_session(sessionmaker(autocommit=True, autoflush=True, bind=engine)),
-    books=scoped_session(sessionmaker(autocommit=True, autoflush=True, bind=engine_books))
-)
-
-
-def shutdown_db():
-    # FIXME not being called anywhere currently, need a "ctrl-c" hook or app on exit
-    for _, sess in SessLocal.items():
-        sess.remove()
 
 
 def normalize(x, y=None, numpy=True):
@@ -86,8 +49,3 @@ def cluster(x, norm_in=True):
 def clear_gpu():
     torch.cuda.empty_cache()
     K.clear_session()
-
-
-# use this in explicit sql queries instead of "now()". SQLAlchemy models will handle
-# it automatically via datetime.utcnow, but engine.execute("now()") will not be utc
-utcnow = "now() at time zone 'utc'"

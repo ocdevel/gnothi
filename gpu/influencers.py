@@ -1,6 +1,6 @@
 from xgb_hyperopt import run_opt
 from xgboost import XGBRegressor
-from utils import SessLocal
+from common.database import SessLocal
 import pandas as pd
 import numpy as np
 

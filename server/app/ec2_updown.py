@@ -1,5 +1,5 @@
 import boto3, time, threading, os
-from app.utils import is_dev, vars, utcnow
+from common.utils import is_dev, vars, utcnow
 from fastapi_sqlalchemy import db
 import socket
 

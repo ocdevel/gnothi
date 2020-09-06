@@ -7,7 +7,9 @@ from sqlalchemy import text
 from books import predict_books
 from themes import themes
 from influencers import influencers
-from utils import SessLocal, cluster, cosine, clear_gpu, utcnow
+from common.utils import utcnow
+from common.database import SessLocal
+from utils import cluster, cosine, clear_gpu
 from nlp import nlp_
 
 m = Box({
@@ -26,7 +28,7 @@ m = Box({
 
 def run_job(job):
     jid, k = job.id, job.method
-    sess = SessLocal.main()
+    sess = SessLocal['main']()
     job = sess.execute("select * from jobs where id=:jid", {'jid': jid}).fetchone()
     data = Box(pickle.loads(job.data))
 
@@ -59,7 +61,7 @@ if __name__ == '__main__':
     print('torch.cuda.is_available()', torch.cuda.is_available())
     print("\n\n")
 
-    sess = SessLocal.main()
+    sess = SessLocal['main']()
     inactivity = 15 * 60  # 15 minutes
     while True:
         # if active_jobs: GPUtil.showUtilization()

@@ -5,14 +5,14 @@ from fastapi.testclient import TestClient
 
 os.environ["DB_NAME"] = "gnothi_test"
 os.environ["ENVIRONMENT"] = "development"
-from app.utils import vars
+from common.utils import vars
 from sqlalchemy_utils import database_exists, create_database, drop_database
 if database_exists(vars.DB_URL):
     drop_database(vars.DB_URL)
 create_database(vars.DB_URL)
 
-import app.database as D
-import app.models as M
+import common.database as D
+import common.models as M
 from app.main import app
 
 exec = D.engine.execute

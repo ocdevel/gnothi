@@ -1,7 +1,8 @@
 import os, pdb, math
 from os.path import exists
 from tqdm import tqdm
-from utils import SessLocal, cosine, cluster, normalize
+from common.database import SessLocal
+from utils import cosine, cluster, normalize
 from cleantext import Clean
 from box import Box
 import numpy as np

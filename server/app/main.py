@@ -2,7 +2,7 @@ import pdb, pytz
 from app.app_app import app as app_
 import app.app_jwt
 import app.app_routes
-from app.utils import is_dev
+from common.utils import is_dev
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from app import habitica
 from app.ec2_updown import ec2_down_maybe
