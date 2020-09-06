@@ -10,12 +10,12 @@ from app.ec2_updown import ec2_down_maybe
 app = app_  # module issue
 
 
-@app.on_event('startup')
-async def startup_event():
-    scheduler = AsyncIOScheduler(timezone=pytz.timezone('America/Los_Angeles'))
-    scheduler.start()
-    scheduler.add_job(habitica.cron, "cron", hour="*")
-    scheduler.add_job(ec2_down_maybe, "cron", minute="*")
+# @app.on_event('startup')
+# async def startup_event():
+#     scheduler = AsyncIOScheduler(timezone=pytz.timezone('America/Los_Angeles'))
+#     scheduler.start()
+#     scheduler.add_job(habitica.cron, "cron", hour="*")
+#     scheduler.add_job(ec2_down_maybe, "cron", minute="*")
 
 
 if __name__ == "__main__":

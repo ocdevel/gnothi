@@ -1,15 +1,16 @@
-import os, pdb, pytest
+import os, pdb, pytest, time
 from box import Box
 from sqlalchemy import text
 from fastapi.testclient import TestClient
+import logging
+logger = logging.getLogger(__name__)
 
 os.environ["DB_NAME"] = "gnothi_test"
 os.environ["ENVIRONMENT"] = "development"
 from common.utils import vars
 from sqlalchemy_utils import database_exists, create_database, drop_database
-if database_exists(vars.DB_URL):
-    drop_database(vars.DB_URL)
-create_database(vars.DB_URL)
+# if database_exists(vars.DB_URL): drop_database(vars.DB_URL)
+if not database_exists(vars.DB_URL): create_database(vars.DB_URL)
 
 import common.database as D
 import common.models as M
@@ -30,10 +31,15 @@ def client():
 @pytest.fixture(autouse=True)
 def setup_users(client):
     # with TestClient(app) as client:
-    exec("delete from users where true")
+    logger.warning("deleting")
+    exec("""
+    delete from users where true;
+    delete from jobs where true;
+    """)
     for t in 'bookshelf entries entries_tags field_entries fields notes people shares shares_tags tags users'.split():
         assert exec(f"select count(*) ct from {t}").fetchone().ct == 0, \
             "{t} rows remained after 'delete * from users', check cascade-delete on children"
+    logger.warning("creating users")
     for k, _ in u.items():
         email = k + "@x.com"
         u[k] = {'email': email}
@@ -54,6 +60,13 @@ def setup_users(client):
         assert res.status_code == 200
         u[k]['tag1'] = {res.json()[0]['id']: True}
 
+    logger.warning("jobs-status")
+    # init jobs-status table
+    res = client.get('/jobs-status', **header('user'))
+    assert res.status_code == 200
+    assert res.json() == 'on'
+
+    logger.warning("sharing")
     # share user main tag with therapist
     data = dict(email=u.therapist.email, tags=u.user.tag1)
     res = client.post('/shares', json=data, **header('user'))
@@ -81,7 +94,12 @@ def _assert_count(table, expected):
 
 
 def _post_entry(c, extra={}):
-    data = {'title': 'Title', 'text': 'Text', 'tags': u.user.tag1, **extra}
+    data = {**dict(
+        title='Title',
+        text='Text',
+        no_ai=True,
+        tags=u.user.tag1,
+    ), **extra}
     res = c.post("/entries", json=data, **header('user'))
     assert res.status_code == 200
     return res.json()['id']
@@ -119,6 +137,13 @@ def _crud_with_perms(
     res = fn(route, **data, **header('user'))
     assert res.status_code == 200
     _assert_count(table, ct+ct_delta)
+
+
+class JobStatus():
+    def test_job_status(self, client):
+        res = client.get('/job-status', **header('user'))
+        assert res.json()['status'] == 'on'
+        assert res.status_code == 200
 
 
 class TestEntries():
@@ -203,6 +228,16 @@ class TestML():
         # 2, enough - but no tags selected
         limit_entries['tags'] = {}
         self._ml_jobs(client, limit_entries, 400)
+
+    def test_summaries(self, client):
+        eid = _post_entry(client, {'no_ai': False})
+        time.sleep(30)
+        res = client.get(f"/entries/{eid}", **header('user'))
+        assert res.status_code == 200
+        res = res.json()
+        assert res['ai_ran'] == True
+        assert res['title_summary']
+        assert res['text_summary']
 
 
     # def test_few_entries(self, client):

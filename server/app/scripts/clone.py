@@ -4,12 +4,12 @@ from sqlalchemy import create_engine
 from common.utils import vars, DROP_SQL
 from common.database import init_db, shutdown_db
 from sqlalchemy_utils.functions import drop_database, create_database, database_exists
-from app.scripts.migrate import migrate
+from app.scripts.migrate import migrate_before, migrate_after
 import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument("method", help="backup|pull|push|wipe")
-parser.add_argument("--migrate", help="If/when to apply a migration? before: prod->local_prod; local_prod.migrate(); local.init(); local_prod->local. 'after' (todo type out). None: no migration")
+parser.add_argument("--migrate", action='store_true', help="Run a migration")
 args = parser.parse_args()
 
 method = args.method
@@ -63,7 +63,7 @@ print('to', to_url)
 #       f" | psql {to_url}"
 cmd = f"pg_dump --no-owner --no-acl"
 
-if args.migrate and args.migrate in ['before','after']:
+if args.migrate:
     if method == 'push':
         raise NotImplemented("push --migrate not yet supported")
     tmp_url = to_url.replace('dev', 'tmp')
@@ -71,10 +71,10 @@ if args.migrate and args.migrate in ['before','after']:
         drop_database(tmp_url)
     create_database(tmp_url)
     os.system(f"{cmd} {from_url} | psql {tmp_url}")
-    if args.migrate == 'before': migrate(tmp_url)
+    migrate_before(engine(tmp_url))
     wipe(to_url, and_init=True)
     os.system(f"{cmd} {tmp_url} --data-only | psql {to_url}")
-    if args.migrate == 'after': migrate(to_url)
+    migrate_after(engine(to_url))
 else:
     wipe(to_url, and_init=False)
     os.system(f"{cmd} {from_url} | psql {to_url}")

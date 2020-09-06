@@ -1,7 +1,10 @@
-import math, time
+import math, time, pdb
 import torch
 import keras.backend as K
 import numpy as np
+from common.database import SessLocal
+import common.models as M
+from sqlalchemy import text as satext
 from sentence_transformers import SentenceTransformer
 from transformers import AutoTokenizer, AutoModelWithLMHead#, AutoModelForQuestionAnswering, AutoModelForSequenceClassification
 from transformers import BartForConditionalGeneration, BartTokenizer
@@ -135,5 +138,36 @@ class NLP():
                 answers.append(answer)
         if not answers: return [{'answer': 'No answer'}]
         return [{'answer': a} for a in answers]
+
+    def entry(self, id):
+        sess = SessLocal.main()
+        entry = sess.query(M.Entry).get(id)
+        res = self.summarization(entry.text, 5, 20, with_sentiment=False)
+        entry.title_summary = res[0]["summary_text"]
+        res = self.summarization(entry.text, 32, 128)
+        entry.text_summary = res[0]["summary_text"]
+        entry.sentiment = res[0]["sentiment"]
+        sess.commit()
+
+        # every x entries, update book recommendations
+        user = sess.query(M.User).get(entry.user_id)
+        sql = 'select count(*)%2=0 as ct from entries where user_id=:uid'
+        should_update = sess.execute(satext(sql), {'uid': user.id}).fetchone().ct
+        if should_update:
+            sess.add(M.Jobs(
+                method='books',
+                data={'kwargs': {'id': user.id}}
+            ))
+            sess.commit()
+
+        # Find any broken entries & clean those up.
+        # TODO https://github.com/kvesteri/sqlalchemy-utils/issues/470
+        entries = sess.query(M.Entry).with_entities(M.Entry.id, M.Entry.title_summary)
+        for entry in entries:
+            if entry.title_summary == 'AI server offline, check back later':
+                sess.close()
+                return self.entry(entry.id)
+        sess.close()
+
 
 nlp_ = NLP()
