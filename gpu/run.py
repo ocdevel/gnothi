@@ -7,7 +7,7 @@ from sqlalchemy import text
 import logging
 logger = logging.getLogger(__name__)
 
-from books import predict_books
+from books import run_books
 from themes import themes
 from influencers import influencers
 from common.utils import utcnow
@@ -25,11 +25,18 @@ m = Box({
     'cosine': cosine,
     'influencers': influencers,
     'cluster': cluster,
-    'books': predict_books,
+    'books': run_books,
     'themes': themes,
 })
 
 non_returning = ['entry', 'books']
+
+def remove_stale_jobs(sess):
+    sql = f"""
+    delete from jobs
+    where created_at < {utcnow} - interval '1 hour'
+    """
+    sess.execute(sql)
 
 
 def run_job(job):
@@ -44,11 +51,8 @@ def run_job(job):
     try:
         start = time.time()
         res = m[k](*args, **kwargs)
-        if k in non_returning:
-            sess.execute("delete from jobs where id=:jid", jid)
-        else:
-            sql = text(f"update jobs set state='done', data=:data where id=:jid")
-            sess.execute(sql, {'data': jsonb(res), **jid})
+        sql = text(f"update jobs set state='done', data=:data where id=:jid")
+        sess.execute(sql, {'data': jsonb(res), **jid})
         logger.info(f"Job Complete {time.time() - start}")
     except Exception as err:
         err = str(traceback.format_exc())
@@ -57,6 +61,8 @@ def run_job(job):
         sql = text(f"update jobs set state='error', data=:data where id=:jid")
         sess.execute(sql, {'data': jsonb(res), **jid})
         logger.info(f"Job Error {time.time() - start} {err}", )
+
+    remove_stale_jobs(sess)
     sess.commit()
     sess.close()
 

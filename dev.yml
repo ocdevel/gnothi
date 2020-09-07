@@ -35,7 +35,9 @@ services:
   gpu:
     build: gpu
     container_name: jgpu
-    restart: unless-stopped
+    entrypoint: /bin/bash
+    stdin_open: true
+    #restart: unless-stopped
     volumes:
       - ./gpu:/app
       - ./common:/app/common

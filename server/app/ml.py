@@ -74,11 +74,3 @@ def themes(entries):
     if res is False:
         return []  # fixme
     return res
-
-
-# def books(user, bust=False):
-#     entries = [e.text for e in user.entries if not e.no_ai]
-#     entries = [user.profile_to_text()] + entries
-#     res = run_gpu_model('books', dict(args=[user.id, entries], kwargs={'bust': bust}))
-#     if res is False: return OFFLINE_MSG
-#     return res

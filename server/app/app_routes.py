@@ -456,18 +456,6 @@ def themes_post(
     return data
 
 
-@app.post('/books')
-def books_post(
-    as_user: str = None,
-    viewer: M.User = Depends(fastapi_users.get_current_user)
-):
-    user, snooping = getuser(viewer, as_user)
-    if snooping and not user.share_data.books:
-        return cant_snoop('Books')
-
-    return ml.books(user)
-
-
 @app.post('/query')
 def question_post(
     data: M.SIQuestion,
@@ -526,7 +514,11 @@ def bookshelf_post(bid, shelf, as_user: str = None, viewer: M.User = Depends(fas
 
 
 @app.get('/books/{shelf}')
-def bookshelf_get(shelf, as_user: str = None, viewer: M.User = Depends(fastapi_users.get_current_user)):
+def bookshelf_get(
+    shelf,
+    as_user: str = None,
+    viewer: M.User = Depends(fastapi_users.get_current_user)
+):
     user, snooping = getuser(viewer, as_user)
     if snooping and not user.share_data.books:
         return cant_snoop('Books')

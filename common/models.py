@@ -239,19 +239,18 @@ class Entry(Base):
         return q.order_by(order_by)
 
     def run_models(self):
+        self.ai_ran = False
         if self.no_ai:
-            self.ai_ran = True
             self.title_summary = self.text_summary = self.sentiment = None
             return
 
-        self.ai_ran = False
         # Run summarization/sentiment in background thread, so (a) user can get back to business;
         # (b) if AI server offline, wait till online
         self.title_summary = "🕒 AI is generating a title"
         self.text_summary = "🕒 AI is generating a summary"
         db.session.add(Jobs(
             method='entry',
-            data={'kwargs': {'id': str(self.id)}}
+            data={'args': [str(self.id)]}
         ))
 
 
@@ -607,6 +606,7 @@ class ShareTag(Base):
 
 
 class Shelves(enum.Enum):
+    ai = "ai"
     like = "like"
     already_read = "already_read"
     dislike = "dislike"
@@ -616,20 +616,27 @@ class Shelves(enum.Enum):
 
 class Bookshelf(Base):
     __tablename__ = 'bookshelf'
+    created_at = DateCol()
+    updated_at = DateCol(update=True)
+
     book_id = Column(Integer, primary_key=True)
     user_id = Column(UUID(as_uuid=True), ForeignKey('users.id', **child_cascade), primary_key=True)
     shelf = Column(Enum(Shelves), nullable=False)
+    score = Column(Float)  # only for ai-recs
 
     @staticmethod
     def update_books(user_id):
         with db():
             # every x thumbs, update book recommendations
-            sql = 'select count(*)%8=0 as ct from bookshelf where user_id=:uid'
+            sql = """
+            select count(*)%8=0 as ct from bookshelf 
+            where user_id=:uid and shelf!='ai'
+            """
             should_update = db.session.execute(text(sql), {'uid':user_id}).fetchone().ct
             if should_update:
                 db.session.add(Jobs(
                     method='books',
-                    data={'kwargs': {'id': str(user_id)}}
+                    data={'args': [str(user_id)]}
                 ))
 
     @staticmethod
@@ -694,3 +701,14 @@ class SIQuestion(SILimitEntries):
 
 class SISummarize(SILimitEntries):
     words: int
+
+
+def await_row(sess, sql, args={}, wait=.5, timeout=None):
+    i = 0
+    while True:
+        res = sess.execute(text(sql), args).fetchone()
+        if res: return res
+        time.sleep(wait)
+        if timeout and wait * i >= timeout:
+            return None
+        i += 1

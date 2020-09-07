@@ -2,6 +2,7 @@ import os, pdb, math
 from os.path import exists
 from tqdm import tqdm
 from common.database import SessLocal
+import common.models as M
 from utils import cosine, cluster, normalize
 from cleantext import Clean
 from box import Box
@@ -176,7 +177,7 @@ def train_books_predictor(books, vecs_books, shelf_idx, fine_tune=True):
     return m
 
 
-def predict_books(user_id, entries, bust=False, n_recs=30, centroids=False):
+def predict_books(user_id, entries, n_recs=30, centroids=False):
     entries = Clean.entries_to_paras(entries)
     vecs_user = nlp_.sentence_encode(entries)
 
@@ -190,7 +191,7 @@ def predict_books(user_id, entries, bust=False, n_recs=30, centroids=False):
     shelf_idx = books.id.isin(shelf.id)
 
     user_path = f"tmp/{user_id}-books.h5"
-    if exists(user_path) and not bust:
+    if exists(user_path):
         dnn = load_model(user_path)
     else:
         # normalize for cosine, and downstream DNN
@@ -230,3 +231,16 @@ def predict_books(user_id, entries, bust=False, n_recs=30, centroids=False):
         .iloc[:n_recs]
     r = [x for x in r.T.to_dict().values()]
     return r
+
+def run_books(user_id):
+    sess = SessLocal.main()
+    user = sess.query(M.User).get(user_id)
+    entries = [e.text for e in user.entries if not e.no_ai]
+    entries = [user.profile_to_text()] + entries
+    res = predict_books(user.id, entries)
+    pdb.set_trace()
+    sql = "delete from bookshelf where user_id=:uid and shelf='ai'"
+    sess.execute(text(sql), {'uid': str(user_id)})
+    sess.commit()
+
+    sess.close()

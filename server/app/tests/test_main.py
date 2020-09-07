@@ -17,6 +17,7 @@ import common.models as M
 from app.main import app
 
 exec = D.engine.execute
+sess_main = D.SessLocal.main()
 
 # Friend only used to double-check sharing features
 u = Box(user={}, therapist={}, friend={}, other={})
@@ -32,10 +33,7 @@ def client():
 def setup_users(client):
     # with TestClient(app) as client:
     logger.warning("deleting")
-    exec("""
-    delete from users where true;
-    delete from jobs where true;
-    """)
+    exec("delete from users;delete from jobs;")
     for t in 'bookshelf entries entries_tags field_entries fields notes people shares shares_tags tags users'.split():
         assert exec(f"select count(*) ct from {t}").fetchone().ct == 0, \
             "{t} rows remained after 'delete * from users', check cascade-delete on children"
@@ -207,8 +205,6 @@ class TestML():
         data = {**limit_entries, 'words': 300}
         res = c.post("/summarize", data=data, **header('user'))
         assert res.status_code == code
-        res = c.post("/books", **header('user'))
-        assert res.status_code == code
 
     def test_entries_count(self, client):
         return
@@ -229,16 +225,42 @@ class TestML():
         limit_entries['tags'] = {}
         self._ml_jobs(client, limit_entries, 400)
 
-    def test_summaries(self, client):
-        eid = _post_entry(client, {'no_ai': False})
-        time.sleep(30)
-        res = client.get(f"/entries/{eid}", **header('user'))
+    def _create_entry_ai(self, c):
+        eid = _post_entry(c, {'no_ai': False})
+
+        # summary job got created
+        sql = "select id from jobs where method='entry'"
+        assert M.await_row(sess_main, sql, timeout=2)
+
+        # summaries generated
+        sql = "select id from jobs where state='done' and method='entry'"
+        res = M.await_row(sess_main, sql, timeout=60)
+        assert res
+        res = c.get(f"/entries/{eid}", **header('user'))
         assert res.status_code == 200
         res = res.json()
         assert res['ai_ran'] == True
         assert res['title_summary']
         assert res['text_summary']
 
+    def test_entry_summaries(self, client):
+        self._create_entry_ai(client)
+
+    def test_summaries_books(self, client):
+        self._create_entry_ai(client)
+        self._create_entry_ai(client)
+
+        # books job created
+        sql = "select id from jobs where method='books'"
+        assert M.await_row(sess_main, sql, timeout=2)
+
+        # books generated
+        sql = "select id from jobs where state='done' and method='books'"
+        assert M.await_row(sess_main, sql, timeout=60)
+        res = client.get(f"/books/ai", **header('user'))
+        assert res.status_code == 200
+        res = res.json()
+        assert len(res) > 0
 
     # def test_few_entries(self, client):
     #     eid = _post_entry(client)

@@ -9,29 +9,16 @@ export default function Books({fetch_, as, aiStatus}) {
   const [books, setBooks] = useState([])
   const [fetching, setFetching] = useState(false)
   const [notShared, setNotShared] = useState(false)
-  const [tab, setTab] = useState('new')  // like|dislike|already_read|remove|recommend
-  const [offline, setOffline] = useState(null)  // like|dislike|already_read|remove|recommend
+  const [tab, setTab] = useState('ai')  // like|dislike|already_read|remove|recommend
 
   if (notShared) {return <h5>{notShared}</h5>}
 
-  const fetchBooks = async () => {
-    setOffline(null)
-    setFetching(true)
-    const {data, code, message} = await fetch_('books', 'POST')
-    setFetching(false)
-    if (code === 401) {return setNotShared(message)}
-    if (typeof data === 'string') {return setOffline(data)}
-    setBooks(data)
-  }
-
   const fetchShelf = async (shelf) => {
-    if (shelf === 'new') {
-      setBooks([])
-      return
-    }
     setFetching(true)
     const {data, code, message} = await fetch_(`books/${shelf}`, 'GET')
     setFetching(false)
+    if (code === 401) {return setNotShared(message)}
+    if (typeof data === 'string') {return setOffline(data)}
     setBooks(data)
   }
 
@@ -59,7 +46,7 @@ export default function Books({fetch_, as, aiStatus}) {
   const renderTabs = () => <>
     <Nav activeKey={tab} onSelect={changeTab}>
       <NavDropdown title="Shelves">
-        <NavDropdown.Item eventKey="new">AI Recommends</NavDropdown.Item>
+        <NavDropdown.Item eventKey="ai">AI Recommends</NavDropdown.Item>
         <NavDropdown.Item eventKey="like">Liked</NavDropdown.Item>
         <NavDropdown.Item eventKey="recommend">Therapist Recommends</NavDropdown.Item>
         <NavDropdown.Item eventKey="already_read">Already Read</NavDropdown.Item>
@@ -96,21 +83,9 @@ export default function Books({fetch_, as, aiStatus}) {
   return <>
     <div>
       {renderTabs()}
-      {fetching ? <>
-        <div>{spinner}</div>
-        {tab === 'new' && <Form.Text muted>Loading book recommendations (takes a while)</Form.Text>}
-      </> : tab === 'new' ? <>
-        <Button
-          disabled={aiStatus !== 'on'}
-          className='bottom-margin'
-          variant='primary'
-          onClick={fetchBooks}
-        >Generate Recommendations</Button>
-        <AiStatusMsg status={aiStatus} />
-      </> : null}
+      {fetching && spinner}
     </div>
     <div>
-      {offline && <p>{offline}</p>}
       {books.length > 0 && <hr/>}
       {books.map(renderBook)}
     </div>

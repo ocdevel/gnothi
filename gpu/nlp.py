@@ -147,6 +147,7 @@ class NLP():
         res = self.summarization(entry.text, 32, 128)
         entry.text_summary = res[0]["summary_text"]
         entry.sentiment = res[0]["sentiment"]
+        entry.ai_ran = True
         sess.commit()
 
         # every x entries, update book recommendations
@@ -156,18 +157,16 @@ class NLP():
         if should_update:
             sess.add(M.Jobs(
                 method='books',
-                data={'kwargs': {'id': user.id}}
+                data={'kwargs': {'id': str(user.id)}}
             ))
             sess.commit()
 
-        # Find any broken entries & clean those up.
-        # TODO https://github.com/kvesteri/sqlalchemy-utils/issues/470
-        entries = sess.query(M.Entry).with_entities(M.Entry.id, M.Entry.title_summary)
-        for entry in entries:
-            if entry.title_summary == 'AI server offline, check back later':
-                sess.close()
-                return self.entry(entry.id)
+        # Clean up broken entries
+        broken = "select id from entries where ai_ran!=true limit 1"
+        broken = sess.execute(broken).fetchone()
         sess.close()
+        if broken: self.entry(entry.id)
+        return {}
 
 
 nlp_ = NLP()
