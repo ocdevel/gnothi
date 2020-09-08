@@ -148,7 +148,7 @@ class JobStatus():
 
 class TestEntries():
     def test_post(self, client):
-        data = {'title': 'Title', 'text': 'Text', 'tags': u.user.tag1}
+        data = {'title': 'Title', 'text': 'Text', 'tags': u.user.tag1, 'no_ai': True}
         _crud_with_perms(client.post, '/entries', 'entries', 1, data=data, their_own=True)
 
     def test_get(self, client):
@@ -157,7 +157,7 @@ class TestEntries():
 
     def test_put(self, client):
         eid = _post_entry(client)
-        data = {'title': 'Title2', 'text': 'Text2', 'tags': u.user.tag1}
+        data = {'title': 'Title2', 'text': 'Text2', 'tags': u.user.tag1, 'no_ai': True}
         _crud_with_perms(client.put, f"/entries/{eid}", 'entries', 0, data=data)
         res = client.get(f"/entries/{eid}", **header('user'))
         data = res.json()
@@ -229,7 +229,6 @@ class TestML():
 
     def _create_entry_ai(self, c):
         # TODO use "and data>>entry_id=x" json query (whatever the syntax is)
-        exec("delete from jobs;")
         eid = _post_entry(c, {'no_ai': False})
 
         # summary job got created
@@ -247,10 +246,8 @@ class TestML():
         assert res['title_summary']
         assert res['text_summary']
 
-    def test_entry_summaries(self, client):
-        self._create_entry_ai(client)
-
     def test_summaries_books(self, client):
+        exec("delete from jobs;")
         self._create_entry_ai(client)
         self._create_entry_ai(client)
 

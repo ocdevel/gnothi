@@ -14,11 +14,11 @@ from sqlalchemy import text
 import feather
 from sklearn import preprocessing as pp
 
-from keras import backend as K
-from keras.layers import Input, Dense
-from keras.models import Model, load_model
-from keras.callbacks import EarlyStopping
-from keras.optimizers import Adam
+from tensorflow.keras import backend as K
+from tensorflow.keras.layers import Input, Dense
+from tensorflow.keras.models import Model, load_model
+from tensorflow.keras.callbacks import EarlyStopping
+from tensorflow.keras.optimizers import Adam
 
 
 paths = Box(df='tmp/libgen.df', vecs='tmp/libgen.npy')
