@@ -1,3 +1,9 @@
+from tensorflow.keras import backend as K
+from tensorflow.keras.layers import Input, Dense
+from tensorflow.keras.models import Model, load_model
+from tensorflow.keras.callbacks import EarlyStopping
+from tensorflow.keras.optimizers import Adam
+
 import os, pdb, math, datetime
 from os.path import exists
 from tqdm import tqdm
@@ -8,17 +14,10 @@ from cleantext import Clean
 from box import Box
 import numpy as np
 import pandas as pd
-import pickle
 from nlp import nlp_
 from sqlalchemy import text
 import feather
 from sklearn import preprocessing as pp
-
-from tensorflow.keras import backend as K
-from tensorflow.keras.layers import Input, Dense
-from tensorflow.keras.models import Model, load_model
-from tensorflow.keras.callbacks import EarlyStopping
-from tensorflow.keras.optimizers import Adam
 
 
 paths = Box(df='tmp/libgen.df', vecs='tmp/libgen.npy')
@@ -243,3 +242,11 @@ def run_books(user_id):
     sess.commit()
 
     # sess.close()
+
+if __name__ == '__main__':
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("uid")
+    args = parser.parse_args()
+
+    run_books(args.uid)

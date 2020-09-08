@@ -1,4 +1,4 @@
-import time, psycopg2, traceback, pdb, multiprocessing, threading
+import time, psycopg2, traceback, pdb, multiprocessing, threading, os
 from psycopg2.extras import Json as jsonb
 from box import Box
 import torch
@@ -7,7 +7,7 @@ from sqlalchemy import text
 import logging
 logger = logging.getLogger(__name__)
 
-from books import run_books
+# from books import run_books
 from themes import themes
 from influencers import influencers
 from common.utils import utcnow
@@ -25,7 +25,7 @@ m = Box({
     'cosine': cosine,
     'influencers': influencers,
     'cluster': cluster,
-    'books': run_books,
+    # 'books': run_books,
     'themes': themes,
 })
 
@@ -48,6 +48,11 @@ def run_job(job):
     kwargs = job.data.get('kwargs', {})
 
     print(f"Running job {k}")
+
+    if k == 'books':
+        sess.close()
+        return os.system(f"python books.py {args[0]}")
+
     try:
         start = time.time()
         res = m[k](*args, **kwargs)

@@ -1,6 +1,6 @@
 FROM nvidia/cuda:10.1-cudnn7-runtime-ubuntu18.04
 RUN apt-get update -y &&\
- apt-get install -y --fix-missing wget unzip build-essential libpq-dev
+ apt-get install -y --fix-missing wget unzip build-essential
 
 # install miniconda https://towardsdatascience.com/conda-pip-and-docker-ftw-d64fe638dc45
 # other options:
