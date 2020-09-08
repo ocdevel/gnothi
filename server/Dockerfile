@@ -9,9 +9,6 @@ RUN apt-get install -y lsb-release &&\
   echo "deb http://apt.postgresql.org/pub/repos/apt/ ${RELEASE}"-pgdg main | tee  /etc/apt/sources.list.d/pgdg.list &&\
   apt update && apt -y install postgresql-client-12
 
-# TODO try removing this & see if pip mysqlclient below sufficient
-#RUN apt-get install -y --fix-missing default-libmysqlclient-dev
-
 RUN pip install \
   python-multipart \
   fastapi-sqlalchemy \
@@ -24,14 +21,15 @@ RUN pip install \
   python-box \
   boto3 \
   tqdm \
-  mysqlclient \
+  mysql-connector-python \
   cryptography \
   fastapi-users[sqlalchemy] \
   asyncpg \
   bcrypt \
   passlib \
   shortuuid \
-  pytest
+  pytest \
+  lorem-text
 
 COPY .aws /root/.aws
 COPY app /app

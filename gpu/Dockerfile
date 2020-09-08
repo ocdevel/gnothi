@@ -1,4 +1,6 @@
 #FROM pytorch/pytorch:1.6.0-cuda10.1-cudnn7-runtime
+
+# TODO cleanup conda stuff via https://towardsdatascience.com/conda-pip-and-docker-ftw-d64fe638dc45
 FROM nvidia/cuda:10.1-cudnn7-runtime-ubuntu18.04
 RUN apt-get update -y &&\
  apt-get install -y --fix-missing wget unzip build-essential libpq-dev
@@ -16,7 +18,7 @@ RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86
 #SHELL ["conda", "run", "-n", "py3", "/bin/bash", "-c"]
 
 # https://github.com/ContinuumIO/docker-images/issues/89
-SHELL ["/bin/bash", "-c"]
+SHELL ["/bin/bash", "--login", "-c"]
 RUN \
   conda create -n py3 python=3.7 &&\
   #conda init bash &&\

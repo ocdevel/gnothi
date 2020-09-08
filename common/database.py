@@ -39,13 +39,11 @@ def init_db():
     Base.metadata.create_all(bind=engine)
     # e6dfbbd8: kick off create_all with sess.execute()
     # 2-birds: init lazy connection; ensure jobs_status
-    logger.warning("initing jobs status")
     engine.execute(f"""
     insert into jobs_status (id, status, ts_client, ts_svc, svc)
     values (1, 'off', {utcnow}, {utcnow}, null)
     on conflict (id) do nothing;
     """)
-    logger.warning("done")
 
 
 def shutdown_db():

@@ -1,4 +1,4 @@
-import os, pdb, math
+import os, pdb, math, datetime
 from os.path import exists
 from tqdm import tqdm
 from common.database import SessLocal
@@ -190,47 +190,42 @@ def predict_books(user_id, entries, n_recs=30, centroids=False):
     # sess.close()
     shelf_idx = books.id.isin(shelf.id)
 
-    user_path = f"tmp/{user_id}-books.h5"
-    if exists(user_path):
-        dnn = load_model(user_path)
-    else:
-        # normalize for cosine, and downstream DNN
-        vecs_user, vecs_books = normalize(vecs_user, vecs_books)
+    # normalize for cosine, and downstream DNN
+    vecs_user, vecs_books = normalize(vecs_user, vecs_books)
 
-        print("Finding cosine similarities")
-        lhs = vecs_user
-        if centroids:
-            labels = cluster(vecs_user, norm_in=False)
-            lhs = np.vstack([
-                vecs_user[labels == l].mean(0)
-                for l in range(labels.max())
-            ])
+    print("Finding cosine similarities")
+    lhs = vecs_user
+    if centroids:
+        labels = cluster(vecs_user, norm_in=False)
+        lhs = np.vstack([
+            vecs_user[labels == l].mean(0)
+            for l in range(labels.max())
+        ])
 
-        # Take best cluster-score for every book
-        dist = cosine(lhs, vecs_books, norm_in=False).min(axis=0)
-        # 0f29e591: minmax_scale(dist). norm_out=True works better
-        # then map back onto books, so they're back in order (pandas index-matching)
-        books['dist'] = dist
+    # Take best cluster-score for every book
+    dist = cosine(lhs, vecs_books, norm_in=False).min(axis=0)
+    # 0f29e591: minmax_scale(dist). norm_out=True works better
+    # then map back onto books, so they're back in order (pandas index-matching)
+    books['dist'] = dist
 
-        if shelf_idx.sum() > 0:
-            like, dislike = dist.min() - dist.std(), dist.max() + dist.std()
-            shelf_map = dict(like=like, already_read=like, recommend=like, dislike=dislike, remove=None)
-            shelf['dist'] = shelf.shelf.apply(lambda k: shelf_map[k])
-            shelf.dist.fillna(books.dist, inplace=True)  # fill in "remove"
-            books.loc[shelf.index, 'dist'] = shelf.dist  # indexes(id) match, so assigns correctly
-            assert not books.dist.isna().any(), "Messed up merging shelf/books.dist by index"
-        dnn = train_books_predictor(books, vecs_books, shelf_idx)
-        dnn.save(user_path)
+    if shelf_idx.sum() > 0:
+        like, dislike = dist.min() - dist.std(), dist.max() + dist.std()
+        shelf_map = dict(like=like, already_read=like, recommend=like, dislike=dislike, remove=None)
+        shelf['dist'] = shelf.shelf.apply(lambda k: shelf_map[k])
+        shelf.dist.fillna(books.dist, inplace=True)  # fill in "remove"
+        books.loc[shelf.index, 'dist'] = shelf.dist  # indexes(id) match, so assigns correctly
+        assert not books.dist.isna().any(), "Messed up merging shelf/books.dist by index"
+
+    # e2eaea3f: save/load dnn
+    dnn = train_books_predictor(books, vecs_books, shelf_idx)
 
     books['dist'] = dnn.predict(vecs_books)
 
     # dupes by title in libgen
     # r = books.sort_values('dist')\
-    r = books[~shelf_idx].sort_values('dist')\
+    return books[~shelf_idx].sort_values('dist')\
         .drop_duplicates('title', keep='first')\
         .iloc[:n_recs]
-    r = [x for x in r.T.to_dict().values()]
-    return r
 
 def run_books(user_id):
     sess = SessLocal.main()
@@ -238,9 +233,13 @@ def run_books(user_id):
     entries = [e.text for e in user.entries if not e.no_ai]
     entries = [user.profile_to_text()] + entries
     res = predict_books(user.id, entries)
-    pdb.set_trace()
     sql = "delete from bookshelf where user_id=:uid and shelf='ai'"
     sess.execute(text(sql), {'uid': str(user_id)})
+    res = res.rename(columns=dict(id='book_id', dist='score'))[['book_id', 'score']]
+    res['user_id'] = user_id
+    res['shelf'] = 'ai'
+    res['created_at'] = res['updated_at'] = datetime.datetime.utcnow()
+    res.to_sql('bookshelf', sess.bind, if_exists='append', index=False)
     sess.commit()
 
     # sess.close()

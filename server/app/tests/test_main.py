@@ -2,6 +2,8 @@ import os, pdb, pytest, time
 from box import Box
 from sqlalchemy import text
 from fastapi.testclient import TestClient
+from lorem_text import lorem
+
 import logging
 logger = logging.getLogger(__name__)
 
@@ -94,7 +96,7 @@ def _assert_count(table, expected):
 def _post_entry(c, extra={}):
     data = {**dict(
         title='Title',
-        text='Text',
+        text=lorem.paragraphs(5),
         no_ai=True,
         tags=u.user.tag1,
     ), **extra}
@@ -236,7 +238,7 @@ class TestML():
 
         # summaries generated
         sql = "select id from jobs where state='done' and method='entry'"
-        res = M.await_row(sess_main, sql, timeout=60)
+        res = M.await_row(sess_main, sql, timeout=40)
         assert res
         res = c.get(f"/entries/{eid}", **header('user'))
         assert res.status_code == 200
@@ -258,7 +260,7 @@ class TestML():
 
         # books generated
         sql = "select id from jobs where state='done' and method='books'"
-        assert M.await_row(sess_main, sql, timeout=60)
+        assert M.await_row(sess_main, sql, timeout=120)
         res = client.get(f"/books/ai", **header('user'))
         assert res.status_code == 200
         res = res.json()
