@@ -83,7 +83,7 @@ def load_books_df():
     if not ALL_BOOKS: sql_ += [sql.just_psych]
     sql_ = ' '.join(sql_)
     df = pd.read_sql(sql_, sess.bind)
-    sess.close()
+    # sess.close()
     df = df.drop_duplicates(['Title', 'Author'])
 
     print('n_books before cleanup', df.shape[0])
@@ -187,7 +187,7 @@ def predict_books(user_id, entries, n_recs=30, centroids=False):
     sess = SessLocal.main()
     sql = "select book_id as id, user_id, shelf from bookshelf where user_id=%(uid)s"
     shelf = pd.read_sql(sql, sess.bind, params={'uid': user_id}).set_index('id', drop=False)
-    sess.close()
+    # sess.close()
     shelf_idx = books.id.isin(shelf.id)
 
     user_path = f"tmp/{user_id}-books.h5"
@@ -243,4 +243,4 @@ def run_books(user_id):
     sess.execute(text(sql), {'uid': str(user_id)})
     sess.commit()
 
-    sess.close()
+    # sess.close()

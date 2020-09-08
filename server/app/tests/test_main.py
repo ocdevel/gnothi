@@ -226,6 +226,8 @@ class TestML():
         self._ml_jobs(client, limit_entries, 400)
 
     def _create_entry_ai(self, c):
+        # TODO use "and data>>entry_id=x" json query (whatever the syntax is)
+        exec("delete from jobs;")
         eid = _post_entry(c, {'no_ai': False})
 
         # summary job got created

@@ -1,56 +1,72 @@
-FROM pytorch/pytorch:1.6.0-cuda10.1-cudnn7-runtime
-RUN apt-get update -y && apt-get install -y wget unzip
+#FROM pytorch/pytorch:1.6.0-cuda10.1-cudnn7-runtime
+FROM nvidia/cuda:10.1-cudnn7-runtime-ubuntu18.04
+RUN apt-get update -y &&\
+ apt-get install -y --fix-missing wget unzip build-essential libpq-dev
 
-# Install postgres-12 client
-# https://computingforgeeks.com/install-postgresql-11-on-ubuntu-18-04-ubuntu-16-04/
-#RUN apt-get install -y lsb-release &&\
-#  wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - &&\
-#  RELEASE=$(lsb_release -cs) &&\
-#  echo "deb http://apt.postgresql.org/pub/repos/apt/ ${RELEASE}"-pgdg main | tee  /etc/apt/sources.list.d/pgdg.list &&\
-#  apt update && apt -y install postgresql-client-12
+# https://stackoverflow.com/a/58269633
+#RUN rm -rf /var/lib/apt/lists/*
+ENV PATH="/root/miniconda3/bin:${PATH}"
+ARG PATH="/root/miniconda3/bin:${PATH}"
+RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh \
+  && mkdir /root/.conda \
+  && bash Miniconda3-latest-Linux-x86_64.sh -b \
+  && rm -f Miniconda3-latest-Linux-x86_64.sh
 
-RUN pip install tensorflow keras
-RUN pip install spacy && python -m spacy download en_core_web_sm
+# https://pythonspeed.com/articles/activate-conda-dockerfile/
+#SHELL ["conda", "run", "-n", "py3", "/bin/bash", "-c"]
+
+# https://github.com/ContinuumIO/docker-images/issues/89
+SHELL ["/bin/bash", "-c"]
+RUN \
+  conda create -n py3 python=3.7 &&\
+  #conda init bash &&\
+  echo "source /opt/conda/etc/profile.d/conda.sh" &&\
+  echo "source activate py3" >> $HOME/.bashrc
+
+# Deep learning
+RUN source activate py3 &&\
+  pip install https://storage.googleapis.com/tensorflow/linux/gpu/tensorflow_gpu-2.3.0-cp37-cp37m-manylinux2010_x86_64.whl &&\
+  pip install torch==1.6.0+cu101 torchvision==0.7.0+cu101 -f https://download.pytorch.org/whl/torch_stable.html
+RUN source activate py3 &&\
+  pip install transformers==3.0.2 sentence-transformers &&\
+  transformers-cli download mrm8488/t5-base-finetuned-emotion &&\
+  transformers-cli download facebook/bart-large-cnn &&\
+  transformers-cli download allenai/longformer-large-4096-finetuned-triviaqa &&\
+  python -c "from sentence_transformers import SentenceTransformer;SentenceTransformer('roberta-base-nli-stsb-mean-tokens')"
+
+# Other NLP
+RUN source activate py3 && pip install spacy && python -m spacy download en_core_web_sm
 #RUN apt-get install -y default-jre &&\
 #    wget http://mallet.cs.umass.edu/dist/mallet-2.0.8.zip -O /mallet-2.0.8.zip && unzip /mallet-2.0.8.zip -d /
 
-RUN pip install transformers==3.0.2 sentence-transformers &&\
-    transformers-cli download mrm8488/t5-base-finetuned-emotion &&\
-    transformers-cli download facebook/bart-large-cnn &&\
-    transformers-cli download allenai/longformer-large-4096-finetuned-triviaqa &&\
-    python -c "from sentence_transformers import SentenceTransformer;SentenceTransformer('roberta-base-nli-stsb-mean-tokens')"
-
 # needed for mysql?
-RUN apt-get install -y --fix-missing default-libmysqlclient-dev
+#RUN apt-get update -y && apt-get install -y default-libmysqlclient-dev
 
-# needed for pytorch docker, not tensorflow
-RUN apt-get install -y build-essential
-
-RUN pip install \
-    psycopg2-binary \
-    python-box \
-    pandas \
-    xgboost \
-    sklearn \
-    gensim \
-    beautifulsoup4 \
-    markdown \
-    lemminflect \
-    mysqlclient \
-    scipy \
-    html5lib \
-    langdetect \
-    hyperopt \
-    kneed \
-    keras \
-    scikit-learn-extra \
-    tqdm \
-    sqlalchemy \
-    feather-format \
-    textacy
+RUN source activate py3 && pip install \
+  psycopg2-binary \
+  python-box \
+  pandas \
+  xgboost \
+  sklearn \
+  gensim \
+  beautifulsoup4 \
+  markdown \
+  lemminflect \
+  mysql-connector-python \
+  scipy \
+  html5lib \
+  #langdetect \
+  hyperopt \
+  kneed \
+  keras \
+  #scikit-learn-extra \
+  tqdm \
+  sqlalchemy \
+  feather-format \
+  textacy
 
 # For common/models (unfortunately all/most required, find workaround later)
-RUN pip install \
+RUN source activate py3 && pip install \
   fastapi-sqlalchemy \
   sqlalchemy_utils \
   cryptography \
@@ -61,6 +77,5 @@ RUN pip install \
 COPY . /app
 WORKDIR /app
 
-#ENTRYPOINT /bin/bash
-ENTRYPOINT python run.py
+ENTRYPOINT source activate py3 && python run.py
 # tf.test.gpu_device_name() to test

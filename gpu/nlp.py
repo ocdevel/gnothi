@@ -157,14 +157,14 @@ class NLP():
         if should_update:
             sess.add(M.Jobs(
                 method='books',
-                data={'kwargs': {'id': str(user.id)}}
+                data={'args': [str(user.id)]}
             ))
             sess.commit()
 
         # Clean up broken entries
         broken = "select id from entries where ai_ran!=true limit 1"
         broken = sess.execute(broken).fetchone()
-        sess.close()
+        # sess.close()
         if broken: self.entry(entry.id)
         return {}
 

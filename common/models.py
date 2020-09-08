@@ -3,6 +3,8 @@ from typing import Optional, List, Any, Dict
 from pydantic import BaseModel, UUID4
 from dateutil import tz
 from uuid import uuid4
+import logging
+logger = logging.getLogger(__name__)
 
 from common.database import Base, SessLocal, fa_users_db
 from common.utils import vars, utcnow
@@ -638,6 +640,7 @@ class Bookshelf(Base):
                     method='books',
                     data={'args': [str(user_id)]}
                 ))
+                db.session.commit()
 
     @staticmethod
     def upsert(user_id, book_id, shelf):
@@ -665,9 +668,9 @@ class Bookshelf(Base):
         where u.ID in :ids
             and t.lang='en' and u.Language = 'English'
         """
-        db_books = SessLocal['books']()
+        db_books = SessLocal.books()
         books = db_books.execute(text(sql), {'ids':ids}).fetchall()
-        db_books.close()
+        # db_books.close()
         return [dict(b) for b in books]
 
 
