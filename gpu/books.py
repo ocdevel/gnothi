@@ -1,3 +1,9 @@
+# https://github.com/tensorflow/tensorflow/issues/2117
+import tensorflow as tf
+config = tf.compat.v1.ConfigProto()
+config.gpu_options.allow_growth = True
+session = tf.compat.v1.Session(config=config)
+
 from tensorflow.keras import backend as K
 from tensorflow.keras.layers import Input, Dense
 from tensorflow.keras.models import Model, load_model
@@ -14,7 +20,6 @@ from cleantext import Clean
 from box import Box
 import numpy as np
 import pandas as pd
-from nlp import nlp_
 from sqlalchemy import text
 import feather
 from sklearn import preprocessing as pp
@@ -119,6 +124,7 @@ def load_books_vecs(df):
 
     print(f"Running BERT on {df.shape[0]} entries")
     texts = (df.title + '\n' + df.text).tolist()
+    from nlp import nlp_
     vecs = nlp_.sentence_encode(texts)
     with open(paths.vecs, 'wb') as f:
         np.save(f, vecs)
@@ -176,10 +182,7 @@ def train_books_predictor(books, vecs_books, shelf_idx, fine_tune=True):
     return m
 
 
-def predict_books(user_id, entries, n_recs=30, centroids=False):
-    entries = Clean.entries_to_paras(entries)
-    vecs_user = nlp_.sentence_encode(entries)
-
+def predict_books(user_id, vecs_user, n_recs=30, centroids=False):
     vecs_books, books = load_books()
     books = books.set_index('id', drop=False)
 
@@ -226,12 +229,23 @@ def predict_books(user_id, entries, n_recs=30, centroids=False):
         .drop_duplicates('title', keep='first')\
         .iloc[:n_recs]
 
-def run_books(user_id):
+def run_books(user_id, job_id=None):
     sess = SessLocal.main()
     user = sess.query(M.User).get(user_id)
-    entries = [e.text for e in user.entries if not e.no_ai]
-    entries = [user.profile_to_text()] + entries
-    res = predict_books(user.id, entries)
+    sql = text("""
+    select c.vectors from cache_entries c
+    inner join entries e on e.id=c.entry_id and e.user_id=:uid
+    order by e.created_at desc;
+    """)
+    entries = sess.execute(sql, {'uid': user_id}).fetchall()
+    sql = text("select vectors from cache_profiles where user_id=:uid")
+    profile = sess.execute(sql, {'uid': user_id}).fetchone()
+
+    vecs = profile.vectors if profile else []
+    vecs = [*vecs, *[e.vectors for e in entries]]
+    vecs = np.vstack(vecs).astype(np.float32)
+    res = predict_books(user.id, vecs)
+
     sql = "delete from bookshelf where user_id=:uid and shelf='ai'"
     sess.execute(text(sql), {'uid': str(user_id)})
     res = res.rename(columns=dict(id='book_id', dist='score'))[['book_id', 'score']]
@@ -239,14 +253,19 @@ def run_books(user_id):
     res['shelf'] = 'ai'
     res['created_at'] = res['updated_at'] = datetime.datetime.utcnow()
     res.to_sql('bookshelf', sess.bind, if_exists='append', index=False)
-    sess.commit()
 
-    # sess.close()
+    if job_id:
+        # TODO capture error
+        sess.execute(text("update jobs set state='done' where id=:jid"), {'jid': job_id})
+
+    sess.commit()
+    sess.close()
 
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument("uid")
+    parser.add_argument("--uid")
+    parser.add_argument("--jid")
     args = parser.parse_args()
 
-    run_books(args.uid)
+    run_books(args.uid, args.jid)

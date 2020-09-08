@@ -11,7 +11,7 @@ os.environ["DB_NAME"] = "gnothi_test"
 os.environ["ENVIRONMENT"] = "development"
 from common.utils import vars
 from sqlalchemy_utils import database_exists, create_database, drop_database
-# if database_exists(vars.DB_URL): drop_database(vars.DB_URL)
+# if database_exists(va3rs.DB_URL): drop_database(vars.DB_URL)
 if not database_exists(vars.DB_URL): create_database(vars.DB_URL)
 
 import common.database as D
@@ -198,7 +198,6 @@ class TestML():
         pass
 
     def _ml_jobs(self, c, limit_entries, code):
-        return
         res = c.post("/themes", data=limit_entries, **header('user'))
         assert res.status_code == code
         data = {**limit_entries, 'query': "Who am I?"}
@@ -209,7 +208,6 @@ class TestML():
         assert res.status_code == code
 
     def test_entries_count(self, client):
-        return
         # none
         main_tag = list(u.user.tag1.keys())[0]
         limit_entries = {'days': 10, 'tags': main_tag}
@@ -232,12 +230,16 @@ class TestML():
         eid = _post_entry(c, {'no_ai': False})
 
         # summary job got created
-        sql = "select id from jobs where method='entry'"
-        assert M.await_row(sess_main, sql, timeout=2)
+        sql = """
+        select id from jobs 
+        where method='entry' and data_in->'args'->>0=:eid
+        """
+        args = {'eid': eid}
+        assert M.await_row(sess_main, sql, args=args, timeout=2)
 
         # summaries generated
-        sql = "select id from jobs where state='done' and method='entry'"
-        res = M.await_row(sess_main, sql, timeout=40)
+        sql += " and state='done'"
+        res = M.await_row(sess_main, sql, args=args, timeout=100)
         assert res
         res = c.get(f"/entries/{eid}", **header('user'))
         assert res.status_code == 200
@@ -247,7 +249,6 @@ class TestML():
         assert res['text_summary']
 
     def test_summaries_books(self, client):
-        exec("delete from jobs;")
         self._create_entry_ai(client)
         self._create_entry_ai(client)
 

@@ -29,8 +29,6 @@ m = Box({
     'themes': themes,
 })
 
-non_returning = ['entry', 'books']
-
 def remove_stale_jobs(sess):
     sql = f"""
     delete from jobs
@@ -40,34 +38,37 @@ def remove_stale_jobs(sess):
 
 
 def run_job(job):
-    jid, k = str(job.id), job.method
-    jid = {'jid': jid}
+    jid_, k = str(job.id), job.method
+    jid = {'jid': jid_}
     sess = SessLocal.main()
-    job = sess.execute("select * from jobs where id=:jid;", jid).fetchone()
-    args = job.data.get('args', [])
-    kwargs = job.data.get('kwargs', {})
+    data = sess.execute("select data_in from jobs where id=:jid", jid).fetchone().data_in
+    args = data.get('args', [])
+    kwargs = data.get('kwargs', {})
 
     print(f"Running job {k}")
 
     if k == 'books':
         sess.close()
-        return os.system(f"python books.py {args[0]}")
+        # nlp_.clear()
+        os.system(f"python books.py --jid={jid_} --uid={args[0]}")
+        return
 
     try:
         start = time.time()
         res = m[k](*args, **kwargs)
-        sql = text(f"update jobs set state='done', data=:data where id=:jid;")
+        sql = text(f"update jobs set state='done', data_out=:data where id=:jid")
         sess.execute(sql, {'data': jsonb(res), **jid})
         print(f"Job Complete {time.time() - start}")
     except Exception as err:
         err = str(traceback.format_exc())
         # err = str(err)
         res = {"error": err}
-        sql = text(f"update jobs set state='error', data=:data where id=:jid;")
+        sql = text(f"update jobs set state='error', data_out=:data where id=:jid")
         sess.execute(sql, {'data': jsonb(res), **jid})
         print(f"Job Error {time.time() - start} {err}", )
 
     remove_stale_jobs(sess)
+    # nlp_.clear()
     sess.commit()
     sess.close()
 

@@ -10,7 +10,7 @@ from common.database import Base, SessLocal, fa_users_db
 from common.utils import vars, utcnow
 
 from sqlalchemy import text, Column, Integer, Enum, Float, ForeignKey, Boolean, JSON, Date, Unicode, \
-    func, TIMESTAMP, select, or_, and_
+    func, TIMESTAMP, select, or_, and_, ARRAY
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship, backref, object_session, column_property
 from sqlalchemy.dialects.postgresql import UUID, BYTEA, JSONB
@@ -29,11 +29,17 @@ class SOut(BaseModel):
         orm_mode = True
 
 
+# https://dev.to/zchtodd/sqlalchemy-cascading-deletes-8hk
+parent_cascade = dict(cascade="all, delete", passive_deletes=True)
+child_cascade = dict(ondelete="cascade")
+
 # Note: using sa.Unicode for all Text/Varchar columns to be consistent with sqlalchemy_utils examples. Also keeping all
 # text fields unlimited (no varchar(max_length)) as Postgres doesn't incur penalty, unlike MySQL, and we don't know
 # how long str will be after encryption.
-def Encrypt(Col, **args):
-    return Column(StringEncryptedType(Col, vars.FLASK_KEY, FernetEngine), **args)
+def Encrypt(Col=Unicode, array=False, **args):
+    enc = StringEncryptedType(Col, vars.FLASK_KEY, FernetEngine)
+    if array: enc = ARRAY(enc)
+    return Column(enc, **args)
 
 # TODO should all date-cols be index=True? (eg sorting, filtering)
 def DateCol(default=True, update=False):
@@ -45,10 +51,9 @@ def DateCol(default=True, update=False):
 def IDCol():
     return Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
 
+def FKCol(fk, **kwargs):
+    return Column(UUID(as_uuid=True), ForeignKey(fk, **child_cascade), **kwargs)
 
-# https://dev.to/zchtodd/sqlalchemy-cascading-deletes-8hk
-parent_cascade = dict(cascade="all, delete", passive_deletes=True)
-child_cascade = dict(ondelete="cascade")
 
 
 class User(Base, SQLAlchemyBaseUserTable):
@@ -57,16 +62,16 @@ class User(Base, SQLAlchemyBaseUserTable):
     created_at = DateCol()
     updated_at = DateCol(update=True)
 
-    first_name = Encrypt(Unicode)
-    last_name = Encrypt(Unicode)
-    gender = Encrypt(Unicode)
-    orientation = Encrypt(Unicode)
+    first_name = Encrypt()
+    last_name = Encrypt()
+    gender = Encrypt()
+    orientation = Encrypt()
     birthday = Column(Date)  # TODO encrypt (how to store/migrate dates?)
     timezone = Column(Unicode)
-    bio = Encrypt(Unicode)
+    bio = Encrypt()
 
-    habitica_user_id = Encrypt(Unicode)
-    habitica_api_token = Encrypt(Unicode)
+    habitica_user_id = Encrypt()
+    habitica_api_token = Encrypt()
 
     entries = relationship("Entry", order_by='Entry.created_at.desc()', **parent_cascade)
     field_entries = relationship("FieldEntry", order_by='FieldEntry.created_at.desc()', **parent_cascade)
@@ -171,17 +176,17 @@ class Entry(Base):
     updated_at = DateCol(update=True)
 
     # Title optional, otherwise generated from text. topic-modeled, or BERT summary, etc?
-    title = Encrypt(Unicode)
+    title = Encrypt()
     text = Encrypt(Unicode, nullable=False)
     no_ai = Column(Boolean, default=False)
     ai_ran = Column(Boolean, default=False)
 
     # Generated
-    title_summary = Encrypt(Unicode)
-    text_summary = Encrypt(Unicode)
-    sentiment = Encrypt(Unicode)
+    title_summary = Encrypt()
+    text_summary = Encrypt()
+    sentiment = Encrypt()
 
-    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id', **child_cascade))
+    user_id = FKCol('users.id', index=True)
     entry_tags_ = relationship("EntryTag", **parent_cascade)
 
     # share_tags = relationship("EntryTag", secondary="shares_tags")
@@ -252,7 +257,7 @@ class Entry(Base):
         self.text_summary = "🕒 AI is generating a summary"
         db.session.add(Jobs(
             method='entry',
-            data={'args': [str(self.id)]}
+            data_in={'args': [str(self.id)]}
         ))
 
 
@@ -289,7 +294,7 @@ class SIEntry(SEntry):
 class SOEntry(SEntry, SOut):
     id: UUID4
     created_at: datetime.datetime
-    ai_ran: bool
+    ai_ran: Optional[bool] = None
     title_summary: Optional[str] = None
     text_summary: Optional[str] = None
     sentiment: Optional[str] = None
@@ -306,8 +311,8 @@ class Note(Base):
     __tablename__ = 'notes'
     id = IDCol()
     created_at = DateCol()
-    entry_id = Column(UUID(as_uuid=True), ForeignKey('entries.id', **child_cascade), index=True)
-    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id', **child_cascade), index=True)
+    entry_id = FKCol('entries.id', index=True)
+    user_id = FKCol('users.id', index=True)
     type = Column(Enum(NoteTypes), nullable=False)
     text = Encrypt(Unicode, nullable=False)
     private = Column(Boolean, default=False)
@@ -380,7 +385,7 @@ class Field(Base):
     id = IDCol()
 
     type = Column(Enum(FieldType))
-    name = Encrypt(Unicode)
+    name = Encrypt()
     # Start entries/graphs/correlations here
     created_at = DateCol()
     # Don't actually delete fields, unless it's the same day. Instead
@@ -396,7 +401,7 @@ class Field(Base):
     service = Column(Unicode)
     service_id = Column(Unicode)
 
-    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id', **child_cascade))
+    user_id = FKCol('users.id', index=True)
 
     json_fields = """
     id
@@ -465,8 +470,8 @@ class FieldEntry(Base):
     value = Column(Float)  # TODO Can everything be a number? reconsider
     created_at = DateCol()
 
-    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id', **child_cascade), index=True)
-    field_id = Column(UUID(as_uuid=True), ForeignKey('fields.id', **child_cascade))
+    user_id = FKCol('users.id', index=True)
+    field_id = FKCol('fields.id')  # TODO index=True?
 
     @staticmethod
     def get_today_entries(user_id, field_id=None):
@@ -499,12 +504,12 @@ class SIFieldEntry(BaseModel):
 class Person(Base):
     __tablename__ = 'people'
     id = IDCol()
-    name = Encrypt(Unicode)
-    relation = Encrypt(Unicode)
-    issues = Encrypt(Unicode)
-    bio = Encrypt(Unicode)
+    name = Encrypt()
+    relation = Encrypt()
+    issues = Encrypt()
+    bio = Encrypt()
 
-    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id', **child_cascade), nullable=False)
+    user_id = FKCol('users.id', index=True)
 
 
 class SIPerson(BaseModel):
@@ -522,7 +527,7 @@ class SOPerson(SIPerson, SOut):
 class Share(Base):
     __tablename__ = 'shares'
     id = IDCol()
-    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id', **child_cascade), index=True)
+    user_id = FKCol('users.id', index=True)
     email = Column(EmailType, index=True)  # TODO encrypt?
 
     fields = Column(Boolean)
@@ -562,7 +567,7 @@ class SOShare(SIShare):
 class Tag(Base):
     __tablename__ = 'tags'
     id = IDCol()
-    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id', **child_cascade), index=True)
+    user_id = FKCol('users.id', index=True)
     name = Encrypt(Unicode, nullable=False)
     # Save user's selected tags between sessions
     selected = Column(Boolean)
@@ -594,14 +599,14 @@ class SOTag(SITag, SOut):
 
 class EntryTag(Base):
     __tablename__ = 'entries_tags'
-    entry_id = Column(UUID(as_uuid=True), ForeignKey('entries.id', **child_cascade), primary_key=True)
-    tag_id = Column(UUID(as_uuid=True), ForeignKey('tags.id', **child_cascade), primary_key=True)
+    entry_id = FKCol('entries.id', primary_key=True)
+    tag_id = FKCol('tags.id', primary_key=True)
 
 
 class ShareTag(Base):
     __tablename__ = 'shares_tags'
-    share_id = Column(UUID(as_uuid=True), ForeignKey('shares.id', **child_cascade), primary_key=True)
-    tag_id = Column(UUID(as_uuid=True), ForeignKey('tags.id', **child_cascade), primary_key=True)
+    share_id = FKCol('shares.id', primary_key=True)
+    tag_id = FKCol('tags.id', primary_key=True)
 
     tag = relationship(Tag, backref=backref("tags"))
     share = relationship(Share, backref=backref("shares"))
@@ -622,7 +627,7 @@ class Bookshelf(Base):
     updated_at = DateCol(update=True)
 
     book_id = Column(Integer, primary_key=True)
-    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id', **child_cascade), primary_key=True)
+    user_id = FKCol('users.id', primary_key=True)
     shelf = Column(Enum(Shelves), nullable=False)
     score = Column(Float)  # only for ai-recs
 
@@ -638,7 +643,7 @@ class Bookshelf(Base):
             if should_update:
                 db.session.add(Jobs(
                     method='books',
-                    data={'args': [str(user_id)]}
+                    data_in={'args': [str(user_id)]}
                 ))
                 db.session.commit()
 
@@ -681,7 +686,8 @@ class Jobs(Base):
     updated_at = DateCol(update=True)
     method = Column(Unicode)
     state = Column(Unicode, default='new')
-    data = Column(JSONB)
+    data_in = Column(JSONB)
+    data_out = Column(JSONB)
 
 
 class JobsStatus(Base):
@@ -704,6 +710,32 @@ class SIQuestion(SILimitEntries):
 
 class SISummarize(SILimitEntries):
     words: int
+
+
+
+###
+# Cache models, storing data for use after machine learning runs
+###
+
+class CacheEntry(Base):
+    __tablename__ = 'cache_entries'
+    entry_id = FKCol('entries.id', primary_key=True)
+    paras = Encrypt(array=True)
+    vectors = Column(ARRAY(Float))
+
+
+class CacheProfile(Base):
+    __tablename__ = 'cache_profiles'
+    user_id = FKCol('users.id', primary_key=True)
+    paras = Encrypt(array=True)
+    vectors = Column(ARRAY(Float))
+
+
+class CacheInfluencer(Base):
+    __tablename__ = 'cache_influencers'
+    field_id = FKCol('fields.id', primary_key=True)
+    data = Column(JSONB)
+    score = Column(Float, nullable=False)
 
 
 def await_row(sess, sql, args={}, wait=.5, timeout=None):

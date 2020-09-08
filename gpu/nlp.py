@@ -5,6 +5,7 @@ import numpy as np
 from common.database import SessLocal
 import common.models as M
 from sqlalchemy import text as satext
+from cleantext import Clean
 from sentence_transformers import SentenceTransformer
 from transformers import AutoTokenizer, AutoModelWithLMHead#, AutoModelForQuestionAnswering, AutoModelForSequenceClassification
 from transformers import BartForConditionalGeneration, BartTokenizer
@@ -150,14 +151,36 @@ class NLP():
         entry.ai_ran = True
         sess.commit()
 
-        # every x entries, update book recommendations
         user = sess.query(M.User).get(entry.user_id)
+
+        # Cache clean-text and vectors, for use in themes/books
+        c_entry = sess.query(M.CacheEntry).get(id)
+        if not c_entry:
+            c_entry = M.CacheEntry(entry_id=id)
+            sess.add(c_entry)
+        c_entry.paras = Clean.entries_to_paras([entry.text])
+        c_entry.vectors = self.sentence_encode(c_entry.paras).tolist()
+
+        # TODO move this to on-profile-save
+        profile_txt = user.profile_to_text()
+        if profile_txt:
+            c_profile = sess.query(M.CacheProfile).get(entry.user_id)
+            if not c_profile:
+                c_profile = M.CacheProfile(user_id=entry.user_id)
+                sess.add(c_profile)
+            c_profile.paras = Clean.entries_to_paras([profile_txt])
+            c_profile.vectors = self.sentence_encode(c_profile.paras).tolist()
+
+        sess.commit()
+
+        # every x entries, update book recommendations
+
         sql = 'select count(*)%2=0 as ct from entries where user_id=:uid'
         should_update = sess.execute(satext(sql), {'uid': user.id}).fetchone().ct
         if should_update:
             sess.add(M.Jobs(
                 method='books',
-                data={'args': [str(user.id)]}
+                data_in={'args': [str(user.id)]}
             ))
             sess.commit()
 

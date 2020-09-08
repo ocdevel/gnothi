@@ -2,6 +2,7 @@ from app.cleantext import unmark
 import pickle, pdb
 import numpy as np
 from sqlalchemy import text
+from psycopg2.extras import Json as jsonb
 from fastapi_sqlalchemy import db
 
 
@@ -16,9 +17,9 @@ def run_gpu_model(method, data):
     if res.status != 'on':
         return False
 
-    sql = f"insert into jobs (id, method, state, data) values (:jid, :method, 'new', :data)"
+    sql = f"insert into jobs (id, method, state, data_in) values (:jid, :method, 'new', :data)"
     jid = str(uuid4())
-    db.session.execute(text(sql), dict(jid=jid, method=method, data=psycopg2.Binary(pickle.dumps(data))))
+    db.session.execute(text(sql), dict(jid=jid, method=method, data=jsonb(data)))
     db.session.commit()
     i = 0
     while True:
@@ -31,9 +32,9 @@ def run_gpu_model(method, data):
             return False
 
         if state == 'done':
-            job = db.session.execute(text("delete from jobs where id=:jid returning method, data"), {'jid': jid}).fetchone()
+            job = db.session.execute(text("delete from jobs where id=:jid returning method, data_out"), {'jid': jid}).fetchone()
             db.session.commit()
-            res = pickle.loads(job.data)['data']
+            res = job.data_out['data']
             if job.method == 'sentence-encode': res = np.array(res)
             return res
         i += 1
