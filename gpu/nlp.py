@@ -140,6 +140,12 @@ class NLP():
         if not answers: return [{'answer': 'No answer'}]
         return [{'answer': a} for a in answers]
 
+    def _prep_entry_cache(self, txt):
+        paras = Clean.entries_to_paras([txt])
+        clean = [' '.join(e) for e in Clean.lda_texts(paras, propn=True)]
+        vecs = self.sentence_encode(paras).tolist()
+        return paras, clean, vecs
+
     def entry(self, id):
         sess = SessLocal.main()
         entry = sess.query(M.Entry).get(id)
@@ -158,8 +164,7 @@ class NLP():
         if not c_entry:
             c_entry = M.CacheEntry(entry_id=id)
             sess.add(c_entry)
-        c_entry.paras = Clean.entries_to_paras([entry.text])
-        c_entry.vectors = self.sentence_encode(c_entry.paras).tolist()
+        c_entry.paras, c_entry.clean, c_entry.vectors = self._prep_entry_cache(entry.text)
 
         # TODO move this to on-profile-save
         profile_txt = user.profile_to_text()
@@ -168,8 +173,7 @@ class NLP():
             if not c_profile:
                 c_profile = M.CacheProfile(user_id=entry.user_id)
                 sess.add(c_profile)
-            c_profile.paras = Clean.entries_to_paras([profile_txt])
-            c_profile.vectors = self.sentence_encode(c_profile.paras).tolist()
+            c_profile.paras, c_profile.clean, c_profile.vectors = self._prep_entry_cache(profile_txt)
 
         sess.commit()
 

@@ -198,13 +198,13 @@ class TestML():
         pass
 
     def _ml_jobs(self, c, limit_entries, code):
-        res = c.post("/themes", data=limit_entries, **header('user'))
+        res = c.post("/themes", json=limit_entries, **header('user'))
         assert res.status_code == code
         data = {**limit_entries, 'query': "Who am I?"}
-        res = c.post("/query", data=data, **header("user"))
+        res = c.post("/query", json=data, **header("user"))
         assert res.status_code == code
         data = {**limit_entries, 'words': 300}
-        res = c.post("/summarize", data=data, **header('user'))
+        res = c.post("/summarize", json=data, **header('user'))
         assert res.status_code == code
 
     def test_entries_count(self, client):
@@ -248,9 +248,18 @@ class TestML():
         assert res['title_summary']
         assert res['text_summary']
 
-    def test_summaries_books(self, client):
+    def test_caching(self, client):
         self._create_entry_ai(client)
         self._create_entry_ai(client)
+
+        # themes
+        main_tag = list(u.user.tag1.keys())
+        limit_entries = {'days': 10, 'tags': main_tag}
+        res = client.post("/themes", json=limit_entries, **header('user'))
+        assert res.status_code == 200, str(res.json())
+        res = res.json()
+        assert res['terms']
+        assert len(res['themes']) > 0
 
         # books job created
         sql = "select id from jobs where method='books'"

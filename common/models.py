@@ -10,10 +10,10 @@ from common.database import Base, SessLocal, fa_users_db
 from common.utils import vars, utcnow
 
 from sqlalchemy import text, Column, Integer, Enum, Float, ForeignKey, Boolean, JSON, Date, Unicode, \
-    func, TIMESTAMP, select, or_, and_, ARRAY
+    func, TIMESTAMP, select, or_, and_
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship, backref, object_session, column_property
-from sqlalchemy.dialects.postgresql import UUID, BYTEA, JSONB
+from sqlalchemy.dialects.postgresql import UUID, BYTEA, JSONB, ARRAY
 from sqlalchemy_utils.types import EmailType
 from sqlalchemy_utils.types.encrypted.encrypted_type import StringEncryptedType, FernetEngine
 
@@ -721,14 +721,16 @@ class CacheEntry(Base):
     __tablename__ = 'cache_entries'
     entry_id = FKCol('entries.id', primary_key=True)
     paras = Encrypt(array=True)
-    vectors = Column(ARRAY(Float))
+    clean = Encrypt(array=True)
+    vectors = Column(ARRAY(Float, dimensions=2))
 
 
 class CacheProfile(Base):
     __tablename__ = 'cache_profiles'
     user_id = FKCol('users.id', primary_key=True)
     paras = Encrypt(array=True)
-    vectors = Column(ARRAY(Float))
+    clean = Encrypt(array=True)
+    vectors = Column(ARRAY(Float, dimensions=2))
 
 
 class CacheInfluencer(Base):

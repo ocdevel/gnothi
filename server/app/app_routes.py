@@ -439,7 +439,7 @@ def themes_post(
         tags=data.tags,
         for_ai=True
     )
-    entries = [e.text for e in entries.all()]
+    entries = [str(e.id) for e in entries.all()]
 
     # For dreams, special handle: process every sentence. TODO make note in UI
     # tags = request.get_json().get('tags', None)

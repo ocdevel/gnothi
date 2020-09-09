@@ -1,5 +1,6 @@
 from app.cleantext import unmark
 import pickle, pdb
+import common.models as M
 import numpy as np
 from sqlalchemy import text
 from psycopg2.extras import Json as jsonb
@@ -17,14 +18,15 @@ def run_gpu_model(method, data):
     if res.status != 'on':
         return False
 
-    sql = f"insert into jobs (id, method, state, data_in) values (:jid, :method, 'new', :data)"
-    jid = str(uuid4())
-    db.session.execute(text(sql), dict(jid=jid, method=method, data=jsonb(data)))
+    job = M.Jobs(method=method, data_in=data)
+    db.session.add(job)
     db.session.commit()
+    db.session.refresh(job)
+    jid = {'jid': job.id}
     i = 0
     while True:
         time.sleep(1)
-        res = db.session.execute(text("select state from jobs where id=:jid"), {'jid': jid})
+        res = db.session.execute(text("select state from jobs where id=:jid"), jid)
         state = res.fetchone().state
 
         # 5 seconds, still not picked up; something's wrong
@@ -32,9 +34,9 @@ def run_gpu_model(method, data):
             return False
 
         if state == 'done':
-            job = db.session.execute(text("delete from jobs where id=:jid returning method, data_out"), {'jid': jid}).fetchone()
+            job = db.session.execute(text("delete from jobs where id=:jid returning method, data_out"), jid).fetchone()
             db.session.commit()
-            res = job.data_out['data']
+            res = job.data_out
             if job.method == 'sentence-encode': res = np.array(res)
             return res
         i += 1
