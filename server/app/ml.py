@@ -63,14 +63,13 @@ def query(question, entries):
     return res
 
 
-def influencers(user_id, specific_target=None):
-    res = run_gpu_model('influencers', dict(
-        args=[user_id],
-        kwargs={'specific_target': specific_target}
-    ))
-    if res is False: return []  # fixme
-    return res
-
+def run_influencers():
+    with db():
+        job = M.Jobs(method='influencers', data_in={})
+        db.session.add(job)
+        db.session.commit()
+        db.session.refresh(job)
+        return job.id
 
 def themes(entries):
     res = run_gpu_model('themes', dict(args=[entries], kwargs={}))

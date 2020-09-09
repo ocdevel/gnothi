@@ -166,17 +166,6 @@ class NLP():
             sess.add(c_entry)
         c_entry.paras, c_entry.clean, c_entry.vectors = self._prep_entry_cache(entry.text)
 
-        # TODO move this to on-profile-save
-        profile_txt = user.profile_to_text()
-        if profile_txt:
-            c_profile = sess.query(M.CacheProfile).get(entry.user_id)
-            if not c_profile:
-                c_profile = M.CacheProfile(user_id=entry.user_id)
-                sess.add(c_profile)
-            c_profile.paras, c_profile.clean, c_profile.vectors = self._prep_entry_cache(profile_txt)
-
-        sess.commit()
-
         # every x entries, update book recommendations
 
         sql = 'select count(*)%2=0 as ct from entries where user_id=:uid'
@@ -194,6 +183,23 @@ class NLP():
         # sess.close()
         if broken: self.entry(entry.id)
         return {}
+
+    def profile(self, id):
+        sess = SessLocal.main()
+        profile_txt = sess.query(M.User).get(id).profile_to_text()
+        cu = M.CacheUser
+        if profile_txt:
+            c_profile = sess.query(cu)\
+                .with_entities(cu.paras, cu.clean, cu.vectors)\
+                .get(id)
+            if not c_profile:
+                c_profile = cu(user_id=id)
+                sess.add(c_profile)
+            c_profile.paras, c_profile.clean, c_profile.vectors = \
+                self._prep_entry_cache(profile_txt)
+
+        sess.commit()
+        sess.close()
 
 
 nlp_ = NLP()

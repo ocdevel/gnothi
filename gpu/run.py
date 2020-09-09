@@ -16,14 +16,20 @@ from utils import cluster, cosine, clear_gpu
 from nlp import nlp_
 
 m = Box({
+    # NLP
     'sentiment-analysis': nlp_.sentiment_analysis,
     'question-answering': nlp_.question_answering,
     'summarization': nlp_.summarization,
     'sentence-encode': nlp_.sentence_encode,
-    'entry': nlp_.entry,
 
-    'cosine': cosine,
+    # Caching
+    'entry': nlp_.entry,
+    'profile': nlp_.profile,
     'influencers': influencers,
+
+
+    # Other
+    'cosine': cosine,
     'cluster': cluster,
     # 'books': run_books,
     'themes': themes,

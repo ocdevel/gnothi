@@ -1,10 +1,14 @@
+import pdb
 from xgb_hyperopt import run_opt
 from xgboost import XGBRegressor
+from sqlalchemy import text
+from psycopg2.extras import Json as jsonb
+from common.utils import utcnow
 from common.database import SessLocal
 import pandas as pd
 import numpy as np
 
-def influencers(user_id, specific_target=None):
+def influencers_(user_id, specific_target=None):
     sess = SessLocal.main()
     fes = pd.read_sql("""
     select  
@@ -67,15 +71,17 @@ def influencers(user_id, specific_target=None):
     # https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.rolling.html
     # http://people.duke.edu/~ccc14/bios-823-2018/S18A_Time_Series_Manipulation_Smoothing.html#Window-functions
     span = 3
-    fes = fes.rolling(span, min_periods=1).mean()
+    fes = fes.rolling(span, min_periods=1).mean().astype(np.float16)
 
     # hyper-opt (TODO cache params)
     t = specific_target or target_ids[0]
     X_opt = fes.drop(columns=[t])
     y_opt = fes[t]
     hypers, _ = run_opt(X_opt, y_opt)
+    for k in ['max_depth', 'n_estimators']:
+        hypers[k] = int(hypers[k])
     print(hypers)
-    hypers = {}
+    xgb_args = {}  # {'tree_method': 'gpu_hist', 'gpu_id': 0}
 
     # predictions
     next_preds = {}
@@ -84,7 +90,7 @@ def influencers(user_id, specific_target=None):
         # trend is important info
         X = fes
         y = X[c]
-        model = XGBRegressor(**hypers)
+        model = XGBRegressor(**xgb_args, **hypers)
         model.fit(X, y)
         preds = model.predict(X.iloc[-1:])
         next_preds[c] = float(preds[0])
@@ -98,7 +104,7 @@ def influencers(user_id, specific_target=None):
             continue
         X = fes.drop(columns=[t])
         y = fes[t]
-        model = XGBRegressor(**hypers)
+        model = XGBRegressor(**xgb_args, **hypers)
         model.fit(X, y)
         imps = [float(x) for x in model.feature_importances_]
 
@@ -117,3 +123,42 @@ def influencers(user_id, specific_target=None):
     all_imps = dict(pd.DataFrame(all_imps).mean())
 
     return (targets, all_imps, next_preds)
+
+def influencers():
+    # TODO don't loop all fields! handle general & specific cases together above
+    sess = SessLocal.main()
+    users = sess.execute(text(f"""
+    with fe_ct as (
+        select user_id, count(*) ct from field_entries 
+        group by user_id having count(*) > 15
+    )
+    select u.id from users u
+    inner join fe_ct on fe_ct.user_id=u.id
+    left outer join cache_users c on c.user_id=u.id
+    where
+      -- has logged in recently
+      u.updated_at > {utcnow} - interval '2 days' and
+      -- has been 1d since last-run (or never run)
+      (extract(day from {utcnow} - c.last_influencers) >= 1 or c.last_influencers is null)
+    """)).fetchall()
+    for u in users:
+        uid = str(u.id)
+        fields = sess.execute(text(f"""
+        select f.id from fields f
+        where f.target=true and f.excluded_at is null and f.user_id=:uid
+        """), {'uid': uid}).fetchall()
+        for f in fields:
+            fid = str(f.id)
+            res = influencers_(uid, fid)
+            sess.execute(text(f"""
+            insert into cache_influencers (field_id, data) values (:fid, :data)
+            on conflict (field_id) do update set data=:data
+            """), {'fid': fid, 'data': jsonb(res)})
+            sess.commit()
+        res = influencers_(uid)
+        sess.execute(text(f"""
+        insert into cache_users (user_id, last_influencers, influencers) values (:uid, {utcnow}, :data)
+        on conflict (user_id) do update set last_influencers={utcnow}, influencers=:data
+        """), {'uid': uid, 'data': jsonb(res)})
+        sess.commit()
+    sess.close()

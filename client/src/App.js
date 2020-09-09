@@ -79,6 +79,7 @@ function App() {
     if (!jwt) {return}
     const {data, code} = await fetch_('user', 'GET')
     if (code === 401) { return logout() }
+    fetch_('user/checkin', 'POST')
     setUser(data)
 
     if (!data.timezone && !as) {

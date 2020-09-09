@@ -1,4 +1,4 @@
-import os, pdb, pytest, time
+import os, pdb, pytest, time, random, datetime
 from box import Box
 from sqlalchemy import text
 from fastapi.testclient import TestClient
@@ -16,6 +16,7 @@ if not database_exists(vars.DB_URL): create_database(vars.DB_URL)
 
 import common.database as D
 import common.models as M
+from app import ml
 from app.main import app
 
 exec = D.engine.execute
@@ -195,7 +196,56 @@ class TestML():
         # TODO few field-entries
         # TODO enough field-entries
         # res = client.get("/influencers", **header('user'))
-        pass
+
+        sess = D.SessLocal.main()
+        fs = list(range(10))
+        for i, _ in enumerate(fs):
+            # create fields (some targets
+            data = dict(
+                type='fivestar',
+                name=str(i),
+                default_value='average',
+                target=i>7
+            )
+            res = client.post("/fields", json=data, **header('user'))
+            assert res.status_code == 200
+            fs[i] = res.json()
+
+            # create field-entries for 10 days (would use API, but can't set created_at)
+            for d in range(10):
+                fe = M.FieldEntry(
+                    field_id=fs[i]['id'],
+                    user_id=u.user.id,
+                    value=random.randint(-5, 5),
+                    created_at=datetime.datetime.today() - datetime.timedelta(days=d)
+                )
+                sess.add(fe)
+        # set last_updated so it's stale
+        sess.execute("update users set updated_at=now() - interval '5 days'")
+        sess.commit()
+
+        client.post('user/checkin', **header('user'))
+
+        # run cron
+        jid = ml.run_influencers()
+        assert M.await_row(sess, "select 1 from jobs where id=:jid and state='done'", {'jid': str(jid)}, timeout=100)
+
+        # check output
+        res = client.get('/influencers', **header('user'))
+        assert res.status_code == 200
+        res = res.json()
+        assert res['overall']
+        assert res['per_target']
+        assert res['next_preds']
+        print(res)
+
+        res = client.get(f"/influencers?target={fs[-1]['id']}", **header('user'))
+        assert res.status_code == 200
+        res = res.json()
+        assert res['overall']
+        assert res['per_target']
+        assert res['next_preds']
+
 
     def _ml_jobs(self, c, limit_entries, code):
         res = c.post("/themes", json=limit_entries, **header('user'))

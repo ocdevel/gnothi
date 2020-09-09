@@ -725,19 +725,24 @@ class CacheEntry(Base):
     vectors = Column(ARRAY(Float, dimensions=2))
 
 
-class CacheProfile(Base):
-    __tablename__ = 'cache_profiles'
+class CacheUser(Base):
+    __tablename__ = 'cache_users'
     user_id = FKCol('users.id', primary_key=True)
+
+    # profile nlp
     paras = Encrypt(array=True)
     clean = Encrypt(array=True)
     vectors = Column(ARRAY(Float, dimensions=2))
+
+    # influencers all general
+    last_influencers = DateCol()
+    influencers = Column(JSONB)
 
 
 class CacheInfluencer(Base):
     __tablename__ = 'cache_influencers'
     field_id = FKCol('fields.id', primary_key=True)
-    data = Column(JSONB)
-    score = Column(Float, nullable=False)
+    data = Column(JSONB)  # {fields[], next_pred}
 
 
 def await_row(sess, sql, args={}, wait=.5, timeout=None):
