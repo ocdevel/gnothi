@@ -33,7 +33,7 @@ async def startup():
     scheduler = AsyncIOScheduler(timezone=pytz.timezone('America/Los_Angeles'))
     scheduler.start()
     scheduler.add_job(habitica.cron, "cron", hour="*")
-    scheduler.add_job(run_influencers, "cron", hour="*")
+    scheduler.add_job(run_influencers, "cron", minute="*")
     scheduler.add_job(ec2_down_maybe, "cron", minute="*")
 
     # ensure jobs_status has the 1 row

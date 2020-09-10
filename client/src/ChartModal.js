@@ -52,7 +52,7 @@ export default function ChartModal({fetch_, close, field=null, overall=false}) {
   const renderInfluencers = () => {
     if (!enough) {
       return <p>
-        After you have enough field entries, this feature will show you which fields influence which other fields.
+        After you've logged enough field entries, this feature will show you which fields influence this field. If you're expecting results now, make sure you set fields as <strong>target</strong> (edit the field), then wait an hour or two. Influencers only calculate for target fields.
       </p>
     }
     return <>
