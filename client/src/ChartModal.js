@@ -11,29 +11,33 @@ export default function ChartModal({fetch_, close, field=null, overall=false}) {
   const [influencers, setInfluencers] = useState({})
   const [fields, setFields] = useState([])
   const [nextPreds, setNextPreds] = useState({})
+  const [enough, setEnough] = useState(false)
   const [fetching, setFetching] = useState(false)
-  const [hasEnough, setHasEnough] = useState(false)
 
+  // console.log('influencers', influencers)
 
   const fetchFieldPreds = async (fields) => {
-    if (field.history.length < 4) { return }
-    setHasEnough(true)
     const {data} = await fetch_(`influencers?target=${field.id}`, 'GET')
+    if (!data.per_target) {
+      return setEnough(false)
+    }
+    setEnough(true)
+    // console.log('data', data)
     setInfluencers(data.per_target[field.id])
     setNextPreds(data.next_preds)
   }
 
   const fetchOverallPreds = async (fields) => {
-    // TODO fix this hasEnough handling. Actually move all hasEnough to server 400 error
-    if (!_.find(fields, o => o.history.length > 3)) { return }
-    setHasEnough(true)
     const {data} = await fetch_(`influencers`, 'GET')
+    if (!data.overall) {
+      return setEnough(false)
+    }
+    setEnough(true)
     setInfluencers(data.overall)
     setNextPreds(data.next_preds)
   }
 
   const fetchTargets = async () => {
-    setHasEnough(false)
     setFetching(true)
     const {data} = await fetch_('fields', 'GET')
     setFields(data)
@@ -45,17 +49,23 @@ export default function ChartModal({fetch_, close, field=null, overall=false}) {
     fetchTargets()
   }, [])
 
-  const renderInfluencers = () => <>
-    <Table striped size="sm">
-      <thead>
+  const renderInfluencers = () => {
+    if (!enough) {
+      return <p>
+        After you have enough field entries, this feature will show you which fields influence which other fields.
+      </p>
+    }
+    return <>
+      <Table striped size="sm">
+        <thead>
         <tr>
           <th>Field</th>
           <th>Importance</th>
           <th>Avg</th>
           <th>Predicted Next</th>
         </tr>
-      </thead>
-      <tbody>
+        </thead>
+        <tbody>
         {fetching ? spinner : _(influencers)
           .toPairs()
           .filter(x => x[1] > 0)
@@ -67,14 +77,12 @@ export default function ChartModal({fetch_, close, field=null, overall=false}) {
             <td>{ round_(fields[x[0]].avg) }</td>
             <td>{ round_(nextPreds[x[0]]) }</td>
           </tr>)}
-      </tbody>
-    </Table>
-  </>
+        </tbody>
+      </Table>
+    </>
+  }
 
   const renderBody = () => {
-    if (!hasEnough) {
-      return "This feature will unlock with more field entries."
-    }
     return <>
       {field && (
         <LineChart width={730} height={250} data={field.history}>
@@ -90,7 +98,10 @@ export default function ChartModal({fetch_, close, field=null, overall=false}) {
       {field && <div>
         <h5>Stats</h5>
         <ul>
-          <li>Predicted Next Value: {round_(nextPreds[field.id])}</li>
+          <li>
+            Predicted Next Value:{' '}
+            {enough ? round_(nextPreds[field.id]) : "<feature available after more field entries>"}
+          </li>
           <li>Average/day: {round_(field.avg)}</li>
         </ul>
       </div>}

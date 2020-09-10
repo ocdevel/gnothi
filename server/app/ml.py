@@ -18,7 +18,7 @@ def run_gpu_model(method, data):
     if res.status != 'on':
         return False
 
-    job = M.Jobs(method=method, data_in=data)
+    job = M.Job(method=method, data_in=data)
     db.session.add(job)
     db.session.commit()
     db.session.refresh(job)
@@ -65,7 +65,7 @@ def query(question, entries):
 
 def run_influencers():
     with db():
-        job = M.Jobs(method='influencers', data_in={})
+        job = M.Job(method='influencers', data_in={})
         db.session.add(job)
         db.session.commit()
         db.session.refresh(job)

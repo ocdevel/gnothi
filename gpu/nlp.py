@@ -189,9 +189,9 @@ class NLP():
         profile_txt = sess.query(M.User).get(id).profile_to_text()
         cu = M.CacheUser
         if profile_txt:
-            c_profile = sess.query(cu)\
-                .with_entities(cu.paras, cu.clean, cu.vectors)\
-                .get(id)
+            c_profile = sess.query(cu).get(id)
+            # TODO can't use with_entities & model.get(). This fetches cu.influencers too, large
+            # .with_entities(cu.paras, cu.clean, cu.vectors)\
             if not c_profile:
                 c_profile = cu(user_id=id)
                 sess.add(c_profile)

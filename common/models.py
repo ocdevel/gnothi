@@ -662,9 +662,11 @@ class Bookshelf(Base):
         sql = "select book_id from bookshelf where user_id=:uid and shelf=:shelf"
         ids = db.session.execute(text(sql), dict(uid=user_id, shelf=shelf)).fetchall()
         ids = tuple([x.book_id for x in ids])
+        print(ids)
         if not ids:
             return []
 
+        # TODO save these clean from msyql into psql
         sql = """
         select u.ID as id, u.Title as title, u.Author as author, d.descr as text, t.topic_descr as topic
         from updated u
@@ -674,12 +676,12 @@ class Bookshelf(Base):
             and t.lang='en' and u.Language = 'English'
         """
         db_books = SessLocal.books()
-        books = db_books.execute(text(sql), {'ids':ids}).fetchall()
+        books = db_books.execute(text(sql), {'ids': ids}).fetchall()
         # db_books.close()
         return [dict(b) for b in books]
 
 
-class Jobs(Base):
+class Job(Base):
     __tablename__ = 'jobs'
     id = IDCol()
     created_at = DateCol()

@@ -36,6 +36,7 @@ RUN pip install spacy && python -m spacy download en_core_web_sm
 #RUN apt-get install -y default-jre &&\
 #    wget http://mallet.cs.umass.edu/dist/mallet-2.0.8.zip -O /mallet-2.0.8.zip && unzip /mallet-2.0.8.zip -d /
 
+RUN apt-get install -y default-libmysqlclient-dev
 RUN pip install \
   psycopg2-binary \
   python-box \
@@ -46,7 +47,7 @@ RUN pip install \
   beautifulsoup4 \
   markdown \
   lemminflect \
-  mysql-connector-python \
+  mysqlclient \
   scipy \
   html5lib \
   #langdetect \

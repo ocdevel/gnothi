@@ -90,7 +90,7 @@ def profile_put(data: M.SIProfile, as_user: str = None, viewer: M.User = Depends
     for k, v in data.dict().items():
         v = v or None  # remove empty strings
         setattr(user, k, v)
-    db.session.add(M.Job(method='profile', data_in={'args': [user.id]}))
+    db.session.add(M.Job(method='profile', data_in={'args': [str(user.id)]}))
     db.session.commit()
     return {}
 
@@ -436,7 +436,7 @@ def influencers_get(
             .filter_by(user_id=user.id).one_or_none()
     if not row: return {}
     k = 'data' if target else 'influencers'
-    all_imps, targets, next_preds = getattr(row, k)
+    targets, all_imps, next_preds = getattr(row, k)
     return {'overall': all_imps, 'per_target': targets, 'next_preds': next_preds}
 
 

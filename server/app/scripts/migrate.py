@@ -14,15 +14,10 @@ def migrate_after(engine):
     dt = "'2020-09-05'::timestamp at time zone 'utc'"
     sql = f"""
     update users set created_at={dt}, updated_at={dt};
-    update entries set updated_at={dt};
+    update entries set updated_at={dt}, ai_ran=false;
     """
     sess.execute(sql)
 
-    # Cleanup broken entries
-    # TODO https://github.com/kvesteri/sqlalchemy-utils/issues/470
-    entries = sess.query(M.Entry).with_entities(M.Entry.id, M.Entry.title_summary)
-    for entry in entries:
-        if entry.title_summary == 'AI server offline, check back later':
-            entry.ai_ran = False
+    # ai_ran set to false for everything, to generate paras/clean/vectors
     sess.commit()
     shutdown_db()

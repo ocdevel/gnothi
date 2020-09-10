@@ -238,7 +238,7 @@ def run_books(user_id, job_id=None):
     order by e.created_at desc;
     """)
     entries = sess.execute(sql, {'uid': user_id}).fetchall()
-    sql = text("select vectors from cache_profiles where user_id=:uid")
+    sql = text("select vectors from cache_users where user_id=:uid")
     profile = sess.execute(sql, {'uid': user_id}).fetchone()
 
     vecs = profile.vectors if profile else []

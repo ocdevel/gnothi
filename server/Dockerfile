@@ -9,6 +9,8 @@ RUN apt-get install -y lsb-release &&\
   echo "deb http://apt.postgresql.org/pub/repos/apt/ ${RELEASE}"-pgdg main | tee  /etc/apt/sources.list.d/pgdg.list &&\
   apt update && apt -y install postgresql-client-12
 
+RUN apt-get install -y default-libmysqlclient-dev
+
 RUN pip install \
   python-multipart \
   fastapi-sqlalchemy \
@@ -21,7 +23,7 @@ RUN pip install \
   python-box \
   boto3 \
   tqdm \
-  mysql-connector-python \
+  mysqlclient \
   cryptography \
   fastapi-users[sqlalchemy] \
   asyncpg \
