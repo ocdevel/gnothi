@@ -740,7 +740,7 @@ class CacheUser(Base):
     last_influencers = DateCol()
     influencers = Column(JSONB)
 
-    update_books = Column(Boolean)
+    last_books = DateCol()
 
 
 def await_row(sess, sql, args={}, wait=.5, timeout=None):

@@ -1,6 +1,6 @@
 import requests
 from dateutil.parser import parse as dparse
-from common.utils import is_dev, vars
+from common.utils import is_dev, vars, utcnow
 from common.database import SessLocal
 import common.models as M
 from fastapi_sqlalchemy import db
@@ -42,9 +42,8 @@ def sync_for(user):
     for f in user.fields:
         if f.service != 'habitica': continue
         if f.service_id not in t_map:
-            # FIXME change models to cascade deletes, remove line below https://dev.to/zchtodd/sqlalchemy-cascading-deletes-8hk
-            db.session.query(M.FieldEntry).filter_by(field_id=f.id).delete()
             db.session.delete(f)
+    db.session.commit()
 
     # Add/update tasks from Habitica
     for task in tasks:
@@ -99,9 +98,15 @@ def sync_for(user):
 
 def cron():
     with db():
-        logger.info("Running cron")
-        q = db.session.query(M.User).filter(M.User.habitica_user_id != None, M.User.habitica_user_id != '')
-        for u in q.all():
+        logger.info("Running habitica")
+        users = db.session.execute(f"""
+        select id from users 
+        where char_length(habitica_user_id) > 0 and char_length(habitica_api_token) > 0
+            -- stop tracking inactive users
+            and updated_at > {utcnow} - interval '3 days'
+        """).fetchall()
+        for u in users:
+            u = db.session.query(M.User).get(u.id)
             try:
                 sync_for(u)
             except Exception as err:

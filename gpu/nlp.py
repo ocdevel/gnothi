@@ -78,7 +78,7 @@ class NLP():
         label = dec[0]
         return [{"label": label, "score": 1.}]
 
-    def summarization(self, text, max_length=None, min_length=None, with_sentiment=True):
+    def summarization(self, text, min_length=None, max_length=None, with_sentiment=True):
         if not text:
             return [{"summary_text": "Nothing to summarize (try adjusting date range)"}]
         tokenizer, model = self.load('summarization')
