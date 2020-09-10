@@ -4,8 +4,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi_sqlalchemy import DBSessionMiddleware  # middleware helper
 
 # Database
-from common.database import init_db, shutdown_db, fa_users_db
-from common.utils import vars, SECRET
+from common.database import init_db, shutdown_db, fa_users_db, engine
+from common.utils import vars, SECRET, utcnow
 
 # Jobs
 import pytz
@@ -35,6 +35,13 @@ async def startup():
     scheduler.add_job(habitica.cron, "cron", hour="*")
     scheduler.add_job(run_influencers, "cron", hour="*")
     scheduler.add_job(ec2_down_maybe, "cron", minute="*")
+
+    # ensure jobs_status has the 1 row
+    engine.execute(f"""
+    insert into jobs_status (id, status, ts_client, ts_svc, svc)
+    values (1, 'off', {utcnow}, {utcnow}, null)
+    on conflict (id) do nothing;
+    """)
 
 
 @app.on_event("shutdown")

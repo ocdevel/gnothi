@@ -8,7 +8,7 @@ from common.database import SessLocal
 import pandas as pd
 import numpy as np
 
-def influencers_(user_id, specific_target=None):
+def influencers_(user_id):
     sess = SessLocal.main()
     fes = pd.read_sql("""
     select  
@@ -27,7 +27,7 @@ def influencers_(user_id, specific_target=None):
     fes['field_id'] = fes.field_id.apply(str)
 
     before_ct = fes.shape[0]
-    fes = fes.drop_duplicates(['created_at', 'field_id'])
+    fes = fes.drop_duplicates(['created_at', 'field_id'], keep='last')
     if before_ct != fes.shape[0]:
         print(f"{before_ct - fes.shape[0]} Duplicates")
 
@@ -49,6 +49,15 @@ def influencers_(user_id, specific_target=None):
 
     # fes = fes.resample('D')
     cols = fes.columns.tolist()
+
+    # Find a good target to hyper-opt against, will use the same hypers for all targets
+    good_target = (0, target_ids[0])
+    for t in target_ids:
+        ct = fes[t].isnull().sum()
+        if ct < good_target[0]:
+            good_target = (ct, t)
+    print(good_target)
+    good_target = good_target[1]
 
     # TODO resample on Days
     for fid in fes.columns:
@@ -73,10 +82,10 @@ def influencers_(user_id, specific_target=None):
     span = 3
     fes = fes.rolling(span, min_periods=1).mean().astype(np.float16)
 
-    # hyper-opt (TODO cache params)
-    t = specific_target or target_ids[0]
-    X_opt = fes.drop(columns=[t])
-    y_opt = fes[t]
+    # hyper-opt
+
+    X_opt = fes.drop(columns=[good_target])
+    y_opt = fes[good_target]
     hypers, _ = run_opt(X_opt, y_opt)
     for k in ['max_depth', 'n_estimators']:
         hypers[k] = int(hypers[k])
@@ -100,8 +109,6 @@ def influencers_(user_id, specific_target=None):
     targets = {}
     all_imps = []
     for t in target_ids:
-        if specific_target and specific_target != t:
-            continue
         X = fes.drop(columns=[t])
         y = fes[t]
         model = XGBRegressor(**xgb_args, **hypers)
@@ -125,7 +132,6 @@ def influencers_(user_id, specific_target=None):
     return (targets, all_imps, next_preds)
 
 def influencers():
-    # TODO don't loop all fields! handle general & specific cases together above
     sess = SessLocal.main()
     users = sess.execute(text(f"""
     with fe_ct as (
@@ -143,18 +149,6 @@ def influencers():
     """)).fetchall()
     for u in users:
         uid = str(u.id)
-        fields = sess.execute(text(f"""
-        select f.id from fields f
-        where f.target=true and f.excluded_at is null and f.user_id=:uid
-        """), {'uid': uid}).fetchall()
-        for f in fields:
-            fid = str(f.id)
-            res = influencers_(uid, fid)
-            sess.execute(text(f"""
-            insert into cache_influencers (field_id, data) values (:fid, :data)
-            on conflict (field_id) do update set data=:data
-            """), {'fid': fid, 'data': jsonb(res)})
-            sess.commit()
         res = influencers_(uid)
         sess.execute(text(f"""
         insert into cache_users (user_id, last_influencers, influencers) values (:uid, {utcnow}, :data)

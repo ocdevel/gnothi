@@ -1,5 +1,6 @@
 from common.database import init_db, shutdown_db, SessLocal
 import common.models as M
+from common.utils import utcnow
 
 def migrate_before(engine):
     sql = f"""
@@ -11,7 +12,7 @@ def migrate_before(engine):
 def migrate_after(engine):
     init_db()
     sess = SessLocal.main()
-    dt = "'2020-09-05'::timestamp at time zone 'utc'"
+    dt = f"{utcnow} - interval '1 day'"
     sql = f"""
     update users set created_at={dt}, updated_at={dt};
     update entries set updated_at={dt}, ai_ran=false;

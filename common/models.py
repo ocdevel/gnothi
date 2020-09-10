@@ -255,7 +255,7 @@ class Entry(Base):
         # (b) if AI server offline, wait till online
         self.title_summary = "🕒 AI is generating a title"
         self.text_summary = "🕒 AI is generating a summary"
-        db.session.add(Jobs(
+        db.session.add(Job(
             method='entry',
             data_in={'args': [str(self.id)]}
         ))
@@ -740,11 +740,7 @@ class CacheUser(Base):
     last_influencers = DateCol()
     influencers = Column(JSONB)
 
-
-class CacheInfluencer(Base):
-    __tablename__ = 'cache_influencers'
-    field_id = FKCol('fields.id', primary_key=True)
-    data = Column(JSONB)  # {fields[], next_pred}
+    update_books = Column(Boolean)
 
 
 def await_row(sess, sql, args={}, wait=.5, timeout=None):

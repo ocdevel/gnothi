@@ -228,7 +228,8 @@ class TestML():
 
         # run cron
         jid = ml.run_influencers()
-        assert M.await_row(sess, "select 1 from jobs where id=:jid and state='done'", {'jid': str(jid)}, timeout=100)
+        sql = "select 1 from jobs where id=:jid and state='done'"
+        assert M.await_row(sess, sql, {'jid': str(jid)}, timeout=120)
 
         # check output
         res = client.get('/influencers', **header('user'))

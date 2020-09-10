@@ -39,10 +39,13 @@ def themes(eids):
         .filter(M.Entry.id.in_(eids))\
         .order_by(M.Entry.created_at.desc())\
         .all()
-    assert len(eids) == len(res)
+    # assert len(eids) == len(res)
     entries = pd.Series([e for r in res for e in r.paras])
     stripped = pd.Series([c for r in res for c in r.clean])
-    vecs = np.vstack([r.vectors for r in res]).astype(np.float32)
+    vecs = []
+    for r in res:
+        if r.vectors: vecs += r.vectors
+    vecs = np.vstack(vecs).astype(np.float32)
     sess.close()
 
     clusters = cluster(vecs)

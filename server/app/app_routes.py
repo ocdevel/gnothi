@@ -427,16 +427,11 @@ def influencers_get(
     user, snooping = getuser(viewer, as_user)
     if snooping and not user.share_data.fields:
         return cant_snoop('Fields')
-    if target:
-        row = db.session.query(M.CacheInfluencer)\
-            .filter_by(field_id=target).one_or_none()
-    else:
-        row = db.session.query(M.CacheUser)\
-            .with_entities(M.CacheUser.influencers)\
-            .filter_by(user_id=user.id).one_or_none()
-    if not row: return {}
-    k = 'data' if target else 'influencers'
-    targets, all_imps, next_preds = getattr(row, k)
+    row = db.session.query(M.CacheUser)\
+        .with_entities(M.CacheUser.influencers)\
+        .filter_by(user_id=user.id).first()
+    if not (row and row.influencers): return {}
+    targets, all_imps, next_preds = row.influencers
     return {'overall': all_imps, 'per_target': targets, 'next_preds': next_preds}
 
 

@@ -15,6 +15,7 @@ from os.path import exists
 from tqdm import tqdm
 from common.database import SessLocal
 import common.models as M
+from common.utils import utcnow
 from utils import cosine, cluster, normalize
 from cleantext import Clean
 from box import Box
@@ -212,7 +213,7 @@ def predict_books(user_id, vecs_user, n_recs=30, centroids=False):
 
     if shelf_idx.sum() > 0:
         like, dislike = dist.min() - dist.std(), dist.max() + dist.std()
-        shelf_map = dict(like=like, already_read=like, recommend=like, dislike=dislike, remove=None)
+        shelf_map = dict(like=like, already_read=like, recommend=like, dislike=dislike, remove=None, ai=None)
         shelf['dist'] = shelf.shelf.apply(lambda k: shelf_map[k])
         shelf.dist.fillna(books.dist, inplace=True)  # fill in "remove"
         books.loc[shelf.index, 'dist'] = shelf.dist  # indexes(id) match, so assigns correctly
@@ -231,23 +232,42 @@ def predict_books(user_id, vecs_user, n_recs=30, centroids=False):
 
 def run_books(user_id, job_id=None):
     sess = SessLocal.main()
-    user = sess.query(M.User).get(user_id)
-    sql = text("""
+    user_id = str(user_id)
+    uid = {'uid': user_id}
+
+    # don't run if ran recently (notice the inverse if & comparator, simpler)
+    if sess.execute(text(f"""
+    select 1 from cache_users 
+    where user_id=:uid and last_books > {utcnow} - interval '10 minutes' 
+    """), uid).fetchone():
+        return sess.close()
+    sess.execute(text(f"""
+    insert into cache_users (user_id, last_books) values (:uid, {utcnow})
+    on conflict (user_id) do update set last_books={utcnow}
+    """), uid)
+    sess.commit()
+
+    entries = sess.execute(text("""
     select c.vectors from cache_entries c
     inner join entries e on e.id=c.entry_id and e.user_id=:uid
     order by e.created_at desc;
-    """)
-    entries = sess.execute(sql, {'uid': user_id}).fetchall()
-    sql = text("select vectors from cache_users where user_id=:uid")
-    profile = sess.execute(sql, {'uid': user_id}).fetchone()
+    """), uid).fetchall()
+    profile = sess.execute(text("""
+    select vectors from cache_users where user_id=:uid
+    """), uid).fetchone()
 
-    vecs = profile.vectors if profile else []
-    vecs = [*vecs, *[e.vectors for e in entries]]
+    vecs = []
+    if profile and profile.vectors:
+        vecs += profile.vectors
+    for e in entries:
+        if e.vectors: vecs += e.vectors
     vecs = np.vstack(vecs).astype(np.float32)
-    res = predict_books(user.id, vecs)
+    res = predict_books(user_id, vecs)
 
-    sql = "delete from bookshelf where user_id=:uid and shelf='ai'"
-    sess.execute(text(sql), {'uid': str(user_id)})
+    sess.execute(text("""
+    delete from bookshelf where user_id=:uid and shelf='ai'
+    """), uid)
+    sess.commit()
     res = res.rename(columns=dict(id='book_id', dist='score'))[['book_id', 'score']]
     res['user_id'] = user_id
     res['shelf'] = 'ai'
@@ -256,7 +276,9 @@ def run_books(user_id, job_id=None):
 
     if job_id:
         # TODO capture error
-        sess.execute(text("update jobs set state='done' where id=:jid"), {'jid': job_id})
+        sess.execute(text("""
+        update jobs set state='done' where id=:jid
+        """), {'jid': job_id})
 
     sess.commit()
     sess.close()

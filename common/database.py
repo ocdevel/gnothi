@@ -38,14 +38,16 @@ def init_db():
     # add `import app.models` in calling code beforehand (after `import database`)
     Base.metadata.create_all(bind=engine)
     # e6dfbbd8: kick off create_all with sess.execute()
-    # 2-birds: init lazy connection; ensure jobs_status
-    engine.execute(f"""
-    insert into jobs_status (id, status, ts_client, ts_svc, svc)
-    values (1, 'off', {utcnow}, {utcnow}, null)
-    on conflict (id) do nothing;
-    """)
+    engine.execute("select 1")
 
 
 def shutdown_db():
     for _, sess in SessLocal.items():
         sess.remove()
+
+def ensure_jobs_status():
+    engine.execute(f"""
+    insert into jobs_status (id, status, ts_client, ts_svc, svc)
+    values (1, 'off', {utcnow}, {utcnow}, null)
+    on conflict (id) do nothing;
+    """)

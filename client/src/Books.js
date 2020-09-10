@@ -36,9 +36,9 @@ export default function Books({fetch_, as, aiStatus}) {
     // fetchBooks()
   }
 
-  const ShelfButton = ({bid, shelf_, icon, popover}) => (
+  const ShelfButton = ({bid, shelf, icon, popover}) => (
     <SimplePopover text={popover}>
-      <Button variant='outline-dark' onClick={() => putOnShelf(bid, shelf_)}>
+      <Button variant='outline-dark' onClick={() => putOnShelf(bid, shelf)}>
         {icon()}
       </Button>
     </SimplePopover>

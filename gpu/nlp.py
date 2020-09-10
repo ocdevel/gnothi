@@ -146,43 +146,46 @@ class NLP():
         vecs = self.sentence_encode(paras).tolist()
         return paras, clean, vecs
 
-    def entry(self, id):
+    def entry(self, id=None):
         sess = SessLocal.main()
-        entry = sess.query(M.Entry).get(id)
-        res = self.summarization(entry.text, 5, 20, with_sentiment=False)
-        entry.title_summary = res[0]["summary_text"]
-        res = self.summarization(entry.text, 32, 128)
-        entry.text_summary = res[0]["summary_text"]
-        entry.sentiment = res[0]["sentiment"]
-        entry.ai_ran = True
+        e = sess.query(M.Entry).filter(M.Entry.no_ai.isnot(True))
+        e = e.filter(M.Entry.id == id) if id else\
+            e.filter(M.Entry.ai_ran.isnot(True)) # look for other entries to cleanup
+        e = e.first()
+        if not e: return {}
+        root_call = bool(id)
+        id = e.id
+
+        # Run summaries
+        try:
+            res = self.summarization(e.text, 5, 20, with_sentiment=False)
+            e.title_summary = res[0]["summary_text"]
+            res = self.summarization(e.text, 32, 128)
+            e.text_summary = res[0]["summary_text"]
+            e.sentiment = res[0]["sentiment"]
+        except Exception as err:
+            print(err)
+        e.ai_ran = True
         sess.commit()
 
-        user = sess.query(M.User).get(entry.user_id)
-
-        # Cache clean-text and vectors, for use in themes/books
+        # Run clean-text & vectors for themes/books
         c_entry = sess.query(M.CacheEntry).get(id)
         if not c_entry:
             c_entry = M.CacheEntry(entry_id=id)
             sess.add(c_entry)
-        c_entry.paras, c_entry.clean, c_entry.vectors = self._prep_entry_cache(entry.text)
+        c_entry.paras, c_entry.clean, c_entry.vectors = self._prep_entry_cache(e.text)
 
-        # every x entries, update book recommendations
-
-        sql = 'select count(*)%2=0 as ct from entries where user_id=:uid'
-        should_update = sess.execute(satext(sql), {'uid': user.id}).fetchone().ct
-        if should_update:
-            sess.add(M.Jobs(
+        # 9131155e: only update every x entries
+        if root_call:
+            sess.add(M.Job(
                 method='books',
-                data_in={'args': [str(user.id)]}
+                data_in={'args': [str(e.user_id)]}
             ))
-            sess.commit()
 
-        # Clean up broken entries
-        broken = "select id from entries where ai_ran!=true limit 1"
-        broken = sess.execute(broken).fetchone()
-        # sess.close()
-        if broken: self.entry(entry.id)
-        return {}
+        sess.commit()
+        sess.close()
+        # recurse to process any left-behind entries
+        return self.entry()
 
     def profile(self, id):
         sess = SessLocal.main()
