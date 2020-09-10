@@ -1,10 +1,13 @@
 import os
+from box import Box
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import scoped_session, sessionmaker
-from app.utils import vars
+from common.utils import vars, utcnow
 # just for fastapi-users (I'm using sqlalchemy+engine+session everywhere else)
 import databases
+import logging
+logger = logging.getLogger(__name__)
 
 Base = declarative_base()
 
@@ -23,7 +26,7 @@ engine_books = create_engine(
     pool_recycle=300,
 )
 
-SessLocal = dict(
+SessLocal = Box(
     main=scoped_session(sessionmaker(autocommit=False, autoflush=False, bind=engine)),
     books=scoped_session(sessionmaker(autocommit=True, autoflush=True, bind=engine_books))
 )
@@ -41,3 +44,10 @@ def init_db():
 def shutdown_db():
     for _, sess in SessLocal.items():
         sess.remove()
+
+def ensure_jobs_status():
+    engine.execute(f"""
+    insert into jobs_status (id, status, ts_client, ts_svc, svc)
+    values (1, 'off', {utcnow}, {utcnow}, null)
+    on conflict (id) do nothing;
+    """)

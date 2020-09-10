@@ -1,50 +1,38 @@
 import React, {useEffect, useState} from "react";
 import _ from 'lodash'
-import {AiStatusMsg, spinner, trueKeys, SimplePopover} from "./utils";
-import {Button, Table, Form, ButtonGroup, Nav, NavDropdown} from "react-bootstrap";
+import {spinner, SimplePopover} from "./utils";
+import {Button, ButtonGroup, Nav, NavDropdown} from "react-bootstrap";
 import {FaTags, FaUser, FaThumbsUp, FaThumbsDown, FaCheck, FaTimes} from "react-icons/fa"
-import ForXDays from "./ForXDays"
 
 export default function Books({fetch_, as, aiStatus}) {
   const [books, setBooks] = useState([])
   const [fetching, setFetching] = useState(false)
   const [notShared, setNotShared] = useState(false)
-  const [tab, setTab] = useState('new')  // like|dislike|already_read|remove|recommend
-  const [offline, setOffline] = useState(null)  // like|dislike|already_read|remove|recommend
+  const [shelf, setShelf] = useState('ai')  // like|dislike|already_read|remove|recommend
 
-  if (notShared) {return <h5>{notShared}</h5>}
-
-  const fetchBooks = async () => {
-    setOffline(null)
-    setFetching(true)
-    const {data, code, message} = await fetch_('books', 'POST')
-    setFetching(false)
-    if (code === 401) {return setNotShared(message)}
-    if (typeof data === 'string') {return setOffline(data)}
-    setBooks(data)
-  }
-
-  const fetchShelf = async (shelf) => {
-    if (shelf === 'new') {
-      setBooks([])
-      return
-    }
+  const fetchShelf = async () => {
     setFetching(true)
     const {data, code, message} = await fetch_(`books/${shelf}`, 'GET')
     setFetching(false)
+    if (code === 401) {return setNotShared(message)}
     setBooks(data)
   }
 
-  const changeTab = (shelf) => {
-    if (shelf === tab) {return}
-    setTab(shelf)
-    fetchShelf(shelf)
+  useEffect(() => {
+    fetchShelf()
+  }, [shelf])
+
+  if (notShared) {return <h5>{notShared}</h5>}
+
+  const changeShelf = (shelf_) => {
+    if (shelf === shelf_) {return}
+    setShelf(shelf_)
   }
 
-  const putOnShelf = async (bid, shelf_) => {
-    await fetch_(`books/${bid}/${shelf_}`, 'POST')
-    _.remove(books, {id: bid})
-    setBooks(_.reject(books, {id: bid}))
+  const putOnShelf = async (id, shelf_) => {
+    await fetch_(`books/${id}/${shelf_}`, 'POST')
+    _.remove(books, {id})
+    setBooks(_.reject(books, {id}))
     // fetchBooks()
   }
 
@@ -57,9 +45,9 @@ export default function Books({fetch_, as, aiStatus}) {
   )
 
   const renderTabs = () => <>
-    <Nav activeKey={tab} onSelect={changeTab}>
+    <Nav activeKey={shelf} onSelect={changeShelf}>
       <NavDropdown title="Shelves">
-        <NavDropdown.Item eventKey="new">AI Recommends</NavDropdown.Item>
+        <NavDropdown.Item eventKey="ai">AI Recommends</NavDropdown.Item>
         <NavDropdown.Item eventKey="like">Liked</NavDropdown.Item>
         <NavDropdown.Item eventKey="recommend">Therapist Recommends</NavDropdown.Item>
         <NavDropdown.Item eventKey="already_read">Already Read</NavDropdown.Item>
@@ -96,23 +84,15 @@ export default function Books({fetch_, as, aiStatus}) {
   return <>
     <div>
       {renderTabs()}
-      {fetching ? <>
-        <div>{spinner}</div>
-        {tab === 'new' && <Form.Text muted>Loading book recommendations (takes a while)</Form.Text>}
-      </> : tab === 'new' ? <>
-        <Button
-          disabled={aiStatus !== 'on'}
-          className='bottom-margin'
-          variant='primary'
-          onClick={fetchBooks}
-        >Generate Recommendations</Button>
-        <AiStatusMsg status={aiStatus} />
-      </> : null}
+      {fetching && spinner}
     </div>
     <div>
-      {offline && <p>{offline}</p>}
-      {books.length > 0 && <hr/>}
-      {books.map(renderBook)}
+      {books.length > 0 ? <>
+        <hr/>
+        {books.map(renderBook)}
+      </> : shelf === 'ai' ? <>
+        <p>No AI recommendations yet. This will populate when you have enough entries.</p>
+      </> : null}
     </div>
   </>
 }

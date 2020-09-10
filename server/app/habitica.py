@@ -1,10 +1,11 @@
 import requests
 from dateutil.parser import parse as dparse
-from app.utils import is_dev, vars
-from app.app_app import app, logger
-from app.database import SessLocal
-import app.models as M
+from common.utils import is_dev, vars
+from common.database import SessLocal
+import common.models as M
 from fastapi_sqlalchemy import db
+import logging
+logger = logging.getLogger(__name__)
 
 
 def sync_for(user):

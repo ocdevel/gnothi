@@ -1,11 +1,14 @@
 import pdb
 from sklearn.feature_extraction.text import TfidfVectorizer
+from common.database import SessLocal
+import common.models as M
 from nlp import nlp_
 from cleantext import Clean
 from utils import cosine, cluster
 import pandas as pd
 import numpy as np
 import threading
+from sqlalchemy import text
 from scipy.stats import percentileofscore as pos
 
 
@@ -27,15 +30,25 @@ def top_terms(texts, k=8):
     return terms
 
 
-def themes(entries):
-    entries = Clean.entries_to_paras(entries)
-    vecs = nlp_.sentence_encode(entries)
+def themes(eids):
+    sess = SessLocal.main()
+    # use Model to decrypt fields
+    res = sess.query(M.CacheEntry)\
+        .with_entities(M.CacheEntry.paras, M.CacheEntry.clean, M.CacheEntry.vectors)\
+        .join(M.Entry, M.Entry.id == M.CacheEntry.entry_id)\
+        .filter(M.Entry.id.in_(eids))\
+        .order_by(M.Entry.created_at.desc())\
+        .all()
+    # assert len(eids) == len(res)
+    entries = pd.Series([e for r in res for e in r.paras])
+    stripped = pd.Series([c for r in res for c in r.clean])
+    vecs = []
+    for r in res:
+        if r.vectors: vecs += r.vectors
+    vecs = np.vstack(vecs).astype(np.float32)
+    sess.close()
 
     clusters = cluster(vecs)
-
-    stripped = [' '.join(e) for e in Clean.lda_texts(entries, propn=True)]
-    stripped = pd.Series(stripped)
-    entries = pd.Series(entries)
 
     topics = []
     # for l in range(clusters.max()):

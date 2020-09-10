@@ -1,7 +1,9 @@
 from app.cleantext import unmark
 import pickle, pdb
+import common.models as M
 import numpy as np
 from sqlalchemy import text
+from psycopg2.extras import Json as jsonb
 from fastapi_sqlalchemy import db
 
 
@@ -16,14 +18,15 @@ def run_gpu_model(method, data):
     if res.status != 'on':
         return False
 
-    sql = f"insert into jobs (id, method, state, data) values (:jid, :method, 'new', :data)"
-    jid = str(uuid4())
-    db.session.execute(text(sql), dict(jid=jid, method=method, data=psycopg2.Binary(pickle.dumps(data))))
+    job = M.Job(method=method, data_in=data)
+    db.session.add(job)
     db.session.commit()
+    db.session.refresh(job)
+    jid = {'jid': job.id}
     i = 0
     while True:
         time.sleep(1)
-        res = db.session.execute(text("select state from jobs where id=:jid"), {'jid': jid})
+        res = db.session.execute(text("select state from jobs where id=:jid"), jid)
         state = res.fetchone().state
 
         # 5 seconds, still not picked up; something's wrong
@@ -31,9 +34,9 @@ def run_gpu_model(method, data):
             return False
 
         if state == 'done':
-            job = db.session.execute(text("delete from jobs where id=:jid returning method, data"), {'jid': jid}).fetchone()
+            job = db.session.execute(text("delete from jobs where id=:jid returning method, data_out"), jid).fetchone()
             db.session.commit()
-            res = pickle.loads(job.data)['data']
+            res = job.data_out
             if job.method == 'sentence-encode': res = np.array(res)
             return res
         i += 1
@@ -60,25 +63,16 @@ def query(question, entries):
     return res
 
 
-def influencers(user_id, specific_target=None):
-    res = run_gpu_model('influencers', dict(
-        args=[user_id],
-        kwargs={'specific_target': specific_target}
-    ))
-    if res is False: return []  # fixme
-    return res
-
+def run_influencers():
+    with db():
+        job = M.Job(method='influencers', data_in={})
+        db.session.add(job)
+        db.session.commit()
+        db.session.refresh(job)
+        return job.id
 
 def themes(entries):
     res = run_gpu_model('themes', dict(args=[entries], kwargs={}))
     if res is False:
         return []  # fixme
-    return res
-
-
-def books(user, bust=False):
-    entries = [e.text for e in user.entries if not e.no_ai]
-    entries = [user.profile_to_text()] + entries
-    res = run_gpu_model('books', dict(args=[user.id, entries], kwargs={'bust': bust}))
-    if res is False: return OFFLINE_MSG
     return res

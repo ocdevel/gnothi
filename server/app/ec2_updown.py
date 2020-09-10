@@ -1,26 +1,20 @@
 import boto3, time, threading, os
-from app.utils import is_dev, vars, utcnow
+from common.utils import is_dev, vars, utcnow
 from fastapi_sqlalchemy import db
-import socket
 
 # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/ec2.html
 ec2_client = boto3.client('ec2')
 
 
 def _fetch_status():
-    sql = f"""
-    -- Ensure 1 row exists
-    insert into jobs_status (id, status, ts_client, ts_svc, svc) 
-        values (1, 'off', {utcnow}, {utcnow}, null) 
-        on conflict (id) do nothing;
+    return db.session.execute(f"""
     select status, svc,
         extract(epoch FROM ({utcnow} - ts_svc)) as elapsed_svc,
         extract(epoch FROM ({utcnow} - ts_client)) as elapsed_client
     from jobs_status;
-    """
-    res = db.session.execute(sql)
-    db.session.commit()
-    return res.fetchone()
+    """).fetchone()
+    # db.session.commit()
+    # return res.fetchone()
 
 
 def ec2_up():

@@ -37,6 +37,7 @@ services:
     stdin_open: true
     volumes:
       - ./server/:/app
+      - ./common/:/app/common
     restart: unless-stopped
     logging:
       options:

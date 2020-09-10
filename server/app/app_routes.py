@@ -6,7 +6,9 @@ from fastapi import Depends, HTTPException, File, UploadFile
 from app.app_app import app
 from app.app_jwt import fastapi_users
 from fastapi_sqlalchemy import db  # an object to provide global access to a database session
-import app.models as M
+from sqlalchemy import text
+from common.utils import utcnow
+import common.models as M
 from app import habitica
 from app.ec2_updown import jobs_status
 from app import ml
@@ -57,6 +59,12 @@ def user_get(as_user: str = None,  viewer: M.User = Depends(fastapi_users.get_cu
     if snooping: return cant_snoop()  # FIXME not handling this?
     return user
 
+@app.post('/user/checkin')
+def checkin_get(viewer: M.User = Depends(fastapi_users.get_current_user)):
+    sql = text(f"update users set updated_at={utcnow} where id=:uid")
+    db.session.execute(sql, {'uid': viewer.id})
+    db.session.commit()
+    return {}
 
 @app.get('/profile', response_model=M.SOProfile)
 def profile_get(as_user: str = None, viewer: M.User = Depends(fastapi_users.get_current_user)):
@@ -82,6 +90,7 @@ def profile_put(data: M.SIProfile, as_user: str = None, viewer: M.User = Depends
     for k, v in data.dict().items():
         v = v or None  # remove empty strings
         setattr(user, k, v)
+    db.session.add(M.Job(method='profile', data_in={'args': [str(user.id)]}))
     db.session.commit()
     return {}
 
@@ -352,7 +361,8 @@ def fields_post(data: M.SIField, as_user: str = None, viewer: M.User = Depends(f
     f = M.Field(**data.dict())
     user.fields.append(f)
     db.session.commit()
-    return {}
+    db.session.refresh(f)
+    return f
 
 
 @app.put('/fields/{field_id}')
@@ -417,10 +427,11 @@ def influencers_get(
     user, snooping = getuser(viewer, as_user)
     if snooping and not user.share_data.fields:
         return cant_snoop('Fields')
-    targets, all_imps, next_preds = ml.influencers(
-        user.id,
-        specific_target=target
-    )
+    row = db.session.query(M.CacheUser)\
+        .with_entities(M.CacheUser.influencers)\
+        .filter_by(user_id=user.id).first()
+    if not (row and row.influencers): return {}
+    targets, all_imps, next_preds = row.influencers
     return {'overall': all_imps, 'per_target': targets, 'next_preds': next_preds}
 
 
@@ -439,7 +450,7 @@ def themes_post(
         tags=data.tags,
         for_ai=True
     )
-    entries = [e.text for e in entries.all()]
+    entries = [str(e.id) for e in entries.all()]
 
     # For dreams, special handle: process every sentence. TODO make note in UI
     # tags = request.get_json().get('tags', None)
@@ -454,18 +465,6 @@ def themes_post(
     if len(data) == 0:
         return send_error("No patterns found in your entries yet, come back later")
     return data
-
-
-@app.post('/books')
-def books_post(
-    as_user: str = None,
-    viewer: M.User = Depends(fastapi_users.get_current_user)
-):
-    user, snooping = getuser(viewer, as_user)
-    if snooping and not user.share_data.books:
-        return cant_snoop('Books')
-
-    return ml.books(user)
 
 
 @app.post('/query')
@@ -526,7 +525,11 @@ def bookshelf_post(bid, shelf, as_user: str = None, viewer: M.User = Depends(fas
 
 
 @app.get('/books/{shelf}')
-def bookshelf_get(shelf, as_user: str = None, viewer: M.User = Depends(fastapi_users.get_current_user)):
+def bookshelf_get(
+    shelf,
+    as_user: str = None,
+    viewer: M.User = Depends(fastapi_users.get_current_user)
+):
     user, snooping = getuser(viewer, as_user)
     if snooping and not user.share_data.books:
         return cant_snoop('Books')

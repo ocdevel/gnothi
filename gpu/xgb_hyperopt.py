@@ -65,11 +65,13 @@ class HPOpt(object):
         try:
             result = fmin(fn=fn, space=space, algo=algo, max_evals=max_evals, trials=trials)
         except Exception as e:
+            print(str(e))
             return {'status': STATUS_FAIL,
                     'exception': str(e)}
         return result, trials
 
     def xgb_reg(self, para):
+        # tree_method='gpu_hist', gpu_id=0
         reg = xgb.XGBRegressor(**para['reg_params'])
         return self.train_reg(reg, para)
 

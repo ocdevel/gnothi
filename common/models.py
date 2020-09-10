@@ -3,16 +3,17 @@ from typing import Optional, List, Any, Dict
 from pydantic import BaseModel, UUID4
 from dateutil import tz
 from uuid import uuid4
+import logging
+logger = logging.getLogger(__name__)
 
-from app.database import Base, SessLocal, fa_users_db
-from app.utils import vars, utcnow
-from app import ml
+from common.database import Base, SessLocal, fa_users_db
+from common.utils import vars, utcnow
 
-from sqlalchemy import text, Column, Integer, Enum, Float, ForeignKey, Boolean, DateTime, JSON, Date, Unicode, \
+from sqlalchemy import text, Column, Integer, Enum, Float, ForeignKey, Boolean, JSON, Date, Unicode, \
     func, TIMESTAMP, select, or_, and_
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship, backref, object_session, column_property
-from sqlalchemy.dialects.postgresql import UUID, BYTEA
+from sqlalchemy.dialects.postgresql import UUID, BYTEA, JSONB, ARRAY
 from sqlalchemy_utils.types import EmailType
 from sqlalchemy_utils.types.encrypted.encrypted_type import StringEncryptedType, FernetEngine
 
@@ -28,34 +29,49 @@ class SOut(BaseModel):
         orm_mode = True
 
 
-# Note: using sa.Unicode for all Text/Varchar columns to be consistent with sqlalchemy_utils examples. Also keeping all
-# text fields unlimited (no varchar(max_length)) as Postgres doesn't incur penalty, unlike MySQL, and we don't know
-# how long str will be after encryption.
-def Encrypt(Col, **args):
-    return Column(StringEncryptedType(Col, vars.FLASK_KEY, FernetEngine), **args)
-
-
-def uuid_(): return str(uuid4())
-
-
 # https://dev.to/zchtodd/sqlalchemy-cascading-deletes-8hk
 parent_cascade = dict(cascade="all, delete", passive_deletes=True)
 child_cascade = dict(ondelete="cascade")
+
+# Note: using sa.Unicode for all Text/Varchar columns to be consistent with sqlalchemy_utils examples. Also keeping all
+# text fields unlimited (no varchar(max_length)) as Postgres doesn't incur penalty, unlike MySQL, and we don't know
+# how long str will be after encryption.
+def Encrypt(Col=Unicode, array=False, **args):
+    enc = StringEncryptedType(Col, vars.FLASK_KEY, FernetEngine)
+    if array: enc = ARRAY(enc)
+    return Column(enc, **args)
+
+# TODO should all date-cols be index=True? (eg sorting, filtering)
+def DateCol(default=True, update=False):
+    args = {}
+    if default: args['default'] = datetime.datetime.utcnow
+    if update: args['onupdate'] = datetime.datetime.utcnow
+    return Column(TIMESTAMP(timezone=True), index=True, **args)
+
+def IDCol():
+    return Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+
+def FKCol(fk, **kwargs):
+    return Column(UUID(as_uuid=True), ForeignKey(fk, **child_cascade), **kwargs)
+
 
 
 class User(Base, SQLAlchemyBaseUserTable):
     __tablename__ = 'users'
 
-    first_name = Encrypt(Unicode)
-    last_name = Encrypt(Unicode)
-    gender = Encrypt(Unicode)
-    orientation = Encrypt(Unicode)
+    created_at = DateCol()
+    updated_at = DateCol(update=True)
+
+    first_name = Encrypt()
+    last_name = Encrypt()
+    gender = Encrypt()
+    orientation = Encrypt()
     birthday = Column(Date)  # TODO encrypt (how to store/migrate dates?)
     timezone = Column(Unicode)
-    bio = Encrypt(Unicode)
+    bio = Encrypt()
 
-    habitica_user_id = Encrypt(Unicode)
-    habitica_api_token = Encrypt(Unicode)
+    habitica_user_id = Encrypt()
+    habitica_api_token = Encrypt()
 
     entries = relationship("Entry", order_by='Entry.created_at.desc()', **parent_cascade)
     field_entries = relationship("FieldEntry", order_by='FieldEntry.created_at.desc()', **parent_cascade)
@@ -155,20 +171,22 @@ class SOUser(FU_User, fu_models.BaseUserDB):
 class Entry(Base):
     __tablename__ = 'entries'
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid_)
+    id = IDCol()
+    created_at = DateCol()
+    updated_at = DateCol(update=True)
+
     # Title optional, otherwise generated from text. topic-modeled, or BERT summary, etc?
-    title = Encrypt(Unicode)
+    title = Encrypt()
     text = Encrypt(Unicode, nullable=False)
     no_ai = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.datetime.utcnow)
+    ai_ran = Column(Boolean, default=False)
 
     # Generated
-    title_summary = Encrypt(Unicode)
-    text_summary = Encrypt(Unicode)
-    sentiment = Encrypt(Unicode)
+    title_summary = Encrypt()
+    text_summary = Encrypt()
+    sentiment = Encrypt()
 
-    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id', **child_cascade))
+    user_id = FKCol('users.id', index=True)
     entry_tags_ = relationship("EntryTag", **parent_cascade)
 
     # share_tags = relationship("EntryTag", secondary="shares_tags")
@@ -227,48 +245,21 @@ class Entry(Base):
             order_by = Entry.created_at.desc()
         return q.order_by(order_by)
 
-    @staticmethod
-    def run_models_(id):
-        with db():
-            while True:
-                res = db.session.execute("select status from jobs_status").fetchone()
-                if res.status != 'on':
-                    time.sleep(1)
-                    continue
-                entry = db.session.query(Entry).get(id)
-                entry.title_summary = ml.summarize(entry.text, 5, 20, with_sentiment=False)["summary_text"]
-                summary = ml.summarize(entry.text, 32, 128)
-                entry.text_summary = summary["summary_text"]
-                entry.sentiment = summary["sentiment"]
-                db.session.commit()
-
-                # every x entries, update book recommendations
-                user = db.session.query(User).get(entry.user_id)
-                sql = 'select count(*)%2=0 as ct from entries where user_id=:uid'
-                should_update = db.session.execute(text(sql), {'uid':user.id}).fetchone().ct
-                if should_update:
-                    ml.books(user, bust=True)
-
-                # Find any broken entries & clean those up.
-                # TODO https://github.com/kvesteri/sqlalchemy-utils/issues/470
-                entries = db.session.query(Entry).with_entities(Entry.id, Entry.title_summary)
-                for entry in entries:
-                    if entry.title_summary == 'AI server offline, check back later':
-                        return Entry.run_models_(entry.id)
-
-                return
-
     def run_models(self):
+        self.ai_ran = False
         if self.no_ai:
             self.title_summary = self.text_summary = self.sentiment = None
-            return db.session.commit()
+            return
+
         # Run summarization/sentiment in background thread, so (a) user can get back to business;
         # (b) if AI server offline, wait till online
         self.title_summary = "🕒 AI is generating a title"
         self.text_summary = "🕒 AI is generating a summary"
-        t = threading.Thread(target=Entry.run_models_, args=(self.id,))
-        t.start()
-        # Entry.run_models_(self.id)  # debug w/o threading
+        db.session.add(Job(
+            method='entry',
+            data_in={'args': [str(self.id)]}
+        ))
+
 
     def update_snoopers(self):
         """Updates snoopers with n_new_entries since last_seen"""
@@ -302,10 +293,11 @@ class SIEntry(SEntry):
 
 class SOEntry(SEntry, SOut):
     id: UUID4
-    created_at: Optional[datetime.datetime] = None
+    created_at: datetime.datetime
+    ai_ran: Optional[bool] = None
     title_summary: Optional[str] = None
     text_summary: Optional[str] = None
-    sentiment: Optional[str] = ''
+    sentiment: Optional[str] = None
     entry_tags: Dict
 
 
@@ -317,10 +309,10 @@ class NoteTypes(enum.Enum):
 
 class Note(Base):
     __tablename__ = 'notes'
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid_)
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
-    entry_id = Column(UUID(as_uuid=True), ForeignKey('entries.id', **child_cascade), index=True)
-    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id', **child_cascade), index=True)
+    id = IDCol()
+    created_at = DateCol()
+    entry_id = FKCol('entries.id', index=True)
+    user_id = FKCol('users.id', index=True)
     type = Column(Enum(NoteTypes), nullable=False)
     text = Encrypt(Unicode, nullable=False)
     private = Column(Boolean, default=False)
@@ -390,14 +382,15 @@ class Field(Base):
     """
     __tablename__ = 'fields'
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid_)
+    id = IDCol()
+
     type = Column(Enum(FieldType))
-    name = Encrypt(Unicode)
+    name = Encrypt()
     # Start entries/graphs/correlations here
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    created_at = DateCol()
     # Don't actually delete fields, unless it's the same day. Instead
     # stop entries/graphs/correlations here
-    excluded_at = Column(DateTime)
+    excluded_at = DateCol(default=False)
     default_value = Column(Enum(DefaultValueTypes), default="value")
     default_value_value = Column(Float, default=None)
     target = Column(Boolean, default=False)
@@ -408,7 +401,7 @@ class Field(Base):
     service = Column(Unicode)
     service_id = Column(Unicode)
 
-    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id', **child_cascade))
+    user_id = FKCol('users.id', index=True)
 
     json_fields = """
     id
@@ -473,12 +466,12 @@ class SIField(SIFieldExclude):
 
 class FieldEntry(Base):
     __tablename__ = 'field_entries'
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid_)
+    id = IDCol()
     value = Column(Float)  # TODO Can everything be a number? reconsider
-    created_at = Column(DateTime(timezone=True), default=datetime.datetime.utcnow, index=True)
+    created_at = DateCol()
 
-    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id', **child_cascade), index=True)
-    field_id = Column(UUID(as_uuid=True), ForeignKey('fields.id', **child_cascade))
+    user_id = FKCol('users.id', index=True)
+    field_id = FKCol('fields.id')  # TODO index=True?
 
     @staticmethod
     def get_today_entries(user_id, field_id=None):
@@ -510,13 +503,13 @@ class SIFieldEntry(BaseModel):
 
 class Person(Base):
     __tablename__ = 'people'
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid_)
-    name = Encrypt(Unicode)
-    relation = Encrypt(Unicode)
-    issues = Encrypt(Unicode)
-    bio = Encrypt(Unicode)
+    id = IDCol()
+    name = Encrypt()
+    relation = Encrypt()
+    issues = Encrypt()
+    bio = Encrypt()
 
-    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id', **child_cascade), nullable=False)
+    user_id = FKCol('users.id', index=True)
 
 
 class SIPerson(BaseModel):
@@ -533,8 +526,8 @@ class SOPerson(SIPerson, SOut):
 
 class Share(Base):
     __tablename__ = 'shares'
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid_)
-    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id', **child_cascade), index=True)
+    id = IDCol()
+    user_id = FKCol('users.id', index=True)
     email = Column(EmailType, index=True)  # TODO encrypt?
 
     fields = Column(Boolean)
@@ -544,7 +537,7 @@ class Share(Base):
     share_tags = relationship("ShareTag", **parent_cascade)
     tags_ = relationship("Tag", secondary="shares_tags")
 
-    last_seen = Column(DateTime, default=datetime.datetime.utcnow)
+    last_seen = DateCol()
     new_entries = Column(Integer, default=0)
 
     @property
@@ -573,8 +566,8 @@ class SOShare(SIShare):
 
 class Tag(Base):
     __tablename__ = 'tags'
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid_)
-    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id', **child_cascade), index=True)
+    id = IDCol()
+    user_id = FKCol('users.id', index=True)
     name = Encrypt(Unicode, nullable=False)
     # Save user's selected tags between sessions
     selected = Column(Boolean)
@@ -606,20 +599,21 @@ class SOTag(SITag, SOut):
 
 class EntryTag(Base):
     __tablename__ = 'entries_tags'
-    entry_id = Column(UUID(as_uuid=True), ForeignKey('entries.id', **child_cascade), primary_key=True)
-    tag_id = Column(UUID(as_uuid=True), ForeignKey('tags.id', **child_cascade), primary_key=True)
+    entry_id = FKCol('entries.id', primary_key=True)
+    tag_id = FKCol('tags.id', primary_key=True)
 
 
 class ShareTag(Base):
     __tablename__ = 'shares_tags'
-    share_id = Column(UUID(as_uuid=True), ForeignKey('shares.id', **child_cascade), primary_key=True)
-    tag_id = Column(UUID(as_uuid=True), ForeignKey('tags.id', **child_cascade), primary_key=True)
+    share_id = FKCol('shares.id', primary_key=True)
+    tag_id = FKCol('tags.id', primary_key=True)
 
     tag = relationship(Tag, backref=backref("tags"))
     share = relationship(Share, backref=backref("shares"))
 
 
 class Shelves(enum.Enum):
+    ai = "ai"
     like = "like"
     already_read = "already_read"
     dislike = "dislike"
@@ -629,19 +623,29 @@ class Shelves(enum.Enum):
 
 class Bookshelf(Base):
     __tablename__ = 'bookshelf'
+    created_at = DateCol()
+    updated_at = DateCol(update=True)
+
     book_id = Column(Integer, primary_key=True)
-    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id', **child_cascade), primary_key=True)
+    user_id = FKCol('users.id', primary_key=True)
     shelf = Column(Enum(Shelves), nullable=False)
+    score = Column(Float)  # only for ai-recs
 
     @staticmethod
     def update_books(user_id):
         with db():
             # every x thumbs, update book recommendations
-            sql = 'select count(*)%8=0 as ct from bookshelf where user_id=:uid'
+            sql = """
+            select count(*)%8=0 as ct from bookshelf 
+            where user_id=:uid and shelf!='ai'
+            """
             should_update = db.session.execute(text(sql), {'uid':user_id}).fetchone().ct
             if should_update:
-                user = db.session.query(User).get(user_id)
-                ml.books(user, bust=True)
+                db.session.add(Jobs(
+                    method='books',
+                    data_in={'args': [str(user_id)]}
+                ))
+                db.session.commit()
 
     @staticmethod
     def upsert(user_id, book_id, shelf):
@@ -658,9 +662,11 @@ class Bookshelf(Base):
         sql = "select book_id from bookshelf where user_id=:uid and shelf=:shelf"
         ids = db.session.execute(text(sql), dict(uid=user_id, shelf=shelf)).fetchall()
         ids = tuple([x.book_id for x in ids])
+        print(ids)
         if not ids:
             return []
 
+        # TODO save these clean from msyql into psql
         sql = """
         select u.ID as id, u.Title as title, u.Author as author, d.descr as text, t.topic_descr as topic
         from updated u
@@ -669,26 +675,29 @@ class Bookshelf(Base):
         where u.ID in :ids
             and t.lang='en' and u.Language = 'English'
         """
-        db_books = SessLocal['books']()
-        books = db_books.execute(text(sql), {'ids':ids}).fetchall()
-        db_books.close()
+        db_books = SessLocal.books()
+        books = db_books.execute(text(sql), {'ids': ids}).fetchall()
+        # db_books.close()
         return [dict(b) for b in books]
 
 
-class Jobs(Base):
+class Job(Base):
     __tablename__ = 'jobs'
-    id = Column(UUID(as_uuid=True), primary_key=True)
+    id = IDCol()
+    created_at = DateCol()
+    updated_at = DateCol(update=True)
     method = Column(Unicode)
-    state = Column(Unicode)
-    data = Column(BYTEA)
+    state = Column(Unicode, default='new')
+    data_in = Column(JSONB)
+    data_out = Column(JSONB)
 
 
 class JobsStatus(Base):
     __tablename__ = 'jobs_status'
     id = Column(Integer, primary_key=True)
     status = Column(Unicode)
-    ts_client = Column(TIMESTAMP)
-    ts_svc = Column(TIMESTAMP)
+    ts_client = DateCol()
+    ts_svc = DateCol()
     svc = Column(Unicode)
 
 
@@ -703,3 +712,43 @@ class SIQuestion(SILimitEntries):
 
 class SISummarize(SILimitEntries):
     words: int
+
+
+
+###
+# Cache models, storing data for use after machine learning runs
+###
+
+class CacheEntry(Base):
+    __tablename__ = 'cache_entries'
+    entry_id = FKCol('entries.id', primary_key=True)
+    paras = Encrypt(array=True)
+    clean = Encrypt(array=True)
+    vectors = Column(ARRAY(Float, dimensions=2))
+
+
+class CacheUser(Base):
+    __tablename__ = 'cache_users'
+    user_id = FKCol('users.id', primary_key=True)
+
+    # profile nlp
+    paras = Encrypt(array=True)
+    clean = Encrypt(array=True)
+    vectors = Column(ARRAY(Float, dimensions=2))
+
+    # influencers all general
+    last_influencers = DateCol()
+    influencers = Column(JSONB)
+
+    update_books = Column(Boolean)
+
+
+def await_row(sess, sql, args={}, wait=.5, timeout=None):
+    i = 0
+    while True:
+        res = sess.execute(text(sql), args).fetchone()
+        if res: return res
+        time.sleep(wait)
+        if timeout and wait * i >= timeout:
+            return None
+        i += 1

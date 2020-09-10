@@ -1,7 +1,11 @@
-import math, time
+import math, time, pdb
 import torch
 import keras.backend as K
 import numpy as np
+from common.database import SessLocal
+import common.models as M
+from sqlalchemy import text as satext
+from cleantext import Clean
 from sentence_transformers import SentenceTransformer
 from transformers import AutoTokenizer, AutoModelWithLMHead#, AutoModelForQuestionAnswering, AutoModelForSequenceClassification
 from transformers import BartForConditionalGeneration, BartTokenizer
@@ -135,5 +139,70 @@ class NLP():
                 answers.append(answer)
         if not answers: return [{'answer': 'No answer'}]
         return [{'answer': a} for a in answers]
+
+    def _prep_entry_cache(self, txt):
+        paras = Clean.entries_to_paras([txt])
+        clean = [' '.join(e) for e in Clean.lda_texts(paras, propn=True)]
+        vecs = self.sentence_encode(paras).tolist()
+        return paras, clean, vecs
+
+    def entry(self, id=None):
+        sess = SessLocal.main()
+        e = sess.query(M.Entry).filter(M.Entry.no_ai.isnot(True))
+        e = e.filter(M.Entry.id == id) if id else\
+            e.filter(M.Entry.ai_ran.isnot(True)) # look for other entries to cleanup
+        e = e.first()
+        if not e: return {}
+        root_call = bool(id)
+        id = e.id
+
+        # Run summaries
+        try:
+            res = self.summarization(e.text, 5, 20, with_sentiment=False)
+            e.title_summary = res[0]["summary_text"]
+            res = self.summarization(e.text, 32, 128)
+            e.text_summary = res[0]["summary_text"]
+            e.sentiment = res[0]["sentiment"]
+        except Exception as err:
+            print(err)
+        e.ai_ran = True
+        sess.commit()
+
+        # Run clean-text & vectors for themes/books
+        c_entry = sess.query(M.CacheEntry).get(id)
+        if not c_entry:
+            c_entry = M.CacheEntry(entry_id=id)
+            sess.add(c_entry)
+        c_entry.paras, c_entry.clean, c_entry.vectors = self._prep_entry_cache(e.text)
+
+        # 9131155e: only update every x entries
+        if root_call:
+            sess.add(M.Job(
+                method='books',
+                data_in={'args': [str(e.user_id)]}
+            ))
+
+        sess.commit()
+        sess.close()
+        # recurse to process any left-behind entries
+        return self.entry()
+
+    def profile(self, id):
+        sess = SessLocal.main()
+        profile_txt = sess.query(M.User).get(id).profile_to_text()
+        cu = M.CacheUser
+        if profile_txt:
+            c_profile = sess.query(cu).get(id)
+            # TODO can't use with_entities & model.get(). This fetches cu.influencers too, large
+            # .with_entities(cu.paras, cu.clean, cu.vectors)\
+            if not c_profile:
+                c_profile = cu(user_id=id)
+                sess.add(c_profile)
+            c_profile.paras, c_profile.clean, c_profile.vectors = \
+                self._prep_entry_cache(profile_txt)
+
+        sess.commit()
+        sess.close()
+
 
 nlp_ = NLP()

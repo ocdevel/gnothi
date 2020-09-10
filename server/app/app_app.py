@@ -1,11 +1,18 @@
+# FastAPI
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi_sqlalchemy import DBSessionMiddleware  # middleware helper
 
+# Database
+from common.database import init_db, shutdown_db, fa_users_db, engine
+from common.utils import vars, SECRET, utcnow
 
-from app.database import init_db, shutdown_db, fa_users_db
-from app.utils import vars, SECRET
-import logging
+# Jobs
+import pytz
+from app.ml import run_influencers
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from app import habitica
+from app.ec2_updown import ec2_down_maybe
 
 app = FastAPI()
 # app.secret_key = SECRET
@@ -16,20 +23,25 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.add_middleware(DBSessionMiddleware, db_url=vars.DB_URL)
-
-# logging.getLogger('werkzeug').setLevel(logging.WARNING)
-logger = logging.getLogger(__name__)
-
-class FilterJobsStatus(logging.Filter):
-    def filter(self, record):
-        return False #  "GET /jobs-status" not in record.getMessage()
-logging.getLogger('uvicorn').addFilter(FilterJobsStatus())
-
+# 9131155e: attempted log-filtering
 
 @app.on_event("startup")
 async def startup():
     await fa_users_db.connect()
     init_db()
+
+    scheduler = AsyncIOScheduler(timezone=pytz.timezone('America/Los_Angeles'))
+    scheduler.start()
+    scheduler.add_job(habitica.cron, "cron", hour="*")
+    scheduler.add_job(run_influencers, "cron", minute="*")
+    scheduler.add_job(ec2_down_maybe, "cron", minute="*")
+
+    # ensure jobs_status has the 1 row
+    engine.execute(f"""
+    insert into jobs_status (id, status, ts_client, ts_svc, svc)
+    values (1, 'off', {utcnow}, {utcnow}, null)
+    on conflict (id) do nothing;
+    """)
 
 
 @app.on_event("shutdown")

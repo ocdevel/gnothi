@@ -1,14 +1,14 @@
 from typing import Dict, Any
 import datetime, pdb
 from app.app_app import app
-from app.utils import vars, SECRET
+from common.utils import vars, SECRET
 from app.mail import send_mail
 from fastapi import Depends, Response, Request
 from fastapi_sqlalchemy import db  # an object to provide global access to a database session
 
 from fastapi_users.authentication import JWTAuthentication
 from fastapi_users import FastAPIUsers
-import app.models as M
+import common.models as M
 
 
 jwt_lifetime = 60 * 60 * 24 * 7  # 1wk. TODO implement token refresh

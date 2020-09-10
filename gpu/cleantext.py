@@ -1,7 +1,7 @@
 import string, re, os
 from bs4 import BeautifulSoup
 from tqdm import tqdm
-from utils import THREADS
+from common.utils import THREADS
 from gensim.models.phrases import Phrases, Phraser
 from gensim.parsing import preprocessing as pp
 

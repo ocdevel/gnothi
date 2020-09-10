@@ -1,21 +1,26 @@
-import os, pdb, pytest
+import os, pdb, pytest, time, random, datetime
 from box import Box
 from sqlalchemy import text
 from fastapi.testclient import TestClient
+from lorem_text import lorem
+
+import logging
+logger = logging.getLogger(__name__)
 
 os.environ["DB_NAME"] = "gnothi_test"
 os.environ["ENVIRONMENT"] = "development"
-from app.utils import vars
+from common.utils import vars
 from sqlalchemy_utils import database_exists, create_database, drop_database
-if database_exists(vars.DB_URL):
-    drop_database(vars.DB_URL)
-create_database(vars.DB_URL)
+# if database_exists(va3rs.DB_URL): drop_database(vars.DB_URL)
+if not database_exists(vars.DB_URL): create_database(vars.DB_URL)
 
-import app.database as D
-import app.models as M
+import common.database as D
+import common.models as M
+from app import ml
 from app.main import app
 
 exec = D.engine.execute
+sess_main = D.SessLocal.main()
 
 # Friend only used to double-check sharing features
 u = Box(user={}, therapist={}, friend={}, other={})
@@ -30,10 +35,12 @@ def client():
 @pytest.fixture(autouse=True)
 def setup_users(client):
     # with TestClient(app) as client:
-    exec("delete from users where true")
+    logger.warning("deleting")
+    exec("delete from users;delete from jobs;")
     for t in 'bookshelf entries entries_tags field_entries fields notes people shares shares_tags tags users'.split():
         assert exec(f"select count(*) ct from {t}").fetchone().ct == 0, \
             "{t} rows remained after 'delete * from users', check cascade-delete on children"
+    logger.warning("creating users")
     for k, _ in u.items():
         email = k + "@x.com"
         u[k] = {'email': email}
@@ -54,6 +61,13 @@ def setup_users(client):
         assert res.status_code == 200
         u[k]['tag1'] = {res.json()[0]['id']: True}
 
+    logger.warning("jobs-status")
+    # init jobs-status table
+    res = client.get('/jobs-status', **header('user'))
+    assert res.status_code == 200
+    assert res.json() == 'on'
+
+    logger.warning("sharing")
     # share user main tag with therapist
     data = dict(email=u.therapist.email, tags=u.user.tag1)
     res = client.post('/shares', json=data, **header('user'))
@@ -81,7 +95,12 @@ def _assert_count(table, expected):
 
 
 def _post_entry(c, extra={}):
-    data = {'title': 'Title', 'text': 'Text', 'tags': u.user.tag1, **extra}
+    data = {**dict(
+        title='Title',
+        text=lorem.paragraphs(5),
+        no_ai=True,
+        tags=u.user.tag1,
+    ), **extra}
     res = c.post("/entries", json=data, **header('user'))
     assert res.status_code == 200
     return res.json()['id']
@@ -121,9 +140,16 @@ def _crud_with_perms(
     _assert_count(table, ct+ct_delta)
 
 
+class JobStatus():
+    def test_job_status(self, client):
+        res = client.get('/job-status', **header('user'))
+        assert res.json()['status'] == 'on'
+        assert res.status_code == 200
+
+
 class TestEntries():
     def test_post(self, client):
-        data = {'title': 'Title', 'text': 'Text', 'tags': u.user.tag1}
+        data = {'title': 'Title', 'text': 'Text', 'tags': u.user.tag1, 'no_ai': True}
         _crud_with_perms(client.post, '/entries', 'entries', 1, data=data, their_own=True)
 
     def test_get(self, client):
@@ -132,7 +158,7 @@ class TestEntries():
 
     def test_put(self, client):
         eid = _post_entry(client)
-        data = {'title': 'Title2', 'text': 'Text2', 'tags': u.user.tag1}
+        data = {'title': 'Title2', 'text': 'Text2', 'tags': u.user.tag1, 'no_ai': True}
         _crud_with_perms(client.put, f"/entries/{eid}", 'entries', 0, data=data)
         res = client.get(f"/entries/{eid}", **header('user'))
         data = res.json()
@@ -170,23 +196,69 @@ class TestML():
         # TODO few field-entries
         # TODO enough field-entries
         # res = client.get("/influencers", **header('user'))
-        pass
+
+        sess = D.SessLocal.main()
+        fs = list(range(10))
+        for i, _ in enumerate(fs):
+            # create fields (some targets
+            data = dict(
+                type='fivestar',
+                name=str(i),
+                default_value='average',
+                target=i>7
+            )
+            res = client.post("/fields", json=data, **header('user'))
+            assert res.status_code == 200
+            fs[i] = res.json()
+
+            # create field-entries for 10 days (would use API, but can't set created_at)
+            for d in range(10):
+                fe = M.FieldEntry(
+                    field_id=fs[i]['id'],
+                    user_id=u.user.id,
+                    value=random.randint(-5, 5),
+                    created_at=datetime.datetime.today() - datetime.timedelta(days=d)
+                )
+                sess.add(fe)
+        # set last_updated so it's stale
+        sess.execute("update users set updated_at=now() - interval '5 days'")
+        sess.commit()
+
+        client.post('user/checkin', **header('user'))
+
+        # run cron
+        jid = ml.run_influencers()
+        sql = "select 1 from jobs where id=:jid and state='done'"
+        assert M.await_row(sess, sql, {'jid': str(jid)}, timeout=120)
+
+        # check output
+        res = client.get('/influencers', **header('user'))
+        assert res.status_code == 200
+        res = res.json()
+        assert res['overall']
+        assert res['per_target']
+        assert res['next_preds']
+        print(res)
+
+        res = client.get(f"/influencers?target={fs[-1]['id']}", **header('user'))
+        assert res.status_code == 200
+        res = res.json()
+        assert res['overall']
+        assert res['per_target']
+        assert res['next_preds']
+
 
     def _ml_jobs(self, c, limit_entries, code):
-        return
-        res = c.post("/themes", data=limit_entries, **header('user'))
+        res = c.post("/themes", json=limit_entries, **header('user'))
         assert res.status_code == code
         data = {**limit_entries, 'query': "Who am I?"}
-        res = c.post("/query", data=data, **header("user"))
+        res = c.post("/query", json=data, **header("user"))
         assert res.status_code == code
         data = {**limit_entries, 'words': 300}
-        res = c.post("/summarize", data=data, **header('user'))
-        assert res.status_code == code
-        res = c.post("/books", **header('user'))
+        res = c.post("/summarize", json=data, **header('user'))
         assert res.status_code == code
 
     def test_entries_count(self, client):
-        return
         # none
         main_tag = list(u.user.tag1.keys())[0]
         limit_entries = {'days': 10, 'tags': main_tag}
@@ -204,6 +276,53 @@ class TestML():
         limit_entries['tags'] = {}
         self._ml_jobs(client, limit_entries, 400)
 
+    def _create_entry_ai(self, c):
+        # TODO use "and data>>entry_id=x" json query (whatever the syntax is)
+        eid = _post_entry(c, {'no_ai': False})
+
+        # summary job got created
+        sql = """
+        select id from jobs 
+        where method='entry' and data_in->'args'->>0=:eid
+        """
+        args = {'eid': eid}
+        assert M.await_row(sess_main, sql, args=args, timeout=2)
+
+        # summaries generated
+        sql += " and state='done'"
+        res = M.await_row(sess_main, sql, args=args, timeout=100)
+        assert res
+        res = c.get(f"/entries/{eid}", **header('user'))
+        assert res.status_code == 200
+        res = res.json()
+        assert res['ai_ran'] == True
+        assert res['title_summary']
+        assert res['text_summary']
+
+    def test_caching(self, client):
+        self._create_entry_ai(client)
+        self._create_entry_ai(client)
+
+        # themes
+        main_tag = list(u.user.tag1.keys())
+        limit_entries = {'days': 10, 'tags': main_tag}
+        res = client.post("/themes", json=limit_entries, **header('user'))
+        assert res.status_code == 200, str(res.json())
+        res = res.json()
+        assert res['terms']
+        assert len(res['themes']) > 0
+
+        # books job created
+        sql = "select id from jobs where method='books'"
+        assert M.await_row(sess_main, sql, timeout=2)
+
+        # books generated
+        sql = "select id from jobs where state='done' and method='books'"
+        assert M.await_row(sess_main, sql, timeout=120)
+        res = client.get(f"/books/ai", **header('user'))
+        assert res.status_code == 200
+        res = res.json()
+        assert len(res) > 0
 
     # def test_few_entries(self, client):
     #     eid = _post_entry(client)

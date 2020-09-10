@@ -1,4 +1,4 @@
-from app.utils import vars, is_dev
+from common.utils import vars, is_dev
 import boto3
 
 url = "http://localhost:3002" if is_dev() else "https://gnothiai.com"
