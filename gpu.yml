@@ -1,0 +1,15 @@
+version: "3.7"
+
+services:
+  gpu:
+    build: gpu
+    container_name: jgpu
+    restart: unless-stopped
+    environment:
+      ENVIRONMENT: production
+    volumes:
+      - ./gpu:/app
+      - ./common:/app/common
+    device_requests:
+      - capabilities:
+          - "gpu"

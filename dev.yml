@@ -32,12 +32,13 @@ services:
         max-size: "5m"
         max-file: "3"
 
-  gpu:
+  gpu-dev:
     build: gpu
-    container_name: jgpu
-    #entrypoint: /bin/bash
+    container_name: jgpu-dev
+    entrypoint: /bin/bash
     stdin_open: true
-    restart: unless-stopped
+    environment:
+      ENVIRONMENT: development
     volumes:
       - ./gpu:/app
       - ./common:/app/common
