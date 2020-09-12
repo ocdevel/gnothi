@@ -67,11 +67,10 @@ def themes(eids):
         center = vecs_.mean(axis=0)[np.newaxis,:]
         dists = cosine(center, vecs_).squeeze()
         entries_ = entries_.iloc[dists.argsort()].tolist()[:5]
-        entries_ = '\n'.join(entries_)  # todo smarter sentence-joiner?
 
         terms = top_terms(stripped_.tolist())
-        summary = nlp_.summarization(entries_, min_length=50, max_length=300)[0]
-        summary, sent = summary["summary_text"], summary["sentiment"]
+        summary = nlp_.summarization(entries_, min_length=50, max_length=300)
+        summary, sent = summary["summary"], summary["sentiment"]
         # summary = sent = None
         topics.append({
             'n_entries': n_entries,

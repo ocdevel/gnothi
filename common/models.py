@@ -7,7 +7,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 from common.database import Base, SessLocal, fa_users_db
-from common.utils import vars, utcnow
+from common.utils import vars, utcnow, flatlist
 
 from sqlalchemy import text, Column, Integer, Enum, Float, ForeignKey, Boolean, JSON, Date, Unicode, \
     func, TIMESTAMP, select, or_, and_
@@ -725,6 +725,23 @@ class CacheEntry(Base):
     paras = Encrypt(array=True)
     clean = Encrypt(array=True)
     vectors = Column(ARRAY(Float, dimensions=2))
+
+    @staticmethod
+    def get_paras(entries_q, profile_id=None):
+        entries = entries_q.join(CacheEntry, CacheEntry.entry_id == Entry.id) \
+            .filter(CacheEntry.paras.isnot(None)) \
+            .with_entities(CacheEntry.paras).all()
+        paras = [p for e in entries for p in e.paras if e.paras]
+
+        if profile_id:
+            profile = db.session.query(CacheUser) \
+                .filter(CacheUser.paras.isnot(None), CacheUser.user_id == profile_id) \
+                .with_entities(CacheUser.paras) \
+                .first()
+            if profile:
+                paras = profile.paras + entries
+
+        return paras
 
 
 class CacheUser(Base):

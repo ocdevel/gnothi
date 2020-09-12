@@ -7,11 +7,11 @@ from app.app_app import app
 from app.app_jwt import fastapi_users
 from fastapi_sqlalchemy import db  # an object to provide global access to a database session
 from sqlalchemy import text
-from common.utils import utcnow
+from common.utils import utcnow, flatlist
 import common.models as M
 from app import habitica
 from app.ec2_updown import jobs_status
-from app import ml
+from app.ml import run_gpu_model, OFFLINE_MSG
 from urllib.parse import quote as urlencode
 
 logger = logging.getLogger(__name__)
@@ -450,7 +450,7 @@ def themes_post(
         tags=data.tags,
         for_ai=True
     )
-    entries = [str(e.id) for e in entries.all()]
+    eids = [str(e.id) for e in entries.all()]
 
     # For dreams, special handle: process every sentence. TODO make note in UI
     # tags = request.get_json().get('tags', None)
@@ -459,12 +459,13 @@ def themes_post(
     #     if re.match('dream(s|ing)?', tag_name, re.IGNORECASE):
     #         entries = [s.text for e in entries for s in e.sents]
 
-    if len(entries) < 2:
+    if len(eids) < 2:
         return send_error("Not enough entries to work with, come back later")
-    data = ml.themes(entries)
-    if len(data) == 0:
+    res = run_gpu_model('themes', dict(args=[eids], kwargs={}))
+    if res is False: return []  # fixme
+    if len(res) == 0:
         return send_error("No patterns found in your entries yet, come back later")
-    return data
+    return res
 
 
 @app.post('/query')
@@ -475,7 +476,7 @@ def question_post(
 ):
     user, snooping = getuser(viewer, as_user)
     question = data.query
-    entries = M.Entry.snoop(
+    context = M.Entry.snoop(
         viewer.email,
         user.id,
         snooping=snooping,
@@ -483,12 +484,15 @@ def question_post(
         tags=data.tags,
         for_ai=True
     )
-    entries = [e.text for e in entries]
 
-    if (not snooping) or user.share_data.profile:
-        entries = [user.profile_to_text()] + entries
+    w_profile = (not snooping) or user.share_data.profile
+    profile_id = user.id if w_profile else None
+    context = M.CacheEntry.get_paras(context, profile_id=profile_id)
 
-    return ml.query(question, entries)
+    res = run_gpu_model('question-answering', dict(args=[question, context]))
+    if res is False:
+        return [{'answer': OFFLINE_MSG}]
+    return res
 
 
 @app.post('/summarize')
@@ -506,13 +510,14 @@ def summarize_post(
         tags=data.tags,
         for_ai=True
     )
-
-    entries = ' '.join(e.text for e in entries)
-    entries = re.sub('\s+', ' ', entries)  # mult new-lines
+    entries = M.CacheEntry.get_paras(entries)
 
     min_ = int(data.words / 2)
-    summary = ml.summarize(entries, min_length=min_, max_length=data.words)
-    return {'summary': summary["summary_text"], 'sentiment': summary["sentiment"]}
+    kwargs = dict(min_length=min_, max_length=data.words)
+    res = run_gpu_model('summarization', dict(args=[entries], kwargs=kwargs))
+    if res is False:
+        return {"summary": OFFLINE_MSG, "sentiment": None}
+    return {'summary': res["summary"], 'sentiment': res["sentiment"]}
 
 
 @app.post('/books/{bid}/{shelf}')
