@@ -25,7 +25,7 @@ RUN \
   pip install https://storage.googleapis.com/tensorflow/linux/gpu/tensorflow_gpu-2.3.0-cp38-cp38-manylinux2010_x86_64.whl &&\
   pip install torch==1.6.0+cu101 torchvision==0.7.0+cu101 -f https://download.pytorch.org/whl/torch_stable.html
 RUN \
-  pip install transformers==3.0.2 sentence-transformers &&\
+  pip install transformers==3.1.0 sentence-transformers==0.3.6 &&\
   transformers-cli download mrm8488/t5-base-finetuned-emotion &&\
   transformers-cli download facebook/bart-large-cnn &&\
   transformers-cli download allenai/longformer-large-4096-finetuned-triviaqa &&\

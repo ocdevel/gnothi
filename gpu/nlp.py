@@ -75,7 +75,7 @@ class NLP():
         for i, para in enumerate(paras):
             if i == 0: continue
             cur, build = n_tokens[i], part_tokens[-1]
-            # 90% max length, some wiggle room (maybe better to just use truncate args?)
+            # 90% max length, some wiggle room
             if build + cur >= (max_length * .9):
                 part_paras.append(para)
                 part_tokens.append(0)
@@ -113,7 +113,7 @@ class NLP():
             parts,
             max_length=max_tokens,
             **tokenizer_args
-        ).to("cuda")
+        )
         summary_ids = model.generate(
             inputs.input_ids.to("cuda"),
             num_beams=4,
@@ -141,22 +141,23 @@ class NLP():
         parts, t_parts = self.para_parts(paras, tokenizer, max_tokens)
 
         answers = []
-        for i, p in enumerate(parts):
-            encoding = tokenizer(question, p, max_length=max_tokens, **tokenizer_args).to("cuda")
-            input_ids = encoding["input_ids"]
-            attention_mask = encoding["attention_mask"]
+        encoding = tokenizer([question]*len(parts), parts, max_length=max_tokens, **tokenizer_args)
+        input_ids = encoding["input_ids"].to("cuda")
+        attention_mask = encoding["attention_mask"].to("cuda")
 
-            with torch.no_grad():
-                outputs = model(input_ids, attention_mask=attention_mask)
-            start_logits = outputs.start_logits
-            end_logits = outputs.end_logits
-            all_tokens = tokenizer.convert_ids_to_tokens(input_ids[0].tolist())
+        with torch.no_grad():
+            outputs = model(input_ids, attention_mask=attention_mask)
+        for i, _ in enumerate(parts):
+            start_logits = outputs.start_logits[i]
+            end_logits = outputs.end_logits[i]
+            all_tokens = tokenizer.convert_ids_to_tokens(input_ids[i].tolist())
 
             answer_tokens = all_tokens[torch.argmax(start_logits):torch.argmax(end_logits) + 1]
             answer = tokenizer.decode(tokenizer.convert_tokens_to_ids(answer_tokens))  # remove space prepending space token
 
             if len(answer) > 200:
-                answer = self.summarization([answer], max_length=10)["summary"]
+                continue
+                # answer = self.summarization([answer], max_length=10)["summary"]
             if answer and answer not in answers:
                 answers.append(answer)
 
