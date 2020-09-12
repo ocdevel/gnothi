@@ -75,29 +75,30 @@ class NLP():
         for i, para in enumerate(paras):
             if i == 0: continue
             cur, build = n_tokens[i], part_tokens[-1]
-            # 90% max length, some wiggle room
-            if build + cur >= (max_length * .9):
+            # 90% max length, some wiggle room for special tokens or something (always > max somehow)
+            if build + cur >= (max_length * .8):
                 part_paras.append(para)
                 part_tokens.append(0)
             else:
                 part_paras[-1] += '\n' + para
                 part_tokens[-1] += cur
-        return part_paras, part_tokens
+        return part_paras
 
     def sentiment_analysis(self, paras):
         if not paras:
             return {"label": "", "score": 1.}
         tokenizer, model, max_tokens = self.load('sentiment-analysis')
 
-        parts, t_parts = self.para_parts(paras, tokenizer, max_tokens)
-        inputs = tokenizer(
-            [p + '</s>' for p in parts],
-            max_length=max_tokens,
-            **tokenizer_args
-        )
-        output = model.generate(inputs.input_ids.to("cuda"), max_length=2)
-        dec = [tokenizer.decode(ids) for ids in output]
-        label = stats_mode(dec).mode[0]  # return most common sentiment
+        parts = self.para_parts(paras, tokenizer, max_tokens)
+
+        # bd7663a3: batch model. too much gpu ram
+        sents = []
+        for p in parts:
+            inputs = tokenizer(p + '</s>', max_length=max_tokens, **tokenizer_args)
+            output = model.generate(inputs.input_ids.to("cuda"), max_length=2)
+            dec = [tokenizer.decode(ids) for ids in output]
+            sents.append(dec[0])
+        label = stats_mode(sents).mode[0]  # return most common sentiment
         return {"label": label, "score": 1.}
 
     def summarization(self, paras, min_length=None, max_length=None, with_sentiment=True):
@@ -105,61 +106,63 @@ class NLP():
             return {"summary": "Nothing to summarize (try adjusting date range)"}
         tokenizer, model, max_tokens = self.load('summarization')
 
-        parts, t_parts = self.para_parts(paras, tokenizer, max_tokens)
+        parts = self.para_parts(paras, tokenizer, max_tokens)
         min_ = max(min_length//len(parts), 2) if min_length else None
         max_ = max(max_length//len(parts), 10) if max_length else None
 
-        inputs = tokenizer(
-            parts,
-            max_length=max_tokens,
-            **tokenizer_args
-        )
-        summary_ids = model.generate(
-            inputs.input_ids.to("cuda"),
-            num_beams=4,
-            min_length=min_,
-            max_length=max_,
-            early_stopping=True
-        )
-        res = [
-            tokenizer.decode(g, skip_special_tokens=True, clean_up_tokenization_spaces=False)
-            for g in summary_ids]
-        #res = [re.sub(r"(^\"|$\")", "", r) for r in res]  # there a model flag to not add quotes?
-        res = "\n".join(res)
+        # bd7663a3: batch model. too much gpu ram
+        summs = []
+        for p in parts:
+            inputs = tokenizer(p, max_length=max_tokens, **tokenizer_args)
+            summary_ids = model.generate(
+                inputs.input_ids.to("cuda"),
+                min_length=min_,
+                max_length=max_,
+                num_beams=4,
+                early_stopping=True
+            )
+            res = [
+                tokenizer.decode(g, skip_special_tokens=True, clean_up_tokenization_spaces=False)
+                for g in summary_ids]
+            #res = [re.sub(r"(^\"|$\")", "", r) for r in res]  # there a model flag to not add quotes?
+            summs.append(res[0])
+        summs = "\n".join(summs)
 
+        sent = None
         if with_sentiment:
             sent = self.sentiment_analysis(paras)
             sent = sent['label']
 
-        return {"summary": res, "sentiment": sent}
+        return {"summary": summs, "sentiment": sent}
 
     def question_answering(self, question, paras):
         if not paras:
             return [{'answer': "Not enough entries to use this feature."}]
         tokenizer, model, max_tokens = self.load('question-answering')
 
-        parts, t_parts = self.para_parts(paras, tokenizer, max_tokens)
+        parts = self.para_parts(paras, tokenizer, max_tokens)
 
+        # bd7663a3: batch model. too much gpu ram
         answers = []
-        encoding = tokenizer([question]*len(parts), parts, max_length=max_tokens, **tokenizer_args)
-        input_ids = encoding["input_ids"].to("cuda")
-        attention_mask = encoding["attention_mask"].to("cuda")
+        for p in parts:
+            encoding = tokenizer(question, p, max_length=max_tokens, **tokenizer_args)
+            input_ids = encoding["input_ids"].to("cuda")
+            attention_mask = encoding["attention_mask"].to("cuda")
 
-        with torch.no_grad():
-            outputs = model(input_ids, attention_mask=attention_mask)
-        for i, _ in enumerate(parts):
-            start_logits = outputs.start_logits[i]
-            end_logits = outputs.end_logits[i]
-            all_tokens = tokenizer.convert_ids_to_tokens(input_ids[i].tolist())
+            with torch.no_grad():
+                outputs = model(input_ids, attention_mask=attention_mask)
+            for i, _ in enumerate(parts):
+                start_logits = outputs.start_logits
+                end_logits = outputs.end_logits
+                all_tokens = tokenizer.convert_ids_to_tokens(input_ids[0].tolist())
 
-            answer_tokens = all_tokens[torch.argmax(start_logits):torch.argmax(end_logits) + 1]
-            answer = tokenizer.decode(tokenizer.convert_tokens_to_ids(answer_tokens))  # remove space prepending space token
+                answer_tokens = all_tokens[torch.argmax(start_logits):torch.argmax(end_logits) + 1]
+                answer = tokenizer.decode(tokenizer.convert_tokens_to_ids(answer_tokens))  # remove space prepending space token
 
-            if len(answer) > 200:
-                continue
-                # answer = self.summarization([answer], max_length=10)["summary"]
-            if answer and answer not in answers:
-                answers.append(answer)
+                if len(answer) > 200:
+                    answer = self.summarization([answer], max_length=10, with_sentiment=False)["summary"]
+                if answer and answer not in answers:
+                    answers.append(answer)
 
         if not answers: return [{'answer': 'No answer'}]
         return [{'answer': a} for a in answers]
@@ -174,7 +177,7 @@ class NLP():
         sess = SessLocal.main()
         e = sess.query(M.Entry).filter(M.Entry.no_ai.isnot(True))
         e = e.filter(M.Entry.id == id) if id else\
-            e.filter(M.Entry.ai_ran.isnot(True)) # look for other entries to cleanup
+            e.filter(M.Entry.ai_ran.isnot(True))  # look for other entries to cleanup
         e = e.first()
         if not e: return {}
         root_call = bool(id)

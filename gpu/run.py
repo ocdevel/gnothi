@@ -71,10 +71,9 @@ def run_job(job):
         res = {"error": err}
         sql = text(f"update jobs set state='error', data_out=:data where id=:jid")
         sess.execute(sql, {'data': jsonb(res), **jid})
-        print(f"Job Error {time.time() - start} {err}", )
+        print(f"Job Error {time.time() - start} {err}")
 
     remove_stale_jobs(sess)
-    # nlp_.clear()
     sess.commit()
     sess.close()
 
