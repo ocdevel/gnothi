@@ -1,4 +1,4 @@
-import json, os
+import json, os, pytz, datetime
 from box import Box
 
 DROP_SQL = 'DROP SCHEMA public CASCADE;CREATE SCHEMA public;'
@@ -43,11 +43,5 @@ THREADS = cpu_count()
 # it automatically via datetime.utcnow, but engine.execute("now()") will not be utc
 utcnow = "now() at time zone 'utc'"
 
-
-import pdb
-def flatlist(arr, k):
-    [v for obj in arr for v in getattr(e, k) if p]
-    return [getattr(obj, k) if k else obj
-            for sub in arr
-            for obj in sub
-            if (getattr(obj, k) if k else True)]
+def nowtz(tz='America/Los_Angeles'):
+    return datetime.datetime.now(pytz.timezone(tz))

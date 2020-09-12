@@ -7,7 +7,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 from common.database import Base, SessLocal, fa_users_db
-from common.utils import vars, utcnow, flatlist
+from common.utils import vars, utcnow, nowtz
 
 from sqlalchemy import text, Column, Integer, Enum, Float, ForeignKey, Boolean, JSON, Date, Unicode, \
     func, TIMESTAMP, select, or_, and_
@@ -474,24 +474,15 @@ class FieldEntry(Base):
     field_id = FKCol('fields.id')  # TODO index=True?
 
     @staticmethod
-    def get_today_entries(user_id, field_id=None):
-        return FieldEntry.get_day_entries(datetime.datetime.utcnow(), user_id, field_id)
-
-    @staticmethod
-    def get_day_entries(day, user_id, field_id=None):
-        tz_ = db.session.query(User).filter_by(id=user_id)\
-            .with_entities(User.timezone)\
-            .first().timezone
+    def get_day_entries(user_id, day=None, field_id=None):
+        tz_ = db.session.query(User.timezone).filter_by(id=user_id).scalar()
         tz_ = tz_ or 'America/Los_Angeles'
+
         timezoned = func.Date(func.timezone(tz_, FieldEntry.created_at))
-        day = day.astimezone(tz.gettz(tz_))
-        # timezoned = func.Date(FieldEntry.created_at)
+        day = day.astimezone(tz.gettz(tz_)) if day else nowtz(tz_)
 
         q = db.session.query(FieldEntry)\
-            .filter(
-                FieldEntry.user_id == user_id,
-                timezoned == day.date()
-            )
+            .filter(FieldEntry.user_id == user_id, timezoned == day.date())
         if field_id:
             q = q.filter(FieldEntry.field_id == field_id)
         return q

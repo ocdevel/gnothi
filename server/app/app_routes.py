@@ -1,4 +1,4 @@
-import pdb, re, datetime, logging, boto3
+import pdb, re, datetime, logging, boto3, pytz
 import shortuuid
 import dateutil.parser
 from typing import List, Dict, Any
@@ -7,7 +7,7 @@ from app.app_app import app
 from app.app_jwt import fastapi_users
 from fastapi_sqlalchemy import db  # an object to provide global access to a database session
 from sqlalchemy import text
-from common.utils import utcnow, flatlist
+from common.utils import utcnow, nowtz
 import common.models as M
 from app import habitica
 from app.ec2_updown import jobs_status
@@ -399,7 +399,7 @@ def field_entries_get(as_user: str = None, viewer: M.User = Depends(fastapi_user
     user, snooping = getuser(viewer, as_user)
     if snooping and not user.share_data.fields:
         return cant_snoop('Fields')
-    res = M.FieldEntry.get_today_entries(user.id).all()
+    res = M.FieldEntry.get_day_entries(user.id).all()
     return {f.field_id: f.value for f in res}
 
 
@@ -407,12 +407,16 @@ def field_entries_get(as_user: str = None, viewer: M.User = Depends(fastapi_user
 def field_entries_post(field_id, data: M.SIFieldEntry, as_user: str = None, viewer: M.User = Depends(fastapi_users.get_current_user)):
     user, snooping = getuser(viewer, as_user)
     if snooping: return cant_snoop()
-    fe = M.FieldEntry.get_today_entries(user.id, field_id).first()
+    fe = M.FieldEntry.get_day_entries(user.id, field_id=field_id).first()
     v = float(data.value)
     if fe:
         fe.value = v
     if not fe:
-        fe = M.FieldEntry(value=v, field_id=field_id)
+        fe = M.FieldEntry(
+            value=v,
+            field_id=field_id,
+            created_at=nowtz(user.timezone)
+        )
         user.field_entries.append(fe)
     db.session.commit()
     return {}

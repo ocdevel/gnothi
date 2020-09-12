@@ -1,4 +1,4 @@
-import requests
+import requests, pdb
 from dateutil.parser import parse as dparse
 from common.utils import is_dev, vars, utcnow
 from common.database import SessLocal
@@ -32,7 +32,7 @@ def sync_for(user):
     lastCron = dparse(huser['lastCron'])
     logger.info("Habitica finished")
 
-    fes = M.FieldEntry.get_day_entries(lastCron, user.id).all()
+    fes = M.FieldEntry.get_day_entries(user.id, day=lastCron).all()
 
     f_map = {f.service_id: f for f in user.fields}
     fe_map = {fe.field_id: fe for fe in fes}
