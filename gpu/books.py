@@ -26,12 +26,11 @@ import feather
 from sklearn import preprocessing as pp
 
 
-paths = Box(df='tmp/libgen.df', vecs='tmp/libgen.npy')
-
-
-def load_books_df():
-    if exists(paths.df):
-        return feather.read_dataframe(paths.df)
+def load_books_df(sess):
+    # sort asc since that's how we mapped to vecs in first place (order_values)
+    df = pd.read_sql("select * from books order by id asc", sess.bind)
+    if df.shape[0]:
+        return df.set_index('id', drop=False)
 
     print("Load books MySQL")
     FIND_PROBLEMS = False
@@ -64,7 +63,7 @@ def load_books_df():
         where_id="and u.ID=:id"
     )
 
-    sess = SessLocal.books()
+    sessb = SessLocal.books()
     if FIND_PROBLEMS:
         # # Those MD5s: UnicodeDecodeError: 'charmap' codec can't decode byte 0x9d in position 636: character maps to <undefined>
         # TODO try instead create_engine(convert_unicode=True)
@@ -87,8 +86,8 @@ def load_books_df():
     sql_ = [sql.select, sql.body]
     if not ALL_BOOKS: sql_ += [sql.just_psych]
     sql_ = ' '.join(sql_)
-    df = pd.read_sql(sql_, sess.bind)
-    # sess.close()
+    df = pd.read_sql(sql_, sessb.bind)
+    sessb.close()
     df = df.drop_duplicates(['Title', 'Author'])
 
     print('n_books before cleanup', df.shape[0])
@@ -106,34 +105,49 @@ def load_books_df():
     # books = books[books.clean.apply(lambda x: detect(x) == 'en')]
     print('n_books after cleanup', df.shape[0])
 
-    df.rename(columns=dict(
+    df = df.rename(columns=dict(
         ID='id',
         descr='text',
         Title='title',
         Author='author',
-        topic_descr='topic'
-    ), inplace=True)
+        topic_descr='topic',
+    ))
 
-    feather.write_dataframe(df, paths.df)
-    return df
+    # drop dupes, keep longest desc
+    df['txt_len'] = df.text.str.len()
+    df = df.sort_values('txt_len', ascending=False)\
+        .drop_duplicates('id')\
+        .drop(columns=['txt_len'])\
+        .sort_values('id')
+    df['thumbs'] = 0
 
+    print(f"Saving books to DB")
+    df.to_sql('books', sess.bind, index=False, chunksize=500, if_exists='append', method='multi')
+
+    return df.set_index('id', drop=False)
+
+
+path_ ='tmp/libgen.npy'
 
 def load_books_vecs(df):
-    if exists(paths.vecs):
-        with open(paths.vecs, 'rb') as f:
-            return np.load(f)
+    if exists(path_):
+        with open(path_, 'rb') as f:
+            vecs = np.load(f)
+            if df.shape[0] == vecs.shape[0]:
+                return vecs
+            # else books table has changed, recompute
 
     print(f"Running BERT on {df.shape[0]} entries")
     texts = (df.title + '\n' + df.text).tolist()
     from nlp import nlp_
     vecs = nlp_.sentence_encode(texts)
-    with open(paths.vecs, 'wb') as f:
+    with open(path_, 'wb') as f:
         np.save(f, vecs)
     return vecs
 
 
-def load_books():
-    df = load_books_df()
+def load_books(sess):
+    df = load_books_df(sess)
     vecs = load_books_vecs(df)
     return vecs, df
 
@@ -184,13 +198,12 @@ def train_books_predictor(books, vecs_books, shelf_idx, fine_tune=True):
 
 
 def predict_books(user_id, vecs_user, n_recs=30, centroids=False):
-    vecs_books, books = load_books()
-    books = books.set_index('id', drop=False)
-
     sess = SessLocal.main()
+    vecs_books, books = load_books(sess)
+
     sql = "select book_id as id, user_id, shelf from bookshelf where user_id=%(uid)s"
     shelf = pd.read_sql(sql, sess.bind, params={'uid': user_id}).set_index('id', drop=False)
-    # sess.close()
+    sess.close()
     shelf_idx = books.id.isin(shelf.id)
 
     # normalize for cosine, and downstream DNN

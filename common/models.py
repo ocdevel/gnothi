@@ -69,6 +69,7 @@ class User(Base, SQLAlchemyBaseUserTable):
     birthday = Column(Date)  # TODO encrypt (how to store/migrate dates?)
     timezone = Column(Unicode)
     bio = Encrypt()
+    is_cool = Column(Boolean, default=False)
 
     habitica_user_id = Encrypt()
     habitica_api_token = Encrypt()
@@ -165,6 +166,7 @@ class SOUser(FU_User, fu_models.BaseUserDB):
     timezone: Optional[Any] = None
     habitica_user_id: Optional[str] = None
     habitica_api_token: Optional[str] = None
+    is_cool: Optional[bool] = False
     shared_with_me: Optional[List[SOSharedWithMe]]
 
 
@@ -603,6 +605,18 @@ class ShareTag(Base):
     share = relationship(Share, backref=backref("shares"))
 
 
+class Book(Base):
+    __tablename__ = 'books'
+    id = Column(Integer, primary_key=True)
+    title = Column(Unicode, nullable=False)
+    text = Column(Unicode, nullable=False)
+    author = Column(Unicode)
+    topic = Column(Unicode)
+
+    thumbs = Column(Integer, default=0)
+    amazon = Column(Unicode)
+
+
 class Shelves(enum.Enum):
     ai = "ai"
     like = "like"
@@ -617,7 +631,7 @@ class Bookshelf(Base):
     created_at = DateCol()
     updated_at = DateCol(update=True)
 
-    book_id = Column(Integer, primary_key=True)
+    book_id = Column(Integer, primary_key=True)  # no FK, books change often
     user_id = FKCol('users.id', primary_key=True)
     shelf = Column(Enum(Shelves), nullable=False)
     score = Column(Float)  # only for ai-recs
@@ -640,36 +654,32 @@ class Bookshelf(Base):
 
     @staticmethod
     def upsert(user_id, book_id, shelf):
-        sql = """
+        db.session.execute(text("""
         insert into bookshelf(book_id, user_id, shelf)  
         values (:book_id, :user_id, :shelf)
-        on conflict (book_id, user_id) do update set shelf=:shelf"""
-        db.session.execute(text(sql), dict(user_id=user_id, book_id=int(book_id), shelf=shelf))
+        on conflict (book_id, user_id) do update set shelf=:shelf
+        """), dict(user_id=user_id, book_id=int(book_id), shelf=shelf))
+
+        dir = dict(ai=0, like=1, already_read=1, dislike=-1, remove=0, recommend=1)[shelf]
+        db.session.execute(text("""
+        update books set thumbs=thumbs+:dir where id=:bid
+        """), dict(dir=dir, bid=book_id))
+
         db.session.commit()
         threading.Thread(target=Bookshelf.update_books, args=(user_id,)).start()
 
     @staticmethod
     def get_shelf(user_id, shelf):
-        sql = "select book_id from bookshelf where user_id=:uid and shelf=:shelf"
-        ids = db.session.execute(text(sql), dict(uid=user_id, shelf=shelf)).fetchall()
-        ids = tuple([x.book_id for x in ids])
-        print(ids)
-        if not ids:
-            return []
-
-        # TODO save these clean from msyql into psql
-        sql = """
-        select u.ID as id, u.Title as title, u.Author as author, d.descr as text, t.topic_descr as topic
-        from updated u
-            inner join description d on d.md5=u.MD5
-            inner join topics t on u.Topic=t.topic_id
-        where u.ID in :ids
-            and t.lang='en' and u.Language = 'English'
-        """
-        db_books = SessLocal.books()
-        books = db_books.execute(text(sql), {'ids': ids}).fetchall()
-        # db_books.close()
-        return [dict(b) for b in books]
+        is_cool = db.session.query(User.is_cool).filter_by(id=user_id).scalar()
+        books = db.session.execute(text(f"""
+        select b.id, b.title, {"b.text" if is_cool else "'' as text"}, b.author, b.topic, b.amazon
+        from books b 
+        inner join bookshelf bs on bs.book_id=b.id 
+            and bs.user_id=:uid and bs.shelf=:shelf
+        """), dict(uid=user_id, shelf=shelf)).fetchall()
+        print(len(books))
+        return books
+        # return [dict(b) for b in books]
 
 
 class Job(Base):
