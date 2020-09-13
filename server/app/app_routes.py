@@ -16,10 +16,6 @@ from urllib.parse import quote as urlencode
 
 logger = logging.getLogger(__name__)
 
-# Remove this after SES email working
-from passlib.hash import pbkdf2_sha256
-from fastapi_users.password import get_password_hash
-
 getuser = M.User.snoop
 
 
@@ -30,22 +26,6 @@ def send_error(message: str, code: int = 400):
 def cant_snoop(feature=None):
     message = f"{feature} isn't shared" if feature else "This feature isn't shared"
     return send_error(message, 401)
-
-
-@app.post('/check-pass-remove-this')
-def check_pw_post(data: M.FU_UserCreate):
-    user = db.session.query(M.User).filter_by(email=data.email).first()
-    if not user: return {}
-    try:
-        # raises if hashed_password not pbkdf2-style, so piggy-backing on raise
-        if not pbkdf2_sha256.verify(data.password, user.hashed_password): raise
-    except:
-        logger.info("Password not in old system")
-        return {}
-    logger.info("Password in old system, updating")
-    user.hashed_password = get_password_hash(data.password)
-    db.session.commit()
-    return {}
 
 
 @app.get('/jobs-status')
@@ -141,13 +121,10 @@ def tags_get(as_user: str = None, viewer: M.User = Depends(fastapi_users.get_cur
     tags = M.Tag.snoop(viewer.email, user.id, snooping=snooping).all()
     if not tags: return []
 
-    # TODO better way of handling missing main (eg for snooping)?
-    main = next(iter([t for t in tags if t.main]), None)
-    if not main:
-        main = tags[0]
-        main.main = True
-    # sort them: main first, then the rest
-    tags = [main] + [t for t in tags if not t.main]
+    # First tag is main usually (sort-by in Tag.snoop). But snoopers might not have shared the viewing
+    # main-tag; in that case just set any to main.
+    # TODO have user select main tag for sharee on share
+    tags[0].main = True
     return tags
 
 

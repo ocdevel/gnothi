@@ -35,6 +35,7 @@ fa_users_db = databases.Database(vars.DB_URL)
 
 
 def init_db():
+    engine.execute('CREATE EXTENSION IF NOT EXISTS "uuid-ossp"')
     # add `import app.models` in calling code beforehand (after `import database`)
     Base.metadata.create_all(bind=engine)
     # e6dfbbd8: kick off create_all with sess.execute()

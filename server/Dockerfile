@@ -28,7 +28,6 @@ RUN pip install \
   fastapi-users[sqlalchemy] \
   asyncpg \
   bcrypt \
-  passlib \
   shortuuid \
   pytest \
   lorem-text

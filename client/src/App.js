@@ -15,6 +15,7 @@ import {
   Route,
   Link,
   Redirect,
+  useHistory
 } from "react-router-dom";
 import Splash from './Splash'
 import Journal from './Journal'
@@ -36,6 +37,11 @@ function App() {
   const aiStatus = useSelector(state => state.aiStatus);
   const serverError = useSelector(state => state.serverError);
 	const dispatch = useDispatch();
+	const history = useHistory()
+
+  useEffect(() => {
+    history.push('/j')
+  }, [as])
 
   useEffect(() => {
     dispatch(getUser())
@@ -46,10 +52,10 @@ function App() {
   }, [jwt, as])
 
   const renderAsSelect = () => {
-    if (_.isEmpty(user.shared_with_me)) {return}
+    if (!user.shared_with_me.length) {return}
     return <>
       {as && (
-        <NavDropdown.Item onClick={() => dispatch(changeAs())}>
+        <NavDropdown.Item onClick={() => dispatch(changeAs(null))}>
           {emoji("🔀")}{user.email}
         </NavDropdown.Item>
       )}
@@ -66,13 +72,14 @@ function App() {
 
   const renderNav = () => {
     let email = user.email
-    if (as) {
-      // email = <>{emoji("🕵️")} {asUser.email}</>
-      email = _.find(user.shared_with_me, {id: as}).email
+    if (asUser) {
+      email = <>{emoji("🕵️")} {asUser.email}</>
     } else {
       const ne = _.reduce(user.shared_with_me, (m,v) => m + v.new_entries, 0)
       email = !ne ? email : <><Badge pill variant='danger'>{ne}</Badge> {email}</>
     }
+
+    const canProfile = !as || (asUser && asUser.profile)
 
     return (
       <Navbar bg="dark" variant="dark">
@@ -86,12 +93,12 @@ function App() {
           <Nav>
             <NavDropdown title={email} id="basic-nav-dropdown">
               {renderAsSelect()}
-              <LinkContainer to="/profile/profile">
+              {canProfile && <LinkContainer to="/profile/profile">
                 <NavDropdown.Item>Profile</NavDropdown.Item>
-              </LinkContainer>
-              <LinkContainer to="/profile/people">
+              </LinkContainer>}
+              {canProfile && <LinkContainer to="/profile/people">
                 <NavDropdown.Item>People</NavDropdown.Item>
-              </LinkContainer>
+              </LinkContainer>}
               {!as && <LinkContainer to="/profile/sharing">
                 <NavDropdown.Item>Sharing</NavDropdown.Item>
               </LinkContainer>}

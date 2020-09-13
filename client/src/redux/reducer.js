@@ -38,10 +38,12 @@ export default function mainReducer(state, action) {
       break
     case SET_AS:
       state.as = action.payload
+      state.asUser = !action.payload ? null
+        : _.find(state.user.shared_with_me, {id: action.payload})
       break
-    case SET_AS_USER:
-      state.asUser = action.payload
-      break
+    // case SET_AS_USER:
+    //   state.asUser = action.payload
+    //   break
     case SET_AI_STATUS:
       state.aiStatus = action.payload
       break

@@ -55,7 +55,6 @@ function Auth() {
 
   const submitLogin = async e => {
     e.preventDefault();
-    await submit_('check-pass-remove-this', 'POST', {email: username, password})
     await login()
   };
 

@@ -64,22 +64,23 @@ export const logout = () => {
 }
 
 export const getUser = () => async (dispatch, getState) => {
-  const {jwt, as} = getState()
+  const {jwt, as, user} = getState()
   if (!jwt) {return}
   const {data, code} = await dispatch(fetch_('user', 'GET'))
   if (as) {
-    dispatch(setAsUser(data))
-  } else {
-    if (code === 401) {
-      return dispatch(logout())
-    }
-    dispatch(setUser(data))
-    dispatch(fetch_('user/checkin', 'POST'))
-    if (!data.timezone) {
-       // Guess their default timezone (TODO should call this out?)
-      const timezone = moment.tz.guess(true)
-      dispatch(fetch_('profile/timezone', 'PUT', {timezone}))
-    }
+    // FIXME fetch basic info from user, limited by permissions
+    // dispatch(setAsUser(data))
+    return
+  }
+  if (code === 401) {
+    return dispatch(logout())
+  }
+  dispatch(setUser(data))
+  dispatch(fetch_('user/checkin', 'POST'))
+  if (!data.timezone) {
+     // Guess their default timezone (TODO should call this out?)
+    const timezone = moment.tz.guess(true)
+    dispatch(fetch_('profile/timezone', 'PUT', {timezone}))
   }
 }
 

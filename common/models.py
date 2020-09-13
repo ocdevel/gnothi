@@ -9,11 +9,11 @@ logger = logging.getLogger(__name__)
 from common.database import Base, SessLocal, fa_users_db
 from common.utils import vars, utcnow, nowtz
 
-from sqlalchemy import text, Column, Integer, Enum, Float, ForeignKey, Boolean, JSON, Date, Unicode, \
+from sqlalchemy import text as satext, Column, Integer, Enum, Float, ForeignKey, Boolean, JSON, Date, Unicode, \
     func, TIMESTAMP, select, or_, and_
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship, backref, object_session, column_property
-from sqlalchemy.dialects.postgresql import UUID, BYTEA, JSONB, ARRAY
+from sqlalchemy.dialects.postgresql import UUID, JSONB, ARRAY
 from sqlalchemy_utils.types import EmailType
 from sqlalchemy_utils.types.encrypted.encrypted_type import StringEncryptedType, FernetEngine
 
@@ -44,12 +44,12 @@ def Encrypt(Col=Unicode, array=False, **args):
 # TODO should all date-cols be index=True? (eg sorting, filtering)
 def DateCol(default=True, update=False):
     args = {}
-    if default: args['default'] = datetime.datetime.utcnow
-    if update: args['onupdate'] = datetime.datetime.utcnow
+    if default: args['server_default'] = satext(utcnow)
+    if update: args['onupdate'] = satext(utcnow)
     return Column(TIMESTAMP(timezone=True), index=True, **args)
 
 def IDCol():
-    return Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    return Column(UUID(as_uuid=True), primary_key=True, server_default=satext("uuid_generate_v4()"))
 
 def FKCol(fk, **kwargs):
     return Column(UUID(as_uuid=True), ForeignKey(fk, **child_cascade), **kwargs)
@@ -69,7 +69,7 @@ class User(Base, SQLAlchemyBaseUserTable):
     birthday = Column(Date)  # TODO encrypt (how to store/migrate dates?)
     timezone = Column(Unicode)
     bio = Encrypt()
-    is_cool = Column(Boolean, default=False)
+    is_cool = Column(Boolean, server_default='false')
 
     habitica_user_id = Encrypt()
     habitica_api_token = Encrypt()
@@ -159,7 +159,14 @@ class SOSharedWithMe(SOProfile):
     id: UUID4
     email: str
     new_entries: Optional[int]
-    # last_seen: Optional[datetime.datetime]
+    last_seen: Optional[datetime.datetime]
+
+    profile: Optional[bool]
+    books: Optional[bool]
+    fields_: Optional[bool]
+
+    class Config:
+        fields = {'fields_': 'fields'}
 
 
 class SOUser(FU_User, fu_models.BaseUserDB):
@@ -180,8 +187,8 @@ class Entry(Base):
     # Title optional, otherwise generated from text. topic-modeled, or BERT summary, etc?
     title = Encrypt()
     text = Encrypt(Unicode, nullable=False)
-    no_ai = Column(Boolean, default=False)
-    ai_ran = Column(Boolean, default=False)
+    no_ai = Column(Boolean, server_default='false')
+    ai_ran = Column(Boolean, server_default='false')
 
     # Generated
     title_summary = Encrypt()
@@ -221,7 +228,7 @@ class Entry(Base):
             update shares set last_seen={utcnow}, new_entries=0
             where email=:email and user_id=:uid
             """
-            db.session.execute(text(sql), dict(email=viewer_email, uid=target_id))
+            db.session.execute(satext(sql), dict(email=viewer_email, uid=target_id))
             db.session.commit()
 
         if entry_id:
@@ -278,7 +285,7 @@ class Entry(Base):
         )
         update shares s set new_entries=n.ct from news n where n.id=s.id
         """
-        db.session.execute(text(sql), {'uid': self.user_id})
+        db.session.execute(satext(sql), {'uid': self.user_id})
         db.session.commit()
 
 
@@ -317,7 +324,7 @@ class Note(Base):
     user_id = FKCol('users.id', index=True)
     type = Column(Enum(NoteTypes), nullable=False)
     text = Encrypt(Unicode, nullable=False)
-    private = Column(Boolean, default=False)
+    private = Column(Boolean, server_default='false')
 
     @staticmethod
     def snoop(
@@ -393,9 +400,9 @@ class Field(Base):
     # Don't actually delete fields, unless it's the same day. Instead
     # stop entries/graphs/correlations here
     excluded_at = DateCol(default=False)
-    default_value = Column(Enum(DefaultValueTypes), default="value")
-    default_value_value = Column(Float, default=None)
-    target = Column(Boolean, default=False)
+    default_value = Column(Enum(DefaultValueTypes), server_default="value")
+    default_value_value = Column(Float)
+    target = Column(Boolean, server_default='false')
     # option{single_or_multi, options:[], ..}
     # number{float_or_int, ..}
     attributes = Column(JSON)
@@ -531,7 +538,7 @@ class Share(Base):
     tags_ = relationship("Tag", secondary="shares_tags")
 
     last_seen = DateCol()
-    new_entries = Column(Integer, default=0)
+    new_entries = Column(Integer, server_default=satext("0"))
 
     @property
     def tags(self):
@@ -562,19 +569,22 @@ class Tag(Base):
     id = IDCol()
     user_id = FKCol('users.id', index=True)
     name = Encrypt(Unicode, nullable=False)
+    created_at = DateCol()
     # Save user's selected tags between sessions
     selected = Column(Boolean)
-    main = Column(Boolean, default=False)
+    main = Column(Boolean, server_default="false")
 
     shares = relationship("Share", secondary="shares_tags")
 
     @staticmethod
     def snoop(from_email, to_id, snooping=False):
         if snooping:
-            return db.session.query(Tag)\
+            q = db.session.query(Tag)\
                 .join(ShareTag, Share)\
-                .filter(Share.email==from_email, Share.user_id == to_id)
-        return db.session.query(Tag).filter_by(user_id=to_id)
+                .filter(Share.email == from_email, Share.user_id == to_id)
+        else:
+            q = db.session.query(Tag).filter_by(user_id=to_id)
+        return q.order_by(Tag.main.desc(), Tag.created_at.asc(), Tag.name.asc())
 
 
 class SITag(BaseModel):
@@ -613,7 +623,7 @@ class Book(Base):
     author = Column(Unicode)
     topic = Column(Unicode)
 
-    thumbs = Column(Integer, default=0)
+    thumbs = Column(Integer, server_default=satext("0"))
     amazon = Column(Unicode)
 
 
@@ -644,7 +654,7 @@ class Bookshelf(Base):
             select count(*)%8=0 as ct from bookshelf 
             where user_id=:uid and shelf!='ai'
             """
-            should_update = db.session.execute(text(sql), {'uid':user_id}).fetchone().ct
+            should_update = db.session.execute(satext(sql), {'uid':user_id}).fetchone().ct
             if should_update:
                 db.session.add(Jobs(
                     method='books',
@@ -654,14 +664,14 @@ class Bookshelf(Base):
 
     @staticmethod
     def upsert(user_id, book_id, shelf):
-        db.session.execute(text("""
+        db.session.execute(satext("""
         insert into bookshelf(book_id, user_id, shelf)  
         values (:book_id, :user_id, :shelf)
         on conflict (book_id, user_id) do update set shelf=:shelf
         """), dict(user_id=user_id, book_id=int(book_id), shelf=shelf))
 
         dir = dict(ai=0, like=1, already_read=1, dislike=-1, remove=0, recommend=1)[shelf]
-        db.session.execute(text("""
+        db.session.execute(satext("""
         update books set thumbs=thumbs+:dir where id=:bid
         """), dict(dir=dir, bid=book_id))
 
@@ -671,7 +681,7 @@ class Bookshelf(Base):
     @staticmethod
     def get_shelf(user_id, shelf):
         is_cool = db.session.query(User.is_cool).filter_by(id=user_id).scalar()
-        books = db.session.execute(text(f"""
+        books = db.session.execute(satext(f"""
         select b.id, b.title, {"b.text" if is_cool else "'' as text"}, b.author, b.topic, b.amazon
         from books b 
         inner join bookshelf bs on bs.book_id=b.id 
@@ -688,7 +698,7 @@ class Job(Base):
     created_at = DateCol()
     updated_at = DateCol(update=True)
     method = Column(Unicode)
-    state = Column(Unicode, default='new')
+    state = Column(Unicode, server_default="new")
     data_in = Column(JSONB)
     data_out = Column(JSONB)
 
@@ -764,7 +774,7 @@ class CacheUser(Base):
 def await_row(sess, sql, args={}, wait=.5, timeout=None):
     i = 0
     while True:
-        res = sess.execute(text(sql), args).fetchone()
+        res = sess.execute(satext(sql), args).fetchone()
         if res: return res
         time.sleep(wait)
         if timeout and wait * i >= timeout:
