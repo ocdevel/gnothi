@@ -1,6 +1,5 @@
 import axios from 'axios'
 import moment from "moment-timezone"
-import _ from "lodash";
 
 // e52c6629: dynamic host/port
 let host = window.location.host
@@ -9,6 +8,9 @@ if (~host.indexOf('gnothi')) { // prod
 } else { // dev
   host = 'http://localhost:5002'
 }
+
+const sockHost = host.replace(/http(s?):\/\//, 'ws://')
+const ws = new WebSocket(sockHost + '/jobs-status')
 
 export const SET_SERVER_ERROR = "SET_SERVER_ERROR"
 export function setServerError(payload) {
@@ -104,9 +106,10 @@ export const changeAs = (as=null) => async (dispatch, getState) => {
 export const SET_AI_STATUS = "SET_AI_STATUS"
 export const setAiStatus = (payload) => ({type: SET_AI_STATUS, payload})
 export const checkAiStatus = () => async (dispatch, getState) => {
-  if (!getState().jwt) {return}
-  const {data} = await dispatch(fetch_('jobs-status'))
-  dispatch(setAiStatus(data))
+  ws.onmessage = (data) => {
+    console.log(data)
+    dispatch(setAiStatus(data.data))
+  }
 }
 
 export const SET_TAGS = "SET_TAGS"

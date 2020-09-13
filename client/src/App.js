@@ -26,7 +26,7 @@ import {aiStatusEmoji} from "./utils"
 
 import { Provider, useSelector, useDispatch } from 'react-redux'
 import store from './redux/store';
-import { getUser, logout, changeAs, checkAiStatus, getTags } from './redux/actions';
+import { getUser, logout, changeAs, checkAiStatus } from './redux/actions';
 
 
 function App() {
@@ -40,15 +40,14 @@ function App() {
 	const history = useHistory()
 
   useEffect(() => {
+    dispatch(checkAiStatus())
+  })
+  useEffect(() => {
     history.push('/j')
   }, [as])
 
   useEffect(() => {
     dispatch(getUser())
-
-    // TODO move to websockets
-    const timer = setInterval(() => dispatch(checkAiStatus()), 1000)
-    return () => clearInterval(timer)
   }, [jwt, as])
 
   const renderAsSelect = () => {

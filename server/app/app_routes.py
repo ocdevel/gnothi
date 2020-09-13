@@ -1,8 +1,8 @@
-import pdb, re, datetime, logging, boto3, pytz
+import pdb, re, datetime, logging, boto3, pytz, time
 import shortuuid
 import dateutil.parser
 from typing import List, Dict, Any
-from fastapi import Depends, HTTPException, File, UploadFile
+from fastapi import Depends, HTTPException, File, UploadFile, WebSocket
 from app.app_app import app
 from app.app_jwt import fastapi_users
 from fastapi_sqlalchemy import db  # an object to provide global access to a database session
@@ -28,9 +28,13 @@ def cant_snoop(feature=None):
     return send_error(message, 401)
 
 
-@app.get('/jobs-status')
-def jobs_status_get(viewer: M.User = Depends(fastapi_users.get_current_user)):
-    return jobs_status()
+@app.websocket('/jobs-status')
+async def jobs_status_get(websocket: WebSocket):
+    with db():
+        await websocket.accept()
+        while True:
+            time.sleep(1)
+            await websocket.send_text(jobs_status())
 
  
 @app.get('/user', response_model=M.SOUser)
