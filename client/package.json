@@ -19,12 +19,15 @@
     "react-icons": "*",
     "react-markdown": "^4.3.1",
     "react-markdown-editor-lite": "^1.2.2",
+    "react-redux": "^7.2.1",
     "react-router-bootstrap": "^0.25.0",
     "react-router-dom": "^5.1.2",
     "react-scripts": "3.4.1",
     "react-select": "^3.1.0",
     "react-stars": "^2.2.5",
-    "recharts": "^1.8.5"
+    "recharts": "^1.8.5",
+    "redux": "^4.0.5",
+    "redux-thunk": "^2.3.0"
   },
   "scripts": {
     "start": "react-scripts start",

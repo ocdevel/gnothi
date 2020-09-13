@@ -3,8 +3,13 @@ import _ from "lodash"
 import React, {useEffect, useState} from "react"
 import { FaPen } from 'react-icons/fa'
 
-function TagForm({fetch_, onSubmit, tag=null}) {
+import { useSelector, useDispatch } from 'react-redux'
+import { fetch_, getTags, setSelectedTags } from './redux/actions'
+
+function TagForm({tag=null}) {
   const [name, setName] = useState(tag ? tag.name : '')
+  const dispatch = useDispatch()
+  const onSubmit = () => dispatch(getTags())
 
   const id = tag && tag.id
 
@@ -14,16 +19,16 @@ function TagForm({fetch_, onSubmit, tag=null}) {
     if (!window.confirm("Are you sure? This will remove this tag from all entries (your entries will stay).")) {
       return
     }
-    await fetch_(`tags/${id}`, 'DELETE')
+    await dispatch(fetch_(`tags/${id}`, 'DELETE'))
     onSubmit()
   }
 
   const submit = async e => {
     e.preventDefault()
     if (id) {
-      await fetch_(`tags/${id}`, 'PUT', {name})
+      await dispatch(fetch_(`tags/${id}`, 'PUT', {name}))
     } else {
-      await fetch_(`tags`, 'POST', {name})
+      await dispatch(fetch_(`tags`, 'POST', {name}))
     }
     onSubmit()
   }
@@ -55,7 +60,9 @@ function TagForm({fetch_, onSubmit, tag=null}) {
   </Form>
 }
 
-function TagModal({fetch_, close, tags, fetchTags}) {
+function TagModal({close}) {
+  const tags = useSelector(state => state.tags)
+
   return (
     <Modal show={true} onHide={close}>
       <Modal.Header>
@@ -63,15 +70,8 @@ function TagModal({fetch_, close, tags, fetchTags}) {
       </Modal.Header>
 
       <Modal.Body>
-        <TagForm fetch_={fetch_} onSubmit={fetchTags} />
-        {tags && tags.map(t =>
-          <TagForm
-            key={t.id}
-            fetch_={fetch_}
-            tag={t}
-            onSubmit={fetchTags}
-          />
-        )}
+        <TagForm />
+        {tags && tags.map(t => <TagForm key={t.id} tag={t}/> )}
       </Modal.Body>
 
       <Modal.Footer>
@@ -83,48 +83,48 @@ function TagModal({fetch_, close, tags, fetchTags}) {
 
 
 export default function Tags({
-  fetch_,
-  as,
   selected=null,
   setSelected=null,
   noEdit=false,
   noClick=false,
   preSelectMain=false
 }) {
-  const [tags, setTags] = useState([])
   const [editTags, setEditTags] = useState(false)
+  const as = useSelector(state => state.as)
+  // tags sorted on server
+  const tags = useSelector(state => state.tags)
+  const selectedTags = useSelector(state => state.selectedTags)
+  const dispatch = useDispatch()
 
-  const fetchTags = async () => {
-    const {data, code, message} = await fetch_('tags', 'GET')
-    if (preSelectMain) {
-      let main = _.find(data, t=>t.main)
-      if (!main) {
-        data[0].main = true
-        main = data[0]
-      }
+  useEffect(() => {
+    dispatch(getTags())
+  }, [as])
+
+  useEffect(() => {
+    if (tags.length && preSelectMain) {
+      const main = _.find(tags, t=>t.main)
       selectTag(main.id, true)
     }
-    setTags(data)
+  }, [tags])
+
+  // no selected,setSelected props indicates using global tags
+  const selectedTags_ = selected || selectedTags
+
+  const selectTag = (id, v) => {
+    if (setSelected) {
+      setSelected({...selectedTags_, [id]: v})
+    } else {
+      dispatch(setSelectedTags({[id]: v}))
+    }
   }
-
-  useEffect(() => {fetchTags()}, [])
-
-  const selectTag = (id, v) => setSelected({...selected, [id]: v})
   // const clear = async () => {
   //   _.each(tags, t => {selectTag(t.id,false)})
   // }
   const showEditTags = () => setEditTags(true)
   const closeEditTags = () => setEditTags(false)
 
-  let sorted = []
-  if (tags.length) {
-    const main = _.find(tags, t => t.main)
-    sorted = main ? [main] : []
-    sorted = [...sorted, ..._.filter(tags, t => !t.main)]
-  }
-
   const renderTag = t => {
-    const selected_ = selected[t.id]
+    const selected_ = selectedTags_[t.id]
     return <>
       <Button
         disabled={noClick}
@@ -136,18 +136,13 @@ export default function Tags({
   }
 
   return <>
-    {editTags && <TagModal
-      fetch_={fetch_}
-      fetchTags={fetchTags}
-      tags={sorted}
-      close={closeEditTags}
-    />}
+    {editTags && <TagModal close={closeEditTags} />}
     {/*<Button
       size="sm"
       variant={_.some(tags, 'selected') ? 'outline-primary' : 'primary'}
       onClick={clear}
     >Default</Button>&nbsp;*/}
-    {sorted.map(renderTag)}
+    {tags.map(renderTag)}
     {!as && !noEdit && <Button
       size="sm"
       variant="light"

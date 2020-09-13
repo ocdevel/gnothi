@@ -8,7 +8,10 @@ import SetupHabitica from "./SetupHabitica";
 import FieldModal from "./FieldModal";
 import ChartModal from "./ChartModal";
 
-export default function Fields({fetch_, as, user}) {
+import { useSelector, useDispatch } from 'react-redux'
+import { fetch_ } from './redux/actions'
+
+export default function Fields() {
   const [fetchingSvc, setFetchingSvc] = useState(false)
   const [fields, setFields] = useState({})
   const [fieldEntries, setFieldEntries] = useState({})
@@ -16,9 +19,13 @@ export default function Fields({fetch_, as, user}) {
   const [showChart, setShowChart] = useState(false)
   const [notShared, setNotShared] = useState(false)
 
+  const dispatch = useDispatch()
+  const as = useSelector(state => state.as)
+  const user = useSelector(state => state.user)
+
   const fetchFieldEntries = async (fields) => {
     // FIXME shouldn't need to pass in fields, but fields=={} even after fetchFields..
-    const {data} = await fetch_(`field-entries`, 'GET')
+    const {data} = await dispatch(fetch_(`field-entries`, 'GET'))
     _.each(data, (val, fid) => {
       if (val) {return}
       const f = fields[fid]
@@ -37,7 +44,7 @@ export default function Fields({fetch_, as, user}) {
   }
 
   const fetchFields = async () => {
-    const {data, code, message} = await fetch_(`fields`, 'GET')
+    const {data, code, message} = await dispatch(fetch_(`fields`, 'GET'))
     if (code === 401) {return setNotShared(message)}
     setFields(data)
     await fetchFieldEntries(data)
@@ -49,7 +56,7 @@ export default function Fields({fetch_, as, user}) {
 
   const fetchService = async (service) => {
     setFetchingSvc(true)
-    await fetch_(`${service}/sync`, 'POST')
+    await dispatch(fetch_(`${service}/sync`, 'POST'))
     await fetchFields()
     setFetchingSvc(false)
   }
@@ -59,7 +66,7 @@ export default function Fields({fetch_, as, user}) {
     v = parseFloat(v)  // until we support strings
     setFieldEntries({...fieldEntries, [fid]: v})
     const body = {value: v}
-    fetch_(`field-entries/${fid}`, 'POST', body)
+    dispatch(fetch_(`field-entries/${fid}`, 'POST', body))
   }
 
   const changeCheck = fid => e => {
@@ -209,7 +216,7 @@ export default function Fields({fetch_, as, user}) {
       </>
     }
     if (g.service === 'habitica' && !as) {
-      return <SetupHabitica fetch_={fetch_}/>
+      return <SetupHabitica />
     }
     return null
   }
@@ -236,7 +243,6 @@ export default function Fields({fetch_, as, user}) {
   return <div>
     {showForm && (
       <FieldModal
-        fetch_={fetch_}
         close={onFormClose}
         field={showForm === true ? {} : fields[showForm]}
       />
@@ -244,7 +250,6 @@ export default function Fields({fetch_, as, user}) {
 
     {showChart && (
       <ChartModal
-        fetch_={fetch_}
         field={showChart === true ? null : fields[showChart]}
         overall={showChart === true}
         close={onChartClose}

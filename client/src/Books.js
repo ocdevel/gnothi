@@ -4,15 +4,21 @@ import {spinner, SimplePopover} from "./utils";
 import {Button, ButtonGroup, Nav, NavDropdown} from "react-bootstrap";
 import {FaTags, FaUser, FaThumbsUp, FaThumbsDown, FaCheck, FaTimes} from "react-icons/fa"
 
-export default function Books({fetch_, as, aiStatus}) {
+import { useSelector, useDispatch } from 'react-redux'
+import { fetch_ } from './redux/actions'
+
+export default function Books() {
   const [books, setBooks] = useState([])
   const [fetching, setFetching] = useState(false)
   const [notShared, setNotShared] = useState(false)
   const [shelf, setShelf] = useState('ai')  // like|dislike|already_read|remove|recommend
 
+  const dispatch = useDispatch()
+  const as = useSelector(state => state.as)
+
   const fetchShelf = async () => {
     setFetching(true)
-    const {data, code, message} = await fetch_(`books/${shelf}`, 'GET')
+    const {data, code, message} = await dispatch(fetch_(`books/${shelf}`, 'GET'))
     setFetching(false)
     if (code === 401) {return setNotShared(message)}
     setBooks(data)
@@ -30,8 +36,8 @@ export default function Books({fetch_, as, aiStatus}) {
   }
 
   const putOnShelf = async (id, shelf_) => {
-    await fetch_(`books/${id}/${shelf_}`, 'POST')
-    _.remove(books, {id})
+    await dispatch(fetch_(`books/${id}/${shelf_}`, 'POST'))
+    // _.remove(books, {id})
     setBooks(_.reject(books, {id}))
     // fetchBooks()
   }

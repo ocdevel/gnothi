@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react'
+import React from 'react'
 import {Jumbotron, Button, Container, Row, Col} from 'react-bootstrap'
 import {
   FaTextHeight,
@@ -20,10 +20,12 @@ import {
   Route,
   Link
 } from "react-router-dom"
+import {useSelector} from "react-redux"
 
-export default function Splash({serverError, onAuth, fetch_}) {
+export default function Splash() {
+  const error = useSelector(state => state.error)
   return <Router>
-    <Error message={serverError} />
+    <Error message={error} />
     <Jumbotron className='gnothi-jumbo'>
       <div className='jumbo-content'>
         <div className='jumbo-text'>
@@ -39,12 +41,12 @@ export default function Splash({serverError, onAuth, fetch_}) {
         <Switch>
           <Route path='/reset-password'>
             <div className='auth-block'>
-              <ResetPassword fetch_={fetch_} />
+              <ResetPassword />
             </div>
           </Route>
           <Route path='/auth'>
             <div className='auth-block'>
-              <Auth onAuth={onAuth} fetch_={fetch_} />
+              <Auth />
             </div>
           </Route>
         </Switch>

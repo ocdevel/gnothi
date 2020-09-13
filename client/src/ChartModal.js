@@ -5,19 +5,24 @@ import ReactMarkdown from "react-markdown";
 import {CartesianGrid, Line, LineChart, Tooltip, XAxis, YAxis} from "recharts";
 import {spinner} from './utils'
 
+import { useSelector, useDispatch } from 'react-redux'
+import { fetch_ } from './redux/actions'
+
 const round_ = (v) => v ? v.toFixed(2) : null
 
-export default function ChartModal({fetch_, close, field=null, overall=false}) {
+export default function ChartModal({close, field=null, overall=false}) {
   const [influencers, setInfluencers] = useState({})
   const [fields, setFields] = useState([])
   const [nextPreds, setNextPreds] = useState({})
   const [enough, setEnough] = useState(false)
   const [fetching, setFetching] = useState(false)
 
+  const dispatch = useDispatch()
+
   // console.log('influencers', influencers)
 
   const fetchFieldPreds = async (fields) => {
-    const {data} = await fetch_(`influencers?target=${field.id}`, 'GET')
+    const {data} = await dispatch(fetch_(`influencers?target=${field.id}`, 'GET'))
     if (!data.per_target) {
       return setEnough(false)
     }
@@ -28,7 +33,7 @@ export default function ChartModal({fetch_, close, field=null, overall=false}) {
   }
 
   const fetchOverallPreds = async (fields) => {
-    const {data} = await fetch_(`influencers`, 'GET')
+    const {data} = await dispatch(fetch_(`influencers`, 'GET'))
     if (!data.overall) {
       return setEnough(false)
     }
@@ -39,7 +44,7 @@ export default function ChartModal({fetch_, close, field=null, overall=false}) {
 
   const fetchTargets = async () => {
     setFetching(true)
-    const {data} = await fetch_('fields', 'GET')
+    const {data} = await dispatch(fetch_('fields', 'GET'))
     setFields(data)
     await (overall ? fetchOverallPreds : fetchFieldPreds)(data)
     setFetching(false)

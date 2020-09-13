@@ -126,8 +126,8 @@ class NLP():
                 inputs.input_ids.to("cuda"),
                 min_length=min_,
                 max_length=max_,
-                num_beams=4,
-                early_stopping=True
+                # num_beams=4,
+                # early_stopping=True
             )
             res = [
                 tokenizer.decode(g, skip_special_tokens=True, clean_up_tokenization_spaces=False)

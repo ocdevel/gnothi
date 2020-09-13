@@ -1,12 +1,18 @@
 import React, {useEffect, useState} from "react";
 import {Button, Form} from "react-bootstrap";
 
-export default function Habitica({fetch_}) {
+import { useSelector, useDispatch } from 'react-redux'
+import { fetch_ } from './redux/actions'
+
+export default function Habitica() {
   const [habiticaUserId, setHabiticaUserId] = useState('')
   const [habiticaApiToken, setHabiticaApiToken] = useState('')
 
+  const dispatch = useDispatch()
+
+  // TODO use reducer.user
   const fetchUser = async () => {
-    const {data} = await fetch_(`user`, 'GET')
+    const {data} = await dispatch(fetch_(`user`, 'GET'))
     setHabiticaUserId(data.habitica_user_id)
     setHabiticaApiToken(data.habitica_api_token)
   }
@@ -21,7 +27,7 @@ export default function Habitica({fetch_}) {
       habitica_user_id: habiticaUserId,
       habitica_api_token: habiticaApiToken
     }
-    await fetch_(`habitica`, 'POST', body)
+    await dispatch(fetch_(`habitica`, 'POST', body))
     fetchUser()
   }
 

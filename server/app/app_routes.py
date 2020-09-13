@@ -138,7 +138,17 @@ def person_delete(person_id: str, as_user: str = None, viewer: M.User = Depends(
 @app.get('/tags', response_model=List[M.SOTag])
 def tags_get(as_user: str = None, viewer: M.User = Depends(fastapi_users.get_current_user)):
     user, snooping = getuser(viewer, as_user)
-    return M.Tag.snoop(viewer.email, user.id, snooping=snooping).all()
+    tags = M.Tag.snoop(viewer.email, user.id, snooping=snooping).all()
+    if not tags: return []
+
+    # TODO better way of handling missing main (eg for snooping)?
+    main = next(iter([t for t in tags if t.main]), None)
+    if not main:
+        main = tags[0]
+        main.main = True
+    # sort them: main first, then the rest
+    tags = [main] + [t for t in tags if not t.main]
+    return tags
 
 
 @app.post('/tags', response_model=M.SOTag)

@@ -20,113 +20,41 @@ import Splash from './Splash'
 import Journal from './Journal'
 import ProfileRoutes from './ProfileRoutes'
 import Error from './Error'
-import moment from "moment-timezone"
 import emoji from 'react-easy-emoji'
 import {aiStatusEmoji} from "./utils"
-import axios from 'axios'
 
-// e52c6629: dynamic host/port
-let host = window.location.host
-if (~host.indexOf('gnothi')) { // prod
-  host = 'https://api.gnothiai.com'
-} else { // dev
-  host = 'http://localhost:5002'
-}
+import { Provider, useSelector, useDispatch } from 'react-redux'
+import store from './redux/store';
+import { getUser, logout, changeAs, checkAiStatus, getTags } from './redux/actions';
+
 
 function App() {
-  const [jwt, setJwt] = useState(localStorage.getItem('jwt'))
-  const [user, setUser] = useState()
-  const [as, setAs] = useState()
-  const [serverError, setServerError] = useState()
-  const [aiStatus, setAiStatus] = useState('off')
-  // const [as, setAs] = useState('3694b314-d050-46da-882a-726598bd6abf')
-
-  const fetch_ = async (
-    route,
-    method='GET',
-    body=null,
-    headers={},
-    useAs=true
-  ) => {
-    const obj = {
-      method,
-      headers: {'Content-Type': 'application/json', ...headers},
-    };
-
-    if (body) obj['data'] = body
-    if (jwt) obj['headers']['Authorization'] = `Bearer ${jwt}`
-    // auth is added by flask-jwt as /auth, all my custom paths are under /api/*
-    let url = `${host}/${route}`
-    if (useAs && as && user && as !== user.id) {
-      url += (~route.indexOf('?') ? '&' : '?') + `as_user=${as}`
-    }
-    obj['url'] = url
-    try {
-      const {status: code, data} = await axios(obj)
-      return {code, data}
-    } catch (error) {
-      let {status: code, statusText: message, data} = error.response
-      message = data.detail || message || "There was an error"
-      // Show errors, but not for 401 (we simply restrict access to components)
-      if (code >= 400 && code !== 401) {
-        setServerError(message)
-      }
-      return {code, message, data}
-    }
-  }
-
-  const getUser = async () => {
-    if (!jwt) {return}
-    const {data, code} = await fetch_('user', 'GET')
-    if (code === 401) { return logout() }
-    fetch_('user/checkin', 'POST')
-    setUser(data)
-
-    if (!data.timezone && !as) {
-       // Guess their default timezone (TODO should call this out?)
-      const timezone = moment.tz.guess(true)
-      fetch_('profile/timezone', 'PUT', {timezone})
-    }
-  }
-
-  const onAuth = jwt_ => setJwt(jwt_)
-
-  const checkAiStatus = () => {
-    return setInterval(async () => {
-      if (!jwt) {return}
-      const {data, code} = await fetch_('jobs-status')
-      setAiStatus(data)
-    }, 1000)
-  }
+  const jwt = useSelector(state => state.jwt);
+  const user = useSelector(state => state.user);
+  const as = useSelector(state => state.as);
+  const asUser = useSelector(state => state.asUser);
+  const aiStatus = useSelector(state => state.aiStatus);
+  const serverError = useSelector(state => state.serverError);
+	const dispatch = useDispatch();
 
   useEffect(() => {
-    getUser()
+    dispatch(getUser())
 
-    const timer = checkAiStatus()
-    return () => clearTimeout(timer)
-  }, [jwt])
-
-  const changeAs = async (as=null) => {
-    setAs(as)
-    const {data} = await fetch_('user', 'GET', null, {}, false)
-    setUser(data)
-  }
-
-  const logout = () => {
-    localStorage.removeItem('jwt')
-    window.location.href = "/"
-  }
+    // TODO move to websockets
+    const timer = setInterval(() => dispatch(checkAiStatus()), 1000)
+    return () => clearInterval(timer)
+  }, [jwt, as])
 
   const renderAsSelect = () => {
     if (_.isEmpty(user.shared_with_me)) {return}
     return <>
       {as && (
-        <NavDropdown.Item onClick={() => changeAs()}>
+        <NavDropdown.Item onClick={() => dispatch(changeAs())}>
           {emoji("🔀")}{user.email}
         </NavDropdown.Item>
       )}
       {user.shared_with_me.map(s => s.id != as && (
-        <NavDropdown.Item onClick={() => changeAs(s.id)}>
+        <NavDropdown.Item onClick={() => dispatch(changeAs(s.id))}>
           {emoji("🔀")}
           {s.new_entries ? <Badge pill variant='danger'>{s.new_entries}</Badge> : null}
           {s.email}
@@ -139,8 +67,8 @@ function App() {
   const renderNav = () => {
     let email = user.email
     if (as) {
+      // email = <>{emoji("🕵️")} {asUser.email}</>
       email = _.find(user.shared_with_me, {id: as}).email
-      email = <>{emoji("🕵️")} {email}</>
     } else {
       const ne = _.reduce(user.shared_with_me, (m,v) => m + v.new_entries, 0)
       email = !ne ? email : <><Badge pill variant='danger'>{ne}</Badge> {email}</>
@@ -167,7 +95,7 @@ function App() {
               {!as && <LinkContainer to="/profile/sharing">
                 <NavDropdown.Item>Sharing</NavDropdown.Item>
               </LinkContainer>}
-              <NavDropdown.Item onClick={logout}>Logout</NavDropdown.Item>
+              <NavDropdown.Item onClick={() => dispatch(logout())}>Logout</NavDropdown.Item>
             </NavDropdown>
           </Nav>
         </Navbar.Collapse>
@@ -176,33 +104,31 @@ function App() {
   }
 
   if (!user) {
-    return <Splash serverError={serverError} onAuth={onAuth} fetch_={fetch_} />
+    return <Splash />
   }
 
   // key={as} triggers refresh on these components (triggering fetches)
-  return (
-    <Router>
-      {renderNav()}
-      <Container fluid key={as}>
-        <Error message={serverError} />
-        <Switch>
-          <Route path="/j">
-            <Journal
-              fetch_={fetch_}
-              as={as}
-              setServerError={setServerError}
-              aiStatus={aiStatus}
-              user={user}
-            />
-          </Route>
-          <Route path="/profile">
-            <ProfileRoutes fetch_={fetch_} as={as} />
-          </Route>
-          <Redirect from="/" to="/j" />
-        </Switch>
-      </Container>
-    </Router>
-  )
+  return <>
+    {renderNav()}
+    <Container fluid key={as}>
+      <Error message={serverError} />
+      <Switch>
+        <Route path="/j">
+          <Journal />
+        </Route>
+        <Route path="/profile">
+          <ProfileRoutes />
+        </Route>
+        <Redirect from="/" to="/j" />
+      </Switch>
+    </Container>
+  </>
 }
 
-export default App;
+export default () => <>
+  <Provider store={store}>
+    <Router>
+      <App />
+    </Router>
+  </Provider>
+</>;

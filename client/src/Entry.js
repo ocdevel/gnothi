@@ -17,6 +17,9 @@ import MdEditor from 'react-markdown-editor-lite'
 import 'react-markdown-editor-lite/lib/index.css'
 import {AddNotes} from './Notes'
 
+import { useSelector, useDispatch } from 'react-redux'
+import { fetch_, setServerError } from './redux/actions'
+
 const mdParser = new MarkdownIt(/* Markdown-it options */);
 
 // https://github.com/HarryChen0506/react-markdown-editor-lite/blob/master/docs/plugin.md
@@ -36,13 +39,15 @@ const plugins = [
   // f3b13052: auto-resize
 ]
 
-function Editor({fetch_, text, changeText}) {
+function Editor({text, changeText}) {
+  const dispatch = useDispatch()
+
   const onImageUpload = async (file) => {
     const formData = new FormData();
     // formData.append('file', file, file.filename);
     formData.append('file', file);
     const headers = {'Content-Type': 'multipart/form-data'}
-    const {data, code} = await fetch_('upload-image', 'POST', formData, headers)
+    const {data, code} = await dispatch(fetch_('upload-image', 'POST', formData, headers))
     return data.filename
   }
 
@@ -63,7 +68,7 @@ function Editor({fetch_, text, changeText}) {
   )
 }
 
-export default function Entry({fetch_, as, setServerError, update}) {
+export default function Entry({update}) {
   const {entry_id} = useParams()
   const history = useHistory()
   const [editing, setEditing] = useState(!entry_id)
@@ -73,10 +78,13 @@ export default function Entry({fetch_, as, setServerError, update}) {
   const [tags, setTags] = useState({})
   const [advanced, setAdvanced] = useState(false)
   const [notes, setNotes] = useState([])
+  const as = useSelector(state => state.as)
+
+  const dispatch = useDispatch()
 
   const fetchEntry = async () => {
     if (!entry_id) { return }
-    const {data} = await fetch_(`entries/${entry_id}`, 'GET')
+    const {data} = await dispatch(fetch_(`entries/${entry_id}`, 'GET'))
     if (!data) {return} // I think if they refresh on entry/{id} while snooping?
     const {title, text, no_ai, created_at} = data
     setForm({title, text, no_ai, created_at})
@@ -86,7 +94,7 @@ export default function Entry({fetch_, as, setServerError, update}) {
 
   const fetchNotes = async () => {
     if (!entry_id) { return }
-    const {data} = await fetch_(`entries/${entry_id}/notes`, 'GET')
+    const {data} = await dispatch(fetch_(`entries/${entry_id}/notes`, 'GET'))
     setNotes(data)
   }
 
@@ -102,12 +110,12 @@ export default function Entry({fetch_, as, setServerError, update}) {
 
   const submit = async e => {
     e.preventDefault()
-    setServerError(false)
+    dispatch(setServerError(false))
     setSubmitting(true)
     let {title, text, no_ai, created_at} = form
     const body = {title, text, no_ai, created_at, tags}
-    const res = entry_id ? await fetch_(`entries/${entry_id}`, 'PUT', body)
-      : await fetch_(`entries`, 'POST', body)
+    const res = entry_id ? await dispatch(fetch_(`entries/${entry_id}`, 'PUT', body))
+      : await dispatch(fetch_(`entries`, 'POST', body))
     setSubmitting(false)
     if (res.code !== 200) {return}
     setEditing(false)
@@ -117,7 +125,7 @@ export default function Entry({fetch_, as, setServerError, update}) {
 
   const deleteEntry = async () => {
     if (window.confirm(`Delete "${entry.title}"`)) {
-      await fetch_(`entries/${entry_id}`, 'DELETE')
+      await dispatch(fetch_(`entries/${entry_id}`, 'DELETE'))
       goBack()
     }
   }
@@ -179,7 +187,7 @@ export default function Entry({fetch_, as, setServerError, update}) {
       </>}
 
       {editing ? (
-        <Editor fetch_={fetch_} text={form.text} changeText={changeText} />
+        <Editor text={form.text} changeText={changeText} />
       ) : (
         <ReactMarkdown source={form.text} linkTarget='_blank' />
       )}
@@ -218,8 +226,6 @@ export default function Entry({fetch_, as, setServerError, update}) {
         </SimplePopover>
         <span className='tools-divider' />
         <Tags
-          fetch_={fetch_}
-          as={as}
           selected={tags}
           setSelected={setTags}
           noClick={!editing}
@@ -262,7 +268,7 @@ export default function Entry({fetch_, as, setServerError, update}) {
 
       <Modal.Footer>
         {!editing && entry_id && <div className='mr-auto'>
-          <AddNotes fetch_={fetch_} entry_id={entry_id} as={as} onSubmit={fetchNotes} />
+          <AddNotes entry_id={entry_id} onSubmit={fetchNotes} />
         </div>}
         {renderButtons()}
       </Modal.Footer>

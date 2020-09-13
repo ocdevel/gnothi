@@ -1,9 +1,15 @@
-import React, {useEffect, useState} from "react";
-import {Button, Col, Form, Modal, Table} from "react-bootstrap";
+import React, {useEffect, useState} from "react"
+import {Button, Col, Form, Modal, Table} from "react-bootstrap"
 
-function Person({fetch_, as, close, person=null}) {
+import { useSelector, useDispatch } from 'react-redux'
+import { fetch_ } from './redux/actions'
+
+function Person({close, person=null}) {
   const default_form = {name: '', relation: '', issues: '', bio: ''}
   const [form, setForm] = useState(person ? person : default_form)
+
+  const as = useSelector(state => state.as)
+  const dispatch = useDispatch()
 
   const changeForm = (k, direct=false) => e => {
     const v = direct ? e : e.target.value
@@ -13,9 +19,9 @@ function Person({fetch_, as, close, person=null}) {
   const submit = async (e) => {
     e.preventDefault()
     if (person) {
-      await fetch_(`people/${person.id}`, 'PUT', form)
+      await dispatch(fetch_(`people/${person.id}`, 'PUT', form))
     } else {
-      await fetch_('people', 'POST', form)
+      await dispatch(fetch_('people', 'POST', form))
     }
     close()
   }
@@ -23,7 +29,7 @@ function Person({fetch_, as, close, person=null}) {
   const destroy = async () => {
     if (!person) {return}
     if (window.confirm("Delete person, are you sure?")) {
-      await fetch_(`people/${person.id}`, 'DELETE')
+      await dispatch(fetch_(`people/${person.id}`, 'DELETE'))
     }
     close()
   }
@@ -80,12 +86,15 @@ function Person({fetch_, as, close, person=null}) {
   </>
 }
 
-export default function People({fetch_, as}) {
+export default function People() {
   const [people, setPeople] = useState([])
   const [person, setPerson] = useState(null)
 
+  const as = useSelector(state => state.as)
+  const dispatch = useDispatch()
+
   const fetchPeople = async () => {
-    const {data} = await fetch_('people')
+    const {data} = await dispatch(fetch_('people'))
     setPerson(null)
     setPeople(data)
   }
@@ -101,8 +110,6 @@ export default function People({fetch_, as}) {
 
   return <>
     {person && <Person
-      fetch_={fetch_}
-      as={as}
       close={onClose}
       person={person === true ? null : person}
     />}

@@ -29,6 +29,9 @@ import {
 import Entry from "./Entry"
 import './Entries.css'
 
+import { useSelector, useDispatch } from 'react-redux'
+import { fetch_ } from './redux/actions'
+
  const tools = {
   entries: {minEntries: 0},
   query: {
@@ -65,29 +68,23 @@ import './Entries.css'
   },
 }
 
-export default function Entries({fetch_, as, aiStatus, setServerError}) {
+export default function Entries() {
   const [entries, setEntries] = useState([])
   const [notShared, setNotShared] = useState(false)
   const [tool, setTool] = useState('entries')
   const [page, setPage] = useState(0)
   let [searchEnabled, setSearchEnabled] = useState(false)
   let [search, setSearch] = useState('')
-  let [tags, setTags] = useState({})
+  const selected = useSelector(state => state.selectedTags)
 
-  // clean up
-  tags = _.pickBy(tags, v => v)
-  search = search.toLowerCase()
-
-  let filtered = _(entries)
-      .filter(e => _.reduce(tags, (m, v, k) => e.entry_tags[k] || m, false))
-      .filter(e => !search.length || ~(e.title + e.text).toLowerCase().indexOf(search))
-      .value()
+  const dispatch = useDispatch()
+  const as = useSelector(state => state.as)
 
   let history = useHistory()
   let match = useRouteMatch()
 
   const fetchEntries = async () => {
-    const {data, code, message} = await fetch_('entries', 'GET')
+    const {data, code, message} = await dispatch(fetch_('entries', 'GET'))
     if (code === 401) {return setNotShared(message)}
     setEntries(data)
   }
@@ -96,19 +93,23 @@ export default function Entries({fetch_, as, aiStatus, setServerError}) {
     fetchEntries()
   }, [])
 
+  useEffect(() => {
+    setPage(0)
+  }, [selected])
+
   if (notShared) {return <h5>{notShared}</h5>}
+
+  let filtered = _(entries)
+      .filter(e => _.reduce(selected, (m, v, k) => e.entry_tags[k] || m, false))
+      .filter(e => !search.length || ~(e.title + e.text).toLowerCase().indexOf(search))
+      .value()
 
   const gotoForm = (entry_id=null) => {
     const p = match.url + "/" + (entry_id ? `entry/${entry_id}` : 'entry')
     history.push(p)
   }
 
-  const changeSearch = e => setSearch(e.target.value)
-
-  const setTags_ = (tags_) => {
-    setTags(tags_)
-    setPage(0)
-  }
+  const changeSearch = e => setSearch(e.target.value.toLowerCase())
 
   const toggleSearch = () => {
     if (tool !== 'entries') {setTool('entries')}
@@ -193,14 +194,7 @@ export default function Entries({fetch_, as, aiStatus, setServerError}) {
         </SimplePopover>
         <span className='tools-divider'/>
         {/*TODO reconsider preSelectMain for !!as. Eg, currently don't want therapist seeing Dream by default.*/}
-        <Tags
-          as={as}
-          fetch_={fetch_}
-          server={false}
-          selected={tags}
-          setSelected={setTags_}
-          preSelectMain={true}
-        />{' '}
+        <Tags preSelectMain={true} />{' '}
       </div>}
       <div style={{marginTop:5}}>
         <SimplePopover text="AI Tools">
@@ -259,8 +253,7 @@ export default function Entries({fetch_, as, aiStatus, setServerError}) {
       return renderEntries()
     }
     const desc = tools[tool].description
-    const args = {fetch_, as, tags, aiStatus}
-    const comp = tools[tool].render(args)
+    const comp = tools[tool].render()
     return <>
       <Alert variant='info'>
         <div>{desc}</div>
@@ -280,11 +273,11 @@ export default function Entries({fetch_, as, aiStatus, setServerError}) {
     <div>
       <Switch>
         <Route path={`${match.url}/entry/:entry_id`}>
-          <Entry fetch_={fetch_} as={as} setServerError={setServerError} update={fetchEntries} />
+          <Entry update={fetchEntries} />
         </Route>
         {!as && (
           <Route path={`${match.url}/entry`}>
-            <Entry fetch_={fetch_} as={as} setServerError={setServerError} update={fetchEntries} />
+            <Entry update={fetchEntries} />
           </Route>
         )}
       </Switch>

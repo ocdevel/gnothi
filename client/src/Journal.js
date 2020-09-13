@@ -6,7 +6,7 @@ import React from "react"
 import {Col, Row} from 'react-bootstrap'
 import {NotesAll} from './Notes'
 
-export default function Journal({user, fetch_, as, setServerError, aiStatus}) {
+export default function Journal() {
   let match = useRouteMatch()
 
   return (
@@ -14,12 +14,12 @@ export default function Journal({user, fetch_, as, setServerError, aiStatus}) {
       <Row>
         <Col>
           <Route path={match.url}>
-            <Entries fetch_={fetch_} as={as} aiStatus={aiStatus} setServerError={setServerError}/>
+            <Entries />
           </Route>
         </Col>
         <Col lg={4}>
-          <Fields fetch_={fetch_} as={as} user={user} />
-          <NotesAll fetch_={fetch_} as={as} />
+          <Fields  />
+          <NotesAll />
         </Col>
       </Row>
     </div>

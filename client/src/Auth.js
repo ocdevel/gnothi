@@ -10,12 +10,17 @@ import {useLocation, useHistory} from "react-router-dom"
 import Error from './Error'
 import {spinner} from './utils'
 
-function Auth({fetch_, onAuth}) {
+import { useSelector, useDispatch } from 'react-redux'
+import { fetch_, onAuth } from './redux/actions';
+
+function Auth() {
   const [submitting, setSubmitting] = useState(false)
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [passwordConfirm, setPasswordConfirm] = useState('')
   const [error, setError] = useState(null)
+
+  const dispatch = useDispatch();
   let location = useLocation()
 
   // Reset password
@@ -28,7 +33,7 @@ function Auth({fetch_, onAuth}) {
   const submit_ = async (url, method, body) => {
     setError(null)
     setSubmitting(true)
-    const {code, message, data} = await fetch_(url, method, body)
+    const {code, message, data} = await dispatch(fetch_(url, method, body))
     setSubmitting(false)
     console.log(code, message, data)
     if (code >= 400) {
@@ -45,8 +50,7 @@ function Auth({fetch_, onAuth}) {
     formData.append('password', password)
     const res = await submit_('auth/jwt/login', 'POST', formData)
     if (res === false) {return}
-    localStorage.setItem('jwt', res.access_token);
-    onAuth(res.access_token);
+    dispatch(onAuth(res.access_token))
   }
 
   const submitLogin = async e => {
@@ -192,11 +196,13 @@ function Auth({fetch_, onAuth}) {
   )
 }
 
-function ResetPassword({fetch_}) {
+function ResetPassword() {
   const [submitting, setSubmitting] = useState(false)
   const [password, setPassword] = useState('')
   const [passwordConfirm, setPasswordConfirm] = useState('')
   const [error, setError] = useState(null)
+
+  const dispatch = useDispatch()
   const history = useHistory()
   let location = useLocation()
 
@@ -214,7 +220,7 @@ function ResetPassword({fetch_}) {
     }
     setError(null)
     setSubmitting(true)
-    const {code, message, data} = await fetch_('auth/reset-password', 'POST', {token, password})
+    const {code, message, data} = await dispatch(fetch_('auth/reset-password', 'POST', {token, password}))
     setSubmitting(false)
     if (code !== 200) {
       setError(message)

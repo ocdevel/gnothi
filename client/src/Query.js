@@ -1,14 +1,21 @@
 import React, {useEffect, useState} from "react";
 import {Col, Form, Card, Button, Alert} from "react-bootstrap";
-import {spinner, AiStatusMsg} from './utils'
+import {spinner, AiStatusMsg, trueKeys} from './utils'
 import ForXDays from "./ForXDays"
 
-export default function Query({fetch_, aiStatus}) {
+import { useSelector, useDispatch } from 'react-redux'
+import { fetch_ } from './redux/actions'
+
+export default function Query() {
   const [query, setQuery] = useState('')
   const [answers, setAnswers] = useState([])
   const [fetching, setFetching] = useState(false)
   const [notShared, setNotShared] = useState(false)
   const [form, setForm] = useState({days: 200})
+
+  const aiStatus = useSelector(state => state.aiStatus)
+  const selectedTags = useSelector(state => state.selectedTags)
+  const dispatch = useDispatch()
 
   if (notShared) {return <h5>{notShared}</h5>}
 
@@ -16,7 +23,9 @@ export default function Query({fetch_, aiStatus}) {
     setFetching(true)
     e.preventDefault()
     const body = {query, ...form}
-    const {data, code, message} = await fetch_('query', 'POST', body)
+    const tags_ = trueKeys(selectedTags)
+    if (tags_.length) { body.tags = tags_ }
+    const {data, code, message} = await dispatch(fetch_('query', 'POST', body))
     setFetching(false)
     if (code === 401) {return setNotShared(message)}
     setAnswers(data)

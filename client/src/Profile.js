@@ -11,9 +11,12 @@ import Select from 'react-select';
 import _ from 'lodash'
 import getZodiacSign from "./zodiac"
 
+import { useSelector, useDispatch } from 'react-redux'
+import { fetch_ } from './redux/actions'
+
 const timezones = moment.tz.names().map(n => ({value: n, label: n}))
 
-export default function Profile({fetch_, as}) {
+export default function Profile() {
   const [profile, setProfile] = useState({
     first_name: '',
     last_name: '',
@@ -25,8 +28,11 @@ export default function Profile({fetch_, as}) {
   })
   const [dirty, setDirty] = useState({dirty: false, saved: false})
 
+  const as = useSelector(state => state.as)
+  const dispatch = useDispatch()
+
   const fetchProfile = async () => {
-    const {data} = await fetch_("profile")
+    const {data} = await dispatch(fetch_("profile"))
     if (!data) {return}
     data.timezone = _.find(timezones, t => t.value === data.timezone)
     setProfile(data)
@@ -49,7 +55,7 @@ export default function Profile({fetch_, as}) {
   const submit = async e => {
     e.preventDefault()
     profile.timezone = _.get(profile, 'timezone.value', profile.timezone)
-    await fetch_('profile', 'PUT', profile)
+    await dispatch(fetch_('profile', 'PUT', profile))
     setDirty({dirty: false, saved: true})
     fetchProfile()
   }

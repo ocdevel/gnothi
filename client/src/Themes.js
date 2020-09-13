@@ -4,18 +4,25 @@ import {Button, Card, Form} from "react-bootstrap"
 import _ from "lodash"
 import ForXDays from "./ForXDays"
 
-export default function Themes({fetch_, as, tags, aiStatus}) {
+import { useSelector, useDispatch } from 'react-redux'
+import { fetch_ } from './redux/actions'
+
+export default function Themes() {
   const [themes, setThemes] = useState({})
   const [fetching, setFetching] = useState(false)
   const [notShared, setNotShared] = useState(false)
   const [form, setForm] = useState({days: 200})
+  const aiStatus = useSelector(state => state.aiStatus)
+  const selectedTags = useSelector(state => state.selectedTags)
+
+  const dispatch = useDispatch()
 
   const fetchThemes = async () => {
     setFetching(true)
-    const tags_ = trueKeys(tags)
+    const tags_ = trueKeys(selectedTags)
     const body = {...form}
-    if (tags_.length) { body['tags'] = tags_}
-    const {data, code, message} = await fetch_('themes', 'POST', body)
+    if (tags_.length) { body.tags = tags_}
+    const {data, code, message} = await dispatch(fetch_('themes', 'POST', body))
     setFetching(false)
     if (code === 401) {return setNotShared(message)}
     setThemes(data)
