@@ -235,7 +235,7 @@ export default function Entries() {
         filtered.slice(page*pageSize, page*pageSize + pageSize)
     return <>
       {filteredPage.map(renderEntry)}
-      {usePaging && (
+      {usePaging && <div style={{overflowX: 'scroll'}}>
         <ButtonGroup aria-label="Page">
           {_.times(_.ceil(filtered.length / pageSize), p => (
             <Button key={p}
@@ -244,7 +244,7 @@ export default function Entries() {
             >{p}</Button>
           ))}
         </ButtonGroup>
-      )}
+      </div>}
     </>
   }
 
