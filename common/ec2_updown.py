@@ -63,9 +63,11 @@ def ec2_down():
 def notify_online(sess):
     # get status.svc before notifying online
     status = _fetch_status(sess)
-    # notify online
     sess.execute(text(f"""
-    update jobs_status set status='on', ts_svc={utcnow}, svc=:svc
+    -- notify online
+    update jobs_status set status='on', ts_svc={utcnow}, svc=:svc;
+    -- remove stale jobs
+    delete from jobs where created_at < {utcnow} - interval '20 minutes';
     """), dict(svc=svc))
     sess.commit()
 
@@ -78,11 +80,9 @@ def notify_online(sess):
         threading.Thread(target=ec2_down).start()
         return status
 
-    # client/gpu still active (5 min), or server already off (?)
+    # client/gpu still active (5 min)
     # Note the client setInterval will keep the activity fresh using even if idling, so no need to wait long after
-    if status.elapsed_client / 60 < 5 \
-        or status.status == 'off' \
-        or any_working:
+    if status.elapsed_client / 60 < 5 or any_working:
         return status
 
     # Client inactive, no jobs working. Off you go.

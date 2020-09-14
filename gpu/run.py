@@ -37,13 +37,6 @@ m = Box({
     'themes': themes,
 })
 
-def remove_stale_jobs(sess):
-    sql = f"""
-    delete from jobs
-    where created_at < {utcnow} - interval '1 hour';
-    """
-    sess.execute(sql)
-
 
 def run_job(job):
     jid_, k = str(job.id), job.method
@@ -75,8 +68,6 @@ def run_job(job):
         logger.info(f"Job Error {time.time() - start} {err}")
     with session() as sess:
         sess.execute(sql, params)
-        remove_stale_jobs(sess)
-
     # 3eb71b3: unloading models. multiprocessing handles better
 
 
@@ -88,7 +79,9 @@ if __name__ == '__main__':
     logger.info(f"torch.cuda.is_available() {torch.cuda.is_available()}")
     logger.info("\n\n")
 
-    inactivity = 15 * 60  # 15 minutes
+    # After 15 minutes of non-use, wipe all models.
+    inactivity = 15 * 60
+
     with session() as sess:
         while True:
             # if active_jobs: GPUtil.showUtilization()
@@ -104,7 +97,6 @@ if __name__ == '__main__':
             if not job:
                 if status.elapsed_client > inactivity:
                     nlp_.clear()
-
                 time.sleep(1)
                 continue
 

@@ -295,6 +295,7 @@ def run_books(user_id, job_id=None):
             sess.execute(text("""
             update jobs set state='done' where id=:jid
             """), {'jid': job_id})
+            sess.commit()
 
 
 if __name__ == '__main__':
