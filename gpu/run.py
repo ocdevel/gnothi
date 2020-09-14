@@ -6,15 +6,14 @@ import time, psycopg2, traceback, pdb, multiprocessing, threading, os
 from psycopg2.extras import Json as jsonb
 from box import Box
 import torch
-import socket
 from sqlalchemy import text
 
 # from books import run_books
 from themes import themes
 from influencers import influencers
 from common.utils import utcnow
-from common.database import session, engine
-from common.ec2_updown import ec2_down_maybe
+from common.database import session
+from common.ec2_updown import notify_online
 from utils import cluster, cosine, clear_gpu
 from nlp import nlp_
 
@@ -90,38 +89,25 @@ if __name__ == '__main__':
     logger.info("\n\n")
 
     inactivity = 15 * 60  # 15 minutes
-    while True:
-        # if active_jobs: GPUtil.showUtilization()
+    with session() as sess:
+        while True:
+            # if active_jobs: GPUtil.showUtilization()
+            status = notify_online(sess)
 
-        # Notify is online.
-        sql = f"update jobs_status set status='on', ts_svc={utcnow}, svc=:svc"
-        engine.execute(text(sql), svc=socket.gethostname())
+            # Find jobs
+            job = sess.execute(f"""
+            update jobs set state='working'
+            where id = (select id from jobs where state='new' limit 1)
+            returning id, method;
+            """).fetchone()
+            sess.commit()
+            if not job:
+                if status.elapsed_client > inactivity:
+                    nlp_.clear()
 
-        # Find jobs
-        sql = f"""
-        update jobs set state='working'
-        where id = (select id from jobs where state='new' limit 1)
-        returning id, method;
-        """
-        job = engine.execute(sql).fetchone()
-        if not job:
-            ec2_down_maybe()
-            sql = f"""
-            select extract(epoch FROM ({utcnow} - ts_client)) as elapsed_client
-            from jobs_status;
-            """
-            if engine.execute(sql).fetchone().elapsed_client > inactivity:
-                nlp_.clear()
+                time.sleep(1)
+                continue
 
-            time.sleep(.5)
-            continue
-
-        # Threading keeps models around for re-use (cleared after inactivity)
-        # Multiprocessing fully wipes the process after run. Keras/TF has model-training memleak & can't recover GPU
-        # RAM, so just run books in Process https://github.com/tensorflow/tensorflow/issues/36465#issuecomment-582749350
-        # FIXME Running influencers in process too because it crashes sometimes. Find solution
-        if job.method in []:  # ['books', 'influencers']:
-            multiprocessing.Process(target=run_job, args=(job,)).start()
-        else:
+            # aaf1ec95: multiprocessing.Process for problem models
             threading.Thread(target=run_job, args=(job,)).start()
-        # run_job(job.id)
+            # run_job(job.id)

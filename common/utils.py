@@ -19,6 +19,7 @@ FLASK_KEY
 GPU_INSTANCE
 EMAIL
 ENVIRONMENT
+MACHINE
 """
 for k in keys.split():
     vars[k] = os.environ.get(k, config_json.get(k, None))
