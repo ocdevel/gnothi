@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from "react";
 import _ from 'lodash'
 import {spinner, SimplePopover} from "./utils";
-import {Button, ButtonGroup, Nav, NavDropdown} from "react-bootstrap";
+import {Button, ButtonGroup, Nav, NavDropdown, Alert} from "react-bootstrap";
 import {FaTags, FaUser, FaThumbsUp, FaThumbsDown, FaCheck, FaTimes} from "react-icons/fa"
 
 import { useSelector, useDispatch } from 'react-redux'
@@ -15,6 +15,7 @@ export default function Books() {
 
   const dispatch = useDispatch()
   const as = useSelector(state => state.as)
+  const user = useSelector(state => state.user)
 
   const fetchShelf = async () => {
     setFetching(true)
@@ -95,6 +96,8 @@ export default function Books() {
     <div>
       {books.length > 0 ? <>
         <hr/>
+        {!user.is_cool && <Alert variant='info'>Why no descriptions or ratings? I can't legally scrape Amazon or Goodreads, <a target="_blank" href="https://openlibrary.org/">Open Library</a> is great but doesn't have much data. <a href="mailto:tylerrenelle@gmail.com">Send me</a> suggestions!</Alert>}
+        <Alert variant='info'>Wikipedia & other resources coming soon.</Alert>
         {books.map(renderBook)}
       </> : shelf === 'ai' ? <>
         <p>No AI recommendations yet. This will populate when you have enough entries.</p>

@@ -41,7 +41,7 @@ def jobs_status():
     # job service is fresh (5s)
     if res.elapsed_svc < 5: pass
     # desktop was recently active; very likely  will be back soon
-    elif res.elapsed_svc < 300 and res.svc in [PCs]: pass
+    elif res.elapsed_svc < 300 and res.svc in PCs: pass
     # jobs svc stale (pending|off), decide if should turn ec2 on
     else:
         # status=on if server not turned off via ec2_down_maybe

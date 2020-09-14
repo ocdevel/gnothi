@@ -508,6 +508,8 @@ def summarize_post(
     res = run_gpu_model('summarization', dict(args=[entries], kwargs=kwargs))
     if res is False:
         return {"summary": OFFLINE_MSG, "sentiment": None}
+    if not res["summary"]:
+        return {"summary": "Nothing to summarize (try adjusting date range)"}
     return {'summary': res["summary"], 'sentiment': res["sentiment"]}
 
 

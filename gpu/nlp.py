@@ -110,7 +110,7 @@ class NLP():
 
     def summarization(self, paras, min_length=None, max_length=None, with_sentiment=True):
         if not paras:
-            return {"summary": "Nothing to summarize (try adjusting date range)"}
+            return {"summary": None, "sentiment": None}
         tokenizer, model, max_tokens = self.load('summarization')
 
         parts = self.para_parts(paras, tokenizer, max_tokens)

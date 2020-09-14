@@ -23,8 +23,9 @@ export default function Profile() {
     gender: null,
     orientation: null,
     birthday: '',
-    timezone:null,
-    bio: ''
+    timezone: null,
+    bio: '',
+    //therapist: false
   })
   const [dirty, setDirty] = useState({dirty: false, saved: false})
 
@@ -104,6 +105,12 @@ export default function Profile() {
           <Form.Text>As much information about yourself as you can provide. This will be used by machine learning and therapists.</Form.Text>
         </>})}
       </Form.Row>
+      {/*<Form.Row>
+        <Form.Group controlId="therapist">
+          <Form.Check type="checkbox" label="I'm a therapist" />
+          <Form.Text>Check this if you want your profile listed in the therapist directory. AI will match users based on their entries to your profile based on your "About You", so be as detailed there as possible. Your name and email address will be visible to users.</Form.Text>
+        </Form.Group>
+      </Form.Row>*/}
       <Button
         disabled={!dirty.dirty}
         variant='primary'
