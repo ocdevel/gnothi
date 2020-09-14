@@ -16,7 +16,7 @@ def _fetch_status(sess, gpu=False):
     select status, svc,
         extract(epoch FROM ({utcnow} - ts_svc)) as elapsed_svc,
         extract(epoch FROM ({utcnow} - ts_client)) as elapsed_client
-    from jobs_status;
+    from jobs_status
     """).fetchone()
     if not status:
         svc_ = svc if gpu else None
@@ -26,7 +26,7 @@ def _fetch_status(sess, gpu=False):
         values (1, :stat, {utcnow}, {utcnow}, :svc)
         """), dict(svc=svc_, stat=stat))
         sess.commit()
-        return _fetch_status(sess)
+        return _fetch_status(sess, gpu)
     return status
 
 
@@ -77,7 +77,8 @@ def notify_online(sess):
     -- notify online
     update jobs_status set status='on', ts_svc={utcnow}, svc=:svc;
     -- remove stale jobs
-    delete from jobs where created_at < {utcnow} - interval '20 minutes';
+    delete from jobs 
+    where created_at < {utcnow} - interval '20 minutes' and state in ('working', 'done');
     """), dict(svc=svc))
     sess.commit()
 
@@ -88,13 +89,16 @@ def notify_online(sess):
     # Desktop's taking over, take a rest EC2
     if (svc in PCs) and (status.svc not in PCs) and (not any_working):
         threading.Thread(target=ec2_down).start()
-        return status
 
     # client/gpu still active (5 min)
     # Note the client setInterval will keep the activity fresh using even if idling, so no need to wait long after
-    if status.elapsed_client / 60 < 5 or any_working:
-        return status
+    elif status.elapsed_client / 60 < 5 or any_working:
+        pass
 
     # Client inactive, no jobs working. Off you go.
-    sess.execute(f"update jobs_status set status='off', ts_client={utcnow}")
-    ec2_down()
+    else:
+        sess.execute(f"update jobs_status set status='off', ts_client={utcnow}")
+        sess.commit()
+        threading.Thread(target=ec2_down).start()
+
+    return status
