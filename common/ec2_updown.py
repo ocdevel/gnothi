@@ -11,13 +11,23 @@ svc = vars.MACHINE or socket.gethostname()
 PCs = ['desktop', 'laptop']
 
 
-def _fetch_status(sess):
-    return sess.execute(f"""
+def _fetch_status(sess, gpu=False):
+    status = sess.execute(f"""
     select status, svc,
         extract(epoch FROM ({utcnow} - ts_svc)) as elapsed_svc,
         extract(epoch FROM ({utcnow} - ts_client)) as elapsed_client
     from jobs_status;
     """).fetchone()
+    if not status:
+        svc_ = svc if gpu else None
+        stat = 'on' if gpu else 'off'
+        sess.execute(text(f"""
+        insert into jobs_status (id, status, ts_svc, ts_client, svc) 
+        values (1, :stat, {utcnow}, {utcnow}, :svc)
+        """), dict(svc=svc_, stat=stat))
+        sess.commit()
+        return _fetch_status(sess)
+    return status
 
 
 def ec2_up():
@@ -30,7 +40,7 @@ def ec2_up():
 
 def jobs_status():
     # db.session available in ContextVars from fastapi_sqlalchemy
-    res = _fetch_status(db.session)
+    res = _fetch_status(db.session, gpu=False)
     # debounce client (race-condition, perf)
     # TODO maybe cache it as global var, so not hitting db so much?
     if res.elapsed_client < 3:
@@ -62,7 +72,7 @@ def ec2_down():
 
 def notify_online(sess):
     # get status.svc before notifying online
-    status = _fetch_status(sess)
+    status = _fetch_status(sess, gpu=True)
     sess.execute(text(f"""
     -- notify online
     update jobs_status set status='on', ts_svc={utcnow}, svc=:svc;

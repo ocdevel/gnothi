@@ -60,12 +60,3 @@ def init_db():
 def shutdown_db():
     # using context-vars session-makers now
     pass
-
-
-def ensure_jobs_status():
-    with session() as sess:
-        sess.execute(f"""
-        insert into jobs_status (id, status, ts_client, ts_svc, svc)
-        values (1, 'off', {utcnow}, {utcnow}, null)
-        on conflict (id) do nothing;
-        """)

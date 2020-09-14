@@ -37,25 +37,22 @@ class NLP():
             tokenizer = AutoTokenizer.from_pretrained("mrm8488/t5-base-finetuned-emotion")
             model = AutoModelWithLMHead.from_pretrained("mrm8488/t5-base-finetuned-emotion").to("cuda")
             # TODO we sure it's not ForSequenceClassification? https://huggingface.co/mrm8488/t5-base-finetuned-emotion
-            # model = AutoModelForSequenceClassification.from_pretrained("mrm8488/t5-base-finetuned-emotion").to("cuda")
             m = (tokenizer, model, 512)
         elif k == 'summarization':
-            # Keeping Bart for now, max_length=1024 where T5=512. Switch to Longformer or LongBart when available
-            # https://github.com/huggingface/transformers/issues/4406
-            # TODO also not automatically using tokenizer max_length like it used to, getting srcIndex < srcSelectDimSize
-            # when using pipeline()
+            # Not using pipelines because can't handle >max_tokens
             # https://github.com/huggingface/transformers/issues/4501
             # https://github.com/huggingface/transformers/issues/4224
-            max_tokens = 1024
+            max_tokens = 1024  # 4096
             tokenizer = BartTokenizer.from_pretrained('facebook/bart-large-cnn')
             model = BartForConditionalGeneration.from_pretrained('facebook/bart-large-cnn').to("cuda")
+            # model = EncoderDecoderModel.from_pretrained("patrickvonplaten/longformer2roberta-cnn_dailymail-fp16").to("cuda")
+            # tokenizer = AutoTokenizer.from_pretrained("allenai/longformer-base-4096")
             m = (tokenizer, model, max_tokens)
         elif k == 'question-answering':
             tokenizer = LongformerTokenizer.from_pretrained("allenai/longformer-large-4096-finetuned-triviaqa")
             model = LongformerForQuestionAnswering.from_pretrained("allenai/longformer-large-4096-finetuned-triviaqa", return_dict=True).to("cuda")
-            # Revert to simple line, delete the rest when fixed: https://github.com/huggingface/transformers/issues/4934
-            # Error: CUDA out of memory. Tried to allocate 3.11 GiB (GPU 0; 11.00 GiB total capacity; 6.97 GiB already allocated; 2.71 GiB free; 7.03 GiB reserved in total by PyTorch)
-            # https://github.com/patrickvonplaten/notebooks/blob/master/How_to_evaluate_Longformer_on_TriviaQA_using_NLP.ipynb
+            # tokenizer = AutoTokenizer.from_pretrained("mrm8488/longformer-base-4096-finetuned-squadv2")
+            # model = AutoModelForQuestionAnswering.from_pretrained("mrm8488/longformer-base-4096-finetuned-squadv2", return_dict=True).to("cuda")
             m = (tokenizer, model, 4096)
         self.m[k] = m
         return m
@@ -111,6 +108,7 @@ class NLP():
     def summarization(self, paras, min_length=None, max_length=None, with_sentiment=True):
         if not paras:
             return {"summary": None, "sentiment": None}
+        # paras = [re.sub(r'\bI\b', 'Tyler', p) for p in paras]
         tokenizer, model, max_tokens = self.load('summarization')
 
         parts = self.para_parts(paras, tokenizer, max_tokens)
