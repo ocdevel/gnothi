@@ -13,6 +13,7 @@ services:
     volumes:
       - ./server/:/app
       - ./common/:/app/common
+      - ./.aws:/root/.aws
     logging:
       options:
         max-size: "5m"
@@ -42,6 +43,7 @@ services:
     volumes:
       - ./gpu:/app
       - ./common:/app/common
+      - ./.aws:/root/.aws
     device_requests:
       - capabilities:
           - "gpu"

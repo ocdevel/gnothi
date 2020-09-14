@@ -7,6 +7,7 @@ from common.utils import vars, utcnow
 # just for fastapi-users (I'm using sqlalchemy+engine+session everywhere else)
 import databases
 import logging
+from contextlib import contextmanager
 logger = logging.getLogger(__name__)
 
 Base = declarative_base()
@@ -26,10 +27,24 @@ engine_books = create_engine(
     pool_recycle=300,
 )
 
-SessLocal = Box(
-    main=scoped_session(sessionmaker(autocommit=False, autoflush=False, bind=engine)),
-    books=scoped_session(sessionmaker(autocommit=True, autoflush=True, bind=engine_books))
+Sessions = dict(
+    main=sessionmaker(autocommit=False, autoflush=False, bind=engine),
+    books=sessionmaker(bind=engine_books)  # never saving to this db anyway
 )
+
+@contextmanager
+def session(k='main', commit=True):
+    sess = Sessions[k]()
+    try:
+        yield sess
+        if commit:
+            sess.commit()
+    except:
+        sess.rollback()
+        raise
+    finally:
+        sess.close()
+
 
 fa_users_db = databases.Database(vars.DB_URL)
 
@@ -43,12 +58,14 @@ def init_db():
 
 
 def shutdown_db():
-    for _, sess in SessLocal.items():
-        sess.remove()
+    # using context-vars session-makers now
+    pass
+
 
 def ensure_jobs_status():
-    engine.execute(f"""
-    insert into jobs_status (id, status, ts_client, ts_svc, svc)
-    values (1, 'off', {utcnow}, {utcnow}, null)
-    on conflict (id) do nothing;
-    """)
+    with session() as sess:
+        sess.execute(f"""
+        insert into jobs_status (id, status, ts_client, ts_svc, svc)
+        values (1, 'off', {utcnow}, {utcnow}, null)
+        on conflict (id) do nothing;
+        """)

@@ -1,7 +1,7 @@
 import requests, pdb
 from dateutil.parser import parse as dparse
 from common.utils import is_dev, vars, utcnow
-from common.database import SessLocal
+from common.database import session
 import common.models as M
 from fastapi_sqlalchemy import db
 import logging

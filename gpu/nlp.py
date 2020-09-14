@@ -1,7 +1,7 @@
 import math, time, pdb, re
 import torch
 import numpy as np
-from common.database import SessLocal
+from common.database import session
 import common.models as M
 from sqlalchemy import text as satext
 from cleantext import Clean
@@ -69,7 +69,7 @@ class NLP():
 
     def sentence_encode(self, x):
         m = self.load('sentence-encode')
-        return np.array(m.encode(x, batch_size=128, show_progress_bar=True))
+        return np.array(m.encode(x, batch_size=64, show_progress_bar=True))
 
     def para_parts(self, paras, tokenizer, max_length):
         n_tokens = tokenizer(paras)
@@ -126,8 +126,10 @@ class NLP():
                 inputs.input_ids.to("cuda"),
                 min_length=min_,
                 max_length=max_,
-                # num_beams=4,
-                # early_stopping=True
+
+                # I think this is just for performance? PC hangs without it, not noticing output diff
+                num_beams=4,
+                early_stopping=True
             )
             res = [
                 tokenizer.decode(g, skip_special_tokens=True, clean_up_tokenization_spaces=False)
@@ -188,63 +190,58 @@ class NLP():
         return paras, clean, vecs
 
     def entry(self, id=None):
-        sess = SessLocal.main()
-        e = sess.query(M.Entry).filter(M.Entry.no_ai.isnot(True))
-        e = e.filter(M.Entry.id == id) if id else\
-            e.filter(M.Entry.ai_ran.isnot(True))  # look for other entries to cleanup
-        e = e.first()
-        if not e: return {}
-        root_call = bool(id)
-        id = e.id
+        with session() as sess:
+            e = sess.query(M.Entry).filter(M.Entry.no_ai.isnot(True))
+            e = e.filter(M.Entry.id == id) if id else\
+                e.filter(M.Entry.ai_ran.isnot(True))  # look for other entries to cleanup
+            e = e.first()
+            if not e: return {}
+            root_call = bool(id)
+            id = e.id
 
-        # Run clean-text & vectors for themes/books
-        c_entry = sess.query(M.CacheEntry).get(id)
-        if not c_entry:
-            c_entry = M.CacheEntry(entry_id=id)
-            sess.add(c_entry)
-        c_entry.paras, c_entry.clean, c_entry.vectors = self._prep_entry_cache(e.text)
-        sess.commit()
+            # Run clean-text & vectors for themes/books
+            c_entry = sess.query(M.CacheEntry).get(id)
+            if not c_entry:
+                c_entry = M.CacheEntry(entry_id=id)
+                sess.add(c_entry)
+            c_entry.paras, c_entry.clean, c_entry.vectors = self._prep_entry_cache(e.text)
+            sess.commit()
 
-        # Run summaries
-        try:
-            res = self.summarization(c_entry.paras, 5, 20, with_sentiment=False)
-            e.title_summary = res["summary"]
-            res = self.summarization(c_entry.paras, 30, 250)
-            e.text_summary = res["summary"]
-            e.sentiment = res["sentiment"]
-        except Exception as err:
-            print(err)
-        e.ai_ran = True
-        sess.commit()
+            # Run summaries
+            try:
+                res = self.summarization(c_entry.paras, 5, 20, with_sentiment=False)
+                e.title_summary = res["summary"]
+                res = self.summarization(c_entry.paras, 30, 250)
+                e.text_summary = res["summary"]
+                e.sentiment = res["sentiment"]
+            except Exception as err:
+                print(err)
+            e.ai_ran = True
+            sess.commit()
 
-        # 9131155e: only update every x entries
-        if root_call:
-            sess.add(M.Job(
-                method='books',
-                data_in={'args': [str(e.user_id)]}
-            ))
+            # 9131155e: only update every x entries
+            if root_call:
+                sess.add(M.Job(
+                    method='books',
+                    data_in={'args': [str(e.user_id)]}
+                ))
 
-        sess.commit()
-        sess.close()
         # recurse to process any left-behind entries
         return self.entry()
 
     def profile(self, id):
-        sess = SessLocal.main()
-        profile_txt = sess.query(M.User).get(id).profile_to_text()
-        cu = M.CacheUser
-        if profile_txt:
-            c_profile = sess.query(cu).get(id)
-            # TODO can't use with_entities & model.get(). This fetches cu.influencers too, large
-            # .with_entities(cu.paras, cu.clean, cu.vectors)\
-            if not c_profile:
-                c_profile = cu(user_id=id)
-                sess.add(c_profile)
-            c_profile.paras, c_profile.clean, c_profile.vectors = \
-                self._prep_entry_cache(profile_txt)
-
-        sess.commit()
-        sess.close()
+        with session() as sess:
+            profile_txt = sess.query(M.User).get(id).profile_to_text()
+            cu = M.CacheUser
+            if profile_txt:
+                c_profile = sess.query(cu).get(id)
+                # TODO can't use with_entities & model.get(). This fetches cu.influencers too, large
+                # .with_entities(cu.paras, cu.clean, cu.vectors)\
+                if not c_profile:
+                    c_profile = cu(user_id=id)
+                    sess.add(c_profile)
+                c_profile.paras, c_profile.clean, c_profile.vectors = \
+                    self._prep_entry_cache(profile_txt)
 
 
 nlp_ = NLP()

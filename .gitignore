@@ -4,3 +4,4 @@ import_lisa.py
 tmp/
 N2D
 letsencrypt
+.aws

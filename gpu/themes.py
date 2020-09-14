@@ -1,6 +1,6 @@
 import pdb
 from sklearn.feature_extraction.text import TfidfVectorizer
-from common.database import SessLocal
+from common.database import session
 import common.models as M
 from nlp import nlp_
 from cleantext import Clean
@@ -31,14 +31,14 @@ def top_terms(texts, k=8):
 
 
 def themes(eids):
-    sess = SessLocal.main()
-    # use Model to decrypt fields
-    res = sess.query(M.CacheEntry)\
-        .with_entities(M.CacheEntry.paras, M.CacheEntry.clean, M.CacheEntry.vectors)\
-        .join(M.Entry, M.Entry.id == M.CacheEntry.entry_id)\
-        .filter(M.Entry.id.in_(eids))\
-        .order_by(M.Entry.created_at.desc())\
-        .all()
+    with session() as sess:
+        # use Model to decrypt fields
+        res = sess.query(M.CacheEntry)\
+            .with_entities(M.CacheEntry.paras, M.CacheEntry.clean, M.CacheEntry.vectors)\
+            .join(M.Entry, M.Entry.id == M.CacheEntry.entry_id)\
+            .filter(M.Entry.id.in_(eids))\
+            .order_by(M.Entry.created_at.desc())\
+            .all()
     # assert len(eids) == len(res)
     entries = pd.Series([e for r in res for e in r.paras])
     stripped = pd.Series([c for r in res for c in r.clean])
@@ -46,7 +46,6 @@ def themes(eids):
     for r in res:
         if r.vectors: vecs += r.vectors
     vecs = np.vstack(vecs).astype(np.float32)
-    sess.close()
 
     clusters = cluster(vecs)
 

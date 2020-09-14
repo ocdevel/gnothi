@@ -13,17 +13,19 @@ from tensorflow.keras.optimizers import Adam
 import os, pdb, math, datetime
 from os.path import exists
 from tqdm import tqdm
-from common.database import SessLocal
+from common.database import session
 import common.models as M
-from common.utils import utcnow
+from common.utils import utcnow, vars
 from utils import cosine, cluster, normalize
 from cleantext import Clean
 from box import Box
 import numpy as np
 import pandas as pd
 from sqlalchemy import text
-import feather
 from sklearn import preprocessing as pp
+
+import logging
+logger = logging.getLogger(__name__)
 
 
 def load_books_df(sess):
@@ -32,7 +34,7 @@ def load_books_df(sess):
     if df.shape[0]:
         return df.set_index('id', drop=False)
 
-    print("Load books MySQL")
+    logger.info("Load books MySQL")
     FIND_PROBLEMS = False
     ALL_BOOKS = False
 
@@ -63,35 +65,36 @@ def load_books_df(sess):
         where_id="and u.ID=:id"
     )
 
-    sessb = SessLocal.books()
     if FIND_PROBLEMS:
         # # Those MD5s: UnicodeDecodeError: 'charmap' codec can't decode byte 0x9d in position 636: character maps to <undefined>
         # TODO try instead create_engine(convert_unicode=True)
 
-        ids = ' '.join([sql.just_ids, sql.body])
-        ids = [x.ID for x in sess.execute(ids).fetchall()]
-        problem_ids = []
-        for i, id in enumerate(tqdm(ids)):
-            if i % 10000 == 0:
-                print(len(problem_ids) / len(ids) * 100, '% problems')
-            try:
-                row = ' '.join([sql.select, sql.body, sql.where_id])
-                sess.execute(text(row), {'id': id})
-            except:
-                problem_ids.append(id)
+        with session('books') as sessb:
+            ids = ' '.join([sql.just_ids, sql.body])
+            ids = [x.ID for x in sessb.execute(ids).fetchall()]
+            problem_ids = []
+            for i, id in enumerate(tqdm(ids)):
+                if i % 10000 == 0:
+                    problems = len(problem_ids) / len(ids) * 100
+                    logger.info(f"{problems}% problems")
+                try:
+                    row = ' '.join([sql.select, sql.body, sql.where_id])
+                    sessb.execute(text(row), {'id': id})
+                except:
+                    problem_ids.append(id)
         problem_ids = ','.join([f"'{id}'" for id in problem_ids])
-        print(f"and u.ID not in ({problem_ids})")
+        logger.info(f"and u.ID not in ({problem_ids})")
         exit(0)
 
     sql_ = [sql.select, sql.body]
     if not ALL_BOOKS: sql_ += [sql.just_psych]
     sql_ = ' '.join(sql_)
-    df = pd.read_sql(sql_, sessb.bind)
-    sessb.close()
+    with session('books') as sessb:
+        df = pd.read_sql(sql_, sessb.bind)
     df = df.drop_duplicates(['Title', 'Author'])
 
-    print('n_books before cleanup', df.shape[0])
-    print("Removing HTML")
+    logger.info(f"n_books before cleanup {df.shape[0]}")
+    logger.info("Removing HTML")
     broken = '(\?\?\?|\#\#\#)'  # russian / other FIXME better way to handle
     df = df[~(df.Title + df.descr).str.contains(broken)] \
         .drop_duplicates(['Title', 'Author'])  # TODO reconsider
@@ -103,7 +106,7 @@ def load_books_df(sess):
         .apply(Clean.unmark)
 
     # books = books[books.clean.apply(lambda x: detect(x) == 'en')]
-    print('n_books after cleanup', df.shape[0])
+    logger.info(f"n_books after cleanup {df.shape[0]}")
 
     df = df.rename(columns=dict(
         ID='id',
@@ -121,13 +124,13 @@ def load_books_df(sess):
         .sort_values('id')
     df['thumbs'] = 0
 
-    print(f"Saving books to DB")
+    logger.info(f"Saving books to DB")
     df.to_sql('books', sess.bind, index=False, chunksize=500, if_exists='append', method='multi')
 
     return df.set_index('id', drop=False)
 
 
-path_ ='tmp/libgen.npy'
+path_ = f"tmp/libgen_{vars.ENVIRONMENT}.npy"
 
 def load_books_vecs(df):
     if exists(path_):
@@ -137,10 +140,11 @@ def load_books_vecs(df):
                 return vecs
             # else books table has changed, recompute
 
-    print(f"Running BERT on {df.shape[0]} entries")
+    logger.info(f"Running BERT on {df.shape[0]} entries")
     texts = (df.title + '\n' + df.text).tolist()
     from nlp import nlp_
     vecs = nlp_.sentence_encode(texts)
+    nlp_.clear()
     with open(path_, 'wb') as f:
         np.save(f, vecs)
     return vecs
@@ -153,7 +157,7 @@ def load_books(sess):
 
 
 def train_books_predictor(books, vecs_books, shelf_idx, fine_tune=True):
-    print("Training DNN")
+    logger.info("Training DNN")
     # linear+mse for smoother distances, what we have here? where sigmoid+xentropy for
     # harder decision boundaries, which we don't have?
     act, loss = 'linear', 'mse'
@@ -198,18 +202,17 @@ def train_books_predictor(books, vecs_books, shelf_idx, fine_tune=True):
 
 
 def predict_books(user_id, vecs_user, n_recs=30, centroids=False):
-    sess = SessLocal.main()
-    vecs_books, books = load_books(sess)
+    with session() as sess:
+        vecs_books, books = load_books(sess)
 
-    sql = "select book_id as id, user_id, shelf from bookshelf where user_id=%(uid)s"
-    shelf = pd.read_sql(sql, sess.bind, params={'uid': user_id}).set_index('id', drop=False)
-    sess.close()
+        sql = "select book_id as id, user_id, shelf from bookshelf where user_id=%(uid)s"
+        shelf = pd.read_sql(sql, sess.bind, params={'uid': user_id}).set_index('id', drop=False)
     shelf_idx = books.id.isin(shelf.id)
 
     # normalize for cosine, and downstream DNN
     vecs_user, vecs_books = normalize(vecs_user, vecs_books)
 
-    print("Finding cosine similarities")
+    logger.info("Finding cosine similarities")
     lhs = vecs_user
     if centroids:
         labels = cluster(vecs_user, norm_in=False)
@@ -244,57 +247,55 @@ def predict_books(user_id, vecs_user, n_recs=30, centroids=False):
         .iloc[:n_recs]
 
 def run_books(user_id, job_id=None):
-    sess = SessLocal.main()
-    user_id = str(user_id)
-    uid = {'uid': user_id}
+    with session() as sess:
+        user_id = str(user_id)
+        uid = {'uid': user_id}
 
-    # don't run if ran recently (notice the inverse if & comparator, simpler)
-    if sess.execute(text(f"""
-    select 1 from cache_users 
-    where user_id=:uid and last_books > {utcnow} - interval '10 minutes' 
-    """), uid).fetchone():
-        return sess.close()
-    sess.execute(text(f"""
-    insert into cache_users (user_id, last_books) values (:uid, {utcnow})
-    on conflict (user_id) do update set last_books={utcnow}
-    """), uid)
-    sess.commit()
+        # don't run if ran recently (notice the inverse if & comparator, simpler)
+        if sess.execute(text(f"""
+        select 1 from cache_users 
+        where user_id=:uid and last_books > {utcnow} - interval '10 minutes' 
+        """), uid).fetchone():
+            return
+        sess.execute(text(f"""
+        insert into cache_users (user_id, last_books) values (:uid, {utcnow})
+        on conflict (user_id) do update set last_books={utcnow}
+        """), uid)
+        sess.commit()
 
-    entries = sess.execute(text("""
-    select c.vectors from cache_entries c
-    inner join entries e on e.id=c.entry_id and e.user_id=:uid
-    order by e.created_at desc;
-    """), uid).fetchall()
-    profile = sess.execute(text("""
-    select vectors from cache_users where user_id=:uid
-    """), uid).fetchone()
+        entries = sess.execute(text("""
+        select c.vectors from cache_entries c
+        inner join entries e on e.id=c.entry_id and e.user_id=:uid
+        order by e.created_at desc;
+        """), uid).fetchall()
+        profile = sess.execute(text("""
+        select vectors from cache_users where user_id=:uid
+        """), uid).fetchone()
 
-    vecs = []
-    if profile and profile.vectors:
-        vecs += profile.vectors
-    for e in entries:
-        if e.vectors: vecs += e.vectors
-    vecs = np.vstack(vecs).astype(np.float32)
-    res = predict_books(user_id, vecs)
+        vecs = []
+        if profile and profile.vectors:
+            vecs += profile.vectors
+        for e in entries:
+            if e.vectors: vecs += e.vectors
+        vecs = np.vstack(vecs).astype(np.float32)
+        res = predict_books(user_id, vecs)
 
-    sess.execute(text("""
-    delete from bookshelf where user_id=:uid and shelf='ai'
-    """), uid)
-    sess.commit()
-    res = res.rename(columns=dict(id='book_id', dist='score'))[['book_id', 'score']]
-    res['user_id'] = user_id
-    res['shelf'] = 'ai'
-    res['created_at'] = res['updated_at'] = datetime.datetime.utcnow()
-    res.to_sql('bookshelf', sess.bind, if_exists='append', index=False)
-
-    if job_id:
-        # TODO capture error
         sess.execute(text("""
-        update jobs set state='done' where id=:jid
-        """), {'jid': job_id})
+        delete from bookshelf where user_id=:uid and shelf='ai'
+        """), uid)
+        sess.commit()
+        res = res.rename(columns=dict(id='book_id', dist='score'))[['book_id', 'score']]
+        res['user_id'] = user_id
+        res['shelf'] = 'ai'
+        res['created_at'] = res['updated_at'] = datetime.datetime.utcnow()
+        res.to_sql('bookshelf', sess.bind, if_exists='append', index=False)
 
-    sess.commit()
-    sess.close()
+        if job_id:
+            # TODO capture error
+            sess.execute(text("""
+            update jobs set state='done' where id=:jid
+            """), {'jid': job_id})
+
 
 if __name__ == '__main__':
     import argparse

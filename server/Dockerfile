@@ -32,7 +32,6 @@ RUN pip install \
   pytest \
   lorem-text
 
-COPY .aws /root/.aws
 COPY app /app
 WORKDIR /app
 

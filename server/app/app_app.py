@@ -12,7 +12,6 @@ import pytz
 from app.ml import run_influencers
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from app import habitica
-from app.ec2_updown import ec2_down_maybe
 
 app = FastAPI()
 # app.secret_key = SECRET
@@ -34,7 +33,6 @@ async def startup():
     scheduler.start()
     scheduler.add_job(habitica.cron, "cron", hour="*")
     scheduler.add_job(run_influencers, "cron", hour="*")
-    scheduler.add_job(ec2_down_maybe, "cron", minute="*")
 
     # ensure jobs_status has the 1 row
     engine.execute(f"""

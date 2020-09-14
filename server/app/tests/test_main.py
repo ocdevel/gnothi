@@ -20,7 +20,7 @@ from app import ml
 from app.main import app
 
 exec = D.engine.execute
-sess_main = D.SessLocal.main()
+sess_main = D.Sessions['main']
 
 # Friend only used to double-check sharing features
 u = Box(user={}, therapist={}, friend={}, other={})
@@ -197,7 +197,6 @@ class TestML():
         # TODO enough field-entries
         # res = client.get("/influencers", **header('user'))
 
-        sess = D.SessLocal.main()
         fs = list(range(10))
         for i, _ in enumerate(fs):
             # create fields (some targets
@@ -219,17 +218,16 @@ class TestML():
                     value=random.randint(-5, 5),
                     created_at=datetime.datetime.today() - datetime.timedelta(days=d)
                 )
-                sess.add(fe)
+                sess_main.add(fe)
         # set last_updated so it's stale
-        sess.execute("update users set updated_at=now() - interval '5 days'")
-        sess.commit()
+        sess_main.execute("update users set updated_at=now() - interval '5 days'")
 
         client.post('user/checkin', **header('user'))
 
         # run cron
         jid = ml.run_influencers()
         sql = "select 1 from jobs where id=:jid and state='done'"
-        assert M.await_row(sess, sql, {'jid': str(jid)}, timeout=120)
+        assert M.await_row(sess_main, sql, {'jid': str(jid)}, timeout=120)
 
         # check output
         res = client.get('/influencers', **header('user'))

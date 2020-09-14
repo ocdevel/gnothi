@@ -38,6 +38,7 @@ services:
     volumes:
       - ./server/:/app
       - ./common/:/app/common
+      - ./.aws:/root/.aws
     restart: unless-stopped
     logging:
       options:
@@ -74,3 +75,7 @@ services:
     restart: unless-stopped
     volumes:
       - ./client:/client
+    logging:
+      options:
+        max-size: "5m"
+        max-file: "3"

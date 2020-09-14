@@ -22,7 +22,7 @@ import Journal from './Journal'
 import ProfileRoutes from './ProfileRoutes'
 import Error from './Error'
 import emoji from 'react-easy-emoji'
-import {aiStatusEmoji} from "./utils"
+import {aiStatusEmoji, SimplePopover} from "./utils"
 
 import { Provider, useSelector, useDispatch } from 'react-redux'
 import store from './redux/store';
@@ -81,10 +81,23 @@ function App() {
 
     const canProfile = !as || (asUser && asUser.profile)
 
+    let aiStatus_ = null
+    if (~['off', 'pending'].indexOf(aiStatus)) {
+      aiStatus_ = {
+        off: "AI server is offline",
+        pending: "AI server is coming online"
+      }[aiStatus]
+      aiStatus_ = <SimplePopover text={aiStatus_} overlayOpts={{placement: 'right'}}>
+        <span>{aiStatusEmoji(aiStatus)}</span>
+      </SimplePopover>
+    }
+
     return (
       <Navbar bg="dark" variant="dark">
         <LinkContainer to="/">
-          <Navbar.Brand>Gnothi {aiStatusEmoji(aiStatus)}</Navbar.Brand>
+          <Navbar.Brand>
+            Gnothi {aiStatus_}
+          </Navbar.Brand>
         </LinkContainer>
         <Navbar.Toggle aria-controls="responsive-navbar-nav" />
         <Navbar.Collapse id="responsive-navbar-nav">

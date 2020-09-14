@@ -4,49 +4,48 @@ from xgboost import XGBRegressor
 from sqlalchemy import text
 from psycopg2.extras import Json as jsonb
 from common.utils import utcnow
-from common.database import SessLocal
+from common.database import session
 import pandas as pd
 import numpy as np
 
 def influencers_(user_id):
-    sess = SessLocal.main()
-    fes = pd.read_sql("""
-    -- remove duplicates, use average. FIXME find the dupes bug
-    with fe_clean as (
-        select field_id, created_at::date, avg(value) as value
-        from field_entries
-        group by field_id, created_at::date
-    ),
-    -- ensure enough data
-    fe_ct as (
-      select field_id from fe_clean 
-      group by field_id having count(value) > 5
-    )
-    select  
-      fe.created_at, -- index 
-      fe.field_id::text, -- column, uuid->string
-      fe.value -- value
-    from fe_clean fe
-    inner join fe_ct on fe_ct.field_id=fe.field_id  -- just removes rows
-    inner join fields f on f.id=fe.field_id
-    where f.user_id=%(uid)s
-      and f.excluded_at is null
-    order by fe.created_at asc
-    """, sess.bind, params={'uid': user_id})
-    if not fes.size: return None  # not enough entries
+    with session() as sess:
+        fes = pd.read_sql("""
+        -- remove duplicates, use average. FIXME find the dupes bug
+        with fe_clean as (
+            select field_id, created_at::date, avg(value) as value
+            from field_entries
+            group by field_id, created_at::date
+        ),
+        -- ensure enough data
+        fe_ct as (
+          select field_id from fe_clean 
+          group by field_id having count(value) > 5
+        )
+        select  
+          fe.created_at, -- index 
+          fe.field_id::text, -- column, uuid->string
+          fe.value -- value
+        from fe_clean fe
+        inner join fe_ct on fe_ct.field_id=fe.field_id  -- just removes rows
+        inner join fields f on f.id=fe.field_id
+        where f.user_id=%(uid)s
+          and f.excluded_at is null
+        order by fe.created_at asc
+        """, sess.bind, params={'uid': user_id})
+        if not fes.size: return None  # not enough entries
 
-    params = dict(
-        uid=user_id,
-        fids=tuple(fes.field_id.unique().tolist())
-    )
-    fs = pd.read_sql("""
-    select id::text, target, default_value, default_value_value
-    from fields
-    where user_id=%(uid)s
-        and id in %(fids)s
-        and excluded_at is null
-    """, sess.bind, params=params)
-    sess.close()
+        params = dict(
+            uid=user_id,
+            fids=tuple(fes.field_id.unique().tolist())
+        )
+        fs = pd.read_sql("""
+        select id::text, target, default_value, default_value_value
+        from fields
+        where user_id=%(uid)s
+            and id in %(fids)s
+            and excluded_at is null
+        """, sess.bind, params=params)
 
     target_ids = fs[fs.target == True].id.tolist()
     if not target_ids:
@@ -147,26 +146,25 @@ def influencers_(user_id):
     return (targets, all_imps, next_preds)
 
 def influencers():
-    sess = SessLocal.main()
-    users = sess.execute(text(f"""
-    select u.id::text from users u
-    left outer join cache_users c on c.user_id=u.id
-    where
-      -- has logged in recently
-      u.updated_at > {utcnow} - interval '2 days' and
-      -- has been 1d since last-run (or never run)
-      (extract(day from {utcnow} - c.last_influencers) >= 1 or c.last_influencers is null)
-    """)).fetchall()
-    for u in users:
-        sess.execute(text(f"""
-        insert into cache_users (user_id, last_influencers) values (:uid, {utcnow})
-        on conflict (user_id) do update set last_influencers={utcnow}
-        """), {'uid': u.id})
-        sess.commit()
+    with session() as sess:
+        users = sess.execute(text(f"""
+        select u.id::text from users u
+        left outer join cache_users c on c.user_id=u.id
+        where
+          -- has logged in recently
+          u.updated_at > {utcnow} - interval '2 days' and
+          -- has been 1d since last-run (or never run)
+          (extract(day from {utcnow} - c.last_influencers) >= 1 or c.last_influencers is null)
+        """)).fetchall()
+        for u in users:
+            sess.execute(text(f"""
+            insert into cache_users (user_id, last_influencers) values (:uid, {utcnow})
+            on conflict (user_id) do update set last_influencers={utcnow}
+            """), {'uid': u.id})
+            sess.commit()
 
-        res = influencers_(u.id)
-        sess.execute(text(f"""
-        update cache_users set influencers=:data where user_id=:uid
-        """), {'uid': u.id, 'data': jsonb(res)})
-        sess.commit()
-    sess.close()
+            res = influencers_(u.id)
+            sess.execute(text(f"""
+            update cache_users set influencers=:data where user_id=:uid
+            """), {'uid': u.id, 'data': jsonb(res)})
+            sess.commit()

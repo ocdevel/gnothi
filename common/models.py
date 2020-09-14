@@ -6,7 +6,7 @@ from uuid import uuid4
 import logging
 logger = logging.getLogger(__name__)
 
-from common.database import Base, SessLocal, fa_users_db
+from common.database import Base, fa_users_db
 from common.utils import vars, utcnow, nowtz
 
 from sqlalchemy import text as satext, Column, Integer, Enum, Float, ForeignKey, Boolean, JSON, Date, Unicode, \

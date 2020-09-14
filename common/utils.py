@@ -3,9 +3,6 @@ from box import Box
 
 DROP_SQL = 'DROP SCHEMA public CASCADE;CREATE SCHEMA public;'
 
-def is_dev():
-    return os.environ['ENVIRONMENT'] == 'development'
-
 def join_(paths):
     return os.path.join(os.path.dirname(__file__), *paths)
 
@@ -21,12 +18,18 @@ HABIT
 FLASK_KEY
 GPU_INSTANCE
 EMAIL
+ENVIRONMENT
 """
 for k in keys.split():
     vars[k] = os.environ.get(k, config_json.get(k, None))
 vars = Box(vars)
 
-if os.environ['ENVIRONMENT'] == 'production':
+
+def is_dev():
+    return vars.ENVIRONMENT == 'development'
+
+
+if vars.ENVIRONMENT == 'production':
     vars['DB_URL'] = vars.DB_PROD_URL
     vars['DB_NAME'] = vars.DB_PROD_NAME
 

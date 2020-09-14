@@ -10,8 +10,9 @@ const spinner = (
   </Spinner>
 )
 
-const SimplePopover = ({children, text}) => (
+const SimplePopover = ({children, text, overlayOpts={}}) => (
   <OverlayTrigger
+    {...overlayOpts}
     overlay={<Popover>
       <Popover.Content>
         {text}
@@ -49,8 +50,8 @@ const aiStatusEmoji = (status) => {
   const statusOpts = {props: {width: 16, height: 16}}
   return {
     off: emoji("🔴", statusOpts),
-    on: emoji("🟢", statusOpts),
-    pending: emoji("🟡", statusOpts)
+    pending: emoji("🟡", statusOpts),
+    on: null,
   }[status]
 }
 
