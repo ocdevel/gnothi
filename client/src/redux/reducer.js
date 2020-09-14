@@ -7,7 +7,8 @@ import {
   SET_AS_USER,
   SET_AI_STATUS,
   SET_TAGS,
-  SET_SELECTED_TAGS
+  SET_SELECTED_TAGS,
+  SET_FIELDS
 } from './actions'
 
 const initialState = {
@@ -18,7 +19,8 @@ const initialState = {
   tags: [],
   selectedTags: {},
   aiStatus: 'off',
-  serverError: null
+  serverError: null,
+  fields: {}
 }
 
 export default function mainReducer(state, action) {
@@ -54,6 +56,9 @@ export default function mainReducer(state, action) {
       let obj = {...state.selectedTags, ...action.payload}
       obj = _.pickBy(obj, v=>v) // remove false
       state.selectedTags = obj
+      break
+    case SET_FIELDS:
+      state.fields = action.payload
       break
   }
 

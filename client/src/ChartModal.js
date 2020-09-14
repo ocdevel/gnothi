@@ -12,16 +12,17 @@ const round_ = (v) => v ? v.toFixed(2) : null
 
 export default function ChartModal({close, field=null, overall=false}) {
   const [influencers, setInfluencers] = useState({})
-  const [fields, setFields] = useState([])
   const [nextPreds, setNextPreds] = useState({})
   const [enough, setEnough] = useState(false)
   const [fetching, setFetching] = useState(false)
 
   const dispatch = useDispatch()
+  const fields = useSelector(state => state.fields)
 
   // console.log('influencers', influencers)
 
-  const fetchFieldPreds = async (fields) => {
+  const fetchFieldPreds = async () => {
+    if (_.isEmpty(fields)) {return}
     const {data} = await dispatch(fetch_(`influencers?target=${field.id}`, 'GET'))
     if (!data.per_target) {
       return setEnough(false)
@@ -32,7 +33,8 @@ export default function ChartModal({close, field=null, overall=false}) {
     setNextPreds(data.next_preds)
   }
 
-  const fetchOverallPreds = async (fields) => {
+  const fetchOverallPreds = async () => {
+    if (_.isEmpty(fields)) {return}
     const {data} = await dispatch(fetch_(`influencers`, 'GET'))
     if (!data.overall) {
       return setEnough(false)
@@ -44,15 +46,13 @@ export default function ChartModal({close, field=null, overall=false}) {
 
   const fetchTargets = async () => {
     setFetching(true)
-    const {data} = await dispatch(fetch_('fields', 'GET'))
-    setFields(data)
-    await (overall ? fetchOverallPreds : fetchFieldPreds)(data)
+    await (overall ? fetchOverallPreds : fetchFieldPreds)()
     setFetching(false)
   }
 
   useEffect(() => {
     fetchTargets()
-  }, [])
+  }, [fields])
 
   const renderInfluencers = () => {
     if (!enough) {

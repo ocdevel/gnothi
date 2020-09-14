@@ -9,55 +9,42 @@ import FieldModal from "./FieldModal";
 import ChartModal from "./ChartModal";
 
 import { useSelector, useDispatch } from 'react-redux'
-import { fetch_ } from './redux/actions'
+import { fetch_, getFields } from './redux/actions'
 
 export default function Fields() {
   const [fetchingSvc, setFetchingSvc] = useState(false)
-  const [fields, setFields] = useState({})
   const [fieldEntries, setFieldEntries] = useState({})
   const [showForm, setShowForm] = useState(false)
   const [showChart, setShowChart] = useState(false)
-  const [notShared, setNotShared] = useState(false)
 
   const dispatch = useDispatch()
   const as = useSelector(state => state.as)
   const user = useSelector(state => state.user)
+  const fields = useSelector(state => state.fields)
 
-  const fetchFieldEntries = async (fields) => {
-    // FIXME shouldn't need to pass in fields, but fields=={} even after fetchFields..
+  const fetchFieldEntries = async () => {
+    if (_.isEmpty(fields)) {return}
     const {data} = await dispatch(fetch_(`field-entries`, 'GET'))
-    _.each(data, (val, fid) => {
-      if (val) {return}
-      const f = fields[fid]
-      if (f.service) {return}
-
-      // TODO hiding this for now since it will prevent them from clicking, thinking
-      // they already have an entry. Reconsider approach
-      const recent = _.last(f.history)
-      data[fid] = {
-        value: f.default_value_value,
-        ffill: recent ? recent.value : null,
-        average: f.avg
-      }[f.default_value]
-    })
-    setFieldEntries(data)
+    return setFieldEntries(data)
+    // 3e896062: something about field_entries default_values?
   }
 
-  const fetchFields = async () => {
-    const {data, code, message} = await dispatch(fetch_(`fields`, 'GET'))
-    if (code === 401) {return setNotShared(message)}
-    setFields(data)
-    await fetchFieldEntries(data)
+  useEffect(() => {
+    dispatch(getFields())
+  }, [as])
+
+  useEffect(() => {
+    fetchFieldEntries()
+  }, [fields])
+
+  if (_.get(fields, 'code') === 401) {
+    return <h5>{fields.message}</h5>
   }
-
-  useEffect(() => {fetchFields()}, [])
-
-  if (notShared) {return <h5>{notShared}</h5>}
 
   const fetchService = async (service) => {
     setFetchingSvc(true)
     await dispatch(fetch_(`${service}/sync`, 'POST'))
-    await fetchFields()
+    await dispatch(getFields())
     setFetchingSvc(false)
   }
 
@@ -87,7 +74,7 @@ export default function Fields() {
 
   const onFormClose = () => {
     setShowForm(false)
-    fetchFields()
+    dispatch(getFields())
   }
 
   const onChartClose = () => {

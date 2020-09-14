@@ -119,3 +119,13 @@ export const getTags = (preSelectMain=true) => async (dispatch, getState) => {
   console.log(data)
   dispatch(setTags(data))
 }
+
+export const SET_FIELDS = "SET_FIELDS"
+export const setFields = (payload) => ({type: SET_FIELDS, payload})
+export const getFields = () => async (dispatch, getState) => {
+  if (!getState().jwt) {return}
+  let {data, code, message} = await dispatch(fetch_('fields', 'GET'))
+  data = code === 401 ? {code, message} : data
+  dispatch(setFields(data))
+}
+
