@@ -219,18 +219,10 @@ class NLP():
 
             # 9131155e: only update every x entries
             if root_call:
-                uid = str(e.user_id)
-                if not sess.execute("""
-                select 1 from jobs 
-                where method='books' 
-                and data_in->'args'->>0=:uid 
-                and state in ('working', 'new')
-                """, dict(uid=uid)).fetchone():
-                    sess.add(M.Job(
-                        method='books',
-                        data_in={'args': [uid]}
-                    ))
-                sess.commit()
+                M.Job.create_job(
+                    method='books',
+                    data_in={'args': [str(e.user_id)]}
+                )
 
         # recurse to process any left-behind entries
         return self.entry()

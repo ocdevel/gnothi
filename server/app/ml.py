@@ -17,11 +17,9 @@ def run_gpu_model(method, data):
     if res.status != 'on':
         return False
 
-    job = M.Job(method=method, data_in=data)
-    db.session.add(job)
-    db.session.commit()
-    db.session.refresh(job)
-    jid = {'jid': job.id}
+    jid = M.Job.create_job(method=method, data_in=data)
+    if not jid: return False
+    jid = {'jid': jid}
     i = 0
     while True:
         time.sleep(1)
@@ -42,9 +40,4 @@ def run_gpu_model(method, data):
 
 
 def run_influencers():
-    with db():
-        job = M.Job(method='influencers', data_in={})
-        db.session.add(job)
-        db.session.commit()
-        db.session.refresh(job)
-        return job.id
+    return M.Job.create_job(method='influencers')

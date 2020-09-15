@@ -70,8 +70,8 @@ def profile_put(data: M.SIProfile, as_user: str = None, viewer: M.User = Depends
     for k, v in data.dict().items():
         v = v or None  # remove empty strings
         setattr(user, k, v)
-    db.session.add(M.Job(method='profile', data_in={'args': [str(user.id)]}))
     db.session.commit()
+    M.Job.create_job(method='profile', data_in={'args': [str(user.id)]})
     return {}
 
 

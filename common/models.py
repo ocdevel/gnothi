@@ -6,7 +6,7 @@ from uuid import uuid4
 import logging
 logger = logging.getLogger(__name__)
 
-from common.database import Base, fa_users_db
+from common.database import Base, fa_users_db, session
 from common.utils import vars, utcnow, nowtz
 
 from sqlalchemy import text as satext, Column, Integer, Enum, Float, ForeignKey, Boolean, JSON, Date, Unicode, \
@@ -264,10 +264,10 @@ class Entry(Base):
         # (b) if AI server offline, wait till online
         self.title_summary = "🕒 AI is generating a title"
         self.text_summary = "🕒 AI is generating a summary"
-        db.session.add(Job(
+        Job.create_job(
             method='entry',
             data_in={'args': [str(self.id)]}
-        ))
+        )
 
 
     def update_snoopers(self):
@@ -656,11 +656,7 @@ class Bookshelf(Base):
             """
             should_update = db.session.execute(satext(sql), {'uid':user_id}).fetchone().ct
             if should_update:
-                db.session.add(Jobs(
-                    method='books',
-                    data_in={'args': [str(user_id)]}
-                ))
-                db.session.commit()
+                Job.create_job(method='books', data_in={'args': [str(user_id)]})
 
     @staticmethod
     def upsert(user_id, book_id, shelf):
@@ -701,6 +697,31 @@ class Job(Base):
     state = Column(Unicode, server_default="new")
     data_in = Column(JSONB)
     data_out = Column(JSONB)
+
+    @staticmethod
+    def create_job(method, data_in={}):
+        """Ensures certain jobs only created as singletons, never manually add Job() call this instead"""
+        with session() as sess:
+            arg0 = data_in.get('args', [None])[0]
+            if type(arg0) != str: arg0 = None
+            exists = sess.execute(satext("""
+            select 1 from jobs 
+            where method=:method and state in ('new', 'working') and
+            case
+                when method='influencers' then true
+                when method='books' and data_in->'args'->>0=:arg0 then true
+                when method='entry' and data_in->'args'->>0=:arg0 then true
+                when method='profile' and data_in->'args'->>0=:arg0 then true
+                else false
+            end;
+            """), dict(method=method, arg0=arg0)).fetchone()
+            if exists: return False
+
+            j = Job(method=method, data_in=data_in)
+            sess.add(j)
+            sess.commit()
+            sess.refresh(j)
+            return str(j.id)
 
 
 class JobsStatus(Base):
