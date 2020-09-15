@@ -145,6 +145,7 @@ def influencers_(user_id):
 
     return (targets, all_imps, next_preds)
 
+
 def influencers():
     with session() as sess:
         users = sess.execute(text(f"""
@@ -168,3 +169,4 @@ def influencers():
             update cache_users set influencers=:data where user_id=:uid
             """), {'uid': u.id, 'data': jsonb(res)})
             sess.commit()
+    return {}

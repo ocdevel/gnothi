@@ -68,6 +68,7 @@ def run_job(job):
         logger.info(f"Job Error {time.time() - start} {err}")
     with session() as sess:
         sess.execute(sql, params)
+        sess.commit()
     # 3eb71b3: unloading models. multiprocessing handles better
 
 
