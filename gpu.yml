@@ -7,10 +7,12 @@ services:
     restart: unless-stopped
     environment:
       ENVIRONMENT: production
+      TORCH_HOME: /bigmodels
     volumes:
       - ./gpu:/app
       - ./common:/app/common
       - ./.aws:/root/.aws
+      - ./bigmodels:/bigmodels
     device_requests:
       - capabilities:
           - "gpu"

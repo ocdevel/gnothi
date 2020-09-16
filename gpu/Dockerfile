@@ -20,24 +20,18 @@ RUN echo ". $CONDA_DIR/etc/profile.d/conda.sh" >> ~/.profile
 # make conda activate command available from /bin/bash --interative shells
 RUN conda init bash
 
+
 # Deep learning
 RUN \
   pip install https://storage.googleapis.com/tensorflow/linux/gpu/tensorflow_gpu-2.3.0-cp38-cp38-manylinux2010_x86_64.whl &&\
   pip install torch==1.6.0+cu101 torchvision==0.7.0+cu101 -f https://download.pytorch.org/whl/torch_stable.html
-RUN \
-  pip install transformers==3.1.0 sentence-transformers==0.3.6 &&\
-  transformers-cli download mrm8488/t5-base-finetuned-emotion &&\
-  transformers-cli download facebook/bart-large-cnn &&\
-  transformers-cli download allenai/longformer-large-4096-finetuned-triviaqa &&\
-  python -c "from sentence_transformers import SentenceTransformer;SentenceTransformer('roberta-base-nli-stsb-mean-tokens')"
 
-# Other NLP
-RUN pip install spacy && python -m spacy download en_core_web_sm
-#RUN apt-get install -y default-jre &&\
-#    wget http://mallet.cs.umass.edu/dist/mallet-2.0.8.zip -O /mallet-2.0.8.zip && unzip /mallet-2.0.8.zip -d /
+RUN pip install spacy[cuda101] && python -m spacy download en_core_web_sm
 
 RUN apt-get install -y default-libmysqlclient-dev
 RUN pip install \
+  transformers==3.1.0 \
+  sentence-transformers==0.3.6 \
   psycopg2-binary \
   python-box \
   pandas \
@@ -53,7 +47,6 @@ RUN pip install \
   #langdetect \
   hyperopt \
   kneed \
-  keras \
   #scikit-learn-extra \
   tqdm \
   sqlalchemy \
