@@ -15,9 +15,9 @@ def normalize(x, y=None, numpy=True):
     n = n / n.norm(dim=1)[:, None]
     if combine:
         x, y = n[:x.shape[0]], n[x.shape[0]:]
-        if numpy: x, y = x.numpy(), y.numpy()
+        if numpy: x, y = x.cpu().numpy(), y.cpu().numpy()
         return x, y
-    if numpy: n = n.numpy()
+    if numpy: n = n.cpu().numpy()
     return n
 
 
@@ -34,7 +34,7 @@ def cosine(x, y, norm_in=True):
     # dist = sim.acos() / np.pi
     # dist = 1 - (sim + 1) / 2
 
-    return dist.numpy()
+    return dist.cpu().numpy()
 
 
 def cluster(x, norm_in=True):
