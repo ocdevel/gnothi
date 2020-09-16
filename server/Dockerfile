@@ -30,6 +30,7 @@ RUN pip install \
   bcrypt \
   shortuuid \
   pytest \
+  pytest-timeout \
   lorem-text
 
 COPY app /app

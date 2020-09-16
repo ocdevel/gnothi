@@ -10,37 +10,47 @@ if database_exists(vars.DB_URL):
 if not database_exists(vars.DB_URL):
     create_database(vars.DB_URL)
 
-import pytest, time, random, datetime
+import pytest, time
 from box import Box
-from sqlalchemy import text
 from fastapi.testclient import TestClient
 from lorem_text import lorem
 
 import common.database as D
 import common.models as M
-from app import ml
 from app.main import app
 
 import logging
 logger = logging.getLogger(__name__)
 
 
+# I want many of these to be session-scope, not just for per but to ensure
+# things like Session() gets recycled properly during a full FastAPI session
 @pytest.fixture(scope='session')
 def client():
     with TestClient(app) as c:
         yield c
 
+
+@pytest.mark.timeout(5)
 @pytest.fixture(scope='session')
 def db(client):
-    # await client to init_db
-    time.sleep(3) # wait for GPU to restart from no-db crash (TODO smarter method)
+    """await client to init_db"""
     with D.session() as sess:
+        # wait for GPU to restart from no-db crash
+        while True:
+            sql = "select 1 from jobs_status where status='on'"
+            if M.await_row(sess, sql): break
+            time.sleep(.5)
+        print("GPU online")
+
         yield sess
+
 
 @pytest.fixture(scope='session')
 def db_books():
     with D.session('books') as sess:
         yield sess
+
 
 @pytest.fixture()
 def u(client, db):
@@ -99,6 +109,8 @@ def u(client, db):
     assert res.status_code == 200
     return u_
 
+
+@pytest.mark.timeout(120)
 @pytest.fixture()
 def post_entry(client, u, db):
     def _post_entry(**kwargs):
@@ -123,8 +135,7 @@ def post_entry(client, u, db):
 
             # summaries generated
             sql += " and state='done'"
-            res = M.await_row(db, sql, args=args, timeout=100)
-            assert res
+            assert M.await_row(db, sql, args=args, timeout=100)
             res = client.get(f"/entries/{eid}", **u.user.header)
             assert res.status_code == 200
             res = res.json()
@@ -140,9 +151,3 @@ def count(db):
     def _count(table):
         return db.execute(f"select count(*) ct from {table}").fetchone().ct
     return _count
-
-@pytest.fixture()
-def assert_count(db, count):
-    def _assert_count(table, expected):
-        assert count(table) == expected
-    return _assert_count
