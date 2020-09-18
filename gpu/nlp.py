@@ -112,6 +112,11 @@ class NLP():
             parts = [self.para_parts(p, tokenizer, max_tokens) for p in paras]
             groups = [len(p) for p in parts]
             parts = [p for part in parts for p in part]
+
+            # previously dividing min/max_length by n_parts. That gets diluted across multiple entries,
+            # so taking simple median for now. TODO rethink
+            n_parts = int(np.median(groups))
+
             batch_size = max_gpu_tokens // max_tokens
             flat = []
             for i in range(0, len(parts), batch_size):
@@ -119,7 +124,7 @@ class NLP():
                 flat += call(
                     loaded,
                     batch,
-                    n_parts=len(parts),
+                    n_parts=n_parts,
                     **call_args
                 )
         grouped = []
@@ -173,14 +178,8 @@ class NLP():
         return [{**s, "sentiment": sents[i]["label"]} for (i, s) in enumerate(summs)]
 
     def summarization_call(self, loaded, batch, n_parts: int, min_length: int = None, max_length: int = None):
-        # FIXME! since we're passing in batches, no clear way to distinguish n_parts per chunk in this batch
-        # (may be dealing with multiple people's entries in one batch). For now just using what's passed,
-        # resulting in longer-than-expected lengths
-        # min_ = max(min_length // n_parts, 2) if min_length else None
-        # max_ = max(max_length // n_parts, 10) if max_length else None
-        min_ = min_length
-        max_ = max_length
-
+        min_ = max(min_length // n_parts, 2) if min_length else None
+        max_ = max(max_length // n_parts, 10) if max_length else None
 
         tokenizer, model, max_tokens = loaded
         inputs = tokenizer(batch, max_length=max_tokens, **tokenizer_args)
