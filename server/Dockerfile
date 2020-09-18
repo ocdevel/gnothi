@@ -25,7 +25,8 @@ RUN pip install \
   shortuuid \
   pytest \
   pytest-timeout \
-  lorem-text
+  lorem-text \
+  pytest-check
 
 COPY app /app
 WORKDIR /app

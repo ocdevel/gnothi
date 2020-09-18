@@ -704,13 +704,22 @@ class Job(Base):
         with session() as sess:
             arg0 = data_in.get('args', [None])[0]
             if type(arg0) != str: arg0 = None
+
+            if method == 'entry' and arg0:
+                sess.execute(satext("""
+                update entries set ai_ran=False where id=:eid;
+                """), dict(eid=arg0))
+                sess.commit()
+
             exists = sess.execute(satext("""
-            select 1 from jobs 
-            where method=:method and state in ('new', 'working') and
+            select 1 from jobs
+            -- maybe if we're mid-job, things have changed; so don't incl. working? rethink 
+            --where method=:method and state in ('new', 'working') and
+            where method=:method and state='new' and
             case
                 when method='influencers' then true
                 when method='books' and data_in->'args'->>0=:arg0 then true
-                when method='entry' and data_in->'args'->>0=:arg0 then true
+                when method='entry' then true
                 when method='profile' and data_in->'args'->>0=:arg0 then true
                 else false
             end;

@@ -45,20 +45,19 @@ def themes(eids):
     vecs = []
     for r in res:
         if r.vectors: vecs += r.vectors
+    # if not vecs: return False  # TODO somethign else to return?
     vecs = np.vstack(vecs).astype(np.float32)
 
     clusters = cluster(vecs)
 
     topics = []
-    # for l in range(clusters.max()):
-    def add_topic(l):
-        nonlocal topics
+    for l in range(clusters.max()):
         in_clust = clusters == l
         n_entries = in_clust.sum().item()
         print('n_entries', n_entries)
         if n_entries < 2:
             print('skipping')
-            return
+            continue
 
         vecs_, stripped_, entries_ = vecs[in_clust],\
             stripped.iloc[in_clust], entries.iloc[in_clust]
@@ -68,22 +67,19 @@ def themes(eids):
         entries_ = entries_.iloc[dists.argsort()].tolist()[:5]
 
         terms = top_terms(stripped_.tolist())
-        summary = nlp_.summarization(entries_, min_length=50, max_length=300)
-        summary, sent = summary["summary"], summary["sentiment"]
-        # summary = sent = None
         topics.append({
             'n_entries': n_entries,
             'terms': terms,
-            'sentiment': sent,
-            'summary': summary
+            'summary': entries_,  # add full thing, will batch-compute next
+            'sentiment': None,
         })
 
-    threads = [
-        threading.Thread(target=add_topic, args=(l,))
-        for l in range(clusters.max())
-    ]
-    for t in threads: t.start()
-    for t in threads: t.join()
+    groups = [t['summary'] for t in topics]
+    batch_summaries = nlp_.summarization(groups, min_length=50, max_length=300)
+    for i, res in enumerate(batch_summaries):
+        print(res)
+        topics[i]['summary'] = res['summary']
+        topics[i]['sentiment'] = res['sentiment']
 
     topics = {
         'terms': top_terms(stripped, 10),

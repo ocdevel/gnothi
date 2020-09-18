@@ -176,9 +176,10 @@ def train_books_predictor(books, vecs_books, shelf_idx, fine_tune=True):
     x = vecs_books
     y = books.dist
     es = EarlyStopping(monitor='val_loss', mode='min', patience=3, min_delta=.0001)
+    epochs = 1 if os.environ.get("IS_TESTING", False) else 50
     m.fit(
         x, y,
-        epochs=50,
+        epochs=epochs,
         batch_size=128,
         shuffle=True,
         callbacks=[es],
@@ -305,4 +306,5 @@ if __name__ == '__main__':
     parser.add_argument("--jid")
     args = parser.parse_args()
 
+    logger.warning(f"Books args {args.uid} {args.jid}")
     run_books(args.uid, args.jid)

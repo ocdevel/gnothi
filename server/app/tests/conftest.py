@@ -36,12 +36,14 @@ def client():
 def db(client):
     """await client to init_db"""
     with D.session() as sess:
+        # Cold-start BERT for downstream
+        M.Job.create_job(method='summarization', data_in=dict(args=[['summarize me please']]))
+
         # wait for GPU to restart from no-db crash
         while True:
             sql = "select 1 from jobs_status where status='on'"
             if M.await_row(sess, sql): break
             time.sleep(.5)
-        print("GPU online")
 
         yield sess
 
@@ -116,7 +118,7 @@ def post_entry(client, u, db):
     def _post_entry(**kwargs):
         data = {**dict(
             title='Title',
-            text=lorem.paragraphs(5),
+            text=lorem.paragraphs(3),
             no_ai=True,
             tags=u.user.tag1,
         ), **kwargs}
@@ -135,7 +137,7 @@ def post_entry(client, u, db):
 
             # summaries generated
             sql += " and state='done'"
-            assert M.await_row(db, sql, args=args, timeout=100)
+            assert M.await_row(db, sql, args=args, timeout=120)
             res = client.get(f"/entries/{eid}", **u.user.header)
             assert res.status_code == 200
             res = res.json()

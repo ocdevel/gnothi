@@ -11,10 +11,15 @@ from transformers import pipeline, AutoTokenizer, AutoModelForSequenceClassifica
 from transformers import BartForConditionalGeneration, BartTokenizer
 from transformers import LongformerTokenizer, LongformerForQuestionAnswering
 from scipy.stats import mode as stats_mode
+from typing import Union, List, Dict, Callable, Tuple
+
+import logging
+logger = logging.getLogger(__name__)
 
 # temporary: how many tokens can the gpu handle at a time? determines how much
 # to batch per model. Eg, QA only one part at a time; others multiple parts
 max_gpu_tokens = 4096
+# max_gpu_tokens = 4096//2
 tokenizer_args = dict(truncation=True, padding=True, return_tensors='pt')
 
 class NLP():
@@ -68,7 +73,11 @@ class NLP():
         m = self.load('sentence-encode')
         return np.array(m.encode(x, batch_size=64, show_progress_bar=True))
 
-    def para_parts(self, paras, tokenizer, max_length):
+    @staticmethod
+    def para_parts(paras, tokenizer, max_length):
+        if not paras:
+            paras = ["no text available"]  # TODO how/where to handle this properly?
+            logger.warning("para_parts() got empty paras[]")
         n_tokens = tokenizer(paras)
         n_tokens = [len(p) for p in n_tokens.input_ids]
         part_paras, part_tokens = [paras[0]], [n_tokens[0]]
@@ -82,66 +91,111 @@ class NLP():
             else:
                 part_paras[-1] += '\n' + para
                 part_tokens[-1] += cur
+        print(part_tokens)
         return part_paras
 
+    def run_batch_model(
+        self,
+        loaded: Tuple,
+        paras: Union[List[str], List[List[str]]],
+        call: Callable,
+        wrap: Callable,
+        call_args: Dict = {},
+    ):
+        if not paras:
+            groups = [1]
+            flat = [None]
+        elif type(paras) == list and type(paras[0]) == str:
+            paras = [paras]
+        if paras:
+            tokenizer, model, max_tokens = loaded
+            parts = [self.para_parts(p, tokenizer, max_tokens) for p in paras]
+            groups = [len(p) for p in parts]
+            parts = [p for part in parts for p in part]
+            batch_size = max_gpu_tokens // max_tokens
+            flat = []
+            for i in range(0, len(parts), batch_size):
+                batch = parts[i:i + batch_size]
+                flat += call(
+                    loaded,
+                    batch,
+                    n_parts=len(parts),
+                    **call_args
+                )
+        grouped = []
+        for ct in groups:
+            grouped.append(wrap(flat[:ct]))
+            flat = flat[ct:]
+        return grouped
+
     def sentiment_analysis(self, paras):
-        if not paras:
-            return {"label": "", "score": 1.}
-        tokenizer, model, max_tokens = self.load('sentiment-analysis')
+        return self.run_batch_model(
+            self.load('sentiment-analysis'),
+            paras,
+            self.sentiment_analysis_call,
+            self.sentiment_analysis_wrap
+        )
 
-        parts = self.para_parts(paras, tokenizer, max_tokens)
+    def sentiment_analysis_call(self, loaded, batch, n_parts=None):
+        tokenizer, model, max_tokens = loaded
+        inputs = tokenizer(
+            [p + '</s>' for p in batch],
+            max_length=max_tokens,
+            **tokenizer_args
+        )
+        output = model.generate(inputs.input_ids.to("cuda"), max_length=2)
+        return [tokenizer.decode(ids) for ids in output]
 
-        sents = []
-        batch_size = max_gpu_tokens//max_tokens
-        for i in range(0, len(parts), batch_size):
-            batch = parts[i:i+batch_size]
-            inputs = tokenizer(
-                [p + '</s>' for p in batch],
-                max_length=max_tokens,
-                **tokenizer_args
-            )
-            output = model.generate(inputs.input_ids.to("cuda"), max_length=2)
-            sents += [tokenizer.decode(ids) for ids in output]
-        label = stats_mode(sents).mode[0]  # return most common sentiment
-        return {"label": label, "score": 1.}
+    def sentiment_analysis_wrap(self, val):
+        if type(val) == list:
+            val = stats_mode(val).mode[0]  # most common sentiment
+        return {"label": val or "", "score": 1.}
 
-    def summarization(self, paras, min_length=None, max_length=None, with_sentiment=True):
-        if not paras:
-            return {"summary": None, "sentiment": None}
-        # paras = [re.sub(r'\bI\b', 'Tyler', p) for p in paras]
-        tokenizer, model, max_tokens = self.load('summarization')
+    def summarization(
+        self,
+        paras: Union[List[str], List[List[str]]],
+        min_length: int = None,
+        max_length: int = None,
+        with_sentiment: bool = True,
+    ):
+        call_args = dict(min_length=min_length, max_length=max_length)
+        summs = self.run_batch_model(
+            self.load('summarization'),
+            paras,
+            self.summarization_call,
+            self.summarization_wrap,
+            call_args=call_args,
+        )
 
-        parts = self.para_parts(paras, tokenizer, max_tokens)
-        min_ = max(min_length//len(parts), 2) if min_length else None
-        max_ = max(max_length//len(parts), 10) if max_length else None
+        sents = self.sentiment_analysis(paras) if with_sentiment else\
+            [self.sentiment_analysis_wrap(None)] * len(summs)
 
-        summs = []
-        batch_size = max_gpu_tokens//max_tokens
-        for i in range(0, len(parts), batch_size):
-            batch = parts[i:i+batch_size]
-            inputs = tokenizer(batch, max_length=max_tokens, **tokenizer_args)
-            summary_ids = model.generate(
-                inputs.input_ids.to("cuda"),
-                min_length=min_,
-                max_length=max_,
+        return [{**s, "sentiment": sents[i]["label"]} for (i, s) in enumerate(summs)]
 
-                # I think this is just for performance? PC hangs without it, not noticing output diff
-                num_beams=4,
-                early_stopping=True
-            )
-            res = [
-                tokenizer.decode(g, skip_special_tokens=True, clean_up_tokenization_spaces=False)
-                for g in summary_ids]
-            #res = [re.sub(r"(^\"|$\")", "", r) for r in res]  # there a model flag to not add quotes?
-            summs += res
-        summs = "\n".join(summs)
+    def summarization_call(self, loaded, batch, n_parts: int, min_length: int = None, max_length: int = None):
+        min_ = max(min_length // n_parts, 2) if min_length else None
+        max_ = max(max_length // n_parts, 10) if max_length else None
 
-        sent = None
-        if with_sentiment:
-            sent = self.sentiment_analysis(paras)
-            sent = sent['label']
+        tokenizer, model, max_tokens = loaded
+        inputs = tokenizer(batch, max_length=max_tokens, **tokenizer_args)
+        summary_ids = model.generate(
+            inputs.input_ids.to("cuda"),
+            min_length=min_,
+            max_length=max_,
 
-        return {"summary": summs, "sentiment": sent}
+            # I think this is just for performance? PC hangs without it, not noticing output diff
+            num_beams=4,
+            early_stopping=True
+        )
+        return [
+            tokenizer.decode(g, skip_special_tokens=True, clean_up_tokenization_spaces=False)
+            for g in summary_ids]
+
+    def summarization_wrap(self, val):
+        if type(val) == list:
+            val = "\n".join([v for v in val if v])
+        val = val or None
+        return {"summary": val, "sentiment": None}
 
     def question_answering(self, question, paras):
         if not paras:
@@ -187,45 +241,52 @@ class NLP():
         vecs = self.sentence_encode(paras).tolist()
         return paras, clean, vecs
 
-    def entry(self, id=None):
+    def entry(self, id):
+        id = None  # remove id arg
+        tokenizer, _, max_tokens = self.load('summarization')
         with session() as sess:
-            e = sess.query(M.Entry).filter(M.Entry.no_ai.isnot(True))
-            e = e.filter(M.Entry.id == id) if id else\
-                e.filter(M.Entry.ai_ran.isnot(True))  # look for other entries to cleanup
-            e = e.first()
-            if not e: return {}
-            root_call = bool(id)
-            id = e.id
+            entries = sess.query(M.Entry)\
+                .filter(M.Entry.no_ai.isnot(True), M.Entry.ai_ran.isnot(True))\
+                .all()
+            if not entries: return {}
 
-            # Run clean-text & vectors for themes/books
-            c_entry = sess.query(M.CacheEntry).get(id)
-            if not c_entry:
-                c_entry = M.CacheEntry(entry_id=id)
-                sess.add(c_entry)
-            c_entry.paras, c_entry.clean, c_entry.vectors = self._prep_entry_cache(e.text)
-            sess.commit()
+            paras_grouped = []
+            uids = set()
+            for e in entries:
+                paras_grouped.append(Clean.entries_to_paras([e.text]))
+                uids.add(e.user_id)
+            paras_flat = [p for paras in paras_grouped for p in paras]
+            embeds = self.sentence_encode(paras_flat).tolist()
+            titles = self.summarization(paras_grouped, min_length=5, max_length=20, with_sentiment=False)
+            texts = self.summarization(paras_grouped, min_length=30, max_length=250)
+            for i, e in enumerate(entries):
+                c_entry = sess.query(M.CacheEntry).get(e.id)
+                if not c_entry:
+                    c_entry = M.CacheEntry(entry_id=e.id)
+                    sess.add(c_entry)
+                paras = paras_grouped[i]
+                c_entry.paras = paras
+                c_entry.clean = [' '.join(e) for e in Clean.lda_texts(paras, propn=True)]
+                ct = len(paras)
+                c_entry.vectors = embeds[:ct]
+                embeds = embeds[ct:]
+                sess.commit()
 
-            # Run summaries
-            try:
-                res = self.summarization(c_entry.paras, 5, 20, with_sentiment=False)
-                e.title_summary = res["summary"]
-                res = self.summarization(c_entry.paras, 30, 250)
-                e.text_summary = res["summary"]
-                e.sentiment = res["sentiment"]
-            except Exception as err:
-                print(err)
-            e.ai_ran = True
-            sess.commit()
+                e.title_summary = titles[i]["summary"]
+                e.text_summary = texts[i]["summary"]
+                e.sentiment = texts[i]["sentiment"]
+                e.ai_ran = True
+                sess.commit()
 
             # 9131155e: only update every x entries
-            if root_call:
-                M.Job.create_job(
-                    method='books',
-                    data_in={'args': [str(e.user_id)]}
-                )
+            sess.execute(satext("""
+            update cache_users set last_books=null where user_id in :uids;
+            """), dict(uids=tuple(uids)))
+            sess.commit()
+            for uid in uids:
+                M.Job.create_job(method='books', data_in=dict(args=[str(uid)]))
+        return {}
 
-        # recurse to process any left-behind entries
-        return self.entry()
 
     def profile(self, id):
         with session() as sess:

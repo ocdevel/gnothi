@@ -52,23 +52,23 @@ def run_job(job):
         os.system(f"python books.py --jid={jid_} --uid={args[0]}")
         return
 
-    sql, params = None, None
     try:
         start = time.time()
         res = m[k](*args, **kwargs)
-        sql = text(f"update jobs set state='done', data_out=:data where id=:jid")
-        params = {'data': jsonb(res), **jid}
-        logger.info(f"Job Complete {time.time() - start}")
+        with session() as sess:
+            sess.execute(text(f"""
+            update jobs set state='done', data_out=:data where id=:jid
+            """), {'data': jsonb(res), **jid})
+        logger.info(f"Job {k} complete {time.time() - start}")
     except Exception as err:
         err = str(traceback.format_exc())
         # err = str(err)
         res = {"error": err}
-        sql = text(f"update jobs set state='error', data_out=:data where id=:jid")
-        params = {'data': jsonb(res), **jid}
-        logger.info(f"Job Error {time.time() - start} {err}")
-    with session() as sess:
-        sess.execute(sql, params)
-        sess.commit()
+        with session() as sess:
+            sess.execute(text(f"""
+            update jobs set state='error', data_out=:data where id=:jid
+            """), {'data': jsonb(res), **jid})
+        logger.error(f"Job {k} error {time.time() - start} {err}")
     # 3eb71b3: unloading models. multiprocessing handles better
 
 

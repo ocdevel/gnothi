@@ -1,6 +1,8 @@
 import os, pdb, pytest, time, random, datetime
 from sqlalchemy import text
 from lorem_text import lorem
+import pytest_check as check
+
 
 import logging
 logger = logging.getLogger(__name__)
@@ -16,9 +18,13 @@ def ml_jobs(client, u):
         data = {**limit_entries, 'query': "Who am I?"}
         res = client.post("/query", json=data, **u.user.header)
         assert res.status_code == code
+        res = res.json()
+        assert len(res) > 0
         data = {**limit_entries, 'words': 300}
         res = client.post("/summarize", json=data, **u.user.header)
         assert res.status_code == code
+        res = res.json()
+        assert len(res) > 0
     return _ml_jobs
 
 @pytest.mark.skip()
@@ -43,40 +49,49 @@ def test_entries_count(post_entry, u, ml_jobs):
     ml_jobs(limit_entries, 400)
 
 
-@pytest.mark.timeout(120)
-def test_caching(client, u, db, post_entry):
-    post_entry(no_ai=False)
+# TODO re-work fixture scopes so I don't need pytest-check
+def test_entries_ml(post_entry, db, client, u, ml_jobs):
+    # TODO use wikipedia entries to actually test qualitative results
+    post_entry()
+    post_entry()
+    db.execute("update entries set no_ai=False")
+    db.commit()
+    # await_row & timeout already in post_entry fixture
     post_entry(no_ai=False)
 
-    # themes
+
     main_tag = list(u.user.tag1.keys())
     limit_entries = {'days': 10, 'tags': main_tag}
     res = client.post("/themes", json=limit_entries, **u.user.header)
-    assert res.status_code == 200, str(res.json())
+    check.equal(res.status_code, 200)
     res = res.json()
-    assert res['terms']
-    assert len(res['themes']) > 0
+    check.is_not_none(res['terms'])
+    check.greater(len(res['themes']), 0)
 
-    # books job created
+    main_tag = list(u.user.tag1.keys())
+    limit_entries = {'days': 10, 'tags': main_tag}
+    ml_jobs(limit_entries, 200)
+
     sql = "select id from jobs where method='books'"
-    assert M.await_row(db, sql, timeout=2)
+    res = M.await_row(db, sql, timeout=100)
+    check.is_not_none(res)
 
-    # books generated
     sql = "select id from jobs where state='done' and method='books'"
-    assert M.await_row(db, sql, timeout=120)
+    res = M.await_row(db, sql, timeout=200)
+    check.is_not_none(res)
     res = client.get(f"/books/ai", **u.user.header)
-    assert res.status_code == 200
+    check.equal(res.status_code, 200)
     res = res.json()
-    assert len(res) > 0
+    check.greater(len(res), 0)
 
-# def test_few_entries(self, client):
-#     eid = _post_entry(client)
-#
-#     # res = client.get("/influencers", **header('user'))
-#     limit_entries = {'days': 10, 'tags': u.user.tag1}
-#     res = client.post("/themes", json=limit_entries, **header('user'))
-#     assert res.status_code == 400
-#     # post /books
-#     # post /query (M.SIQuestion)
-#     # post /summarize (M.SISummarize)
+    # def test_few_entries(self, client):
+    #     eid = _post_entry(client)
+    #
+    #     # res = client.get("/influencers", **header('user'))
+    #     limit_entries = {'days': 10, 'tags': u.user.tag1}
+    #     res = client.post("/themes", json=limit_entries, **header('user'))
+    #     assert res.status_code == 400
+    #     # post /books
+    #     # post /query (M.SIQuestion)
+    #     # post /summarize (M.SISummarize)
 
