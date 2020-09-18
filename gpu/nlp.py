@@ -173,8 +173,14 @@ class NLP():
         return [{**s, "sentiment": sents[i]["label"]} for (i, s) in enumerate(summs)]
 
     def summarization_call(self, loaded, batch, n_parts: int, min_length: int = None, max_length: int = None):
-        min_ = max(min_length // n_parts, 2) if min_length else None
-        max_ = max(max_length // n_parts, 10) if max_length else None
+        # FIXME! since we're passing in batches, no clear way to distinguish n_parts per chunk in this batch
+        # (may be dealing with multiple people's entries in one batch). For now just using what's passed,
+        # resulting in longer-than-expected lengths
+        # min_ = max(min_length // n_parts, 2) if min_length else None
+        # max_ = max(max_length // n_parts, 10) if max_length else None
+        min_ = min_length
+        max_ = max_length
+
 
         tokenizer, model, max_tokens = loaded
         inputs = tokenizer(batch, max_length=max_tokens, **tokenizer_args)
@@ -279,12 +285,7 @@ class NLP():
                 sess.commit()
 
             # 9131155e: only update every x entries
-            sess.execute(satext("""
-            update cache_users set last_books=null where user_id in :uids;
-            """), dict(uids=tuple(uids)))
-            sess.commit()
-            for uid in uids:
-                M.Job.create_job(method='books', data_in=dict(args=[str(uid)]))
+            M.Job.multiple_book_jobs(list(uids))
         return {}
 
 

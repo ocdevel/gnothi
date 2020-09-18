@@ -732,6 +732,20 @@ class Job(Base):
             sess.refresh(j)
             return str(j.id)
 
+    @staticmethod
+    def multiple_book_jobs(uids):
+        with session() as sess:
+            sess.execute(satext("""
+            update cache_users set last_books=null where user_id in :uids;
+            """), dict(uids=tuple(uids)))
+            sess.commit()
+        # TODO handle this in run.py when it's consuming jobs
+        def delay_books(uid, i):
+            time.sleep(i*60*5)  # 5m
+            Job.create_job('books', data_in=dict(args=[str(uid)]))
+        for i, uid in enumerate(uids):
+            threading.Thread(target=delay_books, args=(uid, i)).start()
+
 
 class JobsStatus(Base):
     __tablename__ = 'jobs_status'

@@ -49,7 +49,9 @@ def run_job(job):
     logger.info(f"Running job {k}")
 
     if k == 'books':
-        os.system(f"python books.py --jid={jid_} --uid={args[0]}")
+        cmd = f"python books.py --jid={jid_} --uid={args[0]}"
+        logger.info(cmd)
+        os.system(cmd)
         return
 
     try:
