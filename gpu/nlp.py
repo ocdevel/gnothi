@@ -233,7 +233,8 @@ class NLP():
                 answer = tokenizer.decode(tokenizer.convert_tokens_to_ids(answer_tokens))  # remove space prepending space token
 
                 if len(answer) > 200:
-                    answer = self.summarization([answer], max_length=15, with_sentiment=False)["summary"]
+                    answer = self.summarization([answer], max_length=15, with_sentiment=False)
+                    answer = answer[0]["summary"]
                 if answer and answer not in answers:
                     answers.append(answer)
 
