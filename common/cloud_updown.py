@@ -34,6 +34,12 @@ Failed
 Cancelled
 """.split()
 
+
+def list_states():
+    jobs = job_client.list()
+    print(list(set([j.state for j in jobs.list()])))
+
+
 def _fetch_status(sess, gpu=False):
     status = sess.execute(f"""
     select status, svc,
@@ -53,35 +59,23 @@ def _fetch_status(sess, gpu=False):
     return status
 
 
-def ec2_up():
+def cloud_up():
     if is_dev(): return
     logger.warning("Initing Paperspace")
     jobs = job_client.list()
     if any([j.state in up_states for j in jobs]):
         return
 
-    # TODO more carefully decide what to send, security
-    vars_ = {
-        **dict(vars),
-        **dict(
-            MACHINE='paperspace',
-            ENVIRONMENT='production'
-        )
-    }
-
-    import json
+    # 22f87468: send vars (just using /storage/config.json for now)
     res = job_client.create(
         machine_type='K80',
-        container='lefnire/gnothi:gpu-0.0.7',
+        container='lefnire/gnothi:gpu-0.0.0',
         project_id=vars.PAPERSPACE_PROJECT_ID,
         is_preemptible=True,
         command='python run.py',
         registry_username=vars.PAPERSPACE_REGISTRY_USERNAME,
         registry_password=vars.PAPERSPACE_REGISTRY_PASSWORD,
-        job_env=vars_
     )
-    for j in job_client.list():
-        print(j.state, j.working_directory)
     return res
 
 
@@ -99,23 +93,23 @@ def jobs_status():
     if res.elapsed_svc < 5: pass
     # desktop was recently active; very likely  will be back soon
     elif res.elapsed_svc < 300 and res.svc in PCs: pass
-    # jobs svc stale (pending|off), decide if should turn ec2 on
+    # jobs svc stale (pending|off), decide if should turn cloud on
     else:
-        # status=on if server not turned off via ec2_down_maybe
+        # status=on if server not turned off via cloud_down_maybe
         db.session.execute("update jobs_status set status='pending'")
         db.session.commit()
         if res.status in ['off', 'on']:
-            threading.Thread(target=ec2_up).start()
+            threading.Thread(target=cloud_up).start()
     return res.status
 
 
-def ec2_down():
+def cloud_down():
     if is_dev(): return
-    logger.warning("Stopping Paperspace")
     jobs = job_client.list()
     for j in jobs:
         print(j.state)
         if j.state in up_states:
+            logger.warning("Stopping Paperspace")
             job_client.delete(job_id=j.id)
 
 
@@ -135,9 +129,9 @@ def notify_online(sess):
     select 1 from jobs where state in ('working', 'new') limit 1
     """).fetchone()
 
-    # Desktop's taking over, take a rest EC2
+    # Desktop's taking over, take a rest cloud
     if (svc in PCs) and (status.svc not in PCs) and (not any_working):
-        threading.Thread(target=ec2_down).start()
+        threading.Thread(target=cloud_down).start()
 
     # client/gpu still active (5 min)
     # Note the client setInterval will keep the activity fresh using even if idling, so no need to wait long after
@@ -148,6 +142,6 @@ def notify_online(sess):
     else:
         sess.execute(f"update jobs_status set status='off', ts_client={utcnow}")
         sess.commit()
-        threading.Thread(target=ec2_down).start()
+        threading.Thread(target=cloud_down).start()
 
     return status

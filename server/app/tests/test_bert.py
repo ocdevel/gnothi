@@ -76,9 +76,10 @@ def test_entries_ml(post_entry, db, client, u, ml_jobs):
     res = M.await_row(db, sql, timeout=100)
     check.is_not_none(res)
 
-    sql = "select id from jobs where state='done' and method='books'"
+    sql = "select id, state from jobs where state in ('done', 'error') and method='books'"
     res = M.await_row(db, sql, timeout=200)
     check.is_not_none(res)
+    check.equal(res.state, 'done')
     res = client.get(f"/books/ai", **u.user.header)
     check.equal(res.status_code, 200)
     res = res.json()

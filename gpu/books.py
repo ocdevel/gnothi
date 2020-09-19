@@ -10,7 +10,7 @@ from tensorflow.keras.models import Model, load_model
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.optimizers import Adam
 
-import os, pdb, math, datetime
+import os, pdb, math, datetime, traceback
 from os.path import exists
 from tqdm import tqdm
 from common.database import session
@@ -22,6 +22,7 @@ from box import Box
 import numpy as np
 import pandas as pd
 from sqlalchemy import text
+from psycopg2.extras import Json as jsonb
 from sklearn import preprocessing as pp
 
 import logging
@@ -247,7 +248,7 @@ def predict_books(user_id, vecs_user, n_recs=30, centroids=False):
         .drop_duplicates('title', keep='first')\
         .iloc[:n_recs]
 
-def run_books(user_id, job_id=None):
+def run_books(user_id):
     with session() as sess:
         user_id = str(user_id)
         uid = {'uid': user_id}
@@ -291,13 +292,6 @@ def run_books(user_id, job_id=None):
         res['created_at'] = res['updated_at'] = datetime.datetime.utcnow()
         res.to_sql('bookshelf', sess.bind, if_exists='append', index=False)
 
-        if job_id:
-            # TODO capture error
-            sess.execute(text("""
-            update jobs set state='done' where id=:jid
-            """), {'jid': job_id})
-            sess.commit()
-
 
 if __name__ == '__main__':
     import argparse
@@ -306,5 +300,21 @@ if __name__ == '__main__':
     parser.add_argument("--jid")
     args = parser.parse_args()
 
-    logger.warning(f"Books args {args.uid} {args.jid}")
-    run_books(args.uid, args.jid)
+    # TODO refactor this, copied from run.py
+    jid = args.jid
+    try:
+        run_books(args.uid)
+        with session() as sess:
+            sess.execute(text(f"""
+            update jobs set state='done' where id=:jid
+            """), dict(jid=jid))
+        logger.warning(f"Books {jid} done")
+    except Exception as err:
+        err = str(traceback.format_exc())
+        logger.error(f"Books error {err}")
+        res = {"error": err}
+        with session() as sess:
+            sess.execute(text(f"""
+            update jobs set state='error', data_out=:data where id=:jid
+            """), dict(data=jsonb(res), jid=jid))
+3

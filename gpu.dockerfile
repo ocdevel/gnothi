@@ -4,7 +4,7 @@ FROM lefnire/dl:transformers-pt-tf
 RUN apt-get install -y default-libmysqlclient-dev
 
 RUN \
-  pip install --no-cache-dir spacy[cuda101] && python -m spacy download en_core_web_sm && \
+  pip install --no-cache-dir spacy && python -m spacy download en_core_web_sm && \
   pip install --no-cache-dir \
   mysqlclient \
   psycopg2-binary \

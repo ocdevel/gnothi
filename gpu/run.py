@@ -13,7 +13,7 @@ from themes import themes
 from influencers import influencers
 from common.utils import utcnow
 from common.database import session
-from common.ec2_updown import notify_online
+from common.cloud_updown import notify_online
 from utils import cluster, cosine, clear_gpu
 from nlp import nlp_
 
@@ -49,6 +49,8 @@ def run_job(job):
     logger.info(f"Running job {k}")
 
     if k == 'books':
+        if os.environ.get("IS_TESTING", False):
+            nlp_.clear()
         cmd = f"python books.py --jid={jid_} --uid={args[0]}"
         logger.info(cmd)
         os.system(cmd)

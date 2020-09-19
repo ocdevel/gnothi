@@ -6,7 +6,7 @@ from gensim.models.phrases import Phrases, Phraser
 from gensim.parsing import preprocessing as pp
 
 import spacy
-spacy.prefer_gpu()
+#spacy.prefer_gpu()
 import lemminflect
 nlp = spacy.load('en_core_web_sm', disable=['parser', 'ner'])
 from textacy.preprocessing import replace as treplace

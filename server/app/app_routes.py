@@ -10,7 +10,7 @@ from sqlalchemy import text
 from common.utils import utcnow, nowtz
 import common.models as M
 from app import habitica
-from common.ec2_updown import jobs_status
+from common.cloud_updown import jobs_status
 from app.ml import run_gpu_model, OFFLINE_MSG
 from urllib.parse import quote as urlencode
 

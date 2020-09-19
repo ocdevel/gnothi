@@ -12,7 +12,7 @@ OFFLINE_MSG = "AI server offline, check back later"
 
 
 def run_gpu_model(method, data):
-    # AI offline (it's spinning up from views.py->ec2_updown.py)
+    # AI offline (it's spinning up from views.py->cloud_updown.py)
     res = db.session.execute("select status from jobs_status limit 1").fetchone()
     if res.status != 'on':
         return False

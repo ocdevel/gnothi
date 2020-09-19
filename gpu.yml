@@ -8,8 +8,8 @@ services:
     container_name: jgpu
     restart: unless-stopped
     volumes:
-      - ./gpu:/app
-      - ./common:/app/common
+      - ./gpu:/paperspace
+      - ./common:/paperspace/common
       - ./sotrage:/storage
     device_requests:
       - capabilities:
