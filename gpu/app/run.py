@@ -8,14 +8,14 @@ from box import Box
 import torch
 from sqlalchemy import text
 
-# from books import run_books
-from themes import themes
-from influencers import influencers
+# app.from books import run_books
+from app.themes import themes
+from app.influencers import influencers
 from common.utils import utcnow
 from common.database import session
 from common.cloud_updown import notify_online
 from utils import cluster, cosine, clear_gpu
-from nlp import nlp_
+from app.nlp import nlp_
 
 m = Box({
     # NLP
@@ -51,7 +51,7 @@ def run_job(job):
     if k == 'books':
         if os.environ.get("IS_TESTING", False):
             nlp_.clear()
-        cmd = f"python books.py --jid={jid_} --uid={args[0]}"
+        cmd = f"python app/books.py --jid={jid_} --uid={args[0]}"
         logger.info(cmd)
         os.system(cmd)
         return

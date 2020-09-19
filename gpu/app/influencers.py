@@ -1,5 +1,5 @@
 import pdb
-from xgb_hyperopt import run_opt
+from app.xgb_hyperopt import run_opt
 from xgboost import XGBRegressor
 from sqlalchemy import text
 from psycopg2.extras import Json as jsonb

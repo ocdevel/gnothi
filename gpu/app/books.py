@@ -16,8 +16,8 @@ from tqdm import tqdm
 from common.database import session
 import common.models as M
 from common.utils import utcnow, vars
-from utils import cosine, cluster, normalize
-from cleantext import Clean
+from app.utils import cosine, cluster, normalize
+from app.cleantext import Clean
 from box import Box
 import numpy as np
 import pandas as pd
@@ -143,7 +143,7 @@ def load_books_vecs(df):
 
     logger.info(f"Running BERT on {df.shape[0]} entries")
     texts = (df.title + '\n' + df.text).tolist()
-    from nlp import nlp_
+    from app.nlp import nlp_
     vecs = nlp_.sentence_encode(texts)
     nlp_.clear()
     with open(path_, 'wb') as f:

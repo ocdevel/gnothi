@@ -4,7 +4,7 @@ from sqlalchemy import create_engine
 from common.utils import vars, DROP_SQL
 from common.database import init_db, shutdown_db
 from sqlalchemy_utils.functions import drop_database, create_database, database_exists
-from app.scripts.migrate import migrate_before, migrate_after
+from scripts.migrate import migrate_before, migrate_after
 import argparse
 
 parser = argparse.ArgumentParser()

@@ -1,5 +1,5 @@
 import pdb, pytest
-from nlp import NLP
+from app.nlp import NLP
 
 nlp_ = NLP()
 

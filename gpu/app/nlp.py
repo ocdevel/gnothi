@@ -4,7 +4,7 @@ import numpy as np
 from common.database import session
 import common.models as M
 from sqlalchemy import text as satext
-from cleantext import Clean
+from app.cleantext import Clean
 from sentence_transformers import SentenceTransformer
 from transformers import pipeline, AutoTokenizer, AutoModelForSequenceClassification, AutoModelWithLMHead,\
     AutoModelForSeq2SeqLM, AutoModelForQuestionAnswering

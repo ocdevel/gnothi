@@ -33,14 +33,16 @@ RUN \
   fastapi-users[sqlalchemy] \
   asyncpg \
   bcrypt \
-  gradient
+  gradient \
+  pytest
 
 COPY ./gpu /paperspace
 COPY ./common /paperspace/common
 
 ENV ENVIRONMENT=production
 ENV TORCH_HOME=/storage
+ENV PYTHONPATH=.
 
 WORKDIR /paperspace
-ENTRYPOINT python run.py
+ENTRYPOINT python app/run.py
 # tf.test.gpu_device_name() to test
