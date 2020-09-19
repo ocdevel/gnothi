@@ -37,9 +37,16 @@ def add_var(k, v):
 for k, v in config_example_json.items():
     add_var(k, v)
 
+vars['DB_NAME'] = dict(
+    development='gnothi_dev',
+    production='gnothi_prod',
+    testing='gnothi_test'
+)[vars.ENVIRONMENT] or 'gnothi_dev'
 
+def is_prod(): return vars.ENVIRONMENT == 'production'
+def is_test(): return vars.ENVIRONMENT == 'testing'
 def is_dev():
-    return vars.ENVIRONMENT == 'development'
+    return vars.ENVIRONMENT in ('development', 'testing')
 
 
 if vars.ENVIRONMENT == 'production':

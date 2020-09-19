@@ -1,6 +1,5 @@
-import os, time
-os.environ['DB_NAME'] = 'gnothi_test'
-os.environ['ENVIRONMENT'] = 'development'  # testing
+import os
+os.environ['ENVIRONMENT'] = 'testing'
 
 from common.utils import vars
 assert 'gnothi_test' in vars.DB_URL, "not using test DB!"

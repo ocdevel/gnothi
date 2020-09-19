@@ -2,8 +2,7 @@
   "ENVIRONMENT": "development",
   "DB": {
     "URL": "postgres://user:password@localhost:5432",
-    "NAME": "gnothi_test",
-    "NAME": "gnothi_dev",
+    "NOTE__": "DB_NAME auto-generated from ENVIRONMENT (production=gnothi_prod, development=gnothi_dev, testing=gnothi_test)",
 
     "PROD": {
       "URL": "postgres://user:password@localhost:5432",

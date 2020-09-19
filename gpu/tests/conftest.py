@@ -1,5 +1,5 @@
 import os
-os.environ['IS_TESTING'] = '1'
+os.environ['ENVIRONMENT'] = 'testing'
 
 import pytest
 from app.nlp import NLP

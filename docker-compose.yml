@@ -24,9 +24,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
 
   server:
-    build:
-      context: .
-      dockerfile: ./server.dockerfile
+    image: lefnire/gnothi:server-0.0.1
     container_name: jserver
     environment:
       ENVIRONMENT: production
@@ -38,8 +36,9 @@ services:
       - traefik.http.routers.server.tls.certresolver=myresolver
     stdin_open: true
     volumes:
-      - ./server/:/app
-      - ./common/:/app/common
+      - ./storage:/storage
+    #  - ./server/:/app
+    #  - ./common/:/app/common
     restart: unless-stopped
     logging:
       options:
@@ -76,8 +75,8 @@ services:
       
     stdin_open: true
     restart: unless-stopped
-    volumes:
-      - ./client:/app
+    #volumes:
+    #  - ./client:/app
     logging:
       options:
         max-size: "5m"

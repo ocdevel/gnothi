@@ -2,14 +2,10 @@ version: "3.7"
 
 services:
   gpu:
-    build:
-      context: .
-      dockerfile: ./gpu.dockerfile
+    image: lefnire/gnothi:gpu-0.0.0
     container_name: jgpu
     restart: unless-stopped
     volumes:
-      - ./gpu:/paperspace
-      - ./common:/paperspace/common
       - ./storage:/storage
     device_requests:
       - capabilities:
