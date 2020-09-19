@@ -107,7 +107,6 @@ def cloud_down():
     if is_dev(): return
     jobs = job_client.list()
     for j in jobs:
-        print(j.state)
         if j.state in up_states:
             logger.warning("Stopping Paperspace")
             job_client.delete(job_id=j.id)

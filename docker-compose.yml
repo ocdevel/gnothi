@@ -26,7 +26,7 @@ services:
   server:
     build:
       context: .
-      dockerfile: server.dockerfile
+      dockerfile: ./server.dockerfile
     container_name: jserver
     environment:
       ENVIRONMENT: production
@@ -49,7 +49,7 @@ services:
   client:
     build:
       context: .
-      dockerfile: client.dockerfile
+      dockerfile: ./client.dockerfile
     command: serve -s build -l tcp://0.0.0.0:80
     container_name: jclient
     labels:

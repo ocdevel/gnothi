@@ -4,13 +4,13 @@ services:
   gpu:
     build:
       context: .
-      dockerfile: gpu.dockerfile
+      dockerfile: ./gpu.dockerfile
     container_name: jgpu
     restart: unless-stopped
     volumes:
       - ./gpu:/paperspace
       - ./common:/paperspace/common
-      - ./sotrage:/storage
+      - ./storage:/storage
     device_requests:
       - capabilities:
           - "gpu"

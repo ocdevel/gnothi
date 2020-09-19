@@ -4,7 +4,7 @@ services:
   server:
     build:
       context: .
-      dockerfile: server.dockerfile
+      dockerfile: ./server.dockerfile
     container_name: jserver
     entrypoint: /bin/bash
     environment:
@@ -23,7 +23,7 @@ services:
   client:
     build:
       context: .
-      dockerfile: client.dockerfile
+      dockerfile: ./client.dockerfile
     entrypoint: yarn start
     container_name: jclient
     ports:
@@ -39,7 +39,7 @@ services:
   gpu-dev:
     build:
       context: .
-      dockerfile: gpu.dockerfile
+      dockerfile: ./gpu.dockerfile
     container_name: jgpu-dev
     entrypoint: /bin/bash
     stdin_open: true
