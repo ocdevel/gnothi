@@ -2,7 +2,9 @@ version: "3.7"
 
 services:
   server:
-    build: server
+    build:
+      context: .
+      dockerfile: server.dockerfile
     container_name: jserver
     entrypoint: /bin/bash
     environment:
@@ -13,40 +15,41 @@ services:
     volumes:
       - ./server/:/app
       - ./common/:/app/common
-      - ./.aws:/root/.aws
     logging:
       options:
         max-size: "5m"
         max-file: "3"
 
   client:
-    build: client
-    entrypoint: /bin/bash
+    build:
+      context: .
+      dockerfile: client.dockerfile
+    entrypoint: yarn start
     container_name: jclient
     ports:
       - 3002:3000
     stdin_open: true
     volumes:
-      - ./client:/client
+      - ./client:/app
     logging:
       options:
         max-size: "5m"
         max-file: "3"
 
   gpu-dev:
-    build: gpu
+    build:
+      context: .
+      dockerfile: gpu.dockerfile
     container_name: jgpu-dev
-    entrypoint: /bin/bash
+#    entrypoint: /bin/bash
     stdin_open: true
     restart: unless-stopped
     environment:
       ENVIRONMENT: development
-      TORCH_HOME: /bigmodels
     volumes:
       - ./gpu:/app
       - ./common:/app/common
-      - ./.aws:/root/.aws
-      - ./bigmodels:/bigmodels
+      - ./storage:/storage
     device_requests:
       - capabilities:
           - "gpu"

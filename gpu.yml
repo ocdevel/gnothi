@@ -2,17 +2,15 @@ version: "3.7"
 
 services:
   gpu:
-    build: gpu
+    build:
+      context: .
+      dockerfile: gpu.dockerfile
     container_name: jgpu
     restart: unless-stopped
-    environment:
-      ENVIRONMENT: production
-      TORCH_HOME: /bigmodels
     volumes:
       - ./gpu:/app
       - ./common:/app/common
-      - ./.aws:/root/.aws
-      - ./bigmodels:/bigmodels
+      - ./sotrage:/storage
     device_requests:
       - capabilities:
           - "gpu"

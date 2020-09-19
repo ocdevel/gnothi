@@ -1,15 +1,38 @@
-import boto3, time, threading, os, socket
+import time, threading, os, socket, pdb
 from common.utils import is_dev, vars, utcnow
 from sqlalchemy import text
 from fastapi_sqlalchemy import db
+from gradient import JobsClient
 import logging
 logger = logging.getLogger(__name__)
 
-# https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/ec2.html
-ec2_client = boto3.client('ec2')
 svc = vars.MACHINE or socket.gethostname()
 PCs = ['desktop', 'laptop']
 
+job_client = JobsClient(api_key=vars.PAPERSPACE_API_KEY)
+
+up_states = """
+Pending
+Building
+Provisioning
+Provisioned
+Network Setup
+Starting
+Stopping
+Running
+Created
+Network Setting Up
+Aborting
+Network Teardown
+Network Tearing Down
+""".split()
+
+down_states = """
+Stopped
+Error
+Failed
+Cancelled
+""".split()
 
 def _fetch_status(sess, gpu=False):
     status = sess.execute(f"""
@@ -32,10 +55,34 @@ def _fetch_status(sess, gpu=False):
 
 def ec2_up():
     if is_dev(): return
-    logger.warning("Turning on EC2")
-    try:
-        ec2_client.start_instances(InstanceIds=[vars.GPU_INSTANCE])
-    except: pass
+    logger.warning("Initing Paperspace")
+    jobs = job_client.list()
+    if any([j.state in up_states for j in jobs]):
+        return
+
+    # TODO more carefully decide what to send, security
+    vars_ = {
+        **dict(vars),
+        **dict(
+            MACHINE='paperspace',
+            ENVIRONMENT='production'
+        )
+    }
+
+    import json
+    res = job_client.create(
+        machine_type='K80',
+        container='lefnire/gnothi:gpu-0.0.7',
+        project_id=vars.PAPERSPACE_PROJECT_ID,
+        is_preemptible=True,
+        command='python run.py',
+        registry_username=vars.PAPERSPACE_REGISTRY_USERNAME,
+        registry_password=vars.PAPERSPACE_REGISTRY_PASSWORD,
+        job_env=vars_
+    )
+    for j in job_client.list():
+        print(j.state, j.working_directory)
+    return res
 
 
 def jobs_status():
@@ -64,10 +111,12 @@ def jobs_status():
 
 def ec2_down():
     if is_dev(): return
-    logger.warning("Shutting down EC2")
-    try:
-        ec2_client.stop_instances(InstanceIds=[vars.GPU_INSTANCE])
-    except: pass
+    logger.warning("Stopping Paperspace")
+    jobs = job_client.list()
+    for j in jobs:
+        print(j.state)
+        if j.state in up_states:
+            job_client.delete(job_id=j.id)
 
 
 def notify_online(sess):

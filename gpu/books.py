@@ -130,7 +130,7 @@ def load_books_df(sess):
     return df.set_index('id', drop=False)
 
 
-path_ = f"tmp/libgen_{vars.ENVIRONMENT}.npy"
+path_ = f"/storage/libgen_{vars.ENVIRONMENT}.npy"
 
 def load_books_vecs(df):
     if exists(path_):

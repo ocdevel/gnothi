@@ -15,7 +15,6 @@ RUN pip install \
   flask-apscheduler \
   markdown \
   python-box \
-  boto3 \
   tqdm \
   mysqlclient \
   cryptography \
@@ -26,9 +25,12 @@ RUN pip install \
   pytest \
   pytest-timeout \
   lorem-text \
-  pytest-check
+  pytest-check \
+  gradient \
+  boto3
 
-COPY app /app
+COPY ./server/app /app
+COPY ./common /app/common
 WORKDIR /app
 
 EXPOSE 80

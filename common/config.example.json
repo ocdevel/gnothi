@@ -1,17 +1,43 @@
 {
-  "DB_PROD_URL": "postgres://postgres:password@host.docker.internal:5432",
-  "DB_PROD_NAME": "gnothi_prod",
+  "ENVIRONMENT": "development",
+  "DB": {
+    "URL": "postgres://user:password@localhost:5432",
+    "NAME": "gnothi_test",
+    "NAME": "gnothi_dev",
 
-  "DB_URL": "postgres://postgres:password@host.docker.internal:5432",
-  "DB_NAME": "gnothi_dev",
+    "PROD": {
+      "URL": "postgres://user:password@localhost:5432",
+      "NAME": "gnothi_prod"
+    },
 
-  "GPU_INSTANCE": "ec2-instance-id",
+    "BOOKS": "mysql://user:password@localhost:3306/books"
+  },
 
-  "FLASK_KEY": "super secret",
+  "FLASK_KEY": "x",
+
+  "MACHINE": "desktop",
+
+  "PAPERSPACE": {
+    "API_KEY": "x",
+    "PROJECT_ID": "x",
+    "REGISTRY_USERNAME": "x",
+    "REGISTRY_PASSWORD": "x"
+
+  },
 
   "HABIT": {
-    "USER": "",
-    "KEY": "",
-    "APP": ""
+    "USER": "x",
+    "APP": "x"
+  },
+
+  "EMAIL": {
+    "SES_EMAIL_SOURCE": "x"
+  },
+
+  "AWS": {
+    "ACCESS_KEY_ID": "x",
+    "SECRET_ACCESS_KEY": "x",
+    "DEFAULT_REGION": "x"
   }
 }
+

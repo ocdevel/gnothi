@@ -18,7 +18,7 @@ def sync_for(user):
         "Content-Type": "application/json",
         "x-api-user": user.habitica_user_id,
         "x-api-key": user.habitica_api_token,
-        "x-client": f"{vars.HABIT.USER}-{vars.HABIT.APP}"
+        "x-client": f"{vars.HABIT_USER}-{vars.HABIT_APP}"
     }
     tasks = requests.get(
         'https://habitica.com/api/v3/tasks/user',
