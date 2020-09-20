@@ -25,7 +25,7 @@ m = Box({
     'sentence-encode': nlp_.sentence_encode,
 
     # Caching
-    'entry': nlp_.entry,
+    'entries': nlp_.entries,
     'profile': nlp_.profile,
     'influencers': influencers,
 

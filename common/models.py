@@ -264,10 +264,7 @@ class Entry(Base):
         # (b) if AI server offline, wait till online
         self.title_summary = "🕒 AI is generating a title"
         self.text_summary = "🕒 AI is generating a summary"
-        Job.create_job(
-            method='entry',
-            data_in={'args': [str(self.id)]}
-        )
+        Job.create_job(method='entries')
 
 
     def update_snoopers(self):

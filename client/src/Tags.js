@@ -3,6 +3,7 @@ import _ from "lodash"
 import React, {useEffect, useState} from "react"
 import { FaPen } from 'react-icons/fa'
 
+import {trueKeys} from "./utils"
 import { useSelector, useDispatch } from 'react-redux'
 import { fetch_, getTags, setSelectedTags } from './redux/actions'
 
@@ -81,7 +82,6 @@ function TagModal({close}) {
   )
 }
 
-
 export default function Tags({
   selected=null,
   setSelected=null,
@@ -96,19 +96,21 @@ export default function Tags({
   const selectedTags = useSelector(state => state.selectedTags)
   const dispatch = useDispatch()
 
+  // no selected,setSelected props indicates using global tags
+  const selectedTags_ = selected || selectedTags
+
   useEffect(() => {
     dispatch(getTags())
   }, [as])
 
   useEffect(() => {
-    if (tags.length && preSelectMain) {
+    const alreadySelected = trueKeys(selectedTags_).length > 0
+    if (tags.length && preSelectMain && !alreadySelected) {
       const main = _.find(tags, t=>t.main)
       selectTag(main.id, true)
     }
   }, [tags])
 
-  // no selected,setSelected props indicates using global tags
-  const selectedTags_ = selected || selectedTags
 
   const selectTag = (id, v) => {
     if (setSelected) {
