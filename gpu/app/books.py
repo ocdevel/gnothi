@@ -18,6 +18,7 @@ import common.models as M
 from common.utils import utcnow, vars
 from app.utils import cosine, cluster, normalize
 from app.cleantext import Clean
+from common.fixtures import fixtures
 from box import Box
 import numpy as np
 import pandas as pd
@@ -204,8 +205,10 @@ def train_books_predictor(books, vecs_books, shelf_idx, fine_tune=True):
 
 def predict_books(user_id, vecs_user, n_recs=30, centroids=False):
     with session() as sess:
-        vecs_books, books = load_books(sess)
+        fixt = fixtures.load_books(user_id)
+        if fixt: return fixt
 
+        vecs_books, books = load_books(sess)
         sql = "select book_id as id, user_id, shelf from bookshelf where user_id=%(uid)s"
         shelf = pd.read_sql(sql, sess.bind, params={'uid': user_id}).set_index('id', drop=False)
     shelf_idx = books.id.isin(shelf.id)
@@ -243,9 +246,11 @@ def predict_books(user_id, vecs_user, n_recs=30, centroids=False):
 
     # dupes by title in libgen
     # r = books.sort_values('dist')\
-    return books[~shelf_idx].sort_values('dist')\
+    df = books[~shelf_idx].sort_values('dist')\
         .drop_duplicates('title', keep='first')\
         .iloc[:n_recs]
+    fixtures.save_books(user_id, df)
+    return df
 
 def run_books(user_id):
     with session() as sess:

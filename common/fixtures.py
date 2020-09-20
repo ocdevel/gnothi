@@ -3,6 +3,7 @@ from pprint import pprint
 from box import Box
 from common.database import session
 from common.utils import vars, is_test
+from sqlalchemy import text
 
 BASE = '/storage/fixtures'
 
@@ -52,12 +53,36 @@ class Fixtures():
             return self.gen_entries()
         return pkl
 
-    def load_users(self):
+    def load_users(self, hash=True):
         u = Box(user={}, therapist={}, friend={}, other={})
         for k, _ in u.items():
             email = k + "@x.com"
-            u[k] = {'email': email, 'password': email}
+            pass_k = 'hashed_password' if hash else 'password'
+            u[k] = {'email': email, pass_k: email}
         return u
+
+    def uid_to_email(self, uid):
+        with session() as sess:
+            return sess.execute(text("""
+            select email from users where id=:uid
+            """), dict(uid=uid)).fetchone()
+
+    def eid_to_title(self, eid):
+        with session() as sess:
+            return sess.execute(text("""
+            select title from entries where id=:eid
+            """), dict(eid=eid)).fetchone()
+
+    def load_books(self, user_id):
+        pkl = self.load("books")
+        if RELOAD or not pkl:
+            return {}
+        k = self.uid_to_email(user_id)
+        return pkl[k] or None
+
+    def save_books(self, user_id, books):
+        k = self.uid_to_email(user_id)
+        self.save_k_v("books", k, books)
 
     def load_nlp_entries(self, keys):
         if not USE: return False
@@ -83,7 +108,7 @@ class Fixtures():
             raise("No fixtures generated, run tests on GPU first")
 
         urls = [
-            # "https://en.wikipedia.org/wiki/Cognitive_behavioral_therapy",
+            "https://en.wikipedia.org/wiki/Cognitive_behavioral_therapy",
             "https://en.wikipedia.org/wiki/Virtual_reality",
 
             # "https://en.wikipedia.org/wiki/Coronavirus_disease_2019",
