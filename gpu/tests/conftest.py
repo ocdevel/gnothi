@@ -39,7 +39,7 @@ def main_uid(db):
     u = M.User(id=uuid4(), **fixtures.users.user)
     db.add(u)
     db.commit()
-    return u.id
+    return str(u.id)
 
 @pytest.fixture(scope='module', autouse=True)
 def setup_entries(entries, db, main_uid):

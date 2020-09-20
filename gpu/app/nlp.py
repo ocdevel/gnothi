@@ -270,7 +270,7 @@ class NLP():
         vecs = self.sentence_encode(paras).tolist()
         return paras, clean, vecs
 
-    def entries(self):
+    def entries(self, eid=None):
         tokenizer, _, max_tokens = self.load('summarization')
         with session() as sess:
             entries = sess.query(M.Entry)\

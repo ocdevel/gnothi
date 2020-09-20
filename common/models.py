@@ -264,7 +264,9 @@ class Entry(Base):
         # (b) if AI server offline, wait till online
         self.title_summary = "🕒 AI is generating a title"
         self.text_summary = "🕒 AI is generating a summary"
-        Job.create_job(method='entries')
+        # not used in nlp, but some other meta stuff
+        data_in = dict(args=[str(self.id)])
+        Job.create_job(method='entries', data_in=data_in)
 
 
     def update_snoopers(self):
@@ -702,7 +704,7 @@ class Job(Base):
             arg0 = data_in.get('args', [None])[0]
             if type(arg0) != str: arg0 = None
 
-            if method == 'entry' and arg0:
+            if method == 'entries' and arg0:
                 sess.execute(satext("""
                 update entries set ai_ran=False where id=:eid;
                 """), dict(eid=arg0))
@@ -716,7 +718,7 @@ class Job(Base):
             case
                 when method='influencers' then true
                 when method='books' and data_in->'args'->>0=:arg0 then true
-                when method='entry' then true
+                when method='entries' then true
                 when method='profile' and data_in->'args'->>0=:arg0 then true
                 else false
             end;

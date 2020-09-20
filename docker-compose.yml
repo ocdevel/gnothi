@@ -37,8 +37,6 @@ services:
     stdin_open: true
     volumes:
       - ./storage:/storage
-    #  - ./server/:/app
-    #  - ./common/:/app/common
     restart: unless-stopped
     logging:
       options:
@@ -46,10 +44,7 @@ services:
         max-file: "3"
 
   client:
-    build:
-      context: .
-      dockerfile: ./client.dockerfile
-    command: serve -s build -l tcp://0.0.0.0:80
+    image: lefnire/gnothi-client-0.0.1
     container_name: jclient
     labels:
       - traefik.enable=true
@@ -75,8 +70,6 @@ services:
       
     stdin_open: true
     restart: unless-stopped
-    #volumes:
-    #  - ./client:/app
     logging:
       options:
         max-size: "5m"

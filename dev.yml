@@ -15,6 +15,7 @@ services:
     volumes:
       - ./server/:/app
       - ./common/:/app/common
+      - ./storage:/storage
     logging:
       options:
         max-size: "5m"

@@ -1,4 +1,4 @@
-import pdb, requests, re, os, pickle, random, os
+import pdb, requests, re, os, pickle, random, os, shutil
 from pprint import pprint
 from box import Box
 from common.database import session
@@ -10,15 +10,31 @@ BASE = '/storage/fixtures'
 # double-neg: if is_test() and being called/restarted server.pytest.
 # ie, server.pytest re-creates DB, crashes gpu, dev.yml restarts gpu, no env var specified USE_FIXTURES
 USE = not os.environ.get("NO_FIXTURES", False) and is_test()
-RELOAD = os.environ.get("RELOAD_FIXTURES", False)
+FRESH = os.environ.get("FRESH_FIXTURES", "").split()
 
 class Fixtures():
     def __init__(self):
+        self.clear_fixtures()
+
         self.mkdir()
         self.mkdir("wiki")
 
         self.entries = self.load_entries()
         self.users = self.load_users()
+
+    def clear_fixtures(self):
+        all_ = FRESH == 'all'
+        if 'books' in FRESH or all_:
+            os.remove(f"{BASE}/books.pkl")
+        if 'entries' in FRESH or all_:
+            os.remove(f"{BASE}/entries.pkl")
+        if 'wiki' in FRESH or all_:
+            shutil.rmtree(f"{BASE}/wiki")
+        if 'liben' in FRESH or all_:
+            os.remove(f"{BASE}/libgen_testing.npy")
+            with session() as sess:
+                sess.execute("delete from books")
+                sess.commit()
 
     @staticmethod
     def mkdir(dir=None):
@@ -43,13 +59,13 @@ class Fixtures():
 
     def save_k_v(self, f, k, v):
         pkl = self.load(f)
-        pkl[k] = v
+        pkl[str(k)] = v
         self.save(f, pkl)
 
     def load_entries(self):
         if not USE: return {}
         pkl = self.load("entries")
-        if RELOAD or not pkl:
+        if not pkl:
             return self.gen_entries()
         return pkl
 
@@ -65,29 +81,28 @@ class Fixtures():
         with session() as sess:
             return sess.execute(text("""
             select email from users where id=:uid
-            """), dict(uid=uid)).fetchone()
+            """), dict(uid=uid)).fetchone().email
 
     def eid_to_title(self, eid):
         with session() as sess:
             return sess.execute(text("""
             select title from entries where id=:eid
-            """), dict(eid=eid)).fetchone()
+            """), dict(eid=eid)).fetchone().title
 
     def load_books(self, user_id):
         pkl = self.load("books")
-        if RELOAD or not pkl:
-            return {}
+        if not pkl: return None
         k = self.uid_to_email(user_id)
-        return pkl[k] or None
+        return pkl.get(k, None)
 
     def save_books(self, user_id, books):
         k = self.uid_to_email(user_id)
         self.save_k_v("books", k, books)
 
     def load_nlp_entries(self, keys):
-        if not USE: return False
+        if not USE: return None
         pkl = self.load("nlp_entries")
-        if RELOAD or not pkl: return False
+        if not pkl: return None
         embeds, titles, texts, clean_txt = [], [], [], []
         for k in keys:
             tup = pkl[k]

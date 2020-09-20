@@ -7,7 +7,12 @@ logger = logging.getLogger(__name__)
 
 def test_books(main_uid, db):
     run_books(main_uid)
-    res = db.query(M.Bookshelf)\
-        .filter_by(user_id=main_uid, shelf='ai')\
+    res = db.query(M.Book)\
+        .join(M.Bookshelf, M.Bookshelf.book_id == M.Book.id)\
+        .filter(M.Bookshelf.user_id == main_uid, M.Bookshelf.shelf == 'ai')\
         .all()
     assert len(res) > 0
+    titles = [b.title for b in res]
+    pprint(titles)
+    assert re.search("(cognitive|cbt|virtual)", ";".join(titles))
+

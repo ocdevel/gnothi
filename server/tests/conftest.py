@@ -3,11 +3,14 @@ os.environ['ENVIRONMENT'] = 'testing'
 
 from common.utils import vars
 assert 'gnothi_test' in vars.DB_URL, "not using test DB!"
+
+
 from sqlalchemy_utils import database_exists, drop_database, create_database
-if database_exists(vars.DB_URL):
-    drop_database(vars.DB_URL)
+# Don't drop db! need some tables to stick around, like books. Will drop tables below
+# if database_exists(vars.DB_URL): drop_database(vars.DB_URL)
 if not database_exists(vars.DB_URL):
     create_database(vars.DB_URL)
+
 
 import pytest, time
 from box import Box
@@ -16,10 +19,32 @@ from lorem_text import lorem
 
 import common.database as D
 import common.models as M
+from common.fixtures import fixtures
 from app.main import app
 
 import logging
 logger = logging.getLogger(__name__)
+
+with D.session() as sess:
+    for t in """
+    bookshelf
+    cache_entries
+    cache_users
+    entries
+    entries_tags
+    field_entries
+    fields
+    jobs
+    jobs_status
+    notes
+    people
+    shares
+    shares_tags
+    tags
+    users""".split():
+        sess.execute(f"drop table {t} cascade")
+    sess.commit()
+
 
 
 # I want many of these to be session-scope, not just for per but to ensure
@@ -35,9 +60,6 @@ def client():
 def db(client):
     """await client to init_db"""
     with D.session() as sess:
-        # Cold-start BERT for downstream
-        M.Job.create_job(method='summarization', data_in=dict(args=[['summarize me please']]))
-
         # wait for GPU to restart from no-db crash
         while True:
             sql = "select 1 from jobs_status where status='on'"
@@ -55,8 +77,7 @@ def db_books():
 
 @pytest.fixture()
 def u(client, db):
-    # Friend only used to double-check sharing features
-    u_ = Box(user={}, therapist={}, friend={}, other={})
+    u_ = fixtures.load_users(hash=False)
 
     # TODO move delete-cascade testing out to test_users.py
     logger.warning("deleting")
@@ -68,8 +89,7 @@ def u(client, db):
 
     logger.warning("creating users")
     for k, _ in u_.items():
-        email = k + "@x.com"
-        u_[k] = {'email': email}
+        email = u_[k].email
         form = {'email': email, 'password': email}
         res = client.post("/auth/register", json=form)
         assert res.status_code == 201
@@ -114,11 +134,11 @@ def u(client, db):
 @pytest.mark.timeout(120)
 @pytest.fixture()
 def post_entry(client, u, db):
-    def _post_entry(**kwargs):
+    def _post_entry(fixt_idx=0, **kwargs):
         data = {**dict(
-            title='Title',
-            text=lorem.paragraphs(3),
-            no_ai=True,
+            title=f"Virtual_reality_{fixt_idx}",
+            text=fixtures.entries[f"Virtual_reality_{fixt_idx}"].text,
+            no_ai=False,
             tags=u.user.tag1,
         ), **kwargs}
         res = client.post("/entries", json=data, **u.user.header)
@@ -129,7 +149,7 @@ def post_entry(client, u, db):
             # summary job got created
             sql = """
             select id from jobs 
-            where method='entry' and data_in->'args'->>0=:eid
+            where method='entries' and data_in->'args'->>0=:eid
             """
             args = {'eid': eid}
             assert M.await_row(db, sql, args=args, timeout=2)
@@ -146,6 +166,7 @@ def post_entry(client, u, db):
 
         return eid
     return _post_entry
+
 
 @pytest.fixture()
 def count(db):

@@ -26,6 +26,7 @@ engine_books = create_engine(
     pool_pre_ping=True,
     pool_recycle=300,
 )
+print(engine)
 
 Sessions = dict(
     main=sessionmaker(autocommit=False, autoflush=False, bind=engine),

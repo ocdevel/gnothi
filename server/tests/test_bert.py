@@ -52,12 +52,9 @@ def test_entries_count(post_entry, u, ml_jobs):
 # TODO re-work fixture scopes so I don't need pytest-check
 def test_entries_ml(post_entry, db, client, u, ml_jobs):
     # TODO use wikipedia entries to actually test qualitative results
-    post_entry()
-    post_entry()
-    db.execute("update entries set no_ai=False")
-    db.commit()
-    # await_row & timeout already in post_entry fixture
-    post_entry(no_ai=False)
+    post_entry(0, no_ai=False)
+    post_entry(1, no_ai=False)
+    post_entry(2, no_ai=False)
 
 
     main_tag = list(u.user.tag1.keys())

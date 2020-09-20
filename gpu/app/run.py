@@ -63,6 +63,7 @@ def run_job(job):
             sess.execute(text(f"""
             update jobs set state='done', data_out=:data where id=:jid
             """), {'data': jsonb(res), **jid})
+            sess.commit()
         logger.info(f"Job {k} complete {time.time() - start}")
     except Exception as err:
         err = str(traceback.format_exc())
@@ -72,6 +73,7 @@ def run_job(job):
             sess.execute(text(f"""
             update jobs set state='error', data_out=:data where id=:jid
             """), {'data': jsonb(res), **jid})
+            sess.commit()
         logger.error(f"Job {k} error {time.time() - start} {err}")
     # 3eb71b3: unloading models. multiprocessing handles better
 

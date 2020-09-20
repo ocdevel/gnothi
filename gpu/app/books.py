@@ -205,8 +205,9 @@ def train_books_predictor(books, vecs_books, shelf_idx, fine_tune=True):
 
 def predict_books(user_id, vecs_user, n_recs=30, centroids=False):
     with session() as sess:
+        # TODO should I move this down further, to get more lines to test?
         fixt = fixtures.load_books(user_id)
-        if fixt: return fixt
+        if fixt is not None: return fixt
 
         vecs_books, books = load_books(sess)
         sql = "select book_id as id, user_id, shelf from bookshelf where user_id=%(uid)s"
