@@ -9,4 +9,3 @@ def test_vars():
     # recursive
     assert vars.DB_URL
     assert vars.HABIT_USER
-    pprint.pprint(vars)

@@ -1,4 +1,3 @@
-from app.cleantext import unmark
 import pickle, pdb
 import common.models as M
 import numpy as np
