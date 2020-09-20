@@ -118,7 +118,7 @@ class NLP():
             # so taking simple median for now. TODO rethink
             n_parts = int(np.median(groups))
 
-            batch_size = max_gpu_tokens // max_tokens
+            batch_size = max(max_gpu_tokens // max_tokens, 1)
             flat = []
             for i in range(0, len(parts), batch_size):
                 batch = parts[i:i + batch_size]
@@ -145,7 +145,7 @@ class NLP():
     def sentiment_analysis_call(self, loaded, batch, n_parts=None):
         tokenizer, model, max_tokens = loaded
         inputs = tokenizer(
-            [p + '</s>' for p in batch],
+            batch, # [p + '</s>' for p in batch],  # getting </s> duplicate warning
             max_length=max_tokens,
             **tokenizer_args
         )
@@ -203,44 +203,66 @@ class NLP():
         val = val or None
         return {"summary": val, "sentiment": None}
 
-    def question_answering(self, question, paras):
+    def question_answering(
+        self,
+        question: str,
+        paras: List[str]
+    ):
         if not paras:
-            return [{'answer': "Not enough entries to use this feature."}]
-        tokenizer, model, max_tokens = self.load('question-answering')
+            return [{"answer": "Not enough entries to use this feature."}]
 
-        parts = self.para_parts(paras, tokenizer, max_tokens)
+        # Unlike the other features, QA should only be called on a flat-list of paras
+        # (type-checked in this method's signature)
+        call_args = dict(question=question)
+        res = self.run_batch_model(
+            self.load('question-answering'),
+            [paras],
+            self.question_answering_call,
+            self.question_answering_wrap,
+            call_args=call_args,
+        )[0]
 
-        answers = []
-        batch_size = max_gpu_tokens // max_tokens
-        for i in range(0, len(parts), batch_size):
-            batch = parts[i:i + batch_size]
-            encoding = tokenizer(
-                [question]*batch_size,
-                batch,
-                max_length=max_tokens,
-                **tokenizer_args
-            )
-            input_ids = encoding["input_ids"].to("cuda")
-            attention_mask = encoding["attention_mask"].to("cuda")
+        clean = []
+        for a in res:
+            # Remove duplicates
+            if a['answer'] in [c['answer'] for c in clean]: continue
+            # remove all "No answer" unless it's the only entry
+            if a['answer'] == 'No answer' and len(clean): continue
+            clean.append(a)
+        return clean
 
-            with torch.no_grad():
-                outputs = model(input_ids, attention_mask=attention_mask)
-            for j, _ in enumerate(batch):
-                start_logits = outputs.start_logits[j]
-                end_logits = outputs.end_logits[j]
-                all_tokens = tokenizer.convert_ids_to_tokens(input_ids[j].tolist())
+    def question_answering_call(self, loaded, batch, question:str, n_parts=None):
+        tokenizer, model, max_tokens = loaded
+        batch_size = len(batch)  # TODO right?
+        encoding = tokenizer(
+            [question] * batch_size,
+            batch,
+            max_length=max_tokens,
+            **tokenizer_args
+        )
+        input_ids = encoding["input_ids"].to("cuda")
+        attention_mask = encoding["attention_mask"].to("cuda")
 
-                answer_tokens = all_tokens[torch.argmax(start_logits):torch.argmax(end_logits) + 1]
-                answer = tokenizer.decode(tokenizer.convert_tokens_to_ids(answer_tokens))  # remove space prepending space token
+        with torch.no_grad():
+            outputs = model(input_ids, attention_mask=attention_mask)
+        for j, _ in enumerate(batch):
+            start_logits = outputs.start_logits[j]
+            end_logits = outputs.end_logits[j]
+            all_tokens = tokenizer.convert_ids_to_tokens(input_ids[j].tolist())
 
-                if len(answer) > 200:
-                    answer = self.summarization([answer], max_length=15, with_sentiment=False)
-                    answer = answer[0]["summary"]
-                if answer and answer not in answers:
-                    answers.append(answer)
+            answer_tokens = all_tokens[torch.argmax(start_logits):torch.argmax(end_logits) + 1]
+            answer = tokenizer.decode(
+                tokenizer.convert_tokens_to_ids(answer_tokens))  # remove space prepending space token
 
-        if not answers: return [{'answer': 'No answer'}]
-        return [{'answer': a} for a in answers]
+            # TODO batch this up in question-answering post-process
+            if len(answer) > 200:
+                answer = self.summarization([answer], max_length=15, with_sentiment=False)
+                answer = answer[0]["summary"]
+            answer = answer if re.search("\S", answer) else "No answer"
+            return [answer]
+
+    def question_answering_wrap(self, val: List[str]):
+        return [{"answer": a} for a in val]
 
     def _prep_entry_cache(self, txt):
         paras = Clean.entries_to_paras([txt])

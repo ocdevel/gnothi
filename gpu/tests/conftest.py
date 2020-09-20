@@ -33,7 +33,7 @@ def users():
 @pytest.fixture(scope='session', autouse=True)
 def setup_entries(entries, db):
     db.execute("delete from users")
-    u = M.User(id=uuid4(), **fixtures.users.user)
+    u = M.User(id=uuid4(), email='user@x.com', hashed_password='xyz')
     db.add(u)
     db.commit()
     for k, v in entries.items():
