@@ -1,4 +1,4 @@
-import pytest
+import pytest, re
 from pprint import pprint
 import common.models as M
 from app.nlp import nlp_
@@ -22,10 +22,9 @@ def test_qa_flat(groups):
     # be sure to call with pytest -s
     print("QA Answers")
     pprint(res)
-    # assert 'Virtual' in res[0]['answer']
-    if 'Virtual' not in res[0]['answer']:
-        answers = ', '.join([a['answer'] for a in res])
-        logger.warning(f"'What is VR?' gave {answers}")
+    answers = ', '.join([a['answer'] for a in res])
+    found = re.search("(virtual|vr)", answers, re.IGNORECASE)
+    assert found
 
 
 def test_qa_group(groups):

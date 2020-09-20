@@ -271,7 +271,6 @@ class NLP():
         return paras, clean, vecs
 
     def entries(self):
-        id = None  # remove id arg
         tokenizer, _, max_tokens = self.load('summarization')
         with session() as sess:
             entries = sess.query(M.Entry)\

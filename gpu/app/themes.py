@@ -2,9 +2,9 @@ import pdb
 from sklearn.feature_extraction.text import TfidfVectorizer
 from common.database import session
 import common.models as M
-from nlp import nlp_
-from cleantext import Clean
-from utils import cosine, cluster
+from app.nlp import nlp_
+from app.cleantext import Clean
+from app.utils import cosine, cluster
 import pandas as pd
 import numpy as np
 import threading
