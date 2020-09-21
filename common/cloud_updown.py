@@ -69,7 +69,7 @@ def cloud_up():
     # 22f87468: send vars (just using /storage/config.json for now)
     res = job_client.create(
         machine_type='K80',
-        container='lefnire/gnothi:gpu-0.0.1',
+        container='lefnire/gnothi:gpu-0.0.2',
         project_id=vars.PAPERSPACE_PROJECT_ID,
         is_preemptible=True,
         command='python run.py',

@@ -29,7 +29,7 @@ RUN pip install \
   gradient \
   boto3
 
-COPY ./server/app /app
+COPY ./server /app
 COPY ./common /app/common
 WORKDIR /app
 
