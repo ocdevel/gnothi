@@ -13,7 +13,7 @@ def send_mail(email, type, data):
 
     ses = boto3.client('ses')
     ses.send_email(
-        Source=vars.EMAIL.SES_EMAIL_SOURCE,
+        Source=vars.EMAIL_SES_EMAIL_SOURCE,
         Destination={'ToAddresses': [email]},
         Message={
             'Subject': {'Data': 'Confirm Your Account'},

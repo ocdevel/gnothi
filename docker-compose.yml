@@ -24,7 +24,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
 
   server:
-    image: lefnire/gnothi:server-0.0.2
+    image: lefnire/gnothi:server-0.0.3
     container_name: jserver
     environment:
       ENVIRONMENT: production
@@ -44,7 +44,7 @@ services:
         max-file: "3"
 
   client:
-    image: lefnire/gnothi:client-0.0.2
+    image: lefnire/gnothi:client-0.0.3
     container_name: jclient
     labels:
       - traefik.enable=true
