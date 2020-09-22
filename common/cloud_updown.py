@@ -69,8 +69,8 @@ def cloud_up():
     # TODO more carefully decide what to send, security
     vars_ = {
         **{
-            k: v.replace('172.17.0.1', '54.235.141.176')
-            for k, v in vars.items()
+            k: (v.replace('172.17.0.1', '54.235.141.176') if v else v)
+            for k, v in dict(vars).items()
         },
         **{
             'MACHINE': 'paperspace',
@@ -82,7 +82,7 @@ def cloud_up():
         container='lefnire/gnothi:gpu-0.0.3',
         project_id=vars.PAPERSPACE_PROJECT_ID,
         is_preemptible=True,
-        #command='python app/run.py',
+        command='python app/run.py',
         registry_username=vars.PAPERSPACE_REGISTRY_USERNAME,
         registry_password=vars.PAPERSPACE_REGISTRY_PASSWORD,
         job_env=vars_
