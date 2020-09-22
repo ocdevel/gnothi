@@ -30,7 +30,7 @@ def wipe(url, and_init=False):
         shutdown_db()
 
 def backup():
-    os.system(f"pg_dump {vars.DB_PROD_URL} > tmp/bk-{now}.sql")
+    os.system(f"pg_dump {vars.DB_PROD_FULL} > tmp/bk-{now}.sql")
 
 
 if method == 'push':
@@ -42,15 +42,15 @@ if method == 'backup':
     exit(0)
 
 if method == 'wipe':
-    wipe(vars.DB_URL, True)
+    wipe(vars.DB_FULL, True)
     exit(0)
 
 if method == 'push':
-    from_url, from_name = vars.DB_URL, vars.DB_NAME
-    to_url, to_name = vars.DB_PROD_URL, vars.DB_PROD_NAME
+    from_url, from_name = vars.DB_FULL, vars.DB_NAME
+    to_url, to_name = vars.DB_PROD_FULL, vars.DB_PROD_NAME
 elif method in ['pull', 'migrate']:
-    from_url, from_name = vars.DB_PROD_URL, vars.DB_PROD_NAME
-    to_url, to_name = vars.DB_URL, vars.DB_NAME
+    from_url, from_name = vars.DB_PROD_FULL, vars.DB_PROD_NAME
+    to_url, to_name = vars.DB_FULL, vars.DB_NAME
 else:
     raise Exception("Unrecognized args.method")
 

@@ -26,7 +26,7 @@ RUN pip install \
   pytest-timeout \
   lorem-text \
   pytest-check \
-  gradient \
+  git+https://github.com/Paperspace/gradient-cli.git@job-env \
   boto3
 
 COPY ./server /app

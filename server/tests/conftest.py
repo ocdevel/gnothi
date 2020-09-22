@@ -2,14 +2,14 @@ import os
 os.environ['ENVIRONMENT'] = 'testing'
 
 from common.utils import vars
-assert 'gnothi_test' in vars.DB_URL, "not using test DB!"
+assert 'gnothi_test' in vars.DB_FULL, "not using test DB!"
 
 
 from sqlalchemy_utils import database_exists, drop_database, create_database
 # Don't drop db! need some tables to stick around, like books. Will drop tables below
-# if database_exists(vars.DB_URL): drop_database(vars.DB_URL)
-if not database_exists(vars.DB_URL):
-    create_database(vars.DB_URL)
+# if database_exists(vars.DB_FULL): drop_database(vars.DB_FULL)
+if not database_exists(vars.DB_FULL):
+    create_database(vars.DB_FULL)
 
 
 import pytest, time

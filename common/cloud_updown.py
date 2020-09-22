@@ -66,15 +66,26 @@ def cloud_up():
     if any([j.state in up_states for j in jobs]):
         return
 
-    # 22f87468: send vars (just using /storage/config.json for now)
+    # TODO more carefully decide what to send, security
+    vars_ = {
+        **{
+            k: v.replace('172.17.0.1', '54.235.141.176')
+            for k, v in vars.items()
+        },
+        **{
+            'MACHINE': 'paperspace',
+            'ENVIRONMENT': 'production'
+        }
+    }
     res = job_client.create(
         machine_type='K80',
         container='lefnire/gnothi:gpu-0.0.3',
         project_id=vars.PAPERSPACE_PROJECT_ID,
         is_preemptible=True,
-        command='python run.py',
+        #command='python app/run.py',
         registry_username=vars.PAPERSPACE_REGISTRY_USERNAME,
         registry_password=vars.PAPERSPACE_REGISTRY_PASSWORD,
+        job_env=vars_
     )
     return res
 

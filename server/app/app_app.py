@@ -21,7 +21,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-app.add_middleware(DBSessionMiddleware, db_url=vars.DB_URL)
+app.add_middleware(DBSessionMiddleware, db_url=vars.DB_FULL)
 # 9131155e: attempted log-filtering
 
 @app.on_event("startup")

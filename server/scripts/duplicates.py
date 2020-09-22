@@ -5,7 +5,7 @@ import pandas as pd
 
 run = sys.argv[-1] == 'run'
 
-with create_engine(vars.DB_PROD_URL).connect() as conn:
+with create_engine(vars.DB_PROD_FULL).connect() as conn:
     df = pd.read_sql('select * from field_entries order by created_at desc', conn)
     clean = df.drop_duplicates(['field_id', 'created_at'])
     if df.shape[0] == clean.shape[0]:

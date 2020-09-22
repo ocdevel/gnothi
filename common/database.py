@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 Base = declarative_base()
 
 engine = create_engine(
-    vars.DB_URL,
+    vars.DB_FULL,
     # TODO getting timout errors, trying some solutions
     # https://stackoverflow.com/a/60614871/362790
     # https://docs.sqlalchemy.org/en/13/core/pooling.html#dealing-with-disconnects
@@ -47,7 +47,7 @@ def session(k='main', commit=True):
         sess.close()
 
 
-fa_users_db = databases.Database(vars.DB_URL)
+fa_users_db = databases.Database(vars.DB_FULL)
 
 
 def init_db():

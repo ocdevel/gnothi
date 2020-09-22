@@ -7,5 +7,5 @@ def test_vars():
     # flat
     assert vars.DB_BOOKS
     # recursive
-    assert vars.DB_URL
+    assert vars.DB_FULL
     assert vars.HABIT_USER

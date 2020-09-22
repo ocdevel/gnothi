@@ -53,9 +53,8 @@ if vars.ENVIRONMENT == 'production':
     vars['DB_URL'] = vars.DB_PROD_URL
     vars['DB_NAME'] = vars.DB_PROD_NAME
 
-vars['DB_URL'] = f"{vars.DB_URL}/{vars.DB_NAME}"
-vars['DB_PROD_URL'] = f"{vars.DB_PROD_URL}/{vars.DB_PROD_NAME}"
-#print(vars.DB_URL)
+vars['DB_FULL'] = f"{vars.DB_URL}/{vars.DB_NAME}"
+vars['DB_PROD_FULL'] = f"{vars.DB_PROD_URL}/{vars.DB_PROD_NAME}"
 
 SECRET = vars.FLASK_KEY
 
