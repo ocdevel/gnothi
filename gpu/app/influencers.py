@@ -19,12 +19,13 @@ def impute_and_roll(fes, fs):
         if not dv: continue  # should I just set to 0? can xgb handle nan?
         if dv == 'value':
             if not dvv: continue
-            fes[fid] = fes[fid].fillna(dvv)
+            #fes[fid] = fes[fid].fillna(dvv) getting SettingWithCopyWarning
+            fes[:,fid] = fes[fid].fillna(dvv)
         elif dv == 'ffill':
-            fes[fid] = fes[fid].fillna(method='ffill') \
+            fes[:,fid] = fes[fid].fillna(method='ffill') \
                 .fillna(method='bfill')
         elif dv == 'average':
-            fes[fid] = fes[fid].fillna(fes[fid].mean())
+            fes[:,fid] = fes[fid].fillna(fes[fid].mean())
 
     # This part is important. Rather than say "what today predicts y" (not useful),
     # or even "what history predicts y" (would be time-series models, which don't have feature_importances_)

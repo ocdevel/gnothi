@@ -1,8 +1,10 @@
-import pdb, requests, re, os, pickle, random, os, shutil
+import pdb, requests, re, os, pickle, random, os, shutil, datetime
+from uuid import uuid4
 from pprint import pprint
 from box import Box
 from common.database import session
 from common.utils import vars, is_test
+import common.models as M
 from sqlalchemy import text
 
 BASE = '/storage/fixtures'
@@ -10,7 +12,7 @@ BASE = '/storage/fixtures'
 # double-neg: if is_test() and being called/restarted server.pytest.
 # ie, server.pytest re-creates DB, crashes gpu, dev.yml restarts gpu, no env var specified USE_FIXTURES
 USE = not os.environ.get("NO_FIXTURES", False) and is_test()
-FRESH = os.environ.get("FRESH_FIXTURES", "").split()
+FRESH = os.environ.get("FRESH_FIXTURES", "")
 
 class Fixtures():
     def __init__(self):
@@ -72,6 +74,7 @@ class Fixtures():
         return pkl
 
     def load_users(self, hash=True):
+        if not USE: return {}
         # TODO get rid of just therapist, used in a lot of places currently
         keys = 'user therapist friend other therapist_vr therapist_mix therapist_cbt therapist_na'.split()
         u = Box()
@@ -101,6 +104,57 @@ class Fixtures():
             return sess.execute(text("""
             select title from entries where id=:eid
             """), dict(eid=eid)).fetchone().title
+
+    def submit_fields(self, uid, db, client=None, header=None):
+        if not USE: return
+        # if sess, it's coming from GPU: save to DB. If client, coming from server: POST.
+        for i in list(range(10)):
+            field = dict(
+                type='fivestar',
+                name=str(i),
+                default_value='average',
+            )
+            fid = None
+            if client:
+                res = client.post("/fields", json=field, **header)
+                assert res.status_code == 200
+                fid = res.json()['id']
+            else:
+                field = M.Field(**field, user_id=uid)
+                db.add(field)
+                db.commit()
+                db.refresh(field)
+                fid = field.id
+
+            # create field-entries for x days
+            # stagger range() as if we're creating new fields each day
+            n_days = 20
+            for d in range(n_days - i):
+                # leave some nulls in there
+                if random.randint(0, 4) == 0: continue
+                # some trends, so not all scores 0.
+                value = d + random.randint(-1, 1)
+                created_at = datetime.datetime.today() - datetime.timedelta(days=d)
+                if client:
+                    fe = client.post(
+                        f"/field-entries/{fid}",
+                        json=dict(value=value),
+                        **header
+                    )
+                    assert fe.status_code == 200
+                    feid = fe.json()['id']
+                    db.execute(text("""
+                    update field_entries set created_at=:c where id=:feid 
+                    """), dict(c=created_at, feid=feid))
+                    db.commit()
+                else:
+                    db.add(M.FieldEntry(
+                        field_id=fid,
+                        user_id=uid,
+                        value=value,
+                        created_at=created_at
+                    ))
+                    db.commit()
 
     def load_xgb_hypers(self, uid):
         if not USE: return

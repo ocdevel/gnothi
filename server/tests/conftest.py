@@ -41,6 +41,7 @@ with D.session() as sess:
     shares
     shares_tags
     tags
+    influencers
     users""".split():
         sess.execute(f"drop table {t} cascade")
     sess.commit()

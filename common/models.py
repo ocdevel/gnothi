@@ -425,7 +425,6 @@ class Field(Base):
     created_at
     excluded_at
     default_value_value
-    target
     service
     service_id
     influencer_score
@@ -463,7 +462,6 @@ class SIField(SIFieldExclude):
     name: str
     default_value: DefaultValueTypes
     default_value_value: Optional[float] = None
-    target: bool
 
 ## TODO can't get __root__ setup working
 # class SFieldOut(SOut):

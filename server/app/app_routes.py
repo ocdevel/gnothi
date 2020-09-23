@@ -402,28 +402,31 @@ def field_entries_post(field_id, data: M.SIFieldEntry, as_user: str = None, view
         fe = M.FieldEntry(
             value=v,
             field_id=field_id,
-            created_at=nowtz(user.timezone)
+            created_at=nowtz(user.timezone or 'America/Los_Angeles')
         )
         user.field_entries.append(fe)
     db.session.commit()
-    return {}
+    db.session.refresh(fe)
+    return fe
 
 
 @app.get('/influencers')
 def influencers_get(
-    target: str = None,
     as_user: str = None,
     viewer: M.User = Depends(fastapi_users.get_current_user)
 ):
     user, snooping = getuser(viewer, as_user)
     if snooping and not user.share_data.fields:
         return cant_snoop('Fields')
-    row = db.session.query(M.CacheUser)\
-        .with_entities(M.CacheUser.influencers)\
-        .filter_by(user_id=user.id).first()
-    if not (row and row.influencers): return {}
-    targets, all_imps, next_preds = row.influencers
-    return {'overall': all_imps, 'per_target': targets, 'next_preds': next_preds}
+    rows = db.session.query(M.Influencer)\
+        .join(M.Field, M.Field.id == M.Influencer.influencer_id)\
+        .filter(M.Field.user_id == user.id).all()
+    obj = {}
+    for r in rows:
+        if r.field_id not in obj:
+            obj[r.field_id] = {}
+        obj[r.field_id][r.influencer_id] = r.score
+    return obj
 
 
 @app.post('/themes')
