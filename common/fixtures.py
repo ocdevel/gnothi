@@ -31,7 +31,7 @@ class Fixtures():
         if 'wiki' in FRESH or all_:
             shutil.rmtree(f"{BASE}/wiki")
         if 'influencers' in FRESH or all_:
-            os.remove(f"{BASE}/influencers.pkl")
+            os.remove(f"{BASE}/xgb_hypers.pkl")
         if 'liben' in FRESH or all_:
             os.remove(f"{BASE}/libgen_testing.npy")
             with session() as sess:
@@ -101,6 +101,15 @@ class Fixtures():
             return sess.execute(text("""
             select title from entries where id=:eid
             """), dict(eid=eid)).fetchone().title
+
+    def load_xgb_hypers(self, uid):
+        if not USE: return
+        hypers = self.load("xgb_hypers")
+        return hypers.get(self.uid_to_email(uid), None)
+
+    def save_xgb_hypers(self, uid, hypers):
+        if not USE: return
+        self.save_k_v("xgb_hypers", self.uid_to_email(uid), hypers)
 
     def load_books(self, user_id):
         pkl = self.load("books")

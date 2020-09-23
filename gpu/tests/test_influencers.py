@@ -18,22 +18,17 @@ def setup_fields(main_uid, db):
         db.commit()
         fs[i] = field
 
+        fes = []
         # create field-entries for 10 days
-        # 1. leave some nulls in there
-        # 2. stagger range() as if we're creating new fields each day
-        db.bulk_save_objects([
-            M.FieldEntry(
-                field_id=field.id,
-                user_id=main_uid,
-                # value=random.choice([
-                #     None,
-                #     random.randint(-5, 5)
-                # ]),
-                value=random.randint(-5,5),
-                created_at=datetime.datetime.today() - datetime.timedelta(days=d)
-            )
-            for d in range(10-i)
-        ])
+        # stagger range() as if we're creating new fields each day
+        for d in range(15-i):
+            # leave some nulls in there
+            if random.randint(0, 4) == 0: continue
+            # some trends, so not all scores 0.
+            value = d + random.randint(-1, 1)
+            created_at = datetime.datetime.today() - datetime.timedelta(days=d)
+            fes.append(M.FieldEntry(field_id=field.id, user_id=main_uid, value=value, created_at=created_at))
+        db.bulk_save_objects(fes)
         db.commit()
 
 def test_stale_user(db):
@@ -82,6 +77,8 @@ def test_influencers(main_uid, db):
 
     inf = db.query(M.Influencer).all()
     assert len(inf) > 10
+    # TODO how to test this properly?
+    assert len(inf) <= len(user.fields) * len(user.fields)
 
     score_total = 0.
     for i in inf:

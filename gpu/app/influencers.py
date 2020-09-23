@@ -5,6 +5,7 @@ from sqlalchemy import text
 from psycopg2.extras import Json as jsonb
 from common.utils import utcnow
 from common.database import session
+from common.fixtures import fixtures
 import common.models as M
 import pandas as pd
 import numpy as np
@@ -35,7 +36,12 @@ def impute_and_roll(fes, fs):
     return fes.rolling(span, min_periods=1).mean().astype(np.float32)
 
 
-def hyperopt(fes, fs):
+def hyperopt(fes, fs, user_id):
+    # See if this is tests+fixtures first
+    fixt = fixtures.load_xgb_hypers(user_id)
+    if fixt: return fixt
+
+
     # Find a good target to hyper-opt against, will use the same hypers for all targets
     good_target, nulls = None, None
     for t in fs.keys():
@@ -56,6 +62,7 @@ def hyperopt(fes, fs):
         for k in ['max_depth', 'n_estimators']:
             hypers[k] = int(hypers[k])
     print(hypers)
+    fixtures.save_xgb_hypers(user_id, hypers)
     return hypers
 
 
@@ -107,7 +114,7 @@ def influencers_(user_id):
     # fes = fes.resample('D')
     cols = fes.columns.tolist()
 
-    hypers = hyperopt(fes, fs)
+    hypers = hyperopt(fes, fs, user_id)
     xgb_args = {}  # {'tree_method': 'gpu_hist', 'gpu_id': 0}
 
     next_preds = {}
@@ -158,12 +165,12 @@ def influencers_(user_id):
 def influencers():
     with session() as sess:
         users = sess.execute(text(f"""
-        select u.id::text from users u
+        select id::text from users
         where
           -- has logged in recently
-          u.updated_at > {utcnow} - interval '2 days' and
+          updated_at > {utcnow} - interval '2 days' and
           -- has been 1d since last-run (or never run)
-          (extract(day from {utcnow} - u.last_influencers) >= 1 or u.last_influencers is null)
+          (extract(day from {utcnow} - last_influencers) >= 1 or last_influencers is null)
         """)).fetchall()
         for u in users:
             sess.execute(text(f"""
