@@ -30,6 +30,8 @@ class Fixtures():
             os.remove(f"{BASE}/entries.pkl")
         if 'wiki' in FRESH or all_:
             shutil.rmtree(f"{BASE}/wiki")
+        if 'influencers' in FRESH or all_:
+            os.remove(f"{BASE}/influencers.pkl")
         if 'liben' in FRESH or all_:
             os.remove(f"{BASE}/libgen_testing.npy")
             with session() as sess:

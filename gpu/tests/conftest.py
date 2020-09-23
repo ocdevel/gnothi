@@ -13,7 +13,7 @@ import app.entries_profiles as e_p
 
 with D.session() as sess:
     # drop & re-create since we'll be futzing with models/fields
-    for t in 'users cache_users entries cache_entries'.split():
+    for t in 'users cache_users entries cache_entries fields influencers'.split():
         sess.execute(f"drop table if exists {t} cascade")
     sess.commit()
 D.init_db()
@@ -45,7 +45,7 @@ def clear_sess(db):
 def main_uid(db):
     db.execute("delete from users")
     db.commit()
-    for k in 'entries cache_entries cache_users'.split():
+    for k in 'entries cache_entries cache_users fields influencers'.split():
         sql = f"select count(*) as ct from {k}"
         assert db.execute(sql).fetchone().ct == 0
     u = M.User(id=uuid4(), **fixtures.users.user)

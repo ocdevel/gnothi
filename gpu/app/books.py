@@ -260,13 +260,12 @@ def run_books(user_id):
 
         # don't run if ran recently (notice the inverse if & comparator, simpler)
         if sess.execute(text(f"""
-        select 1 from cache_users 
-        where user_id=:uid and last_books > {utcnow} - interval '10 minutes' 
+        select 1 from users 
+        where id=:uid and last_books > {utcnow} - interval '10 minutes' 
         """), uid).fetchone():
             return
         sess.execute(text(f"""
-        insert into cache_users (user_id, last_books) values (:uid, {utcnow})
-        on conflict (user_id) do update set last_books={utcnow}
+        update users set last_books={utcnow} where id=:uid
         """), uid)
         sess.commit()
 

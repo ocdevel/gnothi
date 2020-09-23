@@ -70,9 +70,11 @@ class User(Base, SQLAlchemyBaseUserTable):
     timezone = Column(Unicode)
     bio = Encrypt()
     is_cool = Column(Boolean, server_default='false')
+    therapist = Column(Boolean, server_default='false')
 
     ai_ran = Column(Boolean, server_default='false')
-    therapist = Column(Boolean, server_default='false')
+    last_books = DateCol()
+    last_influencers = DateCol()
 
     habitica_user_id = Encrypt()
     habitica_api_token = Encrypt()
@@ -404,7 +406,6 @@ class Field(Base):
     excluded_at = DateCol(default=False)
     default_value = Column(Enum(DefaultValueTypes), server_default="value")
     default_value_value = Column(Float)
-    target = Column(Boolean, server_default='false')
     # option{single_or_multi, options:[], ..}
     # number{float_or_int, ..}
     attributes = Column(JSON)
@@ -413,6 +414,10 @@ class Field(Base):
     service_id = Column(Unicode)
 
     user_id = FKCol('users.id', index=True)
+
+    # Populated via ml.influencers.
+    influencer_score = Column(Float, server_default='0')
+    next_pred = Column(Float, server_default='0')
 
     json_fields = """
     id
@@ -423,6 +428,8 @@ class Field(Base):
     target
     service
     service_id
+    influencer_score
+    next_pred
     """
 
     def json(self):
@@ -738,7 +745,7 @@ class Job(Base):
     def multiple_book_jobs(uids):
         with session() as sess:
             sess.execute(satext("""
-            update cache_users set last_books=null where user_id in :uids;
+            update users set last_books=null where id in :uids;
             """), dict(uids=tuple(uids)))
             sess.commit()
         # TODO handle this in run.py when it's consuming jobs
@@ -804,23 +811,22 @@ class CacheEntry(Base):
 class CacheUser(Base):
     __tablename__ = 'cache_users'
     user_id = FKCol('users.id', primary_key=True)
-
-    # profile nlp
     paras = Encrypt(array=True)
     clean = Encrypt(array=True)
     vectors = Column(ARRAY(Float, dimensions=2))
-
-    # influencers all general
-    last_influencers = DateCol()
-    influencers = Column(JSONB)
-
-    last_books = DateCol()
 
 
 class ProfileMatch(Base):
     __tablename__ = 'profile_matches'
     user_id = FKCol('users.id', primary_key=True)
     match_id = FKCol('users.id', primary_key=True)
+    score = Column(Float, nullable=False)
+
+
+class Influencer(Base):
+    __tablename__ = 'influencers'
+    field_id = FKCol('fields.id', primary_key=True)
+    influencer_id = FKCol('fields.id', primary_key=True)
     score = Column(Float, nullable=False)
 
 
