@@ -9,6 +9,7 @@ from app.nlp import nlp_
 from common.fixtures import fixtures
 import common.database as D
 import common.models as M
+import app.entries_profiles as e_p
 
 with D.session() as sess:
     # drop & re-create since we'll be futzing with models/fields
@@ -59,4 +60,4 @@ def setup_entries(entries, db, main_uid):
     for k, v in entries.items():
         db.add(M.Entry(title=k, text=v.text, user_id=main_uid))
     db.commit()
-    nlp_.entries()
+    e_p.entries()

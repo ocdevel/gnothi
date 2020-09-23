@@ -1,11 +1,6 @@
 import math, time, pdb, re
 import torch
 import numpy as np
-from common.database import session
-from common.fixtures import fixtures
-import common.models as M
-from sqlalchemy import text as satext
-from app.cleantext import Clean
 from sentence_transformers import SentenceTransformer
 from transformers import pipeline, AutoTokenizer, AutoModelForSequenceClassification, AutoModelWithLMHead,\
     AutoModelForSeq2SeqLM, AutoModelForQuestionAnswering
@@ -264,86 +259,5 @@ class NLP():
     def question_answering_wrap(self, val: List[str]):
         return [{"answer": a} for a in val]
 
-    def nlp_on_rows(self, method='entries'):
-        for_entries = method == 'entries'  # else is_profile
-        with session() as sess:
-            if for_entries:
-                rows = sess.query(M.Entry)\
-                    .filter(M.Entry.no_ai.isnot(True), M.Entry.ai_ran.isnot(True))
-            else:
-                rows = sess.query(M.User) \
-                    .filter(M.User.bio.isnot(None), M.User.ai_ran.isnot(True))
-            rows = rows.all()
-            if not rows: return {}
-
-            paras_grouped = []
-            uids = set()
-            for r in rows:
-                txt = r.text if for_entries else r.profile_to_text()
-                paras_grouped.append(Clean.entries_to_paras([txt]))
-                if for_entries:
-                    uids.add(r.user_id)
-            paras_flat = [p for paras in paras_grouped for p in paras]
-
-            fkeys = [r.title for r in rows]\
-                if for_entries else [r.email for r in rows]
-            fixt = fixtures.load_nlp_rows(fkeys, method=method)
-            if fixt:
-                if for_entries:
-                    clean_txt, embeds, titles, texts = fixt
-                else:
-                    clean_txt, embeds = fixt
-            else:
-                clean_txt = Clean.lda_texts(paras_flat, propn=True)
-                embeds = self.sentence_encode(paras_flat).tolist()
-                if for_entries:
-                    titles = self.summarization(paras_grouped, min_length=5, max_length=20, with_sentiment=False)
-                    texts = self.summarization(paras_grouped, min_length=30, max_length=250)
-
-            for i, r in enumerate(rows):
-                CM = M.CacheEntry if for_entries else M.CacheUser
-                c = sess.query(CM).get(r.id)
-                if not c:
-                    c = CM(entry_id=r.id) if for_entries else CM(user_id=r.id)
-                    sess.add(c)
-                # Save the cache_entry (paras,clean,vectors)
-                paras = paras_grouped[i]
-                c.paras = paras
-                ct = len(paras)
-                c.clean = [' '.join(e) for e in clean_txt[:ct]]
-                c.vectors = embeds[:ct]
-                sess.commit()
-
-                # Save the fixture for later
-                fixt = (clean_txt[:ct], embeds[:ct], titles[i], texts[i])\
-                    if for_entries else (clean_txt[:ct], embeds[:ct])
-                fixt_k = r.title if for_entries else r.email
-                fixtures.save_nlp_row(fixt_k, fixt, method=method)
-
-                clean_txt, embeds = clean_txt[ct:], embeds[ct:]
-
-                if for_entries:
-                    r.title_summary = titles[i]["summary"]
-                    r.text_summary = texts[i]["summary"]
-                    r.sentiment = texts[i]["sentiment"]
-                r.ai_ran = True
-                sess.commit()
-
-            if for_entries:
-                # 9131155e: only update every x entries
-                M.Job.multiple_book_jobs(list(uids))
-        return {}
-
-    def entries(self, eid=None):
-        return self.nlp_on_rows('entries')
-
-    def profiles(self, uid=None):
-        return self.nlp_on_rows('profiles')
-
-    def match_profiles(self):
-        with session() as sess:
-            cache_users = sess.query(M.CacheUser).all()
-            for cu in cache_users:
-                pass
 
 nlp_ = NLP()

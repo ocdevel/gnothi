@@ -14,8 +14,9 @@ from app.influencers import influencers
 from common.utils import utcnow
 from common.database import session
 from common.cloud_updown import notify_online
-from utils import cluster, cosine, clear_gpu
+from app.utils import cluster, cosine, clear_gpu
 from app.nlp import nlp_
+from app.entries_profiles import entries, profiles
 
 m = Box({
     # NLP
@@ -25,8 +26,8 @@ m = Box({
     'sentence-encode': nlp_.sentence_encode,
 
     # Caching
-    'entries': nlp_.entries,
-    'profile': nlp_.profile,
+    'entries': entries,
+    'profiles': profiles,
     'influencers': influencers,
 
 

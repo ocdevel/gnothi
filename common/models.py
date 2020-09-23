@@ -817,6 +817,13 @@ class CacheUser(Base):
     last_books = DateCol()
 
 
+class ProfileMatch(Base):
+    __tablename__ = 'profile_matches'
+    user_id = FKCol('users.id', primary_key=True)
+    match_id = FKCol('users.id', primary_key=True)
+    score = Column(Float, nullable=False)
+
+
 def await_row(sess, sql, args={}, wait=.5, timeout=None):
     i = 0
     while True:

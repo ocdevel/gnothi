@@ -3,14 +3,24 @@ from uuid import uuid4
 from box import Box
 import common.models as M
 from common.fixtures import fixtures
-from app.nlp import nlp_
+import app.entries_profiles as e_p
 
 e = fixtures.entries
 vr1, vr2 = e.Virtual_reality_0.text, e.Virtual_reality_1.text
 cbt1, cbt2 = e.Cognitive_behavioral_therapy_0.text, e.Cognitive_behavioral_therapy_1.text
 
 @pytest.fixture(scope='module')
-def therapists(db):
+def user_only_likes_vr(db, entries, main_uid):
+    db.execute("delete from entries;delete from cache_entries;")
+    db.commit()
+    for k, v in entries.items():
+        if not k.startswith('Virtual_reality'): continue
+        db.add(M.Entry(title=k, text=v.text, user_id=main_uid))
+    db.commit()
+    e_p.entries()
+
+@pytest.fixture(scope='module')
+def therapists(user_only_likes_vr, db):
     # best is 100% topic overlap; good 50/50; bad none; therapist_na is no profile
     u = Box(
         therapist_best=None,
@@ -29,10 +39,10 @@ def therapists(db):
     u.therapist_na.bio = None
 
     db.commit()
-    nlp_.profiles()
+    e_p.profiles()
     return u
 
-def test_profiles_ran(therapists, db, main_uid):
+def test_profiles_ran(therapists, db):
     ids = [u.id for k, u in therapists.items()]
     cache_users = db.query(M.CacheUser)\
         .filter(M.CacheUser.user_id.in_(ids))\
@@ -43,3 +53,18 @@ def test_profiles_ran(therapists, db, main_uid):
         .all()
     for u in users:
         assert u.ai_ran is True
+
+def test_matches_made(db, main_uid):
+    user = db.query(M.User).get(main_uid)
+    matches = db.execute("""
+    select u.email, pm.score from profile_matches pm
+    inner join users u on pm.match_id=u.id
+    """).fetchall()
+    assert len(matches) == 3
+    matches = Box({
+        m.email.split('@')[0]: m
+        for m in matches
+    })
+    # cosine DISTANCES; smaller is better
+    assert matches.therapist_good.score < matches.therapist_bad.score
+    assert matches.therapist_best.score < matches.therapist_good.score
