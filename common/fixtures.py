@@ -70,11 +70,22 @@ class Fixtures():
         return pkl
 
     def load_users(self, hash=True):
-        u = Box(user={}, therapist={}, friend={}, other={})
-        for k, _ in u.items():
+        # TODO get rid of just therapist, used in a lot of places currently
+        keys = 'user therapist friend other therapist_vr therapist_mix therapist_cbt therapist_na'.split()
+        u = Box()
+        for k in keys:
             email = k + "@x.com"
             pass_k = 'hashed_password' if hash else 'password'
-            u[k] = {'email': email, pass_k: email}
+            u[k] = {'email': email, pass_k: email, 'first_name': k}
+
+        e = self.load_entries()
+        vr1, vr2 = e.Virtual_reality_0.text, e.Virtual_reality_1.text
+        cbt1, cbt2 = e.Cognitive_behavioral_therapy_0.text, e.Cognitive_behavioral_therapy_1.text
+
+        u.therapist_vr.bio = vr1 + "\n\n" + vr2
+        u.therapist_mix.bio = vr1 + "\n\n" + cbt1
+        u.therapist_cbt.bio = cbt1 + "\n\n" + cbt2
+        u.therapist_na.bio = None
         return u
 
     def uid_to_email(self, uid):
