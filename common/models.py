@@ -71,6 +71,9 @@ class User(Base, SQLAlchemyBaseUserTable):
     bio = Encrypt()
     is_cool = Column(Boolean, server_default='false')
 
+    ai_ran = Column(Boolean, server_default='false')
+    therapist = Column(Boolean, server_default='false')
+
     habitica_user_id = Encrypt()
     habitica_api_token = Encrypt()
 
@@ -704,10 +707,10 @@ class Job(Base):
             arg0 = data_in.get('args', [None])[0]
             if type(arg0) != str: arg0 = None
 
-            if method == 'entries' and arg0:
-                sess.execute(satext("""
-                update entries set ai_ran=False where id=:eid;
-                """), dict(eid=arg0))
+            if method in ('entries', 'profiles') and arg0:
+                sess.execute(satext(f"""
+                update {method} set ai_ran=False where id=:id;
+                """), dict(id=arg0))
                 sess.commit()
 
             exists = sess.execute(satext("""
@@ -719,7 +722,7 @@ class Job(Base):
                 when method='influencers' then true
                 when method='books' and data_in->'args'->>0=:arg0 then true
                 when method='entries' then true
-                when method='profile' and data_in->'args'->>0=:arg0 then true
+                when method='profiles' then true
                 else false
             end;
             """), dict(method=method, arg0=arg0)).fetchone()

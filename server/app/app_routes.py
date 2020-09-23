@@ -71,7 +71,7 @@ def profile_put(data: M.SIProfile, as_user: str = None, viewer: M.User = Depends
         v = v or None  # remove empty strings
         setattr(user, k, v)
     db.session.commit()
-    M.Job.create_job(method='profile', data_in={'args': [str(user.id)]})
+    M.Job.create_job(method='profiles', data_in={'args': [str(user.id)]})
     return {}
 
 

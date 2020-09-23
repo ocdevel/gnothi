@@ -99,21 +99,27 @@ class Fixtures():
         k = self.uid_to_email(user_id)
         self.save_k_v("books", k, books)
 
-    def load_nlp_entries(self, keys):
+    def load_nlp_rows(self, keys, method='entries'):
         if not USE: return None
-        pkl = self.load("nlp_entries")
+        pkl = self.load(f"nlp_{method}")
         if not pkl: return None
-        embeds, titles, texts, clean_txt = [], [], [], []
+        if method == 'entries':
+            clean_txt, embeds, titles, texts = [], [], [], []
+        else:
+            clean_txt, embeds = [], []
         for k in keys:
             tup = pkl[k]
-            embeds += tup[0]
-            titles.append(tup[1])
-            texts.append(tup[2])
-            clean_txt += tup[3]
-        return embeds, titles, texts, clean_txt
+            clean_txt += tup[0]
+            embeds += tup[1]
+            if method == 'entries':
+                titles.append(tup[2])
+                texts.append(tup[3])
 
-    def save_nlp_entry(self, k, obj):
-        self.save_k_v("nlp_entries", k, obj)
+        return (clean_txt, embeds, titles, texts) if method == 'entries'\
+            else (clean_txt, embeds)
+
+    def save_nlp_row(self, k, obj, method='entries'):
+        self.save_k_v(f"nlp_{method}", k, obj)
 
     def gen_entries(self):
         try:
