@@ -2,7 +2,7 @@ import React, {useEffect, useState} from "react"
 import {Button, Col, Form, Modal, Table} from "react-bootstrap"
 
 import { useSelector, useDispatch } from 'react-redux'
-import { fetch_ } from './redux/actions'
+import { fetch_ } from '../redux/actions'
 
 function Person({close, person=null}) {
   const default_form = {name: '', relation: '', issues: '', bio: ''}

@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from "react"
 import {Route, Switch, useHistory, useRouteMatch} from "react-router-dom"
 import _ from 'lodash'
-import {sent2face, SimplePopover, fmtDate} from "./utils"
+import {sent2face, SimplePopover, fmtDate} from "../utils"
 import {
   Button,
   ButtonGroup,
@@ -18,7 +18,7 @@ import Entry from "./Entry"
 import './Entries.css'
 
 import { useSelector, useDispatch } from 'react-redux'
-import { fetch_ } from './redux/actions'
+import { fetch_ } from '../redux/actions'
 
 export default function Entries() {
   const [page, setPage] = useState(0)

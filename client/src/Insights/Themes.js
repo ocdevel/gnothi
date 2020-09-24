@@ -1,11 +1,11 @@
 import React, {useEffect, useState} from "react"
-import {AiStatusMsg, sent2face, spinner, trueKeys, toolAlert} from "./utils"
+import {AiStatusMsg, sent2face, spinner, trueKeys, toolAlert} from "../utils"
 import {Button, Card, Form} from "react-bootstrap"
 import _ from "lodash"
 import ForXDays from "./ForXDays"
 
 import { useSelector, useDispatch } from 'react-redux'
-import { fetch_ } from './redux/actions'
+import { fetch_ } from '../redux/actions'
 
 export default function Themes() {
   const [themes, setThemes] = useState({})

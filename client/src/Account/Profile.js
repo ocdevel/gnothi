@@ -12,7 +12,7 @@ import _ from 'lodash'
 import getZodiacSign from "./zodiac"
 
 import { useSelector, useDispatch } from 'react-redux'
-import { fetch_ } from './redux/actions'
+import { fetch_ } from '../redux/actions'
 
 const timezones = moment.tz.names().map(n => ({value: n, label: n}))
 

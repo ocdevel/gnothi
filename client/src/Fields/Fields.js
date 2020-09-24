@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from "react";
-import {SimplePopover, spinner} from "./utils";
+import {SimplePopover, spinner} from "../utils";
 import _ from "lodash";
 import {Accordion, Alert, Button, Card, Form, Table} from "react-bootstrap";
 import ReactMarkdown from "react-markdown";
@@ -9,7 +9,7 @@ import FieldModal from "./FieldModal";
 import ChartModal from "./ChartModal";
 
 import { useSelector, useDispatch } from 'react-redux'
-import { fetch_, getFields } from './redux/actions'
+import { fetch_, getFields } from '../redux/actions'
 
 export default function Fields() {
   const [fetchingSvc, setFetchingSvc] = useState(false)

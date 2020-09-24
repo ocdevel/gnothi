@@ -1,10 +1,10 @@
 import React, {useState} from 'react'
 import {Form, InputGroup, Button} from "react-bootstrap"
-import {spinner, trueKeys, sent2face, AiStatusMsg, toolAlert} from "./utils"
+import {spinner, trueKeys, sent2face, AiStatusMsg, toolAlert} from "../utils"
 import ForXDays from "./ForXDays"
 
 import { useSelector, useDispatch } from 'react-redux'
-import { fetch_ } from './redux/actions'
+import { fetch_ } from '../redux/actions'
 
 export default function Summarize() {
   const [fetching, setFetching] = useState(false)

@@ -2,7 +2,7 @@ import React, {useEffect, useState} from "react";
 import {Button, Form} from "react-bootstrap";
 
 import { useSelector, useDispatch } from 'react-redux'
-import { fetch_ } from './redux/actions'
+import { fetch_ } from '../redux/actions'
 
 export default function Habitica() {
   const [habiticaUserId, setHabiticaUserId] = useState('')

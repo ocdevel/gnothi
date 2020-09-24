@@ -1,10 +1,10 @@
 import {Card, Button, Form, Row, Col} from "react-bootstrap"
 import React, {useEffect, useState} from "react"
 import _ from 'lodash'
-import Tags from './Tags'
+import Tags from '../Tags'
 
 import {useSelector, useDispatch} from "react-redux"
-import { fetch_ } from './redux/actions'
+import { fetch_ } from '../redux/actions'
 
 const feature_map = {
   fields: {

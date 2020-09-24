@@ -1,12 +1,12 @@
 import React, {useEffect, useState} from "react";
 import {Col, Form, Card, Button, Alert} from "react-bootstrap";
-import {spinner, AiStatusMsg, trueKeys, toolAlert} from './utils'
+import {spinner, AiStatusMsg, trueKeys, toolAlert} from '../utils'
 import ForXDays from "./ForXDays"
 
 import { useSelector, useDispatch } from 'react-redux'
-import { fetch_ } from './redux/actions'
+import { fetch_ } from '../redux/actions'
 
-export default function Query() {
+export default function Ask() {
   const [query, setQuery] = useState('')
   const [answers, setAnswers] = useState([])
   const [fetching, setFetching] = useState(false)

@@ -13,7 +13,7 @@ import {
   useLocation
 } from "react-router-dom";
 import Splash from './Splash'
-import ProfileRoutes from './ProfileRoutes'
+import Account from './Account'
 import Error from './Error'
 import MainNav from './MainNav'
 
@@ -27,16 +27,16 @@ import {
   getTags,
   getFields
 } from './redux/actions';
-import Summarize from "./Summarize";
+import Summarize from "./Insights/Summarize";
 import Tags from "./Tags";
 import {SimplePopover} from "./utils";
 import {FaTags} from "react-icons/fa/index";
-import Query from "./Query";
-import Themes from "./Themes";
-import Resources from "./Books";
-import Entries from "./Entries";
-import Fields from "./Fields";
-import {NotesAll} from "./Notes";
+import Ask from "./Insights/Ask";
+import Themes from "./Insights/Themes";
+import Resources from "./Resources/Books";
+import Entries from "./Entries/Entries";
+import Fields from "./Fields/Fields";
+import {NotesAll} from "./Entries/Notes";
 
 
 function App() {
@@ -106,7 +106,7 @@ function App() {
             <Summarize />
           </Route>
           <Route path="/ask">
-            <Query />
+            <Ask />
           </Route>
           <Route path="/themes">
             <Themes />
@@ -114,8 +114,8 @@ function App() {
           <Route path="/resources">
             <Resources />
           </Route>
-          <Route path="/profile">
-            <ProfileRoutes />
+          <Route path="/account">
+            <Account />
           </Route>
           <Redirect from="/" to="/j" />
         </Switch>

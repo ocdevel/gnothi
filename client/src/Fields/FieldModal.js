@@ -3,7 +3,7 @@ import _ from "lodash";
 import {Button, Form, Modal} from "react-bootstrap";
 
 import { useSelector, useDispatch } from 'react-redux'
-import { fetch_ } from './redux/actions'
+import { fetch_ } from '../redux/actions'
 
 export default function FieldModal({close, field= {}}) {
   const dispatch = useDispatch()

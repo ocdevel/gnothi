@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from "react";
 import _ from 'lodash'
-import {spinner, SimplePopover, toolAlert} from "./utils";
+import {spinner, SimplePopover, toolAlert} from "../utils";
 import {
   Button,
   ButtonGroup,
@@ -14,7 +14,7 @@ import {
 import {FaTags, FaUser, FaThumbsUp, FaThumbsDown, FaCheck, FaTimes} from "react-icons/fa"
 
 import { useSelector, useDispatch } from 'react-redux'
-import { fetch_ } from './redux/actions'
+import { fetch_ } from '../redux/actions'
 
 function Books() {
   const [books, setBooks] = useState([])

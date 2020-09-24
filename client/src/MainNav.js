@@ -149,13 +149,13 @@ export default function MainNav() {
         <Nav>
           <NavDropdown title={email} id="basic-nav-dropdown">
             {renderAsSelect()}
-            {canProfile && <LinkContainer to="/profile/profile">
+            {canProfile && <LinkContainer to="/account/profile">
               <NavDropdown.Item>Profile</NavDropdown.Item>
             </LinkContainer>}
-            {canProfile && <LinkContainer to="/profile/people">
+            {canProfile && <LinkContainer to="/account/people">
               <NavDropdown.Item>People</NavDropdown.Item>
             </LinkContainer>}
-            {!as && <LinkContainer to="/profile/sharing">
+            {!as && <LinkContainer to="/account/sharing">
               <NavDropdown.Item>Sharing</NavDropdown.Item>
             </LinkContainer>}
             <NavDropdown.Item onClick={() => dispatch(logout())}>Logout</NavDropdown.Item>

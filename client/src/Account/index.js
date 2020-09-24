@@ -4,7 +4,7 @@ import Profile from "./Profile"
 import People from "./People"
 import Sharing from "./Sharing"
 
-export default function ProfileRoutes() {
+export default function Account() {
   let match = useRouteMatch()
 
   return (
