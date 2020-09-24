@@ -19,13 +19,13 @@ def impute_and_roll(fes, fs):
         if not dv: continue  # should I just set to 0? can xgb handle nan?
         if dv == 'value':
             if not dvv: continue
-            #fes[fid] = fes[fid].fillna(dvv) getting SettingWithCopyWarning
-            fes[:,fid] = fes[fid].fillna(dvv)
+            # fes[fid] = fes[fid].fillna(dvv)  # getting SettingWithCopyWarning
+            fes.loc[:,fid] = fes[fid].fillna(dvv)
         elif dv == 'ffill':
-            fes[:,fid] = fes[fid].fillna(method='ffill') \
+            fes.loc[:,fid] = fes[fid].fillna(method='ffill') \
                 .fillna(method='bfill')
         elif dv == 'average':
-            fes[:,fid] = fes[fid].fillna(fes[fid].mean())
+            fes.loc[:,fid] = fes[fid].fillna(fes[fid].mean())
 
     # This part is important. Rather than say "what today predicts y" (not useful),
     # or even "what history predicts y" (would be time-series models, which don't have feature_importances_)
@@ -175,11 +175,17 @@ def influencers():
         """)).fetchall()
         for u in users:
             sess.execute(text(f"""
-            update users set last_influencers={utcnow} where id=:uid
+            update users set last_influencers={utcnow} where id=:uid;
+            delete from influencers where field_id in (
+                select id from fields where user_id=:uid
+            );
             """), {'uid': u.id})
             sess.commit()
 
-            next_preds, importances, all_imps = influencers_(u.id)
+            res = influencers_(u.id)
+            if not res: continue
+
+            next_preds, importances, all_imps = res
             for fid, next_pred in next_preds.items():
                 sess.bulk_save_objects([
                     M.Influencer(field_id=fid, influencer_id=iid, score=score)

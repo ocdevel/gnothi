@@ -116,9 +116,11 @@ export const setSelectedTags = (payload) => ({type: SET_SELECTED_TAGS, payload})
 export const getTags = (preSelectMain=true) => async (dispatch, getState) => {
   if (!getState().jwt) {return}
   const {data} = await dispatch(fetch_('tags', 'GET'))
-  console.log(data)
   dispatch(setTags(data))
 }
+
+export const SET_INFLUENCERS = "SET_INFLUENCERS"
+export const setInfluencers = (payload) => ({type: SET_INFLUENCERS, payload})
 
 export const SET_FIELDS = "SET_FIELDS"
 export const setFields = (payload) => ({type: SET_FIELDS, payload})
@@ -127,5 +129,9 @@ export const getFields = () => async (dispatch, getState) => {
   let {data, code, message} = await dispatch(fetch_('fields', 'GET'))
   data = code === 401 ? {code, message} : data
   dispatch(setFields(data))
-}
 
+  if (code == 200) {
+    let {data} = await dispatch(fetch_('influencers', 'GET'))
+    dispatch(setInfluencers(data))
+  }
+}

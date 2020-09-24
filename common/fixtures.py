@@ -27,15 +27,20 @@ class Fixtures():
     def clear_fixtures(self):
         all_ = FRESH == 'all'
         if 'books' in FRESH or all_:
-            os.remove(f"{BASE}/books.pkl")
+            try: os.remove(f"{BASE}/books.pkl")
+            except: pass
         if 'entries' in FRESH or all_:
-            os.remove(f"{BASE}/entries.pkl")
+            try: os.remove(f"{BASE}/entries.pkl")
+            except: pass
         if 'wiki' in FRESH or all_:
-            shutil.rmtree(f"{BASE}/wiki")
+            try: shutil.rmtree(f"{BASE}/wiki")
+            except: pass
         if 'influencers' in FRESH or all_:
-            os.remove(f"{BASE}/xgb_hypers.pkl")
+            try: os.remove(f"{BASE}/xgb_hypers.pkl")
+            except: pass
         if 'liben' in FRESH or all_:
-            os.remove(f"{BASE}/libgen_testing.npy")
+            try: os.remove(f"/storage/libgen_testing.npy")
+            except: pass
             with session() as sess:
                 sess.execute("delete from books")
                 sess.commit()
