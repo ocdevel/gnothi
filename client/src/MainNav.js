@@ -107,9 +107,6 @@ export default function MainNav() {
             {canProfile && <LinkContainer to="/account/profile">
               <NavDropdown.Item>Profile</NavDropdown.Item>
             </LinkContainer>}
-            {canProfile && <LinkContainer to="/account/people">
-              <NavDropdown.Item>People</NavDropdown.Item>
-            </LinkContainer>}
             {!as && <LinkContainer to="/account/sharing">
               <NavDropdown.Item>Sharing</NavDropdown.Item>
             </LinkContainer>}

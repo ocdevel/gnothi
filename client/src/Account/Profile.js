@@ -2,21 +2,27 @@ import React, {useEffect, useState} from "react"
 import {
   Button,
   Form,
-  Tabs,
-  Tab,
-  Col
+  Row,
+  Col,
+  Card,
+  Alert
 } from "react-bootstrap"
+import {
+  BsPersonFill,
+  BsPeopleFill
+} from "react-icons/bs"
 import moment from 'moment-timezone'
 import Select from 'react-select';
 import _ from 'lodash'
 import getZodiacSign from "./zodiac"
+import People from './People'
 
 import { useSelector, useDispatch } from 'react-redux'
 import { fetch_ } from '../redux/actions'
 
 const timezones = moment.tz.names().map(n => ({value: n, label: n}))
 
-export default function Profile() {
+function Profile_() {
   const [profile, setProfile] = useState({
     first_name: '',
     last_name: '',
@@ -129,4 +135,35 @@ export default function Profile() {
       {dirty.saved && "Saved"}
     </Form>
   </div>
+}
+
+export default function Profile() {
+  return <>
+    <Row lg={2} md={1} sm={1} xs={1}>
+      <Col>
+        <Card><Card.Body>
+          <Card.Title><BsPersonFill /> Profile</Card.Title>
+          <Card.Text>
+            <Alert variant='info'>
+              <div>Optionally fill out a profile.</div>
+              <small className='text-muted'>You can optionally share your profile with therapists. Fields which might be important (like gender, orientation) might be used in AI. I'm still experimenting with how AI would use this stuff.</small>
+            </Alert>
+            <Profile_ />
+          </Card.Text>
+        </Card.Body></Card>
+      </Col>
+      <Col>
+        <Card><Card.Body>
+          <Card.Title><BsPeopleFill /> People</Card.Title>
+          <Alert variant='info'>
+            <div>Optionally add "who's who" in your life.</div>
+            <small className='text-muted'>When sharing profile with therapists, it would help them to have a "directory" to refresh their memory. It also feeds into the AI's summaries, question-answering, etc.</small>
+          </Alert>
+          <Card.Body>
+            <People />
+          </Card.Body>
+        </Card.Body></Card>
+      </Col>
+    </Row>
+  </>
 }

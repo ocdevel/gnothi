@@ -85,7 +85,7 @@ export default function Insights() {
     </Form.Row>
   </>
 
-  const sz = x => Math.min(x, nTools) || 1
+  const lg = Math.min(3, nTools) || 1
   return <>
     {renderDaysForm()}
     <Alert variant='info'>
@@ -100,7 +100,7 @@ export default function Insights() {
     {nTools === 0 && <Alert variant='warning'>
         <FaLock /> You don't have any entries to work with, come back later
     </Alert>}
-    <Row lg={sz(3)} md={sz(2)} sm={sz(1)}>
+    <Row lg={lg} md={1} sm={1} xs={1}>
       {tools.map(t => ne >= t.minEntries && (
         <Col>
           <Card className='bottom-margin'>

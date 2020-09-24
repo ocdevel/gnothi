@@ -67,32 +67,28 @@ function App() {
     return <Splash />
   }
 
-  const renderTags = () => {
-    if (location.pathname === '/resources') {return null}
-    return (
-      <div className='bottom-margin'>
-        <SimplePopover text="Tags">
-          <FaTags/>
-        </SimplePopover>
-        <span className='tools-divider'/>
-        {/*TODO reconsider preSelectMain for !!as. Eg, currently don't want therapist seeing Dream by default.*/}
-        <Tags preSelectMain={true} />
-      </div>
-    )
-  }
+  const tagsComp = (
+    <div className='bottom-margin'>
+      <SimplePopover text="Tags">
+        <FaTags/>
+      </SimplePopover>
+      <span className='tools-divider'/>
+      {/*TODO reconsider preSelectMain for !!as. Eg, currently don't want therapist seeing Dream by default.*/}
+      <Tags preSelectMain={true} />
+    </div>
+  )
 
   // key={as} triggers refresh on these components (triggering fetches)
   return <div key={as}>
     <MainNav />
     <Container fluid style={{marginTop: 5}}>
-      {renderTags()}
-
       <Error message={serverError} />
 
       <Switch>
         <Route path="/j">
           <Row>
             <Col>
+              {tagsComp}
               <Entries />
             </Col>
             <Col lg={4}>
@@ -102,6 +98,7 @@ function App() {
           </Row>
         </Route>
         <Route path="/insights">
+          {tagsComp}
           <Insights />
         </Route>
         <Route path="/resources">
