@@ -102,8 +102,10 @@ export default function Books() {
       <Alert variant='info'>
         <div>AI-recommended self-help books based on your entries.</div>
         <small className="text-muted">
-          <p>Use thumbs <FaThumbsUp /> to improve AI's recommendations. Wikipedia & other resources coming soon.</p>
-          {!user.is_cool && <p>Why no descriptions or ratings? I can't legally scrape Amazon or Goodreads, <a target="_blank" href="https://openlibrary.org/">Open Library</a> is great but doesn't have much data. <a href="mailto:tylerrenelle@gmail.com">Send me</a> suggestions!</p>}
+          <div>Use thumbs <FaThumbsUp /> to improve AI's recommendations. Wikipedia & other resources coming soon.</div>
+          {!user.is_cool && <div>
+            Why no descriptions or ratings? I can't legally scrape Amazon or Goodreads, <a target="_blank" href="https://openlibrary.org/">Open Library</a> is great but doesn't have much data. <a href="mailto:tylerrenelle@gmail.com">Send me</a> suggestions!
+          </div>}
         </small>
       </Alert>
       {books.length > 0 ? books.map(renderBook)

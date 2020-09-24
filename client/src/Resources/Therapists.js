@@ -33,8 +33,8 @@ export default function Therapists() {
     <Alert variant='info'>
       <div>AI-recommended therapists based on your entries.</div>
       <small className='text-muted'>
-        <p>AI matches your entries to therapists from their bio & specialties. It's automatic & private, they won't see your data (unless you explicitly share with them under Account > Sharing).</p>
-        <p>If you're a therapist wanting listed, check "therapist" under Account > Profile.</p>
+        <div>AI matches your entries to therapists from their bio & specialties. It's automatic & private, they won't see your data (unless you explicitly share with them under Account > Sharing).</div>
+        <div>If you're a therapist wanting listed, check "therapist" under Account > Profile.</div>
       </small>
     </Alert>
     {therapists ? therapists.map(renderTherapist) : (

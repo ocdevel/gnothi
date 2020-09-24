@@ -12,7 +12,7 @@ export default function Error({message=null}) {
   return (
     <Alert variant="danger" onClose={() => setShow(false)} dismissible>
       {/*<Alert.Heading>Oh snap! You got an error!</Alert.Heading>*/}
-      <p>{message}</p>
+      <div>{message}</div>
     </Alert>
   );
 }

@@ -37,9 +37,6 @@ export default function Ask() {
     if (n_answers === 0) {return null}
     return <>
       <hr/>
-      {n_answers > 1 && <>
-        <Alert variant='info'>Too many entries, splitting into chunks by time period.</Alert>
-      </>}
       {answers.map((a, i) => <>
         <Card style={{marginTop: 10}}>
           <Card.Body>

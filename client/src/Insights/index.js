@@ -16,10 +16,10 @@ import {
   FaTextHeight,
   FaLock
 } from "react-icons/fa/index"
-import React from "react"
+import React, {useState} from "react"
 import { useSelector, useDispatch } from 'react-redux'
 import { setDays } from '../redux/actions'
-import {AiStatusMsg} from "../utils"
+import {aiStatusEmoji} from "../utils"
 import _ from 'lodash'
 
 const tools = [
@@ -50,8 +50,8 @@ const tools = [
 export default function Insights() {
   const days = useSelector(state => state.days)
   const entries = useSelector(state => state.entries)
-  const aiStatus = useSelector(state => state.aiStatus)
   const dispatch = useDispatch()
+  const aiStatus = useSelector(state => state.aiStatus)
 
   const ne = entries.length
   const nTools = _.reduce(tools, (m,v,k) => {
@@ -85,20 +85,35 @@ export default function Insights() {
     </Form.Row>
   </>
 
+  const renderStatus = () => {
+    if (aiStatus === 'on') {return null}
+    return <Alert variant='warning'>
+      <div>
+        {aiStatusEmoji(aiStatus)} Can't use tools yet, AI waking up. Check back in 3.
+      </div>
+      <small class='text-muted'>
+        The AI-based features require expensive servers. I have them turned off when nobody's using the site, and on when someone's back. It takes about 3 minutes to wake. The status {aiStatusEmoji(aiStatus)} icon is always visible top-left of website.
+      </small>
+    </Alert>
+  }
+
   const lg = Math.min(3, nTools) || 1
   return <>
     {renderDaysForm()}
     <Alert variant='info'>
-      <div>
-        Tools use AI for insights on your entries. Limit which entries are processed by choosing <FaTags /> tags and <code>#Days</code> above.
-      </div>
-      {nTools < 3 && nTools > 0 && <div>
-        <FaLock /> More AI tools unlock as you add entries
-      </div>}
-      <AiStatusMsg status={aiStatus} />
+      <div>Tools use AI for insights on your entries.</div>
+      <small className='text-muted'>
+        <div>Limit which entries are processed by choosing <FaTags /> tags and <code>#Days</code> above.</div>
+        {nTools < 3 && nTools > 0 && <div>
+          <FaLock /> More AI tools unlock as you add entries
+        </div>}
+      </small>
     </Alert>
+
+    {renderStatus()}
+
     {nTools === 0 && <Alert variant='warning'>
-        <FaLock /> You don't have any entries to work with, come back later
+      <FaLock /> You don't have any entries to work with, come back later
     </Alert>}
     <Row lg={lg} md={1} sm={1} xs={1}>
       {tools.map(t => ne >= t.minEntries && (

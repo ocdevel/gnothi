@@ -56,21 +56,6 @@ export const aiStatusEmoji = (status) => {
   }[status]
 }
 
-export const AiStatusMsg = ({status}) => {
-  const [showMore, setShowMore] = useState(false)
-  if (status === 'on') {return null}
-  const doShowMore = () => setShowMore(true)
-
-  return <div>
-    <Form.Text muted>
-      {aiStatusEmoji(status)} Can't use tools yet, AI server waking up. Check back in 3 minutes. <a href='#' onClick={doShowMore}>Why?</a>
-      {showMore && <p>
-        The AI-based features require expensive servers. I have them turned off when nobody's using the site, and on when someone's back. It takes about 3 minutes to wake. The status {aiStatusEmoji(status)} icon is always visible top-left of website.
-      </p>}
-    </Form.Text>
-  </div>
-}
-
 export const trueKeys = o => _.transform(o, (m,v,k) => {if (v) {m.push(k)}}, [])
 
 export const fmtDate = d => moment(d).format('YYYY-MM-DD ha')
