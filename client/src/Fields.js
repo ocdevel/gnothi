@@ -30,10 +30,6 @@ export default function Fields() {
   }
 
   useEffect(() => {
-    dispatch(getFields())
-  }, [as])
-
-  useEffect(() => {
     fetchFieldEntries()
   }, [fields])
 

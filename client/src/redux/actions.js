@@ -91,15 +91,12 @@ export const setJwt = (payload) => {
 }
 export const onAuth = (jwt) => async (dispatch, getState) => {
   dispatch(setJwt(jwt))
-  dispatch(getUser())
 }
 
 export const SET_AS = "SET_AS"
 export const setAs = (payload) => ({type: SET_AS, payload})
 export const changeAs = (as=null) => async (dispatch, getState) => {
-  dispatch(setSelectedTags({}))
   dispatch(setAs(as))
-  dispatch(getUser())
 }
 
 export const SET_AI_STATUS = "SET_AI_STATUS"

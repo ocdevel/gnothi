@@ -19,7 +19,14 @@ import MainNav from './MainNav'
 
 import { Provider, useSelector, useDispatch } from 'react-redux'
 import store from './redux/store';
-import { getUser, checkAiStatus, getEntries } from './redux/actions';
+import {
+  getUser,
+  checkAiStatus,
+  getEntries,
+  setSelectedTags,
+  getTags,
+  getFields
+} from './redux/actions';
 import Summarize from "./Summarize";
 import Tags from "./Tags";
 import {SimplePopover} from "./utils";
@@ -43,12 +50,15 @@ function App() {
 
   useEffect(() => {
     // FIXME only do after first load
-    history.push('/j')
+    if (as) {history.push('/j')}
   }, [as])
 
   useEffect(() => {
     dispatch(getUser())
+    dispatch(setSelectedTags({}))
+    dispatch(getTags())
     dispatch(getEntries())
+    dispatch(getFields())
 
     // TODO move to websockets
     const timer = setInterval(() => dispatch(checkAiStatus()), 1000)
