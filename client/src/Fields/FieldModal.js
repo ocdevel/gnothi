@@ -3,14 +3,14 @@ import _ from "lodash";
 import {Button, Form, Modal} from "react-bootstrap";
 
 import { useSelector, useDispatch } from 'react-redux'
-import { fetch_ } from './redux/actions'
+import { fetch_ } from '../redux/actions'
 
 export default function FieldModal({close, field= {}}) {
   const dispatch = useDispatch()
 
   const form_ =
-    field.id ? _.pick(field, ['name', 'type', 'default_value', 'default_value_value', 'target'])
-    : {name: '', type: 'number', default_value: 'value', default_value_value: '', target: false}
+    field.id ? _.pick(field, ['name', 'type', 'default_value', 'default_value_value'])
+    : {name: '', type: 'number', default_value: 'value', default_value_value: ''}
 
   const [form, setForm] = useState(form_)
 
@@ -23,7 +23,6 @@ export default function FieldModal({close, field= {}}) {
       type: form.type,
       default_value: form.default_value,
       default_value_value: _.isEmpty(form.default_value_value) ? null : form.default_value_value,
-      target: !!form.target
     }
     if (fid) {
       await dispatch(fetch_(`fields/${fid}`, 'PUT', body))
@@ -121,18 +120,6 @@ export default function FieldModal({close, field= {}}) {
             />
           </Form.Group>
         )}
-
-        <Form.Group controlId="formFieldTarget">
-          <Form.Check
-            type="checkbox"
-            label="Target"
-            checked={form.target}
-            onChange={changeCheck('target')}
-          />
-          <Form.Text className="text-muted">
-            Use this field as a target variable. Ie, you want to know what causes this field (based on other fields). Eg, if "Mood" is a target, we'll look at what other fields effect mood.
-          </Form.Text>
-        </Form.Group>
 
         {fid && (
           <>

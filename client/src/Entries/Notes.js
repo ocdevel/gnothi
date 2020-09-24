@@ -10,10 +10,10 @@ import {
 } from "react-bootstrap";
 import React, {useEffect, useState} from "react";
 import {FaQuestionCircle} from "react-icons/all";
-import {SimplePopover} from "./utils";
+import {SimplePopover} from "../utils";
 
 import { useSelector, useDispatch } from 'react-redux'
-import { fetch_ } from './redux/actions'
+import { fetch_ } from '../redux/actions'
 
 export function NotesAll() {
   const as = useSelector(state => state.as)

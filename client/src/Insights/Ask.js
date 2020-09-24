@@ -1,18 +1,17 @@
 import React, {useEffect, useState} from "react";
 import {Col, Form, Card, Button, Alert} from "react-bootstrap";
-import {spinner, AiStatusMsg, trueKeys} from './utils'
-import ForXDays from "./ForXDays"
+import {spinner, trueKeys} from '../utils'
 
 import { useSelector, useDispatch } from 'react-redux'
-import { fetch_ } from './redux/actions'
+import { fetch_ } from '../redux/actions'
 
-export default function Query() {
+export default function Ask() {
   const [query, setQuery] = useState('')
   const [answers, setAnswers] = useState([])
   const [fetching, setFetching] = useState(false)
   const [notShared, setNotShared] = useState(false)
-  const [form, setForm] = useState({days: 200})
 
+  const days = useSelector(state => state.days)
   const aiStatus = useSelector(state => state.aiStatus)
   const selectedTags = useSelector(state => state.selectedTags)
   const dispatch = useDispatch()
@@ -22,7 +21,7 @@ export default function Query() {
   const fetchAnswer = async (e) => {
     setFetching(true)
     e.preventDefault()
-    const body = {query, ...form}
+    const body = {query, days}
     const tags_ = trueKeys(selectedTags)
     if (tags_.length) { body.tags = tags_ }
     const {data, code, message} = await dispatch(fetch_('query', 'POST', body))
@@ -55,7 +54,7 @@ export default function Query() {
   return <>
     <Form onSubmit={fetchAnswer}>
       <Form.Group controlId="formQuery">
-        <Form.Label for='question-answering'>Question</Form.Label>
+        {/*<Form.Label for='question-answering'>Question</Form.Label>*/}
         <Form.Control
           id='question-answering'
           placeholder="How do I feel about x?"
@@ -68,18 +67,12 @@ export default function Query() {
            Use proper English & grammar. Use personal pronouns.
         </Form.Text>
       </Form.Group>
-      <ForXDays
-        form={form}
-        setForm={setForm}
-        feature={'question-answering'}
-      />
       {fetching ? spinner : <>
         <Button
           disabled={aiStatus !== 'on'}
           variant="primary"
           type="submit"
         >Ask</Button>
-        <AiStatusMsg status={aiStatus} />
       </>}
     </Form>
     {renderAnswers()}

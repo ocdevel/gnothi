@@ -2,7 +2,7 @@ import React, {useEffect, useState} from "react"
 import {Button, Col, Form, Modal, Table} from "react-bootstrap"
 
 import { useSelector, useDispatch } from 'react-redux'
-import { fetch_ } from './redux/actions'
+import { fetch_ } from '../redux/actions'
 
 function Person({close, person=null}) {
   const default_form = {name: '', relation: '', issues: '', bio: ''}
@@ -113,11 +113,6 @@ export default function People() {
       close={onClose}
       person={person === true ? null : person}
     />}
-    <Button
-      variant="success"
-      className='bottom-margin'
-      onClick={() => choosePerson(true)}
-    >Add Person</Button>
     <Table>
       <thead>
         <tr>
@@ -127,6 +122,7 @@ export default function People() {
           <th>Bio</th>
         </tr>
       </thead>
+      <tbody>
       {people.map(p => (
         <tr
           className='cursor-pointer'
@@ -139,9 +135,12 @@ export default function People() {
           <td>{p.bio}</td>
         </tr>
       ))}
-      <tbody>
-
       </tbody>
     </Table>
+    <Button
+      variant="success"
+      className='bottom-margin'
+      onClick={() => choosePerson(true)}
+    >Add Person</Button>
   </>
 }

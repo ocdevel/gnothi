@@ -1,148 +1,117 @@
 import React, { useState, useEffect } from 'react'
-import _ from 'lodash'
 import './App.css'
 import {
-  Container,
-  Nav,
-  Navbar,
-  NavDropdown,
-  Badge
+  Col,
+  Container, Row,
 } from 'react-bootstrap';
-import {LinkContainer} from 'react-router-bootstrap'
 import {
   BrowserRouter as Router,
   Switch,
   Route,
-  Link,
   Redirect,
-  useHistory
+  useHistory,
+  useLocation
 } from "react-router-dom";
 import Splash from './Splash'
-import Journal from './Journal'
-import ProfileRoutes from './ProfileRoutes'
+import Account from './Account'
 import Error from './Error'
-import emoji from 'react-easy-emoji'
-import {aiStatusEmoji, SimplePopover} from "./utils"
+import MainNav from './MainNav'
 
 import { Provider, useSelector, useDispatch } from 'react-redux'
 import store from './redux/store';
-import { getUser, logout, changeAs, checkAiStatus, getTags } from './redux/actions';
+import {
+  getUser,
+  checkAiStatus,
+  getEntries,
+  setSelectedTags,
+  getTags,
+  getFields
+} from './redux/actions';
+import Insights from "./Insights";
+import Tags from "./Tags";
+import {SimplePopover} from "./utils";
+import {FaTags} from "react-icons/fa/index";
+import Resources from "./Resources";
+import Entries from "./Entries/Entries";
+import Fields from "./Fields/Fields";
+import {NotesAll} from "./Entries/Notes";
 
 
 function App() {
   const jwt = useSelector(state => state.jwt);
   const user = useSelector(state => state.user);
   const as = useSelector(state => state.as);
-  const asUser = useSelector(state => state.asUser);
-  const aiStatus = useSelector(state => state.aiStatus);
   const serverError = useSelector(state => state.serverError);
 	const dispatch = useDispatch();
 	const history = useHistory()
+  const location = useLocation()
 
   useEffect(() => {
-    history.push('/j')
+    // FIXME only do after first load
+    if (as) {history.push('/j')}
   }, [as])
 
   useEffect(() => {
     dispatch(getUser())
+    dispatch(setSelectedTags({}))
+    dispatch(getTags())
+    dispatch(getEntries())
+    dispatch(getFields())
 
     // TODO move to websockets
     const timer = setInterval(() => dispatch(checkAiStatus()), 1000)
     return () => clearInterval(timer)
   }, [jwt, as])
 
-  const renderAsSelect = () => {
-    if (!user.shared_with_me.length) {return}
-    return <>
-      {as && (
-        <NavDropdown.Item onClick={() => dispatch(changeAs(null))}>
-          {emoji("🔀")}{user.email}
-        </NavDropdown.Item>
-      )}
-      {user.shared_with_me.map(s => s.id != as && (
-        <NavDropdown.Item onClick={() => dispatch(changeAs(s.id))}>
-          {emoji("🔀")}
-          {s.new_entries ? <Badge pill variant='danger'>{s.new_entries}</Badge> : null}
-          {s.email}
-        </NavDropdown.Item>
-      ))}
-      <NavDropdown.Divider />
-    </>
-  }
-
-  const renderNav = () => {
-    let email = user.email
-    if (asUser) {
-      email = <>{emoji("🕵️")} {asUser.email}</>
-    } else {
-      const ne = _.reduce(user.shared_with_me, (m,v) => m + v.new_entries, 0)
-      email = !ne ? email : <><Badge pill variant='danger'>{ne}</Badge> {email}</>
-    }
-
-    const canProfile = !as || (asUser && asUser.profile)
-
-    let aiStatus_ = null
-    if (~['off', 'pending'].indexOf(aiStatus)) {
-      aiStatus_ = {
-        off: "AI server is offline",
-        pending: "AI server is coming online"
-      }[aiStatus]
-      aiStatus_ = <SimplePopover text={aiStatus_} overlayOpts={{placement: 'right'}}>
-        <span>{aiStatusEmoji(aiStatus)}</span>
-      </SimplePopover>
-    }
-
-    return (
-      <Navbar bg="dark" variant="dark">
-        <LinkContainer to="/">
-          <Navbar.Brand>
-            Gnothi {aiStatus_}
-          </Navbar.Brand>
-        </LinkContainer>
-        <Navbar.Toggle aria-controls="responsive-navbar-nav" />
-        <Navbar.Collapse id="responsive-navbar-nav">
-          <Nav className="mr-auto">
-          </Nav>
-          <Nav>
-            <NavDropdown title={email} id="basic-nav-dropdown">
-              {renderAsSelect()}
-              {canProfile && <LinkContainer to="/profile/profile">
-                <NavDropdown.Item>Profile</NavDropdown.Item>
-              </LinkContainer>}
-              {canProfile && <LinkContainer to="/profile/people">
-                <NavDropdown.Item>People</NavDropdown.Item>
-              </LinkContainer>}
-              {!as && <LinkContainer to="/profile/sharing">
-                <NavDropdown.Item>Sharing</NavDropdown.Item>
-              </LinkContainer>}
-              <NavDropdown.Item onClick={() => dispatch(logout())}>Logout</NavDropdown.Item>
-            </NavDropdown>
-          </Nav>
-        </Navbar.Collapse>
-      </Navbar>
-    )
-  }
-
   if (!user) {
     return <Splash />
   }
 
+  const tagsComp = (
+    <div className='bottom-margin'>
+      <SimplePopover text="Tags">
+        <FaTags/>
+      </SimplePopover>
+      <span className='tools-divider'/>
+      {/*TODO reconsider preSelectMain for !!as. Eg, currently don't want therapist seeing Dream by default.*/}
+      <Tags preSelectMain={true} />
+    </div>
+  )
+
   // key={as} triggers refresh on these components (triggering fetches)
-  return <>
-    {renderNav()}
-    <Container fluid key={as}>
+  return <div key={as}>
+    <MainNav />
+    <Container fluid style={{marginTop: 5}}>
       <Error message={serverError} />
+
       <Switch>
         <Route path="/j">
-          <Journal />
+          <Row>
+            <Col>
+              {tagsComp}
+              <Entries />
+            </Col>
+            <Col lg={4}>
+              <Fields  />
+              <NotesAll />
+            </Col>
+          </Row>
         </Route>
-        <Route path="/profile">
-          <ProfileRoutes />
+        <Route path="/insights">
+          {tagsComp}
+          <Insights />
+        </Route>
+        <Route path="/resources">
+          <Resources />
+        </Route>
+        <Route path="/account">
+          <Account />
         </Route>
         <Redirect from="/" to="/j" />
       </Switch>
+
     </Container>
-  </>
+  </div>
 }
 
 export default () => <>

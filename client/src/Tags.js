@@ -100,10 +100,6 @@ export default function Tags({
   const selectedTags_ = selected || selectedTags
 
   useEffect(() => {
-    dispatch(getTags())
-  }, [as])
-
-  useEffect(() => {
     const alreadySelected = trueKeys(selectedTags_).length > 0
     if (tags.length && preSelectMain && !alreadySelected) {
       const main = _.find(tags, t=>t.main)

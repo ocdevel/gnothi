@@ -1,16 +1,17 @@
 import React, {useEffect, useState} from "react"
-import {OverlayTrigger, Popover, Spinner, Form} from "react-bootstrap"
+import {OverlayTrigger, Popover, Spinner, Form, Alert} from "react-bootstrap"
 import _ from "lodash"
 import emoji from 'react-easy-emoji'
 import moment from "moment";
+import {FaThumbsUp, FaTags} from 'react-icons/fa'
 
-const spinner = (
+export const spinner = (
   <Spinner animation="border" role="status">
     <span className="sr-only">Loading...</span>
   </Spinner>
 )
 
-const SimplePopover = ({children, text, overlayOpts={}}) => (
+export const SimplePopover = ({children, text, overlayOpts={}}) => (
   <OverlayTrigger
     {...overlayOpts}
     overlay={<Popover>
@@ -24,7 +25,7 @@ const SimplePopover = ({children, text, overlayOpts={}}) => (
   </OverlayTrigger>
 )
 
-const sent2face = (sentiment) => {
+export const sent2face = (sentiment) => {
   if (!sentiment) {return null}
   const style = {}
   style.backgroundColor = ~['joy', 'love', 'surprise'].indexOf(sentiment)
@@ -46,7 +47,7 @@ const sent2face = (sentiment) => {
   )
 }
 
-const aiStatusEmoji = (status) => {
+export const aiStatusEmoji = (status) => {
   const statusOpts = {props: {width: 16, height: 16}}
   return {
     off: emoji("🔴", statusOpts),
@@ -55,31 +56,21 @@ const aiStatusEmoji = (status) => {
   }[status]
 }
 
-const AiStatusMsg = ({status}) => {
+export const AiStatusMsg = ({status}) => {
   const [showMore, setShowMore] = useState(false)
   if (status === 'on') {return null}
   const doShowMore = () => setShowMore(true)
 
-  return <>
+  return <div>
     <Form.Text muted>
-      {aiStatusEmoji(status)} AI server waking up, check back in 3 minutes. <a href='#' onClick={doShowMore}>Why?</a>
+      {aiStatusEmoji(status)} Can't use tools yet, AI server waking up. Check back in 3 minutes. <a href='#' onClick={doShowMore}>Why?</a>
       {showMore && <p>
         The AI-based features require expensive servers. I have them turned off when nobody's using the site, and on when someone's back. It takes about 3 minutes to wake. The status {aiStatusEmoji(status)} icon is always visible top-left of website.
       </p>}
     </Form.Text>
-  </>
+  </div>
 }
 
-const trueKeys = o => _.transform(o, (m,v,k) => {if (v) {m.push(k)}}, [])
+export const trueKeys = o => _.transform(o, (m,v,k) => {if (v) {m.push(k)}}, [])
 
-const fmtDate = d => moment(d).format('MM/DD/YYYY ha')
-
-export {
-  spinner,
-  sent2face,
-  trueKeys,
-  SimplePopover,
-  aiStatusEmoji,
-  AiStatusMsg,
-  fmtDate
-}
+export const fmtDate = d => moment(d).format('YYYY-MM-DD ha')

@@ -41,6 +41,8 @@ with D.session() as sess:
     shares
     shares_tags
     tags
+    influencers
+    profile_matches
     users""".split():
         sess.execute(f"drop table {t} cascade")
     sess.commit()
@@ -89,7 +91,8 @@ def u(client, db):
 
     logger.warning("creating users")
     for k, _ in u_.items():
-        email = u_[k].email
+        u__ = u_[k]
+        email = u__.email
         form = {'email': email, 'password': email}
         res = client.post("/auth/register", json=form)
         assert res.status_code == 201
@@ -98,16 +101,21 @@ def u(client, db):
         res = client.post("/auth/jwt/login", data=form)
         assert res.status_code == 200
         token = res.json()['access_token']
-        u_[k]['token'] = token
-        u_[k]['header'] = {"headers": {"Authorization": f"Bearer {token}"}}
+        u__['token'] = token
+        u__['header'] = {"headers": {"Authorization": f"Bearer {token}"}}
 
-        res = client.get("/user", **u_[k].header)
+        res = client.get("/user", **u__.header)
         assert res.status_code == 200
-        u_[k]['id'] = res.json()['id']
+        u__['id'] = res.json()['id']
 
-        res = client.get("/tags", **u_[k].header)
+        res = client.get("/tags", **u__.header)
         assert res.status_code == 200
-        u_[k]['tag1'] = {res.json()[0]['id']: True}
+        u__['tag1'] = {res.json()[0]['id']: True}
+
+        profile = dict(bio=u__.get('bio', None), therapist=u__.get('therapist', False))
+        res = client.put("/profile", json=profile, **u__.header)
+        assert res.status_code == 200
+
 
     logger.warning("jobs-status")
     # init jobs-status table

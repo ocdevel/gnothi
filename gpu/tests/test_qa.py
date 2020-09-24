@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 @pytest.fixture()
 def groups(db):
     # limiting for now, script killing itself (TODO investigate)
-    limit = 50
+    limit = 20
     c_entries = db.query(M.CacheEntry) \
         .with_entities(M.CacheEntry.paras) \
         .limit(limit) \
@@ -25,7 +25,6 @@ def test_qa_flat(groups):
     answers = ', '.join([a['answer'] for a in res])
     found = re.search("(virtual|vr)", answers, re.IGNORECASE)
     assert found
-
 
 def test_qa_group(groups):
     with pytest.raises(Exception):

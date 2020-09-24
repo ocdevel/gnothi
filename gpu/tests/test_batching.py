@@ -16,7 +16,6 @@ def groups(entries):
         if k.startswith("Virtual_reality")
     ]
 
-
 class TestNoGroup():
     def test_empty(self, paras):
         res = nlp_.summarization([])
@@ -44,7 +43,6 @@ class TestNoGroup():
         res = res[0]
         assert 'VR' in res['summary'] or "Virtual" in res['summary']
         assert len(res['sentiment'])
-
 
 class TestGroup():
     @pytest.mark.skip()

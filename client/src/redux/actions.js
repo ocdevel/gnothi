@@ -91,14 +91,12 @@ export const setJwt = (payload) => {
 }
 export const onAuth = (jwt) => async (dispatch, getState) => {
   dispatch(setJwt(jwt))
-  dispatch(getUser())
 }
 
 export const SET_AS = "SET_AS"
 export const setAs = (payload) => ({type: SET_AS, payload})
 export const changeAs = (as=null) => async (dispatch, getState) => {
   dispatch(setAs(as))
-  dispatch(getUser())
 }
 
 export const SET_AI_STATUS = "SET_AI_STATUS"
@@ -116,9 +114,11 @@ export const setSelectedTags = (payload) => ({type: SET_SELECTED_TAGS, payload})
 export const getTags = (preSelectMain=true) => async (dispatch, getState) => {
   if (!getState().jwt) {return}
   const {data} = await dispatch(fetch_('tags', 'GET'))
-  console.log(data)
   dispatch(setTags(data))
 }
+
+export const SET_INFLUENCERS = "SET_INFLUENCERS"
+export const setInfluencers = (payload) => ({type: SET_INFLUENCERS, payload})
 
 export const SET_FIELDS = "SET_FIELDS"
 export const setFields = (payload) => ({type: SET_FIELDS, payload})
@@ -127,5 +127,21 @@ export const getFields = () => async (dispatch, getState) => {
   let {data, code, message} = await dispatch(fetch_('fields', 'GET'))
   data = code === 401 ? {code, message} : data
   dispatch(setFields(data))
+
+  if (code == 200) {
+    let {data} = await dispatch(fetch_('influencers', 'GET'))
+    dispatch(setInfluencers(data))
+  }
 }
 
+export const SET_ENTRIES = "SET_ENTRIES"
+export const setEntries = (payload) => ({type: SET_ENTRIES, payload})
+export const getEntries = () => async (dispatch, getState) => {
+  if (!getState().jwt) {return}
+  let {data, code, message} =  await dispatch(fetch_('entries', 'GET'))
+  data = code === 401 ? {code, message} : data
+  dispatch(setEntries(data))
+}
+
+export const SET_DAYS = "SET_DAYS"
+export const setDays = (payload) => ({type: SET_DAYS, payload})

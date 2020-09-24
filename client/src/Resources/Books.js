@@ -1,11 +1,17 @@
 import React, {useEffect, useState} from "react";
 import _ from 'lodash'
-import {spinner, SimplePopover} from "./utils";
-import {Button, ButtonGroup, Nav, NavDropdown, Alert} from "react-bootstrap";
+import {spinner, SimplePopover} from "../utils";
+import {
+  Button,
+  ButtonGroup,
+  Nav,
+  NavDropdown,
+  Alert,
+} from "react-bootstrap";
 import {FaTags, FaUser, FaThumbsUp, FaThumbsDown, FaCheck, FaTimes} from "react-icons/fa"
 
 import { useSelector, useDispatch } from 'react-redux'
-import { fetch_ } from './redux/actions'
+import { fetch_ } from '../redux/actions'
 
 export default function Books() {
   const [books, setBooks] = useState([])
@@ -62,7 +68,6 @@ export default function Books() {
         <NavDropdown.Item eventKey="remove">Removed</NavDropdown.Item>
       </NavDropdown>
     </Nav>
-    <br/>
   </>
 
   const renderBook = b => (
@@ -94,14 +99,16 @@ export default function Books() {
       {fetching && spinner}
     </div>
     <div>
-      {books.length > 0 ? <>
-        <hr/>
-        {!user.is_cool && <Alert variant='info'>Why no descriptions or ratings? I can't legally scrape Amazon or Goodreads, <a target="_blank" href="https://openlibrary.org/">Open Library</a> is great but doesn't have much data. <a href="mailto:tylerrenelle@gmail.com">Send me</a> suggestions!</Alert>}
-        <Alert variant='info'>Wikipedia & other resources coming soon.</Alert>
-        {books.map(renderBook)}
-      </> : shelf === 'ai' ? <>
-        <p>No AI recommendations yet. This will populate when you have enough entries.</p>
-      </> : null}
+      <Alert variant='info'>
+        <div>AI-recommended self-help books based on your entries.</div>
+        <small className="text-muted">
+          <p>Use thumbs <FaThumbsUp /> to improve AI's recommendations. Wikipedia & other resources coming soon.</p>
+          {!user.is_cool && <p>Why no descriptions or ratings? I can't legally scrape Amazon or Goodreads, <a target="_blank" href="https://openlibrary.org/">Open Library</a> is great but doesn't have much data. <a href="mailto:tylerrenelle@gmail.com">Send me</a> suggestions!</p>}
+        </small>
+      </Alert>
+      {books.length > 0 ? books.map(renderBook)
+        : shelf === 'ai' ? <p>No AI recommendations yet. This will populate when you have enough entries.</p>
+        : null}
     </div>
   </>
 }

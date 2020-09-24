@@ -1,26 +1,25 @@
 import React, {useEffect, useState} from "react"
-import {AiStatusMsg, sent2face, spinner, trueKeys} from "./utils"
+import {sent2face, spinner, trueKeys} from "../utils"
 import {Button, Card, Form} from "react-bootstrap"
 import _ from "lodash"
-import ForXDays from "./ForXDays"
 
 import { useSelector, useDispatch } from 'react-redux'
-import { fetch_ } from './redux/actions'
+import { fetch_ } from '../redux/actions'
 
 export default function Themes() {
   const [themes, setThemes] = useState({})
   const [fetching, setFetching] = useState(false)
   const [notShared, setNotShared] = useState(false)
-  const [form, setForm] = useState({days: 200})
   const aiStatus = useSelector(state => state.aiStatus)
   const selectedTags = useSelector(state => state.selectedTags)
+  const days = useSelector(state => state.days)
 
   const dispatch = useDispatch()
 
   const fetchThemes = async () => {
     setFetching(true)
     const tags_ = trueKeys(selectedTags)
-    const body = {...form}
+    const body = {days}
     if (tags_.length) { body.tags = tags_}
     const {data, code, message} = await dispatch(fetch_('themes', 'POST', body))
     setFetching(false)
@@ -57,11 +56,6 @@ export default function Themes() {
 
   return <>
     <Form onSubmit={_.noop}>
-    <ForXDays
-      form={form}
-      setForm={setForm}
-      feature={'themes'}
-    />
 
     {fetching ? <>
       <div>{spinner}</div>
@@ -73,7 +67,6 @@ export default function Themes() {
         variant='primary'
         onClick={fetchThemes}
       >Show Themes</Button>
-      <AiStatusMsg status={aiStatus} />
     </>}
     </Form>
     {_.size(themes) > 0 && renderThemes()}

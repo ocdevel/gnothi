@@ -1,11 +1,6 @@
 import math, time, pdb, re
 import torch
 import numpy as np
-from common.database import session
-from common.fixtures import fixtures
-import common.models as M
-from sqlalchemy import text as satext
-from app.cleantext import Clean
 from sentence_transformers import SentenceTransformer
 from transformers import pipeline, AutoTokenizer, AutoModelForSequenceClassification, AutoModelWithLMHead,\
     AutoModelForSeq2SeqLM, AutoModelForQuestionAnswering
@@ -72,7 +67,7 @@ class NLP():
 
     def sentence_encode(self, x):
         m = self.load('sentence-encode')
-        return np.array(m.encode(x, batch_size=64, show_progress_bar=True))
+        return np.array(m.encode(x, batch_size=32, show_progress_bar=True))
 
     @staticmethod
     def para_parts(paras, tokenizer, max_length):
@@ -263,82 +258,6 @@ class NLP():
 
     def question_answering_wrap(self, val: List[str]):
         return [{"answer": a} for a in val]
-
-    def _prep_entry_cache(self, txt):
-        paras = Clean.entries_to_paras([txt])
-        clean = [' '.join(e) for e in Clean.lda_texts(paras, propn=True)]
-        vecs = self.sentence_encode(paras).tolist()
-        return paras, clean, vecs
-
-    def entries(self, eid=None):
-        tokenizer, _, max_tokens = self.load('summarization')
-        with session() as sess:
-            entries = sess.query(M.Entry)\
-                .filter(M.Entry.no_ai.isnot(True), M.Entry.ai_ran.isnot(True))\
-                .all()
-            if not entries: return {}
-
-            paras_grouped = []
-            uids = set()
-            for e in entries:
-                paras_grouped.append(Clean.entries_to_paras([e.text]))
-                uids.add(e.user_id)
-            paras_flat = [p for paras in paras_grouped for p in paras]
-
-
-            fkeys = [e.title for e in entries]
-            fixt = fixtures.load_nlp_entries(fkeys)
-            if fixt:
-                embeds, titles, texts, clean_txt = fixt
-            else:
-                embeds = self.sentence_encode(paras_flat).tolist()
-                titles = self.summarization(paras_grouped, min_length=5, max_length=20, with_sentiment=False)
-                texts = self.summarization(paras_grouped, min_length=30, max_length=250)
-                clean_txt = Clean.lda_texts(paras_flat, propn=True)
-
-            for i, e in enumerate(entries):
-                c_entry = sess.query(M.CacheEntry).get(e.id)
-                if not c_entry:
-                    c_entry = M.CacheEntry(entry_id=e.id)
-                    sess.add(c_entry)
-                # Save the cache_entry (paras,clean,vectors)
-                paras = paras_grouped[i]
-                c_entry.paras = paras
-                ct = len(paras)
-                c_entry.clean = [' '.join(e) for e in clean_txt[:ct]]
-                c_entry.vectors = embeds[:ct]
-                sess.commit()
-
-                # Save the fixture for later
-                fixt = (embeds[:ct], titles[i], texts[i], clean_txt[:ct])
-                fixtures.save_nlp_entry(e.title, fixt)
-
-                embeds, clean_txt = embeds[ct:], clean_txt[ct:]
-
-                e.title_summary = titles[i]["summary"]
-                e.text_summary = texts[i]["summary"]
-                e.sentiment = texts[i]["sentiment"]
-                e.ai_ran = True
-                sess.commit()
-
-            # 9131155e: only update every x entries
-            M.Job.multiple_book_jobs(list(uids))
-        return {}
-
-
-    def profile(self, id):
-        with session() as sess:
-            profile_txt = sess.query(M.User).get(id).profile_to_text()
-            cu = M.CacheUser
-            if profile_txt:
-                c_profile = sess.query(cu).get(id)
-                # TODO can't use with_entities & model.get(). This fetches cu.influencers too, large
-                # .with_entities(cu.paras, cu.clean, cu.vectors)\
-                if not c_profile:
-                    c_profile = cu(user_id=id)
-                    sess.add(c_profile)
-                c_profile.paras, c_profile.clean, c_profile.vectors = \
-                    self._prep_entry_cache(profile_txt)
 
 
 nlp_ = NLP()

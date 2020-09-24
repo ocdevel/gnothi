@@ -70,6 +70,11 @@ class User(Base, SQLAlchemyBaseUserTable):
     timezone = Column(Unicode)
     bio = Encrypt()
     is_cool = Column(Boolean, server_default='false')
+    therapist = Column(Boolean, server_default='false')
+
+    ai_ran = Column(Boolean, server_default='false')
+    last_books = DateCol()
+    last_influencers = DateCol()
 
     habitica_user_id = Encrypt()
     habitica_api_token = Encrypt()
@@ -149,6 +154,7 @@ class SIProfile(SITimezone):
     gender: Optional[str] = None
     birthday: Optional[Any] = None
     bio: Optional[str] = None
+    therapist: Optional[bool] = False
 
 
 class SOProfile(SIProfile, SOut):
@@ -401,7 +407,6 @@ class Field(Base):
     excluded_at = DateCol(default=False)
     default_value = Column(Enum(DefaultValueTypes), server_default="value")
     default_value_value = Column(Float)
-    target = Column(Boolean, server_default='false')
     # option{single_or_multi, options:[], ..}
     # number{float_or_int, ..}
     attributes = Column(JSON)
@@ -411,15 +416,20 @@ class Field(Base):
 
     user_id = FKCol('users.id', index=True)
 
+    # Populated via ml.influencers.
+    influencer_score = Column(Float, server_default='0')
+    next_pred = Column(Float, server_default='0')
+
     json_fields = """
     id
     name
     created_at
     excluded_at
     default_value_value
-    target
     service
     service_id
+    influencer_score
+    next_pred
     """
 
     def json(self):
@@ -453,7 +463,6 @@ class SIField(SIFieldExclude):
     name: str
     default_value: DefaultValueTypes
     default_value_value: Optional[float] = None
-    target: bool
 
 ## TODO can't get __root__ setup working
 # class SFieldOut(SOut):
@@ -704,10 +713,11 @@ class Job(Base):
             arg0 = data_in.get('args', [None])[0]
             if type(arg0) != str: arg0 = None
 
-            if method == 'entries' and arg0:
-                sess.execute(satext("""
-                update entries set ai_ran=False where id=:eid;
-                """), dict(eid=arg0))
+            if method in ('entries', 'profiles') and arg0:
+                table = dict(entries='entries', profiles='users')[method]
+                sess.execute(satext(f"""
+                update {table} set ai_ran=False where id=:id;
+                """), dict(id=arg0))
                 sess.commit()
 
             exists = sess.execute(satext("""
@@ -719,7 +729,7 @@ class Job(Base):
                 when method='influencers' then true
                 when method='books' and data_in->'args'->>0=:arg0 then true
                 when method='entries' then true
-                when method='profile' and data_in->'args'->>0=:arg0 then true
+                when method='profiles' then true
                 else false
             end;
             """), dict(method=method, arg0=arg0)).fetchone()
@@ -735,7 +745,7 @@ class Job(Base):
     def multiple_book_jobs(uids):
         with session() as sess:
             sess.execute(satext("""
-            update cache_users set last_books=null where user_id in :uids;
+            update users set last_books=null where id in :uids;
             """), dict(uids=tuple(uids)))
             sess.commit()
         # TODO handle this in run.py when it's consuming jobs
@@ -801,17 +811,23 @@ class CacheEntry(Base):
 class CacheUser(Base):
     __tablename__ = 'cache_users'
     user_id = FKCol('users.id', primary_key=True)
-
-    # profile nlp
     paras = Encrypt(array=True)
     clean = Encrypt(array=True)
     vectors = Column(ARRAY(Float, dimensions=2))
 
-    # influencers all general
-    last_influencers = DateCol()
-    influencers = Column(JSONB)
 
-    last_books = DateCol()
+class ProfileMatch(Base):
+    __tablename__ = 'profile_matches'
+    user_id = FKCol('users.id', primary_key=True)
+    match_id = FKCol('users.id', primary_key=True)
+    score = Column(Float, nullable=False)
+
+
+class Influencer(Base):
+    __tablename__ = 'influencers'
+    field_id = FKCol('fields.id', primary_key=True)
+    influencer_id = FKCol('fields.id', primary_key=True)
+    score = Column(Float, nullable=False)
 
 
 def await_row(sess, sql, args={}, wait=.5, timeout=None):
