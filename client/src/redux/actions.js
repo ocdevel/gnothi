@@ -142,3 +142,6 @@ export const getEntries = () => async (dispatch, getState) => {
   data = code === 401 ? {code, message} : data
   dispatch(setEntries(data))
 }
+
+export const SET_DAYS = "SET_DAYS"
+export const setDays = (payload) => ({type: SET_DAYS, payload})

@@ -5,10 +5,10 @@ from app.themes import themes
 import logging
 logger = logging.getLogger(__name__)
 
-def test_themes_100(db):
+def test_themes_50(db):
     entries = db.query(M.Entry) \
         .with_entities(M.Entry.id, M.Entry.title) \
-        .limit(100) \
+        .limit(50) \
         .all()
     eids = [e.id for e in entries]
 
@@ -21,7 +21,6 @@ def test_themes_100(db):
     print("Themes")
     pprint(res)
     assert found
-
 
 def test_themes_all(db):
     entries = db.query(M.Entry) \

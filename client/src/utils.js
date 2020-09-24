@@ -61,25 +61,22 @@ export const AiStatusMsg = ({status}) => {
   if (status === 'on') {return null}
   const doShowMore = () => setShowMore(true)
 
-  return <>
+  return <div>
     <Form.Text muted>
-      {aiStatusEmoji(status)} AI server waking up, check back in 3 minutes. <a href='#' onClick={doShowMore}>Why?</a>
+      {aiStatusEmoji(status)} Can't use tools yet, AI server waking up. Check back in 3 minutes. <a href='#' onClick={doShowMore}>Why?</a>
       {showMore && <p>
         The AI-based features require expensive servers. I have them turned off when nobody's using the site, and on when someone's back. It takes about 3 minutes to wake. The status {aiStatusEmoji(status)} icon is always visible top-left of website.
       </p>}
     </Form.Text>
-  </>
+  </div>
 }
 
 export const trueKeys = o => _.transform(o, (m,v,k) => {if (v) {m.push(k)}}, [])
 
-export const fmtDate = d => moment(d).format('MM/DD/YYYY ha')
+export const fmtDate = d => moment(d).format('YYYY-MM-DD ha')
 
 export const toolAlert = (tool) => {
   const txt = {
-    summarize: `Summarize your entries for an overview.`,
-    themes: `Show common recurring themes across your entries.`,
-    ask: `Ask a question about your entries.`,
     books: `Generate AI-recommended self-help books, based on your entries.`,
   }[tool]
 

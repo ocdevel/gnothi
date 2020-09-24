@@ -14,48 +14,14 @@ import {
 import emoji from 'react-easy-emoji'
 import {aiStatusEmoji, SimplePopover} from "./utils"
 import {
-  FaSearch,
+  FaRobot,
   FaRegListAlt,
-  FaTextHeight,
-  FaQuestion,
-  FaCubes,
   FaBook,
-  FaLock
 } from 'react-icons/fa'
 
 import { useSelector, useDispatch } from 'react-redux'
 import { logout, changeAs } from './redux/actions';
 
-const tools = [
-  {
-    route: '/summarize',
-    minEntries: 1,
-    label: "Summarize",
-    icon: <FaTextHeight />,
-    popover: "Generate summaries of entries",
-  },
-  {
-    route: '/themes',
-    minEntries: 4,
-    popover: "Common themes across entries",
-    label: "Themes",
-    icon: <FaCubes />,
-  },
-  {
-    route: '/ask',
-    minEntries: 2,
-    label: "Ask",
-    icon: <FaQuestion />,
-    popover: "Ask a question about entries",
-  },
-  {
-    route: '/resources',
-    minEntries: 3,
-    label: "Resources",
-    icon: <FaBook />,
-    popover: "Self-help book recommendations based on entries; find therapists",
-  },
-]
 
 export default function MainNav() {
   const user = useSelector(state => state.user)
@@ -127,20 +93,12 @@ export default function MainNav() {
           <LinkContainer to='/j'>
             <Nav.Link><FaRegListAlt /> Entries</Nav.Link>
           </LinkContainer>
-          {tools.map(t => ne >= t.minEntries && (
-            <SimplePopover text={t.popover} overlayOpts={{placement: 'bottom'}}>
-              <LinkContainer to={t.route}>
-                <Nav.Link>{t.icon} {t.label}</Nav.Link>
-              </LinkContainer>
-            </SimplePopover>
-          ))}
-          {ne < 4 && (
-            <SimplePopover text="More AI tools unlock with added entries" overlayOpts={{placement: 'bottom'}}>
-              <Nav.Link>
-                <FaLock /> More
-              </Nav.Link>
-            </SimplePopover>
-          )}
+          <LinkContainer to='/insights'>
+            <Nav.Link><FaRobot /> Insights</Nav.Link>
+          </LinkContainer>
+          <LinkContainer to='/resources'>
+            <Nav.Link><FaBook /> Resources</Nav.Link>
+          </LinkContainer>
           {/* Want resources as Resources->[Books|Therapists]? */}
           {/*<NavDropdown title="Resources" id="collasible-nav-dropdown">
             <NavDropdown.Item href="#action/3.1">Action</NavDropdown.Item>

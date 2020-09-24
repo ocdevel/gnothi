@@ -10,7 +10,8 @@ import {
   SET_SELECTED_TAGS,
   SET_FIELDS,
   SET_INFLUENCERS,
-  SET_ENTRIES
+  SET_ENTRIES,
+  SET_DAYS
 } from './actions'
 
 const initialState = {
@@ -24,7 +25,8 @@ const initialState = {
   serverError: null,
   fields: {},
   influencers: {},
-  entries: []
+  entries: [],
+  days: 30
 }
 
 export default function mainReducer(state, action) {
@@ -73,6 +75,9 @@ export default function mainReducer(state, action) {
       break
     case SET_ENTRIES:
       state.entries = action.payload
+      break
+    case SET_DAYS:
+      state.days = action.payload
       break
   }
 

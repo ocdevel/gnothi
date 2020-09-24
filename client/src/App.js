@@ -27,12 +27,10 @@ import {
   getTags,
   getFields
 } from './redux/actions';
-import Summarize from "./Insights/Summarize";
+import Insights from "./Insights";
 import Tags from "./Tags";
 import {SimplePopover} from "./utils";
 import {FaTags} from "react-icons/fa/index";
-import Ask from "./Insights/Ask";
-import Themes from "./Insights/Themes";
 import Resources from "./Resources/Books";
 import Entries from "./Entries/Entries";
 import Fields from "./Fields/Fields";
@@ -72,7 +70,7 @@ function App() {
   const renderTags = () => {
     if (location.pathname === '/resources') {return null}
     return (
-      <div>
+      <div className='bottom-margin'>
         <SimplePopover text="Tags">
           <FaTags/>
         </SimplePopover>
@@ -88,37 +86,32 @@ function App() {
     <MainNav />
     <Container fluid style={{marginTop: 5}}>
       {renderTags()}
+
       <Error message={serverError} />
 
-        <Switch>
-          <Route path="/j">
-            <Row>
-              <Col>
-                <Entries />
-              </Col>
-              <Col lg={4}>
-                <Fields  />
-                <NotesAll />
-              </Col>
-            </Row>
-          </Route>
-          <Route path="/summarize">
-            <Summarize />
-          </Route>
-          <Route path="/ask">
-            <Ask />
-          </Route>
-          <Route path="/themes">
-            <Themes />
-          </Route>
-          <Route path="/resources">
-            <Resources />
-          </Route>
-          <Route path="/account">
-            <Account />
-          </Route>
-          <Redirect from="/" to="/j" />
-        </Switch>
+      <Switch>
+        <Route path="/j">
+          <Row>
+            <Col>
+              <Entries />
+            </Col>
+            <Col lg={4}>
+              <Fields  />
+              <NotesAll />
+            </Col>
+          </Row>
+        </Route>
+        <Route path="/insights">
+          <Insights />
+        </Route>
+        <Route path="/resources">
+          <Resources />
+        </Route>
+        <Route path="/account">
+          <Account />
+        </Route>
+        <Redirect from="/" to="/j" />
+      </Switch>
 
     </Container>
   </div>

@@ -8,7 +8,9 @@ import {
   Form,
   Alert,
   Row,
-  Col
+  Col,
+  InputGroup,
+  Card
 } from "react-bootstrap"
 import moment from "moment"
 import {
@@ -57,16 +59,17 @@ export default function Entries() {
     const summary = e.text_summary || e.text
     const sentiment = e.sentiment && sent2face(e.sentiment)
     return (
-      <tr key={e.id}>
-        <td
-          onClick={gotoForm_}
-          className='cursor-pointer'
-        >
-          <div>
-            <h5>{fmtDate(e.created_at)}</h5>
-            <h6>{title}</h6>
-          </div>
-          <div>
+      <Card
+        key={e.id}
+        onClick={gotoForm_}
+        className='cursor-pointer bottom-margin'
+      >
+        <Card.Body>
+          <Card.Title>
+            <code className='text-muted'>{fmtDate(e.created_at)}</code>
+            {' '}{title}
+          </Card.Title>
+          <Card.Text>
             {isSummary ? (
                 <SimplePopover text="Summary is machine-generated from entry. Click to read the original.">
                   <div>
@@ -79,10 +82,9 @@ export default function Entries() {
             ) : (
                 <>{sentiment}{summary}</>
             )}
-          </div>
-          <hr/>
-        </td>
-      </tr>
+          </Card.Text>
+        </Card.Body>
+      </Card>
     )
   }
 
@@ -111,6 +113,23 @@ export default function Entries() {
     </div>
   }
 
+  const renderSearch = () => <>
+    <Form.Label htmlFor="formSearch" srOnly>Search</Form.Label>
+    <InputGroup>
+      <InputGroup.Prepend>
+        <InputGroup.Text><FaSearch /></InputGroup.Text>
+      </InputGroup.Prepend>
+      <Form.Control
+        inline
+        id='formSearch'
+        type="text"
+        value={search}
+        onChange={changeSearch}
+        placeholder="Search"
+      />
+    </InputGroup>
+  </>
+
   return (
     <div>
       <Switch>
@@ -126,13 +145,7 @@ export default function Entries() {
 
       <Row style={{marginTop:5}}>
         <Col lg={10} md={8}>
-          <Form.Control
-            inline
-            type="text"
-            value={search}
-            onChange={changeSearch}
-            placeholder="Search"
-          />
+          {renderSearch()}
         </Col>
         <Col lg={2} md={4}>
           {!as && <Button
@@ -142,7 +155,7 @@ export default function Entries() {
           >New Entry</Button>}
         </Col>
       </Row>
-      <hr />
+      <br />
       {renderEntries()}
     </div>
   )
