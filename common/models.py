@@ -154,6 +154,7 @@ class SIProfile(SITimezone):
     gender: Optional[str] = None
     birthday: Optional[Any] = None
     bio: Optional[str] = None
+    therapist: Optional[bool] = False
 
 
 class SOProfile(SIProfile, SOut):
@@ -713,8 +714,9 @@ class Job(Base):
             if type(arg0) != str: arg0 = None
 
             if method in ('entries', 'profiles') and arg0:
+                table = dict(entries='entries', profiles='users')[method]
                 sess.execute(satext(f"""
-                update {method} set ai_ran=False where id=:id;
+                update {table} set ai_ran=False where id=:id;
                 """), dict(id=arg0))
                 sess.commit()
 

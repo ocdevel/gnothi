@@ -63,7 +63,7 @@ def profile_timezone_put(data: M.SITimezone, as_user: str = None, viewer: M.User
     return {}
 
 
-@app.put('/profile')
+@app.put('/profile', response_model=M.SOProfile)
 def profile_put(data: M.SIProfile, as_user: str = None, viewer: M.User = Depends(fastapi_users.get_current_user)):
     user, snooping = getuser(viewer, as_user)
     if snooping: return cant_snoop()
@@ -72,7 +72,7 @@ def profile_put(data: M.SIProfile, as_user: str = None, viewer: M.User = Depends
         setattr(user, k, v)
     db.session.commit()
     M.Job.create_job(method='profiles', data_in={'args': [str(user.id)]})
-    return {}
+    return user
 
 
 @app.get('/people', response_model=List[M.SOPerson])
@@ -408,6 +408,17 @@ def field_entries_post(field_id, data: M.SIFieldEntry, as_user: str = None, view
     db.session.commit()
     db.session.refresh(fe)
     return fe
+
+
+@app.get('/therapists', response_model=List[M.SOProfile])
+def therapists_get(as_user: str = None, viewer: M.User = Depends(fastapi_users.get_current_user)):
+    user, snooping = getuser(viewer, as_user)
+    if snooping: return cant_snoop()
+    return db.session.query(M.User)\
+        .join(M.ProfileMatch, M.User.id == M.ProfileMatch.match_id)\
+        .filter(M.ProfileMatch.user_id == user.id)\
+        .order_by(M.ProfileMatch.score.asc())\
+        .all()
 
 
 @app.get('/influencers')

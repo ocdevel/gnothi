@@ -25,7 +25,7 @@ export default function Profile() {
     birthday: '',
     timezone: null,
     bio: '',
-    //therapist: false
+    therapist: false
   })
   const [dirty, setDirty] = useState({dirty: false, saved: false})
 
@@ -51,6 +51,11 @@ export default function Profile() {
     setDirty({dirty: true, saved: false})
     const v = direct ? e : e.target.value
     setProfile({...profile, [k]: v})
+  }
+
+  const changeTherapist = e => {
+    setDirty({dirty: true, saved: false})
+    setProfile({...profile, therapist: e.target.checked})
   }
 
   const submit = async e => {
@@ -105,12 +110,17 @@ export default function Profile() {
           <Form.Text>As much information about yourself as you can provide. This will be used by machine learning and therapists.</Form.Text>
         </>})}
       </Form.Row>
-      {/*<Form.Row>
+      <Form.Row>
         <Form.Group controlId="therapist">
-          <Form.Check type="checkbox" label="I'm a therapist" />
-          <Form.Text>Check this if you want your profile listed in the therapist directory. AI will match users based on their entries to your profile based on your "About You", so be as detailed there as possible. Your name and email address will be visible to users.</Form.Text>
+          <Form.Check
+            type="checkbox"
+            label="I'm a therapist"
+            checked={profile.therapist}
+            onChange={changeTherapist}
+          />
+          <Form.Text>Check this if you want your profile listed in the therapist directory. AI will match users based on their entries to your profile based on your "About You" (bio), so be as detailed there as possible. Your name and email address will be visible to users.</Form.Text>
         </Form.Group>
-      </Form.Row>*/}
+      </Form.Row>
       <Button
         disabled={!dirty.dirty}
         variant='primary'

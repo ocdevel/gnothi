@@ -19,7 +19,9 @@ def impute_and_roll(fes, fs):
         if not dv: continue  # should I just set to 0? can xgb handle nan?
         if dv == 'value':
             if not dvv: continue
-            # fes[fid] = fes[fid].fillna(dvv)  # getting SettingWithCopyWarning
+            # FIXME getting SettingWithCopyWarning whether using .loc[:,x] or [x],
+            # but it seems to work anyway... need to verify
+            # fes[fid] = fes[fid].fillna(dvv)
             fes.loc[:,fid] = fes[fid].fillna(dvv)
         elif dv == 'ffill':
             fes.loc[:,fid] = fes[fid].fillna(method='ffill') \

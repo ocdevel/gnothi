@@ -24,7 +24,8 @@ def nlp_on_rows(method='entries'):
         paras_grouped = []
         uids = set()
         for r in rows:
-            txt = r.text if for_entries else r.profile_to_text()
+            txt = r.text if for_entries \
+                else r.bio  # r.profile_to_text()  # TODO profile_to_text adds people
             paras_grouped.append(Clean.entries_to_paras([txt]))
             if for_entries:
                 uids.add(r.user_id)
@@ -96,6 +97,7 @@ def f32(arr):
 def mean_(vecs):
     if type(vecs) == pd.Series:
         # coming in from pd.groupby.agg. Can't return np.array
+        vecs = vecs.dropna()  # TODO why any nans?
         return f32(np.vstack(vecs)).mean(axis=0).tolist()
     return f32(vecs).mean(axis=0)
 

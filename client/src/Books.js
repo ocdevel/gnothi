@@ -1,13 +1,22 @@
 import React, {useEffect, useState} from "react";
 import _ from 'lodash'
 import {spinner, SimplePopover} from "./utils";
-import {Button, ButtonGroup, Nav, NavDropdown, Alert} from "react-bootstrap";
+import {
+  Button,
+  ButtonGroup,
+  Nav,
+  NavDropdown,
+  Alert,
+  Tabs,
+  Tab,
+  Card
+} from "react-bootstrap";
 import {FaTags, FaUser, FaThumbsUp, FaThumbsDown, FaCheck, FaTimes} from "react-icons/fa"
 
 import { useSelector, useDispatch } from 'react-redux'
 import { fetch_ } from './redux/actions'
 
-export default function Books() {
+function Books() {
   const [books, setBooks] = useState([])
   const [fetching, setFetching] = useState(false)
   const [notShared, setNotShared] = useState(false)
@@ -104,4 +113,52 @@ export default function Books() {
       </> : null}
     </div>
   </>
+}
+
+function Therapists() {
+  const [therapists, setTherapists] = useState([])
+  const dispatch = useDispatch()
+
+  const fetchTherapists = async () => {
+    const {data} = dispatch(fetch_('therapists'))
+    setTherapists(data)
+  }
+
+  useEffect(() => {
+    fetchTherapists()
+  }, [])
+
+  const renderTherapist = (t) => {
+    let name = '';
+    if (t.first_name) {name += t.first_name + ' '}
+    if (t.last_name) {name += t.last_name + ' '}
+    name += t.email
+    return <Card>
+      <Card.Body>
+        <Card.Title>{name}</Card.Title>
+        <Card.Text>{t.bio}</Card.Text>
+      </Card.Body>
+    </Card>
+  }
+
+  return <>
+    <hr/>
+    <Alert variant='info'>Therapists can mark their profile as "therapist", and their bio/specialties will be AI-matched to your entries. It's all done behind-the-scenes, they can't see anything of yours.</Alert>
+    {therapists ? therapists.map(renderTherapist) : (
+      <Alert variant='warning'>No therapist matches yet.</Alert>
+    )}
+  </>
+}
+
+export default function Resources() {
+  return (
+    <Tabs defaultActiveKey="books" id="uncontrolled-tab-example" variant="pills">
+      <Tab eventKey="books" title="Books">
+        <Books />
+      </Tab>
+      <Tab eventKey="therapists" title="Therapists">
+        <Therapists />
+      </Tab>
+    </Tabs>
+  )
 }

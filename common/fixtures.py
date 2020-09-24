@@ -24,23 +24,29 @@ class Fixtures():
         self.entries = self.load_entries()
         self.users = self.load_users()
 
+    def rm(self, path, isdir=False):
+        try:
+            if isdir: shutil.rmtree(path)
+            else: os.remove(path)
+            print(f"Deleted {path}")
+        except:
+            print(f"FAILED to delete {path}")
+
     def clear_fixtures(self):
         all_ = FRESH == 'all'
         if 'books' in FRESH or all_:
-            try: os.remove(f"{BASE}/books.pkl")
-            except: pass
+            self.rm(f"{BASE}/books.pkl")
         if 'entries' in FRESH or all_:
-            try: os.remove(f"{BASE}/entries.pkl")
-            except: pass
+            self.rm(f"{BASE}/entries.pkl")
+            self.rm(f"{BASE}/nlp_entries.pkl")
+        if 'profiles' in FRESH or all_:
+            self.rm(f"{BASE}/nlp_profiles.pkl")
         if 'wiki' in FRESH or all_:
-            try: shutil.rmtree(f"{BASE}/wiki")
-            except: pass
+            self.rm(f"{BASE}/wiki", isdir=True)
         if 'influencers' in FRESH or all_:
-            try: os.remove(f"{BASE}/xgb_hypers.pkl")
-            except: pass
+            self.rm(f"{BASE}/xgb_hypers.pkl")
         if 'liben' in FRESH or all_:
-            try: os.remove(f"/storage/libgen_testing.npy")
-            except: pass
+            self.rm(f"/storage/libgen_testing.npy")
             with session() as sess:
                 sess.execute("delete from books")
                 sess.commit()
@@ -87,6 +93,8 @@ class Fixtures():
             email = k + "@x.com"
             pass_k = 'hashed_password' if hash else 'password'
             u[k] = {'email': email, pass_k: email, 'first_name': k}
+            if k.startswith('therapist'):
+                u[k]['therapist'] = True
 
         e = self.load_entries()
         vr1, vr2 = e.Virtual_reality_0.text, e.Virtual_reality_1.text
