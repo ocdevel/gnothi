@@ -1,6 +1,6 @@
 import React, {useState} from 'react'
 import {Form, InputGroup, Button} from "react-bootstrap"
-import {spinner, trueKeys, sent2face, AiStatusMsg} from "./utils"
+import {spinner, trueKeys, sent2face, AiStatusMsg, toolAlert} from "./utils"
 import ForXDays from "./ForXDays"
 
 import { useSelector, useDispatch } from 'react-redux'
@@ -30,26 +30,29 @@ export default function Summarize() {
     setRes(data)
   }
 
-  return <Form onSubmit={submit}>
-    <ForXDays
-      setForm={setForm}
-      form={form}
-      feature={'summarization'}
-    />
-    {fetching ? spinner : <>
-      <Button
-        disabled={aiStatus !== 'on'}
-        type="submit"
-        variant="primary"
-        className='bottom-margin'
-      >Submit</Button>
-      <AiStatusMsg status={aiStatus} />
-    </>}
-    {res.summary && <>
-      <hr/>
-      <p>
-        {sent2face(res.sentiment)} {res.summary}
-      </p>
-    </>}
-  </Form>
+  return <div style={{marginTop: 5}}>
+    {toolAlert('summarize')}
+    <Form onSubmit={submit}>
+      <ForXDays
+        setForm={setForm}
+        form={form}
+        feature={'summarization'}
+      />
+      {fetching ? spinner : <>
+        <Button
+          disabled={aiStatus !== 'on'}
+          type="submit"
+          variant="primary"
+          className='bottom-margin'
+        >Submit</Button>
+        <AiStatusMsg status={aiStatus} />
+      </>}
+      {res.summary && <>
+        <hr/>
+        <p>
+          {sent2face(res.sentiment)} {res.summary}
+        </p>
+      </>}
+    </Form>
+  </div>
 }

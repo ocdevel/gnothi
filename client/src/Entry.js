@@ -18,7 +18,7 @@ import 'react-markdown-editor-lite/lib/index.css'
 import {AddNotes} from './Notes'
 
 import { useSelector, useDispatch } from 'react-redux'
-import { fetch_, setServerError } from './redux/actions'
+import { fetch_, setServerError, getEntries } from './redux/actions'
 
 const mdParser = new MarkdownIt(/* Markdown-it options */);
 
@@ -68,7 +68,7 @@ function Editor({text, changeText}) {
   )
 }
 
-export default function Entry({update}) {
+export default function Entry() {
   const {entry_id} = useParams()
   const history = useHistory()
   const [editing, setEditing] = useState(!entry_id)
@@ -102,6 +102,8 @@ export default function Entry({update}) {
     fetchEntry()
     fetchNotes()
   }, [entry_id])
+
+  const update = () => {dispatch(getEntries())}
 
   const goBack = () => {
     update()

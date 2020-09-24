@@ -1,16 +1,17 @@
 import React, {useEffect, useState} from "react"
-import {OverlayTrigger, Popover, Spinner, Form} from "react-bootstrap"
+import {OverlayTrigger, Popover, Spinner, Form, Alert} from "react-bootstrap"
 import _ from "lodash"
 import emoji from 'react-easy-emoji'
 import moment from "moment";
+import {FaThumbsUp, FaTags} from 'react-icons/fa'
 
-const spinner = (
+export const spinner = (
   <Spinner animation="border" role="status">
     <span className="sr-only">Loading...</span>
   </Spinner>
 )
 
-const SimplePopover = ({children, text, overlayOpts={}}) => (
+export const SimplePopover = ({children, text, overlayOpts={}}) => (
   <OverlayTrigger
     {...overlayOpts}
     overlay={<Popover>
@@ -24,7 +25,7 @@ const SimplePopover = ({children, text, overlayOpts={}}) => (
   </OverlayTrigger>
 )
 
-const sent2face = (sentiment) => {
+export const sent2face = (sentiment) => {
   if (!sentiment) {return null}
   const style = {}
   style.backgroundColor = ~['joy', 'love', 'surprise'].indexOf(sentiment)
@@ -46,7 +47,7 @@ const sent2face = (sentiment) => {
   )
 }
 
-const aiStatusEmoji = (status) => {
+export const aiStatusEmoji = (status) => {
   const statusOpts = {props: {width: 16, height: 16}}
   return {
     off: emoji("🔴", statusOpts),
@@ -55,7 +56,7 @@ const aiStatusEmoji = (status) => {
   }[status]
 }
 
-const AiStatusMsg = ({status}) => {
+export const AiStatusMsg = ({status}) => {
   const [showMore, setShowMore] = useState(false)
   if (status === 'on') {return null}
   const doShowMore = () => setShowMore(true)
@@ -70,16 +71,26 @@ const AiStatusMsg = ({status}) => {
   </>
 }
 
-const trueKeys = o => _.transform(o, (m,v,k) => {if (v) {m.push(k)}}, [])
+export const trueKeys = o => _.transform(o, (m,v,k) => {if (v) {m.push(k)}}, [])
 
-const fmtDate = d => moment(d).format('MM/DD/YYYY ha')
+export const fmtDate = d => moment(d).format('MM/DD/YYYY ha')
 
-export {
-  spinner,
-  sent2face,
-  trueKeys,
-  SimplePopover,
-  aiStatusEmoji,
-  AiStatusMsg,
-  fmtDate
+export const toolAlert = (tool) => {
+  const txt = {
+    summarize: `Summarize your entries for an overview.`,
+    themes: `Show common recurring themes across your entries.`,
+    ask: `Ask a question about your entries.`,
+    books: `Generate AI-recommended self-help books, based on your entries.`,
+  }[tool]
+
+  return <Alert variant='info'>
+    <div>{txt}</div>
+    <small className="text-muted">
+      {tool === 'books' ? <>
+        Use thumbs <FaThumbsUp /> to improve AI's recommendations.
+      </> : <>
+        Select <FaTags /> tags above to limit entries, or all tags are used.
+      </>}
+    </small>
+  </Alert>
 }

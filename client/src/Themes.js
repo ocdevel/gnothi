@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from "react"
-import {AiStatusMsg, sent2face, spinner, trueKeys} from "./utils"
+import {AiStatusMsg, sent2face, spinner, trueKeys, toolAlert} from "./utils"
 import {Button, Card, Form} from "react-bootstrap"
 import _ from "lodash"
 import ForXDays from "./ForXDays"
@@ -55,7 +55,8 @@ export default function Themes() {
     </>
   }
 
-  return <>
+  return <div style={{marginTop: 5}}>
+    {toolAlert('themes')}
     <Form onSubmit={_.noop}>
     <ForXDays
       form={form}
@@ -77,5 +78,5 @@ export default function Themes() {
     </>}
     </Form>
     {_.size(themes) > 0 && renderThemes()}
-  </>
+  </div>
 }

@@ -97,6 +97,7 @@ export const onAuth = (jwt) => async (dispatch, getState) => {
 export const SET_AS = "SET_AS"
 export const setAs = (payload) => ({type: SET_AS, payload})
 export const changeAs = (as=null) => async (dispatch, getState) => {
+  dispatch(setSelectedTags({}))
   dispatch(setAs(as))
   dispatch(getUser())
 }
@@ -134,4 +135,13 @@ export const getFields = () => async (dispatch, getState) => {
     let {data} = await dispatch(fetch_('influencers', 'GET'))
     dispatch(setInfluencers(data))
   }
+}
+
+export const SET_ENTRIES = "SET_ENTRIES"
+export const setEntries = (payload) => ({type: SET_ENTRIES, payload})
+export const getEntries = () => async (dispatch, getState) => {
+  if (!getState().jwt) {return}
+  let {data, code, message} =  await dispatch(fetch_('entries', 'GET'))
+  data = code === 401 ? {code, message} : data
+  dispatch(setEntries(data))
 }

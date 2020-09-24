@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from "react";
 import {Col, Form, Card, Button, Alert} from "react-bootstrap";
-import {spinner, AiStatusMsg, trueKeys} from './utils'
+import {spinner, AiStatusMsg, trueKeys, toolAlert} from './utils'
 import ForXDays from "./ForXDays"
 
 import { useSelector, useDispatch } from 'react-redux'
@@ -52,7 +52,8 @@ export default function Query() {
     </>
   }
 
-  return <>
+  return <div style={{marginTop: 5}}>
+    {toolAlert('ask')}
     <Form onSubmit={fetchAnswer}>
       <Form.Group controlId="formQuery">
         <Form.Label for='question-answering'>Question</Form.Label>
@@ -83,5 +84,5 @@ export default function Query() {
       </>}
     </Form>
     {renderAnswers()}
-  </>
+  </div>
 }

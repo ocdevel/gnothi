@@ -9,7 +9,8 @@ import {
   SET_TAGS,
   SET_SELECTED_TAGS,
   SET_FIELDS,
-  SET_INFLUENCERS
+  SET_INFLUENCERS,
+  SET_ENTRIES
 } from './actions'
 
 const initialState = {
@@ -22,7 +23,8 @@ const initialState = {
   aiStatus: 'off',
   serverError: null,
   fields: {},
-  influencers: {}
+  influencers: {},
+  entries: []
 }
 
 export default function mainReducer(state, action) {
@@ -55,15 +57,22 @@ export default function mainReducer(state, action) {
       state.tags = action.payload
       break
     case SET_SELECTED_TAGS:
-      let obj = {...state.selectedTags, ...action.payload}
-      obj = _.pickBy(obj, v=>v) // remove false
-      state.selectedTags = obj
+      if (_.isEmpty(action.payload)) {
+        state.selectedTags = {}
+      } else {
+        let obj = {...state.selectedTags, ...action.payload}
+        obj = _.pickBy(obj, v=>v) // remove false
+        state.selectedTags = obj
+      }
       break
     case SET_FIELDS:
       state.fields = action.payload
       break
     case SET_INFLUENCERS:
       state.influencers = action.payload
+      break
+    case SET_ENTRIES:
+      state.entries = action.payload
       break
   }
 

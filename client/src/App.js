@@ -1,24 +1,35 @@
 import React, { useState, useEffect } from 'react'
 import './App.css'
 import {
-  Container,
+  Col,
+  Container, Row,
 } from 'react-bootstrap';
 import {
   BrowserRouter as Router,
   Switch,
   Route,
   Redirect,
-  useHistory
+  useHistory,
+  useLocation
 } from "react-router-dom";
 import Splash from './Splash'
-import Journal from './Journal'
 import ProfileRoutes from './ProfileRoutes'
 import Error from './Error'
 import MainNav from './MainNav'
 
 import { Provider, useSelector, useDispatch } from 'react-redux'
 import store from './redux/store';
-import { getUser, checkAiStatus } from './redux/actions';
+import { getUser, checkAiStatus, getEntries } from './redux/actions';
+import Summarize from "./Summarize";
+import Tags from "./Tags";
+import {SimplePopover} from "./utils";
+import {FaTags} from "react-icons/fa/index";
+import Query from "./Query";
+import Themes from "./Themes";
+import Resources from "./Books";
+import Entries from "./Entries";
+import Fields from "./Fields";
+import {NotesAll} from "./Notes";
 
 
 function App() {
@@ -28,13 +39,16 @@ function App() {
   const serverError = useSelector(state => state.serverError);
 	const dispatch = useDispatch();
 	const history = useHistory()
+  const location = useLocation()
 
   useEffect(() => {
+    // FIXME only do after first load
     history.push('/j')
   }, [as])
 
   useEffect(() => {
     dispatch(getUser())
+    dispatch(getEntries())
 
     // TODO move to websockets
     const timer = setInterval(() => dispatch(checkAiStatus()), 1000)
@@ -45,22 +59,59 @@ function App() {
     return <Splash />
   }
 
+  const renderTags = () => {
+    if (location.pathname === '/resources') {return null}
+    return (
+      <div>
+        <SimplePopover text="Tags">
+          <FaTags/>
+        </SimplePopover>
+        <span className='tools-divider'/>
+        {/*TODO reconsider preSelectMain for !!as. Eg, currently don't want therapist seeing Dream by default.*/}
+        <Tags preSelectMain={true} />
+      </div>
+    )
+  }
+
   // key={as} triggers refresh on these components (triggering fetches)
-  return <>
+  return <div key={as}>
     <MainNav />
-    <Container fluid key={as}>
+    <Container fluid style={{marginTop: 5}}>
+      {renderTags()}
       <Error message={serverError} />
-      <Switch>
-        <Route path="/j">
-          <Journal />
-        </Route>
-        <Route path="/profile">
-          <ProfileRoutes />
-        </Route>
-        <Redirect from="/" to="/j" />
-      </Switch>
+
+        <Switch>
+          <Route path="/j">
+            <Row>
+              <Col>
+                <Entries />
+              </Col>
+              <Col lg={4}>
+                <Fields  />
+                <NotesAll />
+              </Col>
+            </Row>
+          </Route>
+          <Route path="/summarize">
+            <Summarize />
+          </Route>
+          <Route path="/ask">
+            <Query />
+          </Route>
+          <Route path="/themes">
+            <Themes />
+          </Route>
+          <Route path="/resources">
+            <Resources />
+          </Route>
+          <Route path="/profile">
+            <ProfileRoutes />
+          </Route>
+          <Redirect from="/" to="/j" />
+        </Switch>
+
     </Container>
-  </>
+  </div>
 }
 
 export default () => <>

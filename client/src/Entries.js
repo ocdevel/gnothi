@@ -6,25 +6,13 @@ import {
   Button,
   ButtonGroup,
   Form,
-  Alert
+  Alert,
+  Row,
+  Col
 } from "react-bootstrap"
 import moment from "moment"
-import Tags from "./Tags"
-import Summarize from "./Summarize"
-import Books from "./Books"
-import Themes from "./Themes"
-import Query from "./Query"
 import {
   FaSearch,
-  FaThumbsUp,
-  FaTags,
-  FaRegListAlt,
-  FaTextHeight,
-  FaRobot,
-  FaQuestion,
-  FaCubes,
-  FaBook,
-  FaLock
 } from 'react-icons/fa'
 import Entry from "./Entry"
 import './Entries.css'
@@ -32,72 +20,23 @@ import './Entries.css'
 import { useSelector, useDispatch } from 'react-redux'
 import { fetch_ } from './redux/actions'
 
- const tools = {
-  entries: {minEntries: 0},
-  query: {
-    minEntries: 1,
-    label: "Ask",
-    icon: <FaQuestion />,
-    popover: "Ask a question about entries",
-    description: `Ask a question about your entries.`,
-    render: args =>  <Query {...args} />,
-  },
-  summarize: {
-    minEntries: 1,
-    label: "Summarize",
-    icon: <FaTextHeight />,
-    popover: "Generate summaries of entries",
-    description: `Summarize your entries for an overview.`,
-    render: args => <Summarize {...args} />,
-  },
-  themes: {
-    minEntries: 3,
-    popover: "Common themes across entries",
-    label: "Themes",
-    icon: <FaCubes />,
-    description: `Show common recurring themes across your entries.`,
-    render: args => <Themes {...args} />,
-  },
-  books: {
-    minEntries: 3,
-    label: "Books",
-    icon: <FaBook />,
-    popover: "Self-help book recommendations based on entries",
-    description: `Generate AI-recommended self-help books, based on your entries.`,
-    render:  args => <Books {...args} />,
-  },
-}
-
 export default function Entries() {
-  const [entries, setEntries] = useState([])
-  const [notShared, setNotShared] = useState(false)
-  const [tool, setTool] = useState('entries')
   const [page, setPage] = useState(0)
-  let [searchEnabled, setSearchEnabled] = useState(false)
   let [search, setSearch] = useState('')
   const selected = useSelector(state => state.selectedTags)
 
   const dispatch = useDispatch()
   const as = useSelector(state => state.as)
+  const entries = useSelector(state => state.entries)
 
   let history = useHistory()
   let match = useRouteMatch()
-
-  const fetchEntries = async () => {
-    const {data, code, message} = await dispatch(fetch_('entries', 'GET'))
-    if (code === 401) {return setNotShared(message)}
-    setEntries(data)
-  }
-
-  useEffect(() => {
-    fetchEntries()
-  }, [])
 
   useEffect(() => {
     setPage(0)
   }, [selected])
 
-  if (notShared) {return <h5>{notShared}</h5>}
+  if (entries.code) {return <h5>{entries.message}</h5>}
 
   let filtered = _(entries)
       .filter(e => _.reduce(selected, (m, v, k) => e.entry_tags[k] || m, false))
@@ -110,12 +49,6 @@ export default function Entries() {
   }
 
   const changeSearch = e => setSearch(e.target.value.toLowerCase())
-
-  const toggleSearch = () => {
-    if (tool !== 'entries') {setTool('entries')}
-    if (searchEnabled) {setSearch('')}
-    setSearchEnabled(!searchEnabled)
-  }
 
   const renderEntry = e => {
     const gotoForm_ = () => gotoForm(e.id)
@@ -153,76 +86,6 @@ export default function Entries() {
     )
   }
 
-  let anyLocked = false;
-  const renderTool = t => {
-    const tObj = tools[t];
-    const locked = filtered.length < tObj.minEntries;
-    anyLocked = anyLocked || locked
-    // const popover = locked ? "This feature unlocks with more entries" : tObj.popover;
-    // const icon = locked ? <FaLock /> : tObj.icon;
-    if (locked) {return null}
-
-    const btnOpts = {
-      size: 'sm',
-      variant: t === tool ? 'dark' : 'outline-dark',
-      onClick: () => setTool(t)
-    }
-    if (t === 'entries') {
-      return <ButtonGroup>
-        <Button {...btnOpts}><FaRegListAlt /> Entries</Button>
-        <SimplePopover text="Search entries">
-          <Button
-            size='sm'
-            variant={searchEnabled ? 'dark' : 'outline-dark'}
-            onClick={toggleSearch}
-          ><FaSearch /></Button>
-        </SimplePopover>
-      </ButtonGroup>
-    }
-    return <SimplePopover text={tObj.popover}>
-      <Button {...btnOpts}>
-        {tObj.icon} {tObj.label}
-      </Button>
-    </SimplePopover>
-  }
-
-  const renderTools = () => {
-    return <>
-      {tool !== 'books' && <div>
-        <SimplePopover text="Tags">
-          <FaTags/>
-        </SimplePopover>
-        <span className='tools-divider'/>
-        {/*TODO reconsider preSelectMain for !!as. Eg, currently don't want therapist seeing Dream by default.*/}
-        <Tags preSelectMain={true} />{' '}
-      </div>}
-      <div style={{marginTop:5}}>
-        <SimplePopover text="AI Tools">
-          <FaRobot />
-        </SimplePopover>
-        <span className='tools-divider' />
-        {renderTool('entries')}{' '}
-        {renderTool('summarize')}{' '}
-        {renderTool('themes')}{' '}
-        {renderTool('query')}{' '}
-        {renderTool('books')}
-        {searchEnabled && tool === 'entries' && <Form.Control
-          ref={c => c && c.focus()}
-          style={{marginTop:5}}
-          inline
-          type="text"
-          value={search}
-          onChange={changeSearch}
-          placeholder="Search"
-        />}
-      </div>
-      {anyLocked && <div className='text-muted'>
-          <FaLock />
-          <span className='tools-divider' />
-          <small>More AI tools unlock with more entries</small>
-      </div>}
-    </>
-  }
 
   const renderEntries = () => {
     if (!filtered.length) {
@@ -233,7 +96,7 @@ export default function Entries() {
     const usePaging = !search.length && filtered.length > pageSize
     const filteredPage = !usePaging ? filtered :
         filtered.slice(page*pageSize, page*pageSize + pageSize)
-    return <>
+    return <div>
       {filteredPage.map(renderEntry)}
       {usePaging && <div style={{overflowX: 'scroll'}}>
         <ButtonGroup aria-label="Page">
@@ -245,55 +108,42 @@ export default function Entries() {
           ))}
         </ButtonGroup>
       </div>}
-    </>
-  }
-
-  const renderMain = () => {
-    if (tool === 'entries') {
-      return renderEntries()
-    }
-    const desc = tools[tool].description
-    const comp = tools[tool].render()
-    return <>
-      <Alert variant='info'>
-        <div>{desc}</div>
-        <small className="text-muted">
-          {tool === 'books' ? <>
-            Use thumbs <FaThumbsUp /> to improve AI's recommendations.
-          </> : <>
-            Select <FaTags /> tags above to limit entries, or all tags are used.
-          </>}
-        </small>
-      </Alert>
-      {comp}
-    </>
+    </div>
   }
 
   return (
     <div>
       <Switch>
         <Route path={`${match.url}/entry/:entry_id`}>
-          <Entry update={fetchEntries} />
+          <Entry />
         </Route>
         {!as && (
           <Route path={`${match.url}/entry`}>
-            <Entry update={fetchEntries} />
+            <Entry />
           </Route>
         )}
       </Switch>
 
-      {!as && <Button
-        style={{float: 'right'}}
-        variant="success"
-        className='bottom-margin'
-        onClick={() => gotoForm()}
-      >New Entry</Button>}
-
-      {renderTools()}
+      <Row style={{marginTop:5}}>
+        <Col lg={10} md={8}>
+          <Form.Control
+            inline
+            type="text"
+            value={search}
+            onChange={changeSearch}
+            placeholder="Search"
+          />
+        </Col>
+        <Col lg={2} md={4}>
+          {!as && <Button
+            variant="success"
+            className='bottom-margin'
+            onClick={() => gotoForm()}
+          >New Entry</Button>}
+        </Col>
+      </Row>
       <hr />
-      <div>
-        {renderMain()}
-      </div>
+      {renderEntries()}
     </div>
   )
 }
