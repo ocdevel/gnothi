@@ -31,7 +31,7 @@ import Insights from "./Insights";
 import Tags from "./Tags";
 import {SimplePopover} from "./utils";
 import {FaTags} from "react-icons/fa/index";
-import Resources from "./Resources/Books";
+import Resources from "./Resources";
 import Entries from "./Entries/Entries";
 import Fields from "./Fields/Fields";
 import {NotesAll} from "./Entries/Notes";

@@ -74,20 +74,3 @@ export const AiStatusMsg = ({status}) => {
 export const trueKeys = o => _.transform(o, (m,v,k) => {if (v) {m.push(k)}}, [])
 
 export const fmtDate = d => moment(d).format('YYYY-MM-DD ha')
-
-export const toolAlert = (tool) => {
-  const txt = {
-    books: `Generate AI-recommended self-help books, based on your entries.`,
-  }[tool]
-
-  return <Alert variant='info'>
-    <div>{txt}</div>
-    <small className="text-muted">
-      {tool === 'books' ? <>
-        Use thumbs <FaThumbsUp /> to improve AI's recommendations.
-      </> : <>
-        Select <FaTags /> tags above to limit entries, or all tags are used.
-      </>}
-    </small>
-  </Alert>
-}

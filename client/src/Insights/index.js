@@ -27,13 +27,11 @@ const tools = [
     minEntries: 1,
     label: "Summarize",
     icon: <FaTextHeight />,
-    // popover: "Generate summaries of entries",
     component: <Summarize />,
     description: `Summarize your entries for an overview.`,
   },
   {
     minEntries: 4,
-    // popover: "Common themes across entries",
     label: "Themes",
     icon: <FaCubes />,
     component: <Themes />,
@@ -43,16 +41,10 @@ const tools = [
     minEntries: 2,
     label: "Ask",
     icon: <FaQuestion />,
-    // popover: "Ask a question about entries",
     component: <Ask />,
     description: `Ask a question about your entries.`,
   },
-  // {
-  //   minEntries: 3,
-  //   label: "Resources",
-  //   icon: <FaBook />,
-  //   popover: "Self-help book recommendations based on entries; find therapists",
-  // },
+  // 62da7182: books attrs, popovers
 ]
 
 export default function Insights() {
@@ -72,7 +64,7 @@ export default function Insights() {
 
   const renderDaysForm = () => <>
     <Form.Row>
-      <Form.Group as={Col}>
+      <Form.Group as={Col} lg={6}>
         <Form.Label for={`xDays`} srOnly>Number of days</Form.Label>
         <InputGroup>
           <InputGroup.Prepend>

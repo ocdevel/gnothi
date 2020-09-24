@@ -59,32 +59,31 @@ export default function Entries() {
     const summary = e.text_summary || e.text
     const sentiment = e.sentiment && sent2face(e.sentiment)
     return (
-      <Card
+      <div
         key={e.id}
         onClick={gotoForm_}
         className='cursor-pointer bottom-margin'
       >
-        <Card.Body>
-          <Card.Title>
-            <code className='text-muted'>{fmtDate(e.created_at)}</code>
-            {' '}{title}
-          </Card.Title>
-          <Card.Text>
-            {isSummary ? (
-                <SimplePopover text="Summary is machine-generated from entry. Click to read the original.">
-                  <div>
-                    <div className='blur-summary'>
-                      {sentiment}{summary}
-                    </div>
-                    <span className='anchor'>Read original</span>
+        <h5>
+          <code className='text-muted'>{fmtDate(e.created_at)}</code>
+          {' '}{title}
+        </h5>
+        <p>
+          {isSummary ? (
+              <SimplePopover text="Summary is machine-generated from entry. Click to read the original.">
+                <div>
+                  <div className='blur-summary'>
+                    {sentiment}{summary}
                   </div>
-                </SimplePopover>
-            ) : (
-                <>{sentiment}{summary}</>
-            )}
-          </Card.Text>
-        </Card.Body>
-      </Card>
+                  <span className='anchor'>Read original</span>
+                </div>
+              </SimplePopover>
+          ) : (
+              <>{sentiment}{summary}</>
+          )}
+        </p>
+        <hr/>
+      </div>
     )
   }
 

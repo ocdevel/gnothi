@@ -28,7 +28,6 @@ export default function MainNav() {
   const as = useSelector(state => state.as)
   const asUser = useSelector(state => state.asUser)
   const aiStatus = useSelector(state => state.aiStatus)
-  const entries = useSelector(state => state.entries)
   const dispatch = useDispatch()
 
   const renderAsSelect = () => {
@@ -72,8 +71,6 @@ export default function MainNav() {
       <span>{aiStatusEmoji(aiStatus)}</span>
     </SimplePopover>
   }
-
-  const ne = entries.length
 
   return (
     <Navbar
