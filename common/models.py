@@ -73,8 +73,8 @@ class User(Base, SQLAlchemyBaseUserTable):
     therapist = Column(Boolean, server_default='false')
 
     ai_ran = Column(Boolean, server_default='false')
-    last_books = DateCol()
-    last_influencers = DateCol()
+    last_books = DateCol(default=False)
+    last_influencers = DateCol(default=False)
 
     habitica_user_id = Encrypt()
     habitica_api_token = Encrypt()

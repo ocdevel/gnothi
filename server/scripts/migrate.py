@@ -13,6 +13,6 @@ def migrate_before(engine):
 def migrate_after(engine):
     engine.execute("""
     update fields set influencer_score=0, next_pred=0;
-    update users set ai_ran=false, last_influencers=null;
+    update users set ai_ran=false, last_influencers=null, last_books=null, therapist=false;
     """)
 
