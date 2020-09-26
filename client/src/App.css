@@ -1,3 +1,5 @@
+
+
 .navbar {
   margin-bottom: 10px;
 }
@@ -28,4 +30,25 @@
 
 .full-width-modal {
   max-width: none !important;
+}
+
+/* ------------- */
+/* https://www.freecodecamp.org/news/how-to-keep-your-footer-where-it-belongs-59c6aa05c59c/ */
+#root {
+  position: relative;
+  min-height: 100vh;
+}
+
+.container, .container-fluid {
+  padding-bottom: 4rem;    /* Footer height */
+}
+
+#footer {
+  text-align: center;
+  padding: 1rem;
+  background-color: #eee;
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  height: 3rem;            /* Footer height */
 }
