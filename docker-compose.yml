@@ -25,6 +25,9 @@ services:
 
   server:
     image: lefnire/gnothi:server-0.0.5
+    #build:
+    #  context: .
+    #  dockerfile: ./server.dockerfile
     container_name: jserver
     environment:
       ENVIRONMENT: production
@@ -45,6 +48,9 @@ services:
 
   client:
     image: lefnire/gnothi:client-0.0.5
+    #build:
+    #  context: .
+    #  dockerfile: ./client.dockerfile
     container_name: jclient
     labels:
       - traefik.enable=true

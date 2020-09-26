@@ -18,13 +18,13 @@ import {
   BrowserRouter as Router,
   Switch,
   Route,
-  Link, Redirect
+  Link
 } from "react-router-dom"
 import {useSelector} from "react-redux"
 
 export default function Splash() {
   const error = useSelector(state => state.error)
-  return <Router>
+  return <>
     <Error message={error} />
     <Jumbotron className='gnothi-jumbo'>
       <div className='jumbo-content'>
@@ -49,7 +49,6 @@ export default function Splash() {
               <Auth />
             </div>
           </Route>
-          <Redirect to="/" />
         </Switch>
       </div>
     </Jumbotron>
@@ -88,5 +87,6 @@ export default function Splash() {
           <p>The sky's the limit with <a target='_blank' href='https://huggingface.co/transformers/'>BERT</a> language models! Astrology? Dream analysis? </p>
         </Col>
       </Row>
-    </Container></Router>
+    </Container>
+  </>
 }

@@ -35,13 +35,14 @@ import {FaTags} from "react-icons/fa/index";
 import Resources from "./Resources";
 import Entries from "./Entries/Entries";
 import Fields from "./Fields/Fields";
+import Privacy from "./Static/Privacy";
 import {NotesAll} from "./Entries/Notes";
 
 function Footer () {
   // TODO figure this out, https://www.freecodecamp.org/news/how-to-keep-your-footer-where-it-belongs-59c6aa05c59c/
   return <div id='footer'>
     <a href="mailto:tylerrenelle@gmail.com">Contact</a>{' '}|{' '}
-    <a href='/privacy.html'>Privacy</a>
+    <Link to='/privacy'>Privacy Policy</Link>
   </div>
 }
 
@@ -71,8 +72,16 @@ function App() {
     return () => clearInterval(timer)
   }, [jwt, as])
 
+  const privacyRoute = <Route path="/privacy"><Privacy /></Route>
+
   if (!user) {
-    return <Splash />
+    return <Switch>
+      {privacyRoute}
+      <Route>
+        <Splash />
+      </Route>
+      <Redirect from="/j" to="/" />
+    </Switch>
   }
 
   const tagsComp = (
@@ -115,6 +124,7 @@ function App() {
         <Route path="/account">
           <Account />
         </Route>
+        {privacyRoute}
         <Redirect from="/" to="/j" />
       </Switch>
 
