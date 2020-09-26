@@ -778,6 +778,9 @@ class SISummarize(SILimitEntries):
     words: int
 
 
+class SIThemes(SILimitEntries):
+    algo: Optional[str] = 'agglomorative'
+
 
 ###
 # Cache models, storing data for use after machine learning runs

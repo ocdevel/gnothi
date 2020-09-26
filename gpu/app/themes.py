@@ -30,7 +30,7 @@ def top_terms(texts, k=8):
     return terms
 
 
-def themes(eids):
+def themes(eids, algo='agglomorative'):
     with session() as sess:
         # use Model to decrypt fields
         res = sess.query(M.CacheEntry)\
@@ -48,7 +48,7 @@ def themes(eids):
     # if not vecs: return False  # TODO somethign else to return?
     vecs = np.vstack(vecs).astype(np.float32)
 
-    clusters = cluster(vecs)
+    clusters = cluster(vecs, algo=algo)
 
     topics = []
     for l in range(clusters.max()):

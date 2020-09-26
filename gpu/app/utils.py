@@ -3,7 +3,9 @@ import torch
 import tensorflow.keras.backend as K
 import numpy as np
 from sklearn.cluster import AgglomerativeClustering
-from sklearn import preprocessing as pp
+from kneed import KneeLocator
+from sklearn.cluster import MiniBatchKMeans as KMeans
+from scipy.spatial.distance import cdist
 
 
 def normalize(x, y=None, numpy=True):
@@ -37,13 +39,35 @@ def cosine(x, y, norm_in=True):
     return dist.cpu().numpy()
 
 
-def cluster(x, norm_in=True):
-    nc = math.floor(1 + 3.5 * math.log10(x.shape[0]))
+def fallback_nc_(x):
+    return math.floor(1 + 3.5 * math.log10(x.shape[0]))
+
+def agglomorative_(x, norm_in):
+    nc = fallback_nc_(x)
     if norm_in: x = normalize(x)
     dists = cosine(x, x, norm_in=False)
     agg = AgglomerativeClustering(n_clusters=nc, affinity='precomputed', linkage='average')
-    labels = agg.fit_predict(dists)
-    return labels
+    return agg.fit_predict(dists)
+
+
+def kmeans_(x):
+    # Code from https://github.com/arvkevi/kneed/blob/master/notebooks/decreasing_function_walkthrough.ipynb
+    step = 2  # math.ceil(guess.max / 10)
+    K = range(2, 40, step)
+    distortions = []
+    for k in K:
+        km = KMeans(n_clusters=k).fit(x)
+        distortions.append(km.inertia_)
+    S = math.floor(math.log(x.shape[0])) # 1=default; 100entries->S=2, 8k->3
+    kn = KneeLocator(list(K), distortions, S=S, curve='convex', direction='decreasing', interp_method='polynomial')
+    nc = kn.knee or fallback_nc_(x)
+    return KMeans(n_clusters=nc).fit(x).labels_
+
+
+def cluster(x, norm_in=True, algo='agglomorative'):
+    if algo == 'agglomorative':
+        return agglomorative_(x, norm_in)
+    return kmeans_(x)
 
 
 def clear_gpu():

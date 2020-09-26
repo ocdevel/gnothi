@@ -442,7 +442,7 @@ def influencers_get(
 
 @app.post('/themes')
 def themes_post(
-    data: M.SILimitEntries,
+    data: M.SIThemes,
     as_user: str = None,
     viewer: M.User = Depends(fastapi_users.get_current_user)
 ):
@@ -466,7 +466,7 @@ def themes_post(
 
     if len(eids) < 2:
         return send_error("Not enough entries to work with, come back later")
-    res = run_gpu_model('themes', dict(args=[eids], kwargs={}))
+    res = run_gpu_model('themes', dict(args=[eids], kwargs={'algo': data.algo}))
     if res is False: return []  # fixme
     if len(res) == 0:
         return send_error("No patterns found in your entries yet, come back later")
