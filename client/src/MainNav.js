@@ -77,7 +77,7 @@ export default function MainNav() {
       bg="dark"
       variant="dark"
       collapseOnSelect
-      expand="lg"
+      expand="sm"
     >
       <LinkContainer to="/">
         <Navbar.Brand>
