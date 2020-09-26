@@ -35,14 +35,13 @@ import {FaTags} from "react-icons/fa/index";
 import Resources from "./Resources";
 import Entries from "./Entries/Entries";
 import Fields from "./Fields/Fields";
-import Privacy from "./Static/Privacy";
 import {NotesAll} from "./Entries/Notes";
 
 function Footer () {
   // TODO figure this out, https://www.freecodecamp.org/news/how-to-keep-your-footer-where-it-belongs-59c6aa05c59c/
   return <div id='footer'>
     <a href="mailto:tylerrenelle@gmail.com">Contact</a>{' '}|{' '}
-    <Link to='/privacy'>Privacy</Link>
+    <a href='/privacy.html'>Privacy</a>
   </div>
 }
 
@@ -116,7 +115,6 @@ function App() {
         <Route path="/account">
           <Account />
         </Route>
-        <Route path="/privacy"><Privacy /></Route>
         <Redirect from="/" to="/j" />
       </Switch>
 

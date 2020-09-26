@@ -18,7 +18,7 @@ import {
   BrowserRouter as Router,
   Switch,
   Route,
-  Link
+  Link, Redirect
 } from "react-router-dom"
 import {useSelector} from "react-redux"
 
@@ -49,6 +49,7 @@ export default function Splash() {
               <Auth />
             </div>
           </Route>
+          <Redirect to="/" />
         </Switch>
       </div>
     </Jumbotron>
