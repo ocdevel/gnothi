@@ -5,7 +5,7 @@ import { FaPen } from 'react-icons/fa'
 
 import {SimplePopover, trueKeys} from "./utils"
 import { useSelector, useDispatch } from 'react-redux'
-import { fetch_, getTags, setSelectedTags } from './redux/actions'
+import { fetch_, getTags } from './redux/actions'
 import {FaTags} from "react-icons/fa/index";
 
 function TagForm({tag=null}) {
@@ -101,19 +101,19 @@ export default function Tags({
   const selectedTags_ = selected || selectedTags
 
   useEffect(() => {
-    const alreadySelected = trueKeys(selectedTags_).length > 0
-    if (tags.length && preSelectMain && !alreadySelected) {
+    if (tags.length && preSelectMain) {
       const main = _.find(tags, t=>t.main)
       selectTag(main.id, true)
     }
   }, [tags])
 
 
-  const selectTag = (id, v) => {
+  const selectTag = async (id, v) => {
     if (setSelected) {
       setSelected({...selectedTags_, [id]: v})
     } else {
-      dispatch(setSelectedTags({[id]: v}))
+      await dispatch(fetch_(`tags/${id}/toggle`, 'POST'))
+      await dispatch(getTags())
     }
   }
   // const clear = async () => {
@@ -156,7 +156,6 @@ export const MainTags = (
       <FaTags/>
     </SimplePopover>
     <span className='tools-divider'/>
-    {/*TODO reconsider preSelectMain for !!as. Eg, currently don't want therapist seeing Dream by default.*/}
-    <Tags preSelectMain={true} />
+    <Tags />
   </div>
 )

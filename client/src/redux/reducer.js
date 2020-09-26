@@ -7,7 +7,6 @@ import {
   SET_AS_USER,
   SET_AI_STATUS,
   SET_TAGS,
-  SET_SELECTED_TAGS,
   SET_FIELDS,
   SET_INFLUENCERS,
   SET_ENTRIES,
@@ -57,15 +56,11 @@ export default function mainReducer(state, action) {
       break
     case SET_TAGS:
       state.tags = action.payload
-      break
-    case SET_SELECTED_TAGS:
-      if (_.isEmpty(action.payload)) {
-        state.selectedTags = {}
-      } else {
-        let obj = {...state.selectedTags, ...action.payload}
-        obj = _.pickBy(obj, v=>v) // remove false
-        state.selectedTags = obj
-      }
+      state.selectedTags = _.reduce(action.payload, (m,v,k) => {
+        if (v.selected) {m[v.id] = true}
+        return m
+      }, {})
+      console.log(state.selectedTags)
       break
     case SET_FIELDS:
       state.fields = action.payload

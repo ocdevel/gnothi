@@ -24,7 +24,6 @@ import {
   getUser,
   checkAiStatus,
   getEntries,
-  setSelectedTags,
   getTags,
   getFields
 } from './redux/actions';
@@ -58,8 +57,8 @@ function App() {
   }, [as])
 
   useEffect(() => {
+    if (!jwt) { return }
     dispatch(getUser())
-    dispatch(setSelectedTags({}))
     dispatch(getTags())
     dispatch(getEntries())
     dispatch(getFields())

@@ -109,9 +109,7 @@ export const checkAiStatus = () => async (dispatch, getState) => {
 
 export const SET_TAGS = "SET_TAGS"
 export const setTags = (payload) => ({type: SET_TAGS, payload})
-export const SET_SELECTED_TAGS = "SET_SELECTED_TAGS"
-export const setSelectedTags = (payload) => ({type: SET_SELECTED_TAGS, payload})
-export const getTags = (preSelectMain=true) => async (dispatch, getState) => {
+export const getTags = () => async (dispatch, getState) => {
   if (!getState().jwt) {return}
   const {data} = await dispatch(fetch_('tags', 'GET'))
   dispatch(setTags(data))

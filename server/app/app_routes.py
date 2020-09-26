@@ -119,12 +119,6 @@ def person_delete(person_id: str, as_user: str = None, viewer: M.User = Depends(
 def tags_get(as_user: str = None, viewer: M.User = Depends(fastapi_users.get_current_user)):
     user, snooping = getuser(viewer, as_user)
     tags = M.Tag.snoop(viewer.email, user.id, snooping=snooping).all()
-    if not tags: return []
-
-    # First tag is main usually (sort-by in Tag.snoop). But snoopers might not have shared the viewing
-    # main-tag; in that case just set any to main.
-    # TODO have user select main tag for sharee on share
-    tags[0].main = True
     return tags
 
 
@@ -161,6 +155,23 @@ def tag_delete(tag_id, as_user: str = None, viewer: M.User = Depends(fastapi_use
     tagq.delete()
     db.session.commit()
     return {}
+
+
+@app.post('/tags/{tag_id}/toggle')
+def tag_toggle(tag_id, as_user: str = None, viewer: M.User = Depends(fastapi_users.get_current_user)):
+    user, snooping = getuser(viewer, as_user)
+    if snooping:
+        row = db.session.query(M.ShareTag)\
+            .join(M.Share)\
+            .filter(M.Share.email == viewer.email, M.ShareTag.tag_id == tag_id)\
+            .first()
+    else:
+        row = M.Tag.snoop(viewer.email, user.id, snooping=snooping) \
+            .filter(M.Tag.id == tag_id).first()
+    if not row: return
+    row.selected = not row.selected
+    db.session.commit()
+    return row
 
 
 @app.get('/shares', response_model=List[M.SOShare])

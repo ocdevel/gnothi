@@ -566,6 +566,7 @@ class SIShare(BaseModel):
 
 class SOShare(SIShare):
     id: UUID4
+    user_id: UUID4
 
     class Config:
         fields = {'fields_': 'fields'}
@@ -579,7 +580,7 @@ class Tag(Base):
     name = Encrypt(Unicode, nullable=False)
     created_at = DateCol()
     # Save user's selected tags between sessions
-    selected = Column(Boolean)
+    selected = Column(Boolean, server_default="true")
     main = Column(Boolean, server_default="false")
 
     shares = relationship("Share", secondary="shares_tags")
@@ -588,6 +589,7 @@ class Tag(Base):
     def snoop(from_email, to_id, snooping=False):
         if snooping:
             q = db.session.query(Tag)\
+                .with_entities(Tag.id, Tag.user_id, Tag.name, Tag.created_at, Tag.main, ShareTag.selected)\
                 .join(ShareTag, Share)\
                 .filter(Share.email == from_email, Share.user_id == to_id)
         else:
@@ -618,6 +620,7 @@ class ShareTag(Base):
     __tablename__ = 'shares_tags'
     share_id = FKCol('shares.id', primary_key=True)
     tag_id = FKCol('tags.id', primary_key=True)
+    selected = Column(Boolean, server_default="true")
 
     tag = relationship(Tag, backref=backref("tags"))
     share = relationship(Share, backref=backref("shares"))
