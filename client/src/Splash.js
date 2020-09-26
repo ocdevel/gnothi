@@ -29,6 +29,7 @@ export default function Splash() {
     <Jumbotron className='gnothi-jumbo'>
       <div className='jumbo-content'>
         <div className='jumbo-text'>
+          <img src="/logo192.png" style={{marginLeft: '1rem'}}/>
           <h1>Gnothi</h1>
           <h4>Gnōthi Seauton: Know Thyself</h4>
           <p>A journal that uses AI to help you introspect and find resources</p>
