@@ -1,7 +1,12 @@
 import React, {useEffect, useState} from "react"
 import {Route, Switch, useHistory, useRouteMatch} from "react-router-dom"
 import _ from 'lodash'
-import {sent2face, SimplePopover, fmtDate} from "../utils"
+import {
+  sent2face,
+  SimplePopover,
+  fmtDate,
+  bsSizes
+} from "../utils"
 import {
   Button,
   ButtonGroup,
@@ -10,7 +15,6 @@ import {
   Row,
   Col,
   InputGroup,
-  Card
 } from "react-bootstrap"
 import moment from "moment"
 import {
@@ -18,9 +22,12 @@ import {
 } from 'react-icons/fa'
 import Entry from "./Entry"
 import './Entries.css'
-
 import { useSelector, useDispatch } from 'react-redux'
 import { fetch_ } from '../redux/actions'
+import Fields from "../Fields/Fields";
+import {NotesAll} from "./Notes";
+import {MainTags} from "../Tags";
+import MediaQuery from 'react-responsive'
 
 export default function Entries() {
   const [page, setPage] = useState(0)
@@ -112,14 +119,13 @@ export default function Entries() {
     </div>
   }
 
-  const renderSearch = () => <>
+  const _search = <div className='bottom-margin'>
     <Form.Label htmlFor="formSearch" srOnly>Search</Form.Label>
     <InputGroup>
       <InputGroup.Prepend>
         <InputGroup.Text><FaSearch /></InputGroup.Text>
       </InputGroup.Prepend>
       <Form.Control
-        inline
         id='formSearch'
         type="text"
         value={search}
@@ -127,35 +133,44 @@ export default function Entries() {
         placeholder="Search"
       />
     </InputGroup>
-  </>
+  </div>
 
-  return (
-    <div>
-      <Switch>
-        <Route path={`${match.url}/entry/:entry_id`}>
+  const _newButton = as ? null : <div className='bottom-margin'>
+    <Button
+      variant="success"
+      onClick={() => gotoForm()}
+    >New Entry</Button>
+  </div>
+
+  return <>
+    <Switch>
+      <Route path={`${match.url}/entry/:entry_id`}>
+        <Entry />
+      </Route>
+      {!as && (
+        <Route path={`${match.url}/entry`}>
           <Entry />
         </Route>
-        {!as && (
-          <Route path={`${match.url}/entry`}>
-            <Entry />
-          </Route>
-        )}
-      </Switch>
+      )}
+    </Switch>
 
-      <Row style={{marginTop:5}}>
-        <Col lg={10} md={8}>
-          {renderSearch()}
-        </Col>
-        <Col lg={2} md={4}>
-          {!as && <Button
-            variant="success"
-            className='bottom-margin'
-            onClick={() => gotoForm()}
-          >New Entry</Button>}
-        </Col>
-      </Row>
-      <br />
-      {renderEntries()}
-    </div>
-  )
+    <Row>
+      <Col>
+        {MainTags}
+        <MediaQuery maxWidth={bsSizes.md}>
+          {_newButton}
+          {_search}
+        </MediaQuery>
+        {renderEntries()}
+      </Col>
+      <Col lg={4} md={5}>
+        <MediaQuery minWidth={bsSizes.md}>
+          {_newButton}
+          {_search}
+        </MediaQuery>
+        <Fields  />
+        <NotesAll />
+      </Col>
+    </Row>
+  </>
 }

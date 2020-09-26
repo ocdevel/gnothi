@@ -14,14 +14,16 @@ import Therapists from './Therapists'
 
 export default function Resources() {
   const [books, setBooks] = useState(true)
-  const [therapists, setTherapists] = useState(true)
+  const [therapists, setTherapists] = useState(false)
 
   const tabs = <div className='bottom-margin'>
     <Button
+      size="sm"
       variant={books ? 'dark' : 'outline-dark'}
       onClick={() => setBooks(!books)}
     >Books</Button>{' '}
     <Button
+      size="sm"
       variant={therapists ? 'dark' : 'outline-dark'}
       onClick={() => setTherapists(!therapists)}
     >Therapists</Button>
@@ -40,7 +42,7 @@ export default function Resources() {
       {therapists && <Col>
         <Card><Card.Body>
           <Card.Title><FaCouch /> Therapists</Card.Title>
-          <Card.Text><Therapists /></Card.Text>
+          <Card.Text><Therapists setShowTherapists={setTherapists} /></Card.Text>
         </Card.Body></Card>
       </Col>}
     </Row>

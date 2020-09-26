@@ -3,13 +3,16 @@ import {useDispatch} from "react-redux";
 import {fetch_} from "../redux/actions";
 import {Alert, Card} from "react-bootstrap";
 
-export default function Therapists() {
+export default function Therapists({setShowTherapists}) {
   const [therapists, setTherapists] = useState([])
   const dispatch = useDispatch()
 
   const fetchTherapists = async () => {
-    const {data} = dispatch(fetch_('therapists'))
+    const {data} = await dispatch(fetch_('therapists'))
     setTherapists(data)
+    if (data.length) {
+      setShowTherapists(true)
+    }
   }
 
   useEffect(() => {
@@ -37,7 +40,7 @@ export default function Therapists() {
         <div>If you're a therapist wanting listed, check "therapist" under Account > Profile.</div>
       </small>
     </Alert>
-    {therapists ? therapists.map(renderTherapist) : (
+    {therapists.length ? therapists.map(renderTherapist) : (
       <Alert variant='warning'>No therapist matches yet.</Alert>
     )}
   </div>

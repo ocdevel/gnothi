@@ -187,6 +187,7 @@ export default function Fields() {
       return <>
         {!as && <Button
           variant="success"
+          size="sm"
           onClick={() => setShowForm(true)}
           className='bottom-margin'
         >New Field</Button>}

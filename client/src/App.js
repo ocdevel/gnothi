@@ -29,14 +29,10 @@ import {
   getFields
 } from './redux/actions';
 import Insights from "./Insights";
-import Tags from "./Tags";
-import {SimplePopover} from "./utils";
-import {FaTags} from "react-icons/fa/index";
+import Tags, {MainTags} from "./Tags";
 import Resources from "./Resources";
 import Entries from "./Entries/Entries";
-import Fields from "./Fields/Fields";
 import staticRoutes from "./Static";
-import {NotesAll} from "./Entries/Notes";
 
 function Footer () {
   // TODO figure this out, https://www.freecodecamp.org/news/how-to-keep-your-footer-where-it-belongs-59c6aa05c59c/
@@ -83,17 +79,6 @@ function App() {
     </Switch>
   }
 
-  const tagsComp = (
-    <div className='bottom-margin'>
-      <SimplePopover text="Tags">
-        <FaTags/>
-      </SimplePopover>
-      <span className='tools-divider'/>
-      {/*TODO reconsider preSelectMain for !!as. Eg, currently don't want therapist seeing Dream by default.*/}
-      <Tags preSelectMain={true} />
-    </div>
-  )
-
   // key={as} triggers refresh on these components (triggering fetches)
   return <div key={as}>
     <MainNav />
@@ -102,19 +87,10 @@ function App() {
 
       <Switch>
         <Route path="/j">
-          <Row>
-            <Col>
-              {tagsComp}
-              <Entries />
-            </Col>
-            <Col lg={4}>
-              <Fields  />
-              <NotesAll />
-            </Col>
-          </Row>
+          <Entries />
         </Route>
         <Route path="/insights">
-          {tagsComp}
+          {MainTags}
           <Insights />
         </Route>
         <Route path="/resources">

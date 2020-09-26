@@ -59,3 +59,16 @@ export const aiStatusEmoji = (status) => {
 export const trueKeys = o => _.transform(o, (m,v,k) => {if (v) {m.push(k)}}, [])
 
 export const fmtDate = d => moment(d).format('YYYY-MM-DD ha')
+
+export const bsSizes = {
+  // Don't know what minWidth/maxWidth system is... just use arr[0] for now, figure out later
+  // @media (min-width: 576px) {
+  // .container {
+  //   max-width: 540px;
+  // }
+  xs: 0,
+  sm: 576, //540
+  md: 768, //720
+  lg: 992, //960
+  xl: 1200, //1140
+}

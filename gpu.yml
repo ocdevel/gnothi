@@ -2,7 +2,10 @@ version: "3.7"
 
 services:
   gpu:
-    image: lefnire/gnothi:gpu-0.0.6
+    #image: lefnire/gnothi:gpu-0.0.6
+    build:
+      context: .
+      dockerfile: ./gpu.dockerfile
     container_name: jgpu
     restart: unless-stopped
     volumes:

@@ -3,9 +3,10 @@ import _ from "lodash"
 import React, {useEffect, useState} from "react"
 import { FaPen } from 'react-icons/fa'
 
-import {trueKeys} from "./utils"
+import {SimplePopover, trueKeys} from "./utils"
 import { useSelector, useDispatch } from 'react-redux'
 import { fetch_, getTags, setSelectedTags } from './redux/actions'
+import {FaTags} from "react-icons/fa/index";
 
 function TagForm({tag=null}) {
   const [name, setName] = useState(tag ? tag.name : '')
@@ -148,3 +149,14 @@ export default function Tags({
     ><FaPen /></Button>}
   </>
 }
+
+export const MainTags = (
+  <div className='bottom-margin'>
+    <SimplePopover text="Tags">
+      <FaTags/>
+    </SimplePopover>
+    <span className='tools-divider'/>
+    {/*TODO reconsider preSelectMain for !!as. Eg, currently don't want therapist seeing Dream by default.*/}
+    <Tags preSelectMain={true} />
+  </div>
+)
