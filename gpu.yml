@@ -2,7 +2,7 @@ version: "3.7"
 
 services:
   gpu:
-    #image: lefnire/gnothi:gpu-0.0.7
+    #image: lefnire/gnothi:gpu-0.0.8
     build:
       context: .
       dockerfile: ./gpu.dockerfile

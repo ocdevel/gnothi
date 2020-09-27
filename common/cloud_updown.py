@@ -79,7 +79,7 @@ def cloud_up():
     }
     res = job_client.create(
         machine_type='K80',
-        container='lefnire/gnothi:gpu-0.0.7',
+        container='lefnire/gnothi:gpu-0.0.8',
         project_id=vars.PAPERSPACE_PROJECT_ID,
         is_preemptible=True,
         command='python app/run.py',

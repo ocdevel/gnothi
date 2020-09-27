@@ -196,17 +196,10 @@ def influencers():
             next_preds, importances, all_imps = res
             for fid, others in importances.items():
                 inf_score, next_pred = all_imps[fid], next_preds[fid]
-
-                # TODO: getting dupe M.Influencers(), investigate then clean this up
-                inf_ids, objs = [], []
-                for inf_id, score in others.items():
-                    if inf_id in inf_ids:
-                        logger.warning(f"Influencer duplicate: field_id={fid} influencer_id={inf_id}")
-                        continue
-                    inf_ids.append(inf_id)
-                    objs.append(M.Influencer(field_id=fid, influencer_id=inf_id, score=score))
-                sess.bulk_save_objects(objs)
-
+                sess.bulk_save_objects([
+                    M.Influencer(field_id=fid, influencer_id=inf_id, score=score)
+                    for inf_id, score in others.items()
+                ])
                 sess.execute(text("""
                 update fields set influencer_score=:score, next_pred=:pred
                 where id=:fid;
