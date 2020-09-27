@@ -343,13 +343,20 @@ def notes_post(entry_id, data: M.SINote, as_user: str = None, viewer: M.User = D
 def note_put(): pass
 def note_delete(): pass
 
-@app.get('/fields') #, response_model=M.SOFields)
+@app.get('/fields', response_model=M.SOFields)
 def fields_get(as_user: str = None, viewer: M.User = Depends(fastapi_users.get_current_user)):
     user, snooping = getuser(viewer, as_user)
     if snooping and not user.share_data.fields:
         return cant_snoop('Fields')
-    return {f.id: f.json() for f in user.fields}
-    # return user.fields
+    return {f.id: f for f in user.fields}
+
+
+@app.get('/fields/{field_id}/history', response_model=List[M.SOFieldHistory])
+def field_history_get(field_id, as_user: str = None, viewer: M.User = Depends(fastapi_users.get_current_user)):
+    user, snooping = getuser(viewer, as_user)
+    if snooping and not user.share_data.fields:
+        return cant_snoop('Fields')
+    return M.Field.get_history(field_id)
 
 
 @app.post('/fields')
@@ -418,6 +425,7 @@ def field_entries_post(field_id, data: M.SIFieldEntry, as_user: str = None, view
         user.field_entries.append(fe)
     db.session.commit()
     db.session.refresh(fe)
+    M.Field.update_avg(field_id)
     return fe
 
 

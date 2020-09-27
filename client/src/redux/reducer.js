@@ -56,7 +56,6 @@ export default function mainReducer(state, action) {
       break
     case SET_USER:
       state.user = action.payload
-      state.insights = initialState.insights
       break
     case SET_JWT:
       state.jwt = action.payload
@@ -65,6 +64,7 @@ export default function mainReducer(state, action) {
       state.as = action.payload
       state.asUser = !action.payload ? null
         : _.find(state.user.shared_with_me, {id: action.payload})
+      state.insights = initialState.insights
       break
     // case SET_AS_USER:
     //   state.asUser = action.payload
@@ -78,7 +78,6 @@ export default function mainReducer(state, action) {
         if (v.selected) {m[v.id] = true}
         return m
       }, {})
-      console.log(state.selectedTags)
       break
     case SET_FIELDS:
       state.fields = action.payload

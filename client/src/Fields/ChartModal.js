@@ -4,14 +4,26 @@ import _ from "lodash";
 import ReactMarkdown from "react-markdown";
 import {CartesianGrid, Line, LineChart, Tooltip, XAxis, YAxis} from "recharts";
 
+import { fetch_ } from '../redux/actions'
 import { useSelector, useDispatch } from 'react-redux'
 
 const round_ = (v) => v ? v.toFixed(2) : null
 
 export default function ChartModal({close, field=null, overall=false}) {
-  const dispatch = useDispatch()
+  const [history, setHistory] = useState([])
   const fields = useSelector(state => state.fields)
   const influencers = useSelector(state => state.influencers)
+  const dispatch = useDispatch()
+
+  const getHistory = async () => {
+    if (!field) { return }
+    const {data, code, message} = await dispatch(fetch_(`fields/${field.id}/history`))
+    setHistory(data || [])
+  }
+
+  useEffect(() => {
+    getHistory()
+  }, [field])
 
   let influencers_ = _.isEmpty(influencers) ? false
     : field ? influencers[field.id]
@@ -55,8 +67,8 @@ export default function ChartModal({close, field=null, overall=false}) {
 
   const renderBody = () => {
     return <>
-      {field && (
-        <LineChart width={730} height={250} data={field.history}>
+      {history.length > 0 && (
+        <LineChart width={730} height={250} data={history}>
           {/*margin={{ top: 5, right: 30, left: 20, bottom: 5 }}*/}
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="created_at" />

@@ -419,39 +419,26 @@ class Field(Base):
     # Populated via ml.influencers.
     influencer_score = Column(Float, server_default='0')
     next_pred = Column(Float, server_default='0')
+    avg = Column(Float, server_default="0")
 
-    json_fields = """
-    id
-    name
-    created_at
-    excluded_at
-    default_value_value
-    service
-    service_id
-    influencer_score
-    next_pred
-    """
+    @staticmethod
+    def update_avg(fid):
+        db.session.execute(satext("""
+        update fields set avg=(
+            select avg(value) from field_entries fe
+            where fe.field_id=:fid
+        ) where id=:fid
+        """), dict(fid=fid))
+        db.session.commit()
 
-    def json(self):
-        json_fields = {k: getattr(self, k) for k in self.json_fields.split()}
-        history = db.session.query(FieldEntry)\
-            .with_entities(FieldEntry.value, FieldEntry.created_at)\
-            .filter_by(field_id=self.id)\
-            .order_by(FieldEntry.created_at.asc())\
+    @staticmethod
+    def get_history(fid):
+        FE = FieldEntry
+        return db.session.query(FE)\
+            .with_entities(FE.value, FE.created_at)\
+            .filter(FE.field_id == fid, FE.value.isnot(None), FE.created_at.isnot(None))\
+            .order_by(FE.created_at.asc())\
             .all()
-        history = [
-            dict(value=x.value, created_at=x.created_at)
-            for x in history
-            if x.value is not None
-        ]
-
-        return {
-            **json_fields,
-            'type': self.type.name,
-            'default_value': self.default_value.name if self.default_value else "value",
-            'avg': sum(x['value'] for x in history) / len(history) if history else 0.,
-            'history': history
-        }
 
 
 class SIFieldExclude(BaseModel):
@@ -464,21 +451,30 @@ class SIField(SIFieldExclude):
     default_value: DefaultValueTypes
     default_value_value: Optional[float] = None
 
-## TODO can't get __root__ setup working
-# class SFieldOut(SOut):
-#     id: str
-#     type: FieldType
-#     name: str
-#     created_at: Optional[Any] = None
-#     excluded_at: Optional[Any] = None
-#     default_value: Optional[M.DefaultValueTypes] = M.DefaultValueTypes.value
-#     default_value_value: Optional[float] = None
-#     target: Optional[bool] = False
-#     service: Optional[str] = None
-#     service_id: Optional[str] = None
-#     history: Any
-# class SFieldsOut(SOut):
-#     __root__: Dict[str, SFieldOut]
+
+class SOFieldHistory(SOut):
+    value: float
+    created_at: datetime.datetime
+
+
+# TODO can't get __root__ setup working
+class SOField(SOut):
+    id: UUID4
+    type: FieldType
+    name: str
+    created_at: Optional[datetime.datetime] = None
+    excluded_at: Optional[datetime.datetime] = None
+    default_value: Optional[DefaultValueTypes] = DefaultValueTypes.value
+    default_value_value: Optional[float] = None
+    service: Optional[str] = None
+    service_id: Optional[str] = None
+    avg: Optional[float] = 0.
+    influencer_score: Optional[float] = 0.
+    next_pred: Optional[float] = 0.
+
+# class SOFields(SOut):
+#     __root__: Dict[UUID4, SOField]
+SOFields = Dict[UUID4, SOField]
 
 
 class FieldEntry(Base):
