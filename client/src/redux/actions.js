@@ -1,6 +1,7 @@
 import axios from 'axios'
 import moment from "moment-timezone"
 import _ from "lodash";
+import {trueKeys} from "../utils";
 
 // e52c6629: dynamic host/port
 let host = window.location.host
@@ -141,5 +142,39 @@ export const getEntries = () => async (dispatch, getState) => {
   dispatch(setEntries(data))
 }
 
-export const SET_DAYS = "SET_DAYS"
-export const setDays = (payload) => ({type: SET_DAYS, payload})
+export const SET_INSIGHTS = "SET_INSIGHTS"
+export const setInsights = (payload) => ({type: SET_INSIGHTS, payload})
+
+export const getInsights = (k) => async (dispatch, getState) => {
+  const fetch_k = `${k}_fetching`
+  const res_k = `${k}_res`
+  dispatch(setInsights({
+    [fetch_k]: true,
+    [res_k]: {}
+  }))
+
+  const {insights, selectedTags} = getState()
+  const body = { days: insights.days }
+  const tags = trueKeys(selectedTags)
+  if (tags.length) { body.tags = tags }
+
+  let res;
+  switch (k) {
+    case 'ask':
+      body.query = insights.ask_req
+      res = await dispatch(fetch_('query', 'POST', body))
+      break
+    case 'themes':
+      body.algo = insights.themes_req
+      res = await dispatch(fetch_('themes', 'POST', body))
+      break
+    case 'summarize':
+      body.words = insights.summarize_req
+      res = await dispatch(fetch_('summarize', 'POST', body))
+      break
+  }
+  dispatch(setInsights({
+    [fetch_k]: false,
+    [res_k]: res
+  }))
+}

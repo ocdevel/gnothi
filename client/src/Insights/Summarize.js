@@ -1,35 +1,28 @@
 import React, {useState} from 'react'
 import {Form, InputGroup, Button, Col} from "react-bootstrap"
-import {spinner, trueKeys, sent2face} from "../utils"
+import {sent2face} from "../utils"
+import {spinner} from "./utils"
 
 import { useSelector, useDispatch } from 'react-redux'
-import { fetch_ } from '../redux/actions'
+import { getInsights, setInsights } from '../redux/actions'
 
 export default function Summarize() {
-  const [fetching, setFetching] = useState(false)
-  const [res, setRes] = useState({summary: '', sentiment: ''})
-  const [form, setForm] = useState({days: 14, words: 300})
-  const [notShared, setNotShared] = useState(false)
   const aiStatus = useSelector(state => state.aiStatus)
-  const selectedTags = useSelector(state => state.selectedTags)
-  const days = useSelector(state => state.days)
-
+  const insights = useSelector(state => state.insights)
   const dispatch = useDispatch()
 
-  if (notShared) {return <h5>{notShared}</h5>}
+  const {summarize_req, summarize_res, summarize_fetching} = insights
+  const {code, message, data} = summarize_res
 
-  const changeField = k => e => setForm({...form, [k]: e.target.value})
+  if (code === 401) { return <h5>{message}</h5> }
+
+  const changeWords = e => {
+    dispatch(setInsights({'summarize_req': e.target.value}))
+  }
 
   const submit = async e => {
-    setFetching(true)
     e.preventDefault();
-    const tags_ = trueKeys(selectedTags)
-    const body = {days, ...form}
-    if (tags_.length) { body.tags = tags_ }
-    const {data, code, message} = await dispatch(fetch_('summarize', 'POST', body))
-    setFetching(false)
-    if (code === 401) {return setNotShared(message)}
-    setRes(data)
+    dispatch(getInsights('summarize'))
   }
 
   const renderForm = () => (
@@ -43,8 +36,8 @@ export default function Summarize() {
           id={`xWords`}
           type="number"
           min={5}
-          value={form.words}
-          onChange={changeField('words')}
+          value={summarize_req}
+          onChange={changeWords}
         />
       </InputGroup>
       <Form.Text muted>
@@ -57,7 +50,7 @@ export default function Summarize() {
   return <>
     {renderForm()}
     <Form onSubmit={submit}>
-      {fetching ? spinner : <>
+      {summarize_fetching ? spinner : <>
         <Button
           disabled={aiStatus !== 'on'}
           type="submit"
@@ -65,11 +58,9 @@ export default function Summarize() {
           className='bottom-margin'
         >Submit</Button>
       </>}
-      {res.summary && <>
+      {data && <>
         <hr/>
-        <p>
-          {sent2face(res.sentiment)} {res.summary}
-        </p>
+        <p>{sent2face(data.sentiment)} {data.summary}</p>
       </>}
     </Form>
   </>

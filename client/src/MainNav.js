@@ -79,7 +79,7 @@ export default function MainNav() {
       collapseOnSelect
       expand="sm"
     >
-      <LinkContainer to="/">
+      <LinkContainer to="/j">
         <Navbar.Brand>
           Gnothi {aiStatus_}
         </Navbar.Brand>

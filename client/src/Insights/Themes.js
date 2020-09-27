@@ -1,48 +1,42 @@
 import React, {useEffect, useState} from "react"
-import {sent2face, spinner, trueKeys} from "../utils"
-import {Button, Card, Form, Badge} from "react-bootstrap"
+import {sent2face} from "../utils"
+import {spinner} from "./utils"
+import {Button, Form} from "react-bootstrap"
 import _ from "lodash"
 import {BsGear, BsQuestionCircle} from "react-icons/bs"
 
 import { useSelector, useDispatch } from 'react-redux'
-import { fetch_ } from '../redux/actions'
+import { setInsights, getInsights } from '../redux/actions'
 
 export default function Themes() {
-  const [themes, setThemes] = useState({})
   const [advanced, setAdvanced] = useState(false)
-  const [algo, setAlgo] = useState('agglomorative')
-  const [fetching, setFetching] = useState(false)
-  const [notShared, setNotShared] = useState(false)
   const aiStatus = useSelector(state => state.aiStatus)
-  const selectedTags = useSelector(state => state.selectedTags)
-  const days = useSelector(state => state.days)
-
+  const insights = useSelector(state => state.insights)
   const dispatch = useDispatch()
 
+  const {themes_req, themes_res, themes_fetching} = insights
+  const {code, message, data} = themes_res
+
   const fetchThemes = async () => {
-    setFetching(true)
-    const tags_ = trueKeys(selectedTags)
-    const body = {days, algo}
-    if (tags_.length) { body.tags = tags_}
-    const {data, code, message} = await dispatch(fetch_('themes', 'POST', body))
-    setFetching(false)
-    if (code === 401) {return setNotShared(message)}
-    setThemes(data)
+    dispatch(getInsights('themes'))
   }
 
-  if (notShared) {return <h5>{notShared}</h5>}
+  if (code === 401) { return <h5>{message}</h5> }
 
-  const renderTerms = terms => terms.map((t, i) => <>
-    <code>{t}</code>
-    {i < terms.length - 1 ? ' · ' : ''}
-  </>)
+  const renderTerms = terms => {
+    if (!terms) {return null}
+    return terms.map((t, i) => <>
+      <code>{t}</code>
+      {i < terms.length - 1 ? ' · ' : ''}
+    </>)
+  }
 
   const renderThemes = () => {
-    const themes_ =_.sortBy(themes.themes, 'n_entries').slice().reverse()
+    const themes_ =_.sortBy(data.themes, 'n_entries').slice().reverse()
     return <>
       <div className='bottom-margin'>
         <h5>Top terms</h5>
-        <p>{renderTerms(themes.terms)}</p>
+        <p>{renderTerms(data.terms)}</p>
         <hr/>
       </div>
       {themes_.map((t, i) => (
@@ -60,14 +54,15 @@ export default function Themes() {
   }
 
   const renderAdvanced = () => {
-    const aggLabel = <span>
-      Agglomorative{' '}
-      <a href="https://scikit-learn.org/stable/modules/generated/sklearn.cluster.AgglomerativeClustering.html" target='_blank'><BsQuestionCircle /></a>
-    </span>
-    const kmeansLabel = <span>
-      KMeans{' '}
-      <a href="https://scikit-learn.org/stable/modules/generated/sklearn.cluster.KMeans.html" target="_blank"><BsQuestionCircle /></a>
-    </span>
+    const algos = [{
+      k: 'agglomorative',
+      label: 'Agglomorative',
+      url: "https://scikit-learn.org/stable/modules/generated/sklearn.cluster.AgglomerativeClustering.html",
+    }, {
+      k: 'kmeans',
+      label: 'KMeans',
+      url: "https://scikit-learn.org/stable/modules/generated/sklearn.cluster.KMeans.html"
+    }]
 
     return <div className='bottom-margin'>
       <div>
@@ -79,20 +74,17 @@ export default function Themes() {
       {advanced && <div>
         <hr />
         <Form.Label>Clustering Algorithm</Form.Label>
-        <Form.Check
-          type='radio'
-          label={aggLabel}
-          id='algo-agglomorative'
-          checked={algo === 'agglomorative'}
-          onChange={() => setAlgo('agglomorative')}
-        />
-        <Form.Check
-          type='radio'
-          label={kmeansLabel}
-          id='algo-kmeans'
-          checked={algo === 'kmeans'}
-          onChange={() => setAlgo('kmeans')}
-        />
+        {algos.map(a => (
+          <Form.Check
+            type='radio'
+            label={<span>
+              {a.label} <a href={a.url} target='_blank'><BsQuestionCircle /></a>
+            </span>}
+            id={`algo-${a.k}`}
+            checked={themes_req === a.k}
+            onChange={() => dispatch(setInsights({'themes_req': a.k}))}
+          />
+        ))}
         <Form.Text>If the output seems off, try a different clustering algorithm. Don't worry about the tech (unless you're curious), just click the other one and submit.</Form.Text>
         <hr />
       </div>}
@@ -100,10 +92,7 @@ export default function Themes() {
   }
 
   return <>
-    {fetching ? <>
-      <div>{spinner}</div>
-      <Form.Text muted>Takes a long time. Will fix later.</Form.Text>
-    </> : <>
+    {themes_fetching ? spinner : <>
       {renderAdvanced()}
       <Button
         disabled={aiStatus !== 'on'}
@@ -112,6 +101,6 @@ export default function Themes() {
         onClick={fetchThemes}
       >Show Themes</Button>
     </>}
-    {_.size(themes) > 0 && renderThemes()}
+    {data && renderThemes()}
   </>
 }

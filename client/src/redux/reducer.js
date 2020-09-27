@@ -10,8 +10,10 @@ import {
   SET_FIELDS,
   SET_INFLUENCERS,
   SET_ENTRIES,
-  SET_DAYS
+  SET_INSIGHTS
 } from './actions'
+
+const emptyRes = {code: null, message: null, data: null}
 
 const initialState = {
   jwt: localStorage.getItem('jwt'),
@@ -25,7 +27,22 @@ const initialState = {
   fields: {},
   influencers: {},
   entries: [],
-  days: 30
+
+  insights: {
+    days: 30,
+
+    ask_fetching: false,
+    ask_req: "",
+    ask_res: emptyRes,
+
+    themes_fetching: false,
+    themes_req: "agglomorative",
+    themes_res: emptyRes,
+
+    summarize_fetching: false,
+    summarize_req: 300,
+    summarize_res: emptyRes
+  }
 }
 
 export default function mainReducer(state, action) {
@@ -39,6 +56,7 @@ export default function mainReducer(state, action) {
       break
     case SET_USER:
       state.user = action.payload
+      state.insights = initialState.insights
       break
     case SET_JWT:
       state.jwt = action.payload
@@ -71,8 +89,8 @@ export default function mainReducer(state, action) {
     case SET_ENTRIES:
       state.entries = action.payload
       break
-    case SET_DAYS:
-      state.days = action.payload
+    case SET_INSIGHTS:
+      state.insights = {...state.insights, ...action.payload}
       break
   }
 

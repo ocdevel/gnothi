@@ -18,7 +18,7 @@ import {
 } from "react-icons/fa/index"
 import React, {useState} from "react"
 import { useSelector, useDispatch } from 'react-redux'
-import { setDays } from '../redux/actions'
+import { setInsights } from '../redux/actions'
 import {aiStatusEmoji} from "../utils"
 import _ from 'lodash'
 
@@ -48,7 +48,7 @@ const tools = [
 ]
 
 export default function Insights() {
-  const days = useSelector(state => state.days)
+  const days = useSelector(state => state.insights.days)
   const entries = useSelector(state => state.entries)
   const dispatch = useDispatch()
   const aiStatus = useSelector(state => state.aiStatus)
@@ -59,7 +59,7 @@ export default function Insights() {
   }, 0)
 
   const changeDays = e => {
-    dispatch(setDays(e.target.value))
+    dispatch(setInsights({days: e.target.value}))
   }
 
   const renderDaysForm = () => <>
