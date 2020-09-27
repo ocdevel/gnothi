@@ -31,10 +31,15 @@ def test_already_ran(db):
 def test_influencers(main_uid, db):
     db.execute("""
     update users set updated_at=now(), last_influencers=now() - interval '25 hours';
-    delete from influencers;
     """)
     db.commit()
+    influencers()
 
+    # Test duplicate key bug
+    db.execute("""
+    update users set updated_at=now(), last_influencers=now() - interval '25 hours';
+    """)
+    db.commit()
     influencers()
 
     # check output

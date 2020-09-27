@@ -9,6 +9,8 @@ from common.fixtures import fixtures
 import common.models as M
 import pandas as pd
 import numpy as np
+import logging
+logger = logging.getLogger(__name__)
 
 
 def impute_and_roll(fes, fs):
@@ -22,12 +24,12 @@ def impute_and_roll(fes, fs):
             # FIXME getting SettingWithCopyWarning whether using .loc[:,x] or [x],
             # but it seems to work anyway... need to verify
             # fes[fid] = fes[fid].fillna(dvv)
-            fes.loc[:,fid] = fes[fid].fillna(dvv)
+            fes[fid] = fes[fid].fillna(dvv)
         elif dv == 'ffill':
-            fes.loc[:,fid] = fes[fid].fillna(method='ffill') \
+            fes[fid] = fes[fid].fillna(method='ffill') \
                 .fillna(method='bfill')
         elif dv == 'average':
-            fes.loc[:,fid] = fes[fid].fillna(fes[fid].mean())
+            fes[fid] = fes[fid].fillna(fes[fid].mean())
 
     # This part is important. Rather than say "what today predicts y" (not useful),
     # or even "what history predicts y" (would be time-series models, which don't have feature_importances_)
@@ -125,9 +127,8 @@ def influencers_(user_id):
     all_imps = []
     for t in cols:
         # remove up until they start tracking; we'll impute from there on up
-        fes_ = fes.copy()
-        fvi = fes_[t].first_valid_index()
-        fes_ = impute_and_roll(fes_[fvi:], fs)
+        fvi = fes[t].first_valid_index()
+        fes_ = impute_and_roll(fes[fvi:].copy(), fs)
 
         ### Next Preds
         ### ----------
@@ -176,26 +177,39 @@ def influencers():
           (extract(day from {utcnow} - last_influencers) >= 1 or last_influencers is null)
         """)).fetchall()
         for u in users:
+            uid_ = dict(uid=u.id)
             sess.execute(text(f"""
-            update users set last_influencers={utcnow} where id=:uid;
-            delete from influencers where field_id in (
-                select id from fields where user_id=:uid
-            );
-            """), {'uid': u.id})
+            update users set last_influencers={utcnow} where id=:uid
+            """), uid_)
             sess.commit()
 
             res = influencers_(u.id)
             if not res: continue
 
+            sess.execute(text(f"""
+            delete from influencers where field_id in (
+              select id from fields where user_id=:uid
+            )
+            """), uid_)
+            sess.commit()
+
             next_preds, importances, all_imps = res
-            for fid, next_pred in next_preds.items():
-                sess.bulk_save_objects([
-                    M.Influencer(field_id=fid, influencer_id=iid, score=score)
-                    for iid, score in importances[fid].items()
-                ])
+            for fid, others in importances.items():
+                inf_score, next_pred = all_imps[fid], next_preds[fid]
+
+                # TODO: getting dupe M.Influencers(), investigate then clean this up
+                inf_ids, objs = [], []
+                for inf_id, score in others.items():
+                    if inf_id in inf_ids:
+                        logger.warning(f"Influencer duplicate: field_id={fid} influencer_id={inf_id}")
+                        continue
+                    inf_ids.append(inf_id)
+                    objs.append(M.Influencer(field_id=fid, influencer_id=inf_id, score=score))
+                sess.bulk_save_objects(objs)
+
                 sess.execute(text("""
                 update fields set influencer_score=:score, next_pred=:pred
                 where id=:fid;
-                """), dict(score=all_imps[fid], pred=next_pred, fid=fid))
+                """), dict(score=inf_score, pred=next_pred, fid=fid))
                 sess.commit()
     return {}
