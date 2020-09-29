@@ -14,7 +14,6 @@ from app.influencers import influencers
 from common.utils import utcnow
 from common.database import session
 from common.cloud_updown import notify_online
-from app.utils import cluster, cosine, clear_gpu
 from app.nlp import nlp_
 from app.entries_profiles import entries, profiles
 
@@ -23,17 +22,13 @@ m = Box({
     'sentiment-analysis': nlp_.sentiment_analysis,
     'question-answering': nlp_.question_answering,
     'summarization': nlp_.summarization,
-    'sentence-encode': nlp_.sentence_encode,
 
     # Caching
     'entries': entries,
     'profiles': profiles,
     'influencers': influencers,
 
-
     # Other
-    'cosine': cosine,
-    'cluster': cluster,
     # 'books': run_books,
     'themes': themes,
 })

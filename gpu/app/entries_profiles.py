@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import common.models as M
 from common.database import session
-from app.utils import cosine, normalize
+from lefnire_ml_utils import Similars
 from common.fixtures import fixtures
 from sqlalchemy import text
 from app.cleantext import Clean
@@ -130,10 +130,7 @@ def match_profiles():
         # This on the other hand is OK to mean, it's just their profile
         vecs_profiles = np.vstack(df.vectors.apply(mean_).values)
 
-        vecs = normalize(np.vstack([vecs_entries, vecs_profiles]), numpy=False)
-        split_ = vecs_entries.shape[0]
-        vecs_entries, vecs_profiles = vecs[:split_], vecs[split_:]
-        dists = cosine(vecs_entries, vecs_profiles, norm_in=False)
+        dists = Similars(vecs_entries, vecs_profiles).normalize().cosine().value()
 
         sess.execute(text("""
         delete from profile_matches where user_id in :uids

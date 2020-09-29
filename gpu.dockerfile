@@ -34,7 +34,8 @@ RUN \
   asyncpg \
   bcrypt \
   gradient \
-  pytest
+  pytest \
+  git+git://github.com/lefnire/lefnire_ml_utils.git
 
 COPY ./gpu /paperspace
 COPY ./common /paperspace/common

@@ -4,7 +4,7 @@ from common.database import session
 import common.models as M
 from app.nlp import nlp_
 from app.cleantext import Clean
-from app.utils import cosine, cluster
+from lefnire_ml_utils import Similars
 import pandas as pd
 import numpy as np
 import threading
@@ -48,7 +48,7 @@ def themes(eids, algo='agglomorative'):
     # if not vecs: return False  # TODO somethign else to return?
     vecs = np.vstack(vecs).astype(np.float32)
 
-    clusters = cluster(vecs, algo=algo)
+    clusters = Similars(vecs).normalize().cluster(algo=algo).value()
 
     topics = []
     for l in range(clusters.max()):
@@ -63,7 +63,7 @@ def themes(eids, algo='agglomorative'):
             stripped.iloc[in_clust], entries.iloc[in_clust]
 
         center = vecs_.mean(axis=0)[np.newaxis,:]
-        dists = cosine(center, vecs_).squeeze()
+        dists = Similars(center, vecs_).normalize().cosine().value().squeeze()
         entries_ = entries_.iloc[dists.argsort()].tolist()[:5]
 
         terms = top_terms(stripped_.tolist())

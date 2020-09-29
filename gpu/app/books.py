@@ -16,8 +16,8 @@ from tqdm import tqdm
 from common.database import session
 import common.models as M
 from common.utils import utcnow, vars
-from app.utils import cosine, cluster, normalize
 from app.cleantext import Clean
+from lefnire_ml_utils import Similars
 from common.fixtures import fixtures
 from box import Box
 import numpy as np
@@ -215,19 +215,20 @@ def predict_books(user_id, vecs_user, n_recs=30, centroids=False):
     shelf_idx = books.id.isin(shelf.id)
 
     # normalize for cosine, and downstream DNN
-    vecs_user, vecs_books = normalize(vecs_user, vecs_books)
+    chain = Similars(vecs_user, vecs_books).normalize()
+    vecs_user, vecs_books = chain.value()
 
     logger.info("Finding cosine similarities")
-    lhs = vecs_user
     if centroids:
-        labels = cluster(vecs_user, norm_in=False)
+        labels = chain.agglomorative().value()
         lhs = np.vstack([
             vecs_user[labels == l].mean(0)
             for l in range(labels.max())
         ])
+        chain = Similars(lhs, vecs_user)
 
     # Take best cluster-score for every book
-    dist = cosine(lhs, vecs_books, norm_in=False).min(axis=0)
+    dist = chain.cosine().value().min(axis=0)
     # 0f29e591: minmax_scale(dist). norm_out=True works better
     # then map back onto books, so they're back in order (pandas index-matching)
     books['dist'] = dist
