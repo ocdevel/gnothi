@@ -28,6 +28,11 @@ def cant_snoop(feature=None):
     return send_error(message, 401)
 
 
+@app.get('/health')
+def health_get():
+    return {'ok': True}
+
+
 @app.get('/jobs-status')
 def jobs_status_get(viewer: M.User = Depends(fastapi_users.get_current_user)):
     return jobs_status()
