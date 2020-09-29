@@ -42,7 +42,7 @@ services:
       context: .
       dockerfile: ./gpu.dockerfile
     container_name: jgpu-dev
-    entrypoint: /bin/bash
+    entrypoint: pip install -e tmp/lefnire_ml_utils;/bin/bash
     stdin_open: true
     restart: unless-stopped
     environment:

@@ -3,7 +3,6 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from common.database import session
 import common.models as M
 from app.nlp import nlp_
-from app.cleantext import Clean
 from lefnire_ml_utils import Similars
 import pandas as pd
 import numpy as np

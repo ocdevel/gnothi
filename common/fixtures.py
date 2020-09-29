@@ -213,7 +213,6 @@ class Fixtures():
     def gen_entries(self):
         try:
             from bs4 import BeautifulSoup
-            from app.cleantext import Clean
         except:
             raise("No fixtures generated, run tests on GPU first")
 

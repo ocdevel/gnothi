@@ -16,8 +16,7 @@ from tqdm import tqdm
 from common.database import session
 import common.models as M
 from common.utils import utcnow, vars
-from app.cleantext import Clean
-from lefnire_ml_utils import Similars
+from lefnire_ml_utils import Similars, cleantext
 from common.fixtures import fixtures
 from box import Box
 import numpy as np
@@ -101,11 +100,13 @@ def load_books_df(sess):
     df = df[~(df.Title + df.descr).str.contains(broken)] \
         .drop_duplicates(['Title', 'Author'])  # TODO reconsider
 
-    df['descr'] = df.descr.apply(Clean.strip_html) \
-        .apply(Clean.fix_punct) \
-        .apply(Clean.only_ascii) \
-        .apply(Clean.multiple_whitespace) \
-        .apply(Clean.unmark)
+    df['descr'] = cleantext.multiple(df.descr.tolist(), [
+        cleantext.strip_html,
+        cleantext.fix_punct,
+        cleantext.only_ascii,
+        cleantext.multiple_whitespace,
+        cleantext.unmark
+    ])
 
     # books = books[books.clean.apply(lambda x: detect(x) == 'en')]
     logger.info(f"n_books after cleanup {df.shape[0]}")

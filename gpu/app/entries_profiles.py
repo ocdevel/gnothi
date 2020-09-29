@@ -3,10 +3,9 @@ import pandas as pd
 import numpy as np
 import common.models as M
 from common.database import session
-from lefnire_ml_utils import Similars
+from lefnire_ml_utils import Similars, cleantext
 from common.fixtures import fixtures
 from sqlalchemy import text
-from app.cleantext import Clean
 from app.nlp import nlp_
 
 def nlp_on_rows(method='entries'):
@@ -26,7 +25,7 @@ def nlp_on_rows(method='entries'):
         for r in rows:
             txt = r.text if for_entries \
                 else r.bio  # r.profile_to_text()  # TODO profile_to_text adds people
-            paras_grouped.append(Clean.entries_to_paras([txt]))
+            paras_grouped.append(cleantext.markdown_split_paragraphs([txt]))
             if for_entries:
                 uids.add(r.user_id)
         paras_flat = [p for paras in paras_grouped for p in paras]
@@ -40,7 +39,7 @@ def nlp_on_rows(method='entries'):
             else:
                 clean_txt, embeds = fixt
         else:
-            clean_txt = Clean.lda_texts(paras_flat, propn=True)
+            clean_txt = cleantext.keywords(paras_flat, postags=['NOUN', 'ADJ', 'VERB', 'PROPN'])
             embeds = nlp_.sentence_encode(paras_flat).tolist()
             if for_entries:
                 titles = nlp_.summarization(paras_grouped, min_length=5, max_length=20, with_sentiment=False)
