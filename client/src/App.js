@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import './App.css'
 import {
-  Col,
-  Container, Row,
+  Container,
 } from 'react-bootstrap';
 import {
   BrowserRouter as Router,
@@ -17,6 +16,7 @@ import Splash from './Splash'
 import Account from './Account'
 import Error from './Error'
 import MainNav from './MainNav'
+import Footer from './Footer'
 
 import { Provider, useSelector, useDispatch } from 'react-redux'
 import store from './redux/store';
@@ -32,15 +32,6 @@ import Tags, {MainTags} from "./Tags";
 import Resources from "./Resources";
 import Entries from "./Entries/Entries";
 import staticRoutes from "./Static";
-
-function Footer () {
-  // TODO figure this out, https://www.freecodecamp.org/news/how-to-keep-your-footer-where-it-belongs-59c6aa05c59c/
-  return <div id='footer'>
-    <a href="mailto:tylerrenelle@gmail.com">Contact</a>{' '}&#183;{' '}
-    <Link to='/privacy'>Privacy Policy</Link>{' '}&#183;{' '}
-    <Link to='/terms'>Terms of Use</Link>
-  </div>
-}
 
 function App() {
   const jwt = useSelector(state => state.jwt);
