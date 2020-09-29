@@ -19,6 +19,16 @@ export function setServerError(payload) {
   }
 }
 
+// Every fetch (except jobs-status) will check the user in, so debounce it a bit since
+// we're often fetching a ton at once
+const checkin = _.debounce((headers) => {
+  axios({
+    method: 'GET',
+    url: `${host}/user/checkin`,
+    headers
+  })
+}, 1000)
+
 export const FETCH = "FETCH"
 export const fetch_ = (
   route,
@@ -40,6 +50,9 @@ export const fetch_ = (
     url += (~route.indexOf('?') ? '&' : '?') + `as_user=${as}`
   }
   obj['url'] = url
+
+  if (route !== 'jobs-status') { checkin(obj.headers) }
+
   try {
     const {status: code, data} = await axios(obj)
     return {code, data}
@@ -77,7 +90,6 @@ export const getUser = () => async (dispatch, getState) => {
     return dispatch(logout())
   }
   dispatch(setUser(data))
-  dispatch(fetch_('user/checkin', 'POST'))
   if (!data.timezone) {
      // Guess their default timezone (TODO should call this out?)
     const timezone = moment.tz.guess(true)
@@ -147,10 +159,11 @@ export const setInsights = (payload) => ({type: SET_INSIGHTS, payload})
 
 export const getInsights = (k) => async (dispatch, getState) => {
   const fetch_k = `${k}_fetching`
-  const res_k = `${k}_res`
+  const res1_k = `${k}_res1`
+  const res2_k = `${k}_res2`
   dispatch(setInsights({
     [fetch_k]: true,
-    [res_k]: {}
+    [res1_k]: {}
   }))
 
   const {insights, selectedTags} = getState()
@@ -161,8 +174,8 @@ export const getInsights = (k) => async (dispatch, getState) => {
   let res;
   switch (k) {
     case 'ask':
-      body.query = insights.ask_req
-      res = await dispatch(fetch_('query', 'POST', body))
+      body.question = insights.ask_req
+      res = await dispatch(fetch_('ask', 'POST', body))
       break
     case 'themes':
       body.algo = insights.themes_req
@@ -173,8 +186,11 @@ export const getInsights = (k) => async (dispatch, getState) => {
       res = await dispatch(fetch_('summarize', 'POST', body))
       break
   }
-  dispatch(setInsights({
-    [fetch_k]: false,
-    [res_k]: res
-  }))
+  dispatch(setInsights({[res1_k]: res}))
+  const {jid} = res.data
+  if (!jid) {
+    return dispatch(setInsights({[fetch_k]: false}))
+  }
+  res = await dispatch(fetch_(`await-job/${jid}`))
+  dispatch(setInsights({[res2_k]: res, [fetch_k]: false}))
 }

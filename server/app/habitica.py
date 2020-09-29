@@ -1,4 +1,4 @@
-import requests, pdb
+import requests, pdb, time, random
 from dateutil.parser import parse as dparse
 from common.utils import is_dev, vars, utcnow
 from common.database import session
@@ -98,16 +98,32 @@ def sync_for(user):
 
 def cron():
     with db():
-        logger.info("Running habitica")
+        # Creat a "handle habitica" job, rather than processing directly, in case there are multiple
+        # server instances running. Then wait some random seconds each instance, rather than everybody
+        # grabbing at once (race condition?). Not perfect, but will do for now.
+        k = 'habitica'
+        M.Job.create_job(k, run_on='cpu')
+        time.sleep(random.randint(0, 10))
+
+        job = M.Job.take_job(db.session, f"method='{k}'")
+        # Another instance grabbed it
+        if not job: return
+
+        logger.info(f"Running {k}")
         users = db.session.execute(f"""
         select id from users 
         where char_length(habitica_user_id) > 0 and char_length(habitica_api_token) > 0
             -- stop tracking inactive users
             and updated_at > {utcnow} - interval '3 days'
         """).fetchall()
-        for u in users:
-            u = db.session.query(M.User).get(u.id)
-            try:
-                sync_for(u)
-            except Exception as err:
-                logger.warning(err)
+
+        def fn():
+            errs = ""
+            for u in users:
+                try:
+                    sync_for(db.session.query(M.User).get(u.id))
+                except Exception as err:
+                    errs += "\n" + str(err)
+            if errs: raise Exception(errs)
+            return {}
+        M.Job.wrap_job(job.id, k, fn)

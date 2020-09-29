@@ -11,9 +11,10 @@ from sqlalchemy import text
 # app.from books import run_books
 from app.themes import themes
 from app.influencers import influencers
-from common.utils import utcnow
+from common.utils import utcnow, vars
 from common.database import session
-from common.cloud_updown import notify_online
+import common.models as M
+from common.cloud_updown import cloud_down_maybe
 from app.nlp import nlp_
 from app.entries_profiles import entries, profiles
 
@@ -42,35 +43,12 @@ def run_job(job):
     args = data.get('args', [])
     kwargs = data.get('kwargs', {})
 
-    logger.info(f"Running job {k}")
-
     if k == 'books':
-        if os.environ.get("IS_TESTING", False):
-            nlp_.clear()
-        cmd = f"python app/books.py --jid={jid_} --uid={args[0]}"
-        logger.info(cmd)
-        os.system(cmd)
+        os.system(f"python app/books.py --jid={jid_} --uid={args[0]}")
         return
 
-    try:
-        start = time.time()
-        res = m[k](*args, **kwargs)
-        with session() as sess:
-            sess.execute(text(f"""
-            update jobs set state='done', data_out=:data where id=:jid
-            """), {'data': jsonb(res), **jid})
-            sess.commit()
-        logger.info(f"Job {k} complete {time.time() - start}")
-    except Exception as err:
-        err = str(traceback.format_exc())
-        # err = str(err)
-        res = {"error": err}
-        with session() as sess:
-            sess.execute(text(f"""
-            update jobs set state='error', data_out=:data where id=:jid
-            """), {'data': jsonb(res), **jid})
-            sess.commit()
-        logger.error(f"Job {k} error {time.time() - start} {err}")
+    def run_(): return m[k](*args, **kwargs)
+    M.Job.wrap_job(jid_, k, run_)
     # 3eb71b3: unloading models. multiprocessing handles better
 
 
@@ -82,27 +60,36 @@ if __name__ == '__main__':
     logger.info(f"torch.cuda.is_available() {torch.cuda.is_available()}")
     logger.info("\n\n")
 
-    # After 15 minutes of non-use, wipe all models.
-    inactivity = 15 * 60
-
     with session() as sess:
-        while True:
-            # if active_jobs: GPUtil.showUtilization()
-            status = notify_online(sess)
+        def do_thing():
+            M.Machine.notify_online(sess, vars.MACHINE)
+            cloud_down_maybe(sess)
+
+            # only allow 2 jobs at a time.
+            if M.Machine.job_ct_on_machine(sess, vars.MACHINE) >= 2:
+                time.sleep(1)
+                return
 
             # Find jobs
-            job = sess.execute(f"""
-            update jobs set state='working'
-            where id = (select id from jobs where state='new' limit 1)
-            returning id, method;
-            """).fetchone()
-            sess.commit()
+            job = M.Job.take_job(sess, "run_on='gpu'")
             if not job:
-                if status.elapsed_client > inactivity:
+                if M.User.last_checkin(sess) > 10:
                     nlp_.clear()
                 time.sleep(1)
-                continue
+                return
 
             # aaf1ec95: multiprocessing.Process for problem models
             threading.Thread(target=run_job, args=(job,)).start()
             # run_job(job.id)
+
+        while True:
+            # During testing, tables get clobbered and can mess this up. Give it some leeway,
+            # but fail eventually
+            i = 0
+            try:
+                do_thing()
+                i = 0
+            except:
+                time.sleep(1)
+                if i > 5: raise
+                i += 1

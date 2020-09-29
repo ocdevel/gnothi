@@ -33,15 +33,18 @@ const initialState = {
 
     ask_fetching: false,
     ask_req: "",
-    ask_res: emptyRes,
+    ask_res1: emptyRes,
+    ask_res2: emptyRes,
 
     themes_fetching: false,
     themes_req: "agglomorative",
-    themes_res: emptyRes,
+    themes_res1: emptyRes,
+    themes_res2: emptyRes,
 
     summarize_fetching: false,
     summarize_req: 300,
-    summarize_res: emptyRes
+    summarize_res1: emptyRes,
+    summarize_res2: emptyRes
   }
 }
 

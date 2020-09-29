@@ -35,7 +35,7 @@ with D.session() as sess:
     field_entries
     fields
     jobs
-    jobs_status
+    machines
     notes
     people
     shares
@@ -64,7 +64,7 @@ def db(client):
     with D.session() as sess:
         # wait for GPU to restart from no-db crash
         while True:
-            sql = "select 1 from jobs_status where status='on'"
+            sql = "select 1 from machines where status='on'"
             if M.await_row(sess, sql): break
             time.sleep(.5)
 

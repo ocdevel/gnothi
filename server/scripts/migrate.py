@@ -4,7 +4,7 @@ from common.utils import utcnow
 from sqlalchemy import text
 
 def migrate_before(engine):
-    pass
+    engine.execute("drop table jobs;drop table jobs_status;")
 
 def migrate_after(engine):
     pass

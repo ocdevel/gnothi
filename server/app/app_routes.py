@@ -10,8 +10,7 @@ from sqlalchemy import text
 from common.utils import utcnow, nowtz
 import common.models as M
 from app import habitica
-from common.cloud_updown import jobs_status
-from app.ml import run_gpu_model, OFFLINE_MSG
+from app import ml
 from urllib.parse import quote as urlencode
 
 logger = logging.getLogger(__name__)
@@ -34,8 +33,8 @@ def health_get():
 
 
 @app.get('/jobs-status')
-def jobs_status_get(viewer: M.User = Depends(fastapi_users.get_current_user)):
-    return jobs_status()
+def jobs_status_get():
+    return M.Machine.gpu_status(db.session)
 
  
 @app.get('/user', response_model=M.SOUser)
@@ -44,7 +43,8 @@ def user_get(as_user: str = None,  viewer: M.User = Depends(fastapi_users.get_cu
     if snooping: return cant_snoop()  # FIXME not handling this?
     return user
 
-@app.post('/user/checkin')
+
+@app.get('/user/checkin')
 def checkin_get(viewer: M.User = Depends(fastapi_users.get_current_user)):
     sql = text(f"update users set updated_at={utcnow} where id=:uid")
     db.session.execute(sql, {'uid': viewer.id})
@@ -464,6 +464,33 @@ def influencers_get(
     return obj
 
 
+@app.get('/await-job/{jid}')
+def await_job_get(
+    jid: str,
+    as_user: str = None,
+    viewer: M.User = Depends(fastapi_users.get_current_user)
+):
+    # TODO insecure; doesn't authenticate job to user. Need to add job.user_id or such
+    job = ml.await_job(jid)
+    method, res = job.method, job.data_out
+    if method == 'themes':
+        if res is False: return []  # fixme
+        if len(res) == 0:
+            return send_error("No patterns found in your entries yet, come back later")
+        return res
+    if method == 'question-answering':
+        if res is False:
+            return [{'answer': ml.OFFLINE_MSG}]
+        return res
+    if method == 'summarization':
+        if res is False:
+            return {"summary": ml.OFFLINE_MSG, "sentiment": None}
+        res = res[0]
+        if not res["summary"]:
+            return {"summary": "Nothing to summarize (try adjusting date range)"}
+        return {'summary': res["summary"], 'sentiment': res["sentiment"]}
+
+
 @app.post('/themes')
 def themes_post(
     data: M.SIThemes,
@@ -490,21 +517,17 @@ def themes_post(
 
     if len(eids) < 2:
         return send_error("Not enough entries to work with, come back later")
-    res = run_gpu_model('themes', dict(args=[eids], kwargs={'algo': data.algo}))
-    if res is False: return []  # fixme
-    if len(res) == 0:
-        return send_error("No patterns found in your entries yet, come back later")
-    return res
+    return ml.submit_job('themes', dict(args=[eids], kwargs={'algo': data.algo}))
 
 
-@app.post('/query')
+@app.post('/ask')
 def question_post(
     data: M.SIQuestion,
     as_user: str = None,
     viewer: M.User = Depends(fastapi_users.get_current_user)
 ):
     user, snooping = getuser(viewer, as_user)
-    question = data.query
+    question = data.question
     context = M.Entry.snoop(
         viewer.email,
         user.id,
@@ -518,10 +541,7 @@ def question_post(
     profile_id = user.id if w_profile else None
     context = M.CacheEntry.get_paras(context, profile_id=profile_id)
 
-    res = run_gpu_model('question-answering', dict(args=[question, context]))
-    if res is False:
-        return [{'answer': OFFLINE_MSG}]
-    return res
+    return ml.submit_job('question-answering', dict(args=[question, context]))
 
 
 @app.post('/summarize')
@@ -543,13 +563,7 @@ def summarize_post(
 
     min_ = int(data.words / 2)
     kwargs = dict(min_length=min_, max_length=data.words)
-    res = run_gpu_model('summarization', dict(args=[entries], kwargs=kwargs))
-    if res is False:
-        return {"summary": OFFLINE_MSG, "sentiment": None}
-    res = res[0]
-    if not res["summary"]:
-        return {"summary": "Nothing to summarize (try adjusting date range)"}
-    return {'summary': res["summary"], 'sentiment': res["sentiment"]}
+    return ml.submit_job('summarization', dict(args=[entries], kwargs=kwargs))
 
 
 @app.post('/books/{bid}/{shelf}')

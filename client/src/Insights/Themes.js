@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from "react"
 import {sent2face} from "../utils"
-import {spinner} from "./utils"
+import {Spinner} from "./utils"
 import {Button, Form} from "react-bootstrap"
 import _ from "lodash"
 import {BsGear, BsQuestionCircle} from "react-icons/bs"
@@ -14,8 +14,8 @@ export default function Themes() {
   const insights = useSelector(state => state.insights)
   const dispatch = useDispatch()
 
-  const {themes_req, themes_res, themes_fetching} = insights
-  const {code, message, data} = themes_res
+  const {themes_req, themes_res1, themes_res2, themes_fetching} = insights
+  const {code, message, data} = themes_res2
 
   const fetchThemes = async () => {
     dispatch(getInsights('themes'))
@@ -92,7 +92,7 @@ export default function Themes() {
   }
 
   return <>
-    {themes_fetching ? spinner : <>
+    {themes_fetching ? <Spinner job={themes_res1} /> : <>
       {renderAdvanced()}
       <Button
         disabled={aiStatus !== 'on'}

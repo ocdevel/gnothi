@@ -1,4 +1,4 @@
-import json, os, pytz, datetime
+import json, os, pytz, datetime, socket
 from box import Box
 
 DROP_SQL = 'DROP SCHEMA public CASCADE;CREATE SCHEMA public;'
@@ -55,6 +55,8 @@ if vars.ENVIRONMENT == 'production':
 
 vars['DB_FULL'] = f"{vars.DB_URL}/{vars.DB_NAME}"
 vars['DB_PROD_FULL'] = f"{vars.DB_PROD_URL}/{vars.DB_PROD_NAME}"
+
+vars['MACHINE'] = vars.MACHINE or socket.gethostname()
 
 SECRET = vars.FLASK_KEY
 

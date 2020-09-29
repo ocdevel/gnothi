@@ -13,7 +13,16 @@ import app.entries_profiles as e_p
 
 with D.session() as sess:
     # drop & re-create since we'll be futzing with models/fields
-    for t in 'users cache_users entries cache_entries fields influencers'.split():
+    for t in """
+    users
+    cache_users
+    entries
+    cache_entries
+    fields
+    influencers
+    jobs
+    machines
+    """.split():
         sess.execute(f"drop table if exists {t} cascade")
     sess.commit()
 D.init_db()

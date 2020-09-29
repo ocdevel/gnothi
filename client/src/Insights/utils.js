@@ -1,13 +1,17 @@
-import {Spinner} from "react-bootstrap";
+import {Spinner as Spinner_} from "react-bootstrap";
 import React from "react";
 
-export const spinner = <>
-  <Spinner animation="border" role="status">
-    <span className="sr-only">Loading...</span>
-  </Spinner>
-  <div>
-    <small className='text-muted'>
-      AI takes 30 seconds - 1 minute, you can leave this tab & come back.
-    </small>
-  </div>
-</>
+export function Spinner({job}) {
+  const {code, message, data} = job
+  if (!(data && data.jid)) {return null}
+  return <>
+    <Spinner_ animation="border" role="status">
+      <span className="sr-only">Loading...</span>
+    </Spinner_>
+    <div>
+      <small className='text-muted'>
+        You are {data.queue} in line, ETA {data.queue * 30}seconds. You can leave this tab & come back.
+      </small>
+    </div>
+  </>
+}

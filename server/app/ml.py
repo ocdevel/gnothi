@@ -1,6 +1,7 @@
 import pickle, pdb
 import common.models as M
 import numpy as np
+from box import Box
 from sqlalchemy import text
 from psycopg2.extras import Json as jsonb
 from fastapi_sqlalchemy import db
@@ -10,31 +11,41 @@ from uuid import uuid4
 OFFLINE_MSG = "AI server offline, check back later"
 
 
-def run_gpu_model(method, data):
+def submit_job(method, data):
     # AI offline (it's spinning up from views.py->cloud_updown.py)
-    res = db.session.execute("select status from jobs_status limit 1").fetchone()
-    if res.status != 'on':
+    status = M.Machine.gpu_status(db.session)
+    if status == 'off':
         return False
 
     jid = M.Job.create_job(method=method, data_in=data)
     if not jid: return False
-    jid = {'jid': jid}
+
+    return dict(
+        jid=jid,
+        queue=M.Job.place_in_queue(jid)
+    )
+
+
+def await_job(jid):
+    params = {'jid': jid}
     i = 0
     while True:
         time.sleep(1)
-        res = db.session.execute(text("select state from jobs where id=:jid"), jid)
-        state = res.fetchone().state
+        job = db.session.execute(text("""
+        select state, method from jobs where id=:jid
+        """), params).fetchone()
 
-        # 5 seconds, still not picked up; something's wrong
-        if i > 4 and state in ['new', 'error']:
-            return False
+        # TODO notify them of error?
+        # 10 minutes, give up
+        if job.state == 'error' or i > 60*10:
+            return Box(method=job.method, data_out=False)
 
-        if state == 'done':
-            job = db.session.execute(text("delete from jobs where id=:jid returning method, data_out"), jid).fetchone()
+        if job.state == 'done':
+            job = db.session.execute(text("""
+            delete from jobs where id=:jid returning method, data_out
+            """), params).fetchone()
             db.session.commit()
-            res = job.data_out
-            if job.method == 'sentence-encode': res = np.array(res)
-            return res
+            return job
         i += 1
 
 

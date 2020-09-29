@@ -306,21 +306,7 @@ if __name__ == '__main__':
     parser.add_argument("--jid")
     args = parser.parse_args()
 
-    # TODO refactor this, copied from run.py
-    jid = args.jid
-    try:
+    def run_books_():
         run_books(args.uid)
-        with session() as sess:
-            sess.execute(text(f"""
-            update jobs set state='done' where id=:jid
-            """), dict(jid=jid))
-        logger.warning(f"Books {jid} done")
-    except Exception as err:
-        err = str(traceback.format_exc())
-        logger.error(f"Books error {err}")
-        res = {"error": err}
-        with session() as sess:
-            sess.execute(text(f"""
-            update jobs set state='error', data_out=:data where id=:jid
-            """), dict(data=jsonb(res), jid=jid))
-3
+        return {}
+    M.Job.wrap_job(args.jid, 'books', run_books_)

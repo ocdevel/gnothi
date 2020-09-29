@@ -1,82 +1,57 @@
-version: "3"
+version: "3.7"
 
 services:
-  traefik:
-    image: traefik:v2.2
-    container_name: traefik
-    command:
-      #- --log.level=DEBUG
-      - --api=false
-      - --providers.docker=true
-      - --providers.docker.exposedbydefault=false
-      - --entrypoints.web.address=:80
-      - --entrypoints.websecure.address=:443
-      - --certificatesresolvers.myresolver.acme.tlschallenge=true
-      #- --certificatesresolvers.myresolver.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory
-      - --certificatesresolvers.myresolver.acme.email=tylerrenelle@gmail.com
-      - --certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json
-    ports:
-      - 80:80
-      - 443:443
-    restart: unless-stopped
-    volumes:
-      - ./letsencrypt:/letsencrypt
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-
   server:
-    #image: lefnire/gnothi:server-0.0.8
     build:
       context: .
       dockerfile: ./server.dockerfile
     container_name: jserver
+    entrypoint: /bin/bash
     environment:
-      ENVIRONMENT: production
-      ACCESS_LOG: ""
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.server.rule=Host(`api.gnothiai.com`)
-      - traefik.http.routers.server.entrypoints=websecure
-      - traefik.http.routers.server.tls.certresolver=myresolver
+      ENVIRONMENT: development
+    ports:
+      - 5002:8000
     stdin_open: true
     volumes:
+      - ./server/:/app
+      - ./common/:/app/common
       - ./storage:/storage
-    restart: unless-stopped
     logging:
       options:
         max-size: "5m"
         max-file: "3"
 
   client:
-    #image: lefnire/gnothi:client-0.0.8
     build:
       context: .
       dockerfile: ./client.dockerfile
+    entrypoint: yarn start
     container_name: jclient
-    labels:
-      - traefik.enable=true
-
-      # redirect http->https. TODO find global https redirect solution
-      - traefik.http.middlewares.ssl-redir.redirectscheme.scheme=https
-      - traefik.http.middlewares.ssl-redir.redirectscheme.permanent=true
-      - traefik.http.routers.client80.middlewares=ssl-redir
-
-      - traefik.http.routers.client80.rule=Host(`gnothiai.com`,`www.gnothiai.com`,`gnothiapp.com`,`www.gnothiapp.com`)
-      - traefik.http.routers.client80.entrypoints=web
-      #- traefik.http.services.client80.loadbalancer.server.port=80
-
-      - traefik.http.routers.client443.rule=Host(`gnothiai.com`,`www.gnothiai.com`,`gnothiapp.com`,`www.gnothiapp.com`)
-      - traefik.http.routers.client443.entrypoints=websecure
-      - traefik.http.routers.client443.tls.certresolver=myresolver
-      - traefik.http.services.client443.loadbalancer.server.port=80
-
-      # redirect gnothiapp.com
-      - traefik.http.middlewares.redir-gnothi.redirectregex.regex=^(.*)gnothiapp.com(.*)
-      - traefik.http.middlewares.redir-gnothi.redirectregex.replacement=https://gnothiai.com
-      - traefik.http.routers.client443.middlewares=redir-gnothi
-      
+    ports:
+      - 3002:3000
     stdin_open: true
-    restart: unless-stopped
+    volumes:
+      - ./client:/app
     logging:
       options:
         max-size: "5m"
         max-file: "3"
+
+  gpu-dev:
+    build:
+      context: .
+      dockerfile: ./gpu.dockerfile
+    container_name: jgpu-dev
+    entrypoint: /bin/bash
+    stdin_open: true
+    restart: unless-stopped
+    environment:
+      ENVIRONMENT: development
+    volumes:
+      - ./gpu:/paperspace
+      - ./common:/paperspace/common
+      - ./storage:/storage
+      - ./tmp:/paperspace/tmp
+    device_requests:
+      - capabilities:
+          - "gpu"

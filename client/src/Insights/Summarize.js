@@ -1,7 +1,7 @@
 import React, {useState} from 'react'
 import {Form, InputGroup, Button, Col} from "react-bootstrap"
 import {sent2face} from "../utils"
-import {spinner} from "./utils"
+import {Spinner} from "./utils"
 
 import { useSelector, useDispatch } from 'react-redux'
 import { getInsights, setInsights } from '../redux/actions'
@@ -11,8 +11,8 @@ export default function Summarize() {
   const insights = useSelector(state => state.insights)
   const dispatch = useDispatch()
 
-  const {summarize_req, summarize_res, summarize_fetching} = insights
-  const {code, message, data} = summarize_res
+  const {summarize_req, summarize_res1, summarize_res2, summarize_fetching} = insights
+  const {code, message, data} = summarize_res2
 
   if (code === 401) { return <h5>{message}</h5> }
 
@@ -50,7 +50,7 @@ export default function Summarize() {
   return <>
     {renderForm()}
     <Form onSubmit={submit}>
-      {summarize_fetching ? spinner : <>
+      {summarize_fetching ? <Spinner job={summarize_res1} /> : <>
         <Button
           disabled={aiStatus !== 'on'}
           type="submit"

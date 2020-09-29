@@ -6,12 +6,14 @@ from fastapi_sqlalchemy import DBSessionMiddleware  # middleware helper
 # Database
 from common.database import init_db, shutdown_db, fa_users_db, engine
 from common.utils import vars, SECRET, utcnow
+import common.models as M
 
 # Jobs
 import pytz
 from app.ml import run_influencers
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from app import habitica
+from common.cloud_updown import cloud_up_maybe
 
 app = FastAPI()
 # app.secret_key = SECRET
@@ -33,13 +35,9 @@ async def startup():
     scheduler.start()
     scheduler.add_job(habitica.cron, "cron", hour="*")
     scheduler.add_job(run_influencers, "cron", hour="*")
-
-    # ensure jobs_status has the 1 row
-    engine.execute(f"""
-    insert into jobs_status (id, status, ts_client, ts_svc, svc)
-    values (1, 'off', {utcnow}, {utcnow}, null)
-    on conflict (id) do nothing;
-    """)
+    scheduler.add_job(cloud_up_maybe, "cron", second="*/5")
+    scheduler.add_job(M.Machine.purge, "cron", minute="*")
+    scheduler.add_job(M.Job.purge, "cron", minute="*")
 
 
 @app.on_event("shutdown")

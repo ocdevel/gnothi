@@ -1,4 +1,4 @@
-import enum, pdb, re, threading, time, datetime
+import enum, pdb, re, threading, time, datetime, traceback
 from typing import Optional, List, Any, Dict
 from pydantic import BaseModel, UUID4
 from dateutil import tz
@@ -11,6 +11,7 @@ from common.utils import vars, utcnow, nowtz
 
 from sqlalchemy import text as satext, Column, Integer, Enum, Float, ForeignKey, Boolean, JSON, Date, Unicode, \
     func, TIMESTAMP, select, or_, and_
+from psycopg2.extras import Json as jsonb
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship, backref, object_session, column_property
 from sqlalchemy.dialects.postgresql import UUID, JSONB, ARRAY
@@ -129,6 +130,15 @@ class User(Base, SQLAlchemyBaseUserTable):
         txt = re.sub(r'\s+', ' ', txt)
         # print(txt)
         return txt
+
+    @staticmethod
+    def last_checkin(sess):
+        return sess.execute(f"""
+        select extract(
+            epoch FROM ({utcnow} - max(updated_at))
+        ) / 60 as mins
+        from users limit 1 
+        """).fetchone().mins
 
 
 class FU_User(fu_models.BaseUser): pass
@@ -695,23 +705,35 @@ class Bookshelf(Base):
         # return [dict(b) for b in books]
 
 
+class MachineTypes(enum.Enum):
+    gpu = "gpu"
+    server = "server"
+
+
 class Job(Base):
     __tablename__ = 'jobs'
     id = IDCol()
     created_at = DateCol()
     updated_at = DateCol(update=True)
-    method = Column(Unicode)
-    state = Column(Unicode, server_default="new")
+    method = Column(Unicode, index=True, nullable=False)
+    state = Column(Unicode, server_default="new", index=True)
+    run_on = Column(Enum(MachineTypes), server_default="gpu", index=True)
+    # FK of Machine.id (but don't use FK, since we delete Machines w/o invalidating jobs)
+    machine_id = Column(Unicode, index=True)
     data_in = Column(JSONB)
     data_out = Column(JSONB)
 
     @staticmethod
-    def create_job(method, data_in={}):
-        """Ensures certain jobs only created as singletons, never manually add Job() call this instead"""
+    def create_job(method, data_in={}, **kwargs):
+        """
+        Ensures certain jobs only created once at a time. Never manually add Job() call this instead
+        """
         with session() as sess:
             arg0 = data_in.get('args', [None])[0]
             if type(arg0) != str: arg0 = None
 
+            # For entries, profiles: set ai_ran=False to queue them into the next batch,
+            # then arg0 isn't used downstream (was previously).
             if method in ('entries', 'profiles') and arg0:
                 table = dict(entries='entries', profiles='users')[method]
                 sess.execute(satext(f"""
@@ -729,16 +751,26 @@ class Job(Base):
                 when method='books' and data_in->'args'->>0=:arg0 then true
                 when method='entries' then true
                 when method='profiles' then true
+                when method='habitica' then true
                 else false
-            end;
+            end
             """), dict(method=method, arg0=arg0)).fetchone()
             if exists: return False
 
-            j = Job(method=method, data_in=data_in)
+            j = Job(method=method, data_in=data_in, **kwargs)
             sess.add(j)
             sess.commit()
             sess.refresh(j)
             return str(j.id)
+
+    @staticmethod
+    def place_in_queue(jid):
+        return db.session.execute(satext(f"""
+        select (
+            (select count(*) from jobs where state in ('working', 'new') and created_at < (select created_at from jobs where id=:jid))
+            / greatest((select count(*) from machines where status in ('on', 'pending')), 1)
+        ) as ct
+        """), dict(jid=jid)).fetchone().ct
 
     @staticmethod
     def multiple_book_jobs(uids):
@@ -754,14 +786,100 @@ class Job(Base):
         for i, uid in enumerate(uids):
             threading.Thread(target=delay_books, args=(uid, i)).start()
 
+    @staticmethod
+    def wrap_job(jid, method, fn):
+        logger.info(f"Running job {method}")
+        try:
+            start = time.time()
+            res = fn()
+            sql = "update jobs set state='done', data_out=:data where id=:jid"
+            logger.info(f"Job {method} complete {time.time() - start}")
+        except Exception as err:
+            err = str(traceback.format_exc())  # str(err)
+            res = dict(error=err)
+            sql = "update jobs set state='error', data_out=:data where id=:jid"
+            logger.error(f"Job {method} error {time.time() - start} {err}")
+        with session() as sess:
+            sess.execute(satext(sql), dict(data=jsonb(res), jid=str(jid)))
+            sess.commit()
 
-class JobsStatus(Base):
-    __tablename__ = 'jobs_status'
-    id = Column(Integer, primary_key=True)
+    @staticmethod
+    def take_job(sess, sql_frag):
+        job = sess.execute(satext(f"""
+        update jobs set state='working', machine_id=:machine 
+        where id in (
+            select id from jobs 
+            where state='new' and {sql_frag}
+            order by created_at asc
+            limit 1
+        )
+        returning id, method
+        """), dict(machine=vars.MACHINE)).fetchone()
+        sess.commit()
+        return job
+
+    @staticmethod
+    def purge():
+        with session() as sess:
+            """Purge completed or stuck jobs. Completed jobs aren't too useful for admins; error is."""
+            sess.execute(f"""
+            delete from jobs 
+            where created_at < {utcnow} - interval '15 minutes' 
+                and state in ('working', 'done') 
+            """)
+            sess.commit()
+
+
+class Machine(Base):
+    """
+    List of running machines (gpu, server)
+    """
+    __tablename__ = 'machines'
+    id = Column(Unicode, primary_key=True)  # socket.hostname()
+    #type = Column(Enum(MachineTypes), server_default="gpu")
     status = Column(Unicode)
-    ts_client = DateCol()
-    ts_svc = DateCol()
-    svc = Column(Unicode)
+    created_at = DateCol()
+    updated_at = DateCol(update=True)
+
+    @staticmethod
+    def gpu_status(sess):
+        res = sess.execute(f"""
+        select status from machines
+        -- prefer 'on' over others, to show online if so
+        order by case 
+            when status='on' then 1
+            when status='pending' then 2
+        end asc
+        limit 1
+        """).fetchone()
+        return res.status if res else "off"
+
+    @staticmethod
+    def notify_online(sess, id, status='on'):
+        # missing vals get server_default
+        sess.execute(satext(f"""
+        insert into machines (id, status) values (:id, :status)
+        on conflict(id) do update set status=:status, updated_at={utcnow}
+        """), dict(id=id, status=status))
+        sess.commit()
+
+    @staticmethod
+    def purge():
+        with session() as sess:
+            """Purge machines which haven't removed themselves properly"""
+            sess.execute(f"""
+            delete from machines where updated_at < {utcnow} - interval '5 minutes' 
+            """)
+            sess.commit()
+
+    @staticmethod
+    def job_ct_on_machine(sess, id):
+        return sess.execute(satext(f"""
+        select count(*) ct from jobs where state='working'
+            and machine_id=:id
+            -- check time in case broken/stale
+            and created_at > {utcnow} - interval '2 minutes'
+        """), dict(id=id)).fetchone().ct
 
 
 class SILimitEntries(BaseModel):
@@ -770,7 +888,7 @@ class SILimitEntries(BaseModel):
 
 
 class SIQuestion(SILimitEntries):
-    query: str
+    question: str
 
 
 class SISummarize(SILimitEntries):

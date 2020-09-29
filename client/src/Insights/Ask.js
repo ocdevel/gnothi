@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from "react";
 import {Col, Form, Card, Button, Alert} from "react-bootstrap";
-import {spinner} from './utils'
+import {Spinner} from './utils'
 
 import { useSelector, useDispatch } from 'react-redux'
 import { getInsights, setInsights } from '../redux/actions'
@@ -10,8 +10,8 @@ export default function Ask() {
   const insights = useSelector(state => state.insights)
   const dispatch = useDispatch()
 
-  const {ask_req, ask_fetching, ask_res} = insights
-  const {code, message, data: answers} = ask_res
+  const {ask_req, ask_fetching, ask_res1, ask_res2} = insights
+  const {code, message, data: answers} = ask_res2
 
   if (code === 401) { return <h5>{message}</h5> }
 
@@ -39,7 +39,7 @@ export default function Ask() {
            Use proper English & grammar. Use personal pronouns.
         </Form.Text>
       </Form.Group>
-      {ask_fetching ? spinner : <>
+      {ask_fetching ? <Spinner job={ask_res1} /> : <>
         <Button
           disabled={aiStatus !== 'on'}
           variant="primary"
