@@ -1,4 +1,4 @@
-FROM lefnire/dl:transformers-pt-tf
+FROM lefnire/dl:transformers-pt-tf-0.0.2
 
 # TODO switch to mysql-python-connector & remove apt-get
 RUN apt-get install -y default-libmysqlclient-dev

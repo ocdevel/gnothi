@@ -16,15 +16,16 @@ Currently very hairy, will clean this up soon.
 * Install Postgres & MySQL servers on your host. Currently not using Docker, as I'm constantly pruning and I want to keep my data between sessions (and use the same SQL hosts for other projects).
 * `cp common/config.example.json common/config.json` and modify
 * Install Docker & docker-compose [with GPU support](https://github.com/docker/compose/issues/6691#issuecomment-670700674). If on Windows, you'll need [WSL2 + Dev channel](https://medium.com/@dalgibbard/docker-with-gpu-support-in-wsl2-ebbc94251cf5)
-* `docker-compose -f dev.yml up -d`
+* `docker-compose up -d`
 
 You'll likely want to `pip install -e` some helper modules during development, since they'll be in active development side-by-side.
 
 ```
-mkdir tmp && cd tmp
+mkdir tmp && pushd tmp
 git clone https://github.com/lefnire/lefnire_ml_utils.git
-# dev.yml will pip install -e tmp/lefnire_ml_utils on run
-docker-compsoe -f dev.yml restart gpu-dev
+popd
+docker-compose exec gpu-dev
+$ pip install -e tmp/lefnire_ml_utils
 ```
 
 Note: docker-compose.yml, production deploy, will go away soon as I move to ECS & S3
@@ -33,10 +34,11 @@ Note: docker-compose.yml, production deploy, will go away soon as I move to ECS 
 First test GPU, which sets up fixtures. Then test server. Client tests sorely needed!
 
 ```
-docker-compose -f dev.yml exec gpu-dev bash
-$ pytest -svv
-$ exit
+docker-compose exec gpu-dev bash
+$ pytest tests -svv
+$ # once it's done, you want to run it in another tab for your server tests
+$ ENVIRONMENT=testing python app/run.py
 
-docker-compose -f dev.yml exec server bash
-$ pytest
+docker-compose exec server bash
+$ pytest tests -svv
 ```

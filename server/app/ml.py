@@ -1,4 +1,5 @@
 import pickle, pdb
+from common.database import session
 import common.models as M
 import numpy as np
 from box import Box
@@ -27,26 +28,27 @@ def submit_job(method, data):
 
 
 def await_job(jid):
-    params = {'jid': jid}
-    i = 0
-    while True:
-        time.sleep(1)
-        job = db.session.execute(text("""
-        select state, method from jobs where id=:jid
-        """), params).fetchone()
-
-        # TODO notify them of error?
-        # 10 minutes, give up
-        if job.state == 'error' or i > 60*10:
-            return Box(method=job.method, data_out=False)
-
-        if job.state == 'done':
-            job = db.session.execute(text("""
-            delete from jobs where id=:jid returning method, data_out
+    with session() as sess:
+        params = {'jid': jid}
+        i = 0
+        while True:
+            time.sleep(1)
+            job = sess.execute(text("""
+            select state, method from jobs where id=:jid
             """), params).fetchone()
-            db.session.commit()
-            return job
-        i += 1
+
+            # TODO notify them of error?
+            # 10 minutes, give up
+            if job.state == 'error' or i > 60*10:
+                return Box(method=job.method, data_out=False)
+
+            if job.state == 'done':
+                job = sess.execute(text("""
+                delete from jobs where id=:jid returning method, data_out
+                """), params).fetchone()
+                sess.commit()
+                return job
+            i += 1
 
 
 def run_influencers():
