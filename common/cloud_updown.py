@@ -54,7 +54,7 @@ def cloud_up_maybe():
         vars_ = {**dict(vars), **{'MACHINE': 'paperspace'}}
         return job_client.create(
             machine_type='K80',
-            container='lefnire/gnothi:gpu-0.0.11',
+            container='lefnire/gnothi:gpu-0.0.12',
             project_id=vars.PAPERSPACE_PROJECT_ID,
             is_preemptible=True,
             command='python app/run.py',
@@ -65,7 +65,7 @@ def cloud_up_maybe():
 def cloud_down_maybe(sess):
     if is_dev(): return
 
-    last_job = sess.execute("""
+    last_job = sess.execute(f"""
     select extract(epoch FROM ({utcnow} - created_at)) / 60 as mins
     from jobs order by created_at desc limit 1
     """).fetchone()
