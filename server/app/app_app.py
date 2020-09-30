@@ -36,8 +36,8 @@ async def startup():
     scheduler.add_job(habitica.cron, "cron", hour="*")
     scheduler.add_job(run_influencers, "cron", hour="*")
     scheduler.add_job(cloud_up_maybe, "cron", second="*/5")
-    scheduler.add_job(M.Machine.purge, "cron", minute="*")
-    scheduler.add_job(M.Job.purge, "cron", minute="*")
+    scheduler.add_job(M.Machine.prune, "cron", minute="*")
+    scheduler.add_job(M.Job.prune, "cron", minute="*")
 
 
 @app.on_event("shutdown")

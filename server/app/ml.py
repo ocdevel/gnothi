@@ -43,8 +43,10 @@ def await_job(jid):
                 return Box(method=job.method, data_out=False)
 
             if job.state == 'done':
+                ## don't delete actually, let Job.prune handle that. Need last_job (created_at)
+                #delete from jobs where id=:jid returning method, data_out
                 job = sess.execute(text("""
-                delete from jobs where id=:jid returning method, data_out
+                select method, data_out from jobs where id=:jid
                 """), params).fetchone()
                 sess.commit()
                 return job

@@ -819,15 +819,23 @@ class Job(Base):
         return job
 
     @staticmethod
-    def purge():
+    def prune():
         with session() as sess:
-            """Purge completed or stuck jobs. Completed jobs aren't too useful for admins; error is."""
+            """prune completed or stuck jobs. Completed jobs aren't too useful for admins; error is."""
             sess.execute(f"""
             delete from jobs 
             where created_at < {utcnow} - interval '15 minutes' 
                 and state in ('working', 'done') 
             """)
             sess.commit()
+
+    @staticmethod
+    def last_job(sess):
+        res = sess.execute(f"""
+       select extract(epoch FROM ({utcnow} - created_at)) / 60 as mins
+       from jobs order by created_at desc limit 1
+       """).fetchone()
+        return res.mins if res else 99
 
 
 class Machine(Base):
@@ -864,9 +872,9 @@ class Machine(Base):
         sess.commit()
 
     @staticmethod
-    def purge():
+    def prune():
         with session() as sess:
-            """Purge machines which haven't removed themselves properly"""
+            """prune machines which haven't removed themselves properly"""
             sess.execute(f"""
             delete from machines where updated_at < {utcnow} - interval '5 minutes' 
             """)
