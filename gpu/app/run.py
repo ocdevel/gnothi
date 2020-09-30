@@ -61,14 +61,14 @@ if __name__ == '__main__':
     logger.info("\n\n")
 
     with session() as sess:
-        def do_thing():
+        while True:
             M.Machine.notify_online(sess, vars.MACHINE)
             cloud_down_maybe(sess)
 
             # only allow 2 jobs at a time.
             if M.Machine.job_ct_on_machine(sess, vars.MACHINE) >= 2:
                 time.sleep(1)
-                return
+                continue
 
             # Find jobs
             job = M.Job.take_job(sess, "run_on='gpu'")
@@ -76,20 +76,8 @@ if __name__ == '__main__':
                 if M.User.last_checkin(sess) > 10:
                     nlp_.clear()
                 time.sleep(1)
-                return
+                continue
 
             # aaf1ec95: multiprocessing.Process for problem models
             threading.Thread(target=run_job, args=(job,)).start()
             # run_job(job.id)
-
-        while True:
-            # During testing, tables get clobbered and can mess this up. Give it some leeway,
-            # but fail eventually
-            i = 0
-            try:
-                do_thing()
-                i = 0
-            except:
-                time.sleep(1)
-                if i > 5: raise
-                i += 1
