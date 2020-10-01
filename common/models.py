@@ -138,7 +138,7 @@ class User(Base, SQLAlchemyBaseUserTable):
             epoch FROM ({utcnow} - max(updated_at))
         ) / 60 as mins
         from users limit 1 
-        """).fetchone().mins
+        """).fetchone().mins or 99
 
 
 class FU_User(fu_models.BaseUser): pass

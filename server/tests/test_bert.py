@@ -1,7 +1,6 @@
 import os, pdb, pytest, time, random, datetime
 from sqlalchemy import text
 from lorem_text import lorem
-import pytest_check as check
 
 
 import logging
@@ -9,21 +8,34 @@ logger = logging.getLogger(__name__)
 
 import common.models as M
 
+@pytest.fixture()
+def submit_job(client, u):
+    def _submit_job(k, data, code=200):
+        res = client.post(f"/{k}", json=data, **u.user.header)
+        json = res.json()
+        if code == 200:
+            assert res.status_code == code
+        # At this point, if we're expecting a non-200 it could come AFTER job-submission,
+        # so don't assert it yet
+        elif res.status_code == code:
+            return json
+        assert json['jid']
+        assert json['queue'] is not None
+        res = client.get(f"/await-job/{json['jid']}", **u.user.header)
+        assert res.status_code == code
+        return res.json()
+    return _submit_job
+
 
 @pytest.fixture()
-def ml_jobs(client, u):
+def ml_jobs(client, u, submit_job):
     def _ml_jobs(limit_entries, code):
-        res = client.post("/themes", json=limit_entries, **u.user.header)
-        assert res.status_code == code
-        data = {**limit_entries, 'query': "Who am I?"}
-        res = client.post("/query", json=data, **u.user.header)
-        assert res.status_code == code
-        res = res.json()
+        res = submit_job("themes", data=limit_entries, code=code)
+        data = {**limit_entries, 'question': "What is VR?"}
+        res = submit_job("ask", data=data, code=code)
         assert len(res) > 0
         data = {**limit_entries, 'words': 300}
-        res = client.post("/summarize", json=data, **u.user.header)
-        assert res.status_code == code
-        res = res.json()
+        res = submit_job("summarize", data=data, code=code)
         assert len(res) > 0
     return _ml_jobs
 
@@ -49,38 +61,33 @@ def test_entries_count(post_entry, u, ml_jobs):
     ml_jobs(limit_entries, 400)
 
 
-# TODO re-work fixture scopes so I don't need pytest-check
-def test_entries_ml(post_entry, db, client, u, ml_jobs):
+def test_entries_ml(post_entry, db, client, u, ml_jobs, submit_job):
     # TODO use wikipedia entries to actually test qualitative results
     post_entry(0, no_ai=False)
     post_entry(1, no_ai=False)
     post_entry(2, no_ai=False)
 
-
     main_tag = list(u.user.tag1.keys())
     limit_entries = {'days': 10, 'tags': main_tag}
-    res = client.post("/themes", json=limit_entries, **u.user.header)
-    check.equal(res.status_code, 200)
-    res = res.json()
-    check.is_not_none(res['terms'])
-    check.greater(len(res['themes']), 0)
+    res = submit_job("themes", data=limit_entries)
+    assert res['terms']
+    assert len(res['themes']) > 0
 
     main_tag = list(u.user.tag1.keys())
     limit_entries = {'days': 10, 'tags': main_tag}
     ml_jobs(limit_entries, 200)
 
     sql = "select id from jobs where method='books'"
-    res = M.await_row(db, sql, timeout=100)
-    check.is_not_none(res)
+    assert M.await_row(db, sql, timeout=100)
 
     sql = "select id, state from jobs where state in ('done', 'error') and method='books'"
     res = M.await_row(db, sql, timeout=200)
-    check.is_not_none(res)
-    check.equal(res.state, 'done')
+    assert res
+    assert res.state == 'done'
     res = client.get(f"/books/ai", **u.user.header)
-    check.equal(res.status_code, 200)
+    assert res.status_code == 200
     res = res.json()
-    check.greater(len(res), 0)
+    assert len(res) > 0
 
     # def test_few_entries(self, client):
     #     eid = _post_entry(client)

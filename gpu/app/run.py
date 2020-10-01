@@ -11,7 +11,7 @@ from sqlalchemy import text
 # app.from books import run_books
 from app.themes import themes
 from app.influencers import influencers
-from common.utils import utcnow, vars
+from common.utils import utcnow, vars, is_test
 from common.database import session
 import common.models as M
 from common.cloud_updown import cloud_down_maybe
@@ -43,14 +43,15 @@ def run_job(job):
     args = data.get('args', [])
     kwargs = data.get('kwargs', {})
 
+    if is_test(): nlp_.clear()
+
     if k == 'books':
         os.system(f"python app/books.py --jid={jid_} --uid={args[0]}")
         return
 
-    def run_(): return m[k](*args, **kwargs)
-    M.Job.wrap_job(jid_, k, run_)
+    def fn(): return m[k](*args, **kwargs)
+    M.Job.wrap_job(jid_, k, fn)
     # 3eb71b3: unloading models. multiprocessing handles better
-
 
 if __name__ == '__main__':
     logger.info(f"torch.cuda.current_device() {torch.cuda.current_device()}")

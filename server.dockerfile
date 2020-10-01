@@ -25,7 +25,6 @@ RUN pip install \
   pytest \
   pytest-timeout \
   lorem-text \
-  pytest-check \
   gradient==1.1.0 \
   boto3
 
