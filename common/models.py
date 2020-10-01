@@ -693,9 +693,8 @@ class Bookshelf(Base):
 
     @staticmethod
     def get_shelf(user_id, shelf):
-        is_cool = db.session.query(User.is_cool).filter_by(id=user_id).scalar()
         books = db.session.execute(satext(f"""
-        select b.id, b.title, {"b.text" if is_cool else "'' as text"}, b.author, b.topic, b.amazon
+        select b.id, b.title, b.text, b.author, b.topic, b.amazon
         from books b 
         inner join bookshelf bs on bs.book_id=b.id 
             and bs.user_id=:uid and bs.shelf=:shelf

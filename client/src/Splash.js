@@ -119,8 +119,11 @@ function Details() {
       <h3>Mobile Apps</h3>
       <p>It would take me 2 weeks total to create an iPhone & Android app. Before I start that, I want to prove this webapp out - make sure people would use Gnothi. This website works great on mobile, so use this in your mobile browser for now. The two main features apps will add are (a) offline capabilities (journal offline, syncs when you're back online); and (b) <a href='https://en.wikipedia.org/wiki/Optical_character_recognition' target='_blank'>OCR</a> to take a photo of your <em>physical</em> journal pages (pen & paper), which gets converted to text & saved to Gnothi. Actually pretty easy using <a href='https://cloud.google.com/functions/docs/tutorials/ocr' target='_blank'>GCP</a>.</p>
       <hr />
-      <h3>Bugs/Features</h3>
+      <h3>Bugs & Features</h3>
       <p>Post any bug reports or feature requests to <a href='https://github.com/lefnire/gnothi' target='_blank'>Github</a></p>
+      <hr />
+      <h3>Privacy / Terms concerns</h3>
+      <p>I don't plan to do anything concerning with your data. If you trust AI analyzing your entries (the whole point of the system), but you don't trust the <a href='/privacy' target='_blank'>Privacy Policy</a>, go with the former. You can see everything I'm doing in the <a href='https://github.com/lefnire/gnothi' target='_blank'>code</a>. Hell, <a href='mailto:tylerrenelle@gmail.com'>schedule a Skype</a> with me so you can know the man behind the curtains. The Privacy Policy is auto-generated, and when I can afford to I'll get a lawyer to draft a proper one. As for <a href='/terms' target='_blank'>Terms</a>, the essence is "don't upload anything that will get me in trouble" (copyright images, book details, etc). I want to do right by you and make you feel comfortable, secure, and private. Also don't want to get sued.</p>
     </>
   }])
 
