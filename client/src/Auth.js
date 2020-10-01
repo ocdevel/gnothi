@@ -26,7 +26,7 @@ function Auth() {
   // Reset password
   let resetSuccess = location.search.match(/reset=true/i)
 
-  const changeUsername = e => setUsername(e.target.value)
+  const changeUsername = e => setUsername(e.target.value.toLowerCase())
   const changePassword = e => setPassword(e.target.value)
   const changePasswordConfirm = e => setPasswordConfirm(e.target.value)
 
