@@ -1,5 +1,14 @@
 import React from 'react'
-import {Jumbotron, Button, Container, Row, Col} from 'react-bootstrap'
+import {
+  Jumbotron,
+  Button,
+  Container,
+  Row,
+  Col,
+  Tabs,
+  Tab,
+  Nav
+} from 'react-bootstrap'
 import {
   FaTextHeight,
   FaRobot,
@@ -8,7 +17,7 @@ import {
   FaQuestion,
   FaCubes,
   FaBook,
-  FaSmile,
+  FaSmile
 } from 'react-icons/fa'
 import { IoMdJournal} from "react-icons/io"
 import Error from "./Error";
@@ -18,27 +27,204 @@ import {
   BrowserRouter as Router,
   Switch,
   Route,
-  Link
+  Link,
+  useRouteMatch,
+  useParams
 } from "react-router-dom"
+import {LinkContainer} from 'react-router-bootstrap'
 import {useSelector} from "react-redux"
+import _ from 'lodash'
+
+function Details() {
+  let { tab } = useParams();
+
+  return <>
+    <Tab.Container activeKey={tab}>
+      <Row>
+        <Col sm={3}>
+          <Nav variant="pills" className="flex-column">
+            <Nav.Item>
+              <LinkContainer to='/about/summaries'>
+                <Nav.Link>Summaries</Nav.Link>
+              </LinkContainer>
+            </Nav.Item>
+            <Nav.Item>
+              <LinkContainer to='/about/themes'>
+                <Nav.Link>Themes</Nav.Link>
+              </LinkContainer>
+            </Nav.Item>
+            <Nav.Item>
+              <LinkContainer to='/about/ask'>
+                <Nav.Link>Ask</Nav.Link>
+              </LinkContainer>
+            </Nav.Item>
+            <Nav.Item>
+              <LinkContainer to='/about/fields'>
+                <Nav.Link>Fields</Nav.Link>
+              </LinkContainer>
+            </Nav.Item>
+            <Nav.Item>
+              <LinkContainer to='/about/sharing'>
+                <Nav.Link>Sharing</Nav.Link>
+              </LinkContainer>
+            </Nav.Item>
+            <Nav.Item>
+              <LinkContainer to='/about/resources'>
+                <Nav.Link>Resources</Nav.Link>
+              </LinkContainer>
+            </Nav.Item>
+          </Nav>
+        </Col>
+        <Col sm={9}>
+          <Tab.Content className='feature-details'>
+            <Tab.Pane eventKey="summaries">
+              <h3>Summarize your entries over custom time periods, in custom lengths</h3>
+              <p>It's hard to remember what's happened over the past days, months, years. With summaries you specify how far go to back (eg  2 weeks) and how many words to output (eg, 300 words). Gnothi AI will capture the most essential phrases.</p>
+              <img src='/screenshots/summarize.png' />
+              <hr />
+              <h3>Each entry is summarized</h3>
+              <p>When you submit entries, AI generates a title-summary and body-summary, so going through old entries is easier. You can override this per entry.</p>
+              <img src='/screenshots/entry.png' style={{padding: 10}} />
+              <hr />
+              <h3>Especially useful for therapists</h3>
+              <p>If you choose to share specified journals with a therapist (see <Link to='/about/sharing'>Sharing</Link>), they'll be able to generate summaries since your last session for a quick catch-up / digest.</p>
+            </Tab.Pane>
+
+            <Tab.Pane eventKey="themes">
+              <h3>See common recurring themes across your entries</h3>
+              <p>Our lives are often vexed by a handful of the same recurring issues. You might not even be aware of these, until you step back and see the same topics repeated over the past months and years.</p>
+              <img src='/screenshots/themes.png' />
+              <hr/>
+              <h3>Dreams!</h3>
+              <p>But it's not all issues and problems, you may find yourself dreaming of the same few symbols multiple months. I didn't realize I dreamt so much of <strong>turtles</strong> until Gnothi Themes pointed it out. I immediately hit the dream dictionary.</p>
+            </Tab.Pane>
+
+            <Tab.Pane eventKey="ask">
+              <h3>Ask questions about your entries</h3>
+              <p>Gnothi AI lets you ask questions of your entries. "How do I feel?" or "what should I do?". The answers have often surprised me. Particularly useful for therapists, who can treat this like a knowledge-base on their client. "What is Tyler's relation with his mother?" or "Who is Lara?"</p>
+              <img src='/screenshots/ask.png' />
+            </Tab.Pane>
+
+            <Tab.Pane eventKey="fields">
+              <h3>Track fields like "mood" and "sleep"</h3>
+              <p>Gnothi lets you track fields - things like mood, sleep. You can also track habits - like exercise, substance intake, daily journaling - but for this I recommend <a href="https://habitica.com" target="_blank">Habitica</a>, which Gnothi syncs with directly.</p>
+              <img src='/screenshots/fields.png' />
+              <hr />
+              <h3>Influencers: field-to-field correlation</h3>
+              <p>Gnothi uses time-lagged XGBoost to determine how fields interact with each other. That is: correlation, or "causation" if you're daring. Eg, what most strongly alters my sleep quality? Caffeine? Exercise? This helps you make intelligent life changes.</p>
+              <p>Hell, Gnothi's so smart it can predict your field-entries for tomorrow! And of course, fields need charts, graphs, etc. These features will improve over time.</p>
+              <img src='/screenshots/fields_charts.png' />
+              <hr />
+              <h3>Overall Influencers</h3>
+              <p>And not just per-field correlations, see which fields are really running the show overall. See "Journal" at the top of my list? This is real, I didn't doctor it - Gnothi's telling me that journaling has impacted my life most of all my habits.</p>
+              <img src='/screenshots/fields_top_influencers.png' />
+            </Tab.Pane>
+
+            <Tab.Pane eventKey="sharing">
+              <h3>Share entries with therapists or friends</h3>
+              <p>You can share certain features with email addresses. For entries, you'll specify one or more tags, and any entries with that tag will be shared with this person. I'm currently sharing my main journal with my therapist, who uses Gnothi to catch up on me since our last session.</p>
+              <img src='/screenshots/sharing.png' style={{padding: 10}}/>
+              <hr />
+              <h3>Sharee ("snoopers") tools</h3>
+               <p>For snoopers (the word I use for those you share with), the process goes like this. They get notified of new shared entries. They click your email to see what's up, and they're now "acting" (snooping) as you. They only see what you've explicitly shared with them. If you've shared fields, they can use the AI tools (summaries, question-answering, themes). You might want to share fields with a therapist, if they're interested in substance intake or mood-tracking. And so on.</p>
+              <img src='/screenshots/sharing_header.png' />
+            </Tab.Pane>
+
+            <Tab.Pane eventKey="resources">
+              <h3>AI-recommended self-help books</h3>
+              <p>My favorite feature. Gnothi AI matches your entries to a database of books, based on their descriptions. You can then thumb-up/down recommendations, or save for later, and your recommendations will improve. This feature is really cool AI magic, if you're curious read the following small-print.</p>
+              <p><small className={'text-muted'}>Gnothi uses <a href='https://github.com/UKPLab/sentence-transformers' target='_blank'>sentence-transformers</a> to embed your entries into vector-space, does the same for books, and matches them via cosine similarity. <a href='https://huggingface.co/transformers/' target='_blank'>BERT</a> is really a magical thing.</small></p>
+              <img src='/screenshots/books.png' style={{padding: 10}}/>
+              <hr />
+              <h3>AI-recommended therapists</h3>
+              <p>Using the same technology above, you can find therapists who match you "in essence" - that is, their specialties (specified in their bio) match your entries via embeddings. Are you a therapist? List yourself now while it's free, you'll be grandfathered once I start chargine!</p>
+            </Tab.Pane>
+
+          </Tab.Content>
+        </Col>
+      </Row>
+    </Tab.Container>
+  </>
+}
+
+function Overviews() {
+  return <>
+    <Row lg={3} sm={2} xs={1}>
+      <Col>
+        <h3><FaTextHeight /> Summaries</h3>
+        <p>AI summarizes your entries over days, weeks, months.</p>
+        <LinkContainer to={`/about/summaries`}>
+          <Button variant='outline-primary'>Details</Button>
+        </LinkContainer>
+      </Col>
+      <Col>
+        <h3><FaCubes /> Themes</h3>
+        <p>AI shows your recurring themes & issues. Also valuable for dream themes.</p>
+        <LinkContainer to={`/about/themes`}>
+          <Button variant='outline-primary'>Details</Button>
+        </LinkContainer>
+      </Col>
+      <Col>
+        <h3><FaQuestion /> Questions</h3>
+        <p>Ask AI anything about yourself. The answers and insights may surprise you.</p>
+        <LinkContainer to={`/about/ask`}>
+          <Button variant='outline-primary'>Details</Button>
+        </LinkContainer>
+      </Col>
+      <Col>
+        <h3><FaBook /> Books</h3>
+        <p>AI recommends self-help books based on your entries.</p>
+        <LinkContainer to={`/about/resources`}>
+          <Button variant='outline-primary'>Details</Button>
+        </LinkContainer>
+      </Col>
+      <Col>
+        <h3><FaSmile /> Field Tracking</h3>
+        <p>Track fields (mood, sleep, substance intake, etc). AI shows you how they interact and which ones to focus on.</p>
+        <LinkContainer to={`/about/fields`}>
+          <Button variant='outline-primary'>Details</Button>
+        </LinkContainer>
+      </Col>
+      <Col>
+        <h3><FaShare /> Share</h3>
+        <p>Share journals with therapists, who can use all these tools to catch up since your last session.</p>
+        <LinkContainer to={`/about/sharing`}>
+          <Button variant='outline-primary'>Details</Button>
+        </LinkContainer>
+      </Col>
+      <Col>
+        <h3><FaLock /> Security</h3>
+        <p>All text is industry-standard encrypted.</p>
+      </Col>
+      <Col>
+        <h3><FaRobot /> Future</h3>
+        <p>The sky's the limit with <a target='_blank' href='https://huggingface.co/transformers/'>BERT</a> language models! Astrology? Dream analysis? </p>
+      </Col>
+    </Row>
+  </>
+}
+
 
 export default function Splash() {
+  const match = useRouteMatch()
   const error = useSelector(state => state.error)
   return <>
     <Error message={error} />
     <Jumbotron className='gnothi-jumbo'>
       <div className='jumbo-content'>
-        <div className='jumbo-text'>
-          <img src="/logo192.png" style={{marginLeft: '1rem'}}/>
-          <h1>Gnothi</h1>
-          <h4>Gnōthi Seauton: Know Thyself</h4>
-          <p>A journal that uses AI to help you introspect and find resources</p>
-          <Route exact path='/'>
-            <Link to='/auth'>
-              <Button>Sign In</Button>
-            </Link>
-          </Route>
-        </div>
+        <LinkContainer to='/'>
+          <div className='jumbo-text cursor-pointer'>
+            <img src="/logo192.png" style={{marginLeft: '1rem'}}/>
+            <h1>Gnothi</h1>
+            <h4>Gnōthi Seauton: Know Thyself</h4>
+            <p>A journal that uses AI to help you introspect and find resources</p>
+            <Route exact path='/'>
+              <Link to='/auth'>
+                <Button>Sign In</Button>
+              </Link>
+            </Route>
+          </div>
+        </LinkContainer>
         <Switch>
           <Route path='/reset-password'>
             <div className='auth-block'>
@@ -54,40 +240,14 @@ export default function Splash() {
       </div>
     </Jumbotron>
     <Container className='splash-features' fluid>
-      <Row lg={3} sm={2} xs={1}>
-        <Col>
-          <h3><FaTextHeight /> Summaries</h3>
-          <p>AI summarizes your entries, your week, your year.</p>
-        </Col>
-        <Col>
-          <h3><FaCubes /> Themes</h3>
-          <p>AI shows your recurring themes & issues. Also valuable for dream themes.</p>
-        </Col>
-        <Col>
-          <h3><FaQuestion /> Questions</h3>
-          <p>Ask AI anything about yourself. The answers and insights may surprise you.</p>
-        </Col>
-        <Col>
-          <h3><FaBook /> Books</h3>
-          <p>AI recommends self-help books based on your entries.</p>
-        </Col>
-        <Col>
-          <h3><FaSmile /> Field Tracking</h3>
-          <p>Track fields (mood, sleep, substance intake, etc). AI shows you how they interact and which ones to focus on.</p>
-        </Col>
-        <Col>
-          <h3><FaShare /> Share</h3>
-          <p>Share journals with therapists, who can use all these tools to catch up since your last session.</p>
-        </Col>
-        <Col>
-          <h3><FaLock /> Security</h3>
-          <p>All text is industry-standard encrypted.</p>
-        </Col>
-        <Col>
-          <h3><FaRobot /> Future</h3>
-          <p>The sky's the limit with <a target='_blank' href='https://huggingface.co/transformers/'>BERT</a> language models! Astrology? Dream analysis? </p>
-        </Col>
-      </Row>
+      <Switch>
+        <Route path='/about/:tab'>
+          <Details />
+        </Route>
+        <Route>
+          <Overviews />
+        </Route>
+      </Switch>
     </Container>
   </>
 }

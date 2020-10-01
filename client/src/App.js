@@ -76,6 +76,9 @@ function App() {
       <Error message={serverError} />
 
       <Switch>
+        <Route path='/about'>
+          <Splash />
+        </Route>
         <Route path="/j">
           <Entries />
         </Route>
