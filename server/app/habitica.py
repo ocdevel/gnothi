@@ -102,7 +102,7 @@ def cron():
         # server instances running. Then wait some random seconds each instance, rather than everybody
         # grabbing at once (race condition?). Not perfect, but will do for now.
         k = 'habitica'
-        M.Job.create_job(k, run_on='cpu')
+        M.Job.create_job(k, run_on='server')
         time.sleep(random.randint(0, 10))
 
         job = M.Job.take_job(db.session, f"method='{k}'")
