@@ -23,21 +23,23 @@ import numpy as np
 import pandas as pd
 from sqlalchemy import text
 from psycopg2.extras import Json as jsonb
-from sklearn import preprocessing as pp
 
 import logging
 logger = logging.getLogger(__name__)
 
-vecs_path = f"/storage/libgen_{vars.ENVIRONMENT}.npy"
+df_path = f"/storage/libgen_{vars.ENVIRONMENT}.df"
+enco_path = f"/storage/libgen_{vars.ENVIRONMENT}.npy"
+ann_path = f"/storage/libgen_{vars.ENVIRONMENT}.ann"
 
 
-def load_books_df(sess, user_id):
-    df = M.Bookshelf.books_with_scores(sess, user_id)
-    if df.shape[0]: return df
+def load_books_df():
+    if exists(df_path):
+        df = pd.read_feather(df_path)
+        if df.shape[0]: return df
 
     logger.info("Load books MySQL")
     FIND_PROBLEMS = False
-    ALL_BOOKS = False
+    ALL_BOOKS = True
 
     # for-sure psych. See tmp/topics.txt, or libgen.sql topics(lang='en')
     psych_topics = 'psychology|self-help|therapy'
@@ -128,13 +130,18 @@ def load_books_df(sess, user_id):
     df['thumbs'] = 0
 
     logger.info(f"Saving books to DB")
-    df.to_sql('books', sess.bind, index=False, chunksize=500, if_exists='append', method='multi')
-    return M.Bookshelf.books_with_scores(sess, user_id)
+    df.set_index('id', drop=False)\
+        .sort_values('id')\
+        .to_feather(df_path)
+    return df
 
 
-def load_books_vecs(df):
-    if exists(vecs_path):
-        with open(vecs_path, 'rb') as f:
+def load_books_embeddings(df):
+    if exists(ann_path):
+        # used as y, but since y is already on disk this param will be ignored
+        return np.array([])
+    if exists(enco_path):
+        with open(enco_path, 'rb') as f:
             vecs = np.load(f)
             if df.shape[0] == vecs.shape[0]:
                 return vecs
@@ -143,14 +150,14 @@ def load_books_vecs(df):
     logger.info(f"Running BERT on {df.shape[0]} entries")
     texts = (df.title + '\n' + df.text).tolist()
     vecs = Similars(texts).embed().value()
-    with open(vecs_path, 'wb') as f:
+    with open(enco_path, 'wb') as f:
         np.save(f, vecs)
     return vecs
 
 
-def load_books(sess, user_id):
-    df = load_books_df(sess, user_id)
-    vecs = load_books_vecs(df)
+def load_books():
+    df = load_books_df()
+    vecs = load_books_embeddings(df)
     return vecs, df
 
 
@@ -199,30 +206,27 @@ def train_books_predictor(books, vecs_books, fine_tune=True):
     return m
 
 
-def predict_books(user_id, vecs_user, n_recs=30, centroids=False):
+def predict_books(user_id, vecs_user, n_recs=30):
+    # TODO should I move this down further, to get more lines to test?
+    fixt = fixtures.load_books(user_id)
+    if fixt is not None: return fixt
+
+    vecs_books, books = load_books()
     with session() as sess:
-        # TODO should I move this down further, to get more lines to test?
-        fixt = fixtures.load_books(user_id)
-        if fixt is not None: return fixt
-        vecs_books, books = load_books(sess, user_id)
+        books_db = M.Bookshelf.books_with_scores(sess, user_id)
 
-    # normalize for cosine, and downstream DNN
+    # this should set on index (id) properly, todo verify
+    books['global_score'] = books_db.global_score | 0
+    books['user_score'] = books_db.user_score | 0
+    books['user_rated'] = books_db.user_rated
+    books['any_rated'] = books_db.any_rated
+
     chain = Similars(vecs_user, vecs_books).normalize()
-    vecs_user, vecs_books = chain.value()
+    # TODO this should be done once per month or so, all users to all books, save snapshot
+    # and fine-tune from here
+    dist = chain.cosine().value().min(0)
 
-    logger.info("Finding cosine similarities")
-    if centroids:
-        labels = chain.agglomorative().value()
-        lhs = np.vstack([
-            vecs_user[labels == l].mean(0)
-            for l in range(labels.max())
-        ])
-        chain = Similars(lhs, vecs_user)
-
-    # Take best cluster-score for every book
-    dist = chain.cosine().value().min(axis=0)
-    # 0f29e591: minmax_scale(dist). norm_out=True works better
-    # then map back onto books, so they're back in order (pandas index-matching)
+    top_pics = chain.ann(y_from_file=ann_path).value()
 
     # Push highly-rated books up, low-rated books down. Do that even stronger for user's own ratings.
     # Using negative-score because cosine DISTANCE (less is better)
