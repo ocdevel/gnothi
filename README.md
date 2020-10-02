@@ -10,12 +10,24 @@ A journal that uses AI to help you introspect and find resources.
 * Security: All text is industry-standard encrypted.
 * Future: The sky's the limit with BERT language models! Astrology? Dream analysis?
 
-## Setup
+# Setup
 Currently very hairy, will clean this up soon.
 
-* Install Postgres & MySQL servers on your host. Currently not using Docker, as I'm constantly pruning and I want to keep my data between sessions (and use the same SQL hosts for other projects).
+### Essentials
+* Install Postgres. Currently not using Docker, as I'm constantly pruning and I want to keep my data between sessions (and use the same SQL hosts for other projects).
 * `cp common/config.example.json common/config.json` and modify
-* Install Docker & docker-compose [with GPU support](https://github.com/docker/compose/issues/6691#issuecomment-670700674). If on Windows, you'll need [WSL2 + Dev channel](https://medium.com/@dalgibbard/docker-with-gpu-support-in-wsl2-ebbc94251cf5)
+* Install Docker & docker-compose
+* `docker-compose up -d`
+* If you get errors with `gpu-dev`, try `docker-compose up -d client && docker-compose up -d server` (then see section below)
+
+### To use AI
+* The client & server should run without the AI stuff, for a while, but you'll want to get this working eventually.
+* Libgen
+    * TODO: this part should be optional - don't use books unless libgen present. Someone PR me? 
+    * Install MySQL server on your host
+    * Download [libgen/dbdumps/libgen.rar](http://gen.lib.rus.ec/dbdumps/), extract, improt into MySQL
+    * Modify `common/config.json` for MySQL/libgen
+* Install docker-compose [with GPU support](https://github.com/docker/compose/issues/6691#issuecomment-670700674). If on Windows, you'll need [WSL2 + Dev channel](https://medium.com/@dalgibbard/docker-with-gpu-support-in-wsl2-ebbc94251cf5)
 * `docker-compose up -d`
 
 You'll likely want to `pip install -e` some helper modules during development, since they'll be in active development side-by-side.
@@ -27,8 +39,6 @@ popd
 docker-compose exec gpu-dev
 $ pip install -e tmp/lefnire_ml_utils
 ```
-
-Note: docker-compose.yml, production deploy, will go away soon as I move to ECS & S3
 
 ## Tests
 First test GPU, which sets up fixtures. Then test server. Client tests sorely needed!
