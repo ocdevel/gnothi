@@ -28,12 +28,12 @@ from sklearn import preprocessing as pp
 import logging
 logger = logging.getLogger(__name__)
 
+vecs_path = f"/storage/libgen_{vars.ENVIRONMENT}.npy"
 
-def load_books_df(sess):
-    # sort asc since that's how we mapped to vecs in first place (order_values)
-    df = pd.read_sql("select * from books order by id asc", sess.bind)
-    if df.shape[0]:
-        return df.set_index('id', drop=False)
+
+def load_books_df(sess, user_id):
+    df = M.Bookshelf.books_with_scores(sess, user_id)
+    if df.shape[0]: return df
 
     logger.info("Load books MySQL")
     FIND_PROBLEMS = False
@@ -129,15 +129,12 @@ def load_books_df(sess):
 
     logger.info(f"Saving books to DB")
     df.to_sql('books', sess.bind, index=False, chunksize=500, if_exists='append', method='multi')
+    return M.Bookshelf.books_with_scores(sess, user_id)
 
-    return df.set_index('id', drop=False)
-
-
-path_ = f"/storage/libgen_{vars.ENVIRONMENT}.npy"
 
 def load_books_vecs(df):
-    if exists(path_):
-        with open(path_, 'rb') as f:
+    if exists(vecs_path):
+        with open(vecs_path, 'rb') as f:
             vecs = np.load(f)
             if df.shape[0] == vecs.shape[0]:
                 return vecs
@@ -145,21 +142,19 @@ def load_books_vecs(df):
 
     logger.info(f"Running BERT on {df.shape[0]} entries")
     texts = (df.title + '\n' + df.text).tolist()
-    from app.nlp import nlp_
-    vecs = nlp_.sentence_encode(texts)
-    nlp_.clear()
-    with open(path_, 'wb') as f:
+    vecs = Similars(texts).embed().value()
+    with open(vecs_path, 'wb') as f:
         np.save(f, vecs)
     return vecs
 
 
-def load_books(sess):
-    df = load_books_df(sess)
+def load_books(sess, user_id):
+    df = load_books_df(sess, user_id)
     vecs = load_books_vecs(df)
     return vecs, df
 
 
-def train_books_predictor(books, vecs_books, shelf_idx, fine_tune=True):
+def train_books_predictor(books, vecs_books, fine_tune=True):
     logger.info("Training DNN")
     # linear+mse for smoother distances, what we have here? where sigmoid+xentropy for
     # harder decision boundaries, which we don't have?
@@ -187,13 +182,13 @@ def train_books_predictor(books, vecs_books, shelf_idx, fine_tune=True):
         callbacks=[es],
         validation_split=.3,
     )
-    if not fine_tune or shelf_idx.sum() < 3:
+    if not fine_tune or books.any_rated.sum() < 3:
         return m
 
     # Train harder on shelved books
     # K.set_value(m.optimizer.learning_rate, 0.0001)  # alternatively https://stackoverflow.com/a/60420156/362790
-    x2 = x[shelf_idx]
-    y2 = books[shelf_idx].dist
+    x2 = x[books.any_rated]
+    y2 = books[books.any_rated].dist
     m.fit(
         x2, y2,
         epochs=1,  # too many epochs overfits (eg to CBT). Maybe adjust LR *down*, or other?
@@ -209,11 +204,7 @@ def predict_books(user_id, vecs_user, n_recs=30, centroids=False):
         # TODO should I move this down further, to get more lines to test?
         fixt = fixtures.load_books(user_id)
         if fixt is not None: return fixt
-
-        vecs_books, books = load_books(sess)
-        sql = "select book_id as id, user_id, shelf from bookshelf where user_id=%(uid)s"
-        shelf = pd.read_sql(sql, sess.bind, params={'uid': user_id}).set_index('id', drop=False)
-    shelf_idx = books.id.isin(shelf.id)
+        vecs_books, books = load_books(sess, user_id)
 
     # normalize for cosine, and downstream DNN
     chain = Similars(vecs_user, vecs_books).normalize()
@@ -232,24 +223,24 @@ def predict_books(user_id, vecs_user, n_recs=30, centroids=False):
     dist = chain.cosine().value().min(axis=0)
     # 0f29e591: minmax_scale(dist). norm_out=True works better
     # then map back onto books, so they're back in order (pandas index-matching)
-    books['dist'] = dist
 
-    if shelf_idx.sum() > 0:
-        like, dislike = dist.min() - dist.std(), dist.max() + dist.std()
-        shelf_map = dict(like=like, already_read=like, recommend=like, dislike=dislike, remove=None, ai=None)
-        shelf['dist'] = shelf.shelf.apply(lambda k: shelf_map[k])
-        shelf.dist.fillna(books.dist, inplace=True)  # fill in "remove"
-        books.loc[shelf.index, 'dist'] = shelf.dist  # indexes(id) match, so assigns correctly
-        assert not books.dist.isna().any(), "Messed up merging shelf/books.dist by index"
+    # Push highly-rated books up, low-rated books down. Do that even stronger for user's own ratings.
+    # Using negative-score because cosine DISTANCE (less is better)
+    books['dist'] = dist
+    books['dist'] = books.dist \
+        + (books.dist.std() * -books.global_score / 2.) \
+        + (books.dist.std() * -books.user_score)
+    assert not books.dist.isna().any(), "Messed up merging shelf/books.dist by index"
+
 
     # e2eaea3f: save/load dnn
-    dnn = train_books_predictor(books, vecs_books, shelf_idx)
+    dnn = train_books_predictor(books, vecs_books)
 
     books['dist'] = dnn.predict(vecs_books)
 
     # dupes by title in libgen
     # r = books.sort_values('dist')\
-    df = books[~shelf_idx].sort_values('dist')\
+    df = books[~books.user_rated].sort_values('dist')\
         .drop_duplicates('title', keep='first')\
         .iloc[:n_recs]
     fixtures.save_books(user_id, df)

@@ -72,7 +72,9 @@ export default function Books() {
 
   const renderBook = b => (
     <div key={b.id}>
-      <h5>{b.title}</h5>
+      <h5>
+        {b.amazon ? <a href={b.amazon} target='_blank'>{b.title}</a> : b.title}
+      </h5>
       <p>
         <FaUser /> {b.author}<br/>
         <FaTags /> {b.topic}</p>

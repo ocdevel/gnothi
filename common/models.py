@@ -3,6 +3,7 @@ from typing import Optional, List, Any, Dict
 from pydantic import BaseModel, UUID4
 from dateutil import tz
 from uuid import uuid4
+import pandas as pd
 import logging
 logger = logging.getLogger(__name__)
 
@@ -702,6 +703,41 @@ class Bookshelf(Base):
         print(len(books))
         return books
         # return [dict(b) for b in books]
+
+    @staticmethod
+    def books_with_scores(sess, uid):
+        """
+        Get all thumbs for books. This is used by gpu/books.py for predicting recommendations, and the thumbs
+        push up-votes closer; down-votes further. Weight this-user's thumbs very high (of course), but also factor
+        in other user's thumbs to a small degree - like a rating system.
+        """
+        shelf_to_score = """
+        case when shelf in ('like', 'already_read', 'recommend') then 1
+        when shelf in ('dislike') then -1
+        else 0 end
+        """
+        sql = f"""
+        -- could use books.thumbs, but it's missing data from before I added it. Maybe switch to it eventually
+        with shelf_to_score as (
+            select book_id, sum({shelf_to_score}) as score
+            from bookshelf where user_id!=%(uid)s
+            group by book_id
+        ), books_ as (
+            select b.*, coalesce(s.score, 0) as global_score
+            from books b
+            left outer join shelf_to_score s on b.id=s.book_id
+        )
+        select b.*,
+            {shelf_to_score} as user_score, 
+            (shelf is not null) as user_rated,
+            (shelf is not null or b.global_score>0 or b.global_score<0) as any_rated 
+        from books_ b
+        left outer join bookshelf s on b.id=s.book_id and s.user_id=%(uid)s
+        -- sort id asc since that's how we mapped to numpy vectors in first place (order_values)
+        order by b.id asc
+        """
+        return pd.read_sql(sql, sess.bind, params={'uid': uid})\
+            .set_index('id', drop=False)
 
 
 class MachineTypes(enum.Enum):
