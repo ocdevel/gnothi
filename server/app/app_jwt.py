@@ -3,12 +3,13 @@ import datetime, pdb
 from app.app_app import app
 from common.utils import vars, SECRET
 from app.mail import send_mail
-from fastapi import Depends, Response, Request
+from fastapi import Depends, Response, Request, BackgroundTasks
 from fastapi_sqlalchemy import db  # an object to provide global access to a database session
 
 from fastapi_users.authentication import JWTAuthentication
 from fastapi_users import FastAPIUsers
 import common.models as M
+from app.google_analytics import ga
 
 
 jwt_lifetime = 60 * 60 * 24 * 7  # 1wk. TODO implement token refresh
@@ -22,6 +23,7 @@ async def refresh_jwt(response: Response, user=Depends(fastapi_users.get_current
     return await jwt_authentication.get_login_response(user, response)
 
 def on_after_register(user: M.FU_UserDB, request: Request):
+    ga(user.id, 'user', 'register')
     with db():
         t = M.Tag(user_id=user.id, main=True, selected=True, name='Main')
         db.session.add(t)

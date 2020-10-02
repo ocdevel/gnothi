@@ -32,9 +32,6 @@ class NLP():
         m = None
         if k == 'sentence-encode':
             m = SentenceTransformer('roberta-base-nli-stsb-mean-tokens')
-            # word_embedding_model = models.Transformer('allenai/longformer-base-4096')
-            # pooling_model = models.Pooling(word_embedding_model.get_word_embedding_dimension())
-            # m = SentenceTransformer(modules=[word_embedding_model, pooling_model])
         elif k == 'sentiment-analysis':
             tokenizer = AutoTokenizer.from_pretrained("mrm8488/t5-base-finetuned-emotion")
             model = AutoModelWithLMHead.from_pretrained("mrm8488/t5-base-finetuned-emotion").to("cuda")

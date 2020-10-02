@@ -37,6 +37,8 @@
     "ACCESS_KEY_ID": "x",
     "SECRET_ACCESS_KEY": "x",
     "DEFAULT_REGION": "x"
-  }
+  },
+
+  "GA": "x"
 }
 

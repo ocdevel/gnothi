@@ -2,7 +2,7 @@ import pdb, re, datetime, logging, boto3, pytz
 import shortuuid
 import dateutil.parser
 from typing import List, Dict, Any
-from fastapi import Depends, HTTPException, File, UploadFile
+from fastapi import Depends, HTTPException, File, UploadFile, BackgroundTasks
 from app.app_app import app
 from app.app_jwt import fastapi_users
 from fastapi_sqlalchemy import db  # an object to provide global access to a database session
@@ -12,6 +12,8 @@ import common.models as M
 from app import habitica
 from app import ml
 from urllib.parse import quote as urlencode
+from app.google_analytics import ga
+
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +47,11 @@ def user_get(as_user: str = None,  viewer: M.User = Depends(fastapi_users.get_cu
 
 
 @app.get('/user/checkin')
-def checkin_get(viewer: M.User = Depends(fastapi_users.get_current_user)):
+def checkin_get(
+    background_tasks: BackgroundTasks,
+    viewer: M.User = Depends(fastapi_users.get_current_user),
+):
+    background_tasks.add_task(ga, viewer.id, 'user', 'checkin')
     sql = text(f"update users set updated_at={utcnow} where id=:uid")
     db.session.execute(sql, {'uid': viewer.id})
     db.session.commit()
@@ -69,7 +75,13 @@ def profile_timezone_put(data: M.SITimezone, as_user: str = None, viewer: M.User
 
 
 @app.put('/profile', response_model=M.SOProfile)
-def profile_put(data: M.SIProfile, as_user: str = None, viewer: M.User = Depends(fastapi_users.get_current_user)):
+def profile_put(
+    data: M.SIProfile,
+    background_tasks: BackgroundTasks,
+    as_user: str = None,
+    viewer: M.User = Depends(fastapi_users.get_current_user)
+):
+    background_tasks.add_task(ga, viewer.id, 'user', 'therapist')
     user, snooping = getuser(viewer, as_user)
     if snooping: return cant_snoop()
     for k, v in data.dict().items():
@@ -207,7 +219,13 @@ def shares_put_post(user, data, share_id=None):
 
 
 @app.post('/shares')
-def shares_post(data: M.SIShare, as_user: str = None, viewer: M.User = Depends(fastapi_users.get_current_user)):
+def shares_post(
+    data: M.SIShare,
+    background_tasks: BackgroundTasks,
+    as_user: str = None,
+    viewer: M.User = Depends(fastapi_users.get_current_user)
+):
+    background_tasks.add_task(ga, viewer.id, 'feature', 'share')
     user, snooping = getuser(viewer, as_user)
     if snooping: return cant_snoop()
     return shares_put_post(user, data)
@@ -285,7 +303,13 @@ def entries_get(as_user: str = None, viewer: M.User = Depends(fastapi_users.get_
 
 
 @app.post('/entries', response_model=M.SOEntry)
-def entries_post(data: M.SIEntry, as_user: str = None, viewer: M.User = Depends(fastapi_users.get_current_user)):
+def entries_post(
+    data: M.SIEntry,
+    background_tasks: BackgroundTasks,
+    as_user: str = None,
+    viewer: M.User = Depends(fastapi_users.get_current_user)
+):
+    background_tasks.add_task(ga, viewer.id, 'feature', 'entry')
     user, snooping = getuser(viewer, as_user)
     if snooping: return cant_snoop()
     return entries_put_post(user, data)
@@ -494,9 +518,11 @@ def await_job_get(
 @app.post('/themes')
 def themes_post(
     data: M.SIThemes,
+    background_tasks: BackgroundTasks,
     as_user: str = None,
     viewer: M.User = Depends(fastapi_users.get_current_user)
 ):
+    background_tasks.add_task(ga, viewer.id, 'feature', 'themes')
     user, snooping = getuser(viewer, as_user)
     entries = M.Entry.snoop(
         viewer.email,
@@ -523,9 +549,11 @@ def themes_post(
 @app.post('/ask')
 def question_post(
     data: M.SIQuestion,
+    background_tasks: BackgroundTasks,
     as_user: str = None,
     viewer: M.User = Depends(fastapi_users.get_current_user)
 ):
+    background_tasks.add_task(ga, viewer.id, 'feature', 'ask')
     user, snooping = getuser(viewer, as_user)
     question = data.question
     context = M.Entry.snoop(
@@ -547,9 +575,11 @@ def question_post(
 @app.post('/summarize')
 def summarize_post(
     data: M.SISummarize,
+    background_tasks: BackgroundTasks,
     as_user: str = None,
     viewer: M.User = Depends(fastapi_users.get_current_user)
 ):
+    background_tasks.add_task(ga, viewer.id, 'feature', 'summarize')
     user, snooping = getuser(viewer, as_user)
     entries = M.Entry.snoop(
         viewer.email,
@@ -567,7 +597,14 @@ def summarize_post(
 
 
 @app.post('/books/{bid}/{shelf}')
-def bookshelf_post(bid, shelf, as_user: str = None, viewer: M.User = Depends(fastapi_users.get_current_user)):
+def bookshelf_post(
+    bid,
+    shelf,
+    background_tasks: BackgroundTasks,
+    as_user: str = None,
+    viewer: M.User = Depends(fastapi_users.get_current_user)
+):
+    background_tasks.add_task(ga, viewer.id, 'bookshelf', shelf)
     user, snooping = getuser(viewer, as_user)
     if snooping and not user.share_data.books:
         return cant_snoop('Books')
