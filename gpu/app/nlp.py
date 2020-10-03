@@ -30,6 +30,7 @@ class NLP():
             return self.m[k]  # it's already loaded
         self.m[k] = -1  # tell others it's loading, wait
         m = None
+        logger.info(f"Load {k}")
         if k == 'sentence-encode':
             m = SentenceTransformer('roberta-base-nli-stsb-mean-tokens')
         elif k == 'sentiment-analysis':
@@ -64,6 +65,7 @@ class NLP():
         torch.cuda.empty_cache()
 
     def sentence_encode(self, x):
+        logger.info("Sentence-encode")
         m = self.load('sentence-encode')
         return m.encode(x, batch_size=16, show_progress_bar=True)
 
@@ -128,6 +130,7 @@ class NLP():
         return grouped
 
     def sentiment_analysis(self, paras):
+        logger.info("Sentiment-analysis")
         return self.run_batch_model(
             self.load('sentiment-analysis'),
             paras,
@@ -157,6 +160,7 @@ class NLP():
         max_length: int = None,
         with_sentiment: bool = True,
     ):
+        logger.info("Summarization")
         call_args = dict(min_length=min_length, max_length=max_length)
         summs = self.run_batch_model(
             self.load('summarization'),
@@ -201,6 +205,7 @@ class NLP():
         question: str,
         paras: List[str]
     ):
+        logger.info("Question-answering")
         if not paras:
             return [{"answer": "Not enough entries to use this feature."}]
 

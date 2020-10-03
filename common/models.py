@@ -823,7 +823,7 @@ class Job(Base):
 
     @staticmethod
     def wrap_job(jid, method, fn):
-        logger.info(f"Running job {method}")
+        logger.info(f"Run job {method}")
         try:
             start = time.time()
             res = fn()

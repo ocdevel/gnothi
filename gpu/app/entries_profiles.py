@@ -137,6 +137,7 @@ def match_profiles():
         # This on the other hand is OK to mean, it's just their profile
         vecs_profiles = np.vstack(df.vectors.apply(mean_).values)
 
+        logger.info(f"Compute distances")
         dists = Similars(vecs_entries, vecs_profiles).normalize().cosine().value()
 
         sess.execute(text("""

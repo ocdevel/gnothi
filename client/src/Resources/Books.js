@@ -76,8 +76,9 @@ export default function Books() {
         {b.amazon ? <a href={b.amazon} target='_blank'>{b.title}</a> : b.title}
       </h5>
       <p>
-        <FaUser /> {b.author}<br/>
-        <FaTags /> {b.topic}</p>
+        <FaUser /> {b.author}
+        {user.is_cool && <><br/><FaTags /> {b.topic}</>}
+      </p>
       <p>{b.text}</p>
       <div>
         <ButtonGroup>

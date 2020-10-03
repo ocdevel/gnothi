@@ -30,6 +30,7 @@ def top_terms(texts, k=8):
 
 
 def themes(eids, algo='agglomorative'):
+    logger.info("Themes")
     with session() as sess:
         # use Model to decrypt fields
         res = sess.query(M.CacheEntry)\

@@ -28,7 +28,10 @@ from sklearn import preprocessing as pp
 import logging
 logger = logging.getLogger(__name__)
 
-vecs_path = f"/storage/libgen_{vars.ENVIRONMENT}.npy"
+paths = Box(
+    vecs=f"/storage/libgen_{vars.ENVIRONMENT}.npy",
+    #df=f"/storage/libgen_{vars.ENVIRONMENT}.df",
+)
 
 
 def load_books_df(sess, user_id):
@@ -97,7 +100,7 @@ def load_books_df(sess, user_id):
     df = df.drop_duplicates(['Title', 'Author'])
 
     logger.info(f"n_books before cleanup {df.shape[0]}")
-    logger.info("Removing HTML")
+    logger.info("Remove HTML")
     broken = '(\?\?\?|\#\#\#)'  # russian / other FIXME better way to handle
     df = df[~(df.Title + df.descr).str.contains(broken)] \
         .drop_duplicates(['Title', 'Author'])  # TODO reconsider
@@ -129,23 +132,25 @@ def load_books_df(sess, user_id):
         .sort_values('id')
     df['thumbs'] = 0
 
-    logger.info(f"Saving books to DB")
+    logger.info(f"Save books to DB")
     df.to_sql('books', sess.bind, index=False, chunksize=500, if_exists='append', method='multi')
     return M.Bookshelf.books_with_scores(sess, user_id)
 
 
 def load_books_vecs(df):
-    if exists(vecs_path):
-        with open(vecs_path, 'rb') as f:
+    if exists(paths.vecs):
+        with open(paths.vecs, 'rb') as f:
+            logger.info(f"Load {paths.vecs}")
             vecs = np.load(f)
             if df.shape[0] == vecs.shape[0]:
                 return vecs
             # else books table has changed, recompute
 
-    logger.info(f"Running BERT on {df.shape[0]} entries")
+    logger.info(f"Embedding {df.shape[0]} entries")
     texts = (df.title + '\n' + df.text).tolist()
     vecs = Similars(texts).embed().value()
-    with open(vecs_path, 'wb') as f:
+    with open(paths.vecs, 'wb') as f:
+        logger.info(f"Save {paths.vecs}")
         np.save(f, vecs)
     return vecs
 
@@ -157,7 +162,7 @@ def load_books(sess, user_id):
 
 
 def train_books_predictor(books, vecs_books, fine_tune=True):
-    logger.info("Training DNN")
+    logger.info("Train DNN")
     # linear+mse for smoother distances, what we have here? where sigmoid+xentropy for
     # harder decision boundaries, which we don't have?
     act, loss = 'linear', 'mse'
@@ -212,7 +217,7 @@ def predict_books(user_id, vecs_user, n_recs=30):
     chain = Similars(vecs_user, vecs_books).normalize()
     vecs_user, vecs_books = chain.value()
 
-    logger.info("Finding cosine similarities")
+    logger.info("Compute distances")
 
     # Take best cluster-score for every book
     dist = chain.cosine(abs=True).value().min(axis=0)
@@ -226,7 +231,6 @@ def predict_books(user_id, vecs_user, n_recs=30):
         + (books.dist.std() * -books.global_score / 2.) \
         + (books.dist.std() * -books.user_score)
     assert not books.dist.isna().any(), "Messed up merging shelf/books.dist by index"
-
 
     # e2eaea3f: save/load dnn
     dnn = train_books_predictor(books, vecs_books)

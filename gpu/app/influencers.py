@@ -42,6 +42,7 @@ def impute_and_roll(fes, fs):
 
 
 def hyperopt(fes, fs, user_id):
+    logging.info("Hyperopt")
     # See if this is tests+fixtures first
     fixt = fixtures.load_xgb_hypers(user_id)
     if fixt: return fixt
@@ -72,6 +73,7 @@ def hyperopt(fes, fs, user_id):
 
 
 def influencers_(user_id):
+    logging.info("Influencers")
     with session() as sess:
         fes = pd.read_sql("""
         -- remove duplicates, use average. FIXME find the dupes bug
