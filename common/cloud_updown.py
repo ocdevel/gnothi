@@ -70,7 +70,7 @@ def cloud_down_maybe(sess):
     if active or vars.MACHINE in ['desktop', 'laptop']:
         return
 
-    sess.query(M.Machine).get(vars.MACHINE).delete()
+    sess.query(M.Machine).filter_by(id=vars.MACHINE).delete()
     sess.commit()
     exit(0)
     # jobs = job_client.list()

@@ -51,10 +51,12 @@ def load_books_df(sess, user_id):
             from updated u
                 inner join description d on d.md5=u.MD5
                 inner join topics t on u.Topic=t.topic_id
+                    -- TODO later more languages; but I think it's only Russian in Libgen?
                     and t.lang='en'
             where u.Language = 'English'
-                and title not regexp 'sams|teach yourself'  -- remove junk
+                -- Make sure there's some content to work with
                 and (length(d.descr) + length(u.Title)) > 200
+            -- Broken books (see FIND_PROBLEMS below). Some utf-8 issues or something.
             and u.ID not in ('62056','72779','111551','165602','165606','239835','240399','272945','310202','339718','390651','530739','570667','581466','862274','862275','879029','935149','1157279','1204687','1210652','1307307','1410416','1517634','1568907','1592543','2103755','2128089','2130515','2187329','2270690','2270720','2275684','2275804','2277017','2284616','2285559','2314405','2325313','2329959','2340421','2347272','2374055','2397307','2412259','2420958','2421152','2421413','2423975')
             """,
 

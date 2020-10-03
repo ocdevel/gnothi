@@ -4,7 +4,7 @@ nlp_ = NLP()
 
 @pytest.fixture(scope='module', autouse=True)
 def paras(entries):
-    paras = entries.Virtual_reality_0.paras
+    paras = entries.vr_0.paras
     assert len(paras) > 0
     return paras.to_list()
 
@@ -13,7 +13,7 @@ def paras(entries):
 def groups(entries):
     return [
         e.paras.to_list() for k, e in entries.items()
-        if k.startswith("Virtual_reality")
+        if k.startswith("vr")
     ]
 
 class TestNoGroup():

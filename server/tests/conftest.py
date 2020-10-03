@@ -144,8 +144,8 @@ def u(client, db):
 def post_entry(client, u, db):
     def _post_entry(fixt_idx=0, **kwargs):
         data = {**dict(
-            title=f"Virtual_reality_{fixt_idx}",
-            text=fixtures.entries[f"Virtual_reality_{fixt_idx}"].text,
+            title=f"vr_{fixt_idx}",
+            text=fixtures.entries[f"vr_{fixt_idx}"].text,
             no_ai=False,
             tags=u.user.tag1,
         ), **kwargs}

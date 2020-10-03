@@ -1,5 +1,4 @@
 import logging
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 import time, psycopg2, traceback, pdb, multiprocessing, threading, os

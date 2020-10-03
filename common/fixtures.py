@@ -6,6 +6,7 @@ from common.database import session
 from common.utils import vars, is_test
 import common.models as M
 from sqlalchemy import text
+from lefnire_ml_utils.fixtures import articles
 
 BASE = '/storage/fixtures'
 
@@ -17,9 +18,7 @@ FRESH = os.environ.get("FRESH_FIXTURES", "")
 class Fixtures():
     def __init__(self):
         self.clear_fixtures()
-
         self.mkdir()
-        self.mkdir("wiki")
 
         self.entries = self.load_entries()
         self.users = self.load_users()
@@ -41,8 +40,6 @@ class Fixtures():
             self.rm(f"{BASE}/nlp_entries.pkl")
         if 'profiles' in FRESH or all_:
             self.rm(f"{BASE}/nlp_profiles.pkl")
-        if 'wiki' in FRESH or all_:
-            self.rm(f"{BASE}/wiki", isdir=True)
         if 'influencers' in FRESH or all_:
             self.rm(f"{BASE}/xgb_hypers.pkl")
         if 'liben' in FRESH or all_:
@@ -97,8 +94,8 @@ class Fixtures():
                 u[k]['therapist'] = True
 
         e = self.load_entries()
-        vr1, vr2 = e.Virtual_reality_0.text, e.Virtual_reality_1.text
-        cbt1, cbt2 = e.Cognitive_behavioral_therapy_0.text, e.Cognitive_behavioral_therapy_1.text
+        vr1, vr2 = e.vr_0.text, e.vr_1.text
+        cbt1, cbt2 = e.cbt_0.text, e.cbt_1.text
 
         u.therapist_vr.bio = vr1 + "\n\n" + vr2
         u.therapist_mix.bio = vr1 + "\n\n" + cbt1
@@ -211,69 +208,11 @@ class Fixtures():
         self.save_k_v(f"nlp_{method}", k, obj)
 
     def gen_entries(self):
-        try:
-            from bs4 import BeautifulSoup
-        except:
-            raise("No fixtures generated, run tests on GPU first")
-
-        urls = [
-            "https://en.wikipedia.org/wiki/Cognitive_behavioral_therapy",
-            "https://en.wikipedia.org/wiki/Virtual_reality",
-
-            # "https://en.wikipedia.org/wiki/Coronavirus_disease_2019",
-            # "https://en.wikipedia.org/wiki/Beer",
-            # "https://en.wikipedia.org/wiki/Clothing",
-            # "https://en.wikipedia.org/wiki/The_Lord_of_the_Rings",
-            # "https://en.wikipedia.org/wiki/Cat",
-            # "https://en.wikipedia.org/wiki/Ocean",
-            # "https://en.wikipedia.org/wiki/Astrology",
-            # "https://en.wikipedia.org/wiki/QAnon",
-        ]
-        entries = Box()
-
-        for url in urls:
-            page = url.split("/")[-1]
-            fname = f"wiki/{page}"
-            content = self.load(fname)
-            if not content:
-                content = requests.get(url).content
-                self.save(fname, content)
-            soup = BeautifulSoup(content, 'html5lib')
-            content = soup.find("div", id="mw-content-text")
-
-            ps = content.find_all("p")
-            i = 0
-            big_entry = []
-            while True:
-                n_paras = random.randint(1, 7)
-                paras = ps[:n_paras]
-                if not paras: break # done
-                ps = ps[n_paras:]
-                clean = []
-                for p in paras:
-                    p = re.sub(r"\[[0-9]+\]", "", p.text)
-                    if not re.match("[a-zA-Z]+", p):
-                        continue # empty
-                    p = re.sub(r"\s+", " ", p)
-                    clean.append(p)
-                if not clean: continue
-                big_entry += clean
-                k = f"{page}_{i}"
-                i += 1
-                entries[k] = dict(
-                    text="\n\n".join(clean),
-                    paras=clean
-                )
-            # make sure there's a huge one. 10 paras plenty
-            big_entry = " ".join(big_entry[:10])
-            entries[f"{page}_{i}"] = dict(
-                text=big_entry,
-                paras=[big_entry]
-            )
-            # also a tiny one? TODO
-        pprint(list(entries.keys()))
-        pprint(entries.Virtual_reality_0.paras)
-
+        entries = articles(group_by='paragraph')
+        entries = Box({
+            k: dict(text=v, paras=v.split('\n\n'))
+            for k, v in entries.items()
+        })
         self.save("entries", entries)
         return entries
 

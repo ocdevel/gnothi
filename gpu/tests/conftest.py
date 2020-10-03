@@ -21,9 +21,12 @@ with D.session() as sess:
     fields
     influencers
     jobs
+    bookshelf
     machines
     """.split():
         sess.execute(f"drop table if exists {t} cascade")
+    if 'books' in os.environ.get("FRESH_FIXTURES", ""):
+        sess.execute(f"drop table if exists books")
     sess.commit()
 D.init_db()
 

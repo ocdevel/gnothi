@@ -35,7 +35,9 @@ RUN \
   bcrypt \
   gradient \
   pytest \
-  git+git://github.com/lefnire/lefnire_ml_utils.git
+  hnswlib \
+  git+git://github.com/lefnire/lefnire_ml_utils.git \
+  git+git://github.com/UKPLab/sentence-transformers.git@dc84bb7644946d8217fa2ea5211a75c53be89101
 
 COPY ./gpu /paperspace
 COPY ./common /paperspace/common

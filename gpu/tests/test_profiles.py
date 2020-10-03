@@ -25,9 +25,9 @@ def setup_profiles(db, entries, main_uid):
 
     for k, v in entries.items():
         entry = M.Entry(title=k, text=v.text)
-        if k.startswith('Virtual_reality'):
+        if k.startswith('vr'):
             entry.user_id=main_uid
-        elif k.startswith('Cognitive_behavioral_therapy'):
+        elif k.startswith('cbt'):
             entry.user_id=user2.id
         else: continue
         db.add(entry)
