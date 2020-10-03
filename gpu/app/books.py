@@ -269,6 +269,7 @@ def run_books(user_id):
             vecs += profile.vectors
         for e in entries:
             if e.vectors: vecs += e.vectors
+        if not vecs: return  # fixme empty vectors
         vecs = np.vstack(vecs).astype(np.float32)
         res = predict_books(user_id, vecs)
 

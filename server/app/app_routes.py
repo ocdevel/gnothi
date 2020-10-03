@@ -81,7 +81,8 @@ def profile_put(
     as_user: str = None,
     viewer: M.User = Depends(fastapi_users.get_current_user)
 ):
-    background_tasks.add_task(ga, viewer.id, 'user', 'therapist')
+    if data.therapist:
+        background_tasks.add_task(ga, viewer.id, 'user', 'therapist')
     user, snooping = getuser(viewer, as_user)
     if snooping: return cant_snoop()
     for k, v in data.dict().items():
