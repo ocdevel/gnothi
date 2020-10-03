@@ -199,7 +199,7 @@ def train_books_predictor(books, vecs_books, fine_tune=True):
     return m
 
 
-def predict_books(user_id, vecs_user, n_recs=30, centroids=False):
+def predict_books(user_id, vecs_user, n_recs=30):
     with session() as sess:
         # TODO should I move this down further, to get more lines to test?
         fixt = fixtures.load_books(user_id)
@@ -211,16 +211,9 @@ def predict_books(user_id, vecs_user, n_recs=30, centroids=False):
     vecs_user, vecs_books = chain.value()
 
     logger.info("Finding cosine similarities")
-    if centroids:
-        labels = chain.agglomorative().value()
-        lhs = np.vstack([
-            vecs_user[labels == l].mean(0)
-            for l in range(labels.max())
-        ])
-        chain = Similars(lhs, vecs_user)
 
     # Take best cluster-score for every book
-    dist = chain.cosine().value().min(axis=0)
+    dist = chain.cosine(abs=True).value().min(axis=0)
     # 0f29e591: minmax_scale(dist). norm_out=True works better
     # then map back onto books, so they're back in order (pandas index-matching)
 
