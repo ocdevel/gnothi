@@ -65,7 +65,7 @@ class NLP():
 
     def sentence_encode(self, x):
         m = self.load('sentence-encode')
-        return np.array(m.encode(x, batch_size=32, show_progress_bar=True))
+        return m.encode(x, batch_size=16, show_progress_bar=True)
 
     @staticmethod
     def para_parts(paras, tokenizer, max_length):

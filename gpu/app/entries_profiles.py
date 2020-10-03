@@ -6,6 +6,7 @@ from common.database import session
 from lefnire_ml_utils import Similars, cleantext
 from common.fixtures import fixtures
 from sqlalchemy import text
+from sqlalchemy.sql.expression import func
 from app.nlp import nlp_
 
 def nlp_on_rows(method='entries'):
@@ -13,10 +14,17 @@ def nlp_on_rows(method='entries'):
     with session() as sess:
         if for_entries:
             rows = sess.query(M.Entry) \
-                .filter(M.Entry.no_ai.isnot(True), M.Entry.ai_ran.isnot(True))
+                .filter(
+                    func.length(M.Entry.text) > 64,
+                    M.Entry.no_ai.isnot(True),
+                    M.Entry.ai_ran.isnot(True)
+                )
         else:
             rows = sess.query(M.User) \
-                .filter(M.User.bio.isnot(None), M.User.ai_ran.isnot(True))
+                .filter(
+                    func.length(M.User.bio) > 32,
+                    M.User.ai_ran.isnot(True)
+                )
         rows = rows.all()
         if not rows: return {}
 
