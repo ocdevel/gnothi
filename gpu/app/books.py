@@ -28,7 +28,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 # Whether to load full Libgen DB, or just self-help books
-ALL_BOOKS = False
+ALL_BOOKS = True
 all_k = "all" if ALL_BOOKS else "min"
 paths = Box(
     vecs=f"/storage/libgen_{vars.ENVIRONMENT}_{all_k}.npy",
@@ -103,7 +103,7 @@ class Books(object):
         except: pass
 
         logger.info("Load books MySQL")
-        FIND_PROBLEMS = False
+        FIND_PROBLEMS = True
 
         # for-sure psych. See tmp/topics.txt, or libgen.sql topics(lang='en')
         psych_topics = 'psychology|self-help|therapy'
