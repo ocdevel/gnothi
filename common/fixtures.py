@@ -43,13 +43,13 @@ class Fixtures():
         if 'influencers' in FRESH or all_:
             self.rm(f"{BASE}/xgb_hypers.pkl")
         if 'liben' in FRESH or all_:
-            logger.warning("Some technical difficulties, you'll need to manually delete the /storage/libgen_*.* files")
-            # You'll need to manually delete these
-            # self.rm(f"/storage/libgen_testing.npy")
-            # self.rm(f"/storage/libgen_df.npy")
             with session() as sess:
                 sess.execute("delete from books")
                 sess.commit()
+        if 'libgen.npy' in FRESH or all_: self.rm(f"/storage/libgen/testing_all.npy")
+        if 'libgen.df' in FRESH or all_: self.rm(f"/storage/libgen/testing_all.df")
+        if 'libgen.tf' in FRESH or all_: self.rm(f"/storage/libgen/testing_all.tf", isdir=True)
+        if 'libgen.min.npy' in FRESH or all_: self.rm(f"/storage/libgen/testing_all.min.npy")
 
     @staticmethod
     def mkdir(dir=None):

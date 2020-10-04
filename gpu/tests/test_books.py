@@ -14,7 +14,7 @@ def test_books(main_uid, db):
     assert len(res) > 0
     titles = [b.title for b in res]
     pprint(titles)
-    assert re.search("(cognitive|cbt|virtual)", ";".join(titles))
+    assert re.search("(cognitive|cbt|virtual)", ";".join(titles), re.IGNORECASE)
 
     def get_ids(sql):
         res = db.execute(sql)

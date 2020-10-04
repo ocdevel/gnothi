@@ -201,12 +201,7 @@ class Books(object):
             self._npfile(paths.vecs, write=vecs)
 
         # Then autoencode them since our operations are so heavy; cosine in particular, maxes GPU RAM easily
-        # First train the autoencoder on a subset (normalize, cosine, etc can't handle len(books)==290k)
-        chain = Similars(vecs).normalize()
-        # This step will save autoencoder behind the scene
-        chain.autoencode(save_load_path=paths.autoencoder)
-        # Not auto-encode the full thing
-        vecs = Similars(vecs).normalize().autoencode(save_load_path=paths.autoencoder).value()
+        vecs = Similars(vecs).normalize().autoencode(save_load_path=paths.autoencoder, preserve_cosine=True).value()
         self._npfile(paths.compressed, write=vecs)
 
         return vecs
