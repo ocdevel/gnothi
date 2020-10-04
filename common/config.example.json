@@ -9,7 +9,8 @@
       "NAME": "gnothi_prod"
     },
 
-    "BOOKS": "mysql://user:password@localhost:3306/books"
+    "NOTE__": "?charset part is super important here",
+    "BOOKS": "mysql://user:password@localhost:3306/libgen?charset=utf8mb4"
   },
 
   "FLASK_KEY": "x",

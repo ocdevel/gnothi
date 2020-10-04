@@ -103,63 +103,30 @@ class Books(object):
         except: pass
 
         logger.info("Load books MySQL")
-        FIND_PROBLEMS = False
 
-        # for-sure psych. See tmp/topics.txt, or libgen.sql topics(lang='en')
-        psych_topics = 'psychology|self-help|therapy'
-        # good other psych topics, either mis-categorized or other
-        psych_topics += '|anthropology|social|religion'
-        psych_topics += '|^history|^education'
+        psych_topics = ""
+        if not ALL_BOOKS:
+            # for-sure psych. See tmp/topics.txt, or libgen.sql topics(lang='en')
+            psych_topics = 'psychology|self-help|therapy'
+            # good other psych topics, either mis-categorized or other
+            psych_topics += '|anthropology|social|religion'
+            psych_topics += '|^history|^education'
+            psych_topics = f"and t.topic_descr regexp '{psych_topics}'"
 
-        sql = Box(
-            select="select u.ID, u.Title, u.Author, d.descr, t.topic_descr",
-            body="""
-            from updated u
-                inner join description d on d.md5=u.MD5
-                inner join topics t on u.Topic=t.topic_id
-                    -- TODO later more languages; but I think it's only Russian in Libgen?
-                    and t.lang='en'
-            where u.Language = 'English'
-                -- Make sure there's some content to work with
-                and (length(d.descr) + length(u.Title)) > 200
-            -- Broken books (see FIND_PROBLEMS below). 
-            and u.ID not in ('62056','72779','111551','165602','165606','239835','240399','272945','310202','339718','390651','530739','570667','581466','862274','862275','879029','935149','1157279','1204687','1210652','1307307','1410416','1517634','1568907','1592543','2103755','2128089','2130515','2187329','2270690','2270720','2275684','2275804','2277017','2284616','2285559','2314405','2325313','2329959','2340421','2347272','2374055','2397307','2412259','2420958','2421152','2421413','2423975')
-            """,
-
-            # handle u.Topic='' (1326526 rows)
-            just_psych=f"and t.topic_descr regexp '{psych_topics}'",
-
-            # find_problems
-            just_ids="select distinct u.ID",
-            where_id="and u.ID=:id"
-        )
-
-        # Set this to true if you get unicode errors.
-        # Those MD5s: UnicodeDecodeError: 'charmap' codec can't decode byte 0x9d in position 636: character maps to <undefined>
-        # Try create_engine(convert_unicode=True)?
-        if FIND_PROBLEMS:
-            with session('books') as sessb:
-                ids = ' '.join([sql.just_ids, sql.body])
-                ids = [x.ID for x in sessb.execute(ids).fetchall()]
-                problem_ids = []
-                for i, id in enumerate(tqdm(ids)):
-                    if i % 10000 == 0:
-                        problems = len(problem_ids) / len(ids) * 100
-                        logger.info(f"{problems}% problems")
-                    try:
-                        row = ' '.join([sql.select, sql.body, sql.where_id])
-                        sessb.execute(text(row), {'id': id})
-                    except:
-                        problem_ids.append(id)
-            problem_ids = ','.join([f"'{id}'" for id in problem_ids])
-            logger.info(f"and u.ID not in ({problem_ids})")
-            exit(0)
-
-        sql_ = [sql.select, sql.body]
-        if not ALL_BOOKS: sql_ += [sql.just_psych]
-        sql_ = ' '.join(sql_)
+        sql = f"""
+        select="select u.ID, u.Title, u.Author, d.descr, t.topic_descr
+        from updated u
+            inner join description d on d.md5=u.MD5
+            inner join topics t on u.Topic=t.topic_id
+                -- TODO later more languages; but I think it's only Russian in Libgen?
+                and t.lang='en'
+        where u.Language = 'English'
+            -- Make sure there's some content to work with
+            and (length(d.descr) + length(u.Title)) > 200
+            {psych_topics}
+        """
         with session('books') as sessb:
-            df = pd.read_sql(sql_, sessb.bind)
+            df = pd.read_sql(sql, sessb.bind)
         df = df.drop_duplicates(['Title', 'Author'])
 
         logger.info(f"n_books before cleanup {df.shape[0]}")
