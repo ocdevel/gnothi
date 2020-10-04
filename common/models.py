@@ -957,18 +957,19 @@ class CacheEntry(Base):
 
     @staticmethod
     def get_paras(entries_q, profile_id=None):
-        entries = entries_q.join(CacheEntry, CacheEntry.entry_id == Entry.id) \
-            .filter(CacheEntry.paras.isnot(None)) \
-            .with_entities(CacheEntry.paras).all()
+        CE, CU = CacheEntry, CacheUser
+        entries = entries_q.join(CE, CE.entry_id == Entry.id) \
+            .filter(func.array_length(CE.paras,1)>0) \
+            .with_entities(CE.paras).all()
         paras = [p for e in entries for p in e.paras if e.paras]
 
         if profile_id:
-            profile = db.session.query(CacheUser) \
-                .filter(CacheUser.paras.isnot(None), CacheUser.user_id == profile_id) \
-                .with_entities(CacheUser.paras) \
+            profile = db.session.query(CU) \
+                .filter(func.array_length(CU.paras,1)>0, CU.user_id == profile_id) \
+                .with_entities(CU.paras) \
                 .first()
             if profile:
-                paras = profile.paras + entries
+                paras = profile.paras + paras
 
         return paras
 

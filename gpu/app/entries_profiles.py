@@ -115,7 +115,7 @@ def match_profiles():
         df = pd.read_sql("""
         select e.user_id, c.vectors from cache_entries c
         inner join entries e on e.id=c.entry_id
-        where c.vectors is not null
+        where array_length(c.vectors, 1) > 0
         """, sess.bind)
         if not df.shape[0]: return
 

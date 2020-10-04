@@ -28,7 +28,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 # Whether to load full Libgen DB, or just self-help books
-ALL_BOOKS = True
+ALL_BOOKS = False
 all_k = "all" if ALL_BOOKS else "min"
 paths = Box(
     vecs=f"/storage/libgen_{vars.ENVIRONMENT}_{all_k}.npy",
@@ -69,11 +69,15 @@ class Books(object):
 
         entries = sess.execute(text("""
         select c.vectors from cache_entries c
-        inner join entries e on e.id=c.entry_id and e.user_id=:uid
+        inner join entries e on e.id=c.entry_id 
+            and e.user_id=:uid
+            and array_length(c.vectors, 1) > 0
         order by e.created_at desc;
         """), uid).fetchall()
         profile = sess.execute(text("""
-        select vectors from cache_users where user_id=:uid
+        select vectors from cache_users 
+            where user_id=:uid
+            and array_length(vectors, 1) > 0
         """), uid).fetchone()
 
         vecs = []

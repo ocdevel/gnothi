@@ -6,10 +6,8 @@ from app.nlp import nlp_
 from lefnire_ml_utils import Similars
 import pandas as pd
 import numpy as np
-import threading
-from sqlalchemy import text
-from scipy.stats import percentileofscore as pos
 import logging
+from sqlalchemy import func
 logger = logging.getLogger(__name__)
 
 
@@ -35,20 +33,17 @@ def themes(eids, algo='agglomorative'):
     logger.info("Themes")
     with session() as sess:
         # use Model to decrypt fields
-        res = sess.query(M.CacheEntry)\
-            .with_entities(M.CacheEntry.paras, M.CacheEntry.clean, M.CacheEntry.vectors)\
-            .join(M.Entry, M.Entry.id == M.CacheEntry.entry_id)\
-            .filter(M.Entry.id.in_(eids))\
-            .order_by(M.Entry.created_at.desc())\
+        E, CE = M.Entry, M.CacheEntry
+        res = sess.query(CE) \
+            .with_entities(CE.paras, CE.clean, CE.vectors) \
+            .join(E, E.id == CE.entry_id) \
+            .filter(E.id.in_(eids), func.array_length(CE.vectors,1)>0) \
+            .order_by(E.created_at.desc()) \
             .all()
     # assert len(eids) == len(res)
     entries = pd.Series([e for r in res for e in r.paras])
     stripped = pd.Series([c for r in res for c in r.clean])
-    vecs = []
-    for r in res:
-        if r.vectors: vecs += r.vectors
-    # if not vecs: return False  # TODO somethign else to return?
-    vecs = np.vstack(vecs).astype(np.float32)
+    vecs = np.vstack([r.vectors for r in res]).astype(np.float32)
 
     clusters = Similars(vecs).normalize().cluster(algo=algo).value()
 
