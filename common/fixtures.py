@@ -1,12 +1,12 @@
-import pdb, requests, re, os, pickle, random, os, shutil, datetime
-from uuid import uuid4
-from pprint import pprint
+import pdb, pickle, random, os, shutil, datetime
 from box import Box
 from common.database import session
 from common.utils import vars, is_test
 import common.models as M
 from sqlalchemy import text
 from lefnire_ml_utils.fixtures import articles
+import logging
+logger = logging.getLogger(__name__)
 
 BASE = '/storage/fixtures'
 
@@ -43,7 +43,8 @@ class Fixtures():
         if 'influencers' in FRESH or all_:
             self.rm(f"{BASE}/xgb_hypers.pkl")
         if 'liben' in FRESH or all_:
-            # I'll re-generate these in books.py
+            logger.warning("Some technical difficulties, you'll need to manually delete the /storage/libgen_*.* files")
+            # You'll need to manually delete these
             # self.rm(f"/storage/libgen_testing.npy")
             # self.rm(f"/storage/libgen_df.npy")
             with session() as sess:

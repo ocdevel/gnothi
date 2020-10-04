@@ -43,6 +43,7 @@ def run_job(job):
     kwargs = data.get('kwargs', {})
 
     if k == 'books':
+        nlp_.clear()
         os.system(f"python app/books.py --jid={jid_} --uid={args[0]}")
         return
 

@@ -29,10 +29,14 @@ logger = logging.getLogger(__name__)
 
 # Whether to load full Libgen DB, or just self-help books
 ALL_BOOKS = True
-all_k = "all" if ALL_BOOKS else "min"
+libgen_dir = "/storage/libgen"
+libgen_file = f"{libgen_dir}/{vars.ENVIRONMENT}_{'all' if ALL_BOOKS else 'psych'}"  # '.ext
+if not os.path.exists(libgen_dir): os.mkdir(libgen_dir)
 paths = Box(
-    vecs=f"/storage/libgen_{vars.ENVIRONMENT}_{all_k}.npy",
-    df=f"/storage/libgen_{vars.ENVIRONMENT}_{all_k}.df",
+    vecs=f"{libgen_file}.npy",
+    df=f"{libgen_file}.df",
+    autoencoder=f"{libgen_file}.tf",
+    compressed=f"{libgen_file}.min.npy",
 )
 
 class Books(object):
@@ -91,7 +95,7 @@ class Books(object):
         return np.vstack(vecs).astype(np.float32)
 
     def load_df(self):
-        if exists(paths.df) and 'libgen' not in os.environ.get("FRESH_FIXTURES", ""):
+        if exists(paths.df):
             logger.info("Load books.df")
             return pd.read_feather(paths.df)\
                 .drop(columns=['index'])\
@@ -168,19 +172,43 @@ class Books(object):
         # call self, which returns newly-saved df (ensures consistent order, etc)
         return self.load_df()
 
-    def load_vecs_books(self):
-        df = self.df
-        if exists(paths.vecs):
-            with open(paths.vecs, 'rb') as f:
-                logger.info(f"Load {paths.vecs}")
+    def _npfile(self, path_, write=None):
+        if write is not None:
+            with open(path_, 'wb') as f:
+                logger.info(f"Save {path_}")
+                np.save(f, write)
+        elif exists(path_):
+            with open(path_, 'rb') as f:
+                logger.info(f"Load {path_}")
                 return np.load(f)
+        return None
 
-        logger.info(f"Embedding {df.shape[0]} entries")
-        texts = (df.title + '\n' + df.text).tolist()
-        vecs = Similars(texts).embed().value()
-        with open(paths.vecs, 'wb') as f:
-            logger.info(f"Save {paths.vecs}")
-            np.save(f, vecs)
+    def load_vecs_books(self):
+        # Try loading autoencoded vecs first. If they exist, then the auto-encoder exists too, and let's save
+        # ourselves resources (.npy file-loading, GPU RAM, etc)
+        vecs = self._npfile(paths.compressed)
+        if vecs is not None:
+            return vecs
+
+        # If autoencoding not yet done, but intermediate full-vectors step is, load that then autoencode
+        vecs = self._npfile(paths.vecs)
+        if vecs is None:
+            # No embeddings at all yet, generate them
+            df = self.df
+            logger.info(f"Embedding {df.shape[0]} entries")
+            texts = (df.title + '\n' + df.text).tolist()
+            vecs = Similars(texts).embed().value()
+            self._npfile(paths.vecs, write=vecs)
+
+        # Then autoencode them since our operations are so heavy; cosine in particular, maxes GPU RAM easily
+        # First train the autoencoder on a subset (normalize, cosine, etc can't handle len(books)==290k)
+        chain = Similars(vecs).normalize()
+        # This step will save autoencoder behind the scene
+        chain.autoencode(save_load_path=paths.autoencoder)
+        # Not auto-encode the full thing
+        vecs = Similars(vecs).normalize().autoencode(save_load_path=paths.autoencoder).value()
+        self._npfile(paths.compressed, write=vecs)
+
         return vecs
 
     def load_scores(self):
@@ -194,14 +222,16 @@ class Books(object):
 
     def compute_dists(self):
         logger.info("Compute distances")
-        df, vecs_user, vecs_books = self.df, self.vecs_user, self.vecs_books
-        # normalize for cosine, and downstream DNN
-        chain = Similars(vecs_user, vecs_books).normalize()
-        # TODO not very clean that we're mutating vecs here, any concerns downstream?
-        self.vecs_user, self.vecs_books = chain.value()
+        df, vu, vb = self.df, self.vecs_user, self.vecs_books
+
+        # First, clean up the vectors some. vecs_books is already clean (normalized and autoencoded via
+        # load_vecs_books), do so now with vecs_user.
+        vu = Similars(vu).normalize().autoencode(save_load_path=paths.autoencoder).value()
+        self.vecs_user = vu  # used anywhere anymore?
+        dist = Similars(vu, vb).cosine(abs=True).value()
 
         # Take best cluster-score for every book
-        dist = chain.cosine(abs=True).value().min(axis=0)
+        dist = dist.min(axis=0)
         # 0f29e591: minmax_scale(dist). norm_out=True works better
         # then map back onto books, so they're back in order (pandas index-matching)
 
