@@ -43,9 +43,14 @@ class Books(object):
         self.vecs_user = None
         self.df = None
         self.vecs_books = None
-        self.books_db = None
         self.model = None
-        # now call books.recommend()
+
+    def prune_books(self):
+        self.sess.execute("""
+        delete from books where 
+            amazon is null and id not in (select book_id from bookshelf);
+        """)
+        self.sess.commit()
 
     def load_vecs_user(self):
         logger.info("Load user_vecs")
@@ -212,7 +217,8 @@ class Books(object):
         df, sess, user_id = self.df, self.sess, self.user_id
         books = M.Bookshelf.books_with_scores(sess, user_id)
         for k, fillna in [('user_score', 0), ('global_score', 0), ('user_rated', False), ('any_rated', False)]:
-            df.loc[books.index, k] = books[k]
+            # df.loc[books.index, k] = books[k]
+            df[k] = books[k]  # this assumes k->k map properly on index
             df[k] = df[k].fillna(fillna)
 
     def compute_dists(self):
@@ -255,13 +261,13 @@ class Books(object):
             optimizer=Adam(learning_rate=.0001),
         )
 
-        es = EarlyStopping(monitor='val_loss', mode='min', patience=3, min_delta=.0001)
+        self.es = EarlyStopping(monitor='val_loss', mode='min', patience=3, min_delta=.0001)
         m.fit(
             x, y,
             epochs=50,
             batch_size=128,
             shuffle=True,
-            callbacks=[es],
+            callbacks=[self.es],
             validation_split=.3,
         )
         self.model = m
@@ -279,7 +285,7 @@ class Books(object):
             x, y,
             epochs=2,  # too many epochs overfits (eg to CBT). Maybe adjust LR *down*, or other?
             batch_size=16,
-            callbacks=[es],
+            callbacks=[self.es],
             validation_split=.3  # might not have enough data?
         )
 
@@ -312,8 +318,6 @@ class Books(object):
         uid = dict(uid=user_id)
         sess.execute(text("""
         delete from bookshelf where user_id=:uid and shelf='ai';
-        delete from books where 
-            amazon is null and id not in (select book_id from bookshelf);
         """), uid)
         sess.commit()
 
@@ -332,6 +336,7 @@ class Books(object):
         shelf.to_sql('bookshelf', sess.bind, if_exists='append', index=False)
 
     def run(self):
+        self.prune_books()
         self.vecs_user = self.load_vecs_user()
         if self.vecs_user is None:
             # no jobs to run
