@@ -10,7 +10,7 @@ from sqlalchemy import text
 # app.from books import run_books
 from app.themes import themes
 from app.influencers import influencers
-from common.utils import utcnow, vars, is_test
+from common.utils import utcnow, vars, is_prod
 from common.database import session
 import common.models as M
 from common.cloud_updown import cloud_down_maybe
@@ -42,8 +42,6 @@ def run_job(job):
     args = data.get('args', [])
     kwargs = data.get('kwargs', {})
 
-    if is_test(): nlp_.clear()
-
     if k == 'books':
         os.system(f"python app/books.py --jid={jid_} --uid={args[0]}")
         return
@@ -73,7 +71,7 @@ if __name__ == '__main__':
             # Find jobs
             job = M.Job.take_job(sess, "run_on='gpu'")
             if not job:
-                if M.User.last_checkin(sess) > 10:
+                if M.User.last_checkin(sess) > 10 and is_prod():
                     nlp_.clear()
                 time.sleep(1)
                 continue

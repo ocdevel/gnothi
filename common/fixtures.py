@@ -43,8 +43,9 @@ class Fixtures():
         if 'influencers' in FRESH or all_:
             self.rm(f"{BASE}/xgb_hypers.pkl")
         if 'liben' in FRESH or all_:
-            self.rm(f"/storage/libgen_testing.npy")
-            self.rm(f"/storage/libgen_df.npy")
+            # I'll re-generate these in books.py
+            # self.rm(f"/storage/libgen_testing.npy")
+            # self.rm(f"/storage/libgen_df.npy")
             with session() as sess:
                 sess.execute("delete from books")
                 sess.commit()

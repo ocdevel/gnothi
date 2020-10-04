@@ -82,7 +82,7 @@ class Books(object):
         return np.vstack(vecs).astype(np.float32)
 
     def load_df(self):
-        if exists(paths.df):
+        if exists(paths.df) and 'libgen' not in os.environ.get("FRESH_FIXTURES", ""):
             logger.info("Load books.df")
             return pd.read_feather(paths.df)\
                 .drop(columns=['index'])\

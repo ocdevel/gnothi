@@ -8,6 +8,8 @@ from common.fixtures import fixtures
 from sqlalchemy import text
 from sqlalchemy.sql.expression import func
 from app.nlp import nlp_
+import logging
+logger = logging.getLogger(__name__)
 
 def nlp_on_rows(method='entries'):
     for_entries = method == 'entries'  # else is_profile

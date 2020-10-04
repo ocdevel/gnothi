@@ -1,4 +1,4 @@
-import math, time, pdb, re
+import math, time, pdb, re, gc
 import torch
 import numpy as np
 from sentence_transformers import SentenceTransformer
@@ -19,16 +19,21 @@ max_gpu_tokens = 4096
 # max_gpu_tokens = 4096//2
 tokenizer_args = dict(truncation=True, padding=True, return_tensors='pt')
 
+# Keep BERT models around for a while, so they're re-used if requested back-to-back. Experiment with settings False
+# around the GPU-killing issue https://github.com/lefnire/gnothi/issues/10
+CACHE_MODELS = True
+
 class NLP():
     def __init__(self):
         self.m = {}
 
     def load(self, k):
-        while self.m.get(k, None) == -1:
-            time.sleep(1)  # loading, wit till ready
-        if self.m.get(k, None) is not None:
-            return self.m[k]  # it's already loaded
-        self.m[k] = -1  # tell others it's loading, wait
+        if CACHE_MODELS:
+            while self.m.get(k, None) == -1:
+                time.sleep(1)  # loading, wit till ready
+            if self.m.get(k, None) is not None:
+                return self.m[k]  # it's already loaded
+            self.m[k] = -1  # tell others it's loading, wait
         m = None
         logger.info(f"Load {k}")
         if k == 'sentence-encode':
@@ -54,13 +59,15 @@ class NLP():
             # tokenizer = AutoTokenizer.from_pretrained("mrm8488/longformer-base-4096-finetuned-squadv2")
             # model = AutoModelForQuestionAnswering.from_pretrained("mrm8488/longformer-base-4096-finetuned-squadv2", return_dict=True).to("cuda")
             m = (tokenizer, model, 4096)
-        self.m[k] = m
+        if CACHE_MODELS:
+            self.m[k] = m
         return m
 
     def clear(self):
         if not self.m: return
         print("Clearing GPU RAM")
         self.m = {}
+        gc.collect()
         # K.clear_session()
         torch.cuda.empty_cache()
 

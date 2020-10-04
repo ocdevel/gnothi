@@ -9,6 +9,8 @@ import numpy as np
 import threading
 from sqlalchemy import text
 from scipy.stats import percentileofscore as pos
+import logging
+logger = logging.getLogger(__name__)
 
 
 def top_terms(texts, k=8):
