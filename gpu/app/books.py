@@ -103,7 +103,7 @@ class Books(object):
         except: pass
 
         logger.info("Load books MySQL")
-        FIND_PROBLEMS = True
+        FIND_PROBLEMS = False
 
         # for-sure psych. See tmp/topics.txt, or libgen.sql topics(lang='en')
         psych_topics = 'psychology|self-help|therapy'
