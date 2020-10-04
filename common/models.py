@@ -941,7 +941,7 @@ class SISummarize(SILimitEntries):
 
 
 class SIThemes(SILimitEntries):
-    algo: Optional[str] = 'agglomorative'
+    algo: Optional[str] = 'kmeans'
 
 
 ###

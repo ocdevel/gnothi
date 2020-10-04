@@ -55,13 +55,13 @@ export default function Themes() {
 
   const renderAdvanced = () => {
     const algos = [{
-      k: 'agglomorative',
-      label: 'Agglomorative',
-      url: "https://scikit-learn.org/stable/modules/generated/sklearn.cluster.AgglomerativeClustering.html",
-    }, {
       k: 'kmeans',
       label: 'KMeans',
       url: "https://scikit-learn.org/stable/modules/generated/sklearn.cluster.KMeans.html"
+    }, {
+      k: 'agglomorative',
+      label: 'Agglomorative',
+      url: "https://scikit-learn.org/stable/modules/generated/sklearn.cluster.AgglomerativeClustering.html",
     }]
 
     return <div className='bottom-margin'>

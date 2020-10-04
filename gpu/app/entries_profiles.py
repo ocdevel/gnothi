@@ -1,4 +1,4 @@
-import pdb
+import pdb, os
 import pandas as pd
 import numpy as np
 import common.models as M
@@ -6,10 +6,12 @@ from common.database import session
 from lefnire_ml_utils import Similars, cleantext
 from common.fixtures import fixtures
 from sqlalchemy import text
+from common.utils import vars
 from sqlalchemy.sql.expression import func
 from app.nlp import nlp_
 import logging
 logger = logging.getLogger(__name__)
+
 
 def nlp_on_rows(method='entries'):
     for_entries = method == 'entries'  # else is_profile
@@ -50,6 +52,7 @@ def nlp_on_rows(method='entries'):
                 clean_txt, embeds = fixt
         else:
             clean_txt = cleantext.keywords(paras_flat, postags=['NOUN', 'ADJ', 'VERB', 'PROPN'])
+            # embeds = Similars(paras_flat).embed().autoencode(save_load_path=vars.AE_PATH).value()
             embeds = nlp_.sentence_encode(paras_flat).tolist()
             if for_entries:
                 titles = nlp_.summarization(paras_grouped, min_length=5, max_length=20, with_sentiment=False)
@@ -140,7 +143,7 @@ def match_profiles():
         vecs_profiles = np.vstack(df.vectors.apply(mean_).values)
 
         logger.info(f"Compute distances")
-        dists = Similars(vecs_entries, vecs_profiles).normalize().cosine().value()
+        dists = Similars(vecs_entries, vecs_profiles).normalize().cosine(abs=True).value()
 
         sess.execute(text("""
         delete from profile_matches where user_id in :uids

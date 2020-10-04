@@ -57,6 +57,7 @@ vars['DB_FULL'] = f"{vars.DB_URL}/{vars.DB_NAME}"
 vars['DB_PROD_FULL'] = f"{vars.DB_PROD_URL}/{vars.DB_PROD_NAME}"
 
 vars['MACHINE'] = vars.MACHINE or socket.gethostname()
+vars['AE_PATH'] = f"/storage/libgen/{vars.ENVIRONMENT}_all.tf"
 
 SECRET = vars.FLASK_KEY
 

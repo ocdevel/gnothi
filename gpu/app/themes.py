@@ -1,7 +1,8 @@
-import pdb
+import pdb, os
 from sklearn.feature_extraction.text import TfidfVectorizer
 from common.database import session
 import common.models as M
+from common.utils import vars
 from app.nlp import nlp_
 from lefnire_ml_utils import Similars
 import pandas as pd
@@ -29,7 +30,7 @@ def top_terms(texts, k=8):
     return terms
 
 
-def themes(eids, algo='agglomorative'):
+def themes(eids, algo='kmeans'):
     logger.info("Themes")
     with session() as sess:
         # use Model to decrypt fields
@@ -45,7 +46,10 @@ def themes(eids, algo='agglomorative'):
     stripped = pd.Series([c for r in res for c in r.clean])
     vecs = np.vstack([r.vectors for r in res]).astype(np.float32)
 
-    clusters = Similars(vecs).normalize().cluster(algo=algo).value()
+    if os.path.exists(vars.AE_PATH):
+        clusters = Similars(vecs).autoencode(save_load_path=vars.AE_PATH).cluster(algo=algo).value()
+    else:
+        clusters = Similars(vecs).normalize().cluster(algo=algo).value()
 
     topics = []
     for l in range(clusters.max()):
@@ -60,7 +64,7 @@ def themes(eids, algo='agglomorative'):
             stripped.iloc[in_clust], entries.iloc[in_clust]
 
         center = vecs_.mean(axis=0)[np.newaxis,:]
-        dists = Similars(center, vecs_).normalize().cosine().value().squeeze()
+        dists = Similars(center, vecs_).normalize().cosine(abs=True).value().squeeze()
         entries_ = entries_.iloc[dists.argsort()].tolist()[:5]
 
         terms = top_terms(stripped_.tolist())

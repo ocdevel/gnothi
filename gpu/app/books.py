@@ -242,7 +242,6 @@ class Books(object):
 
         # Take best cluster-score for every book
         dist = dist.min(axis=0)
-        # 0f29e591: minmax_scale(dist). norm_out=True works better
         # then map back onto books, so they're back in order (pandas index-matching)
 
         # Push highly-rated books up, low-rated books down. Do that even stronger for user's own ratings.
@@ -262,7 +261,7 @@ class Books(object):
         act, loss = 'relu', 'mse'  # trying relu since using cosine(abs=True)
 
         input = Input(shape=(x.shape[1],))
-        m = Dense(ae_kwargs.dims[-1]//2, activation='elu')(input)
+        m = Dense(ae_kwargs['dims'][-1]//2, activation='elu')(input)
         m = Dense(1, activation=act)(m)
         m = Model(input, m)
         m.compile(
@@ -270,11 +269,11 @@ class Books(object):
             loss=loss,
             optimizer=Adam(learning_rate=.0001),
         )
-
+        m.summary()
         self.es = EarlyStopping(monitor='val_loss', mode='min', patience=3, min_delta=.0001)
         m.fit(
             x, y,
-            epochs=50,
+            epochs=35,
             batch_size=128,
             shuffle=True,
             callbacks=[self.es],
