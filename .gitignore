@@ -7,3 +7,4 @@ N2D
 letsencrypt
 .aws
 storage
+*.sql
