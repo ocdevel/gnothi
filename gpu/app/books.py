@@ -44,10 +44,14 @@ paths = Box(
 # predictor dims.
 # [400, 100]: val_loss: 0.0027 - val_decoder_out_loss: 2.4608e-04 - val_dist_out_loss: 0.0025
 # [400, 60]: val_loss: 0.0026 - val_decoder_out_loss: 2.9463e-04 - val_dist_out_loss: 0.0023
+# [400, 60] no normalization: val_loss: 0.0739 - val_decoder_out_loss: 0.0692 - val_dist_out_loss: 0.0047
+# [400, 60] batch_norm: val_loss: 0.0581 - val_decoder_out_loss: 0.0565 - val_dist_out_loss: 0.0016
+# Prefer the last. Learned-normalization (higher decode loss because input->output dist isn't normalized).
 ae_kwargs = dict(
     save_load_path=paths.autoencoder,
     preserve_cosine=True,
-    dims=[400, 60]
+    dims=[400, 60],
+    batch_norm=True
 )
 
 class Books(object):
@@ -212,7 +216,7 @@ class Books(object):
             self._npfile(paths.vecs, write=vecs)
 
         # Then autoencode them since our operations are so heavy; cosine in particular, maxes GPU RAM easily
-        vecs = Similars(vecs).normalize().autoencode(**ae_kwargs).value()
+        vecs = Similars(vecs).autoencode(**ae_kwargs).value()
         self._npfile(paths.compressed, write=vecs)
 
         return vecs
@@ -232,7 +236,7 @@ class Books(object):
 
         # First, clean up the vectors some. vecs_books is already clean (normalized and autoencoded via
         # load_vecs_books), do so now with vecs_user.
-        vu = Similars(vu).normalize().autoencode(**ae_kwargs).value()
+        vu = Similars(vu).autoencode(**ae_kwargs).value()
         self.vecs_user = vu  # used anywhere anymore?
         dist = Similars(vu, vb).cosine(abs=True).value()
 
