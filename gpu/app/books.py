@@ -39,6 +39,17 @@ paths = Box(
     compressed=f"{libgen_file}.min.npy",
 )
 
+# Dim-reduce vecs_books & vecs_user. Only doing because len(vecs_books)>290k & it breaks everything system RAM & GPU
+# RAM (would prefer raw cosine). Experiment with dims; keeping high to preserve accuracy. If not using, adjust DNN
+# predictor dims.
+# [400, 100]: val_loss: 0.0027 - val_decoder_out_loss: 2.4608e-04 - val_dist_out_loss: 0.0025
+# [400, 60]: val_loss: 0.0026 - val_decoder_out_loss: 2.9463e-04 - val_dist_out_loss: 0.0023
+ae_kwargs = dict(
+    save_load_path=paths.autoencoder,
+    preserve_cosine=True,
+    dims=[400, 60]
+)
+
 class Books(object):
     def __init__(self, sess, user_id):
         self.sess = sess  # comes from caller, and must be closed after
@@ -201,7 +212,7 @@ class Books(object):
             self._npfile(paths.vecs, write=vecs)
 
         # Then autoencode them since our operations are so heavy; cosine in particular, maxes GPU RAM easily
-        vecs = Similars(vecs).normalize().autoencode(save_load_path=paths.autoencoder, preserve_cosine=True).value()
+        vecs = Similars(vecs).normalize().autoencode(**ae_kwargs).value()
         self._npfile(paths.compressed, write=vecs)
 
         return vecs
@@ -221,7 +232,7 @@ class Books(object):
 
         # First, clean up the vectors some. vecs_books is already clean (normalized and autoencoded via
         # load_vecs_books), do so now with vecs_user.
-        vu = Similars(vu).normalize().autoencode(save_load_path=paths.autoencoder).value()
+        vu = Similars(vu).normalize().autoencode(**ae_kwargs).value()
         self.vecs_user = vu  # used anywhere anymore?
         dist = Similars(vu, vb).cosine(abs=True).value()
 
@@ -242,13 +253,12 @@ class Books(object):
         logger.info("Pre-train model")
         x = self.vecs_books
         y = self.df.dist
-        # linear+mse for smoother distances, what we have here? where sigmoid+xentropy for
+        # linear+mse for smoother distances, what we have here? where sigmoid+binary_crossentropy for
         # harder decision boundaries, which we don't have?
-        act, loss = 'linear', 'mse'
-        # act, loss = 'sigmoid', 'binary_crossentropy'
+        act, loss = 'relu', 'mse'  # trying relu since using cosine(abs=True)
 
         input = Input(shape=(x.shape[1],))
-        m = Dense(400, activation='elu')(input)
+        m = Dense(ae_kwargs.dims[-1]//2, activation='elu')(input)
         m = Dense(1, activation=act)(m)
         m = Model(input, m)
         m.compile(
@@ -282,6 +292,7 @@ class Books(object):
             epochs=2,  # too many epochs overfits (eg to CBT). Maybe adjust LR *down*, or other?
             batch_size=16,
             callbacks=[self.es],
+            shuffle=True,
             validation_split=.3  # might not have enough data?
         )
 
