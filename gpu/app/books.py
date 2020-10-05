@@ -16,7 +16,7 @@ from tqdm import tqdm
 from common.database import session
 import common.models as M
 from common.utils import utcnow, vars
-from lefnire_ml_utils import Similars, cleantext
+from ml_tools import Similars, cleantext
 from common.fixtures import fixtures
 from box import Box
 import numpy as np
@@ -40,16 +40,9 @@ paths = Box(
 )
 
 # Dim-reduce vecs_books & vecs_user. Only doing because len(vecs_books)>290k & it breaks everything system RAM & GPU
-# RAM (would prefer raw cosine). Experiment with dims; keeping high to preserve accuracy. If not using, adjust DNN
-# predictor dims.
-# [400, 100]: val_loss: 0.0027 - val_decoder_out_loss: 2.4608e-04 - val_dist_out_loss: 0.0025
-# [400, 60]: val_loss: 0.0026 - val_decoder_out_loss: 2.9463e-04 - val_dist_out_loss: 0.0023
-# [400, 60] no normalization: val_loss: 0.0739 - val_decoder_out_loss: 0.0692 - val_dist_out_loss: 0.0047
-# [400, 60] batch_norm: val_loss: 0.0581 - val_decoder_out_loss: 0.0565 - val_dist_out_loss: 0.0016
-# Prefer the last. Learned-normalization (higher decode loss because input->output dist isn't normalized).
+# TODO better to use np.load(mmap_mode) and use raw cosines!
 ae_kwargs = dict(
     filename=paths.autoencoder,
-    preserve='cosine',
     dims=[400, 60],
     batch_norm=True
 )
@@ -133,7 +126,7 @@ class Books(object):
             psych_topics = f"and t.topic_descr regexp '{psych_topics}'"
 
         sql = f"""
-        select="select u.ID, u.Title, u.Author, d.descr, t.topic_descr
+        select u.ID, u.Title, u.Author, d.descr, t.topic_descr
         from updated u
             inner join description d on d.md5=u.MD5
             inner join topics t on u.Topic=t.topic_id
@@ -273,10 +266,10 @@ class Books(object):
             optimizer=Adam(learning_rate=.001),
         )
         m.summary()
-        self.es = EarlyStopping(monitor='val_loss', mode='min', patience=3, min_delta=.0002)
+        self.es = EarlyStopping(monitor='val_loss', mode='min', patience=3, min_delta=.0001)
         m.fit(
             x, y,
-            epochs=30,
+            epochs=40,
             batch_size=128,
             shuffle=True,
             callbacks=[self.es],
@@ -296,7 +289,7 @@ class Books(object):
         print('x_shape', x.shape)
         self.model.fit(
             x, y,
-            epochs=5,  # too many epochs overfits (eg to CBT). Maybe adjust LR *down*, or other?
+            epochs=30,  # too many epochs overfits (eg to CBT). Maybe adjust LR *down*, or other?
             batch_size=16,
             #callbacks=[self.es],
             shuffle=True,

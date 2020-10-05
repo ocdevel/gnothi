@@ -4,7 +4,7 @@ from common.database import session
 from common.utils import vars, is_test
 import common.models as M
 from sqlalchemy import text
-from lefnire_ml_utils.fixtures import articles
+from ml_tools.fixtures import articles
 import logging
 logger = logging.getLogger(__name__)
 

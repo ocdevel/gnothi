@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import common.models as M
 from common.database import session
-from lefnire_ml_utils import Similars, cleantext
+from ml_tools import Similars, cleantext
 from common.fixtures import fixtures
 from sqlalchemy import text
 from common.utils import vars

@@ -30,14 +30,12 @@ Currently very hairy, will clean this up soon.
 * Install docker-compose [with GPU support](https://github.com/docker/compose/issues/6691#issuecomment-670700674). If on Windows, you'll need [WSL2 + Dev channel](https://medium.com/@dalgibbard/docker-with-gpu-support-in-wsl2-ebbc94251cf5)
 * `docker-compose up -d`
 
-You'll likely want to `pip install -e` some helper modules during development, since they'll be in active development side-by-side.
+I'll be developing lefnire/ml-tools actively along with Gnothi, so on my machine it's setup like:
 
 ```
-mkdir tmp && pushd tmp
-git clone https://github.com/lefnire/lefnire_ml_utils.git
-popd
+git clone https://github.com/lefnire/ml-tools.git  # might need to delete that folder first, if docker-compose created it
 docker-compose exec gpu-dev
-$ pip install -e tmp/lefnire_ml_utils
+$ pip install -e /ml-tools
 ```
 
 ## Tests

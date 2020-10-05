@@ -1,4 +1,4 @@
-FROM lefnire/dl:transformers-pt-tf-0.0.2
+FROM lefnire/ml-tools:transformers-pt-tf-0.0.2
 
 # TODO switch to mysql-python-connector & remove apt-get
 RUN apt-get install -y default-libmysqlclient-dev
@@ -36,7 +36,7 @@ RUN \
   gradient \
   pytest \
   hnswlib \
-  git+git://github.com/lefnire/lefnire_ml_utils.git@a8482a1 \
+  git+git://github.com/lefnire/ml-tools.git@0.0.2 \
   git+git://github.com/UKPLab/sentence-transformers.git@dc84bb7644946d8217fa2ea5211a75c53be89101
 
 COPY ./gpu /paperspace

@@ -4,7 +4,7 @@ from common.database import session
 import common.models as M
 from common.utils import vars
 from app.nlp import nlp_
-from lefnire_ml_utils import Similars
+from ml_tools import Similars
 import pandas as pd
 import numpy as np
 import logging
@@ -47,7 +47,6 @@ def themes(eids, algo='kmeans'):
     vecs = np.vstack([r.vectors for r in res]).astype(np.float32)
 
     if os.path.exists(vars.AE_PATH):
-        algo = 'kmeans'  # dim-reduced lost cosine
         clusters = Similars(vecs).autoencode(filename=vars.AE_PATH).cluster(algo=algo).value()
     else:
         clusters = Similars(vecs).normalize().cluster(algo=algo).value()

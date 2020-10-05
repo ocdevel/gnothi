@@ -51,7 +51,7 @@ services:
       - ./gpu:/paperspace
       - ./common:/paperspace/common
       - ./storage:/storage
-      - ./tmp:/paperspace/tmp
+      - ./ml-tools:/ml-tools
     device_requests:
       - capabilities:
           - "gpu"

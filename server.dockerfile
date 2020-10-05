@@ -1,7 +1,7 @@
 FROM tiangolo/uvicorn-gunicorn-fastapi:python3.8
 RUN apt-get update -y && apt-get install -y wget unzip
 
-RUN curl -s https://raw.githubusercontent.com/lefnire/dockerfiles/master/psql-client.sh | bash
+RUN curl -s https://raw.githubusercontent.com/lefnire/ml-tools/master/dockerfiles/psql-client.sh | bash
 
 RUN apt-get install -y default-libmysqlclient-dev
 
