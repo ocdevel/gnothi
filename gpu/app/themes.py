@@ -47,7 +47,8 @@ def themes(eids, algo='kmeans'):
     vecs = np.vstack([r.vectors for r in res]).astype(np.float32)
 
     if os.path.exists(vars.AE_PATH):
-        clusters = Similars(vecs).autoencode(save_load_path=vars.AE_PATH).cluster(algo=algo).value()
+        algo = 'kmeans'  # dim-reduced lost cosine
+        clusters = Similars(vecs).autoencode(filename=vars.AE_PATH).cluster(algo=algo).value()
     else:
         clusters = Similars(vecs).normalize().cluster(algo=algo).value()
 

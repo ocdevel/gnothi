@@ -48,8 +48,8 @@ paths = Box(
 # [400, 60] batch_norm: val_loss: 0.0581 - val_decoder_out_loss: 0.0565 - val_dist_out_loss: 0.0016
 # Prefer the last. Learned-normalization (higher decode loss because input->output dist isn't normalized).
 ae_kwargs = dict(
-    save_load_path=paths.autoencoder,
-    preserve_cosine=True,
+    filename=paths.autoencoder,
+    preserve='cosine',
     dims=[400, 60],
     batch_norm=True
 )
@@ -237,8 +237,11 @@ class Books(object):
         # First, clean up the vectors some. vecs_books is already clean (normalized and autoencoded via
         # load_vecs_books), do so now with vecs_user.
         vu = Similars(vu).autoencode(**ae_kwargs).value()
+        assert vu.shape[1] == ae_kwargs['dims'][-1]
+        assert vb.shape[1] == vu.shape[1]
         self.vecs_user = vu  # used anywhere anymore?
-        dist = Similars(vu, vb).cosine(abs=True).value()
+        # Switched from cosine(abs=True) to euclidean, since autoencoded changed data shape & lost cosine
+        dist = Similars(vu, vb).cdist().value()
 
         # Take best cluster-score for every book
         dist = dist.min(axis=0)
@@ -249,7 +252,7 @@ class Books(object):
         df['dist'] = dist
         df['dist'] = df.dist \
             + (df.dist.std() * -df.global_score / 2.) \
-            + (df.dist.std() * -df.user_score)
+            + (df.dist.std() * -df.user_score * 2.)
         assert not df.dist.isna().any(), "Messed up merging shelf/books.dist by index"
 
     def pretrain(self):
@@ -261,19 +264,19 @@ class Books(object):
         act, loss = 'relu', 'mse'  # trying relu since using cosine(abs=True)
 
         input = Input(shape=(x.shape[1],))
-        m = Dense(ae_kwargs['dims'][-1]//2, activation='elu')(input)
+        m = Dense(10, activation='elu')(input)
         m = Dense(1, activation=act)(m)
         m = Model(input, m)
         m.compile(
             # metrics=['accuracy'],
             loss=loss,
-            optimizer=Adam(learning_rate=.0001),
+            optimizer=Adam(learning_rate=.001),
         )
         m.summary()
-        self.es = EarlyStopping(monitor='val_loss', mode='min', patience=3, min_delta=.0001)
+        self.es = EarlyStopping(monitor='val_loss', mode='min', patience=3, min_delta=.0002)
         m.fit(
             x, y,
-            epochs=35,
+            epochs=30,
             batch_size=128,
             shuffle=True,
             callbacks=[self.es],
@@ -290,11 +293,12 @@ class Books(object):
         # K.set_value(m.optimizer.learning_rate, 0.0001)  # alternatively https://stackoverflow.com/a/60420156/362790
         x = x[df.any_rated]
         y = df[df.any_rated].dist
+        print('x_shape', x.shape)
         self.model.fit(
             x, y,
-            epochs=2,  # too many epochs overfits (eg to CBT). Maybe adjust LR *down*, or other?
+            epochs=5,  # too many epochs overfits (eg to CBT). Maybe adjust LR *down*, or other?
             batch_size=16,
-            callbacks=[self.es],
+            #callbacks=[self.es],
             shuffle=True,
             validation_split=.3  # might not have enough data?
         )

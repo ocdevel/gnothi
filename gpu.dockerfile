@@ -36,7 +36,7 @@ RUN \
   gradient \
   pytest \
   hnswlib \
-  git+git://github.com/lefnire/lefnire_ml_utils.git@8a4960a684d7b2a66167cba9f0defa03813fbd9c \
+  git+git://github.com/lefnire/lefnire_ml_utils.git@a8482a1 \
   git+git://github.com/UKPLab/sentence-transformers.git@dc84bb7644946d8217fa2ea5211a75c53be89101
 
 COPY ./gpu /paperspace
