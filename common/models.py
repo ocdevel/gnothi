@@ -720,7 +720,7 @@ class Bookshelf(Base):
         -- could use books.thumbs, but it's missing data from before I added it. Maybe switch to it eventually
         with shelf_to_score as (
             select book_id, sum({shelf_to_score}) as score
-            from bookshelf
+            from bookshelf where shelf != 'ai'
             -- where user_id!=%(uid)s -- meh, I'll just double-count the user's score & modify math downstream, makes this sql easier
             group by book_id
         ), books_ as (
@@ -732,7 +732,7 @@ class Bookshelf(Base):
         )
         select b.*,
             {shelf_to_score} as user_score, 
-            (shelf is not null) as user_rated
+            (shelf is not null and shelf != 'ai') as user_rated
         from books_ b
         left outer join bookshelf s on b.id=s.book_id and s.user_id=%(uid)s
         -- sort id asc since that's how we mapped to numpy vectors in first place (order_values)
