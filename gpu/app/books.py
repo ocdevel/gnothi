@@ -252,7 +252,7 @@ class Books(object):
         dist = dist \
             - (dist.std() * df.global_score / 2.) \
             - (dist.std() * df.user_score * 2.)
-        # dist = minmax_scale(dist)
+        dist = minmax_scale(dist)
         df['dist'] = dist
         assert not df.dist.isna().any(), "Messed up merging shelf/books.dist by index"
 
@@ -263,7 +263,7 @@ class Books(object):
 
         input = Input(shape=(x.shape[1],))
         m = Dense(10, activation='tanh')(input)
-        m = Dense(1, activation='linear')(m)
+        m = Dense(1, activation='sigmoid')(m)
         m = Model(input, m)
         # http://zerospectrum.com/2019/06/02/mae-vs-mse-vs-rmse/
         # MAE because we _want_ outliers (user score adjustments)
@@ -272,12 +272,13 @@ class Books(object):
             optimizer=Adam(learning_rate=.0003),
         )
         m.summary()
+        self.es = EarlyStopping(monitor='val_loss', mode='min', patience=3, min_delta=.0001)
         m.fit(
             x, y,
-            epochs=30,
+            epochs=40,
             batch_size=128,
             shuffle=True,
-            callbacks=[EarlyStopping(monitor='val_loss', mode='min', patience=3, min_delta=.0001)],
+            callbacks=[self.es],
             validation_split=.3,
         )
         self.model = m
@@ -296,7 +297,7 @@ class Books(object):
             x, y,
             epochs=20,  # too many epochs overfits (eg to CBT). Maybe adjust LR *down*, or other?
             batch_size=16,
-            callbacks=[EarlyStopping(monitor='val_loss', mode='min', patience=3, min_delta=.001)],
+            callbacks=[self.es],
             shuffle=True,
             validation_split=.3  # might not have enough data?
         )
@@ -347,7 +348,12 @@ class Books(object):
         shelf = df[['id', 'dist']].rename(columns=dict(id='book_id', dist='score'))
         shelf['user_id'] = user_id
         shelf['shelf'] = 'ai'
-        shelf.to_sql('bookshelf', sess.bind, if_exists='append', index=False)
+        shelf = shelf.to_dict('records')
+        sess.execute(
+            postgresql.insert(M.Bookshelf.__table__)
+                .values(shelf)
+                .on_conflict_do_nothing(index_elements=[M.Bookshelf.book_id, M.Bookshelf.user_id])
+        )
 
     def run(self):
         self.prune_books()

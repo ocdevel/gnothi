@@ -725,7 +725,7 @@ class Bookshelf(Base):
             group by book_id
         ), books_ as (
             select b.*, 
-                coalesce(s.score, 0) as global_score,
+                s.score as global_score,
                 s.score is not null as any_rated
             from books b
             left outer join shelf_to_score s on b.id=s.book_id
