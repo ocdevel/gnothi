@@ -35,6 +35,9 @@ class Fixtures():
         all_ = FRESH == 'all'
         if 'books' in FRESH or all_:
             self.rm(f"{BASE}/books.pkl")
+            with session() as sess:
+                sess.execute("delete from books")
+                sess.commit()
         if 'entries' in FRESH or all_:
             self.rm(f"{BASE}/entries.pkl")
             self.rm(f"{BASE}/nlp_entries.pkl")
@@ -42,10 +45,6 @@ class Fixtures():
             self.rm(f"{BASE}/nlp_profiles.pkl")
         if 'influencers' in FRESH or all_:
             self.rm(f"{BASE}/xgb_hypers.pkl")
-        if 'liben' in FRESH or all_:
-            with session() as sess:
-                sess.execute("delete from books")
-                sess.commit()
         if 'libgen.npy' in FRESH or all_: self.rm(f"/storage/libgen/testing_all.npy")
         if 'libgen.df' in FRESH or all_: self.rm(f"/storage/libgen/testing_all.df")
         if 'libgen.tf' in FRESH or all_: self.rm(f"/storage/libgen/testing_all.tf", isdir=True)

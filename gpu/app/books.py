@@ -24,6 +24,7 @@ import pandas as pd
 from sqlalchemy import text
 from psycopg2.extras import Json as jsonb
 from sqlalchemy.dialects import postgresql
+from sklearn.preprocessing import minmax_scale
 import logging
 logger = logging.getLogger(__name__)
 
@@ -46,7 +47,7 @@ DNN = True
 ae_kwargs = dict(
     filename=paths.autoencoder,
     dims=[400, 60],
-    batch_norm=True
+    batch_norm=False
 )
 
 class Books(object):
@@ -109,7 +110,6 @@ class Books(object):
             logger.info("Load books.df")
             return pd.read_feather(paths.df)\
                 .drop(columns=['index'])\
-                .sort_values('id')\
                 .set_index('id', drop=False)
 
         # invalidate embeddings, they're out of sync
@@ -172,13 +172,13 @@ class Books(object):
         df['txt_len'] = df.text.str.len()
         df = df.sort_values('txt_len', ascending=False)\
             .drop_duplicates('id')\
-            .drop(columns=['txt_len'])\
-            .sort_values('id')
+            .drop(columns=['txt_len'])
 
         logger.info(f"Save books.df")
         # Error: feather does not support serializing a non-default index for the index; you can .reset_index() to make the index into column(s)
         # I get ^ even though no index has yet been set. Have to manually reset_index() anyway
-        df.reset_index().to_feather(paths.df)
+        df = df.reset_index()
+        df.to_feather(paths.df)
         # call self, which returns newly-saved df (ensures consistent order, etc)
         return self.load_df()
 
@@ -238,7 +238,7 @@ class Books(object):
 
         # autoencoder might ruin cosine, preferring euclidean. investigate
         if DIST_FN == 'cosine':
-            dist = Similars(vu, vb).cosine(abs=True).value()
+            dist = Similars(vu, vb).normalize().cosine(abs=True).value()
         else:
             dist = Similars(vu, vb).cdist().value()
 
@@ -249,42 +249,35 @@ class Books(object):
 
         # Push highly-rated books up, low-rated books down. Do that even stronger for user's own ratings.
         # Using negative-score because cosine DISTANCE (less is better)
+        dist = dist \
+            - (dist.std() * df.global_score / 2.) \
+            - (dist.std() * df.user_score * 2.)
+        # dist = minmax_scale(dist)
         df['dist'] = dist
-        df['dist'] = df.dist \
-            + (df.dist.std() * -df.global_score / 2.) \
-            + (df.dist.std() * -df.user_score * 2.)
         assert not df.dist.isna().any(), "Messed up merging shelf/books.dist by index"
 
     def pretrain(self):
         logger.info("Pre-train model")
         x = self.vecs_books
         y = self.df.dist
-        # linear+mse for smoother distances, what we have here? where sigmoid+binary_crossentropy for
-        # harder decision boundaries, which we don't have?
-        logger.info(f"dist.min={y.min()}, dist.max={y.max()}")
-        if DIST_FN == 'cosine':
-            # thought relu would be good since cosine(abs=True), but still getting negative values. investigate
-            act, loss = 'linear', 'mse'
-        else:
-            act, loss = 'linear', 'mse'
 
         input = Input(shape=(x.shape[1],))
-        m = Dense(10, activation='elu')(input)
-        m = Dense(1, activation=act)(m)
+        m = Dense(10, activation='tanh')(input)
+        m = Dense(1, activation='linear')(m)
         m = Model(input, m)
+        # http://zerospectrum.com/2019/06/02/mae-vs-mse-vs-rmse/
+        # MAE because we _want_ outliers (user score adjustments)
         m.compile(
-            # metrics=['accuracy'],
-            loss=loss,
-            optimizer=Adam(learning_rate=.0001),
+            loss='mae',
+            optimizer=Adam(learning_rate=.0003),
         )
         m.summary()
-        self.es = EarlyStopping(monitor='val_loss', mode='min', patience=3, min_delta=.0001)
         m.fit(
             x, y,
-            epochs=40,
+            epochs=30,
             batch_size=128,
             shuffle=True,
-            callbacks=[self.es],
+            callbacks=[EarlyStopping(monitor='val_loss', mode='min', patience=3, min_delta=.0001)],
             validation_split=.3,
         )
         self.model = m
@@ -303,7 +296,7 @@ class Books(object):
             x, y,
             epochs=20,  # too many epochs overfits (eg to CBT). Maybe adjust LR *down*, or other?
             batch_size=16,
-            callbacks=[self.es],
+            callbacks=[EarlyStopping(monitor='val_loss', mode='min', patience=3, min_delta=.001)],
             shuffle=True,
             validation_split=.3  # might not have enough data?
         )
@@ -328,9 +321,8 @@ class Books(object):
         df = self.df
         df['dist'] = self.predict()
         # dupes by title in libgen
-        # r = books.sort_values('dist')\
         self.df = df[~df.user_rated].sort_values('dist') \
-            .drop_duplicates('title', keep='first') \
+            .drop_duplicates('title') \
             .iloc[:n_recs]
 
     def save_results(self):

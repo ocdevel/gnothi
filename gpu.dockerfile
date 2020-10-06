@@ -22,7 +22,7 @@ RUN \
   bcrypt \
   gradient \
   pytest \
-  git+git://github.com/lefnire/ml-tools.git@0.0.3
+  git+git://github.com/lefnire/ml-tools.git@0.0.4
 
 COPY ./gpu /paperspace
 COPY ./common /paperspace/common

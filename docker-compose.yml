@@ -6,7 +6,7 @@ services:
       context: .
       dockerfile: ./server.dockerfile
     container_name: jserver
-    #entrypoint: /bin/bash
+    entrypoint: /bin/bash
     environment:
       ENVIRONMENT: development
     ports:
@@ -42,7 +42,7 @@ services:
       context: .
       dockerfile: ./gpu.dockerfile
     container_name: jgpu-dev
-    #entrypoint: /bin/bash
+    entrypoint: /bin/bash
     stdin_open: true
     restart: unless-stopped
     environment:
