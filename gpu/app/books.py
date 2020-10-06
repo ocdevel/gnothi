@@ -39,7 +39,7 @@ paths = Box(
     autoencoder=f"{libgen_file}.tf",
     compressed=f"{libgen_file}.min.npy",
 )
-DIST_FN = 'cdist'  # cosine|cdist
+DIST_FN = 'cosine'  # cosine|cdist
 DNN = True
 
 # Dim-reduce vecs_books & vecs_user. Only doing because len(vecs_books)>290k & it breaks everything system RAM & GPU
@@ -238,7 +238,7 @@ class Books(object):
 
         # autoencoder might ruin cosine, preferring euclidean. investigate
         if DIST_FN == 'cosine':
-            dist = Similars(vu, vb).normalize().cosine(abs=True).value()
+            dist = Similars(vu, vb).cosine(abs=True).value()
         else:
             dist = Similars(vu, vb).cdist().value()
 
