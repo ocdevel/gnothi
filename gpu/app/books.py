@@ -1,15 +1,3 @@
-# https://github.com/tensorflow/tensorflow/issues/2117
-import tensorflow as tf
-config = tf.compat.v1.ConfigProto()
-config.gpu_options.allow_growth = True
-session = tf.compat.v1.Session(config=config)
-
-from tensorflow.keras import backend as K
-from tensorflow.keras.layers import Input, Dense
-from tensorflow.keras.models import Model, load_model
-from tensorflow.keras.callbacks import EarlyStopping
-from tensorflow.keras.optimizers import Adam
-
 import os, pdb, math, datetime, traceback
 from os.path import exists
 from tqdm import tqdm
@@ -25,6 +13,7 @@ from sqlalchemy import text
 from psycopg2.extras import Json as jsonb
 from sqlalchemy.dialects import postgresql
 from sklearn.preprocessing import minmax_scale
+from app.books_dnn import BooksDNN
 import logging
 logger = logging.getLogger(__name__)
 
@@ -34,20 +23,9 @@ libgen_dir = "/storage/libgen"
 libgen_file = f"{libgen_dir}/{vars.ENVIRONMENT}_{'all' if ALL_BOOKS else 'psych'}"  # '.ext
 if not os.path.exists(libgen_dir): os.mkdir(libgen_dir)
 paths = Box(
-    vecs=f"{libgen_file}.npy",
     df=f"{libgen_file}.df",
-    autoencoder=f"{libgen_file}.tf",
-    compressed=f"{libgen_file}.min.npy",
-)
-DIST_FN = 'cosine'  # cosine|cdist
-DNN = True
-
-# Dim-reduce vecs_books & vecs_user. Only doing because len(vecs_books)>290k & it breaks everything system RAM & GPU
-# TODO better to use np.load(mmap_mode) and use raw cosines!
-ae_kwargs = dict(
-    filename=paths.autoencoder,
-    dims=[400, 60],
-    batch_norm=False
+    vecs=f"{libgen_file}.npy",
+    dnn=f"{libgen_file}.tf"
 )
 
 class Books(object):
@@ -57,8 +35,6 @@ class Books(object):
 
         self.vecs_user = None
         self.df = None
-        self.vecs_books = None
-        self.model = None
 
     def prune_books(self):
         self.sess.execute("""
@@ -193,28 +169,15 @@ class Books(object):
                 return np.load(f)
         return None
 
-    def load_vecs_books(self):
-        # Try loading autoencoded vecs first. If they exist, then the auto-encoder exists too, and let's save
-        # ourselves resources (.npy file-loading, GPU RAM, etc)
-        vecs = self._npfile(paths.compressed)
-        if vecs is not None:
-            return vecs
-
-        # If autoencoding not yet done, but intermediate full-vectors step is, load that then autoencode
-        vecs = self._npfile(paths.vecs)
-        if vecs is None:
-            # No embeddings at all yet, generate them
-            df = self.df
-            logger.info(f"Embedding {df.shape[0]} entries")
-            texts = (df.title + '\n' + df.text).tolist()
-            vecs = Similars(texts).embed().value()
-            self._npfile(paths.vecs, write=vecs)
-
-        # Then autoencode them since our operations are so heavy; cosine in particular, maxes GPU RAM easily
-        vecs = Similars(vecs).autoencode(**ae_kwargs).value()
-        self._npfile(paths.compressed, write=vecs)
-
-        return vecs
+    def embed_books(self):
+        if exists(paths.vecs):
+            return
+        # No embeddings at all yet, generate them
+        df = self.df
+        logger.info(f"Embedding {df.shape[0]} entries")
+        texts = (df.title + '\n' + df.text).tolist()
+        vecs = Similars(texts).embed().value()
+        self._npfile(paths.vecs, write=vecs)
 
     def load_scores(self):
         logger.info("Load book_scores")
@@ -225,95 +188,16 @@ class Books(object):
             df[k] = books[k]  # this assumes k->k map properly on index
             df[k] = df[k].fillna(fillna)
 
-    def compute_dists(self):
-        logger.info("Compute distances")
-        df, vu, vb = self.df, self.vecs_user, self.vecs_books
-
-        # First, clean up the vectors some. vecs_books is already clean (normalized and autoencoded via
-        # load_vecs_books), do so now with vecs_user.
-        vu = Similars(vu).autoencode(**ae_kwargs).value()
-        assert vu.shape[1] == ae_kwargs['dims'][-1]
-        assert vb.shape[1] == vu.shape[1]
-        self.vecs_user = vu  # used anywhere anymore?
-
-        # autoencoder might ruin cosine, preferring euclidean. investigate
-        if DIST_FN == 'cosine':
-            dist = Similars(vu, vb).cosine(abs=True).value()
-        else:
-            dist = Similars(vu, vb).cdist().value()
-
-
-        # Take best cluster-score for every book
-        dist = dist.min(axis=0)
-        # then map back onto books, so they're back in order (pandas index-matching)
-
-        # Push highly-rated books up, low-rated books down. Do that even stronger for user's own ratings.
-        # Using negative-score because cosine DISTANCE (less is better)
-        dist = dist \
-            - (dist.std() * df.global_score / 2.) \
-            - (dist.std() * df.user_score * 2.)
-        dist = minmax_scale(dist)
-        df['dist'] = dist
-        assert not df.dist.isna().any(), "Messed up merging shelf/books.dist by index"
-
-    def pretrain(self):
-        logger.info("Pre-train model")
-        x = self.vecs_books
-        y = self.df.dist
-
-        input = Input(shape=(x.shape[1],))
-        m = Dense(10, activation='tanh')(input)
-        m = Dense(1, activation='sigmoid')(m)
-        m = Model(input, m)
-        # http://zerospectrum.com/2019/06/02/mae-vs-mse-vs-rmse/
-        # MAE because we _want_ outliers (user score adjustments)
-        m.compile(
-            loss='mae',
-            optimizer=Adam(learning_rate=.0003),
-        )
-        m.summary()
-        self.es = EarlyStopping(monitor='val_loss', mode='min', patience=3, min_delta=.0001)
-        m.fit(
-            x, y,
-            epochs=40,
-            batch_size=128,
-            shuffle=True,
-            callbacks=[self.es],
-            validation_split=.3,
-        )
-        self.model = m
-
-    def finetune(self):
-        logger.info("Fine-tune model")
-        x, df = self.vecs_books, self.df
-        if df.any_rated.sum() < 3: return
-
-        # Train harder on shelved books
-        # K.set_value(m.optimizer.learning_rate, 0.0001)  # alternatively https://stackoverflow.com/a/60420156/362790
-        x = x[df.any_rated]
-        y = df[df.any_rated].dist
-        print('number of ratings', x.shape)
-        self.model.fit(
-            x, y,
-            epochs=20,  # too many epochs overfits (eg to CBT). Maybe adjust LR *down*, or other?
-            batch_size=16,
-            callbacks=[self.es],
-            shuffle=True,
-            validation_split=.3  # might not have enough data?
-        )
-
     def predict(self):
-        user_id = self.user_id
+        df, vu, user_id = self.df, self.vecs_user, self.user_id
         fixt = fixtures.load_books(user_id)
         if fixt is not None:
             logger.info("Returning fixture predictions")
             return fixt
-        if DNN:
-            self.pretrain()
-            self.finetune()
-            preds = self.model.predict(self.vecs_books)
-        else:
-            preds = self.df.dist
+
+        dnn = BooksDNN(vu, df)
+        dnn.train()
+        preds = dnn.predict()
         fixtures.save_books(user_id, preds)
         return preds
 
@@ -363,9 +247,8 @@ class Books(object):
             return {}
 
         self.df = self.load_df()
-        self.vecs_books = self.load_vecs_books()
+        self.embed_books()
         self.load_scores()
-        self.compute_dists()
         self.recommend()
         self.save_results()
 
