@@ -3,7 +3,7 @@ from os.path import exists
 from tqdm import tqdm
 from common.database import session
 import common.models as M
-from common.utils import utcnow, vars
+from common.utils import utcnow, vars, is_test
 from ml_tools import Similars, cleantext
 from common.fixtures import fixtures
 from box import Box
@@ -80,6 +80,18 @@ class Books(object):
             # fixme empty vectors
             return None
         return np.vstack(vecs).astype(np.float32)
+
+    def _add_test_ratings(self, df):
+        """
+        TODO do this in tests themselves (add ratings to DB)
+        """
+        if not is_test(): return
+        idx = df.iloc[:200].index
+        df.loc[idx, 'any_rated'] = True
+        df.loc[idx, 'global_score'] = np.random.randint(0, 10)
+        idx = df.iloc[-100:].index
+        df.loc[idx, 'user_rated'] = True
+        df.loc[idx, 'user_score'] = np.random.randint(0, 10)
 
     def load_df(self):
         if exists(paths.df):
@@ -195,6 +207,7 @@ class Books(object):
             logger.info("Returning fixture predictions")
             return fixt
 
+        self._add_test_ratings(df)
         dnn = BooksDNN(vu, df)
         dnn.train()
         preds = dnn.predict()

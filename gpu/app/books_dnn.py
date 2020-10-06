@@ -11,7 +11,8 @@ from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.optimizers import Adam
 
 import pdb, logging
-from common.utils import vars
+from box import Box
+from common.utils import vars, is_test
 from ml_tools import Similars
 from sklearn.preprocessing import minmax_scale
 import numpy as np
@@ -25,84 +26,117 @@ fname = f"{libgen_file}.tf"
 
 books = np.load(f"{libgen_file}.npy", mmap_mode='r')
 n_books, dims = books.shape[0], books.shape[1]
-split_ = int(n_books * .7)
-batch = 250
+split = int(n_books * .7)
 
 class BooksDNN(object):
     def __init__(self, vecs_user, df):
         self.user = vecs_user
         self.df = df
         self.m = None
+        self.es = EarlyStopping(monitor='val_loss', mode='min', patience=3, min_delta=.0001)
 
-    def generator(self, user_i=None, fine_tune=False, validation=False):
-        user = self.vecs_user
-        user_range = range(user.shape[0]) if user_i is None else [user_i]
+        self.mask = Box(
+            book_train=np.array([i <= split for i in range(n_books)]),
+            book_val=np.array([i > split for i in range(n_books)]),
+            user_train=self.df.any_rated,
+            user_val=self.df.user_rated
+        )
 
-        mask = np.arange(n_books)
-        mask = self.df.any_rated if fine_tune else mask
-        mask = mask[:split_] if validation else mask[split_:]
-        books_ = books[mask,:]
-        df_ = self.df.iloc[mask]
-        for i in user_range:
-            for j in range(0, books_.shape[0], batch):
-                book_batch = books_[j:j+batch]
-                user_batch = np.repeat(user[i:i+1], book_batch.shape[0], axis=0)
-                x = np.hstack([user_batch, book_batch])
+    def shuffle_idx(self, arr):
+        shuffle = np.arange(arr.shape[0])
+        np.random.shuffle(shuffle)
+        return shuffle
 
-                y = Similars(user_batch, book_batch).normalize().cosine(abs=True).value()
-                y = y.min(axis=0)
+    def generator_cosine(self, batch, validation=False):
+        mask = self.mask.book_val if validation else self.mask.book_train
+        bb = books[mask]
+        bb = bb[self.shuffle_idx(bb)]
+        while bb.size:
+            bb = bb[:batch]
+            a = bb
+            shuffle = self.shuffle_idx(a)
+            b = a[shuffle]
+            x = np.hstack([a, b])
 
-                df_batch = df_.iloc[j:j+batch]
+            y = Similars(a,b).normalize().cosine(abs=True).value()
+            y = y[np.arange(a.shape[0]),shuffle]
+            # can't do min_max since over batches
+            # y = minmax_scale(y)
+
+            yield x, y
+
+    def generator_adjustments(self, batch, validation=False):
+        mask = self.mask.user_val if validation else self.mask.user_train
+        df = self.df[mask]
+        user = self.user
+        for i in range(user.shape[0]):
+            bb = books[mask]
+            df_ = df
+            while bb.size:
+                bb = bb[:batch]
+                a = np.repeat([user[i]], bb.shape[0], axis=0)
+                b = bb
+                x = np.hstack([a, b])
+
+                y = Similars(a, b).normalize().cosine(abs=True).value().diagonal()
                 # Push highly-rated books up, low-rated books down. Do that even stronger for user's own ratings.
                 # Using negative-score because cosine DISTANCE (less is better)
-                y = y - (y.std() * df_batch.global_score / 2.) \
-                    - (y.std() * df_batch.user_score * 2.)
-                y = minmax_scale(y)
+                df_ = df_.iloc[:batch]
+                y = y - (y.std() * df_.global_score / 2.) \
+                    - (y.std() * df_.user_score * 2.)
+                yield x, y.values
 
-                yield x, y
+    def generator_predict(self, batch, i):
+        bb = books
+        while bb.size:
+            bb = bb[:batch]
+            a = np.repeat([self.user[i]], bb.shape[0], axis=0)
+            b = bb
+            yield np.hstack([a, b])
 
     def init_model(self):
         input = Input(shape=(dims * 2,))
-        m = Dense(600, activation='relu')(input)
-        m = Dense(100, activation='relu')(m)
-        m = Dense(1, activation='sigmoid')(m)
+        m = Dense(600, activation='tanh')(input)
+        m = Dense(100, activation='tanh')(m)
+        m = Dense(1, activation='linear')(m)
         m = Model(input, m)
         # http://zerospectrum.com/2019/06/02/mae-vs-mse-vs-rmse/
         # MAE because we _want_ outliers (user score adjustments)
         m.compile(
-            loss='mae',
+            # loss='mae',
+            loss='mse',
             optimizer=Adam(learning_rate=.0003),
         )
         m.summary()
         self.m = m
-        # self.es = EarlyStopping(monitor='val_loss', mode='min', patience=3, min_delta=.0001)
-        self.es = EarlyStopping(monitor='val_loss', mode='min', patience=3, min_delta=.0001)
 
     def learn_cosine_function(self):
         logger.info("DNN: learn cosine function")
         # https://www.machinecurve.com/index.php/2020/04/06/using-simple-generators-to-flow-data-from-file-with-keras/
+        # https://www.tensorflow.org/api_docs/python/tf/keras/Model#fit
+        batch = 128
         self.m.fit(
-            self.generator(),
+            self.generator_cosine(batch),
+            # epochs=1,
             epochs=40,
-            batch_size=128,
-            shuffle=True,
             callbacks=[self.es],
-            validation_data=self.generator(validation=True),
-            # steps_per_epoch=books[:split_].shape[0] * self.user.shape[0],
-            # do i need this? (since validation_data is finite)
-            # validation_steps=int(books[:split_].shape[0]/batch),
+            validation_data=self.generator_cosine(batch, validation=True),
+            steps_per_epoch=int(self.mask.book_train.sum()/batch),
+            validation_steps=int(self.mask.book_val.sum()/batch),
         )
 
     def learn_adjustments(self):
+        if self.df.any_rated.sum() < 3: return
         logger.info("DNN: learn adjustments function")
-        self.model.fit(
-            self.generator(fine_tune=True),
+        batch = 16
+        self.m.fit(
+            self.generator_adjustments(batch),
             epochs=20,  # too many epochs overfits (eg to CBT). Maybe adjust LR *down*, or other?
-            batch_size=16,
+            # epochs=1,
             callbacks=[self.es],
-            shuffle=True,
-            validation_data=self.generator(fine_tune=True, validation=True),
-            # validation_steps=int(books[split_:].shape[0]/batch)
+            validation_data=self.generator_adjustments(batch, validation=True),
+            steps_per_epoch=int(self.mask.user_train.sum()*self.user.shape[0]/batch),
+            validation_steps=int(self.mask.user_val.sum()*self.user.shape[0]/batch)
         )
 
     def train(self):
@@ -111,7 +145,17 @@ class BooksDNN(object):
         self.learn_adjustments()
 
     def predict(self):
-        return np.hstack([
-            self.m.predict(self.generator(user_i=i))
-            for i in self.user.shape[0]
-        ]).min(axis=1)
+        batch = 10000
+        best = None
+        for i in [0]:  # range(self.user.shape[0]):
+            preds = self.m.predict(
+                self.generator_predict(batch, i),
+                steps=int(n_books/batch),
+                verbose=1
+            ).squeeze()
+            if best is None:
+                best = preds
+                continue
+            best = np.vstack([best, preds]).min(axis=0)
+        # error Length of values (290000) does not match length of index (297557)
+        return best
