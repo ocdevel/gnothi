@@ -23,7 +23,8 @@ Currently very hairy, will clean this up soon.
 ### To use AI
 * The client & server should run without the AI stuff, for a while, but you'll want to get this working eventually.
 * Libgen
-    * TODO: this part should be optional - don't use books unless libgen present. Someone PR me? 
+    * Quickstart by extracting https://gnothiai.com/libgens.zip to /storage/libgen/*. Each file starts with <ENVIRONMENT>, so replace with "testing" or "development" or such.
+    * If you're not interested in books development, you can stop now. Below is how to generate those libgen files.
     * Install MySQL server on your host
     * Download [libgen/dbdumps/libgen.rar](http://gen.lib.rus.ec/dbdumps/), extract, improt into MySQL
     * Modify `common/config.json` for MySQL/libgen

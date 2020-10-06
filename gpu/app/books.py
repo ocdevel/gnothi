@@ -38,6 +38,8 @@ paths = Box(
     autoencoder=f"{libgen_file}.tf",
     compressed=f"{libgen_file}.min.npy",
 )
+DIST_FN = 'cdist'  # cosine|cdist
+DNN = True
 
 # Dim-reduce vecs_books & vecs_user. Only doing because len(vecs_books)>290k & it breaks everything system RAM & GPU
 # TODO better to use np.load(mmap_mode) and use raw cosines!
@@ -233,8 +235,13 @@ class Books(object):
         assert vu.shape[1] == ae_kwargs['dims'][-1]
         assert vb.shape[1] == vu.shape[1]
         self.vecs_user = vu  # used anywhere anymore?
-        # Switched from cosine(abs=True) to euclidean, since autoencoded changed data shape & lost cosine
-        dist = Similars(vu, vb).cdist().value()
+
+        # autoencoder might ruin cosine, preferring euclidean. investigate
+        if DIST_FN == 'cosine':
+            dist = Similars(vu, vb).cosine(abs=True).value()
+        else:
+            dist = Similars(vu, vb).cdist().value()
+
 
         # Take best cluster-score for every book
         dist = dist.min(axis=0)
@@ -254,7 +261,12 @@ class Books(object):
         y = self.df.dist
         # linear+mse for smoother distances, what we have here? where sigmoid+binary_crossentropy for
         # harder decision boundaries, which we don't have?
-        act, loss = 'relu', 'mse'  # trying relu since using cosine(abs=True)
+        logger.info(f"dist.min={y.min()}, dist.max={y.max()}")
+        if DIST_FN == 'cosine':
+            # thought relu would be good since cosine(abs=True), but still getting negative values. investigate
+            act, loss = 'linear', 'mse'
+        else:
+            act, loss = 'linear', 'mse'
 
         input = Input(shape=(x.shape[1],))
         m = Dense(10, activation='elu')(input)
@@ -263,7 +275,7 @@ class Books(object):
         m.compile(
             # metrics=['accuracy'],
             loss=loss,
-            optimizer=Adam(learning_rate=.001),
+            optimizer=Adam(learning_rate=.0001),
         )
         m.summary()
         self.es = EarlyStopping(monitor='val_loss', mode='min', patience=3, min_delta=.0001)
@@ -286,12 +298,12 @@ class Books(object):
         # K.set_value(m.optimizer.learning_rate, 0.0001)  # alternatively https://stackoverflow.com/a/60420156/362790
         x = x[df.any_rated]
         y = df[df.any_rated].dist
-        print('x_shape', x.shape)
+        print('number of ratings', x.shape)
         self.model.fit(
             x, y,
-            epochs=30,  # too many epochs overfits (eg to CBT). Maybe adjust LR *down*, or other?
+            epochs=20,  # too many epochs overfits (eg to CBT). Maybe adjust LR *down*, or other?
             batch_size=16,
-            #callbacks=[self.es],
+            callbacks=[self.es],
             shuffle=True,
             validation_split=.3  # might not have enough data?
         )
@@ -302,9 +314,12 @@ class Books(object):
         if fixt is not None:
             logger.info("Returning fixture predictions")
             return fixt
-        self.pretrain()
-        self.finetune()
-        preds = self.model.predict(self.vecs_books)
+        if DNN:
+            self.pretrain()
+            self.finetune()
+            preds = self.model.predict(self.vecs_books)
+        else:
+            preds = self.df.dist
         fixtures.save_books(user_id, preds)
         return preds
 
