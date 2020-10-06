@@ -25,7 +25,6 @@ if not os.path.exists(libgen_dir): os.mkdir(libgen_dir)
 paths = Box(
     df=f"{libgen_file}.df",
     vecs=f"{libgen_file}.npy",
-    dnn=f"{libgen_file}.tf"
 )
 
 class Books(object):
