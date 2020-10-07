@@ -124,6 +124,9 @@ function Details() {
       <hr />
       <h3>Privacy / Terms concerns</h3>
       <p>I don't plan to do anything concerning with your data. If you trust AI analyzing your entries (the whole point of the system), but you don't trust the <a href='/privacy' target='_blank'>Privacy Policy</a>, go with the former. You can see everything I'm doing in the <a href='https://github.com/lefnire/gnothi' target='_blank'>code</a>. Hell, <a href='mailto:tylerrenelle@gmail.com'>schedule a Skype</a> with me so you can know the man behind the curtains. The Privacy Policy is auto-generated, and when I can afford to I'll get a lawyer to draft a proper one. As for <a href='/terms' target='_blank'>Terms</a>, the essence is "don't upload anything that will get me in trouble" (copyright images, book details, etc). I want to do right by you and make you feel comfortable, secure, and private. Also don't want to get sued.</p>
+      <hr />
+      <h3>Amazon Affiliate Links</h3>
+      <p>As an <a href="https://affiliate-program.amazon.com/" target="_blank">Amazon Associate</a> I earn from qualifying purchases. How it works: when I see some books are popular, I'll put an Amazon Affiliate Link on them. Amazon-linked books aren't up-weighted (ie, it's not a "sponsored links" situation); instead, user-thumbs in general up/down-weight book recommendations some, with your own thumbs contributing the most. So if Amazon links appear often, it's only because users like those books often, I've noticed that, and slapped an Affiliate link on.</p>
     </>
   }])
 

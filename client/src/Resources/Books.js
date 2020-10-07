@@ -8,7 +8,16 @@ import {
   NavDropdown,
   Alert,
 } from "react-bootstrap";
-import {FaTags, FaUser, FaThumbsUp, FaThumbsDown, FaCheck, FaTimes} from "react-icons/fa"
+import {
+  FaTags,
+  FaUser,
+  FaThumbsUp,
+  FaThumbsDown,
+  FaCheck,
+  FaTimes,
+  FaAmazon
+} from "react-icons/fa"
+import {Link} from 'react-router-dom'
 
 import { useSelector, useDispatch } from 'react-redux'
 import { fetch_ } from '../redux/actions'
@@ -75,10 +84,11 @@ export default function Books() {
       <h5>
         {b.amazon ? <a href={b.amazon} target='_blank'>{b.title}</a> : b.title}
       </h5>
-      <p>
-        <FaUser /> {b.author}
-        {user.is_cool && <><br/><FaTags /> {b.topic}</>}
-      </p>
+      <div className='text-muted bottom-margin'>
+        <div><FaUser /> {b.author}</div>
+        <div><FaTags /> {b.topic}</div>
+        {b.amazon && <div><FaAmazon /> Amazon Affiliate Link <Link to='/about/faq'>?</Link></div>}
+      </div>
       <p>{b.text}</p>
       <div>
         <ButtonGroup>
