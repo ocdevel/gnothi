@@ -86,7 +86,7 @@ class BooksDNN(object):
             y = Similars(a, b).normalize().cosine(abs=True).value().diagonal()
             # Push highly-rated books up, low-rated books down. Do that even stronger for user's own ratings.
             # Using negative-score because cosine DISTANCE (less is better)
-            y = y - (y.std() * df_.global_score / 2.) \
+            y = y - (y.std() * df_.global_score) \
                 - (y.std() * df_.user_score * 2.)
             yield x, y.values
 

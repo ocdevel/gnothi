@@ -719,7 +719,7 @@ class Bookshelf(Base):
         sql = f"""
         -- could use books.thumbs, but it's missing data from before I added it. Maybe switch to it eventually
         with shelf_to_score as (
-            select book_id, sum({shelf_to_score}) as score
+            select book_id, avg({shelf_to_score}) as score
             from bookshelf where shelf != 'ai'
             -- where user_id!=%(uid)s -- meh, I'll just double-count the user's score & modify math downstream, makes this sql easier
             group by book_id
