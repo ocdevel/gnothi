@@ -37,7 +37,7 @@ const initialState = {
     ask_res2: emptyRes,
 
     themes_fetching: false,
-    themes_req: "kmeans",
+    themes_req: "agglomorative",
     themes_res1: emptyRes,
     themes_res2: emptyRes,
 
