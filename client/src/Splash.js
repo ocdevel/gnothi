@@ -110,24 +110,9 @@ function Details() {
       <p>Using the same technology above, you can find therapists who match you "in essence" - that is, their specialties (specified in their bio) match your entries via embeddings. Are you a therapist? List yourself now while it's free, you'll be grandfathered once I start charging!</p>
     </>
   }, {
-    k: 'faq',
+    k: 'https://github.com/lefnire/gnothi/issues?q=label%3AFAQ',
     label: 'FAQ',
-    render: () => <>
-      <h3>Open source, but you're protected</h3>
-      <p>Gnothi is <a href='https://opensource.org/licenses/AGPL-3.0' target='_blank'>AGPL-3.0</a> on <a href='https://github.com/lefnire/gnothi' target='_blank'>Github</a>, with some AI utilities <a href='https://github.com/lefnire/ml-tools' target='_blank'>here</a>. Your data is completely locked down, and encrypted! Open-source does not mean open-data, it's just the code. In fact, open-source typically means stronger security, as there's more concerned expert parties' hands on deck.</p>
-      <hr />
-      <h3>Mobile Apps</h3>
-      <p>It would take me 2 weeks total to create an iPhone & Android app. Before I start that, I want to prove this webapp out - make sure people would use Gnothi. This website works great on mobile, so use this in your mobile browser for now. The two main features apps will add are (a) offline capabilities (journal offline, syncs when you're back online); and (b) <a href='https://en.wikipedia.org/wiki/Optical_character_recognition' target='_blank'>OCR</a> to take a photo of your <em>physical</em> journal pages (pen & paper), which gets converted to text & saved to Gnothi. Actually pretty easy using <a href='https://cloud.google.com/functions/docs/tutorials/ocr' target='_blank'>GCP</a>.</p>
-      <hr />
-      <h3>Bugs & Features</h3>
-      <p>Post any bug reports or feature requests to <a href='https://github.com/lefnire/gnothi' target='_blank'>Github</a></p>
-      <hr />
-      <h3>Privacy / Terms concerns</h3>
-      <p>I don't plan to do anything concerning with your data. If you trust AI analyzing your entries (the whole point of the system), but you don't trust the <a href='/privacy' target='_blank'>Privacy Policy</a>, go with the former. You can see everything I'm doing in the <a href='https://github.com/lefnire/gnothi' target='_blank'>code</a>. Hell, <a href='mailto:tylerrenelle@gmail.com'>schedule a Skype</a> with me so you can know the man behind the curtains. The Privacy Policy is auto-generated, and when I can afford to I'll get a lawyer to draft a proper one. As for <a href='/terms' target='_blank'>Terms</a>, the essence is "don't upload anything that will get me in trouble" (copyright images, book details, etc). I want to do right by you and make you feel comfortable, secure, and private. Also don't want to get sued.</p>
-      <hr />
-      <h3>Amazon Affiliate Links</h3>
-      <p>As an <a href="https://affiliate-program.amazon.com/" target="_blank">Amazon Associate</a> I earn from qualifying purchases. How it works: when I see some books are popular, I'll put an Amazon Affiliate Link on them. Amazon-linked books aren't up-weighted (ie, it's not a "sponsored links" situation); instead, user-thumbs in general up/down-weight book recommendations some, with your own thumbs contributing the most. So if Amazon links appear often, it's only because users like those books often, I've noticed that, and slapped an Affiliate link on.</p>
-    </>
+    render: () => <></>
   }])
 
   return <>
@@ -136,9 +121,12 @@ function Details() {
         <Col sm={3}>
           <Nav variant="pills" className="flex-column">
             {tabs.map(t => <Nav.Item key={t.k}>
-              <LinkContainer to={`/about/${t.k}`}>
-                <Nav.Link>{t.label}</Nav.Link>
-              </LinkContainer>
+              {t.label === 'FAQ' ?
+                <Nav.Link href={t.k} target='_blank'>{t.label}</Nav.Link> :
+                <LinkContainer to={`/about/${t.k}`}>
+                  <Nav.Link>{t.label}</Nav.Link>
+                </LinkContainer>
+              }
             </Nav.Item>)}
           </Nav>
         </Col>

@@ -87,7 +87,7 @@ export default function Books() {
       <div className='text-muted bottom-margin'>
         <div><FaUser /> {b.author}</div>
         <div><FaTags /> {b.topic}</div>
-        {b.amazon && <div><FaAmazon /> Amazon Affiliate Link <Link to='/about/faq'>?</Link></div>}
+        {b.amazon && <div><FaAmazon /> Amazon Affiliate Link <a href='https://github.com/lefnire/gnothi/issues/47' target='_blank'>?</a></div>}
       </div>
       <p>{b.text}</p>
       <div>
