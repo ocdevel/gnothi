@@ -46,7 +46,7 @@ def themes(eids, algo='kmeans'):
     stripped = pd.Series([c for r in res for c in r.clean])
     vecs = np.vstack([r.vectors for r in res]).astype(np.float32)
 
-    if os.path.exists(vars.AE_PATH):
+    if False and os.path.exists(vars.AE_PATH):
         clusters = Similars(vecs).autoencode(filename=vars.AE_PATH).cluster(algo=algo).value()
     else:
         clusters = Similars(vecs).normalize().cluster(algo=algo).value()
