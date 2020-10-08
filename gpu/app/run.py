@@ -71,12 +71,12 @@ if __name__ == '__main__':
 
             # Find jobs
             job = M.Job.take_job(sess, "run_on='gpu'")
-            if not job:
-                if M.User.last_checkin(sess) > 10 and is_prod():
-                    nlp_.clear()
-                time.sleep(1)
-                continue
+            if job:
+                # aaf1ec95: multiprocessing.Process for problem models
+                threading.Thread(target=run_job, args=(job,)).start()
+                # run_job(job.id)
 
-            # aaf1ec95: multiprocessing.Process for problem models
-            threading.Thread(target=run_job, args=(job,)).start()
-            # run_job(job.id)
+            if M.User.last_checkin(sess) > 10 and is_prod():
+                nlp_.clear()
+            time.sleep(1)
+

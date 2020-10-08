@@ -4,7 +4,7 @@ from tqdm import tqdm
 from common.database import session
 import common.models as M
 from common.utils import utcnow, vars, is_test
-from ml_tools import Similars, cleantext
+from ml_tools import Similars, CleanText
 from common.fixtures import fixtures
 from box import Box
 import numpy as np
@@ -13,7 +13,6 @@ from sqlalchemy import text
 from psycopg2.extras import Json as jsonb
 from sqlalchemy.dialects import postgresql
 from sklearn.preprocessing import minmax_scale
-from app.books_dnn import BooksDNN
 import logging
 logger = logging.getLogger(__name__)
 
@@ -84,6 +83,7 @@ class Books(object):
         """
         TODO do this in tests themselves (add ratings to DB)
         """
+        return
         if not is_test(): return
         idx = df.iloc[:200].index
         df.loc[idx, 'any_rated'] = True
@@ -119,34 +119,15 @@ class Books(object):
         from updated u
             inner join description d on d.md5=u.MD5
             inner join topics t on u.Topic=t.topic_id
-                -- TODO later more languages; but I think it's only Russian in Libgen?
+                -- later more languages; but I think it's only Russian in Libgen?
                 and t.lang='en'
         where u.Language = 'English'
             -- Make sure there's some content to work with
-            and (length(d.descr) + length(u.Title)) > 200
+            and length(d.descr) > 200 and length(u.Title) > 1
             {psych_topics}
         """
         with session('books') as sessb:
             df = pd.read_sql(sql, sessb.bind)
-        df = df.drop_duplicates(['Title', 'Author'])
-
-        logger.info(f"n_books before cleanup {df.shape[0]}")
-        logger.info("Remove HTML")
-        broken = '(\?\?\?|\#\#\#)'  # russian / other FIXME better way to handle
-        df = df[~(df.Title + df.descr).str.contains(broken)] \
-            .drop_duplicates(['Title', 'Author'])  # TODO reconsider
-
-        df['descr'] = cleantext.multiple(df.descr.tolist(), [
-            cleantext.strip_html,
-            cleantext.fix_punct,
-            cleantext.only_ascii,
-            cleantext.multiple_whitespace,
-            cleantext.unmark
-        ])
-
-        # books = books[books.clean.apply(lambda x: detect(x) == 'en')]
-        logger.info(f"n_books after cleanup {df.shape[0]}")
-
         df = df.rename(columns=dict(
             ID='id',
             descr='text',
@@ -155,11 +136,24 @@ class Books(object):
             topic_descr='topic',
         ))
 
-        # drop dupes, keep longest desc
+        logger.info(f"n_books before cleanup {df.shape[0]}")
+        logger.info("Remove HTML")
+        # .unmark().only_english()
+        df['text'] = CleanText(df.text.tolist())\
+            .strip_html()\
+            .only_ascii()\
+            .fix_punct()\
+            .multiple_whitespace()\
+            .value()
         df['txt_len'] = df.text.str.len()
-        df = df.sort_values('txt_len', ascending=False)\
+        # Ensure has content. Drop dupes, keeping those w longest description
+        df = df[df.txt_len > 150]\
+            .sort_values('txt_len', ascending=False)\
             .drop_duplicates('id')\
+            .drop_duplicates(['title', 'author'])\
             .drop(columns=['txt_len'])
+        # books = books[books.clean.apply(lambda x: detect(x) == 'en')]
+        logger.info(f"n_books after cleanup {df.shape[0]}")
 
         logger.info(f"Save books.df")
         # Error: feather does not support serializing a non-default index for the index; you can .reset_index() to make the index into column(s)
@@ -207,6 +201,7 @@ class Books(object):
             return fixt
 
         self._add_test_ratings(df)
+        from app.books_dnn import BooksDNN
         dnn = BooksDNN(vu, df)
         dnn.train()
         preds = dnn.predict()

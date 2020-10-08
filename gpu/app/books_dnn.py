@@ -161,11 +161,7 @@ class BooksDNN(object):
         if user.shape[0] < 5:
             clusters = user
         else:
-            labels = Similars(user).normalize().cluster(algo='agglomorative').value()
-            clusters = np.vstack([
-                user[labels == l].mean(axis=0).squeeze()
-                for l in range(labels.max())
-            ])
+            clusters = Similars(user).normalize().cluster(algo='agglomorative').value()
             print("n_clusters", clusters.shape[0])
         best = None
         for x in clusters:

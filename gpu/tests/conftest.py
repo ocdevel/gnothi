@@ -48,7 +48,7 @@ def users():
 
 @pytest.fixture(scope='module', autouse=True)
 def clear_sess(db):
-    nlp_.clear()
+    #nlp_.clear()
     db.execute("delete from jobs")
     db.commit()
 

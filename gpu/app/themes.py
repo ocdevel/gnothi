@@ -46,24 +46,25 @@ def themes(eids, algo='kmeans'):
     stripped = pd.Series([c for r in res for c in r.clean])
     vecs = np.vstack([r.vectors for r in res]).astype(np.float32)
 
+    chain = Similars(vecs)
     if False and os.path.exists(vars.AE_PATH):
-        clusters = Similars(vecs).autoencode(filename=vars.AE_PATH).cluster(algo=algo).value()
+        chain = chain.autoencode(filename=vars.AE_PATH).cluster(algo=algo)
     else:
-        clusters = Similars(vecs).normalize().cluster(algo=algo).value()
+        chain = chain.normalize().cluster(algo=algo)
+    clusters = chain.value()
+    labels = chain.data.labels
 
     topics = []
-    for l in range(clusters.max()):
-        in_clust = clusters == l
-        n_entries = in_clust.sum().item()
+    for l, center in enumerate(clusters):
+        mask = labels == l
+        n_entries = mask.sum().item()
         print('n_entries', n_entries)
         if n_entries < 2:
             print('skipping')
             continue
 
-        vecs_, stripped_, entries_ = vecs[in_clust],\
-            stripped.iloc[in_clust], entries.iloc[in_clust]
+        vecs_, stripped_, entries_ = vecs[mask], stripped[mask], entries[mask]
 
-        center = vecs_.mean(axis=0)[np.newaxis,:]
         dists = Similars(center, vecs_).normalize().cosine(abs=True).value().squeeze()
         entries_ = entries_.iloc[dists.argsort()].tolist()[:5]
 
