@@ -2,7 +2,7 @@ import math, time, pdb, re, gc
 import torch
 import numpy as np
 from sentence_transformers import SentenceTransformer
-from transformers import pipeline, AutoTokenizer, AutoModelForSequenceClassification, AutoModelWithLMHead,\
+from transformers import pipeline, AutoTokenizer, AutoModelForSequenceClassification, AutoModelForSeq2SeqLM,\
     AutoModelForSeq2SeqLM, AutoModelForQuestionAnswering
 from transformers import BartForConditionalGeneration, BartTokenizer
 from transformers import LongformerTokenizer, LongformerForQuestionAnswering
@@ -40,7 +40,8 @@ class NLP():
             m = SentenceTransformer('roberta-base-nli-stsb-mean-tokens')
         elif k == 'sentiment-analysis':
             tokenizer = AutoTokenizer.from_pretrained("mrm8488/t5-base-finetuned-emotion")
-            model = AutoModelWithLMHead.from_pretrained("mrm8488/t5-base-finetuned-emotion").to("cuda")
+            model = AutoModelForSeq2SeqLM.from_pretrained("mrm8488/t5-base-finetuned-emotion").to("cuda")
+            model.eval()
             # TODO we sure it's not ForSequenceClassification? https://huggingface.co/mrm8488/t5-base-finetuned-emotion
             m = (tokenizer, model, 512)
         elif k == 'summarization':
@@ -50,12 +51,14 @@ class NLP():
             max_tokens = 1024  # 4096
             tokenizer = BartTokenizer.from_pretrained('facebook/bart-large-cnn')
             model = BartForConditionalGeneration.from_pretrained('facebook/bart-large-cnn').to("cuda")
+            model.eval()
             # model = EncoderDecoderModel.from_pretrained("patrickvonplaten/longformer2roberta-cnn_dailymail-fp16").to("cuda")
             # tokenizer = AutoTokenizer.from_pretrained("allenai/longformer-base-4096")
             m = (tokenizer, model, max_tokens)
         elif k == 'question-answering':
             tokenizer = LongformerTokenizer.from_pretrained("allenai/longformer-large-4096-finetuned-triviaqa")
             model = LongformerForQuestionAnswering.from_pretrained("allenai/longformer-large-4096-finetuned-triviaqa", return_dict=True).to("cuda")
+            model.eval()
             # tokenizer = AutoTokenizer.from_pretrained("mrm8488/longformer-base-4096-finetuned-squadv2")
             # model = AutoModelForQuestionAnswering.from_pretrained("mrm8488/longformer-base-4096-finetuned-squadv2", return_dict=True).to("cuda")
             m = (tokenizer, model, 4096)
@@ -124,12 +127,13 @@ class NLP():
             flat = []
             for i in range(0, len(parts), batch_size):
                 batch = parts[i:i + batch_size]
-                flat += call(
-                    loaded,
-                    batch,
-                    n_parts=n_parts,
-                    **call_args
-                )
+                with torch.no_grad():
+                    flat += call(
+                        loaded,
+                        batch,
+                        n_parts=n_parts,
+                        **call_args
+                    )
         grouped = []
         for ct in groups:
             grouped.append(wrap(flat[:ct]))
