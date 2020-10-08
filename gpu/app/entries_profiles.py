@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import common.models as M
 from common.database import session
-from ml_tools import Similars, cleantext
+from ml_tools import Similars, CleanText
 from common.fixtures import fixtures
 from sqlalchemy import text
 from common.utils import vars
@@ -37,7 +37,8 @@ def nlp_on_rows(method='entries'):
         for r in rows:
             txt = r.text if for_entries \
                 else r.bio  # r.profile_to_text()  # TODO profile_to_text adds people
-            paras_grouped.append(cleantext.markdown_split_paragraphs([txt]))
+            paras = CleanText([txt]).markdown_split_paragraphs().value()
+            paras_grouped.append(paras)
             if for_entries:
                 uids.add(r.user_id)
         paras_flat = [p for paras in paras_grouped for p in paras]
@@ -51,7 +52,9 @@ def nlp_on_rows(method='entries'):
             else:
                 clean_txt, embeds = fixt
         else:
-            clean_txt = cleantext.keywords(paras_flat, postags=['NOUN', 'ADJ', 'VERB', 'PROPN'])
+            clean_txt = CleanText(paras_flat)\
+                .keywords(postags=['NOUN', 'ADJ', 'VERB', 'PROPN'], mode='fast')\
+                .join().value()
             # embeds = Similars(paras_flat).embed().autoencode(save_load_path=vars.AE_PATH).value()
             embeds = nlp_.sentence_encode(paras_flat).tolist()
             if for_entries:
@@ -68,7 +71,7 @@ def nlp_on_rows(method='entries'):
             paras = paras_grouped[i]
             c.paras = paras
             ct = len(paras)
-            c.clean = [' '.join(e) for e in clean_txt[:ct]]
+            c.clean = clean_txt[:ct]
             c.vectors = embeds[:ct]
             sess.commit()
 

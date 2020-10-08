@@ -1,4 +1,4 @@
-FROM lefnire/ml-tools:ml-tools-0.0.5
+FROM lefnire/ml-tools:ml-tools-0.0.7
 
 # TODO switch to mysql-python-connector & remove apt-get
 RUN apt-get update -y && \
@@ -22,13 +22,14 @@ RUN \
   bcrypt \
   gradient \
   pytest \
-  git+git://github.com/lefnire/ml-tools.git@0.0.5
+  git+git://github.com/lefnire/ml-tools.git@0.0.7
 
 COPY ./gpu /paperspace
 COPY ./common /paperspace/common
 
 ENV ENVIRONMENT=production
 ENV TORCH_HOME=/storage
+ENV STANZA_RESOURCES_DIR=/storage/stanza_resources
 ENV PYTHONPATH=.
 
 WORKDIR /paperspace

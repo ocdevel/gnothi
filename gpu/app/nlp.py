@@ -155,8 +155,12 @@ class NLP():
             batch, # [p + '</s>' for p in batch],  # getting </s> duplicate warning
             max_length=max_tokens,
             **tokenizer_args
+        ).to("cuda")
+        output = model.generate(
+            inputs.input_ids,
+            attention_mask=inputs.attention_mask,
+            max_length=2
         )
-        output = model.generate(inputs.input_ids.to("cuda"), max_length=2)
         return [tokenizer.decode(ids) for ids in output]
 
     def sentiment_analysis_wrap(self, val):
@@ -191,15 +195,16 @@ class NLP():
         max_ = max(max_length // n_parts, 10) if max_length else None
 
         tokenizer, model, max_tokens = loaded
-        inputs = tokenizer(batch, max_length=max_tokens, **tokenizer_args)
+        inputs = tokenizer(batch, max_length=max_tokens, **tokenizer_args).to("cuda")
         summary_ids = model.generate(
-            inputs.input_ids.to("cuda"),
+            inputs.input_ids,
+            attention_mask=inputs.attention_mask,
             min_length=min_,
             max_length=max_,
 
             # I think this is just for performance? PC hangs without it, not noticing output diff
-            num_beams=4,
-            early_stopping=True
+            # num_beams=4,
+            # early_stopping=True
         )
         return [
             tokenizer.decode(g, skip_special_tokens=True, clean_up_tokenization_spaces=False)
