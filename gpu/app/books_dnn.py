@@ -11,14 +11,14 @@ from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.utils import Sequence
 
-import pdb, logging, math
-from tqdm import tqdm
+import pdb, logging, math, re
 from os.path import exists
 from box import Box
 from common.utils import vars, THREADS
 from ml_tools import Similars
 from sklearn.preprocessing import minmax_scale
 import numpy as np
+import pandas as pd
 logger = logging.getLogger(__name__)
 
 # TODO refactor with books.py
@@ -36,22 +36,37 @@ split = int(n_books * .7)
 
 class BooksDNN(object):
     def __init__(self, vecs_user, df):
+        self.hypers = Box({
+            'layers': (500, 10),
+            'act': 'tanh',
+            'final': 'sigmoid',
+            'loss': 'mse',
+            'batch': 128
+        })
         self.user = vecs_user
         self.df = df
-        self.m = None
-        self.es = EarlyStopping(monitor='val_loss', mode='min', patience=3, min_delta=.0001)
-
         self.mask = Box(
             book_train=np.array([i <= split for i in range(n_books)]),
             book_val=np.array([i > split for i in range(n_books)]),
             user_train=self.df.any_rated,
             user_val=self.df.user_rated
         )
+        self.m = None
+        self.es = EarlyStopping(monitor='val_loss', mode='min', patience=3, min_delta=.0001)
+        self.loaded = False
+        self.init_model()
 
     def rand_idx(self, arr):
         shuffle = np.arange(arr.shape[0])
         np.random.shuffle(shuffle)
         return shuffle
+
+    def _scale_y(self, y):
+        if self.hypers.final == 'sigmoid':
+            return minmax_scale(y)
+        elif self.hypers.final == 'tanh':
+            return minmax_scale(y, feature_range=(-1, 1))
+        else: return y
 
     def generator_cosine(self, batch, validation=False):
         mask = self.mask.book_val if validation else self.mask.book_train
@@ -66,7 +81,7 @@ class BooksDNN(object):
             y = Similars(a,b).normalize().cosine(abs=True).value()
             y = y[np.arange(a.shape[0]),shuffle]
             # can't do min_max since over batches
-            # y = minmax_scale(y)
+            y = self._scale_y(y)
 
             yield x, y
 
@@ -88,7 +103,9 @@ class BooksDNN(object):
             # Using negative-score because cosine DISTANCE (less is better)
             y = y - (y.std() * df_.global_score) \
                 - (y.std() * df_.user_score * 2.)
-            yield x, y.values
+            y = y.values
+            y = self._scale_y(y)
+            yield x, y
 
     def generator_predict(self, batch, x):
         for i in range(0, books.shape[0], batch):
@@ -97,35 +114,43 @@ class BooksDNN(object):
             b = bb
             yield np.hstack([a, b])
 
-    def init_model(self):
+    def init_model(self, load=True):
+        if load and exists(fname):
+            logger.info("DNN: pretrained model")
+            self.m = load_model(fname)
+            self.loaded = True
+            return
+        self.loaded = False
+
+        h = self.hypers
         input = Input(shape=(dims * 2,))
-        m = Dense(800, activation='relu')(input)
-        m = Dense(100, activation='relu')(m)
-        m = Dense(1, activation='linear')(m)
+        m = input
+        for d in h.layers:
+            m = Dense(d, activation=h.act)(m)
+        m = Dense(1, activation=h.final)(m)
         m = Model(input, m)
         # http://zerospectrum.com/2019/06/02/mae-vs-mse-vs-rmse/
         # MAE because we _want_ outliers (user score adjustments)
         m.compile(
-            # loss='mae',
-            loss='mse',
+            loss=h.loss,
             optimizer=Adam(learning_rate=.0001),
         )
         m.summary()
         self.m = m
 
     def learn_cosine_function(self):
-        logger.info("DNN: learn cosine function")
-        if exists(fname):
-            logger.info("DNN: loading cosine-pretrained")
-            self.m = load_model(fname)
+        if self.loaded:
+            logger.info("DNN: using cosine-pretrained")
             return
+        else:
+            logger.info("DNN: learn cosine function")
 
         # https://www.machinecurve.com/index.php/2020/04/06/using-simple-generators-to-flow-data-from-file-with-keras/
         # https://www.tensorflow.org/api_docs/python/tf/keras/Model#fit
-        batch = 128
+        batch = self.hypers.batch
         self.m.fit(
             self.generator_cosine(batch),
-            epochs=10,
+            epochs=50,
             callbacks=[self.es],
             validation_data=self.generator_cosine(batch, validation=True),
             steps_per_epoch=math.ceil(self.mask.book_train.sum()/batch),
@@ -151,7 +176,6 @@ class BooksDNN(object):
         )
 
     def train(self):
-        self.init_model()
         self.learn_cosine_function()
         self.learn_adjustments()
 
@@ -177,3 +201,54 @@ class BooksDNN(object):
                 continue
             best = np.vstack([best, preds]).min(axis=0)
         return best
+
+
+    def hyperopt(self, regex: str):
+        table, max_evals = [], 100
+        def objective(args):
+            print(args)
+            self.hypers = Box(args)
+            self.init_model(load=False)
+            self.train()
+            preds = self.predict()
+            df = self.df.copy()
+            df['dist'] = preds
+            df = df.sort_values('dist').iloc[:200]
+            text = df.title + df.text
+            score = sum([
+                1 if re.search(regex, x, re.IGNORECASE) else 0
+                for x in text
+            ])
+            args['score'] = score
+            table.append(args)
+            df = pd.DataFrame(table).sort_values('score', ascending=False)
+            print(f"Top 5 ({df.shape[0]}/{max_evals})")
+            print(df.iloc[:5])
+            print("All")
+            print(df)
+            return -score
+
+        # define a search space
+        from hyperopt import hp
+        space = {
+            'layers': hp.choice('layers', [
+                (800, 200),
+                (500, 10),
+                (400,)
+            ]),
+            # no relu, since we may want negative values downstream
+            'act': hp.choice('act', ['tanh', 'elu']),
+            # no relu, since even though we constrain cosine positive, the adjustments may become negative
+            'final': hp.choice('final', ['sigmoid', 'tanh', 'linear', 'elu']),
+            'loss': hp.choice('loss', ['mse', 'mae']),
+            'batch': hp.choice('batch', [32, 64, 128, 256, 512])
+        }
+
+        # minimize the objective over the space
+        from hyperopt import fmin, tpe, space_eval
+        best = fmin(objective, space, algo=tpe.suggest, max_evals=max_evals, show_progressbar=False)
+
+        print(best)
+        # -> {'a': 1, 'c2': 0.01420615366247227}
+        print(space_eval(space, best))
+        # -> ('case 2', 0.01420615366247227}

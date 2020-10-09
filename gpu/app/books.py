@@ -203,7 +203,10 @@ class Books(object):
         self._add_test_ratings(df)
         from app.books_dnn import BooksDNN
         dnn = BooksDNN(vu, df)
-        dnn.train()
+        if is_test():
+            dnn.hyperopt(r"(virtual|cognitive|cbt)")
+        else:
+            dnn.train()
         preds = dnn.predict()
         fixtures.save_books(user_id, preds)
         return preds
