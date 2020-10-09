@@ -5,7 +5,7 @@ config.gpu_options.allow_growth = True
 session = tf.compat.v1.Session(config=config)
 
 from tensorflow.keras import backend as K
-from tensorflow.keras.layers import Input, Dense
+from tensorflow.keras.layers import Input, Dense, BatchNormalization
 from tensorflow.keras.models import Model, load_model
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.optimizers import Adam
@@ -27,7 +27,7 @@ libgen_dir = "/storage/libgen"
 libgen_file = f"{libgen_dir}/{vars.ENVIRONMENT}_{'all' if ALL_BOOKS else 'psych'}"  # '.ext
 fname = f"{libgen_file}.tf"
 
-books = np.load(f"{libgen_file}.npy", mmap_mode='r')
+books = np.load(f"{libgen_file}.npy") # , mmap_mode='r')
 n_books, dims = books.shape[0], books.shape[1]
 split = int(n_books * .7)
 
@@ -37,12 +37,16 @@ split = int(n_books * .7)
 class BooksDNN(object):
     def __init__(self, vecs_user, df):
         self.hypers = Box({
-            'layers': (500, 10),
+            'l1': 600,
+            'l2': {'n': 20},
             'act': 'tanh',
-            'final': 'sigmoid',
+            'final': 'linear',
             'loss': 'mse',
-            'batch': 128
+            'batch': 300,
+            'norm': True
         })
+        if vecs_user.shape[0] > 5:
+            vecs_user = Similars(vecs_user).cluster(algo='agglomorative').value()
         self.user = vecs_user
         self.df = df
         self.mask = Box(
@@ -61,13 +65,6 @@ class BooksDNN(object):
         np.random.shuffle(shuffle)
         return shuffle
 
-    def _scale_y(self, y):
-        if self.hypers.final == 'sigmoid':
-            return minmax_scale(y)
-        elif self.hypers.final == 'tanh':
-            return minmax_scale(y, feature_range=(-1, 1))
-        else: return y
-
     def generator_cosine(self, batch, validation=False):
         mask = self.mask.book_val if validation else self.mask.book_train
         books_ = books[mask]
@@ -76,12 +73,13 @@ class BooksDNN(object):
             a = books_[idx]
             shuffle = self.rand_idx(a)
             b = a[shuffle]
-            x = np.hstack([a, b])
+            chain = Similars(a, b).normalize()
+            if self.hypers.norm is True:
+                a, b = chain.value()
 
-            y = Similars(a,b).normalize().cosine(abs=True).value()
-            y = y[np.arange(a.shape[0]),shuffle]
-            # can't do min_max since over batches
-            y = self._scale_y(y)
+            x = np.hstack([a, b])
+            y = chain.cosine(abs=True).value()
+            y = y.diagonal()
 
             yield x, y
 
@@ -91,20 +89,24 @@ class BooksDNN(object):
         books_ = books[mask]
 
         while True:
-            entry = self.user[np.random.randint(0, self.user.shape[0])]
             idx = self.rand_idx(books_)[:batch]
             b = books_[idx]
             df_ = df.iloc[idx]
-            a = np.repeat([entry], b.shape[0], axis=0)
-            x = np.hstack([a, b])
 
-            y = Similars(a, b).normalize().cosine(abs=True).value().diagonal()
+            # repeat user entries, cut off excess
+            nbooks, nuser = b.shape[0], self.user.shape[0]
+            a = np.tile(self.user, (math.ceil(nbooks/nuser), 1))[:nbooks]
+
+            chain = Similars(a, b).normalize()
+            if self.hypers.norm is True:
+                a, b = chain.value()
+            x = np.hstack([a, b])
+            y = chain.cosine(abs=True).value().diagonal()
             # Push highly-rated books up, low-rated books down. Do that even stronger for user's own ratings.
             # Using negative-score because cosine DISTANCE (less is better)
             y = y - (y.std() * df_.global_score) \
                 - (y.std() * df_.user_score * 2.)
             y = y.values
-            y = self._scale_y(y)
             yield x, y
 
     def generator_predict(self, batch, x):
@@ -112,6 +114,8 @@ class BooksDNN(object):
             bb = books[i:i+batch]
             a = np.repeat(x, bb.shape[0], axis=0)
             b = bb
+            if self.hypers.norm is True:
+                a, b = Similars(a, b).normalize().value()
             yield np.hstack([a, b])
 
     def init_model(self, load=True):
@@ -123,16 +127,22 @@ class BooksDNN(object):
         self.loaded = False
 
         h = self.hypers
+
         input = Input(shape=(dims * 2,))
         m = input
-        for d in h.layers:
-            m = Dense(d, activation=h.act)(m)
+        if h.norm == 'bn':
+            m = BatchNormalization()(m)
+        m = Dense(int(h.l1), activation=h.act)(m)
+        if h.l2.n:
+            m = Dense(int(h.l2.n), activation=h.act)(m)
         m = Dense(1, activation=h.final)(m)
         m = Model(input, m)
         # http://zerospectrum.com/2019/06/02/mae-vs-mse-vs-rmse/
         # MAE because we _want_ outliers (user score adjustments)
+        # loss = 'binary_crossentropy' if h.final == 'sigmoid' else h.loss
+        loss = h.loss
         m.compile(
-            loss=h.loss,
+            loss=loss,
             optimizer=Adam(learning_rate=.0001),
         )
         m.summary()
@@ -147,7 +157,7 @@ class BooksDNN(object):
 
         # https://www.machinecurve.com/index.php/2020/04/06/using-simple-generators-to-flow-data-from-file-with-keras/
         # https://www.tensorflow.org/api_docs/python/tf/keras/Model#fit
-        batch = self.hypers.batch
+        batch = int(self.hypers.batch)
         self.m.fit(
             self.generator_cosine(batch),
             epochs=50,
@@ -180,15 +190,9 @@ class BooksDNN(object):
         self.learn_adjustments()
 
     def predict(self):
-        user = self.user
         batch = 1000
-        if user.shape[0] < 5:
-            clusters = user
-        else:
-            clusters = Similars(user).normalize().cluster(algo='agglomorative').value()
-            print("n_clusters", clusters.shape[0])
         best = None
-        for x in clusters:
+        for x in self.user:
             preds = self.m.predict(
                 self.generator_predict(batch, [x]),
                 steps=math.ceil(n_books/batch),
@@ -196,6 +200,7 @@ class BooksDNN(object):
                 # workers=THREADS,
                 # use_multiprocessing=True
             ).squeeze()
+            # preds = Similars([x], books).normalize().cosine(abs=True).value()
             if best is None:
                 best = preds
                 continue
@@ -226,22 +231,24 @@ class BooksDNN(object):
             print(df.iloc[:5])
             print("All")
             print(df)
+            df.to_csv('./hypers.csv')
             return -score
 
         # define a search space
         from hyperopt import hp
         space = {
-            'layers': hp.choice('layers', [
-                (800, 200),
-                (500, 10),
-                (400,)
+            'l1': hp.quniform('l1', 400, 900, 100),
+            'l2': hp.choice('l2', [
+                {'n': None},
+                {'n': hp.quniform('n', 10, 400, 20)}
             ]),
             # no relu, since we may want negative values downstream
             'act': hp.choice('act', ['tanh', 'elu']),
             # no relu, since even though we constrain cosine positive, the adjustments may become negative
-            'final': hp.choice('final', ['sigmoid', 'tanh', 'linear', 'elu']),
+            'final': hp.choice('final', ['sigmoid', 'linear', 'elu']),
             'loss': hp.choice('loss', ['mse', 'mae']),
-            'batch': hp.choice('batch', [32, 64, 128, 256, 512])
+            'batch': hp.quniform('batch', 32, 512, 32),
+            'norm': hp.choice('norm', [True, False, 'bn'])
         }
 
         # minimize the objective over the space
