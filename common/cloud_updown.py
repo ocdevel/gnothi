@@ -54,7 +54,7 @@ def cloud_up_maybe():
         vars_ = {**dict(vars), **{'MACHINE': 'paperspace'}}
         return job_client.create(
             machine_type='K80',
-            container='lefnire/gnothi:gpu-0.0.29',
+            container='lefnire/gnothi:gpu-0.0.30',
             project_id=vars.PAPERSPACE_PROJECT_ID,
             is_preemptible=True,
             command='python app/run.py',

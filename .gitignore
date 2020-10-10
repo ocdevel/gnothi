@@ -9,3 +9,4 @@ letsencrypt
 storage
 *.sql
 ml-tools
+*.csv

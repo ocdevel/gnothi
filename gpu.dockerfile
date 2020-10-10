@@ -1,4 +1,4 @@
-FROM lefnire/ml-tools:ml-tools-0.0.9
+FROM lefnire/ml-tools:ml-tools-0.0.10
 
 # TODO switch to mysql-python-connector & remove apt-get
 RUN apt-get update -y && \
@@ -22,7 +22,7 @@ RUN \
   bcrypt \
   gradient \
   pytest \
-  git+git://github.com/lefnire/ml-tools.git@0.0.9
+  git+git://github.com/lefnire/ml-tools.git@0.0.10
 
 COPY ./gpu /paperspace
 COPY ./common /paperspace/common

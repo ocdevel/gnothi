@@ -4,7 +4,7 @@ from tqdm import tqdm
 from common.database import session
 import common.models as M
 from common.utils import utcnow, vars, is_test
-from ml_tools import Similars, CleanText
+from ml_tools import Similars, CleanText, CosineEstimator
 from common.fixtures import fixtures
 from box import Box
 import numpy as np
@@ -12,18 +12,17 @@ import pandas as pd
 from sqlalchemy import text
 from psycopg2.extras import Json as jsonb
 from sqlalchemy.dialects import postgresql
-from sklearn.preprocessing import minmax_scale
 import logging
 logger = logging.getLogger(__name__)
 
 # Whether to load full Libgen DB, or just self-help books
-ALL_BOOKS = True
 libgen_dir = "/storage/libgen"
-libgen_file = f"{libgen_dir}/{vars.ENVIRONMENT}_{'all' if ALL_BOOKS else 'psych'}"  # '.ext
-if not os.path.exists(libgen_dir): os.mkdir(libgen_dir)
+if not exists(libgen_dir): os.mkdir(libgen_dir)
+libgen_file = f"{libgen_dir}/{vars.ENVIRONMENT}"  # .<ext>
 paths = Box(
     df=f"{libgen_file}.df",
     vecs=f"{libgen_file}.npy",
+    dnn=f"{libgen_file}.tf"
 )
 
 class Books(object):
@@ -32,6 +31,7 @@ class Books(object):
         self.user_id = str(user_id)
 
         self.vecs_user = None
+        self.vecs_books = None
         self.df = None
 
     def prune_books(self):
@@ -77,43 +77,22 @@ class Books(object):
         if not vecs:
             # fixme empty vectors
             return None
-        return np.vstack(vecs).astype(np.float32)
-
-    def _add_test_ratings(self, df):
-        """
-        TODO do this in tests themselves (add ratings to DB)
-        """
-        return
-        if not is_test(): return
-        idx = df.iloc[:200].index
-        df.loc[idx, 'any_rated'] = True
-        df.loc[idx, 'global_score'] = np.random.randint(0, 10)
-        idx = df.iloc[-100:].index
-        df.loc[idx, 'user_rated'] = True
-        df.loc[idx, 'user_score'] = np.random.randint(0, 10)
+        self.vecs_user = np.vstack(vecs).astype(np.float32)
 
     def load_df(self):
         if exists(paths.df):
             logger.info("Load books.df")
-            return pd.read_feather(paths.df)\
+            self.df = pd.read_feather(paths.df)\
                 .drop(columns=['index'])\
                 .set_index('id', drop=False)
+            return
 
         # invalidate embeddings, they're out of sync
         try: os.remove(paths.vecs)
         except: pass
 
         logger.info("Load books MySQL")
-
-        psych_topics = ""
-        if not ALL_BOOKS:
-            # for-sure psych. See tmp/topics.txt, or libgen.sql topics(lang='en')
-            psych_topics = 'psychology|self-help|therapy'
-            # good other psych topics, either mis-categorized or other
-            psych_topics += '|anthropology|social|religion'
-            psych_topics += '|^history|^education'
-            psych_topics = f"and t.topic_descr regexp '{psych_topics}'"
-
+        # 58fbd36a: limit to psychology topics
         sql = f"""
         select u.ID, u.Title, u.Author, d.descr, t.topic_descr
         from updated u
@@ -124,7 +103,6 @@ class Books(object):
         where u.Language = 'English'
             -- Make sure there's some content to work with
             and length(d.descr) > 200 and length(u.Title) > 1
-            {psych_topics}
         """
         with session('books') as sessb:
             df = pd.read_sql(sql, sessb.bind)
@@ -161,28 +139,19 @@ class Books(object):
         df = df.reset_index()
         df.to_feather(paths.df)
         # call self, which returns newly-saved df (ensures consistent order, etc)
-        return self.load_df()
+        self.load_df()
 
-    def _npfile(self, path_, write=None):
-        if write is not None:
-            with open(path_, 'wb') as f:
-                logger.info(f"Save {path_}")
-                np.save(f, write)
-        elif exists(path_):
-            with open(path_, 'rb') as f:
-                logger.info(f"Load {path_}")
-                return np.load(f)
-        return None
-
-    def embed_books(self):
+    def load_vecs_books(self):
         if exists(paths.vecs):
+            self.vecs_books = np.load(paths.vecs, mmap_mode='r')
             return
         # No embeddings at all yet, generate them
         df = self.df
         logger.info(f"Embedding {df.shape[0]} entries")
         texts = (df.title + '\n' + df.text).tolist()
         vecs = Similars(texts).embed().value()
-        self._npfile(paths.vecs, write=vecs)
+        np.save(paths.vecs, vecs)
+        self.load_vecs_books()
 
     def load_scores(self):
         logger.info("Load book_scores")
@@ -192,22 +161,25 @@ class Books(object):
             # df.loc[books.index, k] = books[k]
             df[k] = books[k]  # this assumes k->k map properly on index
             df[k] = df[k].fillna(fillna)
+        df['adjustments'] = df.user_score * 2 + df.global_score
 
     def predict(self):
-        df, vu, user_id = self.df, self.vecs_user, self.user_id
+        df, vecs_user, vecs_books, user_id = self.df, self.vecs_user, self.vecs_books, self.user_id
         fixt = fixtures.load_books(user_id)
         if fixt is not None:
             logger.info("Returning fixture predictions")
             return fixt
 
-        self._add_test_ratings(df)
-        from app.books_dnn import BooksDNN
-        dnn = BooksDNN(vu, df)
-        if is_test():
-            dnn.hyperopt(r"(virtual|cognitive|cbt)")
-        else:
-            dnn.train()
-        preds = dnn.predict()
+        if vecs_user.shape[0] > 5:
+            vecs_user = Similars(vecs_user).cluster(algo='agglomorative').value()
+        adjustments = df.adjustments.values
+
+        dnn = CosineEstimator(vecs_books, filename=paths.dnn)
+        dnn.fit_cosine()
+        if df.any_rated.sum() > 3:
+            dnn.fit_adjustments(vecs_user, adjustments)
+
+        preds = dnn.predict(vecs_user)
         fixtures.save_books(user_id, preds)
         return preds
 
@@ -251,13 +223,13 @@ class Books(object):
 
     def run(self):
         self.prune_books()
-        self.vecs_user = self.load_vecs_user()
+        self.load_vecs_user()
         if self.vecs_user is None:
             # no jobs to run
             return {}
 
-        self.df = self.load_df()
-        self.embed_books()
+        self.load_df()
+        self.load_vecs_books()
         self.load_scores()
         self.recommend()
         self.save_results()
