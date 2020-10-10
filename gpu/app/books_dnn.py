@@ -38,12 +38,12 @@ class BooksDNN(object):
     def __init__(self, vecs_user, df):
         self.hypers = Box({
             'l1': 600,
-            'l2': {'n': 20},
+            'l2': {'n': 200},
             'act': 'tanh',
-            'final': 'linear',
-            'loss': 'mse',
+            'final': 'elu',
+            'loss': 'mse',  # winner
             'batch': 300,
-            'norm': True
+            'norm': False  # winner
         })
         if vecs_user.shape[0] > 5:
             vecs_user = Similars(vecs_user).cluster(algo='agglomorative').value()
@@ -176,7 +176,7 @@ class BooksDNN(object):
         batch = 16
         self.m.fit(
             self.generator_adjustments(batch),
-            epochs=20,  # too many epochs overfits (eg to CBT). Maybe adjust LR *down*, or other?
+            epochs=7,  # too many epochs overfits (eg to CBT). Maybe adjust LR *down*, or other?
             # callbacks=[self.es],
             validation_data=self.generator_adjustments(batch, validation=True),
             steps_per_epoch=math.ceil(self.mask.user_train.sum()/batch),
@@ -237,18 +237,18 @@ class BooksDNN(object):
         # define a search space
         from hyperopt import hp
         space = {
-            'l1': hp.quniform('l1', 400, 900, 100),
+            'l1': hp.quniform('l1', 400, 1400, 100),
             'l2': hp.choice('l2', [
                 {'n': None},
-                {'n': hp.quniform('n', 10, 400, 20)}
+                {'n': hp.quniform('n', 10, 600, 20)}
             ]),
             # no relu, since we may want negative values downstream
             'act': hp.choice('act', ['tanh', 'elu']),
             # no relu, since even though we constrain cosine positive, the adjustments may become negative
             'final': hp.choice('final', ['sigmoid', 'linear', 'elu']),
-            'loss': hp.choice('loss', ['mse', 'mae']),
-            'batch': hp.quniform('batch', 32, 512, 32),
-            'norm': hp.choice('norm', [True, False, 'bn'])
+            'loss': 'mse',  # hp.choice('loss', ['mse', 'mae']),
+            'batch': 300,  # hp.quniform('batch', 32, 512, 32),
+            'norm': False,  # hp.choice('norm', [True, False, 'bn'])
         }
 
         # minimize the objective over the space
