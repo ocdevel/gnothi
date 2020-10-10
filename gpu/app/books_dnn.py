@@ -27,7 +27,7 @@ libgen_dir = "/storage/libgen"
 libgen_file = f"{libgen_dir}/{vars.ENVIRONMENT}_{'all' if ALL_BOOKS else 'psych'}"  # '.ext
 fname = f"{libgen_file}.tf"
 
-books = np.load(f"{libgen_file}.npy") # , mmap_mode='r')
+books = np.load(f"{libgen_file}.npy", mmap_mode='r')
 n_books, dims = books.shape[0], books.shape[1]
 split = int(n_books * .7)
 
