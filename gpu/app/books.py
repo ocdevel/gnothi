@@ -161,7 +161,7 @@ class Books(object):
             # df.loc[books.index, k] = books[k]
             df[k] = books[k]  # this assumes k->k map properly on index
             df[k] = df[k].fillna(fillna)
-        df['adjustments'] = df.user_score * 2 + df.global_score
+        df['adjustments'] = df.user_score + df.global_score/3.
 
     def predict(self):
         df, vecs_user, vecs_books, user_id = self.df, self.vecs_user, self.vecs_books, self.user_id
