@@ -202,7 +202,7 @@ export default function Splash() {
     <Jumbotron className='gnothi-jumbo'>
       <div className='jumbo-content'>
         <LinkContainer to='/'>
-          <div className='jumbo-text cursor-pointer'>
+          <header className='jumbo-text cursor-pointer'>
             <img src="/logo192.png" style={{marginLeft: '1rem'}}/>
             <h1>Gnothi</h1>
             <h4>Gnōthi Seauton: Know Thyself</h4>
@@ -212,7 +212,7 @@ export default function Splash() {
                 <Button>Sign In</Button>
               </Link>
             </>}
-          </div>
+          </header>
         </LinkContainer>
         <Switch>
           <Route path='/reset-password'>
