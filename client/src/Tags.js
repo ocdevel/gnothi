@@ -103,7 +103,9 @@ export default function Tags({
   useEffect(() => {
     if (tags.length && preSelectMain) {
       const main = _.find(tags, t=>t.main)
-      selectTag(main.id, true)
+      if (main) {
+        selectTag(main.id, true)
+      }
     }
   }, [tags])
 
