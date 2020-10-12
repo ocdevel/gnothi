@@ -30,29 +30,27 @@ def nlp_on_rows(method='entries'):
                     M.User.ai_ran.isnot(True)
                 )
 
-        # Set everything with not-enough-content to ai_ran, and skip
         rows = []
+        paras_grouped = []
+        uids = set()
         for r in rows_.all():
-            txt = r.text if for_entries else r.bio
-            if len(txt) < 128:
+            txt = r.text if for_entries \
+                else r.bio  # r.profile_to_text()  # TODO profile_to_text adds people
+            paras = CleanText([txt]).markdown_split_paragraphs().value()
+            if not paras:
+                # Set everything with not-enough-content to ai_ran, and skip
                 if for_entries:
                     r.title_summary = r.text_summary = r.sentiment = None
                 r.ai_ran = True
                 sess.commit()
-            else:
-                rows.append(r)
-        # Everything was too-short of content, nothing to do now.
-        if not rows: return {}
-
-        paras_grouped = []
-        uids = set()
-        for r in rows:
-            txt = r.text if for_entries \
-                else r.bio  # r.profile_to_text()  # TODO profile_to_text adds people
-            paras = CleanText([txt]).markdown_split_paragraphs().value()
+                continue
+            rows.append(r)
             paras_grouped.append(paras)
             if for_entries:
                 uids.add(r.user_id)
+        # Everything was too-short of content, nothing to do now.
+        if not rows: return {}
+
         paras_flat = [p for paras in paras_grouped for p in paras]
 
         fkeys = [r.title for r in rows] \
