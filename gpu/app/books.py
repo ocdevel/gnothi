@@ -116,6 +116,10 @@ class Books(object):
 
         logger.info(f"n_books before cleanup {df.shape[0]}")
         logger.info("Remove HTML")
+
+        # some books are literally just ########
+        df = df[~(df.title + df.text).str.contains('(\?\?\?|\#\#\#)')]
+
         # .unmark().only_english()
         df['text'] = CleanText(df.text.tolist())\
             .strip_html()\
