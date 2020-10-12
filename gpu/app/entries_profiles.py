@@ -36,7 +36,7 @@ def nlp_on_rows(method='entries'):
         for r in rows_.all():
             txt = r.text if for_entries \
                 else r.bio  # r.profile_to_text()  # TODO profile_to_text adds people
-            paras = CleanText([txt]).markdown_split_paragraphs().value()
+            paras = len(txt) > 128 and CleanText([txt]).markdown_split_paragraphs().value()
             if not paras:
                 # Set everything with not-enough-content to ai_ran, and skip
                 if for_entries:

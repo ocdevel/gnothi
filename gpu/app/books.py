@@ -157,11 +157,15 @@ class Books(object):
         logger.info("Load book_scores")
         df, sess, user_id = self.df, self.sess, self.user_id
         books = M.Bookshelf.books_with_scores(sess, user_id)
-        for k, fillna in [('user_score', 0), ('global_score', 0), ('user_rated', False), ('any_rated', False)]:
+        for k, fillna in [('user_score', 0.), ('global_score', 0.), ('user_rated', False), ('any_rated', False)]:
             # df.loc[books.index, k] = books[k]
             df[k] = books[k]  # this assumes k->k map properly on index
             df[k] = df[k].fillna(fillna)
-        df['adjustments'] = df.user_score + df.global_score/3.
+        # adjust books' cosine similarity; not by too much, we want to stick to the 0-1 range still
+        # and do so for users-scores much more than global-scores. Global-scores are just an overall rating
+        # system, and not meant to have too much sway.
+        df['adjustments'] = df.user_score * .3 \
+            + df.global_score * .03
 
     def predict(self):
         df, vecs_user, vecs_books, user_id = self.df, self.vecs_user, self.vecs_books, self.user_id
