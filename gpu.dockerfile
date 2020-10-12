@@ -22,7 +22,9 @@ RUN \
   bcrypt \
   gradient \
   pytest \
-  git+git://github.com/lefnire/ml-tools.git@4043186
+  git+git://github.com/lefnire/ml-tools.git@c31f4a23373d229e160471a912d808802433ca58 \
+  # already installed in ml-tools, but something above reverts the version
+  git+git://github.com/hyperopt/hyperopt.git@0.2.5
 
 COPY ./gpu /paperspace
 COPY ./common /paperspace/common

@@ -143,7 +143,7 @@ class Books(object):
 
     def load_vecs_books(self):
         if exists(paths.vecs):
-            self.vecs_books = np.load(paths.vecs, mmap_mode='r')
+            self.vecs_books = np.load(paths.vecs)#, mmap_mode='r')
             return
         # No embeddings at all yet, generate them
         df = self.df
@@ -178,12 +178,12 @@ class Books(object):
             vecs_user = Similars(vecs_user).cluster(algo='agglomorative').value()
         adjustments = df.adjustments.values
 
-        dnn = CosineEstimator(vecs_books, filename=paths.dnn)
+        dnn = CosineEstimator(vecs_user, vecs_books)
         dnn.fit_cosine()
         if df.any_rated.sum() > 3:
-            dnn.fit_adjustments(vecs_user, adjustments)
+            dnn.fit_adjustments(adjustments)
 
-        preds = dnn.predict(vecs_user)
+        preds = dnn.predict()
         fixtures.save_books(user_id, preds)
         return preds
 
