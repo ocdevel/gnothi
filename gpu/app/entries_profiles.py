@@ -17,19 +17,31 @@ def nlp_on_rows(method='entries'):
     for_entries = method == 'entries'  # else is_profile
     with session() as sess:
         if for_entries:
-            rows = sess.query(M.Entry) \
+            rows_ = sess.query(M.Entry) \
                 .filter(
-                    func.length(M.Entry.text) > 64,
+                    M.Entry.text.isnot(None),
                     M.Entry.no_ai.isnot(True),
                     M.Entry.ai_ran.isnot(True)
                 )
         else:
-            rows = sess.query(M.User) \
+            rows_ = sess.query(M.User) \
                 .filter(
-                    func.length(M.User.bio) > 32,
+                    M.User.bio.isnot(None),
                     M.User.ai_ran.isnot(True)
                 )
-        rows = rows.all()
+
+        # Set everything with not-enough-content to ai_ran, and skip
+        rows = []
+        for r in rows_.all():
+            txt = r.text if for_entries else r.bio
+            if len(txt) < 128:
+                if for_entries:
+                    r.title_summary = r.text_summary = r.sentiment = None
+                r.ai_ran = True
+                sess.commit()
+            else:
+                rows.append(r)
+        # Everything was too-short of content, nothing to do now.
         if not rows: return {}
 
         paras_grouped = []

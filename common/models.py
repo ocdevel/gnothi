@@ -272,9 +272,6 @@ class Entry(Base):
         return q.order_by(order_by)
 
     def run_models(self):
-        if len(self.text) < 128:
-            self.no_ai = True
-
         self.ai_ran = False
         if self.no_ai:
             self.title_summary = self.text_summary = self.sentiment = None
