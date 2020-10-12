@@ -239,9 +239,14 @@ class NLP():
         clean = []
         for a in res:
             # Remove duplicates
-            if a['answer'] in [c['answer'] for c in clean]: continue
+            if a['answer'] in [c['answer'] for c in clean]:
+                continue
+            # Remove sensitive / dangerous responses
+            if re.search(r"(suicide|kill|die)", a['answer'], re.IGNORECASE):
+                continue
             # remove all "No answer" unless it's the only entry
-            if a['answer'] == 'No answer' and len(clean): continue
+            if a['answer'] == 'No answer' and len(clean):
+                continue
             clean.append(a)
         return clean
 
