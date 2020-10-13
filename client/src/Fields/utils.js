@@ -32,11 +32,18 @@ const options = {keep: [
   // 'toml'
 ]}
 
-export function FieldName({name}) {
-  return <ReactMarkdown
-    plugins={[[strip, options], emoji]}
-    source={name}
-    escapeHtml={true}
-    linkTarget={'_blank'}
-  />
+
+export function FieldName({name, maxWidth=null}) {
+  // https://css-tricks.com/snippets/css/truncate-string-with-ellipsis/
+  const style = {whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}
+  if (maxWidth) { style['maxWidth'] = maxWidth }
+
+  return <div style={style}>
+    <ReactMarkdown
+      plugins={[[strip, options], emoji]}
+      source={name}
+      escapeHtml={true}
+      linkTarget={'_blank'}
+    />
+  </div>
 }

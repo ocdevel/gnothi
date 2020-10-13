@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from "react";
 import {SimplePopover, spinner} from "../utils";
 import _ from "lodash";
-import {Accordion, Alert, Button, Card, Form, Table} from "react-bootstrap";
+import {Accordion, Alert, Button, Card, Form, Table, Row, Col} from "react-bootstrap";
 import ReactMarkdown from "react-markdown";
 import ReactStars from "react-stars";
 import SetupHabitica from "./SetupHabitica";
@@ -80,21 +80,32 @@ export default function Fields() {
   }
 
   const renderField = (f) => {
+    let rowStyle = {width: '100%', margin: 0}
+    if (f.excluded_at) {
+      rowStyle = {
+        ...rowStyle,
+        textDecoration: 'line-through',
+        opacity: .5
+      }
+    }
+    const c1 = {xs: 5}
+    const c2 = {xs: 5}
+    const c3 = {xs: 2}
+    const colStyle = {style: {padding: 3}}
     return (
-      <tr
+      <Row
         key={f.id}
-        style={!f.excluded_at ? {} : {
-          textDecoration: 'line-through',
-          opacity: .5
-        }}
+        style={rowStyle}
       >
-        <td
+        <Col
+          {...c1}
+          {...colStyle}
           onClick={() => setShowForm(f.id)}
           className='cursor-pointer'
         >
           <FieldName name={f.name}/>
-        </td>
-        <td>
+        </Col>
+        <Col {...c2} {...colStyle}>
           {f.type === 'fivestar' ? (
             <ReactStars
               value={fieldEntries[f.id]}
@@ -103,7 +114,7 @@ export default function Fields() {
               onChange={changeFieldVal(f.id, true)}
             />
           ) : f.type === 'check' ? (
-            <>
+            <div>
               <Form.Check
                 type='radio'
                 label='Yes'
@@ -120,7 +131,7 @@ export default function Fields() {
                 checked={fieldEntries[f.id] < 1}
                 onChange={changeCheck(f.id)}
               />
-            </>
+            </div>
           ) : (
             <Form.Control
               disabled={!!f.service}
@@ -130,15 +141,17 @@ export default function Fields() {
               onChange={changeFieldVal(f.id)}
             />
           )}
-        </td>
-        <td>
-          ~{f.avg && f.avg.toFixed(1)}
-          <a
-            onClick={() => setShowChart(f.id)}
-            className='cursor-pointer'
-          >📈</a>
-        </td>
-      </tr>
+        </Col>
+        <Col {...c3} {...colStyle}>
+          <div>
+            ~{f.avg && f.avg.toFixed(1)}
+            <a
+              onClick={() => setShowChart(f.id)}
+              className='cursor-pointer'
+            >📈</a>
+          </div>
+        </Col>
+      </Row>
     )
   }
 
@@ -214,12 +227,8 @@ export default function Fields() {
       </Accordion.Toggle>
       <Accordion.Collapse eventKey={g.service}>
         <Card.Body>
-          <Table size='sm' borderless>
-            <tbody>
-            {g.fields.length ? g.fields.map(renderField) : g.emptyText()}
-            </tbody>
-            {renderSyncButton(g.service)}
-          </Table>
+          {g.fields.length ? g.fields.map(renderField) : g.emptyText()}
+          {renderSyncButton(g.service)}
           {renderButtons(g)}
         </Card.Body>
       </Accordion.Collapse>
