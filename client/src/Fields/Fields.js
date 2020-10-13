@@ -48,7 +48,7 @@ export default function Fields() {
   const changeFieldVal = (fid, direct=false) => e => {
     let value = direct ? e : e.target.value
     setFieldEntries({...fieldEntries, [fid]: value})
-    if (!value.length) {return}
+    if (value === "") {return}
     value = parseFloat(value) // until we support strings
     const body = {value}
     dispatch(fetch_(`field-entries/${fid}`, 'POST', body))
