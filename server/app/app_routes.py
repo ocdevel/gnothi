@@ -655,3 +655,26 @@ def habitica_sync_post(as_user: str = None, viewer: M.User = Depends(fastapi_use
         return {}
     habitica.sync_for(user)
     return {}
+
+
+@app.get('/stats')
+def stats_get():
+    exec = db.session.execute
+    users = exec("select count(*) ct from users").fetchone().ct
+    therapists = exec("select count(*) ct from users where therapist=true").fetchone().ct
+    books = exec("""
+    select s.shelf
+    from books b
+    inner join bookshelf s on b.id=s.book_id
+    inner join users u on u.id=s.user_id
+    where s.shelf != 'ai'
+        and u.id not in ('7408962c-51d6-4877-b65f-d9dac376b2f5', 'be7ecb62-e2f8-4197-8c21-a16033cea3f0')
+        and b.amazon is null
+    order by s.created_at desc;
+    """).fetchall()
+    return dict(
+        users=users,
+        therapists=therapists,
+        upvotes=sum([1 for b in books if b.shelf=='like']),
+        downvotes=sum([1 for b in books if b.shelf!='like']),
+    )
