@@ -74,7 +74,7 @@ def sync_for(user):
         value = 0.
         # Habit
         if task['type'] == 'habit':
-            value = task['counterUp'] - task['counterDown']
+            value = task.get('counterUp',0) - task.get('counterDown',0)
         # Daily
         else:
             value = 1. if task['completed'] \
