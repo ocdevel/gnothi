@@ -102,7 +102,7 @@ export default function ChartModal({close, field=null, overall=false}) {
       <Modal.Header closeButton>
         <Modal.Title>{field ? <FieldName name={field.name} maxWidth={960} /> : "Top Influencers"}</Modal.Title>
       </Modal.Header>
-      <Modal.Body>
+      <Modal.Body style={{overflowX: 'scroll'}}>
         {renderBody()}
       </Modal.Body>
     </Modal>
