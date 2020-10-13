@@ -44,7 +44,7 @@ with D.session() as sess:
     influencers
     profile_matches
     users""".split():
-        sess.execute(f"drop table {t} cascade")
+        sess.execute(f"drop table if exists {t} cascade")
     sess.commit()
 
 

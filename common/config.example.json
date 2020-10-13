@@ -27,7 +27,9 @@
 
   "HABIT": {
     "USER": "x",
-    "APP": "x"
+    "APP": "x",
+    "NOTE__": "api token only needed for tests",
+    "API": "x"
   },
 
   "EMAIL": {
