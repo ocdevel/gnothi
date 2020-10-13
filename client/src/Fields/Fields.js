@@ -65,7 +65,7 @@ export default function Fields() {
     if (fetchingSvc) {return spinner}
     return <>
       <SimplePopover text='Gnothi auto-syncs every hour'>
-        <Button onClick={() => fetchService(service)}>Sync</Button>
+        <Button size='sm' onClick={() => fetchService(service)}>Sync</Button>
       </SimplePopover>
     </>
   }

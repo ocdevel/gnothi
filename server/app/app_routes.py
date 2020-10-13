@@ -632,6 +632,18 @@ def habitica_post(data: M.SIHabitica, as_user: str = None, viewer: M.User = Depe
     user.habitica_user_id = data.habitica_user_id
     user.habitica_api_token = data.habitica_api_token
     db.session.commit()
+    habitica.sync_for(user)
+    return {}
+
+@app.delete('/habitica')
+def habitica_delete(as_user: str = None, viewer: M.User = Depends(fastapi_users.get_current_user)):
+    user, snooping = getuser(viewer, as_user)
+    if snooping: return cant_snoop()
+    db.session.execute(text("""
+    update users set habitica_user_id=null, habitica_api_token=null where id=:uid;
+    delete from fields where service='habitica' and user_id=:uid;
+    """), dict(uid=viewer.id))
+    db.session.commit()
     return {}
 
 

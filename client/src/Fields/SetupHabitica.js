@@ -1,12 +1,44 @@
 import React, {useEffect, useState} from "react";
-import {Button, Form} from "react-bootstrap";
+import {Button, Form, Modal} from "react-bootstrap";
 
 import { useSelector, useDispatch } from 'react-redux'
-import { fetch_ } from '../redux/actions'
+import { fetch_, getFields, getUser } from '../redux/actions'
+
+
+function DisconnectModal({show, close}) {
+  const dispatch = useDispatch()
+
+  const disconnect = async () => {
+    await dispatch(fetch_('habitica', 'DELETE'))
+    dispatch(getFields())
+    dispatch(getUser())
+    close()
+  }
+  return (
+    <Modal show={show} onHide={close}>
+      <Modal.Header>
+        <Modal.Title>Disconnect Habitica</Modal.Title>
+      </Modal.Header>
+
+      <Modal.Body>
+        <p>Are you sure you want to disconnect from Habitica? Your field history will be wiped from Gnothi, and you'd
+          need to start collecting from scratch again if you change your mind in the future.</p>
+        <p>Consider instead <strong>removing</strong> Habitica tasks which aren't relevant to AI (remove, not delete).
+          Click a field name, and click "Remove". Details in that modal.</p>
+      </Modal.Body>
+
+      <Modal.Footer>
+        <Button variant="secondary" size='sm' onClick={close}>Cancel</Button>
+        <Button variant="danger" size='sm' onClick={disconnect}>Disconnect</Button>
+      </Modal.Footer>
+    </Modal>
+  )
+}
 
 export default function Habitica() {
   const [habiticaUserId, setHabiticaUserId] = useState('')
   const [habiticaApiToken, setHabiticaApiToken] = useState('')
+  const [showModal, setShowModal] = useState(false)
 
   const dispatch = useDispatch()
 
@@ -29,12 +61,14 @@ export default function Habitica() {
     }
     await dispatch(fetch_(`habitica`, 'POST', body))
     fetchUser()
+    dispatch(getFields())
   }
 
   const changeHabiticaUserId = e => setHabiticaUserId(e.target.value)
   const changeHabiticaApiToken = e => setHabiticaApiToken(e.target.value)
 
-  return (
+  return <>
+    <DisconnectModal show={showModal} close={() => setShowModal(false)} />
     <Form onSubmit={saveHabitica}>
       <Form.Group controlId="formHabiticaUserId">
         <Form.Label>User ID</Form.Label>
@@ -54,9 +88,8 @@ export default function Habitica() {
         />
       </Form.Group>
 
-      <Button type='submit' variant='primary'>
-        Save
-      </Button>
+      <Button type='submit' variant='primary' size='sm'>Save</Button>{' '}
+      {habiticaUserId && <Button variant='danger' size='sm' onClick={() => setShowModal(true)}>Disconnect</Button>}
     </Form>
-  )
+  </>
 }
