@@ -25,7 +25,7 @@ services:
     build:
       context: .
       dockerfile: ./client.dockerfile
-    entrypoint: yarn start
+    entrypoint: /bin/bash
     container_name: jclient
     ports:
       - 3002:3000
