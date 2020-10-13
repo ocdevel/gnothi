@@ -6,6 +6,7 @@ import {CartesianGrid, Line, LineChart, Tooltip, XAxis, YAxis} from "recharts";
 
 import { fetch_ } from '../redux/actions'
 import { useSelector, useDispatch } from 'react-redux'
+import {FieldName} from "./utils";
 
 const round_ = (v) => v ? v.toFixed(2) : null
 
@@ -55,7 +56,7 @@ export default function ChartModal({close, field=null, overall=false}) {
           .orderBy(x => -x[1])
           .value()
           .map(x => <tr key={x[0]}>
-            <td><ReactMarkdown source={fields[x[0]].name} /></td>
+            <td><FieldName name={fields[x[0]].name} /></td>
             <td>{ round_(x[1]) }</td>
             <td>{ round_(fields[x[0]].avg) }</td>
             <td>{ round_(fields[x[0]].next_pred) }</td>
@@ -99,7 +100,7 @@ export default function ChartModal({close, field=null, overall=false}) {
   return (
     <Modal size="lg" show={true} onHide={close} animation={false}>
       <Modal.Header closeButton>
-        <Modal.Title>{field ? field.name : "Top Influencers"}</Modal.Title>
+        <Modal.Title>{field ? <FieldName name={field.name} /> : "Top Influencers"}</Modal.Title>
       </Modal.Header>
       <Modal.Body>
         {renderBody()}

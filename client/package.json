@@ -29,7 +29,9 @@
     "react-stars": "^2.2.5",
     "recharts": "^1.8.5",
     "redux": "^4.0.5",
-    "redux-thunk": "^2.3.0"
+    "redux-thunk": "^2.3.0",
+    "remark-emoji": "^2.1.0",
+    "strip-markdown": "^3.1.2"
   },
   "scripts": {
     "start": "react-scripts start",

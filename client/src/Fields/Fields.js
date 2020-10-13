@@ -7,6 +7,7 @@ import ReactStars from "react-stars";
 import SetupHabitica from "./SetupHabitica";
 import FieldModal from "./FieldModal";
 import ChartModal from "./ChartModal";
+import {FieldName} from "./utils";
 
 import { useSelector, useDispatch } from 'react-redux'
 import { fetch_, getFields } from '../redux/actions'
@@ -45,10 +46,11 @@ export default function Fields() {
   }
 
   const changeFieldVal = (fid, direct=false) => e => {
-    let v = direct ? e : e.target.value
-    v = parseFloat(v)  // until we support strings
-    setFieldEntries({...fieldEntries, [fid]: v})
-    const body = {value: v}
+    let value = direct ? e : e.target.value
+    setFieldEntries({...fieldEntries, [fid]: value})
+    if (!value.length) {return}
+    value = parseFloat(value) // until we support strings
+    const body = {value}
     dispatch(fetch_(`field-entries/${fid}`, 'POST', body))
   }
 
@@ -90,7 +92,7 @@ export default function Fields() {
           onClick={() => setShowForm(f.id)}
           className='cursor-pointer'
         >
-          <ReactMarkdown source={f.name} linkTarget='_blank' />
+          <FieldName name={f.name}/>
         </td>
         <td>
           {f.type === 'fivestar' ? (
