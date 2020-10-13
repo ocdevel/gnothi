@@ -189,16 +189,25 @@ def influencers():
             res = influencers_(u.id)
             if not res: continue
 
+            # A field can get deleted while running XGB, causing a fkey constraint error.
+            # https://docs.sqlalchemy.org/en/13/dialects/postgresql.html
+            # Can't do on_conflict for FK constraints, get fresh ids and filter out missing ones.
+            fids = [x.id for x in sess.execute(text("""
+            select id::text from fields where user_id=:uid
+            """), uid_).fetchall()]
+
             next_preds, importances, all_imps = res
             for fid, others in importances.items():
+                if fid not in fids: continue
                 inf_score, next_pred = all_imps[fid], next_preds[fid]
 
-                insert = postgresql.insert(M.Influencer.__table__).values([
+                insert = postgresql.insert(M.Influencer.__table__).values( [
                     dict(field_id=fid, influencer_id=inf_id, score=score)
                     for inf_id, score in others.items()
+                    if inf_id in fids
                 ])
                 sess.execute(insert.on_conflict_do_update(
-                    index_elements=[M.Influencer.field_id, M.Influencer.influencer_id],
+                    constraint=M.Influencer.__table__.primary_key,
                     set_=dict(score=insert.excluded.score)
                 ))
                 sess.execute(text("""
