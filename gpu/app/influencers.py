@@ -3,6 +3,7 @@ from app.xgb_hyperopt import run_opt
 from xgboost import XGBRegressor
 from sqlalchemy import text
 from psycopg2.extras import Json as jsonb
+from sqlalchemy.dialects import postgresql
 from common.utils import utcnow
 from common.database import session
 from common.fixtures import fixtures
@@ -188,32 +189,22 @@ def influencers():
             res = influencers_(u.id)
             if not res: continue
 
-            sess.execute(text(f"""
-            delete from influencers where field_id in (
-              select id from fields where user_id=:uid
-            )
-            """), uid_)
-            sess.commit()
-
-            # TODO handle this better. Do a bulk_insert with on_conflict, which allows per-row errors (fkey violation)
-            fids = sess.execute(text(f"select id from fields where user_id=:uid"), uid_).fetchall()
-            fids = [f.id for f in fids]
-
             next_preds, importances, all_imps = res
             for fid, others in importances.items():
                 inf_score, next_pred = all_imps[fid], next_preds[fid]
-                try:
-                    sess.bulk_save_objects([
-                        M.Influencer(field_id=fid, influencer_id=inf_id, score=score)
-                        for inf_id, score in others.items()
-                        if inf_id in fids and fid in fids
-                    ])
-                except Exception as err:
-                    logger.error(err)
 
+                insert = postgresql.insert(M.Influencer.__table__).values([
+                    dict(field_id=fid, influencer_id=inf_id, score=score)
+                    for inf_id, score in others.items()
+                ])
+                sess.execute(insert.on_conflict_do_update(
+                    index_elements=[M.Influencer.field_id, M.Influencer.influencer_id],
+                    set_=dict(score=insert.excluded.score)
+                ))
                 sess.execute(text("""
                 update fields set influencer_score=:score, next_pred=:pred
                 where id=:fid;
                 """), dict(score=inf_score, pred=next_pred, fid=fid))
                 sess.commit()
+
     return {}
