@@ -28,7 +28,7 @@ RUN pip install \
   gradient==1.1.0 \
   boto3
 
-COPY ./server /app
+COPY ./server/app /app/app
 COPY ./common /app/common
 WORKDIR /app
 

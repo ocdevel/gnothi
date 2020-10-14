@@ -36,7 +36,7 @@ class Books(object):
 
     def prune_books(self):
         self.sess.execute("""
-        delete from books where 
+        delete from books where
             amazon is null and id not in (select book_id from bookshelf);
         """)
         self.sess.commit()
@@ -47,8 +47,8 @@ class Books(object):
         sess = self.sess
         # don't run if ran recently (notice the inverse if & comparator, simpler)
         if sess.execute(text(f"""
-        select 1 from users 
-        where id=:uid and last_books > {utcnow} - interval '10 minutes' 
+        select 1 from users
+        where id=:uid and last_books > {utcnow} - interval '10 minutes'
         """), uid).fetchone():
             return None
         sess.execute(text(f"""
@@ -58,13 +58,13 @@ class Books(object):
 
         entries = sess.execute(text("""
         select c.vectors from cache_entries c
-        inner join entries e on e.id=c.entry_id 
+        inner join entries e on e.id=c.entry_id
             and e.user_id=:uid
             and array_length(c.vectors, 1) > 0
         order by e.created_at desc;
         """), uid).fetchall()
         profile = sess.execute(text("""
-        select vectors from cache_users 
+        select vectors from cache_users
             where user_id=:uid
             and array_length(vectors, 1) > 0
         """), uid).fetchone()
@@ -169,7 +169,7 @@ class Books(object):
         # and do so for users-scores much more than global-scores. Global-scores are just an overall rating
         # system, and not meant to have too much sway.
         df['adjustments'] = df.user_score * .3 \
-            + df.global_score * .03
+            + df.global_score * .09
 
     def predict(self):
         df, vecs_user, vecs_books, user_id = self.df, self.vecs_user, self.vecs_books, self.user_id
@@ -182,11 +182,8 @@ class Books(object):
             vecs_user = Similars(vecs_user).cluster(algo='agglomorative').value()
         adjustments = df.adjustments.values
 
-        dnn = CosineEstimator(vecs_user, vecs_books)
-        dnn.fit_cosine()
-        if df.any_rated.sum() > 3:
-            dnn.fit_adjustments(adjustments)
-
+        dnn = CosineEstimator(vecs_user, vecs_books, adjustments)
+        dnn.fit()
         preds = dnn.predict()
         fixtures.save_books(user_id, preds)
         return preds
