@@ -167,9 +167,10 @@ class Books(object):
             df[k] = df[k].fillna(fillna)
         # adjust books' cosine similarity; not by too much, we want to stick to the 0-1 range still
         # and do so for users-scores much more than global-scores. Global-scores are just an overall rating
-        # system, and not meant to have too much sway.
-        df['adjustments'] = df.user_score * .3 \
-            + df.global_score * .09
+        # system, and not meant to have too much sway. These numbers found via hyperparameter optimization
+        user_adj = .183
+        other_adj = user_adj * .307
+        df['adjustments'] = df.user_score * user_adj + df.global_score * other_adj
 
     def predict(self):
         df, vecs_user, vecs_books, user_id = self.df, self.vecs_user, self.vecs_books, self.user_id

@@ -668,13 +668,13 @@ def stats_get():
     inner join bookshelf s on b.id=s.book_id
     inner join users u on u.id=s.user_id
     where s.shelf != 'ai'
-        and u.id not in ('7408962c-51d6-4877-b65f-d9dac376b2f5', 'be7ecb62-e2f8-4197-8c21-a16033cea3f0')
+        and u.is_superuser is not true
         and b.amazon is null
     order by s.created_at desc;
     """).fetchall()
     return dict(
         users=users,
         therapists=therapists,
-        upvotes=sum([1 for b in books if b.shelf=='like']),
-        downvotes=sum([1 for b in books if b.shelf!='like']),
+        upvotes=sum([1 for b in books if b.shelf in ('like', 'already_read', 'recommend')]),
+        downvotes=sum([1 for b in books if b.shelf in ('dislike', 'remove')]),
     )
