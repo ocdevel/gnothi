@@ -5,20 +5,21 @@ from sqlalchemy import text
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument('target', help='lefnire|all')
+parser.add_argument('target', help='super|all')
 args = parser.parse_args()
 
 with session() as sess:
-    if args.target == 'lefnire':
-        user = sess.query(M.User).filter(M.User.email == 'tylerrenelle@gmail.com').first()
-        users = [user]
+    if args.target == 'super':
+        users = sess.query(M.User).filter_by(is_superuser=True).all()
     else:
         users = sess.execute(text("""
         with entries_ as (
             select count(*) ct, user_id 
             from entries group by user_id
         )
-        select user_id as id from entries_ where ct>2
+        select u.email, u.id from entries_ e
+        inner join users u on u.id=e.user_id
+        where e.ct>2
         """)).fetchall()
     for u in users:
         uid = u.id
@@ -31,5 +32,7 @@ with session() as sess:
         from bookshelf s
         inner join books b on b.id=s.book_id and s.user_id=:uid and s.shelf='ai'
         """), uid_).fetchall()
+        print("\n\n")
+        print(u.email)
         for r in res:
             print(r.shelf, r.title)

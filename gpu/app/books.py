@@ -120,11 +120,9 @@ class Books(object):
         # some books are literally just ########
         df = df[~(df.title + df.text).str.contains('(\?\?\?|\#\#\#)')]
 
-        # .unmark().only_english()
         df['text'] = CleanText(df.text.tolist())\
             .strip_html()\
             .only_ascii()\
-            .fix_punct()\
             .multiple_whitespace()\
             .value()
         df['txt_len'] = df.text.str.len()
@@ -165,12 +163,6 @@ class Books(object):
             # df.loc[books.index, k] = books[k]
             df[k] = books[k]  # this assumes k->k map properly on index
             df[k] = df[k].fillna(fillna)
-        # adjust books' cosine similarity; not by too much, we want to stick to the 0-1 range still
-        # and do so for users-scores much more than global-scores. Global-scores are just an overall rating
-        # system, and not meant to have too much sway. These numbers found via hyperparameter optimization
-        user_adj = .183
-        other_adj = user_adj * .307
-        df['adjustments'] = df.user_score * user_adj + df.global_score * other_adj
 
     def predict(self):
         df, vecs_user, vecs_books, user_id = self.df, self.vecs_user, self.vecs_books, self.user_id
@@ -181,7 +173,14 @@ class Books(object):
 
         if vecs_user.shape[0] > 5:
             vecs_user = Similars(vecs_user).cluster(algo='agglomorative').value()
-        adjustments = df.adjustments.values
+
+        # adjust books' cosine similarity; not by too much, we want to stick to the 0-1 range still
+        # and do so for users-scores much more than global-scores. Global-scores are just an overall rating
+        # system, and not meant to have too much sway. These numbers found via hyperparameter optimization
+        adjustments = [
+            dict(weight=50., amount=.3, values=df.user_score.values),
+            dict(weight=2., amount=.05, values=df.global_score.values)
+        ]
 
         dnn = CosineEstimator(vecs_user, vecs_books, adjustments)
         dnn.fit()
