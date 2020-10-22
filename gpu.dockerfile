@@ -20,7 +20,7 @@ RUN \
   fastapi-users[sqlalchemy] \
   asyncpg \
   bcrypt \
-  gradient \
+  boto3 \
   pytest \
   git+git://github.com/lefnire/ml-tools.git@0.0.17 \
   # already installed in ml-tools, but something above reverts the version
