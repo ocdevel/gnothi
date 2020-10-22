@@ -177,9 +177,10 @@ class Books(object):
         # adjust books' cosine similarity; not by too much, we want to stick to the 0-1 range still
         # and do so for users-scores much more than global-scores. Global-scores are just an overall rating
         # system, and not meant to have too much sway. These numbers found via hyperparameter optimization
+        dh = Box(CosineEstimator.default_hypers)
         adjustments = [
-            dict(weight=50., amount=.3, values=df.user_score.values),
-            dict(weight=2., amount=.05, values=df.global_score.values)
+            dict(weight=dh.sw_mine, amount=dh.std_mine, values=df.user_score.values),
+            dict(weight=dh.sw_mine * dh.sw_other, amount=dh.std_mine * dh.std_other, values=df.global_score.values)
         ]
 
         dnn = CosineEstimator(vecs_user, vecs_books, adjustments)
