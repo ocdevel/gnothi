@@ -866,13 +866,7 @@ class Job(Base):
             """)
             sess.commit()
 
-    @staticmethod
-    def last_job(sess):
-        res = sess.execute(f"""
-       select extract(epoch FROM ({utcnow} - created_at)) / 60 as mins
-       from jobs order by created_at desc limit 1
-       """).fetchone()
-        return res.mins if res else 99
+    # ea063dfa: last_job()
 
 
 class Machine(Base):
@@ -894,6 +888,7 @@ class Machine(Base):
         order by case 
             when status='on' then 1
             when status='pending' then 2
+            else 3
         end asc
         limit 1
         """).fetchone()
