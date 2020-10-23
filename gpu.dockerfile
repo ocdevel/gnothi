@@ -1,4 +1,4 @@
-FROM lefnire/ml-tools:ml-tools-0.0.17
+FROM lefnire/ml-tools:ml-tools-0.0.18
 
 # TODO switch to mysql-python-connector & remove apt-get
 RUN apt-get update -y && \
@@ -22,7 +22,7 @@ RUN \
   bcrypt \
   boto3 \
   pytest \
-  git+git://github.com/lefnire/ml-tools.git@0.0.17 \
+  git+git://github.com/lefnire/ml-tools.git@0.0.18 \
   # already installed in ml-tools, but something above reverts the version
   git+git://github.com/hyperopt/hyperopt.git@0.2.5
 
