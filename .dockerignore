@@ -1,7 +1,10 @@
-.idea
-.git
-tmp
+**/.idea
+**/.git
+**/tmp
 ml-tools
 storage
-common/config.json
-__pycache__
+**/config.json
+**/__pycache__
+**/.pytest_cache
+**/*.sql
+**/*.csv
