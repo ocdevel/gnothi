@@ -171,7 +171,7 @@ class Books(object):
             logger.info("Returning fixture predictions")
             return fixt
 
-        if vecs_user.shape[0] > 5:
+        if vecs_user.shape[0] > 100:
             vecs_user = Similars(vecs_user).cluster(algo='agglomorative').value()
 
         # adjust books' cosine similarity; not by too much, we want to stick to the 0-1 range still
