@@ -22,7 +22,7 @@ RUN \
   bcrypt \
   boto3 \
   pytest \
-  git+git://github.com/lefnire/ml-tools.git@22c300c4 \
+  git+git://github.com/lefnire/ml-tools.git@d339d94c \
   # already installed in ml-tools, but something above reverts the version
   git+git://github.com/hyperopt/hyperopt.git@0.2.5
 
