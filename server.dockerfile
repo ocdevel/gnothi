@@ -12,7 +12,7 @@ RUN pip install \
   sqlalchemy_utils \
   pandas \
   requests \
-  flask-apscheduler \
+  apscheduler \
   markdown \
   python-box \
   tqdm \
