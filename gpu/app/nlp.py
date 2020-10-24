@@ -203,8 +203,8 @@ class NLP():
             max_length=max_,
 
             # I think this is just for performance? PC hangs without it, not noticing output diff
-            # num_beams=4,
-            # early_stopping=True
+            num_beams=4,
+            early_stopping=True
         )
         return [
             tokenizer.decode(g, skip_special_tokens=True, clean_up_tokenization_spaces=False)
