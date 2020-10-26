@@ -1,12 +1,17 @@
-.idea
-.pytest_cache
-tmp
-import_lisa.py
-tmp/
-N2D
-letsencrypt
-.aws
+# handled separately
 storage
-*.sql
 ml-tools
-*.csv
+
+# bloat
+**/.idea
+**/.pytest_cache
+**/__pycache__
+**/tmp
+
+# sensitive
+**/config.yml
+**/config.json
+**/.aws
+**/*.sql
+**/*.csv
+

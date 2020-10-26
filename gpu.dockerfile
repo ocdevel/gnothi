@@ -21,6 +21,7 @@ RUN \
   asyncpg \
   bcrypt \
   boto3 \
+  dynaconf \
   pytest \
   git+git://github.com/lefnire/ml-tools.git@d339d94c \
   # already installed in ml-tools, but something above reverts the version

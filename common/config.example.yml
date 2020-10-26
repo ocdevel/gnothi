@@ -1,0 +1,25 @@
+ENVIRONMENT: development
+
+DB_URL: postgres://user:password@localhost:5432
+# DB_NAME auto-generated from ENVIRONMENT (production=gnothi_prod, development=gnothi_dev, testing=gnothi_test)
+DB_PROD_URL: postgres://user:password@localhost:5432
+DB_PROD_NAME: gnothi_dev
+# ?charset part is super important here
+DB_BOOKS: mysql://user:password@localhost:3306/libgen?charset=utf8mb4
+
+FLASK_KEY: x
+
+MACHINE: desktop
+
+HABIT_USER: x
+HABIT_APP: x
+# api token only needed for tests
+HABIT_API: x
+
+EMAIL_SES_EMAIL_SOURCE: x
+
+AWS_ACCESS_KEY_ID: x
+AWS_SECRET_ACCESS_KEY: x
+AWS_DEFAULT_REGION: x
+
+GA: x

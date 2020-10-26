@@ -25,7 +25,8 @@ RUN pip install \
   pytest \
   pytest-timeout \
   lorem-text \
-  boto3
+  boto3 \
+  dynaconf
 
 COPY ./server/app /app/app
 COPY ./common /app/common

@@ -179,7 +179,9 @@ class Books(object):
         # system, and not meant to have too much sway. These numbers found via hyperparameter optimization
         # dh = Box(CosineEstimator.default_hypers)
         adjustments = [
-            dict(weight=25., amount=.3, values=df.user_score.values),
+            # user weight b/w 50-100. I think 50 good to not overfit thumbs over entries
+            dict(weight=50., amount=.3, values=df.user_score.values),
+            # other weight should be low. Possibly even removed (1.001, just to prevent the !=1 check)
             dict(weight=1.15, amount=.1, values=df.global_score.values)
         ]
 

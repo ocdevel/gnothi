@@ -1,10 +1,18 @@
-**/.idea
-**/.git
-**/tmp
-ml-tools
+# handled separately
 storage
-**/config.json
-**/__pycache__
+ml-tools
+
+# bloat
+**/.git
+**/.idea
 **/.pytest_cache
+**/__pycache__
+**/tmp
+
+# sensitive
+**/config.yml
+**/config.json
+**/.aws
 **/*.sql
 **/*.csv
+
