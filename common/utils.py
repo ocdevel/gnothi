@@ -5,7 +5,7 @@ DROP_SQL = 'DROP SCHEMA public CASCADE;CREATE SCHEMA public;'
 
 # load configs. Priority = config.example.yml -> config.yml -> env_vars
 vars = Dynaconf(
-    settings_files=['common/config.example.yml', 'common/config.yml'],
+    settings_files=['common/config.example.yml', '/storage/config.yml', 'common/config.yml'],
     # environments=True
 )
 
