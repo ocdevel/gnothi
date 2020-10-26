@@ -1,23 +1,23 @@
 import json, os, pytz, datetime, socket
 from box import Box
+from dynaconf import Dynaconf
 
 DROP_SQL = 'DROP SCHEMA public CASCADE;CREATE SCHEMA public;'
 
-# 82fa7285: join paths (in case file in different location)
-def load_json(fname):
+config_paths = []
+# check if the respective paths exist to load
+for fname in ['config.example.json', 'config.json']:
     path_ = os.path.join(os.path.dirname(__file__), fname)
-    json_ = {}
-    if not os.path.exists(path_):
-        path_ = '/storage/' + fname
+    storage_path_ = '/storage/' + fname
     if os.path.exists(path_):
-        with open(path_, 'r') as f:
-            json_ = json.load(f)
-    return Box(json_, box_dots=True, default_box=True)
+        config_paths.append(path_)
+    if os.path.exists(storage_path_):
+        config_paths.append(storage_path_)
 
-config_example_json = load_json('config.example.json')
-config_json = load_json('config.json')
+#load configs - overwrites as (config.example < config < /storage/config)
+configs = Dynaconf(settings_files=config_paths)
 
-# Recursively add env vars from config.example.json as template, and (1) os.environ,
+# Recursively add env vars from config.json files as template, and (1) os.environ,
 # (2) config.json as values. Nested json vars are squashed as parent_child_child2 etc
 vars = Box()
 def add_var(k, v):
@@ -25,7 +25,7 @@ def add_var(k, v):
         for k2, v2 in v.items():
             add_var(f"{k}.{k2}", v2)
         return
-    config_val = config_json[k] or None # using dots
+    config_val = configs[k] or None # using dots
     k = k.replace('.', '_')
     val = os.environ.get(k, config_val)
     vars[k] = val
@@ -34,7 +34,7 @@ def add_var(k, v):
     if k and val and k.startswith("AWS_") and not os.environ.get(k, False):
         os.environ[k] = val
 
-for k, v in config_example_json.items():
+for k, v in configs.as_dict().items():
     add_var(k, v)
 
 vars['DB_NAME'] = dict(
