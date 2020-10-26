@@ -1,8 +1,9 @@
 import enum, pdb, re, threading, time, datetime, traceback
-from typing import Optional, List, Any, Dict
+from typing import Optional, List, Any, Dict, Union
 from pydantic import BaseModel, UUID4
-from dateutil import tz
+import pytz
 from uuid import uuid4
+import dateutil
 import pandas as pd
 import logging
 logger = logging.getLogger(__name__)
@@ -140,6 +141,34 @@ class User(Base, SQLAlchemyBaseUserTable):
         ) / 60 as mins
         from users limit 1 
         """).fetchone().mins or 99
+
+    @staticmethod
+    def timezoned(
+        date: Union[datetime.datetime, str]=None,
+        user: BaseModel=None,
+        user_id: Union[str, UUID4]=None
+    ):
+        """
+        Converts a date to this user's timezone
+        :param date: date to convert to this user's timezone, or None for now
+        :param user: User model to get user.timezone, else use `user_id`
+        :param user_id: user_id to look up timezone, else use `user`
+        :return: (user.timezone, converted_date)
+        """
+        tz = user.timezone if user else \
+            db.session.query(User.timezone).filter_by(id=user_id).scalar()
+        tz = tz or 'America/Los_Angeles'
+        if type(date) == str:
+            # Is this seriously how to make a date at a timezone? So much hack...
+            offset = datetime.datetime.now(pytz.timezone(tz)).strftime('%z')
+            date = date + f"T12:00:00{offset}"
+            dateutil.parser.parse(date)
+            # date = datetime.datetime.strptime(date, "%Y-%m-%d").replace(tzinfo=pytz.timezone(tz))
+        elif date is None:
+            date = nowtz(tz)
+        else:
+            date.astimezone(dateutil.tz.gettz(tz))
+        return date, tz
 
 
 class FU_User(fu_models.BaseUser): pass
@@ -499,11 +528,8 @@ class FieldEntry(Base):
 
     @staticmethod
     def get_day_entries(user_id, day=None, field_id=None):
-        tz_ = db.session.query(User.timezone).filter_by(id=user_id).scalar()
-        tz_ = tz_ or 'America/Los_Angeles'
-
-        timezoned = func.Date(func.timezone(tz_, FieldEntry.created_at))
-        day = day.astimezone(tz.gettz(tz_)) if day else nowtz(tz_)
+        day, tz = User.timezoned(date=day, user_id=user_id)
+        timezoned = func.Date(func.timezone(tz, FieldEntry.created_at))
 
         q = db.session.query(FieldEntry)\
             .filter(FieldEntry.user_id == user_id, timezoned == day.date())
@@ -936,7 +962,7 @@ class SISummarize(SILimitEntries):
 
 
 class SIThemes(SILimitEntries):
-    algo: Optional[str] = 'kmeans'
+    algo: Optional[str] = 'agglomorative'
 
 
 ###

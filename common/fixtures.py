@@ -4,7 +4,6 @@ from common.database import session
 from common.utils import vars, is_test
 import common.models as M
 from sqlalchemy import text
-from ml_tools.fixtures import articles
 import logging
 logger = logging.getLogger(__name__)
 
@@ -210,6 +209,12 @@ class Fixtures():
         self.save_k_v(f"nlp_{method}", k, obj)
 
     def gen_entries(self):
+        try:
+            # the generates article-fixtures on the GPU container, which then become available in /storage
+            # to the server container. So run tests on GPU first, then on esrver. TODO decouple this!
+            from ml_tools.fixtures import articles
+        except:
+            raise Exception("Can't generate entries from server container, must do from GPU container first.")
         entries = articles(group_by='paragraph')
         entries = Box({
             k: dict(text=v, paras=v.split('\n\n'))

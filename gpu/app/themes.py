@@ -30,7 +30,7 @@ def top_terms(texts, k=8):
     return terms
 
 
-def themes(eids, algo='kmeans'):
+def themes(eids, algo='agglomorative'):
     logger.info("Themes")
     with session() as sess:
         # use Model to decrypt fields
@@ -79,9 +79,9 @@ def themes(eids, algo='kmeans'):
     groups = [t['summary'] for t in topics]
     batch_summaries = nlp_.summarization(groups, min_length=50, max_length=300)
     for i, res in enumerate(batch_summaries):
-        print(res)
-        topics[i]['summary'] = res['summary']
-        topics[i]['sentiment'] = res['sentiment']
+            print(res)
+            topics[i]['summary'] = res['summary']
+            topics[i]['sentiment'] = res['sentiment']
 
     topics = {
         'terms': top_terms(stripped, 10),

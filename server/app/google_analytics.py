@@ -28,7 +28,7 @@ def ga(uid: Union[str, UUID4], category: str, action: str):
         ec=category,
         ea=action
     ))
-    if DEBUG: print(res.json())
+    # if DEBUG: print(res.json())
 
     if action in ('register', 'like', 'dislike', 'therapist'):
         with session() as sess:
