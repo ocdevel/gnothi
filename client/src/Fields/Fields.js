@@ -39,10 +39,12 @@ export default function Fields() {
   const user = useSelector(state => state.user)
   const fields = useSelector(state => state.fields)
 
+  const isToday = iso() === iso(day)
+
   const fetchFieldEntries = async () => {
     if (_.isEmpty(fields)) {return}
     const {data} = await dispatch(fetch_(`field-entries?day=${day}`, 'GET'))
-    return setFieldEntries(data)
+    setFieldEntries(data)
     // 3e896062: something about field_entries default_values?
   }
 
@@ -112,6 +114,7 @@ export default function Fields() {
         opacity: .5
       }
     }
+    const thirdParty = !!f.service
     const c1 = {xs: 5}
     const c2 = {xs: 5}
     const c3 = {xs: 2}
@@ -132,7 +135,7 @@ export default function Fields() {
         <Col {...c2} {...colStyle}>
           {f.type === 'fivestar' ? (
             <ReactStars
-              value={fieldEntries[f.id]}
+              value={fieldEntries[f.id] || 0}
               half={false}
               size={25}
               onChange={changeFieldVal(f.id, true)}
@@ -158,10 +161,10 @@ export default function Fields() {
             </div>
           ) : (
             <Form.Control
-              disabled={!!f.service}
+              disabled={thirdParty && isToday}
               type='number'
               size="sm"
-              value={fieldEntries[f.id]}
+              value={fieldEntries[f.id] || 0}
               onChange={changeFieldVal(f.id)}
             />
           )}
@@ -288,7 +291,7 @@ export default function Fields() {
         <Button
           variant="outline-secondary"
           onClick={() => changeDay(1)}
-          disabled={iso() == iso(day)}
+          disabled={isToday}
         >{">"}</Button>
       </ButtonGroup>
     </div>

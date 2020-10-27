@@ -21,7 +21,7 @@ import {
 
 export default function Sidebar() {
   return <>
-    <Accordion defaultActiveKey="links">
+    <Accordion defaultActiveKey="fields">
       <Card>
         <Accordion.Toggle as={Card.Header} variant="link" eventKey="fields">
           Fields
