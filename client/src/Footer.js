@@ -6,8 +6,7 @@ export default function Footer () {
   return <div id='footer'>
     <Link to='/about'>About</Link>{' '}&#183;{' '}
     <a href="mailto:tylerrenelle@gmail.com">Contact</a>{' '}&#183;{' '}
-    <Link to='/privacy'>Privacy Policy</Link>{' '}&#183;{' '}
-    <Link to='/terms'>Terms of Use</Link>{' '}&#183;{' '}
-    <a target='_blank' href='https://github.com/lefnire/gnothi'>Github</a>
+    <Link to='/privacy'>Privacy</Link>{' '}&#183;{' '}
+    <Link to='/terms'>Terms</Link>{' '}
   </div>
 }
