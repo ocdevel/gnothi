@@ -15,7 +15,7 @@ import {
   MdEmail,
   FaMicrophone,
   FaDragon, FaReddit, FaBalanceScale,
-  FaBook
+  FaBook, FaDollarSign
 } from "react-icons/all";
 
 import { useDispatch } from 'react-redux'
@@ -86,6 +86,10 @@ export default function Sidebar() {
               <li>
                 <FaMap /> <a href="https://github.com/lefnire/gnothi/projects/1" target="_blank">Roadmap</a>{' '}
                 <small className='text-muted'>See what I'm working on now and in the future</small>
+              </li>
+              <li>
+                <FaDollarSign /> <a href="https://github.com/lefnire/gnothi/issues/96" target="_blank">Support</a>{' '}
+                <small className='text-muted'>How to support the project</small>
               </li>
             </ul>
 
