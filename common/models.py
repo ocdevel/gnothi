@@ -162,7 +162,7 @@ class User(Base, SQLAlchemyBaseUserTable):
             # Is this seriously how to make a date at a timezone? So much hack...
             offset = datetime.datetime.now(pytz.timezone(tz)).strftime('%z')
             date = date + f"T12:00:00{offset}"
-            dateutil.parser.parse(date)
+            date = dateutil.parser.parse(date)
             # date = datetime.datetime.strptime(date, "%Y-%m-%d").replace(tzinfo=pytz.timezone(tz))
         elif date is None:
             date = nowtz(tz)

@@ -435,19 +435,29 @@ def field_delete(field_id, as_user: str = None, viewer: M.User = Depends(fastapi
 
 
 @app.get('/field-entries')
-def field_entries_get(as_user: str = None, viewer: M.User = Depends(fastapi_users.get_current_user)):
+def field_entries_get(
+    day: str = None,
+    as_user: str = None,
+    viewer: M.User = Depends(fastapi_users.get_current_user)
+):
     user, snooping = getuser(viewer, as_user)
     if snooping and not user.share_data.fields:
         return cant_snoop('Fields')
-    res = M.FieldEntry.get_day_entries(user.id).all()
+    res = M.FieldEntry.get_day_entries(user.id, day=day).all()
     return {f.field_id: f.value for f in res}
 
 
 @app.post('/field-entries/{field_id}')
-def field_entries_post(field_id, data: M.SIFieldEntry, as_user: str = None, viewer: M.User = Depends(fastapi_users.get_current_user)):
+def field_entries_post(
+    field_id,
+    data: M.SIFieldEntry,
+    day: str = None,
+    as_user: str = None,
+    viewer: M.User = Depends(fastapi_users.get_current_user)
+):
     user, snooping = getuser(viewer, as_user)
     if snooping: return cant_snoop()
-    fe = M.FieldEntry.get_day_entries(user.id, field_id=field_id).first()
+    fe = M.FieldEntry.get_day_entries(user.id, day=day, field_id=field_id).first()
     v = float(data.value)
     if fe:
         fe.value = v
@@ -455,9 +465,9 @@ def field_entries_post(field_id, data: M.SIFieldEntry, as_user: str = None, view
         fe = M.FieldEntry(
             value=v,
             field_id=field_id,
-            created_at=nowtz(user.timezone or 'America/Los_Angeles')
         )
         user.field_entries.append(fe)
+    fe.created_at, _ = M.User.timezoned(date=day, user=user)
     db.session.commit()
     db.session.refresh(fe)
     M.Field.update_avg(field_id)

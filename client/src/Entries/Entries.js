@@ -16,7 +16,6 @@ import {
   Col,
   InputGroup,
 } from "react-bootstrap"
-import moment from "moment"
 import {
   FaSearch,
 } from 'react-icons/fa'
@@ -24,10 +23,10 @@ import Entry from "./Entry"
 import './Entries.css'
 import { useSelector, useDispatch } from 'react-redux'
 import { fetch_ } from '../redux/actions'
-import Fields from "../Fields/Fields";
 import {NotesAll} from "./Notes";
 import {MainTags} from "../Tags";
 import MediaQuery from 'react-responsive'
+import Sidebar from "./Sidebar";
 
 export default function Entries() {
   const [page, setPage] = useState(0)
@@ -168,7 +167,7 @@ export default function Entries() {
           {_newButton}
           {_search}
         </MediaQuery>
-        <Fields  />
+        <Sidebar  />
         <NotesAll />
       </Col>
     </Row>

@@ -1,18 +1,34 @@
 import React, {useEffect, useState} from "react";
 import {SimplePopover, spinner} from "../utils";
 import _ from "lodash";
-import {Accordion, Alert, Button, Card, Form, Table, Row, Col} from "react-bootstrap";
-import ReactMarkdown from "react-markdown";
+import {
+  Accordion,
+  Button,
+  Card,
+  Form,
+  Row,
+  Col,
+  ButtonGroup
+} from "react-bootstrap";
 import ReactStars from "react-stars";
 import SetupHabitica from "./SetupHabitica";
 import FieldModal from "./FieldModal";
 import ChartModal from "./ChartModal";
 import {FieldName} from "./utils";
+import moment from 'moment'
 
 import { useSelector, useDispatch } from 'react-redux'
 import { fetch_, getFields } from '../redux/actions'
+import './Fields.css'
+
+const fmt = 'YYYY-MM-DD'
+const iso = (day=null) => {
+  const m = day ? moment(day) : moment()
+  return m.format(fmt)
+}
 
 export default function Fields() {
+  const [day, setDay] = useState(iso())
   const [fetchingSvc, setFetchingSvc] = useState(false)
   const [fieldEntries, setFieldEntries] = useState({})
   const [showForm, setShowForm] = useState(false)
@@ -25,14 +41,14 @@ export default function Fields() {
 
   const fetchFieldEntries = async () => {
     if (_.isEmpty(fields)) {return}
-    const {data} = await dispatch(fetch_(`field-entries`, 'GET'))
+    const {data} = await dispatch(fetch_(`field-entries?day=${day}`, 'GET'))
     return setFieldEntries(data)
     // 3e896062: something about field_entries default_values?
   }
 
   useEffect(() => {
     fetchFieldEntries()
-  }, [fields])
+  }, [fields, day])
 
   if (_.get(fields, 'code') === 401) {
     return <h5>{fields.message}</h5>
@@ -51,11 +67,19 @@ export default function Fields() {
     if (value === "") {return}
     value = parseFloat(value) // until we support strings
     const body = {value}
-    dispatch(fetch_(`field-entries/${fid}`, 'POST', body))
+    dispatch(fetch_(`field-entries/${fid}?day=${day}`, 'POST', body))
   }
 
   const changeCheck = fid => e => {
     changeFieldVal(fid, true)(~~!fieldEntries[fid])
+  }
+
+  const changeDay = dir => {
+    if (dir === -1 ) {
+      setDay(moment(day).subtract(1, 'day').format(fmt))
+    } else {
+      setDay(moment(day).add(1, 'day').format(fmt))
+    }
   }
 
   const renderSyncButton = (service) => {
@@ -159,7 +183,7 @@ export default function Fields() {
   // currently just habitica
   const groups = [{
     service: 'custom',
-    name: 'Fields',
+    name: 'Custom',
     fields: _(fields)
       .filter(v => !v.service && !v.excluded_at)
       .sortBy('id').value(),
@@ -222,7 +246,7 @@ export default function Fields() {
 
   const renderGroup = g => (
     <Card key={g.service}>
-      <Accordion.Toggle as={Card.Header} variant="link" eventKey={g.service}>
+      <Accordion.Toggle as={Card.Header} eventKey={g.service}>
         {g.name}
       </Accordion.Toggle>
       <Accordion.Collapse eventKey={g.service}>
@@ -235,7 +259,7 @@ export default function Fields() {
     </Card>
   )
 
-  return <div>
+  return <div className="sidebar-fields">
     {showForm && (
       <FieldModal
         close={onFormClose}
@@ -254,5 +278,20 @@ export default function Fields() {
     <Accordion defaultActiveKey="custom">
       {groups.map(renderGroup)}
     </Accordion>
+
+    <div className='day-changer'>
+      <ButtonGroup aria-label="Edit days">
+        <Button
+          variant="outline-secondary"
+          onClick={() => changeDay(-1)}
+        >{"<"}</Button>
+        <Button
+          variant="outline-secondary"
+          onClick={() => changeDay(1)}
+          disabled={iso() == iso(day)}
+        >{">"}</Button>
+      </ButtonGroup>
+    </div>
+    <div className='selected-day'>{day}</div>
   </div>
 }
