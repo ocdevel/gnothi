@@ -44,7 +44,7 @@ def await_job(jid):
 
             if job.state == 'done':
                 job = sess.execute(text("""
-                delete from jobs where id=:jid returning method, data_out
+                select method, data_out from jobs where id=:jid
                 """), params).fetchone()
                 sess.commit()
                 return job
