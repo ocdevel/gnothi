@@ -639,6 +639,13 @@ def bookshelf_get(
         return cant_snoop('Books')
     return M.Bookshelf.get_shelf(user.id, shelf)
 
+@app.get('/top-books')
+def top_books_get(
+    # just require some login
+    viewer: M.User = Depends(fastapi_users.get_current_user)
+):
+    return M.Bookshelf.top_books()
+
 
 @app.post('/habitica')
 def habitica_post(data: M.SIHabitica, as_user: str = None, viewer: M.User = Depends(fastapi_users.get_current_user)):

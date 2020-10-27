@@ -1,8 +1,10 @@
-import React from "react";
+import React, {useEffect, useState} from "react";
+import {Link} from 'react-router-dom'
 import Fields from "../Fields/Fields";
 import {
   Accordion,
   Card,
+  Alert
 } from "react-bootstrap";
 import {
   FaGithub,
@@ -12,10 +14,42 @@ import {
   FaBug,
   MdEmail,
   FaMicrophone,
-  FaDragon, FaReddit, FaBalanceScale
+  FaDragon, FaReddit, FaBalanceScale,
+  FaBook
 } from "react-icons/all";
 
+import { useDispatch } from 'react-redux'
+import { fetch_ } from '../redux/actions'
+import {FaAmazon} from "react-icons/fa";
+
+function TopBooks() {
+  const [books, setBooks] = useState([])
+  const dispatch = useDispatch()
+
+  const fetchBooks = async () => {
+    const {data} = await dispatch(fetch_('top-books'))
+    setBooks(data)
+  }
+
+  useEffect(() => {
+    fetchBooks()
+  }, [])
+
+  return <>
+    <Alert variant='info'>To see books recommended to you based on your journal entries, go to <Link to='/resources'><FaBook /> Resources</Link>. Below are some (non-personalized) popular books in the community.</Alert>
+    {books.map((b, i) => <div>
+      <a href={b.amazon} target='_blank'>{b.title}</a> -{' '}
+      <small className='text-muted'>
+        {b.author} - {b.topic} -{' '}
+        <FaAmazon /> Affiliate <a href='https://github.com/lefnire/gnothi/issues/47' target='_blank'>?</a>
+      </small>
+      {i < books.length-1 && <hr/>}
+    </div>)}
+  </>
+}
+
 export default function Sidebar() {
+
   return <>
     <Accordion defaultActiveKey="fields">
       <Card>
@@ -95,6 +129,17 @@ export default function Sidebar() {
               </li>
             </ul>
 
+          </Card.Body>
+        </Accordion.Collapse>
+      </Card>
+
+      <Card>
+        <Accordion.Toggle as={Card.Header} variant="link" eventKey="books">
+          Top Books
+        </Accordion.Toggle>
+        <Accordion.Collapse eventKey="books">
+          <Card.Body>
+            <TopBooks />
           </Card.Body>
         </Accordion.Collapse>
       </Card>

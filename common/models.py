@@ -767,6 +767,21 @@ class Bookshelf(Base):
         return pd.read_sql(sql, sess.bind, params={'uid': uid})\
             .set_index('id', drop=False)
 
+    @staticmethod
+    def top_books():
+        sql = f"""
+        with books_ as (
+            select b.id, count(s.shelf) ct from books b
+            inner join bookshelf s on b.id=s.book_id
+            where s.shelf in ('like', 'already_read') and amazon is not null
+            group by b.id
+        )
+        select b.title, b.author, b.topic, b.amazon from books b
+        inner join books_ b_ on b_.id=b.id
+        order by b_.ct desc limit 10
+        """
+        return db.session.execute(sql).fetchall()
+
 
 class MachineTypes(enum.Enum):
     gpu = "gpu"
