@@ -23,6 +23,8 @@ tokenizer_args = dict(truncation=True, padding=True, return_tensors='pt')
 # around the GPU-killing issue https://github.com/lefnire/gnothi/issues/10
 CACHE_MODELS = True
 
+BANNED_WORDS = r"(suicide|kill|die)"
+
 class NLP():
     def __init__(self):
         self.m = {}
@@ -224,6 +226,8 @@ class NLP():
         logger.info("Question-answering")
         if not paras:
             return [{"answer": "Not enough entries to use this feature."}]
+        if re.search(BANNED_WORDS, question, re.IGNORECASE):
+            return [{"answer": "No answer."}]
 
         # Unlike the other features, QA should only be called on a flat-list of paras
         # (type-checked in this method's signature)
@@ -242,7 +246,7 @@ class NLP():
             if a['answer'] in [c['answer'] for c in clean]:
                 continue
             # Remove sensitive / dangerous responses
-            if re.search(r"(suicide|kill|die)", a['answer'], re.IGNORECASE):
+            if re.search(BANNED_WORDS, a['answer'], re.IGNORECASE):
                 continue
             # remove all "No answer" unless it's the only entry
             if a['answer'] == 'No answer' and len(clean):
