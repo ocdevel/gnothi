@@ -366,12 +366,19 @@ def notes_get(entry_id, as_user: str = None, viewer: M.User = Depends(fastapi_us
 
 
 @app.post('/entries/{entry_id}/notes', response_model=List[M.SONote])
-def notes_post(entry_id, data: M.SINote, as_user: str = None, viewer: M.User = Depends(fastapi_users.get_current_user)):
+def notes_post(
+    entry_id,
+    data: M.SINote,
+    background_tasks: BackgroundTasks,
+    as_user: str = None,
+    viewer: M.User = Depends(fastapi_users.get_current_user),
+):
     user, snooping = getuser(viewer, as_user)
     # TODO handle snooping
     n = M.Note(user_id=viewer.id, entry_id=entry_id, **data.dict())
     db.session.add(n)
     db.session.commit()
+    background_tasks.add_task(ga, viewer.id, 'feature', 'notes')
     return M.Note.snoop(viewer.id, user.id, entry_id).all()
 
 # TODO

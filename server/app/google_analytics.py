@@ -30,7 +30,7 @@ def ga(uid: Union[str, UUID4], category: str, action: str):
     ))
     # if DEBUG: print(res.json())
 
-    if action in ('register', 'like', 'dislike', 'therapist'):
+    if action in ('register', 'like', 'dislike', 'therapist', 'notes'):
         with session() as sess:
             if sess.execute(text("""
             select is_superuser su from users where id=:uid
