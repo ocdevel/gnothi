@@ -885,10 +885,11 @@ class Job(Base):
     def take_job(sess, sql_frag):
         job = sess.execute(satext(f"""
         update jobs set state='working', machine_id=:machine 
-        where id in (
+        where id = (
             select id from jobs 
             where state='new' and {sql_frag}
             order by created_at asc
+            for update skip locked
             limit 1
         )
         returning id, method
