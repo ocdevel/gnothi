@@ -69,7 +69,11 @@ def main_uid(db):
 @pytest.fixture(scope='module', autouse=True)
 def setup_entries(entries, db, main_uid):
     # main_uid "delete from users" deletes prior entries
+    some_entry = None
     for k, v in entries.items():
-        db.add(M.Entry(title=k, text=v.text, user_id=main_uid))
+        entry = M.Entry(title=k, text=v.text, user_id=main_uid)
+        db.add(entry)
+        some_entry = entry
     db.commit()
-    e_p.entries()
+    db.refresh(some_entry)
+    e_p.entries(some_entry.id)

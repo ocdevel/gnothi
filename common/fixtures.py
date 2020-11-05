@@ -190,20 +190,22 @@ class Fixtures():
         if not USE: return None
         pkl = self.load(f"nlp_{method}")
         if not pkl: return None
+        if not pkl.get(keys[0], None):
+            # this batch hasn't been processed yet
+            return None
         if method == 'entries':
-            clean_txt, embeds, titles, texts = [], [], [], []
+            embeds, titles, texts = [], [], []
         else:
-            clean_txt, embeds = [], []
+            embeds = []
         for k in keys:
             tup = pkl[k]
-            clean_txt += tup[0]
-            embeds += tup[1]
+            embeds += tup[0]
             if method == 'entries':
-                titles.append(tup[2])
-                texts.append(tup[3])
+                titles.append(tup[1])
+                texts.append(tup[2])
 
-        return (clean_txt, embeds, titles, texts) if method == 'entries'\
-            else (clean_txt, embeds)
+        return (embeds, titles, texts) if method == 'entries'\
+            else (embeds,)
 
     def save_nlp_row(self, k, obj, method='entries'):
         self.save_k_v(f"nlp_{method}", k, obj)

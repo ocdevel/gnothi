@@ -195,8 +195,21 @@ class NLP():
     def summarization_call(self, loaded, batch, n_parts: int, min_length: int = None, max_length: int = None):
         min_ = max(min_length // n_parts, 2) if min_length else None
         max_ = max(max_length // n_parts, 10) if max_length else None
-
         tokenizer, model, max_tokens = loaded
+
+        # don't summarize entries that are < min_tokens.
+        # makes a list of [True, True, <orig_para>, True, <orig_para>, ..] for deciding
+        # which list to pop(0) from later
+        inputs = tokenizer(batch).input_ids
+        summarize_or_orig = [
+            para if min_ and len(inputs[i]) < min_ else True
+            for i, para in enumerate(batch)]
+        batch = [
+            batch[i] for i, v in enumerate(summarize_or_orig)
+            if v is True]
+        # all paragraphs too short
+        if not batch: return summarize_or_orig
+
         inputs = tokenizer(batch, max_length=max_tokens, **tokenizer_args).to("cuda")
         summary_ids = model.generate(
             inputs.input_ids,
@@ -208,9 +221,13 @@ class NLP():
             num_beams=4,
             early_stopping=True
         )
-        return [
+        summs = [
             tokenizer.decode(g, skip_special_tokens=True, clean_up_tokenization_spaces=False)
             for g in summary_ids]
+        return [
+            summs.pop(0) if val is True else val
+            for val in summarize_or_orig
+        ]
 
     def summarization_wrap(self, val):
         if type(val) == list:

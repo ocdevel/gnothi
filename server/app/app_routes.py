@@ -6,6 +6,7 @@ from fastapi import Depends, HTTPException, File, UploadFile, BackgroundTasks
 from app.app_app import app
 from app.app_jwt import fastapi_users
 from fastapi_sqlalchemy import db  # an object to provide global access to a database session
+import sqlalchemy as sa
 from sqlalchemy import text
 from common.utils import utcnow, nowtz
 import common.models as M
@@ -327,6 +328,18 @@ def entry_get(entry_id, as_user: str = None, viewer: M.User = Depends(fastapi_us
     entry = M.Entry.snoop(viewer.email, user.id, snooping=snooping, entry_id=entry_id).first()
     if not entry: return send_error("Entry not found", 404)
     return entry
+
+
+# TODO fit this into current system, just threw it in
+@app.get('/entries/{entry_id}/cache')
+def cache_entry_get(entry_id, as_user: str = None, viewer: M.User = Depends(fastapi_users.get_current_user)):
+    user, snooping = getuser(viewer, as_user)
+    if snooping: return cant_snoop()
+    CE = M.CacheEntry
+    return db.session.query(CE)\
+        .options(sa.orm.load_only(CE.paras, CE.clean))\
+        .filter(CE.entry_id==entry_id)\
+        .first()
 
 
 @app.put('/entries/{entry_id}', response_model=M.SOEntry)

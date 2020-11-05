@@ -42,6 +42,9 @@ def run_job(job):
     args = data.get('args', [])
     kwargs = data.get('kwargs', {})
 
+    if k in ('entries', 'profiles'):
+        kwargs['job_id'] = jid_
+
     if k == 'books':
         nlp_.clear()
         os.system(f"python app/books.py --jid={jid_} --uid={args[0]}")

@@ -201,7 +201,7 @@ def influencers():
                 if fid not in fids: continue
                 inf_score, next_pred = all_imps[fid], next_preds[fid]
 
-                insert = postgresql.insert(M.Influencer.__table__).values( [
+                insert = postgresql.insert(M.Influencer.__table__).values([
                     dict(field_id=fid, influencer_id=inf_id, score=score)
                     for inf_id, score in others.items()
                     if inf_id in fids

@@ -810,8 +810,7 @@ class Job(Base):
             arg0 = data_in.get('args', [None])[0]
             if type(arg0) != str: arg0 = None
 
-            # For entries, profiles: set ai_ran=False to queue them into the next batch,
-            # then arg0 isn't used downstream (was previously).
+            # For entries, profiles: set ai_ran=False to queue them into the next batch
             if method in ('entries', 'profiles') and arg0:
                 table = dict(entries='entries', profiles='users')[method]
                 sess.execute(satext(f"""
@@ -827,8 +826,8 @@ class Job(Base):
             case
                 when method='influencers' then true
                 when method='books' and data_in->'args'->>0=:arg0 then true
-                when method='entries' then true
-                when method='profiles' then true
+                when method='entries' and data_in->'args'->>0=:arg0 then true
+                when method='profiles' and data_in->'args'->>0=:arg0 then true
                 when method='habitica' then true
                 else false
             end
@@ -849,20 +848,6 @@ class Job(Base):
             / greatest((select count(*) from machines where status in ('on', 'pending')), 1)
         ) as ct
         """), dict(jid=jid)).fetchone().ct
-
-    @staticmethod
-    def multiple_book_jobs(uids):
-        with session() as sess:
-            sess.execute(satext("""
-            update users set last_books=null where id in :uids;
-            """), dict(uids=tuple(uids)))
-            sess.commit()
-        # TODO handle this in run.py when it's consuming jobs
-        def delay_books(uid, i):
-            time.sleep(i*60*5)  # 5m
-            Job.create_job('books', data_in=dict(args=[str(uid)]))
-        for i, uid in enumerate(uids):
-            threading.Thread(target=delay_books, args=(uid, i)).start()
 
     @staticmethod
     def wrap_job(jid, method, fn):
@@ -903,7 +888,7 @@ class Job(Base):
             """prune completed or stuck jobs. Completed jobs aren't too useful for admins; error is."""
             sess.execute(f"""
             delete from jobs 
-            where created_at < {utcnow} - interval '15 minutes' 
+            where updated_at < {utcnow} - interval '10 minutes' 
                 and state in ('working', 'done') 
             """)
             sess.commit()

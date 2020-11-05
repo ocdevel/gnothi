@@ -7,6 +7,9 @@ import {
   Card,
   Form,
   Modal,
+  Row,
+  Col,
+  Alert
 } from "react-bootstrap"
 import ReactMarkdown from "react-markdown"
 import './Entry.css'
@@ -16,6 +19,7 @@ import MarkdownIt from 'markdown-it'
 import MdEditor from 'react-markdown-editor-lite'
 import 'react-markdown-editor-lite/lib/index.css'
 import {AddNotes} from './Notes'
+import _ from 'lodash'
 
 import { useSelector, useDispatch } from 'react-redux'
 import { fetch_, setServerError, getEntries } from '../redux/actions'
@@ -78,9 +82,12 @@ export default function Entry() {
   const [tags, setTags] = useState({})
   const [advanced, setAdvanced] = useState(false)
   const [notes, setNotes] = useState([])
+  const [cacheEntry, setCacheEntry] = useState()
   const as = useSelector(state => state.as)
 
   const dispatch = useDispatch()
+
+  const showCacheEntry = !editing && entry_id && cacheEntry
 
   const fetchEntry = async () => {
     if (!entry_id) { return }
@@ -132,6 +139,13 @@ export default function Entry() {
     }
   }
 
+  const showAiSees = async () => {
+    if (!entry_id) { return }
+    if (cacheEntry) {return setCacheEntry(null)}
+    const {data} = await dispatch(fetch_(`entries/${entry_id}/cache`, 'GET'))
+    setCacheEntry(data)
+  }
+
   const changeTitle = e => setForm({...form, title: e.target.value})
   const changeDate = e => setForm({...form, created_at: e.target.value})
   const changeText = (text) => setForm({...form, text})
@@ -170,72 +184,89 @@ export default function Entry() {
   }
 
   const renderForm = () => <>
-    <Form onSubmit={submit}>
-      {editing ? <>
-        <Form.Group controlId="formTitle">
-          <Form.Label>Title</Form.Label>
-          <Form.Control
-            type="text"
-            placeholder="Title"
-            value={form.title}
-            onChange={changeTitle}
-          />
-          <Form.Text>
-            Leave blank to use a machine-generated title based on your entry.
-          </Form.Text>
-        </Form.Group>
-      </> : <>
-        <h2>{form.title}</h2>
-      </>}
+    <Row>
+      <Col>
+        <Form onSubmit={submit}>
+          {editing ? <>
+            <Form.Group controlId="formTitle">
+              <Form.Label>Title</Form.Label>
+              <Form.Control
+                type="text"
+                placeholder="Title"
+                value={form.title}
+                onChange={changeTitle}
+              />
+              <Form.Text>
+                Leave blank to use a machine-generated title based on your entry.
+              </Form.Text>
+            </Form.Group>
+          </> : <>
+            <h2>{form.title}</h2>
+          </>}
 
-      {editing ? (
-        <Editor text={form.text} changeText={changeText} />
-      ) : (
-        <ReactMarkdown source={form.text} linkTarget='_blank' />
-      )}
+          {editing ? (
+            <Editor text={form.text} changeText={changeText} />
+          ) : (
+            <ReactMarkdown source={form.text} linkTarget='_blank' />
+          )}
 
-      {editing && <>
-        {advanced ? <div>
-          <Form.Group controlId="formNoAI">
-            <Form.Check
-              type="checkbox"
-              label="Exclude from AI"
-              checked={form.no_ai}
-              onChange={changeNoAI}
-            />
-            <Form.Text>Use rarely, AI can't help with what it doesn't know. Example uses: technical note to a therapist, song lyrics, etc.</Form.Text>
-          </Form.Group>
-          <Form.Group controlId="formDate">
-            <Form.Label>Date</Form.Label>
-            <Form.Control
-              size='sm'
-              type="text"
-              placeholder="YYYY-MM-DD"
-              value={form.created_at}
-              onChange={changeDate}
-            />
-            <Form.Text>Manually enter this entry's date (otherwise it's set to time of submission).</Form.Text>
-          </Form.Group>
-        </div> : <div>
-          <span className='anchor' onClick={() => setAdvanced(true)}>Advanced</span>
-        </div>}
-      </>}
-      <br/>
+          {editing && <>
+            {advanced ? <div>
+              <Form.Group controlId="formNoAI">
+                <Form.Check
+                  type="checkbox"
+                  label="Exclude from AI"
+                  checked={form.no_ai}
+                  onChange={changeNoAI}
+                />
+                <Form.Text>Use rarely, AI can't help with what it doesn't know. Example uses: technical note to a therapist, song lyrics, etc.</Form.Text>
+              </Form.Group>
+              <Form.Group controlId="formDate">
+                <Form.Label>Date</Form.Label>
+                <Form.Control
+                  size='sm'
+                  type="text"
+                  placeholder="YYYY-MM-DD"
+                  value={form.created_at}
+                  onChange={changeDate}
+                />
+                <Form.Text>Manually enter this entry's date (otherwise it's set to time of submission).</Form.Text>
+              </Form.Group>
+            </div> : <div>
+              <span className='anchor' onClick={() => setAdvanced(true)}>Advanced</span>
+            </div>}
+          </>}
+          <br/>
+        </Form>
+      </Col>
 
-      <div>
-        <SimplePopover text='Tags'>
-          <FaTags />
-        </SimplePopover>
-        <span className='tools-divider' />
-        <Tags
-          selected={tags}
-          setSelected={setTags}
-          noClick={!editing}
-          noEdit={!editing}
-          preSelectMain={true}
-        />
-      </div>
-    </Form>
+      {showCacheEntry && <Col>
+        <Alert variant='info'>Paragraphs get split in the following way, and AI considers each paraph independently from the other (as if they're separate entries).</Alert>
+        <div>{cacheEntry.paras.map(p => <><p>{p}</p><hr/></>)}</div>
+        <Alert variant='info'>Keywords generated for use in Themes</Alert>
+        <div>{cacheEntry.clean.map(p => <>
+          <p>{_.uniq(p.split(' ')).join(' ')}</p>
+          <hr/>
+        </>)}</div>
+      </Col>}
+    </Row>
+
+    <div>
+      {!editing && <div className='float-right'>
+        <Button size='sm' variant='outline-dark' onClick={showAiSees}>What does AI see?</Button>
+      </div>}
+      <SimplePopover text='Tags'>
+        <FaTags />
+      </SimplePopover>
+      <span className='tools-divider' />
+      <Tags
+        selected={tags}
+        setSelected={setTags}
+        noClick={!editing}
+        noEdit={!editing}
+        preSelectMain={true}
+      />
+    </div>
   </>
 
   const renderNotes = () => {
