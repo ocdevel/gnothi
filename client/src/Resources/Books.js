@@ -116,7 +116,7 @@ export default function Books() {
       <Alert variant='info'>
         <div>AI-recommended self-help books based on your entries.</div>
         <small className="text-muted">
-          <div>Use thumbs <FaThumbsUp /> to improve AI's recommendations. Wikipedia & other resources coming soon.</div>
+          <div>Use thumbs <FaThumbsUp /> to improve AI's recommendations. Wikipedia & other resources coming soon. If the recommendations are bad, <a href="https://github.com/lefnire/gnothi/issues/101" target="_blank">try this</a>.</div>
         </small>
       </Alert>
       {books.length > 0 ? books.map(renderBook)

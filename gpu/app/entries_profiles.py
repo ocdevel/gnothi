@@ -251,11 +251,3 @@ def entries(eid, job_id=None):
 
 def profiles(uid, job_id=None):
     return nlp_on_rows('profiles', str(uid), job_id)
-
-
-if __name__ == '__main__':
-    with session() as sess:
-        users = sess.execute("select id from users").fetchall()
-        for user in users:
-            uid = str(user.id)
-            gen_keywords(True, uid, sess)
