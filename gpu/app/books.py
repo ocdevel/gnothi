@@ -237,6 +237,7 @@ class Books(object):
                 .values(vals.to_dict('records'))
                 .on_conflict_do_nothing(index_elements=[M.Book.id])
             )
+            sess.commit()
 
             # Upsert user bookshelf
             vals = df_[['id', 'user_id', 'score']].rename(columns={'id': 'book_id'})
@@ -246,6 +247,7 @@ class Books(object):
                     .values(vals.to_dict('records'))
                     .on_conflict_do_nothing(index_elements=[M.Bookshelf.book_id, M.Bookshelf.user_id])
             )
+            sess.commit()
 
     def run(self):
         self.prune_books()
