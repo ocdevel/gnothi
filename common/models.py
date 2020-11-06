@@ -726,6 +726,7 @@ class Bookshelf(Base):
         from books b 
         inner join bookshelf bs on bs.book_id=b.id 
             and bs.user_id=:uid and bs.shelf=:shelf
+        order by bs.score asc
         """), dict(uid=user_id, shelf=shelf)).fetchall()
         print(len(books))
         return books
