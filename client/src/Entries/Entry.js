@@ -43,6 +43,13 @@ const plugins = [
   // f3b13052: auto-resize
 ]
 
+const placeholder = `Write a journal entry, whatever's on your mind. Hard times you're going through, politics, philosophy, the weather. Be verbose, AI works best with long-form content - a paragraph or more is ideal, less might result in poor insights or resource-recommendations. Try to use proper grammar and full words, rather than abbreviations or slang ("therapist" rather than "shrink"). AI is decent at inferring, but the more help you give it the better.
+ 
+Separate multiple concepts by hitting ENTER twice (two new lines). So if you're chatting weather, then want to chat relationships - two ENTERs. See the toolbar at the top for formatting help, this editor uses Markdown. The square icon (right-side toolbar) lets you go into full-screen mode, easier for typing long entries. 
+
+After you have one or two entries, head to the Insights and Resources links at the website top to play with the AI.     
+`
+
 function Editor({text, changeText}) {
   const dispatch = useDispatch()
 
@@ -68,6 +75,7 @@ function Editor({text, changeText}) {
       renderHTML={(text) => mdParser.render(text)}
       onChange={onChange}
       onImageUpload={onImageUpload}
+      placeholder={placeholder}
     />
   )
 }
@@ -242,12 +250,18 @@ export default function Entry() {
 
       {showCacheEntry && <Col>
         <Alert variant='info'>Paragraphs get split in the following way, and AI considers each paraph independently from the other (as if they're separate entries).</Alert>
-        <div>{cacheEntry.paras.map(p => <><p>{p}</p><hr/></>)}</div>
+        <div>{
+          cacheEntry.paras ? cacheEntry.paras.map(p => <><p>{p}</p><hr/></>)
+            : <p>Nothing here yet.</p>
+        }</div>
         <Alert variant='info'>Keywords generated for use in Themes</Alert>
-        <div>{cacheEntry.clean.map(p => <>
-          <p>{_.uniq(p.split(' ')).join(' ')}</p>
-          <hr/>
-        </>)}</div>
+        <div>{
+          cacheEntry.clean ? cacheEntry.clean.map(p => <>
+            <p>{_.uniq(p.split(' ')).join(' ')}</p>
+            <hr/>
+          </>)
+            : <p>Nothing here yet.</p>
+        }</div>
       </Col>}
     </Row>
 

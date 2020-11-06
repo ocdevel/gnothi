@@ -23,7 +23,7 @@ RUN \
   boto3 \
   dynaconf \
   pytest \
-  git+git://github.com/lefnire/ml-tools.git@2ec9b8d4 \
+  git+git://github.com/lefnire/ml-tools.git@9316d42c \
   # already installed in ml-tools, but something above reverts the version
   git+git://github.com/hyperopt/hyperopt.git@0.2.5
 

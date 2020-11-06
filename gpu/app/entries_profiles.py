@@ -174,6 +174,7 @@ def gen_keywords(for_entries, uid, sess):
             .options(sa.orm.load_only(col, m.paras))\
             .filter(sa.func.array_length(m.paras, 1) > 0)\
             .all()
+    if not rows: return
     paras_flat = [p for row in rows for p in row.paras]
     keywords = CleanText(paras_flat) \
         .keywords(postags=['NOUN', 'ADJ', 'VERB', 'PROPN'], mode='fast', bigram_min_count=2, bigram_threshold=2) \
