@@ -673,6 +673,7 @@ class Book(Base):
 
 class Shelves(enum.Enum):
     ai = "ai"
+    cosine = "cosine"
     like = "like"
     already_read = "already_read"
     dislike = "dislike"
@@ -696,7 +697,7 @@ class Bookshelf(Base):
             # every x thumbs, update book recommendations
             sql = """
             select count(*)%8=0 as ct from bookshelf 
-            where user_id=:uid and shelf!='ai'
+            where user_id=:uid and shelf not in ('ai', 'cosine')
             """
             should_update = db.session.execute(satext(sql), {'uid':user_id}).fetchone().ct
             if should_update:
@@ -710,7 +711,7 @@ class Bookshelf(Base):
         on conflict (book_id, user_id) do update set shelf=:shelf
         """), dict(user_id=user_id, book_id=int(book_id), shelf=shelf))
 
-        dir = dict(ai=0, like=1, already_read=1, dislike=-1, remove=0, recommend=1)[shelf]
+        dir = dict(ai=0, cosine=0, like=1, already_read=1, dislike=-1, remove=0, recommend=1)[shelf]
         db.session.execute(satext("""
         update books set thumbs=thumbs+:dir where id=:bid
         """), dict(dir=dir, bid=book_id))
@@ -746,7 +747,7 @@ class Bookshelf(Base):
         -- could use books.thumbs, but it's missing data from before I added it. Maybe switch to it eventually
         with shelf_to_score as (
             select book_id, avg({shelf_to_score}) as score
-            from bookshelf where shelf != 'ai'
+            from bookshelf where shelf not in ('ai', 'cosine')
             -- where user_id!=%(uid)s -- meh, I'll just double-count the user's score & modify math downstream, makes this sql easier
             group by book_id
         ), books_ as (
@@ -758,7 +759,7 @@ class Bookshelf(Base):
         )
         select b.*,
             {shelf_to_score} as user_score, 
-            (shelf is not null and shelf != 'ai') as user_rated
+            (shelf is not null and shelf not in ('ai', 'cosine')) as user_rated
         from books_ b
         left outer join bookshelf s on b.id=s.book_id and s.user_id=%(uid)s
         -- sort id asc since that's how we mapped to numpy vectors in first place (order_values)

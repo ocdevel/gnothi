@@ -70,6 +70,7 @@ export default function Books() {
     <Nav activeKey={shelf} onSelect={changeShelf}>
       <NavDropdown title="Shelves">
         <NavDropdown.Item eventKey="ai">AI Recommends</NavDropdown.Item>
+        <NavDropdown.Item eventKey="cosine">Direct (Cosine) Matches</NavDropdown.Item>
         <NavDropdown.Item eventKey="like">Liked</NavDropdown.Item>
         <NavDropdown.Item eventKey="recommend">Therapist Recommends</NavDropdown.Item>
         <NavDropdown.Item eventKey="already_read">Already Read</NavDropdown.Item>

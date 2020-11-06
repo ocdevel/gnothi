@@ -709,7 +709,7 @@ def stats_get():
     from books b
     inner join bookshelf s on b.id=s.book_id
     inner join users u on u.id=s.user_id
-    where s.shelf != 'ai'
+    where s.shelf not in ('ai', 'cosine')
         and u.is_superuser is not true
         and b.amazon is null
     order by s.created_at desc;

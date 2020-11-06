@@ -1,3 +1,4 @@
+from app.utils import logging
 import os, pdb, math, datetime, traceback
 from os.path import exists
 from tqdm import tqdm
@@ -12,7 +13,6 @@ import pandas as pd
 from sqlalchemy import text
 from psycopg2.extras import Json as jsonb
 from sqlalchemy.dialects import postgresql
-import logging
 logger = logging.getLogger(__name__)
 
 # Whether to load full Libgen DB, or just self-help books
@@ -77,7 +77,12 @@ class Books(object):
         if not vecs:
             # fixme empty vectors
             return None
-        self.vecs_user = np.vstack(vecs).astype(np.float32)
+        vecs = np.vstack(vecs).astype(np.float32)
+        # If very many entries, cluster so that user represented by a handful of centroids.
+        # More performant, and less noise
+        if vecs.shape[0] > 30:
+            vecs = Similars(vecs).cluster(algo='agglomorative').value()
+        self.vecs_user = vecs
 
     def load_df(self):
         if exists(paths.df):
@@ -171,9 +176,6 @@ class Books(object):
             logger.info("Returning fixture predictions")
             return fixt
 
-        if vecs_user.shape[0] > 100:
-            vecs_user = Similars(vecs_user).cluster(algo='agglomorative').value()
-
         # adjust books' cosine similarity; not by too much, we want to stick to the 0-1 range still
         # and do so for users-scores much more than global-scores. Global-scores are just an overall rating
         # system, and not meant to have too much sway. These numbers found via hyperparameter optimization
@@ -191,43 +193,59 @@ class Books(object):
         fixtures.save_books(user_id, preds)
         return preds
 
+    def cosine(self):
+        user, books = self.vecs_user, self.vecs_books
+
+        # TODO refactor, copied from ml-tools/cosine_estimator
+        batch = 100
+        def gen_dists():
+            for i in range(0, books.shape[0], batch):
+                c = Similars(user, books[i:i + batch]).normalize()
+                yield c.cosine(abs=True).value().min(axis=0).squeeze()
+        return np.hstack([d for d in gen_dists()])
+
     def recommend(self, n_recs=30):
         logger.info("Recommend books")
-        df = self.df
-        df['dist'] = self.predict()
-        # dupes by title in libgen
-        self.df = df[~df.user_rated].sort_values('dist') \
-            .drop_duplicates('title') \
-            .iloc[:n_recs]
-
-    def save_results(self):
-        logger.info("Save results")
         df, sess, user_id = self.df, self.sess, self.user_id
+        df['user_id'] = user_id  # for db-insert
 
-        uid = dict(uid=user_id)
-        sess.execute(text("""
-        delete from bookshelf where user_id=:uid and shelf='ai';
-        """), uid)
-        sess.commit()
+        # Cosine: create a direct-mapping of user entries to books via cosine similarity, mostly for
+        # sanity-check
+        # AI: Recommend books based on user preferences (thumbs, other-user-liked, etc)
+        for shelf in ['cosine', 'ai']:
+            logger.info(f"Books: recommend_{shelf}")
+            df['score'] = {'cosine': self.cosine, 'ai': self.predict}[shelf]()
 
-        # pd.to_sql doesn't support "on conflict", and we could hit a race-condition by doing select-ids -> insert
-        # where not in ids.
-        books = df["id title text author topic".split()].to_dict('records')
-        sess.execute(
-            postgresql.insert(M.Book.__table__)
-            .values(books)
-            .on_conflict_do_nothing(index_elements=[M.Book.id])
-        )
+            logger.info("Save results")
+            sess.execute(text("""
+            delete from bookshelf where user_id=:uid and shelf=:shelf
+            """), dict(uid=user_id, shelf=shelf))
+            sess.commit()
 
-        shelf = df[['id', 'dist']].rename(columns=dict(id='book_id', dist='score'))
-        shelf['user_id'] = user_id
-        shelf['shelf'] = 'ai'
-        shelf = shelf.to_dict('records')
-        sess.execute(
-            postgresql.insert(M.Bookshelf.__table__)
-                .values(shelf)
-                .on_conflict_do_nothing(index_elements=[M.Bookshelf.book_id, M.Bookshelf.user_id])
-        )
+            # Top-k, dedupe titles in libgen
+            df_ = df[~df.user_rated].copy()\
+                .sort_values('score')\
+                .drop_duplicates('title')\
+                .iloc[:n_recs]
+
+            # Upsert books. We don't want to store all libgen DB in our own, too big; so we
+            # only store recommends. They may be deleted if not interacted with, that's fine since we'll
+            # upsert them again if they show up again.
+            vals = df_[["id", "title", "text", "author", "topic"]]
+            sess.execute(
+                postgresql.insert(M.Book.__table__)
+                .values(vals.to_dict('records'))
+                .on_conflict_do_nothing(index_elements=[M.Book.id])
+            )
+
+            # Upsert user bookshelf
+            vals = df_[['id', 'user_id', 'score']].rename(columns={'id': 'book_id'})
+            vals['shelf'] = shelf
+            sess.execute(
+                postgresql.insert(M.Bookshelf.__table__)
+                    .values(vals.to_dict('records'))
+                    .on_conflict_do_nothing(index_elements=[M.Bookshelf.book_id, M.Bookshelf.user_id])
+            )
 
     def run(self):
         self.prune_books()
@@ -240,7 +258,6 @@ class Books(object):
         self.load_vecs_books()
         self.load_scores()
         self.recommend()
-        self.save_results()
 
 
 def run_books(user_id):

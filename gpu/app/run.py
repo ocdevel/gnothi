@@ -1,4 +1,4 @@
-import logging
+from app.utils import logging
 logger = logging.getLogger(__name__)
 
 import time, psycopg2, traceback, pdb, multiprocessing, threading, os
