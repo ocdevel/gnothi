@@ -85,6 +85,7 @@ export default function Entry() {
   const history = useHistory()
   const [editing, setEditing] = useState(!entry_id)
   const [form, setForm] = useState({title: '', text: '', no_ai: false, created_at: null})
+  const [formOrig, setFormOrig] = useState()
   const [entry, setEntry] = useState({})
   const [submitting, setSubmitting] = useState(false)
   const [tags, setTags] = useState({})
@@ -96,13 +97,15 @@ export default function Entry() {
   const dispatch = useDispatch()
 
   const showCacheEntry = !editing && entry_id && cacheEntry
+  const draftId = `draft-${entry_id || "new"}`
 
   const fetchEntry = async () => {
-    if (!entry_id) { return }
+    if (!entry_id) { return loadDraft() }
     const {data} = await dispatch(fetch_(`entries/${entry_id}`, 'GET'))
     if (!data) {return} // I think if they refresh on entry/{id} while snooping?
-    const {title, text, no_ai, created_at} = data
-    setForm({title, text, no_ai, created_at})
+    const form = _.pick(data, 'title text no_ai created_at'.split(' '))
+    setForm(form)
+    setFormOrig(form)
     setEntry(data)
     setTags(data.entry_tags)
   }
@@ -118,11 +121,22 @@ export default function Entry() {
     fetchNotes()
   }, [entry_id])
 
-  const update = () => {dispatch(getEntries())}
+  const loadDraft = () => {
+    const draft = localStorage.getItem(draftId)
+    if (draft) { setForm(JSON.parse(draft)) }
+  }
+  const saveDraft = _.debounce(function() {
+    localStorage.setItem(draftId, JSON.stringify(form))
+  }, 500)
+  const clearDraft = () => {
+    localStorage.removeItem(draftId)
+    if (formOrig) {setForm(formOrig)}
+  }
 
-  const goBack = () => {
-    update()
-    history.push('/j')
+  const go = (to='/j') => {
+    clearDraft()
+    dispatch(getEntries())
+    history.push(to)
   }
 
   const submit = async e => {
@@ -136,14 +150,13 @@ export default function Entry() {
     setSubmitting(false)
     if (res.code !== 200) {return}
     setEditing(false)
-    history.push(`/j/entry/${res.data.id}`)
-    update()
+    go(`/j/entry/${res.data.id}`)
   }
 
   const deleteEntry = async () => {
     if (window.confirm(`Delete "${entry.title}"`)) {
       await dispatch(fetch_(`entries/${entry_id}`, 'DELETE'))
-      goBack()
+      go()
     }
   }
 
@@ -156,11 +169,19 @@ export default function Entry() {
 
   const changeTitle = e => setForm({...form, title: e.target.value})
   const changeDate = e => setForm({...form, created_at: e.target.value})
-  const changeText = (text) => setForm({...form, text})
+  const changeText = (text) => {
+    setForm({...form, text})
+    saveDraft()
+  }
   const changeNoAI = e => setForm({...form, no_ai: e.target.checked})
   const changeEditing = e => {
     e.stopPropagation()
     e.preventDefault()
+    if (editing) {
+      clearDraft()
+    } else {
+      loadDraft()
+    }
     setEditing(!editing)
   }
 
@@ -267,7 +288,7 @@ export default function Entry() {
 
     <div>
       {!editing && <div className='float-right'>
-        <Button size='sm' variant='outline-dark' onClick={showAiSees}>What does AI see?</Button>
+        <Button size='sm' variant='outline-dark' onClick={showAiSees}>What AI sees</Button>
       </div>}
       <SimplePopover text='Tags'>
         <FaTags />
@@ -300,8 +321,10 @@ export default function Entry() {
     <Modal
       show={true}
       size='xl'
-      onHide={goBack}
+      onHide={go}
       scrollable={true}
+      keyboard={false}
+      backdrop='static'
     >
       <Modal.Header closeButton>
         <Modal.Title>{fmtDate(entry_id ? form.created_at : Date.now())}</Modal.Title>
