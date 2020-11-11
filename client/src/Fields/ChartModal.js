@@ -70,10 +70,10 @@ export default function ChartModal({close, field=null, overall=false}) {
 
   const renderChart = () => {
     if (history.length < 1) {return}
-    let data = history.map((d, i) => [i, d.value])
 
     // add trend-line https://github.com/tom-alexander/regression-js#readme
     // returns [equation, string, points, r2, predict()]
+    let data = history.map((d, i) => [i, d.value])
     const result = regression.linear(data)
     const points = result.points
 
@@ -114,7 +114,7 @@ export default function ChartModal({close, field=null, overall=false}) {
           {/* Adds the scroller. https://jsfiddle.net/alidingling/mc8r7e6p/ */}
           <Brush dataKey='x' height={25} stroke={colors.scroller} />
           <XAxis dataKey="x" angle={-45} stroke={colors.xAxis} />{/*textAnchor: "end"*/}
-          <YAxis />
+          <YAxis domain={['dataMin', 'dataMax']} />
         </ComposedChart>
       </ResponsiveContainer>
     </div>
