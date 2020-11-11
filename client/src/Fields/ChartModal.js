@@ -1,9 +1,9 @@
 import React, {useEffect, useState} from "react";
 import {Modal, Table} from "react-bootstrap";
 import _ from "lodash";
-import ReactMarkdown from "react-markdown";
+import regression from 'regression';
 import {CartesianGrid, Line, LineChart, Tooltip, XAxis, YAxis, ResponsiveContainer,
-  Area, AreaChart} from "recharts";
+  Area, AreaChart, ComposedChart, Scatter, BarChart, Bar, Legend, Brush, ReferenceLine} from "recharts";
 import moment from 'moment'
 
 import { fetch_ } from '../redux/actions'
@@ -21,14 +21,7 @@ export default function ChartModal({close, field=null, overall=false}) {
   const getHistory = async () => {
     if (!field) { return }
     const {data, code, message} = await dispatch(fetch_(`fields/${field.id}/history`))
-    const clean = !data ? [] : data.map(d => {
-      const fmt = moment(d.created_at).format('YYYY') === moment().format('YYYY') ? 'MM-DD' : 'YYYY-MM-DD'
-      return {
-        value: d.value,
-        created_at: moment(d.created_at).format(fmt)
-      }
-    })
-    setHistory(clean)
+    setHistory(data)
   }
 
   useEffect(() => {
@@ -75,27 +68,61 @@ export default function ChartModal({close, field=null, overall=false}) {
     </>
   }
 
+  const renderChart = () => {
+    if (history.length < 1) {return}
+    let data = history.map((d, i) => [i, d.value])
+
+    // add trend-line https://github.com/tom-alexander/regression-js#readme
+    // returns [equation, string, points, r2, predict()]
+    const result = regression.linear(data)
+    const points = result.points
+
+    const thisYear = moment().format('YYYY')
+    let [hasNeg, hasPos] = [false, false] // will add a reference line if both positive/negative values present
+    data = history.map((d, i) => {
+      const fmt = moment(d.created_at).format('YYYY') === thisYear ? 'MM-DD' : 'YYYY-MM-DD'
+      if (d.value > 0) {hasPos = true}
+      if (d.value < 0) {hasNeg = true}
+      return {
+        x: moment(d.created_at).format(fmt),
+        y: d.value,
+        trend: points[i][1],
+      }
+    })
+
+    const colors = {
+      bar: "#8884d8",
+      trend: "green", //"#82ca9d"
+      scroller: "#8884d8",
+      xAxis: null, //"#000",
+      referenceLine: "#000"
+    }
+
+    return <div style={{width:'100%', height: 300}}>
+      <ResponsiveContainer>
+        <ComposedChart
+          data={data}
+        >
+          {/*margin={{ top: 5, right: 30, left: 20, bottom: 5 }}*/}
+          <CartesianGrid strokeDasharray="3 3" />
+          <Tooltip />
+          <Legend verticalAlign="top"/>
+          {/*<Area type="monotone" dataKey="y" stroke="#8884d8"/>*/}
+          <Bar dataKey="y" name="Value" fill={colors.bar} />
+          <Line type="monotone" dataKey="trend" name="Trend" stroke={colors.trend} dot={false} isAnimationActive={false} />
+          {hasNeg && hasPos && <ReferenceLine y={0} stroke={colors.referenceLine} />}
+          {/* Adds the scroller. https://jsfiddle.net/alidingling/mc8r7e6p/ */}
+          <Brush dataKey='x' height={25} stroke={colors.scroller} />
+          <XAxis dataKey="x" angle={-45} stroke={colors.xAxis} />{/*textAnchor: "end"*/}
+          <YAxis />
+        </ComposedChart>
+      </ResponsiveContainer>
+    </div>
+  }
+
   const renderBody = () => {
-    const xAxisOpts = {angle: -45}  // , textAnchor: "end"}
     return <>
-      {history.length > 0 && <>
-        <div style={{width:'100%', height: 300}}>
-          <ResponsiveContainer>
-            <LineChart
-              data={history}
-            >
-              {/*margin={{ top: 5, right: 30, left: 20, bottom: 5 }}*/}
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="created_at" {...xAxisOpts}/>
-              <YAxis />
-              <Tooltip />
-              {/*<Legend />*/}
-              <Line type="monotone" dataKey="value" stroke="#8884d8"/>
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-        <br />
-      </>}
+      {renderChart()}
       {field && <div>
         <h5>Stats</h5>
         <ul>
