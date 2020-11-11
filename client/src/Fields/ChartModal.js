@@ -74,7 +74,7 @@ export default function ChartModal({close, field=null, overall=false}) {
     // add trend-line https://github.com/tom-alexander/regression-js#readme
     // returns [equation, string, points, r2, predict()]
     let data = history.map((d, i) => [i, d.value])
-    const result = regression.linear(data)
+    const result = regression.linear(data, {precision: 9})
     const points = result.points
 
     const thisYear = moment().format('YYYY')
