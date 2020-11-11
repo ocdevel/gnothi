@@ -1,5 +1,5 @@
 import {useHistory, useParams} from "react-router-dom"
-import React, {useEffect, useState, useContext} from "react"
+import React, {useEffect, useState, useContext, useCallback} from "react"
 import {spinner, SimplePopover, fmtDate} from "../utils"
 import {
   Badge,
@@ -125,9 +125,12 @@ export default function Entry() {
     const draft = localStorage.getItem(draftId)
     if (draft) { setForm(JSON.parse(draft)) }
   }
-  const saveDraft = _.debounce(function() {
-    localStorage.setItem(draftId, JSON.stringify(form))
-  }, 500)
+  const saveDraft = useCallback(
+    _.debounce((form) => {
+      localStorage.setItem(draftId, JSON.stringify(form))
+    }, 500),
+    []
+  )
   const clearDraft = () => {
     localStorage.removeItem(draftId)
     if (formOrig) {setForm(formOrig)}
@@ -171,7 +174,7 @@ export default function Entry() {
   const changeDate = e => setForm({...form, created_at: e.target.value})
   const changeText = (text) => {
     setForm({...form, text})
-    saveDraft()
+    saveDraft(form)
   }
   const changeNoAI = e => setForm({...form, no_ai: e.target.checked})
   const changeEditing = e => {

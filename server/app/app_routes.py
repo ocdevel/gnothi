@@ -463,9 +463,21 @@ def field_entries_get(
     user, snooping = getuser(viewer, as_user)
     if snooping and not user.share_data.fields:
         return cant_snoop('Fields')
-    res = M.FieldEntry.get_day_entries(user.id, day=day).all()
-    return {f.field_id: f.value for f in res}
+    return M.FieldEntry.get_day_entries(user.id, day=day)\
+        .order_by(M.FieldEntry.created_at.asc())\
+        .all()
 
+@app.delete('/field-entries/{entry_id}')
+def field_entries_delete(
+    entry_id,
+    as_user: str = None,
+    viewer: M.User = Depends(fastapi_users.get_current_user)
+):
+    user, snooping = getuser(viewer, as_user)
+    if snooping: return cant_snoop()
+    db.session.query(M.FieldEntry).filter_by(id=entry_id).delete()
+    db.session.commit()
+    return {}
 
 @app.post('/field-entries/{field_id}')
 def field_entries_post(
