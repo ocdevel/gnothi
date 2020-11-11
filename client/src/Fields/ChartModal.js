@@ -2,7 +2,9 @@ import React, {useEffect, useState} from "react";
 import {Modal, Table} from "react-bootstrap";
 import _ from "lodash";
 import ReactMarkdown from "react-markdown";
-import {CartesianGrid, Line, LineChart, Tooltip, XAxis, YAxis} from "recharts";
+import {CartesianGrid, Line, LineChart, Tooltip, XAxis, YAxis, ResponsiveContainer,
+  Area, AreaChart} from "recharts";
+import moment from 'moment'
 
 import { fetch_ } from '../redux/actions'
 import { useSelector, useDispatch } from 'react-redux'
@@ -19,7 +21,14 @@ export default function ChartModal({close, field=null, overall=false}) {
   const getHistory = async () => {
     if (!field) { return }
     const {data, code, message} = await dispatch(fetch_(`fields/${field.id}/history`))
-    setHistory(data || [])
+    const clean = !data ? [] : data.map(d => {
+      const fmt = moment(d.created_at).format('YYYY') === moment().format('YYYY') ? 'MM-DD' : 'YYYY-MM-DD'
+      return {
+        value: d.value,
+        created_at: moment(d.created_at).format(fmt)
+      }
+    })
+    setHistory(clean)
   }
 
   useEffect(() => {
@@ -67,18 +76,26 @@ export default function ChartModal({close, field=null, overall=false}) {
   }
 
   const renderBody = () => {
+    const xAxisOpts = {angle: -45}  // , textAnchor: "end"}
     return <>
-      {history.length > 0 && (
-        <LineChart width={730} height={250} data={history}>
-          {/*margin={{ top: 5, right: 30, left: 20, bottom: 5 }}*/}
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="created_at" />
-          <YAxis />
-          <Tooltip />
-          {/*<Legend />*/}
-          <Line type="monotone" dataKey="value" stroke="#8884d8" isAnimationActive={false}/>
-        </LineChart>
-      )}
+      {history.length > 0 && <>
+        <div style={{width:'100%', height: 300}}>
+          <ResponsiveContainer>
+            <LineChart
+              data={history}
+            >
+              {/*margin={{ top: 5, right: 30, left: 20, bottom: 5 }}*/}
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="created_at" {...xAxisOpts}/>
+              <YAxis />
+              <Tooltip />
+              {/*<Legend />*/}
+              <Line type="monotone" dataKey="value" stroke="#8884d8"/>
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+        <br />
+      </>}
       {field && <div>
         <h5>Stats</h5>
         <ul>

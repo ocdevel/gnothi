@@ -224,13 +224,13 @@ export default function Fields() {
           }
         </Col>
         <Col {...c3} {...colStyle}>
-          <a
+          <div
             onClick={() => setShowChart(f.id)}
             className='cursor-pointer'
           >
-            {f.avg && f.avg.toFixed(1)}{' '}
-            <FaChartLine />
-          </a>
+            <FaChartLine />{' '}
+            {f.avg && f.avg.toFixed(1)}
+          </div>
         </Col>
       </Row>
     )
