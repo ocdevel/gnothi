@@ -16,6 +16,7 @@ from sqlalchemy import text as satext, Column, Integer, Enum, Float, ForeignKey,
 from psycopg2.extras import Json as jsonb
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship, backref, object_session, column_property
+from sqlalchemy.dialects import postgresql
 from sqlalchemy.dialects.postgresql import UUID, JSONB, ARRAY
 from sqlalchemy_utils.types import EmailType
 from sqlalchemy_utils.types.encrypted.encrypted_type import StringEncryptedType, FernetEngine
@@ -519,23 +520,45 @@ SOFields = Dict[UUID4, SOField]
 
 class FieldEntry(Base):
     __tablename__ = 'field_entries'
-    id = IDCol()
+    field_id = FKCol('fields.id', primary_key=True)
+    created_at = DateCol(primary_key=True)
     value = Column(Float)  # TODO Can everything be a number? reconsider
-    created_at = DateCol()
-
     user_id = FKCol('users.id', index=True)
-    field_id = FKCol('fields.id')  # TODO index=True?
 
     @staticmethod
-    def get_day_entries(user_id, day=None, field_id=None):
-        day, tz = User.timezoned(date=day, user_id=user_id)
-        timezoned = func.Date(func.timezone(tz, FieldEntry.created_at))
+    def get_day_entries(sess, user_id, day=None):
+        res = sess.execute(satext("""
+        select fe.* from field_entries fe
+        where fe.user_id=:user_id and fe.created_at=timezone(
+            coalesce(u.timezone, 'America/Los_Angeles'),
+            date(coalesce(:day, now()))
+        )
+        order by created_at asc
+        """), dict(user_id=user_id, day=day))
+        return res.fetchall()
 
-        q = db.session.query(FieldEntry)\
-            .filter(FieldEntry.user_id == user_id, timezoned == day.date())
-        if field_id:
-            q = q.filter(FieldEntry.field_id == field_id)
-        return q
+    @staticmethod
+    def upsert(sess, user_id, field_id, value, day=None):
+        timezoned = f"""
+        (select timezone(
+            coalesce(u.timezone, 'America/Los_Angeles'),
+            date(coalesce(:day, now()))
+        ) as day
+        from users u where u.id=:user_id)
+        """
+        res = sess.execute(satext(f"""
+        insert into field_entries (field_id, created_at, user_id, value)
+        values (:field_id, {timezoned}, :user_id, :value)
+        on conflict (field_id, created_at) do update set value=:value
+        returning *
+        """), dict(
+            field_id=field_id,
+            value=float(value),
+            user_id=user_id,
+            day=day
+        ))
+        sess.commit()
+        return res.fetchone()
 
 
 class SIFieldEntry(BaseModel):

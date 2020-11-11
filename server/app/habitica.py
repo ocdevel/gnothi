@@ -32,10 +32,9 @@ def sync_for(user):
     lastCron = dparse(huser['lastCron'])
     logger.info("Habitica finished")
 
-    fes = M.FieldEntry.get_day_entries(user.id, day=lastCron).all()
+    fes = M.FieldEntry.get_day_entries(db.session, user.id, day=lastCron)
 
     f_map = {f.service_id: f for f in user.fields}
-    fe_map = {fe.field_id: fe for fe in fes}
     t_map = {task['id']: task for task in tasks}
 
     # Remove Habitica-deleted tasks
@@ -86,13 +85,8 @@ def sync_for(user):
             if (not task['completed']) and any(c['completed'] for c in cl):
                 value = sum(c['completed'] for c in cl) / len(cl)
 
-        fe = fe_map.get(f.id, None)
-        if fe:
-            fe.value = value
-        else:
-            fe = M.FieldEntry(field_id=f.id, created_at=lastCron, value=value)
-            user.field_entries.append(fe)
-        db.session.commit()
+        # TODO ensure lastCron parses correctly in downstream SQL
+        M.FieldEntry.upsert(db.session, user_id=user.id, field_id=f.id, value=value, day=lastCron)
         logger.info(task['text'] + " done")
 
 

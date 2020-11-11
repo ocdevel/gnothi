@@ -463,9 +463,7 @@ def field_entries_get(
     user, snooping = getuser(viewer, as_user)
     if snooping and not user.share_data.fields:
         return cant_snoop('Fields')
-    return M.FieldEntry.get_day_entries(user.id, day=day)\
-        .order_by(M.FieldEntry.created_at.asc())\
-        .all()
+    return M.FieldEntry.get_day_entries(db.session, user.id, day=day)
 
 @app.delete('/field-entries/{entry_id}')
 def field_entries_delete(
@@ -489,19 +487,7 @@ def field_entries_post(
 ):
     user, snooping = getuser(viewer, as_user)
     if snooping: return cant_snoop()
-    fe = M.FieldEntry.get_day_entries(user.id, day=day, field_id=field_id).first()
-    v = float(data.value)
-    if fe:
-        fe.value = v
-    if not fe:
-        fe = M.FieldEntry(
-            value=v,
-            field_id=field_id,
-        )
-        user.field_entries.append(fe)
-    fe.created_at, _ = M.User.timezoned(date=day, user=user)
-    db.session.commit()
-    db.session.refresh(fe)
+    M.FieldEntry.upsert(db.session, user_id, field_id, data.value, day)
     M.Field.update_avg(field_id)
     return fe
 
