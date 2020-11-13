@@ -18,7 +18,7 @@ from xgboost import XGBRegressor
 
 import optuna
 
-import pdb
+import pdb, math
 import pandas as pd
 import numpy as np
 from common.database import engine
@@ -26,6 +26,7 @@ from collections import OrderedDict
 
 SEED = 42
 N_FOLDS = 3
+N_TRIALS = 300
 
 def feature_importances(xgb_model, cols, target=None):
     """
@@ -50,14 +51,18 @@ def feature_importances(xgb_model, cols, target=None):
     return OrderedDict(zip(cols[idx], imps[idx]))
 
 class XGBHyperOpt:
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
+    def __init__(self, data):
+        self.data = data
+        self.i = 0
         self.results = []
+        self.writing = False
 
     # FYI: Objective functions can take additional arguments
     # (https://optuna.readthedocs.io/en/stable/faq.html#objective-func-additional-args).
     def objective(self, trial):
+        i = self.i
+        x, y = self.data[i]
+        y = y.fillna(np.mean(y))  # TODO use default specified by user
 
         args = {
             # early_stopping_rounds range: [10] [100]
@@ -93,7 +98,7 @@ class XGBHyperOpt:
         # subsample ranges: [.8, 1.] [.7, 1.]
         param["subsample"] = trial.suggest_float("subsample", .7, 1.)
 
-        dtrain = xgb.DMatrix(self.x, label=self.y)
+        dtrain = xgb.DMatrix(x, label=y)
         xgb_cv_results = xgb.cv(
             params={**base_param, **param},
             dtrain=dtrain,
@@ -105,28 +110,41 @@ class XGBHyperOpt:
 
         # 41d91fed: n_estimators from len(xgb_cv_results), save to csv
 
-        # Extract the best score.
-        best_score = xgb_cv_results["test-mae-mean"].values[-1]
+        best_score = next(
+            (s for s in xgb_cv_results["test-mae-mean"].values[::-1]
+            if s and not np.isnan(s)),
+            None
+        )
+        if not best_score or np.isnan(best_score):
+            pdb.set_trace()
+            return None
 
         self.results.append({
             'score': best_score,
-            'rows': self.x.shape[0],
-            'cols': self.x.shape[1],
+            'rows': x.shape[0],
+            'cols': x.shape[1],
+            'study': f'study-{i}',
             **param, **args
         })
-        df = pd.DataFrame(self.results).sort_values("score")
-        df.to_sql('xgb_hypers', engine, if_exists='replace')
+        try:
+            df = pd.DataFrame(self.results).sort_values("score")
+        except: return
+        if df.shape[0] > 10 and not self.writing:
+            self.writing = True
+            df.to_sql('xgb_hypers', engine, if_exists='replace')
+            self.writing = False
 
-        # Show importances of xgboost hypers (meta)
-        # c4efd732: CatBoost
-        if df.shape[0] > 10:
-            x = df.drop(columns=['score'])
-            x['grow_policy'] = x.grow_policy.apply(lambda s: {"depthwise": 0, "lossguide": 1}[s]).astype(int)
-            model = XGBRegressor().fit(x, df.score)
-            print("\nFeature Importances\n", feature_importances(model, x.columns))
+            # Show importances of xgboost hypers (meta)
+            # c4efd732: CatBoost
+            x_ = df.drop(columns=['score', 'study'])
+            x_['grow_policy'] = x_.grow_policy.apply(lambda s: {"depthwise": 0, "lossguide": 1}[s]).astype(int)
+            model = XGBRegressor().fit(x_, df.score)
+            print("\nFeature Importances\n", feature_importances(model, x_.columns))
 
         return best_score
 
     def optimize(self):
-        study = optuna.create_study()
-        study.optimize(self.objective, n_trials=500) #, timeout=600)
+        for i, data in enumerate(self.data):
+            self.i = i
+            study = optuna.create_study()
+            study.optimize(self.objective, n_trials=N_TRIALS, n_jobs=-1) #, timeout=600)

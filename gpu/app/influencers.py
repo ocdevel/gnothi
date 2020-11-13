@@ -41,40 +41,9 @@ def impute_and_roll(fes, fs):
     span = 3
     return fes.rolling(span, min_periods=1).mean().astype(np.float32)
 
+# TODO put fixtures.load_xgb_hypers back
 
-def hyperopt(fes, fs, user_id):
-    logging.info("Hyperopt")
-    # See if this is tests+fixtures first
-    fixt = fixtures.load_xgb_hypers(user_id)
-    if fixt: return fixt
-
-
-    # Find a good target to hyper-opt against, will use the same hypers for all targets
-    good_target, nulls = None, None
-    for t in fs.keys():
-        nulls_ = fes[t].isnull().sum()
-        if good_target is None or nulls_ < nulls:
-            good_target, nulls = t, nulls_
-    print(good_target, nulls)
-
-    # hyper-opt
-    fes_ = impute_and_roll(fes.copy(), fs)
-    X_opt = fes_.drop(columns=[good_target])
-    y_opt = fes_[good_target]
-    hypers = XGBHyperOpt(X_opt, y_opt).optimize()
-    if type(hypers) == str:
-        print(hypers)  # it's an error
-        hypers = {}
-    else:
-        for k in ['max_depth', 'n_estimators']:
-            hypers[k] = int(hypers[k])
-    print(hypers)
-    fixtures.save_xgb_hypers(user_id, hypers)
-    return hypers
-
-
-def influencers_(user_id):
-    logging.info("Influencers")
+def load_data(user_id):
     with session() as sess:
         fes = pd.read_sql("""
         -- remove duplicates, use average. FIXME find the dupes bug
@@ -119,10 +88,19 @@ def influencers_(user_id):
     # fields['field_id'] =  fields.field_id.apply(lambda x: x[0:4])
     fes = fes.pivot(index='created_at', columns='field_id', values='value')
 
+    return fs, fes
+
+
+def influencers_(user_id):
+    logging.info("Influencers")
+
+    fs, fes = load_data(user_id)
     # fes = fes.resample('D')
     cols = fes.columns
 
-    hypers = hyperopt(fes, fs, user_id)
+    # hypers = hyperopt(fes, fs, user_id)
+    # TODO set to defaults
+    hypers = {}
     xgb_args = {}  # {'tree_method': 'gpu_hist', 'gpu_id': 0}
 
     next_preds = {}
@@ -139,6 +117,7 @@ def influencers_(user_id):
         # trend is important info
         X = fes_
         y = X[t]
+        y = y.fillna(y.mean())  # TODO use user-specified default
         model = XGBRegressor(**xgb_args, **hypers)
         model.fit(X, y)
         preds = model.predict(X.iloc[-1:])
@@ -211,4 +190,29 @@ def influencers():
 
 if __name__ == '__main__':
     with session() as sess:
-        influencers_('7408962c-51d6-4877-b65f-d9dac376b2f5')
+        uids = sess.execute("""
+        select u.id, count(fe.id) from users u
+        inner join field_entries_bk fe on u.id=fe.user_id
+        group by u.id
+        having count(fe.id) > 10
+        """).fetchall()
+    data = []
+    for u in uids:
+        res = load_data(u.id)
+        if res is None: continue
+        fs, fes = res
+
+        # Find a good target to hyper-opt against, will use the same hypers for all targets
+        good_target, nulls = None, None
+        for t in fs.keys():
+            nulls_ = fes[t].isnull().sum()
+            if good_target is None or nulls_ < nulls:
+                good_target, nulls = t, nulls_
+        print(good_target, nulls)
+
+        # hyper-opt
+        fes_ = impute_and_roll(fes.copy(), fs)
+        x_opt = fes_.drop(columns=[good_target])
+        y_opt = fes_[good_target]
+        data.append((x_opt, y_opt))
+    hypers = XGBHyperOpt(data).optimize()

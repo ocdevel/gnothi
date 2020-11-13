@@ -47,6 +47,8 @@ services:
     restart: unless-stopped
     environment:
       ENVIRONMENT: development
+    ports:
+      - 8888:8888
     volumes:
       - ./gpu:/paperspace
       - ./common:/paperspace/common
