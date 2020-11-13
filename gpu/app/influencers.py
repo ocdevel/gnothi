@@ -153,8 +153,8 @@ def influencers_(user_id):
         model.fit(X, y)
         
         imps = feature_importances(model, cols, t)
-        all_imps.append(dict_)
-        importances[t] = dict_
+        all_imps.append(imps)
+        importances[t] = imps
 
     all_imps = dict(pd.DataFrame(all_imps).mean())
     return next_preds, importances, all_imps

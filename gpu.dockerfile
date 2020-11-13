@@ -24,8 +24,7 @@ RUN \
   dynaconf \
   pytest \
   git+git://github.com/lefnire/ml-tools.git@9316d42c \
-  # already installed in ml-tools, but something above reverts the version
-  git+git://github.com/hyperopt/hyperopt.git@0.2.5
+  catboost
 
 COPY ./gpu /paperspace
 COPY ./common /paperspace/common
