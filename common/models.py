@@ -46,11 +46,11 @@ def Encrypt(Col=Unicode, array=False, **args):
     return Column(enc, **args)
 
 # TODO should all date-cols be index=True? (eg sorting, filtering)
-def DateCol(default=True, update=False):
+def DateCol(default=True, update=False, **kwargs):
     args = {}
     if default: args['server_default'] = satext(utcnow)
     if update: args['onupdate'] = satext(utcnow)
-    return Column(TIMESTAMP(timezone=True), index=True, **args)
+    return Column(TIMESTAMP(timezone=True), index=True, **args, **kwargs)
 
 def IDCol():
     return Column(UUID(as_uuid=True), primary_key=True, server_default=satext("uuid_generate_v4()"))
@@ -516,6 +516,15 @@ class SOField(SOut):
 # class SOFields(SOut):
 #     __root__: Dict[UUID4, SOField]
 SOFields = Dict[UUID4, SOField]
+
+
+class FieldEntryBk(Base):
+    __tablename__ = 'field_entries_bk'
+    id = IDCol()
+    value = Column(Float)
+    created_at = DateCol()
+    user_id = FKCol('users.id', index=True)
+    field_id = FKCol('fields.id')  # TODO index=True?
 
 
 class FieldEntry(Base):

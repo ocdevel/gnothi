@@ -1,5 +1,5 @@
 import pdb
-from app.xgb_hyperopt import run_opt
+from app.xgb_hyperopt import XGBHyperOpt, feature_importances
 from xgboost import XGBRegressor
 from sqlalchemy import text
 from psycopg2.extras import Json as jsonb
@@ -61,7 +61,7 @@ def hyperopt(fes, fs, user_id):
     fes_ = impute_and_roll(fes.copy(), fs)
     X_opt = fes_.drop(columns=[good_target])
     y_opt = fes_[good_target]
-    hypers, _ = run_opt(X_opt, y_opt)
+    hypers = XGBHyperOpt(X_opt, y_opt).optimize()
     if type(hypers) == str:
         print(hypers)  # it's an error
         hypers = {}
@@ -80,7 +80,7 @@ def influencers_(user_id):
         -- remove duplicates, use average. FIXME find the dupes bug
         with fe_clean as (
             select field_id, created_at::date, avg(value) as value
-            from field_entries
+            from field_entries_bk
             group by field_id, created_at::date
         ),
         -- ensure enough data
@@ -120,7 +120,7 @@ def influencers_(user_id):
     fes = fes.pivot(index='created_at', columns='field_id', values='value')
 
     # fes = fes.resample('D')
-    cols = fes.columns.tolist()
+    cols = fes.columns
 
     hypers = hyperopt(fes, fs, user_id)
     xgb_args = {}  # {'tree_method': 'gpu_hist', 'gpu_id': 0}
@@ -151,17 +151,8 @@ def influencers_(user_id):
         y = fes_[t]
         model = XGBRegressor(**xgb_args, **hypers)
         model.fit(X, y)
-        imps = [float(x) for x in model.feature_importances_]
-
-        # FIXME
-        # /xgboost/sklearn.py:695: RuntimeWarning: invalid value encountered in true_divide return all_features / all_features.sum()
-        # I think this is due to target having no different value, in which case
-        # just leave like this.
-        imps = [0. if np.isnan(imp) else imp for imp in imps]
-
-        # put target col back in
-        imps.insert(cols.index(t), 0.0)
-        dict_ = dict(zip(cols, imps))
+        
+        imps = feature_importances(model, cols, t)
         all_imps.append(dict_)
         importances[t] = dict_
 
@@ -217,3 +208,7 @@ def influencers():
                 sess.commit()
 
     return {}
+
+if __name__ == '__main__':
+    with session() as sess:
+        influencers_('7408962c-51d6-4877-b65f-d9dac376b2f5')
