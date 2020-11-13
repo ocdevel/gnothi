@@ -23,8 +23,7 @@ RUN \
   boto3 \
   dynaconf \
   pytest \
-  git+git://github.com/lefnire/ml-tools.git@9316d42c \
-  catboost
+  git+git://github.com/lefnire/ml-tools.git@9316d42c
 
 COPY ./gpu /paperspace
 COPY ./common /paperspace/common
