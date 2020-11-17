@@ -465,17 +465,6 @@ def field_entries_get(
         return cant_snoop('Fields')
     return M.FieldEntry.get_day_entries(db.session, user.id, day=day)
 
-@app.delete('/field-entries/{entry_id}')
-def field_entries_delete(
-    entry_id,
-    as_user: str = None,
-    viewer: M.User = Depends(fastapi_users.get_current_user)
-):
-    user, snooping = getuser(viewer, as_user)
-    if snooping: return cant_snoop()
-    db.session.query(M.FieldEntry).filter_by(id=entry_id).delete()
-    db.session.commit()
-    return {}
 
 @app.post('/field-entries/{field_id}')
 def field_entries_post(
@@ -487,7 +476,7 @@ def field_entries_post(
 ):
     user, snooping = getuser(viewer, as_user)
     if snooping: return cant_snoop()
-    M.FieldEntry.upsert(db.session, user_id, field_id, data.value, day)
+    fe = M.FieldEntry.upsert(db.session, user.id, field_id, data.value, day)
     M.Field.update_avg(field_id)
     return fe
 

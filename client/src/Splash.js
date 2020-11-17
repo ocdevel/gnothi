@@ -113,7 +113,7 @@ function Details() {
     k: 'https://github.com/lefnire/gnothi/issues?q=label%3AFAQ',
     label: 'FAQ',
     render: () => <></>
-  }])
+  }], [])
 
   return <>
     <Tab.Container activeKey={tab}>
@@ -173,7 +173,7 @@ function Overviews() {
   }, {
     title: <><FaRobot /> Future</>,
     body: <p>The sky's the limit with <a target='_blank' href='https://huggingface.co/transformers/'>BERT</a> language models! Astrology? Dream analysis? </p>
-  }])
+  }], [])
 
   return <>
     <Row lg={3} sm={2} xs={1}>

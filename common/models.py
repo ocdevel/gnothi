@@ -466,8 +466,8 @@ class Field(Base):
     def update_avg(fid):
         db.session.execute(satext("""
         update fields set avg=(
-            select avg(value) from field_entries fe
-            where fe.field_id=:fid
+            select avg(value) from field_entries2 fe
+            where fe.field_id=:fid and fe.value is not null
         ) where id=:fid
         """), dict(fid=fid))
         db.session.commit()
@@ -518,47 +518,62 @@ class SOField(SOut):
 SOFields = Dict[UUID4, SOField]
 
 
-class FieldEntryBk(Base):
-    __tablename__ = 'field_entries_bk'
+class FieldEntryOld(Base):
+    """
+    This is a broken table. Didn't have the right constraints and resulted in
+    tons of duplicates which needed cleaning up (#20). Will remove this eventually
+    and rename field_entries2 & its constraints.
+    """
+    __tablename__ = 'field_entries'
     id = IDCol()
     value = Column(Float)
     created_at = DateCol()
     user_id = FKCol('users.id', index=True)
-    field_id = FKCol('fields.id')  # TODO index=True?
+    field_id = FKCol('fields.id')
 
 
 class FieldEntry(Base):
-    __tablename__ = 'field_entries'
+    __tablename__ = 'field_entries2'
     field_id = FKCol('fields.id', primary_key=True)
     created_at = DateCol(primary_key=True)
     value = Column(Float)  # TODO Can everything be a number? reconsider
     user_id = FKCol('users.id', index=True)
 
+    # remove these after duplicates bug handled
+    dupes = Column(JSONB)
+    dupe = Column(Integer, server_default="0")
+
+    with_tz = """
+    with tz as (
+        select coalesce(timezone, 'America/Los_Angeles') as tz
+        from users where id=:user_id
+    )
+    """
+
+    day_or_now = "coalesce(:day, CURRENT_TIMESTAMP)"
+
     @staticmethod
     def get_day_entries(sess, user_id, day=None):
-        res = sess.execute(satext("""
-        select fe.* from field_entries fe
-        where fe.user_id=:user_id and fe.created_at=timezone(
-            coalesce(u.timezone, 'America/Los_Angeles'),
-            date(coalesce(:day, now()))
-        )
+        res = sess.execute(satext(f"""
+        {FieldEntry.with_tz}
+        select fe.* from field_entries2 fe, tz
+        where fe.user_id=:user_id 
+            and timezone(tz, fe.created_at)::date
+                =timezone(tz, {FieldEntry.day_or_now})::date
         order by created_at asc
         """), dict(user_id=user_id, day=day))
         return res.fetchall()
 
     @staticmethod
     def upsert(sess, user_id, field_id, value, day=None):
-        timezoned = f"""
-        (select timezone(
-            coalesce(u.timezone, 'America/Los_Angeles'),
-            date(coalesce(:day, now()))
-        ) as day
-        from users u where u.id=:user_id)
-        """
         res = sess.execute(satext(f"""
-        insert into field_entries (field_id, created_at, user_id, value)
-        values (:field_id, {timezoned}, :user_id, :value)
-        on conflict (field_id, created_at) do update set value=:value
+        {FieldEntry.with_tz}
+        insert into field_entries2 (user_id, field_id, value, created_at)
+        values (
+            :user_id, :field_id, :value,
+            (select timezone(tz, {FieldEntry.day_or_now}::date) from tz)
+        )
+        on conflict (field_id, created_at) do update set value=:value, dupes=null, dupe=0
         returning *
         """), dict(
             field_id=field_id,
@@ -572,6 +587,11 @@ class FieldEntry(Base):
 
 class SIFieldEntry(BaseModel):
     value: float
+
+
+class SIFieldEntryPick(BaseModel):
+    value: float
+    day: str
 
 
 class Person(Base):

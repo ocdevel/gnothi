@@ -5,7 +5,7 @@ from sqlalchemy import text
 from psycopg2.extras import Json as jsonb
 from sqlalchemy.dialects import postgresql
 from common.utils import utcnow
-from common.database import session
+from common.database import session, engine
 from common.fixtures import fixtures
 import common.models as M
 import pandas as pd
@@ -49,7 +49,7 @@ def load_data(user_id):
         -- remove duplicates, use average. FIXME find the dupes bug
         with fe_clean as (
             select field_id, created_at::date, avg(value) as value
-            from field_entries_bk
+            from field_entries2
             group by field_id, created_at::date
         ),
         -- ensure enough data
@@ -63,7 +63,7 @@ def load_data(user_id):
           fe.value -- value
         from fe_clean fe
         inner join fe_ct on fe_ct.field_id=fe.field_id  -- just removes rows
-        inner join fields f on f.id=fe.field_id
+        inner join fields f on f.id=fe.field_id -- ensure field still exists? (cascade should be fine, remove?)
         where f.user_id=%(uid)s
           and f.excluded_at is null
         order by fe.created_at asc
@@ -188,31 +188,101 @@ def influencers():
 
     return {}
 
+
+def good_target(fes, fs):
+    # Find a good target to hyper-opt against, will use the same hypers for all targets
+    good_target, nulls = None, None
+    for t in fs.keys():
+        nulls_ = fes[t].isnull().sum()
+        if good_target is None or nulls_ < nulls:
+            good_target, nulls = t, nulls_
+    # print(good_target, nulls)
+    return good_target
+
+
+def fix_dupes():
+    fes = pd.read_sql(f"""
+    with fe_tz as (
+        select fe.*,
+            timezone(coalesce(u.timezone, 'America/Los_Angeles'), fe.created_at)::date as day
+        from field_entries fe
+        inner join users u on fe.user_id=u.id
+    ), fe_grouped as (
+        select field_id::text, user_id::text, day,
+            -- pick most common value of dupes as starting value
+            mode() within group (order by value) as value,
+            -- collect all dupes into a List[Dict]
+            json_agg(fe_tz) as dupes,
+            -- this will be set in python later, just add the attr
+            0 as dupe
+        from fe_tz
+        group by field_id, user_id, day
+    )
+    select * from fe_grouped
+    order by user_id, day asc
+    """, engine)\
+        .set_index(['user_id', 'day', 'field_id'])
+
+    # for day, g_day in df.groupby(['user_id', 'timezoned']):
+    for idx, row in fes.iterrows():
+        if len(row.dupes) == 1:
+            pass  # clean!
+        elif len(set([x['value'] for x in row.dupes])) == 1:
+            # repeated values, likely that (repeated) value is correct
+            fes.loc[idx, 'dupe'] = 1
+        else:
+            # non-repeated values; this is corrupt, will need to predict downstream
+            fes.loc[idx, 'dupe'] = 2
+            fes.loc[idx, 'value'] = None
+
+    for uid, feu in fes.groupby(level=0):
+        if not feu.dupe.any():
+            continue
+
+        feu = feu.reset_index()
+        bads = feu[feu.dupe == 2].field_id.unique()
+        for bad in bads:
+            piv = feu.pivot(index='day', columns='field_id', values='value')
+
+            train = piv[~piv[bad].isnull()]
+            if train.shape[0] == 0: pdb.set_trace()
+            # print('training', feu_.shape)
+
+            # Consider other models for small datasets, LinearRegression NaiveBayes & XGBoost with these hypers:
+            # https://www.kaggle.com/rafjaa/dealing-with-very-small-datasets
+            x, y = train.drop(columns=[bad]), train[bad]
+            model = XGBRegressor(
+                max_depth=2,
+                gamma=2,
+                eta=0.8,
+                reg_alpha=0.5,
+                reg_lambda=0.5
+            ).fit(x, y)
+
+            test = piv[piv[bad].isnull()]
+            preds = model.predict(test.drop(columns=[bad]))
+            i = 0
+            for day, row in test.iterrows():
+                idx = (uid, day, bad)
+                if idx not in fes.index: continue  # TODO right?
+                # Find the dupe-value closest to the prediction
+                dupes = [d['value'] for d in fes.loc[idx, 'dupes']]
+                # https://www.kite.com/python/answers/how-to-find-the-numpy-array-element-closest-to-a-given-value-in-python
+                v = dupes[np.abs(dupes - preds[i]).argmin()]
+                fes.loc[(uid, day, bad), 'value'] = v
+                # print(dupes, v)
+                i += 1
+
+    from sqlalchemy.dialects.postgresql import JSONB
+    fes.reset_index()\
+        .rename(columns={'day': 'created_at'})\
+        .to_sql(
+            'field_entries2',
+            engine,
+            dtype={'dupes': JSONB},
+            if_exists='append',
+            index=False
+        )
+
 if __name__ == '__main__':
-    with session() as sess:
-        uids = sess.execute("""
-        select u.id, count(fe.id) from users u
-        inner join field_entries_bk fe on u.id=fe.user_id
-        group by u.id
-        having count(fe.id) > 10
-        """).fetchall()
-    data = []
-    for u in uids:
-        res = load_data(u.id)
-        if res is None: continue
-        fs, fes = res
-
-        # Find a good target to hyper-opt against, will use the same hypers for all targets
-        good_target, nulls = None, None
-        for t in fs.keys():
-            nulls_ = fes[t].isnull().sum()
-            if good_target is None or nulls_ < nulls:
-                good_target, nulls = t, nulls_
-        print(good_target, nulls)
-
-        # hyper-opt
-        fes_ = impute_and_roll(fes.copy(), fs)
-        x_opt = fes_.drop(columns=[good_target])
-        y_opt = fes_[good_target]
-        data.append((x_opt, y_opt))
-    hypers = XGBHyperOpt(data).optimize()
+    fix_dupes()

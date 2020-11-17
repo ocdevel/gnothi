@@ -64,6 +64,8 @@ class XGBHyperOpt:
         x, y = self.data[i]
         y = y.fillna(np.mean(y))  # TODO use default specified by user
 
+        # See https://www.kaggle.com/rafjaa/dealing-with-very-small-datasets#t2 for small dataset hypers
+
         args = {
             # early_stopping_rounds range: [10] [100]
             "early_stopping_rounds": trial.suggest_int("early_stopping_rounds", 10, 100, step=10),
@@ -136,9 +138,16 @@ class XGBHyperOpt:
 
             # Show importances of xgboost hypers (meta)
             # c4efd732: CatBoost
+            # TODO use study.feature_importances, not my own
             x_ = df.drop(columns=['score', 'study'])
             x_['grow_policy'] = x_.grow_policy.apply(lambda s: {"depthwise": 0, "lossguide": 1}[s]).astype(int)
-            model = XGBRegressor().fit(x_, df.score)
+            model = XGBRegressor(
+                max_depth=2,
+                gamma=2,
+                eta=0.8,
+                reg_alpha=0.5,
+                reg_lambda=0.5
+            ).fit(x_, df.score)
             print("\nFeature Importances\n", feature_importances(model, x_.columns))
 
         return best_score

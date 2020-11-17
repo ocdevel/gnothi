@@ -155,7 +155,7 @@ class Fixtures():
                     assert fe.status_code == 200
                     feid = fe.json()['id']
                     db.execute(text("""
-                    update field_entries set created_at=:c where id=:feid 
+                    update field_entries2 set created_at=:c where id=:feid 
                     """), dict(c=created_at, feid=feid))
                     db.commit()
                 else:
