@@ -75,7 +75,8 @@ export default function Fields() {
     if (value === "") {return}
     value = parseFloat(value) // until we support strings
     const body = {value}
-    await dispatch(fetch_(`field-entries/${fid}?day=${day}`, 'POST', body))
+    const params = isToday ? "" : `?day=${day}`
+    await dispatch(fetch_(`field-entries/${fid}${params}`, 'POST', body))
   }
 
   const fetchService = async (service) => {

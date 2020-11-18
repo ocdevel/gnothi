@@ -48,8 +48,10 @@ def Encrypt(Col=Unicode, array=False, **args):
 # TODO should all date-cols be index=True? (eg sorting, filtering)
 def DateCol(default=True, update=False, **kwargs):
     args = {}
-    if default: args['server_default'] = satext(utcnow)
-    if update: args['onupdate'] = satext(utcnow)
+    # Using utcnow here caused double utc (add more hours), why? Just using now() for now,
+    # and assuming you're DB server is set on UTC
+    if default: args['server_default'] = satext("now()")
+    if update: args['onupdate'] = satext("now()")
     return Column(TIMESTAMP(timezone=True), index=True, **args, **kwargs)
 
 def IDCol():
@@ -144,10 +146,18 @@ class User(Base, SQLAlchemyBaseUserTable):
         """).fetchone().mins or 99
 
     @staticmethod
+    def tz(sess, user_id):
+        return sess.execute(satext(f"""
+        select coalesce(timezone, 'America/Los_Angeles') as tz
+        from users where id=:user_id
+        """), dict(user_id=user_id)).fetchone().tz
+
+    # TODO remove this method & callers, rely all timezone logic on SQL
+    @staticmethod
     def timezoned(
-        date: Union[datetime.datetime, str]=None,
-        user: BaseModel=None,
-        user_id: Union[str, UUID4]=None
+        date: Union[datetime.datetime, str] = None,
+        user: BaseModel = None,
+        user_id: Union[str, UUID4] = None
     ):
         """
         Converts a date to this user's timezone
@@ -532,54 +542,56 @@ class FieldEntryOld(Base):
     field_id = FKCol('fields.id')
 
 
+at_tz = "at time zone :tz"
+at_utc = "at time zone 'utc'"
 class FieldEntry(Base):
     __tablename__ = 'field_entries2'
-    field_id = FKCol('fields.id', primary_key=True)
-    created_at = DateCol(primary_key=True)
-    value = Column(Float)  # TODO Can everything be a number? reconsider
+    # day & field_id may be queries independently, so compound primary-key not enough - index too
+    field_id = FKCol('fields.id', primary_key=True, index=True)
+    day = Column(Date, primary_key=True, index=True)
+
+    created_at = DateCol()
+    value = Column(Float)  # Later consider more storage options than float
     user_id = FKCol('users.id', index=True)
 
     # remove these after duplicates bug handled
     dupes = Column(JSONB)
     dupe = Column(Integer, server_default="0")
 
-    with_tz = """
-    with tz as (
-        select coalesce(timezone, 'America/Los_Angeles') as tz
-        from users where id=:user_id
-    )
-    """
-
-    day_or_now = "coalesce(:day, CURRENT_TIMESTAMP)"
-
     @staticmethod
     def get_day_entries(sess, user_id, day=None):
+        user_id = str(user_id)
+        tz = User.tz(sess, user_id)
         res = sess.execute(satext(f"""
-        {FieldEntry.with_tz}
-        select fe.* from field_entries2 fe, tz
+        select fe.* from field_entries2 fe
         where fe.user_id=:user_id 
-            and timezone(tz, fe.created_at)::date
-                =timezone(tz, {FieldEntry.day_or_now})::date
-        order by created_at asc
-        """), dict(user_id=user_id, day=day))
+        and date(fe.day::timestamptz {at_tz})=
+            date(coalesce(:day ::timestamptz, now()) {at_tz})
+        """), dict(user_id=user_id, day=day, tz=tz))
         return res.fetchall()
 
     @staticmethod
-    def upsert(sess, user_id, field_id, value, day=None):
+    def upsert(sess, user_id, field_id, value, day:str=None):
+        """
+        Create a field-entry, but if one exists for the specified day update it instead.
+        """
+        # Timezone-handling is very complicated. Defer as much to Postgres (rather than Python) to keep
+        # to one system as much as possible. Below says "if they said a day (like '2020-11-19'), convert that
+        # to a timestamp at UTC; then convert that to their own timezone". timestamptz cast first is important, see
+        # https://stackoverflow.com/a/25123558/362790
+        tz = User.tz(sess, user_id)
+        time_at = f"coalesce(:day ::timestamptz, now()) {at_tz}"
         res = sess.execute(satext(f"""
-        {FieldEntry.with_tz}
-        insert into field_entries2 (user_id, field_id, value, created_at)
-        values (
-            :user_id, :field_id, :value,
-            (select timezone(tz, {FieldEntry.day_or_now}::date) from tz)
-        )
-        on conflict (field_id, created_at) do update set value=:value, dupes=null, dupe=0
+        insert into field_entries2 (user_id, field_id, value, day, created_at)
+        values (:user_id, :field_id, :value, date({time_at}), time_at)
+        on conflict (field_id, day) do update set value=:value, dupes=null, dupe=0
         returning *
         """), dict(
             field_id=field_id,
             value=float(value),
             user_id=user_id,
-            day=day
+            day=day,
+            tz=tz
         ))
         sess.commit()
         return res.fetchone()

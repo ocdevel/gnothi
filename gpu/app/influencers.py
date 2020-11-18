@@ -5,7 +5,7 @@ from sqlalchemy import text
 from psycopg2.extras import Json as jsonb
 from sqlalchemy.dialects import postgresql
 from common.utils import utcnow
-from common.database import session, engine
+from common.database import session, engine, init_db
 from common.fixtures import fixtures
 import common.models as M
 import pandas as pd
@@ -201,10 +201,13 @@ def good_target(fes, fs):
 
 
 def fix_dupes():
+    with session() as sess:
+        sess.execute('drop table if exists field_entries2')
+    init_db()
     fes = pd.read_sql(f"""
     with fe_tz as (
         select fe.*,
-            timezone(coalesce(u.timezone, 'America/Los_Angeles'), fe.created_at)::date as day
+            date(fe.created_at at time zone coalesce(u.timezone, 'America/Los_Angeles')) as day
         from field_entries fe
         inner join users u on fe.user_id=u.id
     ), fe_grouped as (
@@ -226,7 +229,8 @@ def fix_dupes():
     # for day, g_day in df.groupby(['user_id', 'timezoned']):
     for idx, row in fes.iterrows():
         if len(row.dupes) == 1:
-            pass  # clean!
+            # clean
+            fes.loc[idx, 'dupes'] = None
         elif len(set([x['value'] for x in row.dupes])) == 1:
             # repeated values, likely that (repeated) value is correct
             fes.loc[idx, 'dupe'] = 1
@@ -274,15 +278,15 @@ def fix_dupes():
                 i += 1
 
     from sqlalchemy.dialects.postgresql import JSONB
-    fes.reset_index()\
-        .rename(columns={'day': 'created_at'})\
-        .to_sql(
-            'field_entries2',
-            engine,
-            dtype={'dupes': JSONB},
-            if_exists='append',
-            index=False
-        )
+    fes = fes.reset_index()
+    # fes['created_at'] = fes['day']
+    fes.to_sql(
+        'field_entries2',
+        engine,
+        dtype={'dupes': JSONB},
+        if_exists='append',
+        index=False
+    )
 
 if __name__ == '__main__':
     fix_dupes()
