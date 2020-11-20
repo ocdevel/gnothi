@@ -287,6 +287,11 @@ def fix_dupes():
         if_exists='append',
         index=False
     )
+    engine.execute("""
+    update field_entries2
+    set created_at=day::timestamp at time zone 
+        (select coalesce(timezone, 'America/Los_Angeles') from users where users.id=user_id)
+    """)
 
 if __name__ == '__main__':
     fix_dupes()
