@@ -2,7 +2,7 @@ import React, {useEffect, useState} from "react"
 import {OverlayTrigger, Popover, Spinner, Form, Alert} from "react-bootstrap"
 import _ from "lodash"
 import emoji from 'react-easy-emoji'
-import moment from "moment";
+import moment from "moment-timezone";
 import {FaThumbsUp, FaTags} from 'react-icons/fa'
 
 export const spinner = (

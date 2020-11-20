@@ -45,6 +45,3 @@ SECRET = vars.FLASK_KEY
 
 from multiprocessing import cpu_count
 THREADS = cpu_count()
-
-def nowtz(tz='America/Los_Angeles'):
-    return datetime.datetime.now(pytz.timezone(tz))

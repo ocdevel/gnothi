@@ -8,7 +8,6 @@ from app.app_jwt import fastapi_users
 from fastapi_sqlalchemy import db  # an object to provide global access to a database session
 import sqlalchemy as sa
 from sqlalchemy import text
-from common.utils import nowtz
 import common.models as M
 from app import habitica
 from app import ml
@@ -263,23 +262,23 @@ def entries_put_post(user, data: M.SIEntry, entry=None):
     entry.title = data['title']
     entry.text = data['text']
     entry.no_ai = data['no_ai'] or False
-
-    iso_fmt = r"^\d{4}-([0]\d|1[0-2])-([0-2]\d|3[01])$"
-    ca = data['created_at']
-    if ca and re.match(iso_fmt, ca):
-        # Manual date submission. Check before else below, could be PUT|POST
-        entry.created_at, _ = M.User.timezoned(date=ca, user=user)
-    elif new_entry:
-        # New entry, ensure timezoned to user
-        entry.created_at, _ = M.User.timezoned(user=user)
-    # else leave it alone; it's PUT without manual edit
-
-    # entry needs id, prior tags need deleting
     db.session.commit()
+    db.session.refresh(entry)
+
+    # manual created-at override
+    iso_fmt = r"^\d{4}-([0]\d|1[0-2])-([0-2]\d|3[01])$"
+    created_at = data.get('created_at', None)
+    if created_at and re.match(iso_fmt, created_at):
+        tz = M.User.tz(db.session, user.id)
+        db.session.execute(text("""
+        update entries set created_at=(:day ::timestamp at time zone :tz) 
+        where id=:id 
+        """), dict(day=created_at, tz=tz, id=entry.id))
+        db.session.commit()
+
     for tag, v in data['tags'].items():
         if not v: continue
         db.session.add(M.EntryTag(entry_id=entry.id, tag_id=tag))
-    # commit above first, in case run-models crashes
     db.session.commit()
     db.session.refresh(entry)
 

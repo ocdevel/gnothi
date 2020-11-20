@@ -9,7 +9,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 from common.database import Base, fa_users_db, session
-from common.utils import vars, nowtz
+from common.utils import vars
 
 from sqlalchemy import text as satext, Column, Integer, Enum, Float, ForeignKey, Boolean, JSON, Date, Unicode, \
     func, TIMESTAMP, select, or_, and_
@@ -151,36 +151,6 @@ class User(Base, SQLAlchemyBaseUserTable):
         select coalesce(timezone, 'America/Los_Angeles') as tz
         from users where id=:user_id
         """), dict(user_id=user_id)).fetchone().tz
-
-    # TODO remove this method & callers, rely all timezone logic on SQL
-    @staticmethod
-    def timezoned(
-        date: Union[datetime.datetime, str] = None,
-        user: BaseModel = None,
-        user_id: Union[str, UUID4] = None
-    ):
-        """
-        Converts a date to this user's timezone
-        :param date: date to convert to this user's timezone, or None for now
-        :param user: User model to get user.timezone, else use `user_id`
-        :param user_id: user_id to look up timezone, else use `user`
-        :return: (user.timezone, converted_date)
-        """
-        tz = user.timezone if user else \
-            db.session.query(User.timezone).filter_by(id=user_id).scalar()
-        tz = tz or 'America/Los_Angeles'
-        if type(date) == str:
-            # Is this seriously how to make a date at a timezone? So much hack...
-            offset = datetime.datetime.now(pytz.timezone(tz)).strftime('%z')
-            date = date + f"T12:00:00{offset}"
-            date = dateutil.parser.parse(date)
-            # date = datetime.datetime.strptime(date, "%Y-%m-%d").replace(tzinfo=pytz.timezone(tz))
-        elif date is None:
-            date = nowtz(tz)
-        else:
-            date.astimezone(dateutil.tz.gettz(tz))
-        return date, tz
-
 
 class FU_User(fu_models.BaseUser): pass
 class FU_UserCreate(fu_models.BaseUserCreate): pass
