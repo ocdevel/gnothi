@@ -543,7 +543,8 @@ class FieldEntryOld(Base):
 
 
 at_tz = "at time zone :tz"
-time_at = f"coalesce(:day ::timestamp, now()) {at_tz}"
+tz_read = f"coalesce(:day ::timestamp, now()) {at_tz}"
+tz_write = f"coalesce(:day ::timestamp {at_tz}, now())"
 class FieldEntry(Base):
     __tablename__ = 'field_entries2'
     # day & field_id may be queries independently, so compound primary-key not enough - index too
@@ -565,10 +566,9 @@ class FieldEntry(Base):
         res = sess.execute(satext(f"""
         select fe.* from field_entries2 fe
         where fe.user_id=:user_id
-        and date({time_at})=
-            fe.day
+        and date({tz_read})=
             --use created_at rather than day in case they switch timezones
-            --date(fe.created_at {at_tz})
+            date(fe.created_at {at_tz})
         """), dict(user_id=user_id, day=day, tz=tz))
         return res.fetchall()
 
@@ -584,7 +584,7 @@ class FieldEntry(Base):
         tz = User.tz(sess, user_id)
         res = sess.execute(satext(f"""
         insert into field_entries2 (user_id, field_id, value, day, created_at)
-        values (:user_id, :field_id, :value, date({time_at}), {time_at})
+        values (:user_id, :field_id, :value, date({tz_read}), {tz_write})
         on conflict (field_id, day) do update set value=:value, dupes=null, dupe=0
         returning *
         """), dict(
