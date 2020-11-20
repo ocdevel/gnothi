@@ -14,6 +14,7 @@ RUN \
   sqlalchemy \
   feather-format \
   # For common/models TODO can remove some yet?
+  fastapi \
   fastapi-sqlalchemy \
   sqlalchemy_utils \
   cryptography \

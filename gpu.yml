@@ -9,6 +9,9 @@ services:
     restart: unless-stopped
     volumes:
       - ./storage:/storage
+      #- ./gpu:/paperspace
+      #- ./common:/paperspace/common
+      #- ./ml-tools:/ml-tools
     device_requests:
       - capabilities:
           - "gpu"

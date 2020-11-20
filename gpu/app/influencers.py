@@ -248,7 +248,7 @@ def fix_dupes():
             train = piv[~piv[bad].isnull()]
             if train.shape[0] == 0:
                 raise Exception(f"Everything corrupt for {uid}, can't train")
-            # print('training', feu_.shape)
+            print('training', train.shape)
 
             # Consider other models for small datasets, LinearRegression NaiveBayes & XGBoost with these hypers:
             # https://www.kaggle.com/rafjaa/dealing-with-very-small-datasets
@@ -256,7 +256,7 @@ def fix_dupes():
             model = MyXGB.small_model(x, y)
 
             test = piv[piv[bad].isnull()]
-            preds = model.predict(test.drop(columns=[bad]))
+            preds = model.predict(DMatrix(test.drop(columns=[bad])))
             i = 0
             for day, row in test.iterrows():
                 idx = (uid, day, bad)
@@ -277,7 +277,9 @@ def fix_dupes():
         engine,
         dtype={'dupes': JSONB},
         if_exists='append',
-        index=False
+        index=False,
+        method='multi',
+        chunksize=1000
     )
     engine.execute("""
     update field_entries2
