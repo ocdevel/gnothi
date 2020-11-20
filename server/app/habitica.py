@@ -34,7 +34,7 @@ def sync_for(user):
     tz = M.User.tz(db.session, user.id)
     last_cron = db.session.execute(text("""
     select date(:lastCron ::timestamptz at time zone :tz)::text last_cron
-    """), dict(lastCron=huser['last'], tz=tz)).fetchone().last_cron
+    """), dict(lastCron=huser['lastCron'], tz=tz)).fetchone().last_cron
 
     f_map = {f.service_id: f for f in user.fields}
     t_map = {task['id']: task for task in tasks}
