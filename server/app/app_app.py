@@ -5,7 +5,7 @@ from fastapi_sqlalchemy import DBSessionMiddleware  # middleware helper
 
 # Database
 from common.database import init_db, shutdown_db, fa_users_db, engine
-from common.utils import vars, SECRET, utcnow
+from common.utils import vars, SECRET
 
 app = FastAPI()
 # app.secret_key = SECRET

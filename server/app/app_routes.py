@@ -8,7 +8,7 @@ from app.app_jwt import fastapi_users
 from fastapi_sqlalchemy import db  # an object to provide global access to a database session
 import sqlalchemy as sa
 from sqlalchemy import text
-from common.utils import utcnow, nowtz
+from common.utils import nowtz
 import common.models as M
 from app import habitica
 from app import ml
@@ -53,7 +53,7 @@ def checkin_get(
     viewer: M.User = Depends(fastapi_users.get_current_user),
 ):
     background_tasks.add_task(ga, viewer.id, 'user', 'checkin')
-    sql = text(f"update users set updated_at={utcnow} where id=:uid")
+    sql = text(f"update users set updated_at=now() where id=:uid")
     db.session.execute(sql, {'uid': viewer.id})
     db.session.commit()
     return {}

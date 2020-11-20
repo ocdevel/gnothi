@@ -4,7 +4,7 @@ from os.path import exists
 from tqdm import tqdm
 from common.database import session
 import common.models as M
-from common.utils import utcnow, vars, is_test
+from common.utils import vars, is_test
 from ml_tools import Similars, CleanText, CosineEstimator
 from common.fixtures import fixtures
 from box import Box
@@ -48,11 +48,11 @@ class Books(object):
         # don't run if ran recently (notice the inverse if & comparator, simpler)
         if sess.execute(text(f"""
         select 1 from users
-        where id=:uid and last_books > {utcnow} - interval '10 minutes'
+        where id=:uid and last_books > now() - interval '10 minutes'
         """), uid).fetchone():
             return None
         sess.execute(text(f"""
-        update users set last_books={utcnow} where id=:uid
+        update users set last_books=now() where id=:uid
         """), uid)
         sess.commit()
 

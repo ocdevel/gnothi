@@ -1,6 +1,6 @@
 import requests, pdb, time, random
 from dateutil.parser import parse as dparse
-from common.utils import is_dev, vars, utcnow
+from common.utils import is_dev, vars
 from common.database import session
 import common.models as M
 from sqlalchemy import text
@@ -99,7 +99,7 @@ def cron():
         select id from users 
         where char_length(habitica_user_id) > 0 and char_length(habitica_api_token) > 0
             -- stop tracking inactive users
-            and updated_at > {utcnow} - interval '3 days'
+            and updated_at > now() - interval '3 days'
         """).fetchall()
 
         errs = ""

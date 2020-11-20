@@ -6,7 +6,7 @@ from common.database import session
 from ml_tools import Similars, CleanText
 from common.fixtures import fixtures
 from sqlalchemy import text
-from common.utils import vars, utcnow
+from common.utils import vars
 from sqlalchemy.sql.expression import func
 from sqlalchemy.dialects import postgresql
 import sqlalchemy as sa
@@ -26,7 +26,7 @@ def nlp_on_rows_(method, id, job_id, sess, uids):
     # keep job alive, in case we're recursing and it's taking long
     if job_id is not None:
         sess.execute(text(f"""
-        update jobs set updated_at={utcnow} where id=:job_id
+        update jobs set updated_at=now() where id=:job_id
         """), dict(job_id=str(job_id)))
         sess.commit()
 

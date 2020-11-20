@@ -10,7 +10,7 @@ from sqlalchemy import text
 # app.from books import run_books
 from app.themes import themes
 from app.influencers import influencers
-from common.utils import utcnow, vars, is_prod
+from common.utils import vars, is_prod
 from common.database import session
 import common.models as M
 from common.cloud_updown import cloud_down_maybe

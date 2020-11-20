@@ -9,7 +9,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 from common.database import Base, fa_users_db, session
-from common.utils import vars, utcnow, nowtz
+from common.utils import vars, nowtz
 
 from sqlalchemy import text as satext, Column, Integer, Enum, Float, ForeignKey, Boolean, JSON, Date, Unicode, \
     func, TIMESTAMP, select, or_, and_
@@ -140,7 +140,7 @@ class User(Base, SQLAlchemyBaseUserTable):
     def last_checkin(sess):
         return sess.execute(f"""
         select extract(
-            epoch FROM ({utcnow} - max(updated_at))
+            epoch FROM (now() - max(updated_at))
         ) / 60 as mins
         from users limit 1 
         """).fetchone().mins or 99
@@ -282,7 +282,7 @@ class Entry(Base):
                 .filter(Share.email == viewer_email, Share.user_id == target_id)
             # TODO use ORM partial thus far for this query command, not raw sql
             sql = f"""
-            update shares set last_seen={utcnow}, new_entries=0
+            update shares set last_seen=now(), new_entries=0
             where email=:email and user_id=:uid
             """
             db.session.execute(satext(sql), dict(email=viewer_email, uid=target_id))
@@ -955,7 +955,7 @@ class Job(Base):
             """prune completed or stuck jobs. Completed jobs aren't too useful for admins; error is."""
             sess.execute(f"""
             delete from jobs 
-            where updated_at < {utcnow} - interval '10 minutes' 
+            where updated_at < now() - interval '10 minutes' 
                 and state in ('working', 'done') 
             """)
             sess.commit()
@@ -993,7 +993,7 @@ class Machine(Base):
         # missing vals get server_default
         sess.execute(satext(f"""
         insert into machines (id, status) values (:id, :status)
-        on conflict(id) do update set status=:status, updated_at={utcnow}
+        on conflict(id) do update set status=:status, updated_at=now()
         """), dict(id=id, status=status))
         sess.commit()
 
@@ -1002,7 +1002,7 @@ class Machine(Base):
         with session() as sess:
             """prune machines which haven't removed themselves properly"""
             sess.execute(f"""
-            delete from machines where updated_at < {utcnow} - interval '5 minutes' 
+            delete from machines where updated_at < now() - interval '5 minutes' 
             """)
             sess.commit()
 
@@ -1012,7 +1012,7 @@ class Machine(Base):
         select count(*) ct from jobs where state='working'
             and machine_id=:id
             -- check time in case broken/stale
-            and created_at > {utcnow} - interval '2 minutes'
+            and created_at > now() - interval '2 minutes'
         """), dict(id=id)).fetchone().ct
 
 

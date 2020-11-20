@@ -4,7 +4,6 @@ from xgboost import XGBRegressor, DMatrix
 from sqlalchemy import text
 from psycopg2.extras import Json as jsonb
 from sqlalchemy.dialects import postgresql
-from common.utils import utcnow
 from common.database import session, engine, init_db
 from common.fixtures import fixtures
 import common.models as M
@@ -142,14 +141,14 @@ def influencers():
         select id::text from users
         where
           -- has logged in recently
-          updated_at > {utcnow} - interval '2 days' and
+          updated_at > now() - interval '2 days' and
           -- has been 1d since last-run (or never run)
-          (extract(day from {utcnow} - last_influencers) >= 1 or last_influencers is null)
+          (extract(day from now() - last_influencers) >= 1 or last_influencers is null)
         """)).fetchall()
         for u in users:
             uid_ = dict(uid=u.id)
             sess.execute(text(f"""
-            update users set last_influencers={utcnow} where id=:uid
+            update users set last_influencers=now() where id=:uid
             """), uid_)
             sess.commit()
 

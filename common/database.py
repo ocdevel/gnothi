@@ -3,7 +3,7 @@ from box import Box
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import scoped_session, sessionmaker
-from common.utils import vars, utcnow
+from common.utils import vars
 # just for fastapi-users (I'm using sqlalchemy+engine+session everywhere else)
 import databases
 import logging
