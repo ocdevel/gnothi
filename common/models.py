@@ -543,7 +543,7 @@ class FieldEntryOld(Base):
 
 
 at_tz = "at time zone :tz"
-tz_read = f"coalesce(:day ::timestamp, now()) {at_tz}"
+tz_read = f"coalesce(:day ::timestamp {at_tz}, now() {at_tz})"
 tz_write = f"coalesce(:day ::timestamp {at_tz}, now())"
 class FieldEntry(Base):
     __tablename__ = 'field_entries2'
