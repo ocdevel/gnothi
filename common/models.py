@@ -543,6 +543,7 @@ class FieldEntryOld(Base):
 
 
 at_tz = "at time zone :tz"
+time_at = f"coalesce(:day ::timestamp, now()) {at_tz}"
 class FieldEntry(Base):
     __tablename__ = 'field_entries2'
     # day & field_id may be queries independently, so compound primary-key not enough - index too
@@ -564,9 +565,10 @@ class FieldEntry(Base):
         res = sess.execute(satext(f"""
         select fe.* from field_entries2 fe
         where fe.user_id=:user_id
-        -- use created_at rather than day in case they switch timezones
-        and date(fe.created_at {at_tz})=
-            date(coalesce(:day ::timestamp, now()) {at_tz})
+        and date({time_at})=
+            fe.day
+            --use created_at rather than day in case they switch timezones
+            --date(fe.created_at {at_tz})
         """), dict(user_id=user_id, day=day, tz=tz))
         return res.fetchall()
 
@@ -580,7 +582,6 @@ class FieldEntry(Base):
         # to a timestamp at UTC; then convert that to their own timezone". timestamptz cast first is important, see
         # https://stackoverflow.com/a/25123558/362790
         tz = User.tz(sess, user_id)
-        time_at = f"coalesce(:day ::timestamp, now()) {at_tz}"
         res = sess.execute(satext(f"""
         insert into field_entries2 (user_id, field_id, value, day, created_at)
         values (:user_id, :field_id, :value, date({time_at}), {time_at})
