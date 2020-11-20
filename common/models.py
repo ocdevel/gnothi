@@ -563,8 +563,9 @@ class FieldEntry(Base):
         tz = User.tz(sess, user_id)
         res = sess.execute(satext(f"""
         select fe.* from field_entries2 fe
-        where fe.user_id=:user_id 
-        and date(fe.day::timestamp {at_tz})=
+        where fe.user_id=:user_id
+        -- use created_at rather than day in case they switch timezones
+        and date(fe.created_at {at_tz})=
             date(coalesce(:day ::timestamp, now()) {at_tz})
         """), dict(user_id=user_id, day=day, tz=tz))
         return res.fetchall()
