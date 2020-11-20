@@ -32,7 +32,7 @@ with D.session() as sess:
     cache_users
     entries
     entries_tags
-    field_entries
+    field_entries2
     fields
     jobs
     machines
@@ -85,7 +85,7 @@ def u(client, db):
     logger.warning("deleting")
     db.execute("delete from users;delete from jobs;")
     db.commit()
-    for t in 'bookshelf entries entries_tags field_entries fields notes people shares shares_tags tags users'.split():
+    for t in 'bookshelf entries entries_tags field_entries2 fields notes people shares shares_tags tags users'.split():
         assert db.execute(f"select count(*) ct from {t}").fetchone().ct == 0, \
             "{t} rows remained after 'delete * from users', check cascade-delete on children"
 

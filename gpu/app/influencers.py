@@ -1,11 +1,11 @@
 import pdb
-from app.xgb_hyperopt import run_opt
-from xgboost import XGBRegressor
+from app.xgb import MyXGB
+from xgboost import XGBRegressor, DMatrix
 from sqlalchemy import text
 from psycopg2.extras import Json as jsonb
 from sqlalchemy.dialects import postgresql
 from common.utils import utcnow
-from common.database import session
+from common.database import session, engine, init_db
 from common.fixtures import fixtures
 import common.models as M
 import pandas as pd
@@ -41,63 +41,26 @@ def impute_and_roll(fes, fs):
     span = 3
     return fes.rolling(span, min_periods=1).mean().astype(np.float32)
 
+# TODO put fixtures.load_xgb_hypers back
 
-def hyperopt(fes, fs, user_id):
-    logging.info("Hyperopt")
-    # See if this is tests+fixtures first
-    fixt = fixtures.load_xgb_hypers(user_id)
-    if fixt: return fixt
-
-
-    # Find a good target to hyper-opt against, will use the same hypers for all targets
-    good_target, nulls = None, None
-    for t in fs.keys():
-        nulls_ = fes[t].isnull().sum()
-        if good_target is None or nulls_ < nulls:
-            good_target, nulls = t, nulls_
-    print(good_target, nulls)
-
-    # hyper-opt
-    fes_ = impute_and_roll(fes.copy(), fs)
-    X_opt = fes_.drop(columns=[good_target])
-    y_opt = fes_[good_target]
-    hypers, _ = run_opt(X_opt, y_opt)
-    if type(hypers) == str:
-        print(hypers)  # it's an error
-        hypers = {}
-    else:
-        for k in ['max_depth', 'n_estimators']:
-            hypers[k] = int(hypers[k])
-    print(hypers)
-    fixtures.save_xgb_hypers(user_id, hypers)
-    return hypers
-
-
-def influencers_(user_id):
-    logging.info("Influencers")
+def load_data(user_id):
     with session() as sess:
         fes = pd.read_sql("""
-        -- remove duplicates, use average. FIXME find the dupes bug
-        with fe_clean as (
-            select field_id, created_at::date, avg(value) as value
-            from field_entries
-            group by field_id, created_at::date
-        ),
         -- ensure enough data
-        fe_ct as (
-          select field_id from fe_clean 
+        with fe_ct as (
+          select field_id from field_entries2 
           group by field_id having count(value) > 5
         )
         select  
-          fe.created_at, -- index 
+          fe.day, -- index 
           fe.field_id::text, -- column, uuid->string
           fe.value -- value
-        from fe_clean fe
+        from field_entries2 fe
         inner join fe_ct on fe_ct.field_id=fe.field_id  -- just removes rows
-        inner join fields f on f.id=fe.field_id
+        inner join fields f on f.id=fe.field_id -- ensure field still exists? (cascade should be fine, remove?)
         where f.user_id=%(uid)s
           and f.excluded_at is null
-        order by fe.created_at asc
+        order by fe.day asc
         """, sess.bind, params={'uid': user_id})
         if not fes.size: return None  # not enough entries
 
@@ -117,13 +80,27 @@ def influencers_(user_id):
 
     # Easier pivot debugging
     # fields['field_id'] =  fields.field_id.apply(lambda x: x[0:4])
-    fes = fes.pivot(index='created_at', columns='field_id', values='value')
+    fes = fes.pivot(index='day', columns='field_id', values='value')
 
+    # Not enough to make predictions
+    if fes.shape[0] < 4: return None
+
+    return fs, fes
+
+
+def influencers_(user_id):
+    logging.info("Influencers")
+
+    data = load_data(user_id)
+    if not data: return
+    fs, fes = data
     # fes = fes.resample('D')
-    cols = fes.columns.tolist()
+    cols = fes.columns
 
-    hypers = hyperopt(fes, fs, user_id)
-    xgb_args = {}  # {'tree_method': 'gpu_hist', 'gpu_id': 0}
+    x, y = fes, good_target(fes, fs)
+    x, y = x.drop(columns=[y]), x[y]
+    xgb_ = MyXGB(x, y)
+    xgb_.optimize()
 
     next_preds = {}
     importances = {}
@@ -137,33 +114,23 @@ def influencers_(user_id):
         ### ----------
         # For next-pred, we keep target column. Yes, likely most predictive; but a rolling
         # trend is important info
-        X = fes_
-        y = X[t]
-        model = XGBRegressor(**xgb_args, **hypers)
-        model.fit(X, y)
-        preds = model.predict(X.iloc[-1:])
+        x = fes_
+        y = x[t]
+        y = y.fillna(y.mean())  # TODO use user-specified default
+        model = xgb_.train(x, y)
+        preds = model.predict(DMatrix(x.iloc[-1:]))
         next_preds[t] = float(preds[0])
-        # model.fit(X, y)  # what's this? was I fitting twice?
 
         ### Importances
         ### -----------
-        X = fes_.drop(columns=[t])
+        x = fes_.drop(columns=[t])
         y = fes_[t]
-        model = XGBRegressor(**xgb_args, **hypers)
-        model.fit(X, y)
-        imps = [float(x) for x in model.feature_importances_]
-
-        # FIXME
-        # /xgboost/sklearn.py:695: RuntimeWarning: invalid value encountered in true_divide return all_features / all_features.sum()
-        # I think this is due to target having no different value, in which case
-        # just leave like this.
-        imps = [0. if np.isnan(imp) else imp for imp in imps]
-
-        # put target col back in
-        imps.insert(cols.index(t), 0.0)
-        dict_ = dict(zip(cols, imps))
-        all_imps.append(dict_)
-        importances[t] = dict_
+        model = xgb_.train(x, y)
+        
+        imps = MyXGB.feature_importances(model)
+        imps[t] = 0.
+        all_imps.append(imps)
+        importances[t] = imps
 
     all_imps = dict(pd.DataFrame(all_imps).mean())
     return next_preds, importances, all_imps
@@ -217,3 +184,107 @@ def influencers():
                 sess.commit()
 
     return {}
+
+
+def good_target(fes, fs):
+    # Find a good target to hyper-opt against, will use the same hypers for all targets
+    good_target, nulls = None, None
+    for t in fs.keys():
+        nulls_ = fes[t].isnull().sum()
+        if good_target is None or nulls_ < nulls:
+            good_target, nulls = t, nulls_
+    # print(good_target, nulls)
+    return good_target
+
+
+def fix_dupes():
+    with session() as sess:
+        sess.execute('drop table if exists field_entries2')
+    init_db()
+    fes = pd.read_sql(f"""
+    with fe_tz as (
+        select fe.*,
+            date(fe.created_at at time zone coalesce(u.timezone, 'America/Los_Angeles')) as day
+        from field_entries fe
+        inner join users u on fe.user_id=u.id
+    ), fe_grouped as (
+        select field_id::text, user_id::text, day,
+            -- pick most common value of dupes as starting value
+            mode() within group (order by value) as value,
+            -- collect all dupes into a List[Dict]
+            json_agg(fe_tz) as dupes,
+            -- this will be set in python later, just add the attr
+            0 as dupe
+        from fe_tz
+        group by field_id, user_id, day
+    )
+    select * from fe_grouped
+    order by user_id, day asc
+    """, engine)\
+        .set_index(['user_id', 'day', 'field_id'])
+
+    # for day, g_day in df.groupby(['user_id', 'timezoned']):
+    for idx, row in fes.iterrows():
+        if len(row.dupes) == 1:
+            # clean
+            fes.loc[idx, 'dupes'] = None
+        elif len(set([x['value'] for x in row.dupes])) == 1:
+            # repeated values, likely that (repeated) value is correct
+            fes.loc[idx, 'dupe'] = 1
+        else:
+            # non-repeated values; this is corrupt, will need to predict downstream
+            fes.loc[idx, 'dupe'] = 2
+            fes.loc[idx, 'value'] = None
+
+    for uid, feu in fes.groupby(level=0):
+        if not feu.dupe.any():
+            continue
+
+        feu = feu.reset_index()
+        bads = feu[feu.dupe == 2].field_id.unique()
+        for bad in bads:
+            piv = feu.pivot(index='day', columns='field_id', values='value')
+
+            train = piv[~piv[bad].isnull()]
+            if train.shape[0] == 0:
+                raise Exception(f"Everything corrupt for {uid}, can't train")
+            # print('training', feu_.shape)
+
+            # Consider other models for small datasets, LinearRegression NaiveBayes & XGBoost with these hypers:
+            # https://www.kaggle.com/rafjaa/dealing-with-very-small-datasets
+            x, y = train.drop(columns=[bad]), train[bad]
+            model = MyXGB.small_model(x, y)
+
+            test = piv[piv[bad].isnull()]
+            preds = model.predict(test.drop(columns=[bad]))
+            i = 0
+            for day, row in test.iterrows():
+                idx = (uid, day, bad)
+                if idx not in fes.index: continue  # TODO right?
+                # Find the dupe-value closest to the prediction
+                dupes = [d['value'] for d in fes.loc[idx, 'dupes']]
+                # https://www.kite.com/python/answers/how-to-find-the-numpy-array-element-closest-to-a-given-value-in-python
+                v = dupes[np.abs(dupes - preds[i]).argmin()]
+                fes.loc[(uid, day, bad), 'value'] = v
+                # print(dupes, v)
+                i += 1
+
+    from sqlalchemy.dialects.postgresql import JSONB
+    fes = fes.reset_index()
+    # fes['created_at'] = fes['day']
+    fes.to_sql(
+        'field_entries2',
+        engine,
+        dtype={'dupes': JSONB},
+        if_exists='append',
+        index=False
+    )
+    engine.execute("""
+    update field_entries2
+    set created_at=day::timestamp at time zone 
+        (select coalesce(timezone, 'America/Los_Angeles') from users where users.id=user_id)
+    """)
+
+if __name__ == '__main__':
+    engine.execute("update users set last_influencers = now() - interval '2 days'")
+    influencers()

@@ -33,9 +33,11 @@ export default function Fields() {
   const [day, setDay] = useState(iso())
   const [fetchingSvc, setFetchingSvc] = useState(false)
   const [fieldEntries, setFieldEntries] = useState({})
-  const [dupes, setDupes] = useState({})
+  const [fieldValues, setFieldValues] = useState({})
   const [showForm, setShowForm] = useState(false)
   const [showChart, setShowChart] = useState(false)
+  // having lots of trouble refreshing certain things, esp. dupes list after picking. Force it for now
+  const [cacheBust, setCacheBust] = useState(+new Date)
 
   const dispatch = useDispatch()
   const as = useSelector(state => state.as)
@@ -43,25 +45,6 @@ export default function Fields() {
   const fields = useSelector(state => state.fields)
 
   const isToday = iso() === iso(day)
-
-  const fetchFieldEntries = async () => {
-    if (_.isEmpty(fields)) {return}
-    const {data} = await dispatch(fetch_(`field-entries?day=${day}`, 'GET'))
-    const clean = {}
-    const dupes = {}
-    _.each(data, (fe) => {
-      const k = fe.field_id
-      if (clean[k]) {
-        dupes[k].push(fe)
-      } else {
-        dupes[k] = [fe]
-        clean[k] = fe.value
-      }
-    })
-    setFieldEntries(clean)
-    setDupes(dupes)
-    // 3e896062: something about field_entries default_values?
-  }
 
   useEffect(() => {
     fetchFieldEntries()
@@ -71,17 +54,29 @@ export default function Fields() {
   // https://www.freecodecamp.org/news/debounce-and-throttle-in-react-with-hooks/
   // TODO should I be using useRef instead of useCallback? (see link)
   const postFieldVal = useCallback(
-    _.debounce((fid, value) => {
-      if (value === "") {return}
-      value = parseFloat(value) // until we support strings
-      const body = {value}
-      dispatch(fetch_(`field-entries/${fid}?day=${day}`, 'POST', body))
-    }, 500),
-    [] // will be created only once initially
+    _.debounce(postFieldVal_, 100),
+    [day] // re-initialize with day-change
   )
 
   if (_.get(fields, 'code') === 401) {
     return <h5>{fields.message}</h5>
+  }
+
+  async function fetchFieldEntries() {
+    if (_.isEmpty(fields)) {return}
+    const {data} = await dispatch(fetch_(`field-entries?day=${day}`, 'GET'))
+    const obj = _.keyBy(data, 'field_id')
+    setFieldEntries(obj)
+    setFieldValues(_.mapValues(obj, 'value'))
+    // 3e896062: something about field_entries default_values?
+  }
+
+  async function postFieldVal_(fid, value) {
+    if (value === "") {return}
+    value = parseFloat(value) // until we support strings
+    const body = {value}
+    const params = isToday ? "" : `?day=${day}`
+    await dispatch(fetch_(`field-entries/${fid}${params}`, 'POST', body))
   }
 
   const fetchService = async (service) => {
@@ -93,12 +88,12 @@ export default function Fields() {
 
   const changeFieldVal = (fid, direct=false) => e => {
     let value = direct ? e : e.target.value
-    setFieldEntries({...fieldEntries, [fid]: value})
+    setFieldValues({...fieldValues, [fid]: value})
     postFieldVal(fid, value)
   }
 
   const changeCheck = fid => e => {
-    changeFieldVal(fid, true)(~~!fieldEntries[fid])
+    changeFieldVal(fid, true)(~~!fieldValues[fid])
   }
 
   const changeDay = dir => {
@@ -131,9 +126,10 @@ export default function Fields() {
   }
 
   const renderFieldEntry = (f, fe) => {
+    const v = fieldValues[f.id]
     if (f.type === 'fivestar') return <>
       <ReactStars
-        value={fe || 0}
+        value={v || 0}
         half={false}
         size={25}
         onChange={changeFieldVal(f.id, true)}
@@ -145,7 +141,7 @@ export default function Fields() {
         label='Yes'
         id={f.id + '-yes'}
         inline
-        checked={fe > 0}
+        checked={v > 0}
         onChange={changeCheck(f.id)}
       />
       <Form.Check
@@ -153,7 +149,7 @@ export default function Fields() {
         label='No'
         id={f.id + '-no'}
         inline
-        checked={fe < 1}
+        checked={v < 1}
         onChange={changeCheck(f.id)}
       />
     </div>
@@ -162,31 +158,33 @@ export default function Fields() {
         disabled={!!f.service && isToday}
         type='number'
         size="sm"
-        value={fe || 0}
+        value={v || 0}
         onChange={changeFieldVal(f.id)}
       />
     </>
   }
 
-  const pickDupe = async (fe) => {
-    await Promise.all(_.map(dupes[fe.field_id], async (d) => {
-      if (fe.id === d.id) {return Promise.resolve()}
-      await dispatch(fetch_(`field-entries/${d.id}`, 'delete'))
-    }))
+  const pickDupe = async (fid, val) => {
+    await postFieldVal_(fid, val)
     await fetchFieldEntries()
+    setCacheBust(+new Date)
   }
 
-  const renderDupes = (f) => {
+  function renderDupe(dupe) {
+    const f = fields[dupe.field_id]
+    const v = f.type === 'check' ? (dupe.value === 1 ? 'Yes' : 'No') : dupe.value
+    return <div className='bottom-margin' key={dupe.id || 'guess'}>
+      <Button variant='outline-dark' size='sm' onClick={() => pickDupe(f.id, dupe.value)}>
+        Pick
+      </Button>{' '}{v}{dupe.id ? '' : " (Gnothi's Guess)"}
+    </div>
+  }
+
+  const renderDupes = (f, fe) => {
     return <Alert variant='warning' style={{margin: 0, padding: 0}}>
       <div><FaExclamationTriangle /> Duplicates <a href="https://github.com/lefnire/gnothi/issues/20" target="_blank">bug</a>! Pick the one that's correct.</div>
-      {dupes[f.id].map((fe) => (
-        <div key={fe.id} className='bottom-margin'>
-          <Button variant='outline-dark' size='sm' onClick={() => pickDupe(fe)}>Pick</Button>{' '}
-          {f.type === 'check' ? (fe.value === 1 ? 'Yes' : 'No')
-              : fe.value
-          }
-        </div>
-      ))}
+      {renderDupe(fe)}
+      {fe.dupes.map(renderDupe)}
     </Alert>
   }
 
@@ -203,10 +201,11 @@ export default function Fields() {
     const c2 = {xs: 5}
     const c3 = {xs: 2}
     const colStyle = {style: {padding: 3}}
-    const n_dupes = dupes[f.id] ? dupes[f.id].length : 0
+    const fe = fieldEntries[f.id]
+    const n_dupes = _.get(fe, 'dupes.length', 0)
     return (
       <Row
-        key={`${f.id}-${n_dupes}`}
+        key={`${f.id}-${cacheBust}`}
         style={rowStyle}
       >
         <Col
@@ -219,8 +218,8 @@ export default function Fields() {
         </Col>
         <Col {...c2} {...colStyle}>
           {n_dupes > 1
-            ? renderDupes(f)
-            : renderFieldEntry(f, fieldEntries[f.id])
+            ? renderDupes(f, fe)
+            : renderFieldEntry(f, fe)
           }
         </Col>
         <Col {...c3} {...colStyle}>

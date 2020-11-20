@@ -16,6 +16,7 @@ from sqlalchemy import text as satext, Column, Integer, Enum, Float, ForeignKey,
 from psycopg2.extras import Json as jsonb
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship, backref, object_session, column_property
+from sqlalchemy.dialects import postgresql
 from sqlalchemy.dialects.postgresql import UUID, JSONB, ARRAY
 from sqlalchemy_utils.types import EmailType
 from sqlalchemy_utils.types.encrypted.encrypted_type import StringEncryptedType, FernetEngine
@@ -45,11 +46,13 @@ def Encrypt(Col=Unicode, array=False, **args):
     return Column(enc, **args)
 
 # TODO should all date-cols be index=True? (eg sorting, filtering)
-def DateCol(default=True, update=False):
+def DateCol(default=True, update=False, **kwargs):
     args = {}
-    if default: args['server_default'] = satext(utcnow)
-    if update: args['onupdate'] = satext(utcnow)
-    return Column(TIMESTAMP(timezone=True), index=True, **args)
+    # Using utcnow here caused double utc (add more hours), why? Just using now() for now,
+    # and assuming you're DB server is set on UTC
+    if default: args['server_default'] = satext("now()")
+    if update: args['onupdate'] = satext("now()")
+    return Column(TIMESTAMP(timezone=True), index=True, **args, **kwargs)
 
 def IDCol():
     return Column(UUID(as_uuid=True), primary_key=True, server_default=satext("uuid_generate_v4()"))
@@ -143,10 +146,18 @@ class User(Base, SQLAlchemyBaseUserTable):
         """).fetchone().mins or 99
 
     @staticmethod
+    def tz(sess, user_id):
+        return sess.execute(satext(f"""
+        select coalesce(timezone, 'America/Los_Angeles') as tz
+        from users where id=:user_id
+        """), dict(user_id=user_id)).fetchone().tz
+
+    # TODO remove this method & callers, rely all timezone logic on SQL
+    @staticmethod
     def timezoned(
-        date: Union[datetime.datetime, str]=None,
-        user: BaseModel=None,
-        user_id: Union[str, UUID4]=None
+        date: Union[datetime.datetime, str] = None,
+        user: BaseModel = None,
+        user_id: Union[str, UUID4] = None
     ):
         """
         Converts a date to this user's timezone
@@ -465,8 +476,8 @@ class Field(Base):
     def update_avg(fid):
         db.session.execute(satext("""
         update fields set avg=(
-            select avg(value) from field_entries fe
-            where fe.field_id=:fid
+            select avg(value) from field_entries2 fe
+            where fe.field_id=:fid and fe.value is not null
         ) where id=:fid
         """), dict(fid=fid))
         db.session.commit()
@@ -517,29 +528,82 @@ class SOField(SOut):
 SOFields = Dict[UUID4, SOField]
 
 
-class FieldEntry(Base):
+class FieldEntryOld(Base):
+    """
+    This is a broken table. Didn't have the right constraints and resulted in
+    tons of duplicates which needed cleaning up (#20). Will remove this eventually
+    and rename field_entries2 & its constraints.
+    """
     __tablename__ = 'field_entries'
     id = IDCol()
-    value = Column(Float)  # TODO Can everything be a number? reconsider
+    value = Column(Float)
     created_at = DateCol()
-
     user_id = FKCol('users.id', index=True)
-    field_id = FKCol('fields.id')  # TODO index=True?
+    field_id = FKCol('fields.id')
+
+
+at_tz = "at time zone :tz"
+class FieldEntry(Base):
+    __tablename__ = 'field_entries2'
+    # day & field_id may be queries independently, so compound primary-key not enough - index too
+    field_id = FKCol('fields.id', primary_key=True, index=True)
+    day = Column(Date, primary_key=True, index=True)
+
+    created_at = DateCol()
+    value = Column(Float)  # Later consider more storage options than float
+    user_id = FKCol('users.id', index=True)
+
+    # remove these after duplicates bug handled
+    dupes = Column(JSONB)
+    dupe = Column(Integer, server_default="0")
 
     @staticmethod
-    def get_day_entries(user_id, day=None, field_id=None):
-        day, tz = User.timezoned(date=day, user_id=user_id)
-        timezoned = func.Date(func.timezone(tz, FieldEntry.created_at))
+    def get_day_entries(sess, user_id, day=None):
+        user_id = str(user_id)
+        tz = User.tz(sess, user_id)
+        res = sess.execute(satext(f"""
+        select fe.* from field_entries2 fe
+        where fe.user_id=:user_id
+        -- use created_at rather than day in case they switch timezones
+        and date(fe.created_at {at_tz})=
+            date(coalesce(:day ::timestamp, now()) {at_tz})
+        """), dict(user_id=user_id, day=day, tz=tz))
+        return res.fetchall()
 
-        q = db.session.query(FieldEntry)\
-            .filter(FieldEntry.user_id == user_id, timezoned == day.date())
-        if field_id:
-            q = q.filter(FieldEntry.field_id == field_id)
-        return q
+    @staticmethod
+    def upsert(sess, user_id, field_id, value, day:str=None):
+        """
+        Create a field-entry, but if one exists for the specified day update it instead.
+        """
+        # Timezone-handling is very complicated. Defer as much to Postgres (rather than Python) to keep
+        # to one system as much as possible. Below says "if they said a day (like '2020-11-19'), convert that
+        # to a timestamp at UTC; then convert that to their own timezone". timestamptz cast first is important, see
+        # https://stackoverflow.com/a/25123558/362790
+        tz = User.tz(sess, user_id)
+        time_at = f"coalesce(:day ::timestamp, now()) {at_tz}"
+        res = sess.execute(satext(f"""
+        insert into field_entries2 (user_id, field_id, value, day, created_at)
+        values (:user_id, :field_id, :value, date({time_at}), {time_at})
+        on conflict (field_id, day) do update set value=:value, dupes=null, dupe=0
+        returning *
+        """), dict(
+            field_id=field_id,
+            value=float(value),
+            user_id=user_id,
+            day=day,
+            tz=tz
+        ))
+        sess.commit()
+        return res.fetchone()
 
 
 class SIFieldEntry(BaseModel):
     value: float
+
+
+class SIFieldEntryPick(BaseModel):
+    value: float
+    day: str
 
 
 class Person(Base):
