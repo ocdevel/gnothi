@@ -159,13 +159,7 @@ class Fixtures():
                     """), dict(c=created_at, feid=feid))
                     db.commit()
                 else:
-                    db.add(M.FieldEntry(
-                        field_id=fid,
-                        user_id=uid,
-                        value=value,
-                        created_at=created_at
-                    ))
-                    db.commit()
+                    M.FieldEntry.upsert(db, uid, fid, value, str(created_at.date()))
 
     def load_xgb_hypers(self, uid):
         if not USE: return

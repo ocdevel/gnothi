@@ -3,6 +3,7 @@ from dateutil.parser import parse as dparse
 from common.utils import is_dev, vars, utcnow
 from common.database import session
 import common.models as M
+from sqlalchemy import text
 from fastapi_sqlalchemy import db
 import logging
 logger = logging.getLogger(__name__)
@@ -29,10 +30,11 @@ def sync_for(user):
         headers=headers
     ).json()['data']
 
-    lastCron = dparse(huser['lastCron'])
-    logger.info("Habitica finished")
-
-    fes = M.FieldEntry.get_day_entries(db.session, user.id, day=lastCron)
+    # Use SQL to determine day, so not managing timezones in python + sql
+    tz = M.User.tz(db.session, user.id)
+    last_cron = db.session.execute(text("""
+    select date(:lastCron ::timestamptz at time zone :tz)::text last_cron
+    """), dict(lastCron=huser['last'], tz=tz)).fetchone().last_cron
 
     f_map = {f.service_id: f for f in user.fields}
     t_map = {task['id']: task for task in tasks}
@@ -85,8 +87,7 @@ def sync_for(user):
             if (not task['completed']) and any(c['completed'] for c in cl):
                 value = sum(c['completed'] for c in cl) / len(cl)
 
-        # TODO ensure lastCron parses correctly in downstream SQL
-        M.FieldEntry.upsert(db.session, user_id=user.id, field_id=f.id, value=value, day=lastCron)
+        M.FieldEntry.upsert(db.session, user_id=user.id, field_id=f.id, value=value, day=last_cron)
         logger.info(task['text'] + " done")
 
 
