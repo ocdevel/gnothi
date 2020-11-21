@@ -1,5 +1,6 @@
 import React, {useEffect, useState, useCallback} from "react";
 import {SimplePopover, spinner} from "../utils";
+import {API_URL, setServerError} from '../redux/actions'
 import _ from "lodash";
 import {
   Accordion,
@@ -9,7 +10,7 @@ import {
   Row,
   Col,
   ButtonGroup,
-  Alert
+  Alert, Modal
 } from "react-bootstrap";
 import ReactStars from "react-stars";
 import SetupHabitica from "./SetupHabitica";
@@ -22,12 +23,110 @@ import { useSelector, useDispatch } from 'react-redux'
 import { fetch_, getFields } from '../redux/actions'
 import './Fields.css'
 import {FaChartLine, FaExclamationTriangle} from "react-icons/all";
+import axios from "axios";
+import fileDownload from 'js-file-download';
 
 const fmt = 'YYYY-MM-DD'
 const iso = (day=null) => {
   const m = day ? moment(day) : moment()
   return m.format(fmt)
 }
+
+
+function FieldsAdvanced({fetchFieldEntries}) {
+  const [hasDupes, setHasDupes] = useState(false)
+  const [confirmWipe, setConfirmWipe] = useState('')
+  const dispatch = useDispatch()
+  const jwt = useSelector(state => state.jwt)
+
+  useEffect(() => {
+    fetchHasDupes()
+  }, [])
+
+  async function fetchHasDupes() {
+    const {data} = await dispatch(fetch_('field-entries/has-dupes'))
+    setHasDupes(!!data)
+  }
+
+  async function downloadCsv(version) {
+    // TODO refactor this into actions.js/fetch_
+    const obj = {
+      method: 'get',
+      url: `${API_URL}/field-entries/csv/${version}`,
+      headers: {'Authorization' : `Bearer ${jwt}`},
+      responseType: 'blob',
+    }
+
+    try {
+      const {data} = await axios(obj)
+      const fname = {'new': 'field_entries', 'old': 'field_entries_old'}[version]
+      fileDownload(data, `${fname}.csv`);
+    } catch (error) {
+      let {statusText: message, data} = error.response
+      message = data.detail || message || "There was an error"
+      dispatch(setServerError(message))
+    }
+  }
+
+  async function acceptDupes() {
+    await dispatch(fetch_('field-entries/clear-dupes', 'post'))
+    await fetchHasDupes()
+    fetchFieldEntries()
+  }
+
+  async function startOver() {
+    await dispatch(fetch_('field-entries/clear-entries', 'post'))
+    await fetchHasDupes()
+    fetchFieldEntries()
+  }
+
+  function changeConfirmWipe(e) {
+    setConfirmWipe(e.target.value)
+  }
+
+  const btnOpts = {size: 'sm', variant: 'outline-primary', className: 'fields-adv-btn top-margin'}
+
+  return <div>
+    <Button
+      {...btnOpts}
+      onClick={() => downloadCsv('new')}
+    >Download field_entries.csv</Button>
+    <Form.Text>Export your field-entries to CSV</Form.Text>
+    <hr/>
+    {hasDupes && <>
+      <Alert variant='warning'>
+        <Form.Text>Your field entries were effected by the <a href='https://github.com/lefnire/gnothi/issues/20' target='_blank'>duplicates bug</a>. See that link for details and what to do.</Form.Text>
+
+      <Button
+        {...btnOpts}
+        onClick={() => downloadCsv('old')}
+      >Download field_entries_old.csv</Button>
+      <Form.Text>Export your original field-entries (before duplicates were fixed) to CSV</Form.Text>
+      <Button
+        {...btnOpts}
+        variant='outline-danger'
+        onClick={acceptDupes}
+      >Accept Gnothi's fix</Button>
+      <Form.Text>You can click through each day to find duplicates and select the correct entry, or click this to accept Gnothi's chose duplicate fixes for all days.</Form.Text>
+      </Alert>
+    </>}
+    <Button
+      {...btnOpts}
+      disabled={confirmWipe !== 'wipe field entries'}
+      variant='outline-danger'
+      onClick={startOver}
+    >Start Over</Button>
+    <Form.Control
+      type="text"
+      size='sm'
+      placeholder="wipe field entries"
+      value={confirmWipe}
+      onChange={changeConfirmWipe}
+    />
+    <Form.Text>Wipe field entries for all days and start from scratch (keeping the fields, just clearing their entries). Enable the button by typing in the text-field "wipe field entries". <a href="https://github.com/lefnire/gnothi/issues/114" target="_blank">Why do this?</a></Form.Text>
+  </div>
+}
+
 
 export default function Fields() {
   const [day, setDay] = useState(iso())
@@ -188,6 +287,8 @@ export default function Fields() {
     </Alert>
   }
 
+
+
   const renderField = (f) => {
     let rowStyle = {width: '100%', margin: 0}
     if (f.excluded_at) {
@@ -275,6 +376,11 @@ export default function Fields() {
     emptyText: () => <small className='text-muted'>
       <p>If you stop tracking a field, but keep it around just in case, click "Remove" and it will show up here.</p>
     </small>
+  }, {
+    service: 'advanced',
+    name: 'Advanced',
+    fields: [],
+    emptyText: () => <FieldsAdvanced fetchFieldEntries={fetchFieldEntries} />
   }]
 
   const renderButtons = g => {

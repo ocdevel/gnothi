@@ -11,6 +11,8 @@ if (~host.indexOf('gnothi')) { // prod
   host = 'http://localhost:5002'
 }
 
+export const API_URL = host;
+
 export const SET_SERVER_ERROR = "SET_SERVER_ERROR"
 export function setServerError(payload) {
   return {

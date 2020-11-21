@@ -1,4 +1,4 @@
-import pdb, re, datetime, logging, boto3, pytz
+import pdb, re, datetime, logging, boto3, io
 import shortuuid
 import dateutil.parser
 from typing import List, Dict, Any
@@ -13,7 +13,8 @@ from app import habitica
 from app import ml
 from urllib.parse import quote as urlencode
 from app.google_analytics import ga
-
+import pandas as pd
+from fastapi.responses import StreamingResponse
 
 logger = logging.getLogger(__name__)
 
@@ -463,6 +464,77 @@ def field_entries_get(
     if snooping and not user.share_data.fields:
         return cant_snoop('Fields')
     return M.FieldEntry.get_day_entries(db.session, user.id, day=day)
+
+
+# Note: field-entries/action need to come before field-entries/{field_id}
+
+@app.get('/field-entries/has-dupes')
+def field_entries_has_dupes_get(
+    as_user: str = None,
+    viewer: M.User = Depends(fastapi_users.get_current_user)
+):
+    user, snooping = getuser(viewer, as_user)
+    if snooping: return cant_snoop('Fields')
+    return db.session.execute(text("""
+    select 1 has_dupes from field_entries2 where user_id=:uid and dupes is not null limit 1
+    """), dict(uid=viewer.id)).fetchone()
+
+
+@app.post('/field-entries/clear-dupes')
+def field_entries_clear_dupes_post(
+    as_user: str = None,
+    viewer: M.User = Depends(fastapi_users.get_current_user)
+):
+    user, snooping = getuser(viewer, as_user)
+    if snooping: return cant_snoop('Fields')
+    db.session.execute(text("""
+    delete from field_entries where user_id=:uid;
+    update field_entries2 set dupes=null, dupe=0 where user_id=:uid
+    """), dict(uid=viewer.id))
+    db.session.commit()
+    return {}
+
+@app.post('/field-entries/clear-entries')
+def field_entries_clear_entries_post(
+    as_user: str = None,
+    viewer: M.User = Depends(fastapi_users.get_current_user)
+):
+    user, snooping = getuser(viewer, as_user)
+    if snooping: return cant_snoop('Fields')
+    db.session.execute(text("""
+    delete from field_entries where user_id=:uid;
+    delete from field_entries2 where user_id=:uid;
+    """), dict(uid=viewer.id))
+    db.session.commit()
+    return {}
+
+
+@app.get('/field-entries/csv/{version}')
+def field_entries_csv(
+    version: str,
+    as_user: str = None,
+    viewer: M.User = Depends(fastapi_users.get_current_user)
+):
+    user, snooping = getuser(viewer, as_user)
+    if snooping: return cant_snoop('Fields')
+    if version not in ('new', 'old'):
+        return send_error("table must be in (new|old)")
+
+    m = {'new': M.FieldEntry, 'old': M.FieldEntryOld}[version]
+    # Can't make direct query, since need field-name decrypted via sqlalchemy
+    # https://stackoverflow.com/a/31300355/362790 - load_only from joined tables
+    rows = db.session.query(m.created_at, m.value, M.Field)\
+        .filter(m.user_id==viewer.id)\
+        .join(M.Field, M.Field.id==m.field_id)\
+        .order_by(m.created_at.asc())\
+        .all()
+    # https://stackoverflow.com/a/61910803/362790
+    df = pd.DataFrame([
+        dict(name=f.name, date=date, value=value, type=f.type, excluded_at=f.excluded_at,
+             default_value=f.default_value, default_value_value=f.default_value_value, service=f.service)
+        for (date, value, f) in rows
+    ])
+    return StreamingResponse(io.StringIO(df.to_csv(index=False)), media_type="text/csv")
 
 
 @app.post('/field-entries/{field_id}')

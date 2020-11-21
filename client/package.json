@@ -8,6 +8,7 @@
     "@testing-library/user-event": "^7.1.2",
     "axios": "^0.19.2",
     "bootstrap": "^4.4.1",
+    "js-file-download": "^0.4.12",
     "lodash": "^4.17.15",
     "markdown-it": "^11.0.0",
     "matchmedia-polyfill": "^0.3.2",
