@@ -87,10 +87,10 @@ export default function Sidebar() {
                 <FaMap /> <a href="https://github.com/lefnire/gnothi/projects/1" target="_blank">Roadmap</a>{' '}
                 <small className='text-muted'>See what I'm working on now and in the future</small>
               </li>
-              <li>
+              {/*<li>
                 <FaDollarSign /> <a href="https://github.com/lefnire/gnothi/issues/96" target="_blank">Support</a>{' '}
                 <small className='text-muted'>How to support the project</small>
-              </li>
+              </li>*/}
             </ul>
 
             <h5>Feedback</h5>
@@ -148,5 +148,17 @@ export default function Sidebar() {
         </Accordion.Collapse>
       </Card>
     </Accordion>
+
+    <Card className='top-margin'>
+      <Card.Body>
+        <Card.Text>
+          Support Gnothi's development by becoming a Github Sponsor!
+        </Card.Text>
+        <iframe src="https://github.com/sponsors/lefnire/button" title="Support Gnothi" className='sponsor-button' height="35" width="116"></iframe>
+      </Card.Body>
+      {/*<a id="PC9631" href="https://thegreatcourses.7eer.net/c/358692/167386/2997?prodsku=PC9631&u=https%3A%2F%2Fwww.thegreatcourses.com%2Fcognitive-behavioral-therapy-techniques-for-retraining-your-brain.html%3Fai%3D107119&intsrc=PUI1_1204" target="_top">
+        <Card.Img variant="top" src="https://www.thegreatcourses.com/media/catalog/product/9/6/9631---packaging_flat.jpg" className='advertisement'/>
+      </a>*/}
+    </Card>
   </>
 }

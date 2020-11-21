@@ -15,3 +15,13 @@
   width    : 100%;
   height   : 2em;
 }
+
+.sponsor-button {
+  border: 0;
+}
+
+.advertisement {
+  max-width: 400px;
+  margin: 0 auto;
+  display: block;
+}
