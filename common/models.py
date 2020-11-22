@@ -1055,6 +1055,19 @@ class Influencer(Base):
     score = Column(Float, nullable=False)
 
 
+class ModelHypers(Base):
+    __tablename__ = 'model_hypers'
+    id = IDCol()
+    model = Column(Unicode, nullable=False, index=True)
+    model_version = Column(Integer, nullable=False, index=True)
+    user_id = FKCol('users.id')
+    created_at = DateCol()
+    score = Column(Float, nullable=False)
+    hypers = Column(JSONB, nullable=False)
+    meta = Column(JSONB)  # for xgboost it's {n_rows, n_cols}
+
+
+
 def await_row(sess, sql, args={}, wait=.5, timeout=None):
     i = 0
     while True:

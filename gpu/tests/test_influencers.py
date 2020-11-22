@@ -2,11 +2,20 @@ import random, datetime, pytest
 import common.models as M
 from app.influencers import influencers
 from common.fixtures import fixtures
+from app.xgb import MyXGB
+from sqlalchemy import text
 
 
 @pytest.fixture(scope='module', autouse=True)
 def setup_fields(main_uid, db):
     fixtures.submit_fields(main_uid, db)
+
+def run_influencers(db):
+    db.execute("""
+    update users set updated_at=now(), last_influencers=now() - interval '25 hours';
+    """)
+    db.commit()
+    influencers()
 
 def test_stale_user(db):
     db.execute("""
@@ -29,18 +38,10 @@ def test_already_ran(db):
 
 
 def test_influencers(main_uid, db):
-    db.execute("""
-    update users set updated_at=now(), last_influencers=now() - interval '25 hours';
-    """)
-    db.commit()
-    influencers()
+    run_influencers(db)
 
     # Test duplicate key bug
-    db.execute("""
-    update users set updated_at=now(), last_influencers=now() - interval '25 hours';
-    """)
-    db.commit()
-    influencers()
+    run_influencers(db)
 
     # check output
     user = db.query(M.User).get(main_uid)
@@ -67,6 +68,39 @@ def test_influencers(main_uid, db):
         score_total += i.score
         assert i.score is not None
     assert score_total
+
+
+@pytest.mark.parametrize("n_days", [0, MyXGB.too_small - 2, 100])  # no run, small_params, standard
+def test_hyper_caching(n_days, main_uid, db):
+    db.execute("delete from model_hypers;delete from fields")
+    db.commit()
+
+    def ct_hypers():
+        return db.execute(text("""
+        select count(*) ct from model_hypers where user_id=:uid
+        """), dict(uid=main_uid)).fetchone().ct
+
+    fixtures.submit_fields(main_uid, db, n_days=n_days)
+    assert ct_hypers() == 0
+    run_influencers(db)
+    if n_days < MyXGB.too_small:
+        assert ct_hypers() == 0
+        return
+
+    assert ct_hypers() == 1
+    run_influencers(db)
+    assert ct_hypers() == 2
+    run_influencers(db)
+    run_influencers(db)
+    run_influencers(db)
+    assert ct_hypers() == 3
+
+    db.execute("update model_hypers set model_version=999")
+    db.commit()
+    run_influencers(db)
+    assert ct_hypers() == 1
+
+
 
 # TODO test corrupt data (lots of nulls, new fields, etc)
 # TODO no field-entries

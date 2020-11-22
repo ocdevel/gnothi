@@ -13,10 +13,19 @@ import numpy as np
 import xgboost as xgb
 from sklearn.model_selection import train_test_split
 from collections import OrderedDict
+from common.utils import is_test
+
+class EarlyStoppingExceeded(Exception):
+    pass
+
+
 
 
 class MyXGB:
-    n_trials = 300
+    n_trials = 50 if is_test() else 300
+    version = 1
+    too_small = 20
+    early_stop_at = 10
 
     base_params = {
         "verbosity": 0,
@@ -40,10 +49,15 @@ class MyXGB:
         "lambda": 0.5
     }
 
-    def __init__(self, x, y):
+    def __init__(self, x, y, enqueue=[], beat_this=None):
         self.x = x
         self.y = y
-        self.best_params = {}
+
+        self.enqueue=enqueue
+        self.best_params = self.small_params
+        self.best_value = None
+        self.early_stop_i = 0
+        self.beat_this = beat_this
 
 
     @staticmethod
@@ -76,6 +90,16 @@ class MyXGB:
             cols[idx], imps[idx].tolist()
         ))
 
+    def early_stop(self, study, trial):
+        # https://github.com/optuna/optuna/issues/1001#issuecomment-596478792
+        if self.beat_this is None:
+            # not working with previous best to compare against for early-stopping
+            return
+        if self.early_stop_i > self.early_stop_at:
+            raise EarlyStoppingExceeded()
+        good_enough = round(study.best_value, 3) <= round(self.beat_this, 3)
+        if good_enough or self.early_stop_i > 0:
+            self.early_stop_i += + 1
 
     # FYI: Objective functions can take additional arguments
     # (https://optuna.readthedocs.io/en/stable/faq.html#objective-func-additional-args).
@@ -129,13 +153,16 @@ class MyXGB:
         return best_score
 
     def optimize(self):
-        if self.x.shape[0] < 30:
-            self.best_params = self.small_params
+        if self.x.shape[0] < self.too_small:
             return
         study = optuna.create_study()
         study.enqueue_trial(self.small_params)
-        study.optimize(self.objective, n_trials=self.n_trials, n_jobs=-1) #, timeout=600)
-        self.best_params = study.best_params
+        for e in self.enqueue:
+            study.enqueue_trial(e)
+        try:
+            study.optimize(self.objective, n_trials=self.n_trials, n_jobs=-1, callbacks=[self.early_stop]) #, timeout=600)
+        except EarlyStoppingExceeded: pass
+        self.best_value, self.best_params = study.best_value, study.best_params
 
     def train(self, x, y):
         x_train, x_val, y_train, y_val = train_test_split(x, y, test_size=0.3)

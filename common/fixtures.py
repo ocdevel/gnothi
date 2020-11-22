@@ -116,7 +116,7 @@ class Fixtures():
             select title from entries where id=:eid
             """), dict(eid=eid)).fetchone().title
 
-    def submit_fields(self, uid, db, client=None, header=None):
+    def submit_fields(self, uid, db, client=None, header=None, n_days=20):
         if not USE: return
         # if sess, it's coming from GPU: save to DB. If client, coming from server: POST.
         for i in list(range(10)):
@@ -139,7 +139,6 @@ class Fixtures():
 
             # create field-entries for x days
             # stagger range() as if we're creating new fields each day
-            n_days = 20
             for d in range(n_days - i):
                 # leave some nulls in there
                 if random.randint(0, 4) == 0: continue

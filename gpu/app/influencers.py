@@ -13,6 +13,17 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+def good_target(fes, fs):
+    # Find a good target to hyper-opt against, will use the same hypers for all targets
+    gt, nulls = None, None
+    for t in fs.keys():
+        nulls_ = fes[t].isnull().sum()
+        if gt is None or nulls_ < nulls:
+            gt, nulls = t, nulls_
+    # print(gt, nulls)
+    return gt
+
+
 def impute_and_roll(fes, fs):
     """Call this per field where past of nulls is removed"""
     for fid in fes.columns:
@@ -42,38 +53,37 @@ def impute_and_roll(fes, fs):
 
 # TODO put fixtures.load_xgb_hypers back
 
-def load_data(user_id):
-    with session() as sess:
-        fes = pd.read_sql("""
-        -- ensure enough data
-        with fe_ct as (
-          select field_id from field_entries2 
-          group by field_id having count(value) > 5
-        )
-        select  
-          fe.day, -- index 
-          fe.field_id::text, -- column, uuid->string
-          fe.value -- value
-        from field_entries2 fe
-        inner join fe_ct on fe_ct.field_id=fe.field_id  -- just removes rows
-        inner join fields f on f.id=fe.field_id -- ensure field still exists? (cascade should be fine, remove?)
-        where f.user_id=%(uid)s
-          and f.excluded_at is null
-        order by fe.day asc
-        """, sess.bind, params={'uid': user_id})
-        if not fes.size: return None  # not enough entries
+def load_data(sess, user_id):
+    fes = pd.read_sql("""
+    -- ensure enough data
+    with fe_ct as (
+      select field_id from field_entries2 
+      group by field_id having count(value) > 5
+    )
+    select  
+      fe.day, -- index 
+      fe.field_id::text, -- column, uuid->string
+      fe.value -- value
+    from field_entries2 fe
+    inner join fe_ct on fe_ct.field_id=fe.field_id  -- just removes rows
+    inner join fields f on f.id=fe.field_id -- ensure field still exists? (cascade should be fine, remove?)
+    where f.user_id=%(uid)s
+      and f.excluded_at is null
+    order by fe.day asc
+    """, sess.bind, params={'uid': user_id})
+    if not fes.size: return None  # not enough entries
 
-        params = dict(
-            uid=user_id,
-            fids=tuple(fes.field_id.unique().tolist())
-        )
-        fs = pd.read_sql("""
-        select id::text, default_value, default_value_value
-        from fields
-        where user_id=%(uid)s
-            and id in %(fids)s
-            and excluded_at is null
-        """, sess.bind, params=params)
+    params = dict(
+        uid=user_id,
+        fids=tuple(fes.field_id.unique().tolist())
+    )
+    fs = pd.read_sql("""
+    select id::text, default_value, default_value_value
+    from fields
+    where user_id=%(uid)s
+        and id in %(fids)s
+        and excluded_at is null
+    """, sess.bind, params=params)
 
     fs = {r.id: r for i, r in fs.iterrows()}
 
@@ -87,10 +97,42 @@ def load_data(user_id):
     return fs, fes
 
 
-def influencers_(user_id):
+def get_prev_best(sess, user_id):
+    """
+    get x previous best hyper-runs for this user
+    """
+    # Ensure previous hyper-runs are up-to-date
+    sess.execute(text("""
+    delete from model_hypers where model='influencers' and model_version != :version 
+    """), dict(version=MyXGB.version))
+    sess.commit()
+
+    prev_best = sess.execute(text("""
+    select score, hypers from model_hypers where user_id=:uid and model='influencers'
+    order by created_at desc -- will use to delete oldest
+    """), dict(uid=user_id)).fetchall()
+
+    # clear older runs
+    sess.execute(text("""
+    with hypers_ as (
+        select id from model_hypers where user_id=:uid and model='influencers'
+        order by created_at desc
+        limit 2
+    ) delete from model_hypers where user_id=:uid and model='influencers' and id not in (select id from hypers_)
+    """), dict(uid=user_id))
+    sess.commit()
+
+    if prev_best:
+        return min([e.score for e in prev_best]), \
+               [p.hypers for p in prev_best]
+    else:
+        return None
+
+
+def influencers_(sess, user_id):
     logging.info("Influencers")
 
-    data = load_data(user_id)
+    data = load_data(sess, user_id)
     if not data: return
     fs, fes = data
     # fes = fes.resample('D')
@@ -98,8 +140,20 @@ def influencers_(user_id):
 
     x, y = fes, good_target(fes, fs)
     x, y = x.drop(columns=[y]), x[y]
-    xgb_ = MyXGB(x, y)
+    xgb_args = {}
+    prev_best = get_prev_best(sess, user_id)
+    if prev_best:
+        xgb_args['beat_this'] = prev_best[0]
+        xgb_args['enqueue'] = prev_best[1]
+    xgb_ = MyXGB(x, y, **xgb_args)
     xgb_.optimize()
+    score, hypers = xgb_.best_value, xgb_.best_params
+    # save hypers & score for later enqueue_trial (see get_prev_best)
+    if x.shape[0] > MyXGB.too_small:
+        meta = dict(n_rows=x.shape[0], n_cols=x.shape[1])
+        sess.add(M.ModelHypers(model='influencers', model_version=xgb_.version, user_id=user_id, score=score,
+            hypers=hypers, meta=meta))
+        sess.commit()
 
     next_preds = {}
     importances = {}
@@ -152,7 +206,7 @@ def influencers():
             """), uid_)
             sess.commit()
 
-            res = influencers_(u.id)
+            res = influencers_(sess, u.id)
             if not res: continue
 
             # A field can get deleted while running XGB, causing a fkey constraint error.
@@ -184,13 +238,8 @@ def influencers():
 
     return {}
 
-
-def good_target(fes, fs):
-    # Find a good target to hyper-opt against, will use the same hypers for all targets
-    good_target, nulls = None, None
-    for t in fs.keys():
-        nulls_ = fes[t].isnull().sum()
-        if good_target is None or nulls_ < nulls:
-            good_target, nulls = t, nulls_
-    # print(good_target, nulls)
-    return good_target
+if __name__ == '__main__':
+    from common.database import init_db
+    init_db()
+    engine.execute("update users set last_influencers=null where email='tylerrenelle@gmail.com'")
+    influencers()
