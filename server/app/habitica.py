@@ -88,6 +88,7 @@ def sync_for(user):
                 value = sum(c['completed'] for c in cl) / len(cl)
 
         M.FieldEntry.upsert(db.session, user_id=user.id, field_id=f.id, value=value, day=last_cron)
+        M.Field.update_avg(f.id)
         logger.info(task['text'] + " done")
 
 
