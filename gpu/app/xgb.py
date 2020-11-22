@@ -19,10 +19,8 @@ class EarlyStoppingExceeded(Exception):
     pass
 
 
-
-
 class MyXGB:
-    n_trials = 50 if is_test() else 300
+    n_trials = 50 if is_test() else 150
     version = 1
     too_small = 20
     early_stop_at = 10

@@ -109,7 +109,6 @@ def get_prev_best(sess, user_id):
 
     prev_best = sess.execute(text("""
     select score, hypers from model_hypers where user_id=:uid and model='influencers'
-    order by created_at desc -- will use to delete oldest
     """), dict(uid=user_id)).fetchall()
 
     # clear older runs
@@ -147,9 +146,9 @@ def influencers_(sess, user_id):
         xgb_args['enqueue'] = prev_best[1]
     xgb_ = MyXGB(x, y, **xgb_args)
     xgb_.optimize()
-    score, hypers = xgb_.best_value, xgb_.best_params
     # save hypers & score for later enqueue_trial (see get_prev_best)
     if x.shape[0] > MyXGB.too_small:
+        score, hypers = xgb_.best_value, xgb_.best_params
         meta = dict(n_rows=x.shape[0], n_cols=x.shape[1])
         sess.add(M.ModelHypers(model='influencers', model_version=xgb_.version, user_id=user_id, score=score,
             hypers=hypers, meta=meta))
@@ -237,9 +236,3 @@ def influencers():
                 sess.commit()
 
     return {}
-
-if __name__ == '__main__':
-    from common.database import init_db
-    init_db()
-    engine.execute("update users set last_influencers=null where email='tylerrenelle@gmail.com'")
-    influencers()
