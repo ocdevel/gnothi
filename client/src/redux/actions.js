@@ -23,13 +23,27 @@ export function setServerError(payload) {
 
 // Every fetch (except jobs-status) will check the user in, so debounce it a bit since
 // we're often fetching a ton at once
-const checkin = _.debounce((headers) => {
+const checkin = _.debounce((dispatch, headers) => {
   axios({
     method: 'GET',
     url: `${host}/user/checkin`,
     headers
   })
 }, 1000)
+
+const refreshToken = async (dispatch) => {
+  try {
+    const {data} = await axios({
+      method: 'POST',
+      url: `${host}/auth/refresh`,
+      headers: {'Authorization': `Bearer ${localStorage.getItem('refresh_token')}`}
+    })
+    await dispatch(onAuth(data))
+    return data.access_token
+  } catch (error) {
+    return false
+  }
+}
 
 export const FETCH = "FETCH"
 export const fetch_ = (
@@ -38,7 +52,7 @@ export const fetch_ = (
   body=null,
   headers={}
 ) => async (dispatch, getState) => {
-  const {jwt, user, as} = getState()
+  let {jwt, user, as} = getState()
   const obj = {
     method,
     headers: {'Content-Type': 'application/json', ...headers},
@@ -53,7 +67,9 @@ export const fetch_ = (
   }
   obj['url'] = url
 
-  if (route !== 'jobs-status') { checkin(obj.headers) }
+  if (route !== 'jobs-status') {
+    checkin(dispatch, obj.headers)
+  }
 
   try {
     const {status: code, data} = await axios(obj)
@@ -61,6 +77,19 @@ export const fetch_ = (
   } catch (error) {
     let {status: code, statusText: message, data} = error.response
     message = data.detail || message || "There was an error"
+
+    if (code === 400 && message === 'JWT error') {
+      // try refreshing the token, then try again
+      jwt = await refreshToken(dispatch)
+      if (jwt) {
+        obj['headers']['Authorization'] = `Bearer ${jwt}`
+        try {
+          const {status: code, data} = await axios(obj)
+          return {code, data}
+        } catch {}
+      }
+    }
+
     // Show errors, but not for 401 (we simply restrict access to components)
     if (code >= 400 && code !== 401) {
       dispatch(setServerError(message))
@@ -100,9 +129,10 @@ export const getUser = () => async (dispatch, getState) => {
 }
 
 export const SET_JWT = "SET_JWT"
-export const setJwt = (payload) => {
-  localStorage.setItem('jwt', payload)
-  return {type: SET_JWT, payload}
+export const setJwt = ({access_token, refresh_token}) => {
+  localStorage.setItem('access_token', access_token)
+  if (refresh_token) {localStorage.setItem('refresh_token', refresh_token)}
+  return {type: SET_JWT, access_token}
 }
 export const onAuth = (jwt) => async (dispatch, getState) => {
   dispatch(setJwt(jwt))
@@ -117,6 +147,7 @@ export const changeAs = (as=null) => async (dispatch, getState) => {
 export const SET_AI_STATUS = "SET_AI_STATUS"
 export const setAiStatus = (payload) => ({type: SET_AI_STATUS, payload})
 export const checkAiStatus = () => async (dispatch, getState) => {
+  return
   if (!getState().jwt) {return}
   const {data} = await dispatch(fetch_('jobs-status'))
   dispatch(setAiStatus(data))
