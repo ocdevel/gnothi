@@ -235,6 +235,15 @@ export default function Splash() {
         </Route>
         <Route>
           <Overviews />
+          <hr/>
+          <div className='croesus-container'>
+            <blockquote className="blockquote croesus-blockquote">{/*text-right*/}
+              <p className="mb-0">Croesus inquired of the oracle what to do to live a happy life. The answer was:</p>
+              <p className="mb-0">"Know yourself, O Croesus - thus you will live and be happy."</p>
+              <footer className="blockquote-footer"><cite title="Source Title">(Xenophon, Cyropaedia)</cite>
+              </footer>
+            </blockquote>
+          </div>
         </Route>
       </Switch>
     </Container>
