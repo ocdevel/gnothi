@@ -15,7 +15,7 @@ import {aiStatusEmoji, SimplePopover} from "./utils"
 import {
   FaRobot,
   FaRegListAlt,
-  FaBook,
+  FaBook, FaRegComments,
 } from 'react-icons/fa'
 
 import { useSelector, useDispatch } from 'react-redux'
@@ -97,6 +97,9 @@ export default function MainNav() {
           </LinkContainer>
           <LinkContainer to='/resources'>
             <Nav.Link><FaBook /> Resources</Nav.Link>
+          </LinkContainer>
+          <LinkContainer to='/groups'>
+            <Nav.Link><FaRegComments /> Groups</Nav.Link>
           </LinkContainer>
           {/* Want resources as Resources->[Books|Therapists]? */}
           {/*<NavDropdown title="Resources" id="collasible-nav-dropdown">

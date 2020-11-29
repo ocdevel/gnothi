@@ -31,6 +31,7 @@ import Insights from "./Insights";
 import Tags, {MainTags} from "./Tags";
 import Resources from "./Resources";
 import Entries from "./Entries/Entries";
+import Groups from "./Groups";
 import staticRoutes from "./Static";
 
 function App() {
@@ -91,6 +92,9 @@ function App() {
         </Route>
         <Route path="/account">
           <Account />
+        </Route>
+        <Route path="/groups">
+          <Groups />
         </Route>
         {staticRoutes()}
         <Redirect from="/" to="/j" />

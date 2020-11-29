@@ -1041,13 +1041,6 @@ class CacheUser(Base):
     vectors = Column(ARRAY(Float, dimensions=2))
 
 
-class ProfileMatch(Base):
-    __tablename__ = 'profile_matches'
-    user_id = FKCol('users.id', primary_key=True)
-    match_id = FKCol('users.id', primary_key=True)
-    score = Column(Float, nullable=False)
-
-
 class Influencer(Base):
     __tablename__ = 'influencers'
     field_id = FKCol('fields.id', primary_key=True)
@@ -1065,6 +1058,21 @@ class ModelHypers(Base):
     score = Column(Float, nullable=False)
     hypers = Column(JSONB, nullable=False)
     meta = Column(JSONB)  # for xgboost it's {n_rows, n_cols}
+
+
+class MatchTypes(enum.Enum):
+    users = "users"
+    groups = "groups"
+
+
+class Match(Base):
+    __tablename__ = 'matches'
+    id = IDCol()
+    owner_id = FKCol('users.id', index=True, nullable=False)
+    user_id = FKCol('users.id', index=True)
+    groups_id = FKCol('groups.id', index=True)
+    match_type = Column(Enum(MatchTypes), nullable=False)
+    score = Column(Float, nullable=False)
 
 
 class Group(Base):
@@ -1089,22 +1097,17 @@ class UserGroup(Base):
     user_id = FKCol('users.id', primary_key=True)
     group_id = FKCol('groups.id', primary_key=True)
     username = Encrypt()  # auto-generate a random name
-    score = Column(Float)  # match score. They can have an entry without belonging to group, just to record the score
     joined_at = DateCol()
     role = Column(Enum(GroupRoles))
-
-
-class RecipientTypes(enum.Enum):
-    groups = "groups"
-    users = "users"
 
 
 class Message(Base):
     __tablename__ = 'messages'
     id = IDCol()
+    owner_id = FKCol('users.id', index=True)
     user_id = FKCol('users.id', index=True)
-    recipient_id = Column(Unicode, index=True, nullable=False)
-    recipient_type = Column(Enum(RecipientTypes))
+    group_id = FKCol('groups.id', index=True)
+    recipient_type = Column(Enum(MatchTypes))
     created_at = DateCol()
     updated_at = DateCol(update=True)
     text = Encrypt(Unicode, nullable=False)
@@ -1115,6 +1118,7 @@ class MessagePing(Base):
     user_id = FKCol('users.id', primary_key=True)
     message_id = FKCol('messages.id', primary_key=True)
     created_at = DateCol()
+
 
 class MessageReaction(Base):
     __tablename__ = 'message_reactions'
