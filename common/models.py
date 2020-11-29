@@ -1067,6 +1067,54 @@ class ModelHypers(Base):
     meta = Column(JSONB)  # for xgboost it's {n_rows, n_cols}
 
 
+class Group(Base):
+    __tablename__ = 'groups'
+    id = IDCol()
+    owner = FKCol('users.id', index=True)
+    title = Encrypt(Unicode, nullable=False)
+    text = Encrypt(Unicode, nullable=False)
+    created_at = DateCol()
+    updated_at = DateCol(update=True)
+
+
+class GroupRoles(enum.Enum):
+    member = "member"
+    owner = "owner"
+    admin = "admin"
+
+
+class UserGroup(Base):
+    __tablename__ = 'users_groups'
+    user_id = FKCol('users.id', primary_key=True)
+    group_id = FKCol('groups.id', primary_key=True)
+    username = Encrypt()  # auto-generate a random name
+    score = Column(Float)  # match score. They can have an entry without belonging to group, just to record the score
+    joined_at = DateCol()
+    role = Column(Enum(GroupRoles))
+
+
+class RecipientTypes(enum.Enum):
+    groups = "groups"
+    users = "users"
+
+
+class Message(Base):
+    __tablename__ = 'messages'
+    id = IDCol()
+    user_id = FKCol('users.id', index=True)
+    recipient_id = Column(Unicode, index=True, nullable=False)
+    recipient_type = Column(Enum(RecipientTypes))
+    created_at = DateCol()
+    updated_at = DateCol(update=True)
+    text = Encrypt(Unicode, nullable=False)
+
+
+class MessagePing(Base):
+    __tablename__ = 'message_pings'
+    user_id = FKCol('users.id', primary_key=True)
+    message_id = FKCol('messages.id', primary_key=True)
+    created_at = DateCol()
+
 
 def await_row(sess, sql, args={}, wait=.5, timeout=None):
     i = 0
