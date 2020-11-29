@@ -106,9 +106,7 @@ class User(Base, SQLAlchemyBaseUserTable):
                 .filter_by(user_id=as_id, email=viewer.email) \
                 .first()
         else:
-            # as_user = viewer
-            # fastapi-users giving me beef, re-load from sqlalchemy
-            as_user = db.session.query(User).get(viewer.id)
+            as_user = viewer
         return as_user, snooping
 
     @property

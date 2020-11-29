@@ -11,7 +11,7 @@ import Error from './Error'
 import {spinner} from './utils'
 
 import { useSelector, useDispatch } from 'react-redux'
-import { fetch_, onAuth } from './redux/actions';
+import { fetch_, setJwt } from './redux/actions';
 
 function Auth() {
   const [submitting, setSubmitting] = useState(false)
@@ -48,9 +48,9 @@ function Auth() {
     const formData = new FormData()
     formData.append('username', username)
     formData.append('password', password)
-    const res = await submit_('auth/jwt/login', 'POST', formData)
+    const res = await submit_('auth/login', 'POST', formData)
     if (res === false) {return}
-    dispatch(onAuth(res.access_token))
+    dispatch(setJwt(res))
   }
 
   const submitLogin = async e => {

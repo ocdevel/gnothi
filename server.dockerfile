@@ -26,7 +26,8 @@ RUN pip install \
   pytest-timeout \
   lorem-text \
   boto3 \
-  dynaconf
+  dynaconf \
+  fastapi-jwt-auth
 
 COPY ./server/app /app/app
 COPY ./common /app/common

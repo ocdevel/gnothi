@@ -26,9 +26,12 @@ def sync_for(user):
         headers=headers
     ).json()['data']
     huser = requests.get(
-        'https://habitica.com/api/v3/user?userFields=lastCron,needsCron',
+        'https://habitica.com/api/v3/user?userFields=lastCron,needsCron,preferences',
         headers=headers
     ).json()['data']
+
+    # don't pull field if they're in the inn
+    if huser['preferences']['sleep']: return
 
     # Use SQL to determine day, so not managing timezones in python + sql
     tz = M.User.tz(db.session, user.id)

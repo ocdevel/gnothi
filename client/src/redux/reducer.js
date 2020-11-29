@@ -16,7 +16,7 @@ import {
 const emptyRes = {code: null, message: null, data: null}
 
 const initialState = {
-  jwt: localStorage.getItem('jwt'),
+  jwt: localStorage.getItem('access_token'),
   user: null,
   as: null,
   asUser: null,
