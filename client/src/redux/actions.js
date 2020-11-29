@@ -23,11 +23,13 @@ export function setServerError(payload) {
 
 // Every fetch (except jobs-status) will check the user in, so debounce it a bit since
 // we're often fetching a ton at once
-const checkin = _.debounce((dispatch, headers) => {
+const checkin = _.debounce((dispatch, getState) => {
+  // don't pass in jwt, since it may change due to refresh token. Pass getState instead
+  const {jwt} = getState()
   axios({
     method: 'GET',
     url: `${host}/user/checkin`,
-    headers
+    headers: {'Authorization': `Bearer ${jwt}`}
   })
 }, 1000)
 
@@ -38,7 +40,7 @@ const refreshToken = async (dispatch) => {
       url: `${host}/auth/refresh`,
       headers: {'Authorization': `Bearer ${localStorage.getItem('refresh_token')}`}
     })
-    await dispatch(onAuth(data))
+    await dispatch(setJwt(data))
     return data.access_token
   } catch (error) {
     return false
@@ -68,7 +70,7 @@ export const fetch_ = (
   obj['url'] = url
 
   if (route !== 'jobs-status') {
-    checkin(dispatch, obj.headers)
+    checkin(dispatch, getState)
   }
 
   try {
@@ -78,7 +80,7 @@ export const fetch_ = (
     let {status: code, statusText: message, data} = error.response
     message = data.detail || message || "There was an error"
 
-    if (code === 400 && message === 'JWT error') {
+    if (data.jwt_error) {
       // try refreshing the token, then try again
       jwt = await refreshToken(dispatch)
       if (jwt) {
@@ -86,7 +88,9 @@ export const fetch_ = (
         try {
           const {status: code, data} = await axios(obj)
           return {code, data}
-        } catch {}
+        } catch {
+          // Couldn't fix via refresh-token. carry on to error-handling below.
+        }
       }
     }
 
@@ -104,7 +108,8 @@ export const setUser = (payload) => ({type: SET_USER, payload})
 export const setAsUser = (payload) => ({type: SET_AS_USER, payload})
 
 export const logout = () => {
-  localStorage.removeItem('jwt')
+  localStorage.removeItem('access_token')
+  localStorage.removeItem('refresh_token')
   window.location.href = "/"
 }
 
@@ -132,10 +137,7 @@ export const SET_JWT = "SET_JWT"
 export const setJwt = ({access_token, refresh_token}) => {
   localStorage.setItem('access_token', access_token)
   if (refresh_token) {localStorage.setItem('refresh_token', refresh_token)}
-  return {type: SET_JWT, access_token}
-}
-export const onAuth = (jwt) => async (dispatch, getState) => {
-  dispatch(setJwt(jwt))
+  return {type: SET_JWT, payload: access_token}
 }
 
 export const SET_AS = "SET_AS"
@@ -147,7 +149,6 @@ export const changeAs = (as=null) => async (dispatch, getState) => {
 export const SET_AI_STATUS = "SET_AI_STATUS"
 export const setAiStatus = (payload) => ({type: SET_AI_STATUS, payload})
 export const checkAiStatus = () => async (dispatch, getState) => {
-  return
   if (!getState().jwt) {return}
   const {data} = await dispatch(fetch_('jobs-status'))
   dispatch(setAiStatus(data))

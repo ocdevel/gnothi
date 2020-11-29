@@ -1,15 +1,20 @@
-from typing import Dict, Any
-import datetime, pdb
-from app.app_app import app
-from common.utils import vars, SECRET
-from app.mail import send_mail
-from fastapi import Depends, Response, Request, BackgroundTasks
-from fastapi_sqlalchemy import db  # an object to provide global access to a database session
+from pydantic import BaseModel
+from common.utils import SECRET
+from fastapi_sqlalchemy import db
+from fastapi import APIRouter, Depends, HTTPException, Response, Request, status
+from fastapi.security import OAuth2PasswordRequestForm
+from fastapi.responses import JSONResponse
 
+from fastapi_jwt_auth.exceptions import AuthJWTException
+from fastapi_jwt_auth import AuthJWT
+from fastapi_users.router.common import ErrorCode
 from fastapi_users.authentication import JWTAuthentication
 from fastapi_users import FastAPIUsers
-import common.models as M
+
+from app.app_app import app
+from app.mail import send_mail
 from app.google_analytics import ga
+import common.models as M
 
 
 jwt_authentication = JWTAuthentication(secret=SECRET, lifetime_seconds=60*5)
@@ -28,13 +33,6 @@ def on_after_register(user: M.FU_UserDB, request: Request):
 def on_after_forgot_password(user: M.FU_UserDB, token: str, request: Request):
     send_mail(user.email, "forgot-password", token)
 
-# def on_after_update(user: M.FU_UserDB, updated_user_data: Dict[str, Any], request: Request):
-#     print(f"User {user.id} has been updated with the following data: {updated_user_data}")
-
-# app.include_router(
-#     fastapi_users.get_auth_router(jwt_authentication), prefix="/auth/jwt", tags=["auth"]
-# )
-
 app.include_router(
     fastapi_users.get_register_router(on_after_register), prefix="/auth", tags=["auth"]
 )
@@ -47,20 +45,9 @@ app.include_router(
     tags=["auth"],
 )
 
-# app.include_router(fastapi_users.get_users_router(on_after_update), prefix="/users", tags=["users"])
-
-
-
-
-from fastapi import FastAPI, HTTPException, Depends, Request, APIRouter
-from fastapi_jwt_auth import AuthJWT
-from pydantic import BaseModel
-from common.utils import SECRET
-from fastapi_sqlalchemy import db
-from fastapi import APIRouter, Depends, HTTPException, Response, status
-from fastapi.security import OAuth2PasswordRequestForm
-
-from fastapi_users.router.common import ErrorCode
+# 233da7ae: fastapi-users gutted here, only using for bells/whistles (model setup, registration,
+# reset-password, and soon verify password). Using instead fastapi-jwt-auth for per-route jwt
+# verification since it supports refresh tokens.
 
 
 # in production you can use Settings management
@@ -77,6 +64,13 @@ def get_config():
 
 
 router = APIRouter()
+
+@app.exception_handler(AuthJWTException)
+def authjwt_exception_handler(request: Request, exc: AuthJWTException):
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"detail": exc.message, "jwt_error": True}
+    )
 
 
 # Standard login endpoint. Will return a fresh access token and a refresh token
@@ -115,33 +109,14 @@ def refresh(Authorize: AuthJWT = Depends()):
     Authorize.jwt_refresh_token_required()
 
     current_user = Authorize.get_jwt_subject()
-    new_access_token = Authorize.create_access_token(subject=current_user, fresh=True)
+    new_access_token = Authorize.create_access_token(subject=current_user)
     return {"access_token": new_access_token}
 
-# @router.post('/fresh-login')
-# def fresh_login(user: M.FU_UserCreate, Authorize: AuthJWT = Depends()):
-#     """
-#     Fresh login endpoint. This is designed to be used if we need to
-#     make a fresh token for a user (by verifying they have the
-#     correct username and password). Unlike the standard login endpoint,
-#     this will only return a new access token, so that we don't keep
-#     generating new refresh tokens, which entirely defeats their point.
-#     """
-#     passw = users.get(user.username, None)
-#     if not (passw and passw == user.password):
-#         raise HTTPException(status_code=401, detail="Bad username or password")
-#
-#     new_access_token = Authorize.create_access_token(subject=user.username,fresh=True)
-#     return {"access_token": new_access_token}
-
-from fastapi_jwt_auth.exceptions import AuthJWTException
+# See https://indominusbyte.github.io/fastapi-jwt-auth/usage/freshness/
+# for freshness tokens required for one-time critical routes, like deleting account etc
 
 def jwt_user(Authorize: AuthJWT = Depends()):
-    try:
-        Authorize.fresh_jwt_required()
-    except AuthJWTException as exc:
-        # raise HTTPException(status_code=exc.status_code, detail=exc.message)
-        raise HTTPException(status_code=400, detail="JWT error")
+    Authorize.jwt_required()
     uid = Authorize.get_jwt_subject()
     return db.session.query(M.User).get(uid)
 
