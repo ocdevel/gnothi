@@ -1081,6 +1081,7 @@ class GroupRoles(enum.Enum):
     member = "member"
     owner = "owner"
     admin = "admin"
+    banned = "banned"
 
 
 class UserGroup(Base):
@@ -1113,6 +1114,13 @@ class MessagePing(Base):
     __tablename__ = 'message_pings'
     user_id = FKCol('users.id', primary_key=True)
     message_id = FKCol('messages.id', primary_key=True)
+    created_at = DateCol()
+
+class MessageReaction(Base):
+    __tablename__ = 'message_reactions'
+    user_id = FKCol('users.id', primary_key=True)
+    message_id = FKCol('messages.id', primary_key=True)
+    reaction = Column(Unicode)  # deal with emoji enums later
     created_at = DateCol()
 
 
