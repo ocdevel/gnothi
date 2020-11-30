@@ -10,7 +10,11 @@ import {
   SET_FIELDS,
   SET_INFLUENCERS,
   SET_ENTRIES,
-  SET_INSIGHTS
+  SET_INSIGHTS,
+
+  WS_SET_MESSAGES,
+  WS_SET_USERS,
+  WS_SET_MESSAGE,
 } from './actions'
 
 const emptyRes = {code: null, message: null, data: null}
@@ -45,7 +49,11 @@ const initialState = {
     summarize_req: 300,
     summarize_res1: emptyRes,
     summarize_res2: emptyRes
-  }
+  },
+
+  ws_messages: {},
+  ws_users: {},
+  ws_message: ""
 }
 
 export default function mainReducer(state, action) {
@@ -93,6 +101,16 @@ export default function mainReducer(state, action) {
       break
     case SET_INSIGHTS:
       state.insights = {...state.insights, ...action.payload}
+      break
+
+    case WS_SET_MESSAGES:
+      state.ws_messages = action.payload
+      break
+    case WS_SET_USERS:
+      state.ws_users = action.payload
+      break
+    case WS_SET_MESSAGE:
+      state.ws_message = action.payload
       break
   }
 

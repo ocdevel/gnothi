@@ -2,6 +2,7 @@ import axios from 'axios'
 import moment from "moment-timezone"
 import _ from "lodash";
 import {trueKeys} from "../utils";
+import store from './store'
 
 // e52c6629: dynamic host/port
 let host = window.location.host
@@ -232,3 +233,99 @@ export const getInsights = (k) => async (dispatch, getState) => {
   res = await dispatch(fetch_(`await-job/${jid}`))
   dispatch(setInsights({[res2_k]: res, [fetch_k]: false}))
 }
+
+
+export const WS_SET_MESSAGES = "WS_SET_MESSAGES"
+export const wsSetMessages = (payload) => ({type: WS_SET_MESSAGES, payload})
+
+export const WS_SET_USERS = "WS_SET_USERS"
+export const wsSetUsers = (payload) => ({type: WS_SET_USERS, payload})
+
+export const WS_SET_MESSAGE = "WS_SET_MESSAGE"
+export const wsSetMessage = (payload) => ({type: WS_SET_MESSAGE, payload})
+
+
+/**
+ * Websockets
+ */
+
+function addToUsersList(user_id) {
+  const {dispatch, getState} = store
+  const {users} = getState()
+  dispatch(wsSetUsers({...users, [user_id]: new Date()}))
+}
+
+function addMessage(msg, user_id) {
+  const {dispatch, getState} = store
+  const {ws_messages} = getState()
+  msg = {msg, user_id}
+  if (user_id === 'error') {msg.error = true}
+  if (user_id === 'server') {msg.server = true}
+  dispatch(wsSetMessages({...ws_messages, [new Date()]: msg}))
+}
+
+/** Handle an incoming message from the websocket connection. */
+function onWebsocketMessage(message) {
+  const {dispatch, getState} = store
+
+  console.log('Got message from websocket:', message)
+  const payload = JSON.parse(message.data)
+  const {type, data} = payload
+  let {users, messages} = getState()
+  switch(type) {
+    case 'MESSAGE':
+    case 'ERROR':
+    case 'ROOM_KICK':
+      const {msg, user_id} = data
+      addMessage(msg, user_id)
+      if (type === 'ROOM_KICK') {dispatch(wsSetUsers({}))}
+      return
+    case 'USER_JOIN':
+      addToUsersList(data)
+      addMessage(`**User ${data}** joined the room`, 'server')
+      return
+    case 'USER_LEAVE':
+      delete users[data]
+      addMessage(`**User ${data}** left the room`, 'server')
+      return;
+    case 'ROOM_JOIN':
+      // setMyUserId(data.user_id);
+      addToUsersList(data.user_id);
+      return;
+    default:
+      throw new TypeError('Unknown message type: ' + payload.type);
+      return;
+  }
+}
+
+/** Print websocket errors into the chat box using addErrorMessage. */
+function onWebsocketError(err)  {
+  console.error('Websocket error: ', err);
+  // TODO requires dispatch to
+  // addErrorMessage('Error:' + err, 'error');
+  // onWebsocketClose();
+}
+
+/** Disable the 'submit' button when the websocket connection closes. */
+function onWebsocketClose() {
+  console.log('Closing WebSocket connection');
+  // TODO
+  // setDisabled(true);
+}
+
+/** On page load, open a websocket connection, and fetch the list of active users. */
+const oReq = new XMLHttpRequest();
+oReq.addEventListener("load", reqListener);
+oReq.open("GET", "http://localhost:5002/users2");
+oReq.send();
+
+function reqListener () {
+  const userData = JSON.parse(this.responseText);
+  console.log('Received user list:', userData);
+  userData.users.forEach(addToUsersList);
+}
+
+export const websocket = new WebSocket('ws://localhost:5002/ws');
+websocket.onerror = onWebsocketError;
+websocket.onclose = onWebsocketClose;
+websocket.onmessage = onWebsocketMessage;
