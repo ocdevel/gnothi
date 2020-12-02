@@ -5,6 +5,7 @@ from typing import List, Dict, Any
 from fastapi import Depends, HTTPException, File, UploadFile, BackgroundTasks
 from app.app_app import app
 from app.app_jwt import fastapi_users, jwt_user
+from app.app_stripe import stripe_router
 from fastapi_sqlalchemy import db  # an object to provide global access to a database session
 import sqlalchemy as sa
 from sqlalchemy import text
@@ -20,6 +21,8 @@ from fastapi.responses import StreamingResponse
 logger = logging.getLogger(__name__)
 
 getuser = M.User.snoop
+
+app.include_router(stripe_router, prefix='/stripe')
 
 
 def send_error(message: str, code: int = 400):

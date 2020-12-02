@@ -26,7 +26,7 @@ import { fetch_ } from '../redux/actions'
 import {NotesAll} from "./Notes";
 import {MainTags} from "../Tags";
 import MediaQuery from 'react-responsive'
-import Sidebar from "./Sidebar";
+import Sidebar from "../Sidebar";
 
 export default function Entries() {
   const [page, setPage] = useState(0)
