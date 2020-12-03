@@ -4,85 +4,10 @@ import {loadStripe} from "@stripe/stripe-js";
 import "./Stripe.css";
 import "./CheckoutForm.css";
 
+import { useDispatch } from 'react-redux'
+import { fetch_ } from '../redux/actions'
+
 const host = "http://localhost:5002"
-
-const createPaymentIntent = options => {
-  return window
-    .fetch(`${host}/stripe/create-payment-intent`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      // body: JSON.stringify(options)
-    })
-    .then(res => {
-      if (res.status === 200) {
-        return res.json();
-      } else {
-        return null;
-      }
-    })
-    .then(data => {
-      if (!data || data.error) {
-        console.log("API error:", { data });
-        throw new Error("PaymentIntent API Error");
-      } else {
-        return data.client_secret;
-      }
-    });
-};
-
-const getProductDetails = options => {
-  return window
-    .fetch(`${host}/stripe/product-details`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json"
-      }
-    })
-    .then(res => {
-      if (res.status === 200) {
-        return res.json();
-      } else {
-        return null;
-      }
-    })
-    .then(data => {
-      if (!data || data.error) {
-        console.log("API error:", { data });
-        throw Error("API Error");
-      } else {
-        return data;
-      }
-    });
-};
-
-const getPublicStripeKey = options => {
-  return window
-    .fetch(`${host}/stripe/public-key`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json"
-      }
-    })
-    .then(res => {
-      if (res.status === 200) {
-        return res.json();
-      } else {
-        return null;
-      }
-    })
-    .then(data => {
-      if (!data || data.error) {
-        console.log("API error:", { data });
-        throw Error("API Error");
-      } else {
-        return data.publicKey;
-      }
-    });
-};
-
-const stripePromise = getPublicStripeKey().then(key => loadStripe(key));
 
 function CheckoutForm() {
   const [amount, setAmount] = useState(0);
@@ -95,22 +20,22 @@ function CheckoutForm() {
   const stripe = useStripe();
   const elements = useElements();
 
-  useEffect(() => {
+  const dispatch = useDispatch()
+
+  async function setupStripe() {
     // Step 1: Fetch product details such as amount and currency from
     // API to make sure it can't be tampered with in the client.
-    getProductDetails().then((productDetails) => {
-      setAmount(productDetails.amount / 100);
-      setCurrency(productDetails.currency);
-    });
+    const {data: productDetails} = await dispatch(fetch_("stripe/product-details"))
+    setAmount(productDetails.amount / 100);
+    setCurrency(productDetails.currency);
 
     // Step 2: Create PaymentIntent over Stripe API
-    createPaymentIntent()
-      .then((clientSecret) => {
-        setClientSecret(clientSecret);
-      })
-      .catch((err) => {
-        setError(err.message);
-      });
+    const {data: clientSecret} = await dispatch(fetch_("stripe/create-payment-intent", 'POST'))
+    setClientSecret(clientSecret.client_secret);
+  }
+
+  useEffect(() => {
+    setupStripe()
   }, []);
 
   const handleSubmit = async (ev) => {
@@ -225,7 +150,20 @@ function CheckoutForm() {
 }
 
 export default function Stripe() {
-  return <Elements stripe={stripePromise}>
+  const [stripe, setStripe] = useState()
+  const dispatch = useDispatch()
+  async function loadStripe_() {
+    const {data} = await dispatch(fetch_("stripe/public-key"))
+    setStripe(loadStripe(data.publicKey))
+  }
+
+  useEffect(() => {
+    loadStripe_()
+  }, [])
+
+  if (!stripe) {return null}
+
+  return <Elements stripe={stripe}>
     <CheckoutForm />
   </Elements>
 }

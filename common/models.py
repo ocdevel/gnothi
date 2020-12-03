@@ -77,6 +77,7 @@ class User(Base, SQLAlchemyBaseUserTable):
     bio = Encrypt()
     is_cool = Column(Boolean, server_default='false')
     therapist = Column(Boolean, server_default='false')
+    paid = Column(Boolean)
 
     ai_ran = Column(Boolean, server_default='false')
     last_books = DateCol(default=False)
@@ -200,6 +201,7 @@ class SOUser(FU_User, fu_models.BaseUserDB):
     habitica_api_token: Optional[str] = None
     is_cool: Optional[bool] = False
     shared_with_me: Optional[List[SOSharedWithMe]]
+    paid: Optional[bool] = False
 
 
 class Entry(Base):

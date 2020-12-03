@@ -27,7 +27,8 @@ RUN pip install \
   lorem-text \
   boto3 \
   dynaconf \
-  fastapi-jwt-auth
+  fastapi-jwt-auth \
+  stripe
 
 COPY ./server/app /app/app
 COPY ./common /app/common
