@@ -1,7 +1,8 @@
 import React, {useState, useEffect} from 'react'
 import {Card, Button, Modal} from "react-bootstrap";
 import {useDispatch, useSelector} from "react-redux";
-import Stripe from "./Ads.scss";
+import Stripe from "./Stripe.js";
+import "./Ads.scss";
 import {fetch_, getFields, getUser} from "../redux/actions";
 import _ from 'lodash'
 
