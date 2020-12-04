@@ -16,7 +16,7 @@ export default function Resources() {
   const [books, setBooks] = useState(true)
   const [therapists, setTherapists] = useState(false)
 
-  const tabs = <div className='bottom-margin'>
+  const tabs = <div className='mb-3'>
     <Button
       size="sm"
       variant={books ? 'dark' : 'outline-dark'}

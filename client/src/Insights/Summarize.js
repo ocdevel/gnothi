@@ -55,7 +55,7 @@ export default function Summarize() {
           disabled={aiStatus !== 'on'}
           type="submit"
           variant="primary"
-          className='bottom-margin'
+          className='mb-3'
         >Submit</Button>
       </>}
       {data && <>

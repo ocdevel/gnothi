@@ -153,7 +153,7 @@ export default function Tags({
 }
 
 export const MainTags = (
-  <div className='bottom-margin'>
+  <div className='mb-3'>
     <SimplePopover text="Tags">
       <FaTags/>
     </SimplePopover>

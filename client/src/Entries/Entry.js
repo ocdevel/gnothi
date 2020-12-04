@@ -310,7 +310,7 @@ export default function Entry() {
   const renderNotes = () => {
     if (editing || !entry_id || notes.length === 0) { return }
     return <div style={{marginTop: '1rem'}}>
-      {notes.map(n => <Card className='bottom-margin'>
+      {notes.map(n => <Card className='mb-3'>
         <Card.Body>
           <Badge variant="primary">{n.type}</Badge>{' '}
           {n.private ? "[private] " : null}

@@ -68,7 +68,7 @@ export default function Entries() {
       <div
         key={e.id}
         onClick={gotoForm_}
-        className='cursor-pointer bottom-margin'
+        className='cursor-pointer mb-3'
       >
         <h5>
           <code className='text-muted'>{fmtDate(e.created_at)}</code>
@@ -118,7 +118,7 @@ export default function Entries() {
     </div>
   }
 
-  const _search = <div className='bottom-margin'>
+  const _search = <div className='mb-3'>
     <Form.Label htmlFor="formSearch" srOnly>Search</Form.Label>
     <InputGroup>
       <InputGroup.Prepend>
@@ -134,7 +134,7 @@ export default function Entries() {
     </InputGroup>
   </div>
 
-  const _newButton = as ? null : <div className='bottom-margin'>
+  const _newButton = as ? null : <div className='mb-3'>
     <Button
       variant="success"
       onClick={() => gotoForm()}

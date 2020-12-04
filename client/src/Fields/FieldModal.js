@@ -124,7 +124,7 @@ export default function FieldModal({close, field= {}}) {
         {fid && (
           <>
             <hr/>
-            <div className='bottom-margin'>
+            <div className='mb-3'>
               <Button
                 disabled={field.service}
                 variant='danger'

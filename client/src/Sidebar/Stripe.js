@@ -6,8 +6,6 @@ import {loadStripe} from "@stripe/stripe-js";
 import { useDispatch, useSelector } from 'react-redux'
 import { fetch_, setServerError, getUser } from '../redux/actions'
 
-import './Stripe.css'
-
 function CheckoutForm() {
   const [amount, setAmount] = useState(0);
   const [currency, setCurrency] = useState("");

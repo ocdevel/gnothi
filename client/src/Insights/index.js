@@ -118,10 +118,10 @@ export default function Insights() {
     <Row lg={lg} md={1} sm={1} xs={1}>
       {tools.map(t => ne >= t.minEntries && (
         <Col>
-          <Card className='bottom-margin'>
+          <Card className='mb-3'>
             <Card.Body>
               <Card.Title>{t.icon} {t.label}</Card.Title>
-              <Card.Subtitle className='bottom-margin'>{t.description}</Card.Subtitle>
+              <Card.Subtitle className='mb-3'>{t.description}</Card.Subtitle>
               <Card.Text>{t.component}</Card.Text>
             </Card.Body>
           </Card>

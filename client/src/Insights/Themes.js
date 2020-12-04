@@ -34,13 +34,13 @@ export default function Themes() {
   const renderThemes = () => {
     const themes_ =_.sortBy(data.themes, 'n_entries').slice().reverse()
     return <>
-      <div className='bottom-margin'>
+      <div className='mb-3'>
         <h5>Top terms</h5>
         <p>{renderTerms(data.terms)}</p>
         <hr/>
       </div>
       {themes_.map((t, i) => (
-        <div key={`${i}-${t.length}`} className='bottom-margin'>
+        <div key={`${i}-${t.length}`} className='mb-3'>
           <h5>{sent2face(t.sentiment)} {t.n_entries} Entries</h5>
           <p>
             {renderTerms(t.terms)}
@@ -64,7 +64,7 @@ export default function Themes() {
       url: "https://scikit-learn.org/stable/modules/generated/sklearn.cluster.AgglomerativeClustering.html",
     }]
 
-    return <div className='bottom-margin'>
+    return <div className='mb-3'>
       <div>
         <span
           className='cursor-pointer'
@@ -96,7 +96,7 @@ export default function Themes() {
       {renderAdvanced()}
       <Button
         disabled={aiStatus !== 'on'}
-        className='bottom-margin'
+        className='mb-3'
         variant='primary'
         onClick={fetchThemes}
       >Show Themes</Button>

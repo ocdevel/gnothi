@@ -85,7 +85,7 @@ export default function Books() {
       <h5>
         {b.amazon ? <a href={b.amazon} target='_blank'>{b.title}</a> : b.title}
       </h5>
-      <div className='text-muted bottom-margin'>
+      <div className='text-muted mb-3'>
         <div><FaUser /> {b.author}</div>
         <div><FaTags /> {b.topic}</div>
         {b.amazon && <div><FaAmazon /> Amazon Affiliate Link <a href='https://github.com/lefnire/gnothi/issues/47' target='_blank'>?</a></div>}

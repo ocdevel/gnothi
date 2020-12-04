@@ -32,7 +32,7 @@ export default function Therapists({setShowTherapists}) {
     </Card>
   }
 
-  return <div className='top-margin'>
+  return <div className='mt-3'>
     <Alert variant='info'>
       <div>AI-recommended therapists based on your entries.</div>
       <small className='text-muted'>

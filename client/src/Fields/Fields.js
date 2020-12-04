@@ -84,7 +84,7 @@ function FieldsAdvanced({fetchFieldEntries}) {
     setConfirmWipe(e.target.value)
   }
 
-  const btnOpts = {size: 'sm', variant: 'outline-primary', className: 'fields-adv-btn top-margin'}
+  const btnOpts = {size: 'sm', variant: 'outline-primary', className: 'fields-adv-btn mt-3'}
 
   return <div>
     <Button
@@ -272,7 +272,7 @@ export default function Fields() {
   function renderDupe(dupe) {
     const f = fields[dupe.field_id]
     const v = f.type === 'check' ? (dupe.value === 1 ? 'Yes' : 'No') : dupe.value
-    return <div className='bottom-margin' key={dupe.id || 'guess'}>
+    return <div className='mb-3' key={dupe.id || 'guess'}>
       <Button variant='outline-dark' size='sm' onClick={() => pickDupe(f.id, dupe.value)}>
         Pick
       </Button>{' '}{v}{dupe.id ? '' : " (Gnothi's Guess)"}
@@ -390,7 +390,7 @@ export default function Fields() {
           variant="success"
           size="sm"
           onClick={() => setShowForm(true)}
-          className='bottom-margin'
+          className='mb-3'
         >New Field</Button>}
         {!!g.fields.length && <Button
           variant="outline-primary"

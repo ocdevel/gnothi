@@ -58,7 +58,7 @@ function Person({close, person=null}) {
       </Modal.Header>
 
       <Modal.Body>
-        <Form className='bottom-margin'>
+        <Form className='mb-3'>
           <Form.Row>
             {textField({k: 'name', v: 'Name', ...req})}
             {textField({k: 'relation', v: 'Relation', ...req})}
@@ -139,7 +139,7 @@ export default function People() {
     </Table>
     <Button
       variant="success"
-      className='bottom-margin'
+      className='mb-3'
       onClick={() => choosePerson(true)}
     >Add Person</Button>
   </>

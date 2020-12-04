@@ -50,7 +50,7 @@ export default function Ask() {
     {answers && answers.length && <>
       <hr/>
       {answers.map((a, i) => <>
-        <Card className='bottom-margin'>
+        <Card className='mb-3'>
           <Card.Body>
             <Card.Text>{a.answer}</Card.Text>
           </Card.Body>

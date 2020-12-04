@@ -1,7 +1,7 @@
 import React, {useState, useEffect} from 'react'
 import {Card, Button, Modal} from "react-bootstrap";
 import {useDispatch, useSelector} from "react-redux";
-import Stripe from "./Stripe";
+import Stripe from "./Ads.scss";
 import {fetch_, getFields, getUser} from "../redux/actions";
 import _ from 'lodash'
 
@@ -50,7 +50,7 @@ export default function Ads() {
 
   return <>
     <PaymentModal show={show} close={() => setShow(false)}/>
-    <Card className='top-margin advert'>
+    <Card className='mt-3 advert shadow'>
       <Card.Header>
         <div className='float-right'>
           <Button variant='link' size='sm' onClick={() => setShow(true)}>Remove Ads</Button>{' '}
@@ -60,6 +60,5 @@ export default function Ads() {
       </Card.Header>
       {ad}
     </Card>
-    
   </>
 }
