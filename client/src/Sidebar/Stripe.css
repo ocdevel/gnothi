@@ -1,53 +1,34 @@
-/* Pasha styles – Brand-overrides, can split these out */
-:root {
-  --accent-color: #ed5f74;
-  --success-color: #5fed82;
-  --headline-color: var(--accent-color);
-  --logo-image: url("https://storage.googleapis.com/stripe-sample-images/logo-pasha.svg");
+.advert.card {
+  border: none;
+
+  /*https://css-tricks.com/almanac/properties/b/box-shadow/*/
+  box-shadow:
+  0 2.8px 2.2px rgba(0, 0, 0, 0.034),
+  0 6.7px 5.3px rgba(0, 0, 0, 0.048),
+  0 12.5px 10px rgba(0, 0, 0, 0.06),
+  0 22.3px 17.9px rgba(0, 0, 0, 0.072),
+  0 41.8px 33.4px rgba(0, 0, 0, 0.086),
+  0 100px 80px rgba(0, 0, 0, 0.12);
+
+  border-radius: 5px;
 }
 
-.pasha-image-stack {
-  display: grid;
-  grid-gap: 12px;
-  grid-template-columns: auto auto;
+.advert .card-header {
+  background-color: white;
+  border: none;
 }
 
-.pasha-image-stack img {
-  border-radius: var(--radius);
-  background-color: var(--gray-border);
-  box-shadow: 0 7px 14px 0 rgba(50, 50, 93, 0.1),
-    0 3px 6px 0 rgba(0, 0, 0, 0.07);
-  transition: all 0.8s ease;
-  opacity: 0;
+.advert .card-header .btn {
+  padding-top: 0px;
 }
 
-.pasha-image-stack img:nth-child(1) {
-  transform: translate(12px, -12px);
-  opacity: 1;
-}
-.pasha-image-stack img:nth-child(2) {
-  transform: translate(-24px, 16px);
-  opacity: 1;
-}
-.pasha-image-stack img:nth-child(3) {
-  transform: translate(68px, -100px);
-  opacity: 1;
+.advert img {
+  max-width: 400px;
+  width: 100%;
+  margin: 0 auto;
+  display: block;
 }
 
-.sample-info {
-  padding: 20px 30px;
-  border: 1px solid var(--gray-border);
-  border-radius: var(--radius);
-
-  position: fixed;
-  top: 10px;
-  left: 50%;
-  margin-left: -250px;
-  max-width: 500px;
-}
-
-@media (max-width: 720px) {
-  .sample-info {
-    top: 0;
-  }
+.audible-ad {
+  border:none !important; margin:0px !important;
 }

@@ -92,6 +92,7 @@ def profile_put(
     if snooping: return cant_snoop()
     for k, v in data.dict().items():
         v = v or None  # remove empty strings
+        if k == 'paid': continue
         setattr(user, k, v)
     db.session.commit()
     M.Job.create_job(method='profiles', data_in={'args': [str(user.id)]})
