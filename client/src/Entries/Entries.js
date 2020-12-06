@@ -30,8 +30,9 @@ import Sidebar from "../Sidebar";
 
 
 function EntryTeaser({e, gotoForm}) {
-  const [hovered, setHovered] = useState(false);
-  const toggleHover = () => setHovered(!hovered);
+  const [hovered, setHovered] = useState(false)
+  const onHover = () => setHovered(true)
+  const onLeave = () => setHovered(false)
 
   const title = e.title || e.title_summary
   const isSummary = e.text_summary && e.text !== e.text_summary
@@ -42,8 +43,8 @@ function EntryTeaser({e, gotoForm}) {
       key={e.id}
       onClick={() => gotoForm(e.id)}
       className={`cursor-pointer mb-3 entries-entry ${hovered ? 'hovered shadow-sm' : ''}`}
-      onMouseEnter={toggleHover}
-      onMouseLeave={toggleHover}
+      onMouseEnter={onHover}
+      onMouseLeave={onLeave}
     >
       <Card.Title>
         {title}

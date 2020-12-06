@@ -15,9 +15,8 @@ import {
   MdEmail,
   FaMicrophone,
   FaDragon, FaReddit, FaBalanceScale,
-  FaBook, FaDollarSign
+  FaBook
 } from "react-icons/all";
-import Stripe from './Stripe'
 
 import { useDispatch, useSelector } from 'react-redux'
 import { fetch_ } from '../redux/actions'

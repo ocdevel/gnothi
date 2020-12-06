@@ -82,10 +82,10 @@ export function AddNotes({entry_id, onSubmit}) {
   const [text, setText] = useState('')
   const [private_, setPrivate] = useState(false)
   const [showHelp, setShowHelp] = useState(false)
+  const [qmarkHover, setQmarkHover] = useState(false)
 
   const as = useSelector(state => state.as)
   const dispatch = useDispatch()
-
 
   const renderHelpModal = () => {
     return <>
@@ -124,7 +124,7 @@ export function AddNotes({entry_id, onSubmit}) {
   const renderSection = (obj) => {
     return (
       <Button
-        style={{marginRight: '.5rem'}}
+        className='mr-2'
         variant='outline-primary'
         size='sm'
         onClick={() => setAdding(obj.key)}
@@ -133,15 +133,16 @@ export function AddNotes({entry_id, onSubmit}) {
   }
 
   const renderButtons = () => <>
-    {noteTypes.map(renderSection)}{' '}
-    <SimplePopover text="What are these?">
-      <span
-        className='cursor-pointer'
-        onClick={() => setShowHelp(true)}
-      >
-        <FaQuestionCircle />
-      </span>
-    </SimplePopover>
+    {noteTypes.map(renderSection)}
+    <span
+      className='cursor-pointer mr-2'
+      onClick={() => setShowHelp(true)}
+      onMouseEnter={() => setQmarkHover(true)}
+      onMouseLeave={() => setQmarkHover(false)}
+    >
+      <FaQuestionCircle />
+    </span>
+    {qmarkHover && <span className='text-muted'>What are these?</span>}
   </>
 
   const clear = () => {
@@ -195,13 +196,13 @@ export function AddNotes({entry_id, onSubmit}) {
           </Form>
         </Modal.Body>
         <Modal.Footer>
+          <Button variant='link' size="sm" className='text-secondary' onClick={clear}>
+            Cancel
+          </Button>
           <Button
             variant="primary"
             onClick={submit}
-          >Submit</Button>{' '}
-          <Button variant='secondary' onClick={clear}>
-            Cancel
-          </Button>
+          >Submit</Button>
         </Modal.Footer>
       </Modal>
     </>

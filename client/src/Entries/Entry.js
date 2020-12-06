@@ -198,20 +198,21 @@ export default function Entry() {
       ><FaPen /> Edit
       </Button>
     </>
+
     return <>
       {entry_id && <>
+        <Button variant='link' className='text-danger mr-auto' size="sm" onClick={deleteEntry}>
+          Delete
+        </Button>
         <Button variant='link' className='text-secondary' size="sm" onClick={changeEditing}>
           Cancel
         </Button>
-        <Button variant='link' className='text-danger' size="sm" onClick={deleteEntry}>
-          Delete
-        </Button>{' '}
       </>}
       <Button
         variant="primary"
         onClick={submit}
       >Submit
-      </Button>{' '}
+      </Button>
     </>
   }
 
@@ -291,7 +292,7 @@ export default function Entry() {
 
     <div>
       {!editing && <div className='float-right'>
-        <Button size='sm' variant='outline-dark' onClick={showAiSees}>What AI sees</Button>
+        <Button size='sm' variant='link' onClick={showAiSees}>What AI sees</Button>
       </div>}
       <SimplePopover text='Tags'>
         <FaTags />
