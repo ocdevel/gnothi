@@ -1,0 +1,40 @@
+.sidebar-fields {
+  .card {
+    border: none;
+    padding: 0;
+  }
+
+  .card-body {
+    padding: 0;
+  }
+
+  .card-header {
+    border-bottom: 1px solid rgba(0,0,0,.125);
+    padding: .25rem 0rem;
+    background-color: white;
+    cursor: pointer;
+    color: #007bff;
+  }
+
+  .sidebar-fields {
+    /*position: relative;*/
+  }
+
+  .day-changer {
+    position: absolute;
+    right: 5px;
+    top: 5px;
+  }
+
+  .selected-day {
+    position: absolute;
+    top: 50px;
+    right: 5px;
+  }
+
+
+  .fields-adv-btn {
+    display: block;
+    width: 100%;
+  }
+}

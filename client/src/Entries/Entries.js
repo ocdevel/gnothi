@@ -98,7 +98,7 @@ export default function Entries() {
 
   const renderEntries = () => {
     if (!filtered.length) {
-      return <Alert variant='info'>No entries. If you're a new user, click <Button variant="success" size='sm' disabled>New Entry</Button> above. If you're a therapist, click your email top-right and select a client; you'll then be in that client's shoes.</Alert>
+      return <Alert variant='info'>No entries. If you're a new user, click <Button variant="primary" size='sm' disabled>New Entry</Button> above. If you're a therapist, click your email top-right and select a client; you'll then be in that client's shoes.</Alert>
     }
 
     const pageSize = 7
@@ -140,7 +140,7 @@ export default function Entries() {
 
   const _newButton = as ? null : <div className='mb-3'>
     <Button
-      variant="success"
+      variant="primary"
       onClick={() => gotoForm()}
     >New Entry</Button>
   </div>

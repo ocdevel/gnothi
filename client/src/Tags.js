@@ -49,12 +49,13 @@ function TagForm({tag=null}) {
       <Form.Group controlId="buttons" as={Col}>
         <Button
           size='sm'
-          variant={id ? "primary" : "success"}
+          variant={id ? "outline-primary" : "primary"}
           onClick={submit}
         >{id ? "Save" : "Add"}</Button>&nbsp;
         {id && !tag.main && <Button
           size='sm'
-          variant='danger'
+          variant='link'
+          className='text-secondary'
           onClick={destroyTag}
         >Delete</Button>}
       </Form.Group>
@@ -67,7 +68,7 @@ function TagModal({close}) {
 
   return (
     <Modal show={true} onHide={close}>
-      <Modal.Header>
+      <Modal.Header closeButton>
         <Modal.Title>Tags</Modal.Title>
       </Modal.Header>
 
@@ -75,10 +76,6 @@ function TagModal({close}) {
         <TagForm />
         {tags && tags.map(t => <TagForm key={t.id} tag={t}/> )}
       </Modal.Body>
-
-      <Modal.Footer>
-        <Button size="sm" variant="secondary" onClick={close}>Close</Button>
-      </Modal.Footer>
     </Modal>
   )
 }

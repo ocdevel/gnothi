@@ -172,7 +172,7 @@ export default function FieldModal({close, field= {}}) {
       </Modal.Body>
 
       <Modal.Footer>
-        <Button variant="secondary" onClick={close}>Cancel</Button>
+        <Button variant="link" className='text-secondary' onClick={close}>Cancel</Button>
         <Button variant="primary" onClick={saveField}>Save</Button>
       </Modal.Footer>
     </Modal>

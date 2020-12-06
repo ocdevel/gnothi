@@ -21,7 +21,7 @@ import moment from 'moment'
 
 import { useSelector, useDispatch } from 'react-redux'
 import { fetch_, getFields } from '../redux/actions'
-import './Fields.css'
+import './Fields.scss'
 import {FaChartLine, FaExclamationTriangle} from "react-icons/all";
 import axios from "axios";
 import fileDownload from 'js-file-download';
@@ -387,7 +387,7 @@ export default function Fields() {
     if (g.service === 'custom') {
       return <>
         {!as && <Button
-          variant="success"
+          variant="primary"
           size="sm"
           onClick={() => setShowForm(true)}
           className='mb-3'

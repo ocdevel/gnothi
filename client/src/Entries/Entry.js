@@ -198,21 +198,21 @@ export default function Entry() {
       ><FaPen /> Edit
       </Button>
     </>
-    return <div>
+    return <>
+      {entry_id && <>
+        <Button variant='link' className='text-secondary' size="sm" onClick={changeEditing}>
+          Cancel
+        </Button>
+        <Button variant='link' className='text-danger' size="sm" onClick={deleteEntry}>
+          Delete
+        </Button>{' '}
+      </>}
       <Button
         variant="primary"
         onClick={submit}
       >Submit
       </Button>{' '}
-      {entry_id && <>
-        <Button variant='danger' size="sm" onClick={deleteEntry}>
-          Delete
-        </Button>{' '}
-        <Button variant='secondary' size="sm" onClick={changeEditing}>
-          Cancel
-        </Button>
-      </>}
-    </div>
+    </>
   }
 
   const renderForm = () => <>

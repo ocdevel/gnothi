@@ -51,7 +51,7 @@ export default function Ads() {
 
   return <>
     <PaymentModal show={show} close={() => setShow(false)}/>
-    <Card className='mt-3 advert shadow'>
+    <Card className='mt-3 advert'>
       <Card.Header>
         <div className='float-right'>
           <Button variant='link' size='sm' onClick={() => setShow(true)}>Remove Ads</Button>{' '}
