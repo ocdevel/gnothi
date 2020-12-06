@@ -47,7 +47,7 @@ export default function Ads() {
   const user = useSelector(state => state.user)
   const entries = useSelector(state => state.entries)
 
-  if (user.paid || entries.length < 5) {return null}
+  if (user.paid || entries.length < 3) {return null}
 
   return <>
     <PaymentModal show={show} close={() => setShow(false)}/>

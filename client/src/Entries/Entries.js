@@ -14,19 +14,57 @@ import {
   Alert,
   Row,
   Col,
-  InputGroup,
+  InputGroup, Card,
 } from "react-bootstrap"
 import {
   FaSearch,
 } from 'react-icons/fa'
 import Entry from "./Entry"
-import './Entries.css'
+import './Entries.scss'
 import { useSelector, useDispatch } from 'react-redux'
 import { fetch_ } from '../redux/actions'
 import {NotesAll} from "./Notes";
 import {MainTags} from "../Tags";
 import MediaQuery from 'react-responsive'
 import Sidebar from "../Sidebar";
+
+
+function EntryTeaser({e, gotoForm}) {
+  const [hovered, setHovered] = useState(false);
+  const toggleHover = () => setHovered(!hovered);
+
+  const title = e.title || e.title_summary
+  const isSummary = e.text_summary && e.text !== e.text_summary
+  const summary = e.text_summary || e.text
+  const sentiment = e.sentiment && sent2face(e.sentiment)
+  return (
+    <Card.Body
+      key={e.id}
+      onClick={() => gotoForm(e.id)}
+      className={`cursor-pointer mb-3 entries-entry ${hovered ? 'hovered shadow-sm' : ''}`}
+      onMouseEnter={toggleHover}
+      onMouseLeave={toggleHover}
+    >
+      <Card.Title>
+        {title}
+      </Card.Title>
+      <Card.Subtitle className='mb-2 text-muted'>
+        {fmtDate(e.created_at)}
+      </Card.Subtitle>
+      <Card.Text>
+        {isSummary ? <>
+          <div className='blur-summary'>
+            {sentiment}{summary}
+          </div>
+          {hovered && <div className='text-info'>You're viewing an AI-generated summary of this entry. Click to read the original.</div>}
+        </> : <div>
+          {sentiment}{summary}
+        </div>}
+      </Card.Text>
+    </Card.Body>
+  )
+}
+
 
 export default function Entries() {
   const [page, setPage] = useState(0)
@@ -58,42 +96,6 @@ export default function Entries() {
 
   const changeSearch = e => setSearch(e.target.value.toLowerCase())
 
-  const renderEntry = e => {
-    const gotoForm_ = () => gotoForm(e.id)
-    const title = e.title || e.title_summary
-    const isSummary = e.text_summary && e.text !== e.text_summary
-    const summary = e.text_summary || e.text
-    const sentiment = e.sentiment && sent2face(e.sentiment)
-    return (
-      <div
-        key={e.id}
-        onClick={gotoForm_}
-        className='cursor-pointer mb-3'
-      >
-        <h5>
-          <code className='text-muted'>{fmtDate(e.created_at)}</code>
-          {' '}{title}
-        </h5>
-        <p>
-          {isSummary ? (
-              <SimplePopover text="Summary is machine-generated from entry. Click to read the original.">
-                <div>
-                  <div className='blur-summary'>
-                    {sentiment}{summary}
-                  </div>
-                  <span className='anchor'>Read original</span>
-                </div>
-              </SimplePopover>
-          ) : (
-              <>{sentiment}{summary}</>
-          )}
-        </p>
-        <hr/>
-      </div>
-    )
-  }
-
-
   const renderEntries = () => {
     if (!filtered.length) {
       return <Alert variant='info'>No entries. If you're a new user, click <Button variant="success" size='sm' disabled>New Entry</Button> above. If you're a therapist, click your email top-right and select a client; you'll then be in that client's shoes.</Alert>
@@ -103,19 +105,21 @@ export default function Entries() {
     const usePaging = !search.length && filtered.length > pageSize
     const filteredPage = !usePaging ? filtered :
         filtered.slice(page*pageSize, page*pageSize + pageSize)
-    return <div>
-      {filteredPage.map(renderEntry)}
-      {usePaging && <div style={{overflowX: 'scroll'}}>
-        <ButtonGroup aria-label="Page">
-          {_.times(_.ceil(filtered.length / pageSize), p => (
-            <Button key={p}
-              variant={p === page ? 'dark' : 'outline-dark'}
-              onClick={() => setPage(p)}
-            >{p}</Button>
-          ))}
-        </ButtonGroup>
-      </div>}
-    </div>
+    return <Card>
+      {filteredPage.map(e => <EntryTeaser e={e} gotoForm={gotoForm} key={e.id}/> )}
+      <Card.Footer>
+        {usePaging && <div style={{overflowX: 'scroll'}}>
+          <ButtonGroup aria-label="Page">
+            {_.times(_.ceil(filtered.length / pageSize), p => (
+              <Button key={p}
+                variant={p === page ? 'dark' : 'outline-dark'}
+                onClick={() => setPage(p)}
+              >{p}</Button>
+            ))}
+          </ButtonGroup>
+        </div>}
+      </Card.Footer>
+    </Card>
   }
 
   const _search = <div className='mb-3'>

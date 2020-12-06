@@ -28,9 +28,9 @@ export const SimplePopover = ({children, text, overlayOpts={}}) => (
 export const sent2face = (sentiment) => {
   if (!sentiment) {return null}
   const style = {}
-  style.backgroundColor = ~['joy', 'love', 'surprise'].indexOf(sentiment)
-    ? '#24cc8f' : '#ff6165'
-  style.padding = 5
+  // style.backgroundColor = ~['joy', 'love', 'surprise'].indexOf(sentiment)
+  //   ? '#24cc8f' : '#ff6165'
+  // style.padding = 5
   style.marginRight = 5
   const emoji_ = {
     sadness: emoji("😢"),

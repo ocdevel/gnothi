@@ -129,10 +129,10 @@ export default function Tags({
     return <>
       <Button
         disabled={noClick}
-        size="sm"
-        variant={selected_ ? 'dark' : 'outline-dark'}
+        variant="link"
+        className={`mr-1 ${selected_ ? 'tag-selected' : 'tag-unselected'}`}
         onClick={() => selectTag(t.id, !selected_)}
-      >{t.name}</Button>&nbsp;
+      >{t.name}</Button>
     </>
   }
 

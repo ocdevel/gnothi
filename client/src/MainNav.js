@@ -73,8 +73,9 @@ export default function MainNav() {
 
   return (
     <Navbar
-      bg="dark"
-      variant="dark"
+      bg="light"
+      variant="light"
+      className="shadow-sm mb-3"
       collapseOnSelect
       expand="sm"
     >
