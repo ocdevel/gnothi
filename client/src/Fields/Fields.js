@@ -22,7 +22,14 @@ import moment from 'moment'
 import { useSelector, useDispatch } from 'react-redux'
 import { fetch_, getFields } from '../redux/actions'
 import './Fields.scss'
-import {FaChartLine, FaExclamationTriangle} from "react-icons/all";
+import {
+  FaArrowLeft,
+  FaArrowRight,
+  FaCalendar,
+  FaChartLine,
+  FaExclamationTriangle,
+  FaRegCalendarAlt
+} from "react-icons/all";
 import axios from "axios";
 import fileDownload from 'js-file-download';
 
@@ -444,14 +451,17 @@ export default function Fields() {
     <div className='day-changer'>
       <ButtonGroup aria-label="Edit days">
         <Button
+          className='border-right-0'
           variant="outline-secondary"
           onClick={() => changeDay(-1)}
-        >{"<"}</Button>
+        ><FaArrowLeft /></Button>
+        <Button variant="outline-dark" disabled className='border-left-0 border-right-0'><FaRegCalendarAlt /></Button>
         <Button
+          className='border-left-0'
           variant="outline-secondary"
           onClick={() => changeDay(1)}
           disabled={isToday}
-        >{">"}</Button>
+        ><FaArrowRight /></Button>
       </ButtonGroup>
     </div>
     <div className='selected-day'>{day}</div>
