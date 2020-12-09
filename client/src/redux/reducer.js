@@ -15,6 +15,7 @@ import {
   WS_SET_MESSAGES,
   WS_SET_USERS,
   WS_SET_MESSAGE,
+  WS_SET_STATUS,
 } from './actions'
 
 const emptyRes = {code: null, message: null, data: null}
@@ -53,7 +54,8 @@ const initialState = {
 
   ws_messages: {},
   ws_users: {},
-  ws_message: ""
+  ws_message: "",
+  ws_status: "off"
 }
 
 export default function mainReducer(state, action) {
@@ -111,6 +113,9 @@ export default function mainReducer(state, action) {
       break
     case WS_SET_MESSAGE:
       state.ws_message = action.payload
+      break
+    case WS_SET_STATUS:
+      state.ws_status = action.payload
       break
   }
 

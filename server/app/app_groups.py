@@ -315,6 +315,7 @@ class RoomLive(WebSocketEndpoint):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        print('init')
         self.room: Optional[Room] = None
         self.user_id: Optional[str] = None
 

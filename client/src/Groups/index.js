@@ -1,17 +1,22 @@
 import React, {useState, useEffect} from 'react'
 import _ from 'lodash'
-import {websocket, wsSetMessage} from "../redux/actions";
+import {websocket, wsSetMessage, fetchRoom} from "../redux/actions";
 import { useSelector, useDispatch } from 'react-redux'
 
 
 export default function Groups() {
   const [disabled, setDisabled] = useState(false)
+  const [room, setRoom] = useState()
 
   let users = useSelector(state => state.ws_users);
   let messages = useSelector(state => state.ws_messages);
   const message = useSelector(state => state.ws_message);
 
   const dispatch = useDispatch();
+
+  useEffect(() => {
+    dispatch(fetchRoom())
+  }, [])
 
   messages = _(messages).toPairs().sortBy(o => o[0]).map(o => o[1]).value()
   users = _(users).toPairs().sortBy(o => o[1]).map(o => o[0]).value()

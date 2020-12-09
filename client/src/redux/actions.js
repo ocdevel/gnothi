@@ -245,6 +245,9 @@ export const wsSetUsers = (payload) => ({type: WS_SET_USERS, payload})
 export const WS_SET_MESSAGE = "WS_SET_MESSAGE"
 export const wsSetMessage = (payload) => ({type: WS_SET_MESSAGE, payload})
 
+export const WS_SET_STATUS = "WS_SET_STATUS"
+export const wsSetStatus = (payload) => ({type: WS_SET_STATUS, payload})
+
 function addToUsersList(user_id) {
   const {dispatch, getState} = store
   const {users} = getState()
@@ -271,6 +274,7 @@ function onWebsocketMessage(message) {
   switch(type) {
     case 'JOBS_STATUS':
       dispatch(setAiStatus(data.status))
+      return
     case 'MESSAGE':
     case 'ERROR':
     case 'ROOM_KICK':
@@ -298,39 +302,44 @@ function onWebsocketMessage(message) {
 
 export const websocket = {ws: null, interval: null};
 
-/** Print websocket errors into the chat box using addErrorMessage. */
-function onWebsocketError(err)  {
+function onWebsocketOpen() {
   const {dispatch} = store
-  dispatch(setServerError(err))
-  console.error('Websocket error: ', err)
-  onWebsocketClose()
+  dispatch(wsSetStatus('on'))
+  if (websocket.interval) {
+    clearInterval(websocket.interval)
+    delete websocket.interval
+  }
 }
 
-/** Disable the 'submit' button when the websocket connection closes. */
-function onWebsocketClose() {
+function onWebsocketError(err)  {
+  onWebsocketClose(err)
+}
+
+function onWebsocketClose(e) {
+  const {dispatch} = store
+  if (typeof e === "string") {
+    console.error('Websocket error: ', e)
+    dispatch(setServerError(e))
+    dispatch(wsSetStatus("off"))
+  }
   console.log('Closing WebSocket connection');
-  websocket.interval = setInterval(initWebsocket, 2000)  // try to reconnect
-  // setDisabled(true); // TODO
+
+  if (!websocket.interval) {
+    websocket.interval = setInterval(initWebsocket, 5000)  // try to reconnect
+  }
 }
 
-/** On page load, open a websocket connection, and fetch the list of active users. */
-const oReq = new XMLHttpRequest();
-oReq.addEventListener("load", reqListener);
-oReq.open("GET", `${host}/users2`);
-oReq.send();
-
-function reqListener () {
-  const userData = JSON.parse(this.responseText);
-  console.log('Received user list:', userData);
-  userData.users.forEach(addToUsersList);
+export const fetchRoom = () => async (dispatch, getState) => {
+  const {data} = await dispatch(fetch_('users2'))
+  data.users.forEach(addToUsersList);
 }
 
 function initWebsocket() {
   websocket.ws = new WebSocket(`${ws_host}/ws`);
+  websocket.ws.onopen = onWebsocketOpen;
   websocket.ws.onerror = onWebsocketError;
   websocket.ws.onclose = onWebsocketClose;
   websocket.ws.onmessage = onWebsocketMessage;
-  if (websocket.interval) {clearInterval(websocket.interval)}
 }
 initWebsocket()
 
