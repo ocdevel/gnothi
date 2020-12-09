@@ -7,6 +7,7 @@ export default function Footer () {
     <Link to='/about'>About</Link>{' '}&#183;{' '}
     <a href="mailto:tylerrenelle@gmail.com">Contact</a>{' '}&#183;{' '}
     <Link to='/privacy'>Privacy</Link>{' '}&#183;{' '}
-    <Link to='/terms'>Terms</Link>{' '}
+    <Link to='/terms'>Terms</Link>{' '}&#183;{' '}
+    <span>Copyright © 2020 OCDevel LLC</span>
   </footer>
 }
