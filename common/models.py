@@ -20,6 +20,7 @@ from sqlalchemy.dialects import postgresql
 from sqlalchemy.dialects.postgresql import UUID, JSONB, ARRAY
 from sqlalchemy_utils.types import EmailType
 from sqlalchemy_utils.types.encrypted.encrypted_type import StringEncryptedType, FernetEngine
+import petname
 
 
 from fastapi_sqlalchemy import db  # an object to provide global access to a database session
@@ -1096,7 +1097,12 @@ class UserGroup(Base):
     __tablename__ = 'users_groups'
     user_id = FKCol('users.id', primary_key=True)
     group_id = FKCol('groups.id', primary_key=True)
-    username = Encrypt()  # auto-generate a random name
+
+    # Temporary/private name & id assigned for this user for this group.
+    # If they opt to expose real username, it will be used instead
+    username = Encrypt(default=petname.Generate)  # auto-generate a random name (adjective-animal)
+    user_group_id = IDCol()
+
     joined_at = DateCol()
     role = Column(Enum(GroupRoles))
 

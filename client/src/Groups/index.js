@@ -19,7 +19,7 @@ export default function Groups() {
   function onSubmit(e) {
     e.preventDefault();
     if (message === '') { return }
-    websocket.send(message);
+    websocket.ws.send(message);
     dispatch(wsSetMessage(''))
   }
 

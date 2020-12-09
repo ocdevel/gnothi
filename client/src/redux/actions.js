@@ -12,6 +12,8 @@ if (~host.indexOf('gnothi')) { // prod
   host = 'http://localhost:5002'
 }
 
+const ws_host = host.replace(/^https?/, 'ws')
+
 export const API_URL = host;
 
 export const SET_SERVER_ERROR = "SET_SERVER_ERROR"
@@ -153,11 +155,6 @@ export const changeAs = (as=null) => async (dispatch, getState) => {
 
 export const SET_AI_STATUS = "SET_AI_STATUS"
 export const setAiStatus = (payload) => ({type: SET_AI_STATUS, payload})
-export const checkAiStatus = () => async (dispatch, getState) => {
-  if (!getState().jwt) {return}
-  const {data} = await dispatch(fetch_('jobs-status'))
-  dispatch(setAiStatus(data))
-}
 
 export const SET_TAGS = "SET_TAGS"
 export const setTags = (payload) => ({type: SET_TAGS, payload})
@@ -235,6 +232,10 @@ export const getInsights = (k) => async (dispatch, getState) => {
 }
 
 
+/**
+ * Websockets
+ */
+
 export const WS_SET_MESSAGES = "WS_SET_MESSAGES"
 export const wsSetMessages = (payload) => ({type: WS_SET_MESSAGES, payload})
 
@@ -243,11 +244,6 @@ export const wsSetUsers = (payload) => ({type: WS_SET_USERS, payload})
 
 export const WS_SET_MESSAGE = "WS_SET_MESSAGE"
 export const wsSetMessage = (payload) => ({type: WS_SET_MESSAGE, payload})
-
-
-/**
- * Websockets
- */
 
 function addToUsersList(user_id) {
   const {dispatch, getState} = store
@@ -271,8 +267,10 @@ function onWebsocketMessage(message) {
   console.log('Got message from websocket:', message)
   const payload = JSON.parse(message.data)
   const {type, data} = payload
-  let {users, messages} = getState()
+  let {ws_users, messages} = getState()
   switch(type) {
+    case 'JOBS_STATUS':
+      dispatch(setAiStatus(data.status))
     case 'MESSAGE':
     case 'ERROR':
     case 'ROOM_KICK':
@@ -285,7 +283,7 @@ function onWebsocketMessage(message) {
       addMessage(`**User ${data}** joined the room`, 'server')
       return
     case 'USER_LEAVE':
-      delete users[data]
+      delete ws_users[data]
       addMessage(`**User ${data}** left the room`, 'server')
       return;
     case 'ROOM_JOIN':
@@ -298,25 +296,27 @@ function onWebsocketMessage(message) {
   }
 }
 
+export const websocket = {ws: null, interval: null};
+
 /** Print websocket errors into the chat box using addErrorMessage. */
 function onWebsocketError(err)  {
-  console.error('Websocket error: ', err);
-  // TODO requires dispatch to
-  // addErrorMessage('Error:' + err, 'error');
-  // onWebsocketClose();
+  const {dispatch} = store
+  dispatch(setServerError(err))
+  console.error('Websocket error: ', err)
+  onWebsocketClose()
 }
 
 /** Disable the 'submit' button when the websocket connection closes. */
 function onWebsocketClose() {
   console.log('Closing WebSocket connection');
-  // TODO
-  // setDisabled(true);
+  websocket.interval = setInterval(initWebsocket, 2000)  // try to reconnect
+  // setDisabled(true); // TODO
 }
 
 /** On page load, open a websocket connection, and fetch the list of active users. */
 const oReq = new XMLHttpRequest();
 oReq.addEventListener("load", reqListener);
-oReq.open("GET", "http://localhost:5002/users2");
+oReq.open("GET", `${host}/users2`);
 oReq.send();
 
 function reqListener () {
@@ -325,7 +325,12 @@ function reqListener () {
   userData.users.forEach(addToUsersList);
 }
 
-export const websocket = new WebSocket('ws://localhost:5002/ws');
-websocket.onerror = onWebsocketError;
-websocket.onclose = onWebsocketClose;
-websocket.onmessage = onWebsocketMessage;
+function initWebsocket() {
+  websocket.ws = new WebSocket(`${ws_host}/ws`);
+  websocket.ws.onerror = onWebsocketError;
+  websocket.ws.onclose = onWebsocketClose;
+  websocket.ws.onmessage = onWebsocketMessage;
+  if (websocket.interval) {clearInterval(websocket.interval)}
+}
+initWebsocket()
+

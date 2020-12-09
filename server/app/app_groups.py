@@ -14,8 +14,8 @@ logger = logging.getLogger(__name__)
 getuser = M.User.snoop
 
 from typing import List
-
-from fastapi import WebSocket, WebSocketDisconnect
+from fastapi_sqlalchemy import db
+from fastapi import WebSocket #, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
 
 router = APIRouter()
@@ -25,8 +25,7 @@ router = APIRouter()
 broadcast backend.
 """
 
-import logging
-import time
+import logging, time, asyncio
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
@@ -52,6 +51,7 @@ class UserInfo(BaseModel):
     user_id: str
     connected_at: float
     message_count: int
+
 
 
 class Room:
@@ -173,6 +173,38 @@ class Room:
             await websocket.send_json({"type": "USER_LEAVE", "data": user_id})
 
 
+class GlobalWS:
+    """For sending global messages (like jobs-status)
+    """
+
+    def __init__(self):
+        self._clients: Dict[str, WebSocket] = {}
+        # https://stackoverflow.com/questions/48429306/run-async-while-loop-independently
+        asyncio.ensure_future(self.loop())
+
+    async def loop(self):
+        with db():
+            while True:
+                res = M.Machine.gpu_status(db.session)
+                await self.broadcast("JOBS_STATUS", {"status": res})
+                await asyncio.sleep(2)
+
+    def add_client(self, user_id: str, ws: WebSocket):
+        self._clients[user_id] = ws
+
+    async def broadcast(self, message_type, data: Dict):
+        """Broadcast message to all connected users.
+        """
+        # don't use _clients.items() because "dictionary changed size during iteration"
+        user_ids = list(self._clients.keys())
+        for user_id in user_ids:
+            ws = self._clients[user_id]
+            try:
+                await ws.send_json({"type": message_type, "data": data})
+            except:
+                del self._clients[user_id]
+
+
 class RoomEventMiddleware:  # pylint: disable=too-few-public-methods
     """Middleware for providing a global :class:`~.Room` instance to both HTTP
     and WebSocket scopes.
@@ -192,8 +224,6 @@ class RoomEventMiddleware:  # pylint: disable=too-few-public-methods
         if scope["type"] in ("lifespan", "http", "websocket"):
             scope["room"] = self._room
         await self._app(scope, receive, send)
-
-
 
 
 class UserListResponse(BaseModel):
@@ -273,6 +303,7 @@ async def thunder(request: Request, distance: ThunderDistance = Body(...)):
         await room.broadcast_message("server", "You feel a faint tremor")
 
 
+
 @router.websocket_route("/ws", name="ws")
 class RoomLive(WebSocketEndpoint):
     """Live connection to the global :class:`~.Room` instance, via WebSocket.
@@ -286,6 +317,9 @@ class RoomLive(WebSocketEndpoint):
         super().__init__(*args, **kwargs)
         self.room: Optional[Room] = None
         self.user_id: Optional[str] = None
+
+        # For global/site-wide messages
+        self.global_ws: GlobalWS = GlobalWS()
 
     @classmethod
     def get_next_user_id(cls):
@@ -314,6 +348,7 @@ class RoomLive(WebSocketEndpoint):
         )
         await self.room.broadcast_user_joined(self.user_id)
         self.room.add_user(self.user_id, websocket)
+        self.global_ws.add_client(self.user_id, websocket)
 
     async def on_disconnect(self, _websocket: WebSocket, _close_code: int):
         """Disconnect the user, removing them from the :class:`~.Room`, and

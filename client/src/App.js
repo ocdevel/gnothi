@@ -54,10 +54,6 @@ function App() {
     dispatch(getTags())
     dispatch(getEntries())
     dispatch(getFields())
-
-    // TODO move to websockets
-    const timer = setInterval(() => dispatch(checkAiStatus()), 1000)
-    return () => clearInterval(timer)
   }, [jwt, as])
 
   if (!user) {
