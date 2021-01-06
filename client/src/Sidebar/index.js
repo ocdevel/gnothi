@@ -21,7 +21,7 @@ import {
 import { useDispatch, useSelector } from 'react-redux'
 import { fetch_ } from '../redux/actions'
 import {FaAmazon} from "react-icons/fa";
-import Ads from "./Ads";
+// import Ads from "./Ads";
 
 function TopBooks() {
   const [books, setBooks] = useState([])
@@ -151,6 +151,6 @@ export default function Sidebar() {
       </Card>
     </Accordion>
 
-    <Ads />
+    {/* <Ads /> */}
   </>
 }

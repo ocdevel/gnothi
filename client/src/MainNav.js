@@ -29,8 +29,10 @@ export default function MainNav() {
   const aiStatus = useSelector(state => state.aiStatus)
   const dispatch = useDispatch()
 
+  const shares = user.shared_with_me || []
+
   const renderAsSelect = () => {
-    if (!user.shared_with_me.length) {
+    if (!shares.length) {
       return
     }
     return <>
@@ -39,7 +41,7 @@ export default function MainNav() {
           {emoji("🔀")}{user.email}
         </NavDropdown.Item>
       )}
-      {user.shared_with_me.map(s => s.id != as && (
+      {shares.map(s => s.id != as && (
         <NavDropdown.Item onClick={() => dispatch(changeAs(s.id))}>
           {emoji("🔀")}
           {s.new_entries ? <Badge pill variant='danger'>{s.new_entries}</Badge> : null}
@@ -54,7 +56,7 @@ export default function MainNav() {
   if (asUser) {
     email = <>{emoji("🕵️")} {asUser.email}</>
   } else {
-    const ne = _.reduce(user.shared_with_me, (m, v) => m + v.new_entries, 0)
+    const ne = _.reduce(shares, (m, v) => m + v.new_entries, 0)
     email = !ne ? email : <><Badge pill variant='danger'>{ne}</Badge> {email}</>
   }
 
