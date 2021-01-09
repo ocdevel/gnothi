@@ -43,6 +43,10 @@ const refreshToken = async (dispatch) => {
     await dispatch(setJwt(data))
     return data.access_token
   } catch (error) {
+    if (error.response.status === 422) {
+      // TODO investigate why server sending 422 here
+      logout()
+    }
     return false
   }
 }
