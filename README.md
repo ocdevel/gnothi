@@ -28,7 +28,7 @@ Currently very hairy, will clean this up soon.
     * Install MySQL server on your host
     * Download [libgen/dbdumps/libgen.rar](http://gen.lib.rus.ec/dbdumps/), extract, improt into MySQL
     * Modify `common/config.json` for MySQL/libgen
-* Install docker-compose [with GPU support](https://github.com/docker/compose/issues/6691#issuecomment-670700674). If on Windows, you'll need [WSL2 + Dev channel](https://medium.com/@dalgibbard/docker-with-gpu-support-in-wsl2-ebbc94251cf5)
+* Install Docker & docker-compose [with GPU support](https://ocdevel.com/blog/20201207-wsl2-gpu-docker)
 * `docker-compose up -d`
 
 I'll be developing lefnire/ml-tools actively along with Gnothi, so on my machine it's setup like:

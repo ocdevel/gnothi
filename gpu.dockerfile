@@ -31,6 +31,7 @@ COPY ./common /paperspace/common
 
 ENV ENVIRONMENT=production
 ENV TORCH_HOME=/storage
+ENV TRANSFORMERS_CACHE=/storage
 ENV STANZA_RESOURCES_DIR=/storage/stanza_resources
 ENV PYTHONPATH=.
 
