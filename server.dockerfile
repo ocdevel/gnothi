@@ -18,7 +18,10 @@ RUN pip install \
   tqdm \
   mysqlclient \
   cryptography \
+  # else fastapi-jwt-auth breaks
+  PyJWT==1.7.1 \
   fastapi-users[sqlalchemy] \
+  fastapi-jwt-auth \
   asyncpg \
   bcrypt \
   shortuuid \
@@ -27,7 +30,6 @@ RUN pip install \
   lorem-text \
   boto3 \
   dynaconf \
-  fastapi-jwt-auth \
   stripe
 
 COPY ./server/app /app/app
