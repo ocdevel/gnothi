@@ -2,26 +2,26 @@ import React, {useEffect, useState} from "react";
 import {Col, Form, Card, Button, Alert} from "react-bootstrap";
 import {Spinner} from './utils'
 
-import { useSelector, useDispatch } from 'react-redux'
-import { getInsights, setInsights } from '../redux/actions'
+import {useStoreActions, useStoreState} from "easy-peasy";
 
 export default function Ask() {
-  const aiStatus = useSelector(state => state.aiStatus)
-  const insights = useSelector(state => state.insights)
-  const dispatch = useDispatch()
+  const aiStatus = useStoreState(state => state.server.ai)
+  const insight = useStoreState(state => state.insights.ask)
+  const getInsight = useStoreActions(actions => actions.insights.getInsight)
+  const setInsight = useStoreActions(actions => actions.insights.setInsight)
 
-  const {ask_req, ask_fetching, ask_res1, ask_res2} = insights
-  const {code, message, data: answers} = ask_res2
+  const {req, fetching, res1, res2} = insight
+  const {code, message, data: answers} = res2
 
   if (code === 401) { return <h5>{message}</h5> }
 
   const fetchAnswer = async (e) => {
     e.preventDefault()
-    if (!ask_req.length) {return}
-    dispatch(getInsights('ask'))
+    if (!req.length) {return}
+    getInsight('ask')
   }
 
-  const changeQuestion = e => dispatch(setInsights({'ask_req': e.target.value}))
+  const changeQuestion = e => setInsight(['ask', {req: e.target.value}])
 
   return <>
     <Form onSubmit={fetchAnswer}>
@@ -32,14 +32,14 @@ export default function Ask() {
           placeholder="How do I feel about x?"
           as="textarea"
           rows={3}
-          value={ask_req}
+          value={req}
           onChange={changeQuestion}
         />
         <Form.Text muted>
            Use proper English & grammar. Use personal pronouns.
         </Form.Text>
       </Form.Group>
-      {ask_fetching ? <Spinner job={ask_res1} /> : <>
+      {fetching ? <Spinner job={res1} /> : <>
         <Button
           disabled={aiStatus !== 'on'}
           variant="primary"

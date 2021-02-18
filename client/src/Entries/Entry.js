@@ -21,8 +21,7 @@ import 'react-markdown-editor-lite/lib/index.css'
 import {AddNotes} from './Notes'
 import _ from 'lodash'
 
-import { useSelector, useDispatch } from 'react-redux'
-import { fetch_, setServerError, getEntries } from '../redux/actions'
+import {useStoreActions, useStoreState} from "easy-peasy";
 
 const mdParser = new MarkdownIt(/* Markdown-it options */);
 
@@ -51,14 +50,13 @@ After you have one or two entries, head to the Insights and Resources links at t
 `
 
 function Editor({text, changeText}) {
-  const dispatch = useDispatch()
-
+  const fetch = useStoreActions(actions => actions.server.fetch)
   const onImageUpload = async (file) => {
     const formData = new FormData();
     // formData.append('file', file, file.filename);
     formData.append('file', file);
     const headers = {'Content-Type': 'multipart/form-data'}
-    const {data, code} = await dispatch(fetch_('upload-image', 'POST', formData, headers))
+    const {data, code} = await fetch({route: 'upload-image', method: 'POST', body: formData, headers})
     return data.filename
   }
 
@@ -92,16 +90,18 @@ export default function Entry() {
   const [advanced, setAdvanced] = useState(false)
   const [notes, setNotes] = useState([])
   const [cacheEntry, setCacheEntry] = useState()
-  const as = useSelector(state => state.as)
 
-  const dispatch = useDispatch()
+  const as = useStoreState(state => state.user.as)
+  const fetch = useStoreActions(actions => actions.server.fetch)
+  const getEntries = useStoreActions(actions => actions.j.getEntries)
+  const setServerError = useStoreActions(actions => actions.server.error)
 
   const showCacheEntry = !editing && entry_id && cacheEntry
   const draftId = `draft-${entry_id || "new"}`
 
   const fetchEntry = async () => {
     if (!entry_id) { return loadDraft() }
-    const {data} = await dispatch(fetch_(`entries/${entry_id}`, 'GET'))
+    const {data} = await fetch({route:`entries/${entry_id}`})
     if (!data) {return} // I think if they refresh on entry/{id} while snooping?
     const form = _.pick(data, 'title text no_ai created_at'.split(' '))
     setForm(form)
@@ -112,7 +112,7 @@ export default function Entry() {
 
   const fetchNotes = async () => {
     if (!entry_id) { return }
-    const {data} = await dispatch(fetch_(`entries/${entry_id}/notes`, 'GET'))
+    const {data} = await fetch({route:`entries/${entry_id}/notes`})
     setNotes(data)
   }
 
@@ -138,18 +138,18 @@ export default function Entry() {
 
   const go = (to='/j') => {
     clearDraft()
-    dispatch(getEntries())
+    getEntries()
     history.push(to)
   }
 
   const submit = async e => {
     e.preventDefault()
-    dispatch(setServerError(false))
+    setServerError(false)
     setSubmitting(true)
     let {title, text, no_ai, created_at} = form
     const body = {title, text, no_ai, created_at, tags}
-    const res = entry_id ? await dispatch(fetch_(`entries/${entry_id}`, 'PUT', body))
-      : await dispatch(fetch_(`entries`, 'POST', body))
+    const res = entry_id ? await fetch({route: `entries/${entry_id}`, method: 'PUT', body})
+      : await fetch({route: `entries`, method: 'POST', body})
     setSubmitting(false)
     if (res.code !== 200) {return}
     setEditing(false)
@@ -158,7 +158,7 @@ export default function Entry() {
 
   const deleteEntry = async () => {
     if (window.confirm(`Delete "${entry.title}"`)) {
-      await dispatch(fetch_(`entries/${entry_id}`, 'DELETE'))
+      await fetch({route: `entries/${entry_id}`, method: 'DELETE'})
       go()
     }
   }
@@ -166,7 +166,7 @@ export default function Entry() {
   const showAiSees = async () => {
     if (!entry_id) { return }
     if (cacheEntry) {return setCacheEntry(null)}
-    const {data} = await dispatch(fetch_(`entries/${entry_id}/cache`, 'GET'))
+    const {data} = await fetch({route: `entries/${entry_id}/cache`})
     setCacheEntry(data)
   }
 

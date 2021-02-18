@@ -1,21 +1,21 @@
 import React, {useState, useEffect} from 'react'
 import _ from 'lodash'
-import {websocket, wsSetMessage, fetchRoom} from "../redux/actions";
-import { useSelector, useDispatch } from 'react-redux'
+import {useStoreState, useStoreActions} from "easy-peasy";
 
 
 export default function Groups() {
+  const ws = useStoreState(state => state.ws)
   const [disabled, setDisabled] = useState(false)
   const [room, setRoom] = useState()
 
-  let users = useSelector(state => state.ws_users);
-  let messages = useSelector(state => state.ws_messages);
-  const message = useSelector(state => state.ws_message);
-
-  const dispatch = useDispatch();
+  let users = useStoreState(state => state.ws.users);
+  let messages = useStoreState(state => state.ws.messages);
+  const message = useStoreState(state => state.ws.message);
+  const fetchRoom = useStoreActions(actions => actions.ws.fetchRoom)
+  const setMessage = useStoreActions(actions => actions.ws.setMessage)
 
   useEffect(() => {
-    dispatch(fetchRoom())
+    fetchRoom()
   }, [])
 
   messages = _(messages).toPairs().sortBy(o => o[0]).map(o => o[1]).value()
@@ -24,8 +24,8 @@ export default function Groups() {
   function onSubmit(e) {
     e.preventDefault();
     if (message === '') { return }
-    websocket.ws.send(message);
-    dispatch(wsSetMessage(''))
+    ws.ws.send(message);
+    setMessage('')
   }
 
   const myUserId = false
@@ -61,7 +61,7 @@ export default function Groups() {
                   id="chat-input"
                   placeholder="Enter message..."
                   value={message}
-                  onChange={(e) => dispatch(wsSetMessage(e.target.value))}
+                  onChange={(e) => setMessage(e.target.value)}
                 />
               </div>
               <div className="col-sm-2">

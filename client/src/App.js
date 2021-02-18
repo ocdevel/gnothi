@@ -18,15 +18,9 @@ import Error from './Error'
 import MainNav from './MainNav'
 import Footer from './Footer'
 
-import { Provider, useSelector, useDispatch } from 'react-redux'
-import store from './redux/store';
-import {
-  getUser,
-  checkAiStatus,
-  getEntries,
-  getTags,
-  getFields
-} from './redux/actions';
+import { StoreProvider, useStoreActions, useStoreState } from 'easy-peasy'
+import store from './redux/store'
+
 import Insights from "./Insights";
 import Tags, {MainTags} from "./Tags";
 import Resources from "./Resources";
@@ -35,11 +29,15 @@ import Groups from "./Groups";
 import staticRoutes from "./Static";
 
 function App() {
-  const jwt = useSelector(state => state.jwt);
-  const user = useSelector(state => state.user);
-  const as = useSelector(state => state.as);
-  const serverError = useSelector(state => state.serverError);
-	const dispatch = useDispatch();
+  const jwt = useStoreState(state => state.user.jwt);
+  const user = useStoreState(state => state.user.user);
+  const as = useStoreState(state => state.user.as);
+  const error = useStoreState(state => state.server.error);
+	const getUser = useStoreActions(actions => actions.user.getUser)
+	const getTags = useStoreActions(actions => actions.j.getTags)
+	const getEntries = useStoreActions(actions => actions.j.getEntries)
+	const getFields = useStoreActions(actions => actions.j.getFields)
+
 	const history = useHistory()
   const location = useLocation()
 
@@ -50,10 +48,10 @@ function App() {
 
   useEffect(() => {
     if (!jwt) { return }
-    dispatch(getUser())
-    dispatch(getTags())
-    dispatch(getEntries())
-    dispatch(getFields())
+    getUser()
+    getTags()
+    getEntries()
+    getFields()
   }, [jwt, as])
 
   if (!user) {
@@ -70,7 +68,7 @@ function App() {
   return <div key={as}>
     <MainNav />
     <Container fluid style={{marginTop: 5}}>
-      <Error message={serverError} />
+      <Error message={error} />
 
       <Switch>
         <Route path='/about'>
@@ -101,10 +99,10 @@ function App() {
 }
 
 export default () => <>
-  <Provider store={store}>
+  <StoreProvider store={store}>
     <Router>
       <App />
       <Footer />
     </Router>
-  </Provider>
+  </StoreProvider>
 </>;

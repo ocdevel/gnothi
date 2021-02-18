@@ -17,12 +17,14 @@ import _ from 'lodash'
 import getZodiacSign from "./zodiac"
 import People from './People'
 
-import { useSelector, useDispatch } from 'react-redux'
-import { fetch_ } from '../redux/actions'
+import {useStoreState, useStoreActions} from "easy-peasy";
 
 const timezones = moment.tz.names().map(n => ({value: n, label: n}))
 
 function Profile_() {
+  const as = useStoreState(state => state.user.as)
+  const fetch = useStoreActions(actions => actions.server.fetch)
+
   const [profile, setProfile] = useState({
     first_name: '',
     last_name: '',
@@ -35,11 +37,8 @@ function Profile_() {
   })
   const [dirty, setDirty] = useState({dirty: false, saved: false})
 
-  const as = useSelector(state => state.as)
-  const dispatch = useDispatch()
-
   const fetchProfile = async () => {
-    const {data} = await dispatch(fetch_("profile"))
+    const {data} = await fetch({route: "profile"})
     if (!data) {return}
     data.timezone = _.find(timezones, t => t.value === data.timezone)
     setProfile(data)
@@ -67,7 +66,7 @@ function Profile_() {
   const submit = async e => {
     e.preventDefault()
     profile.timezone = _.get(profile, 'timezone.value', profile.timezone)
-    await dispatch(fetch_('profile', 'PUT', profile))
+    await fetch({route: 'profile', method: 'PUT', body: profile})
     setDirty({dirty: false, saved: true})
     fetchProfile()
   }

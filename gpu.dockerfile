@@ -24,7 +24,8 @@ RUN \
   boto3 \
   dynaconf \
   pytest \
-  git+git://github.com/lefnire/ml-tools.git@9316d42c
+  git+git://github.com/lefnire/ml-tools.git@9316d42c \
+  petname
 
 COPY ./gpu /paperspace
 COPY ./common /paperspace/common

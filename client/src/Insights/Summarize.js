@@ -3,26 +3,26 @@ import {Form, InputGroup, Button, Col} from "react-bootstrap"
 import {sent2face} from "../utils"
 import {Spinner} from "./utils"
 
-import { useSelector, useDispatch } from 'react-redux'
-import { getInsights, setInsights } from '../redux/actions'
+import {useStoreState, useStoreActions} from "easy-peasy";
 
 export default function Summarize() {
-  const aiStatus = useSelector(state => state.aiStatus)
-  const insights = useSelector(state => state.insights)
-  const dispatch = useDispatch()
+  const aiStatus = useStoreState(state => state.server.ai)
+  const insight = useStoreState(state => state.insights.summarize)
+  const setInsight = useStoreActions(actions => actions.insights.setInsight)
+  const getInsight = useStoreActions(actions => actions.insights.getInsight)
 
-  const {summarize_req, summarize_res1, summarize_res2, summarize_fetching} = insights
-  const {code, message, data} = summarize_res2
+  const {req, res1, res2, fetching} = insight
+  const {code, message, data} = res2
 
   if (code === 401) { return <h5>{message}</h5> }
 
   const changeWords = e => {
-    dispatch(setInsights({'summarize_req': e.target.value}))
+    setInsight(['summarize', {req: e.target.value}])
   }
 
   const submit = async e => {
     e.preventDefault();
-    dispatch(getInsights('summarize'))
+    getInsight('summarize')
   }
 
   const renderForm = () => (
@@ -36,7 +36,7 @@ export default function Summarize() {
           id={`xWords`}
           type="number"
           min={5}
-          value={summarize_req}
+          value={req}
           onChange={changeWords}
         />
       </InputGroup>
@@ -50,7 +50,7 @@ export default function Summarize() {
   return <>
     {renderForm()}
     <Form onSubmit={submit}>
-      {summarize_fetching ? <Spinner job={summarize_res1} /> : <>
+      {fetching ? <Spinner job={res1} /> : <>
         <Button
           disabled={aiStatus !== 'on'}
           type="submit"

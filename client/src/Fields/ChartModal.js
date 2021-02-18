@@ -6,21 +6,22 @@ import {CartesianGrid, Line, LineChart, Tooltip, XAxis, YAxis, ResponsiveContain
   Area, AreaChart, ComposedChart, Scatter, BarChart, Bar, Legend, Brush, ReferenceLine} from "recharts";
 import moment from 'moment'
 
-import { fetch_ } from '../redux/actions'
-import { useSelector, useDispatch } from 'react-redux'
+import {useStoreState, useStoreActions} from "easy-peasy";
 import {FieldName} from "./utils";
 
 const round_ = (v) => v ? v.toFixed(2) : null
 
 export default function ChartModal({close, field=null, overall=false}) {
+  const as = useStoreState(state => state.user.as)
+  const fetch = useStoreActions(actions => actions.server.fetch)
+
   const [history, setHistory] = useState([])
-  const fields = useSelector(state => state.fields)
-  const influencers = useSelector(state => state.influencers)
-  const dispatch = useDispatch()
+  const fields = useStoreState(state => state.j.fields)
+  const influencers = useStoreState(state => state.j.influencers)
 
   const getHistory = async () => {
     if (!field) { return }
-    const {data, code, message} = await dispatch(fetch_(`fields/${field.id}/history`))
+    const {data, code, message} = await fetch({route: `fields/${field.id}/history`})
     setHistory(data)
   }
 

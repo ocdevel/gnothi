@@ -12,16 +12,15 @@ import React, {useEffect, useState} from "react";
 import {FaQuestionCircle} from "react-icons/all";
 import {SimplePopover} from "../utils";
 
-import { useSelector, useDispatch } from 'react-redux'
-import { fetch_ } from '../redux/actions'
+import {useStoreActions, useStoreState} from "easy-peasy";
 
 export function NotesAll() {
-  const as = useSelector(state => state.as)
-  const dispatch = useDispatch()
+  const as = useStoreState(state => state.user.as)
+  const fetch = useStoreActions(actions => actions.server.fetch)
 
   const [notes, setNotes] = useState([])
   const fetchNotes = async () => {
-    const {data} = await dispatch(fetch_(`notes`, 'GET'))
+    const {data} = await fetch({route: `notes`})
     setNotes(data)
   }
   useEffect(() => {
@@ -78,14 +77,14 @@ const noteTypes = [{
 }]
 
 export function AddNotes({entry_id, onSubmit}) {
+  const as = useStoreState(state => state.user.as)
+  const fetch = useStoreActions(actions => actions.server.fetch)
+
   const [adding, setAdding] = useState(null)
   const [text, setText] = useState('')
   const [private_, setPrivate] = useState(false)
   const [showHelp, setShowHelp] = useState(false)
   const [qmarkHover, setQmarkHover] = useState(false)
-
-  const as = useSelector(state => state.as)
-  const dispatch = useDispatch()
 
   const renderHelpModal = () => {
     return <>
@@ -153,7 +152,8 @@ export function AddNotes({entry_id, onSubmit}) {
 
   const submit = async (e) => {
     e.preventDefault()
-    await dispatch(fetch_(`entries/${entry_id}/notes`, 'POST', {type: adding, text, private: private_}))
+    const body = {type: adding, text, private: private_}
+    await fetch({route: `entries/${entry_id}/notes`, method: 'POST', body})
     clear()
     onSubmit()
   }

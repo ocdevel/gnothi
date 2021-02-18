@@ -29,7 +29,8 @@ import {
   useParams
 } from "react-router-dom"
 import {LinkContainer} from 'react-router-bootstrap'
-import {useSelector} from "react-redux"
+
+import {useStoreActions, useStoreState} from 'easy-peasy'
 
 function Details() {
   let { tab } = useParams();
@@ -193,8 +194,8 @@ function Overviews() {
 
 export default function Splash() {
   const location = useLocation()
-  const error = useSelector(state => state.error)
-  const jwt = useSelector(state => state.jwt)
+  const error = useStoreState(state => state.server.error)
+  const jwt = useStoreState(state => state.user.jwt)
   // Sign In button not in <Switch> because it uses the flex/center css from jumbotron, the auth routes use left-just
   const showSignin = !jwt && !~['/auth', '/reset-password'].indexOf(location.pathname)
   return <>

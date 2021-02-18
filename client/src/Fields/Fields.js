@@ -1,6 +1,6 @@
 import React, {useEffect, useState, useCallback} from "react";
 import {SimplePopover, spinner} from "../utils";
-import {API_URL, setServerError} from '../redux/actions'
+import {API_URL} from '../redux/server'
 import _ from "lodash";
 import {
   Accordion,
@@ -19,8 +19,7 @@ import ChartModal from "./ChartModal";
 import {FieldName} from "./utils";
 import moment from 'moment'
 
-import { useSelector, useDispatch } from 'react-redux'
-import { fetch_, getFields } from '../redux/actions'
+import {useStoreState, useStoreActions} from "easy-peasy";
 import './Fields.scss'
 import {
   FaArrowLeft,
@@ -41,17 +40,19 @@ const iso = (day=null) => {
 
 
 function FieldsAdvanced({fetchFieldEntries}) {
+  const jwt = useStoreState(state => state.user.jwt)
+  const fetch = useStoreActions(actions => actions.server.fetch)
+  const setServerError = useStoreActions(actions => actions.server.error)
+
   const [hasDupes, setHasDupes] = useState(false)
   const [confirmWipe, setConfirmWipe] = useState('')
-  const dispatch = useDispatch()
-  const jwt = useSelector(state => state.jwt)
 
   useEffect(() => {
     fetchHasDupes()
   }, [])
 
   async function fetchHasDupes() {
-    const {data} = await dispatch(fetch_('field-entries/has-dupes'))
+    const {data} = await fetch({route: 'field-entries/has-dupes'})
     setHasDupes(!!data)
   }
 
@@ -71,18 +72,18 @@ function FieldsAdvanced({fetchFieldEntries}) {
     } catch (error) {
       let {statusText: message, data} = error.response
       message = data.detail || message || "There was an error"
-      dispatch(setServerError(message))
+      setServerError(message)
     }
   }
 
   async function acceptDupes() {
-    await dispatch(fetch_('field-entries/clear-dupes', 'post'))
+    await fetch({route: 'field-entries/clear-dupes', method: 'POST'})
     await fetchHasDupes()
     fetchFieldEntries()
   }
 
   async function startOver() {
-    await dispatch(fetch_('field-entries/clear-entries', 'post'))
+    await fetch({route: 'field-entries/clear-entries', method: 'POST'})
     await fetchHasDupes()
     fetchFieldEntries()
   }
@@ -136,6 +137,12 @@ function FieldsAdvanced({fetchFieldEntries}) {
 
 
 export default function Fields() {
+  const as = useStoreState(state => state.user.as)
+  const user = useStoreState(state => state.user.user)
+  const fields = useStoreState(state => state.j.fields)
+  const fetch = useStoreActions(actions => actions.server.fetch)
+  const getFields = useStoreActions(actions => actions.j.getFields)
+
   const [day, setDay] = useState(iso())
   const [fetchingSvc, setFetchingSvc] = useState(false)
   const [fieldEntries, setFieldEntries] = useState({})
@@ -144,11 +151,6 @@ export default function Fields() {
   const [showChart, setShowChart] = useState(false)
   // having lots of trouble refreshing certain things, esp. dupes list after picking. Force it for now
   const [cacheBust, setCacheBust] = useState(+new Date)
-
-  const dispatch = useDispatch()
-  const as = useSelector(state => state.as)
-  const user = useSelector(state => state.user)
-  const fields = useSelector(state => state.fields)
 
   const isToday = iso() === iso(day)
 
@@ -170,7 +172,7 @@ export default function Fields() {
 
   async function fetchFieldEntries() {
     if (_.isEmpty(fields)) {return}
-    const {data} = await dispatch(fetch_(`field-entries?day=${day}`, 'GET'))
+    const {data} = await fetch({route: `field-entries?day=${day}`})
     const obj = _.keyBy(data, 'field_id')
     setFieldEntries(obj)
     setFieldValues(_.mapValues(obj, 'value'))
@@ -182,13 +184,13 @@ export default function Fields() {
     value = parseFloat(value) // until we support strings
     const body = {value}
     const params = isToday ? "" : `?day=${day}`
-    await dispatch(fetch_(`field-entries/${fid}${params}`, 'POST', body))
+    await fetch({route: `field-entries/${fid}${params}`, method: 'POST', body})
   }
 
   const fetchService = async (service) => {
     setFetchingSvc(true)
-    await dispatch(fetch_(`${service}/sync`, 'POST'))
-    await dispatch(getFields())
+    await fetch({route: `${service}/sync`, method: 'POST'})
+    await getFields()
     setFetchingSvc(false)
   }
 
@@ -224,7 +226,7 @@ export default function Fields() {
 
   const onFormClose = () => {
     setShowForm(false)
-    dispatch(getFields())
+    getFields()
   }
 
   const onChartClose = () => {

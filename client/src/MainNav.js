@@ -18,16 +18,18 @@ import {
   FaBook, FaRegComments,
 } from 'react-icons/fa'
 
-import { useSelector, useDispatch } from 'react-redux'
-import { logout, changeAs } from './redux/actions';
+import {useStoreState, useStoreActions} from "easy-peasy";
 
 
 export default function MainNav() {
-  const user = useSelector(state => state.user)
-  const as = useSelector(state => state.as)
-  const asUser = useSelector(state => state.asUser)
-  const aiStatus = useSelector(state => state.aiStatus)
-  const dispatch = useDispatch()
+  const fetch = useStoreActions(actions => actions.server.fetch)
+  const changeAs = useStoreActions(actions => actions.user.changeAs)
+  const logout = useStoreActions(actions => actions.user.logout)
+
+  const user = useStoreState(state => state.user.user)
+  const as = useStoreState(state => state.user.as)
+  const asUser = useStoreState(state => state.user.asUser)
+  const aiStatus = useStoreState(state => state.server.ai)
 
   const shares = user.shared_with_me || []
 
@@ -37,12 +39,12 @@ export default function MainNav() {
     }
     return <>
       {as && (
-        <NavDropdown.Item onClick={() => dispatch(changeAs(null))}>
+        <NavDropdown.Item onClick={() => changeAs(null)}>
           {emoji("🔀")}{user.email}
         </NavDropdown.Item>
       )}
       {shares.map(s => s.id != as && (
-        <NavDropdown.Item onClick={() => dispatch(changeAs(s.id))}>
+        <NavDropdown.Item onClick={() => changeAs(s.id)}>
           {emoji("🔀")}
           {s.new_entries ? <Badge pill variant='danger'>{s.new_entries}</Badge> : null}
           {s.email}
@@ -115,7 +117,7 @@ export default function MainNav() {
             {!as && <LinkContainer to="/account/sharing">
               <NavDropdown.Item>Sharing</NavDropdown.Item>
             </LinkContainer>}
-            <NavDropdown.Item onClick={() => dispatch(logout())}>Logout</NavDropdown.Item>
+            <NavDropdown.Item onClick={() => logout()}>Logout</NavDropdown.Item>
           </NavDropdown>
         </Nav>
       </Navbar.Collapse>

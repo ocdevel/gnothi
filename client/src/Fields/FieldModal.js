@@ -2,11 +2,10 @@ import React, {useState} from "react";
 import _ from "lodash";
 import {Button, Form, Modal} from "react-bootstrap";
 
-import { useSelector, useDispatch } from 'react-redux'
-import { fetch_ } from '../redux/actions'
+import {useStoreActions, useStoreState} from "easy-peasy";
 
 export default function FieldModal({close, field= {}}) {
-  const dispatch = useDispatch()
+  const fetch = useStoreActions(actions => actions.server.fetch)
 
   const form_ =
     field.id ? _.pick(field, ['name', 'type', 'default_value', 'default_value_value'])
@@ -25,9 +24,9 @@ export default function FieldModal({close, field= {}}) {
       default_value_value: _.isEmpty(form.default_value_value) ? null : form.default_value_value,
     }
     if (fid) {
-      await dispatch(fetch_(`fields/${fid}`, 'PUT', body))
+      await fetch({route: `fields/${fid}`, method: 'PUT', body})
     } else {
-      await dispatch(fetch_(`fields`, 'POST', body))
+      await fetch({route: `fields`, method: 'POST', body})
     }
 
     close()
@@ -40,13 +39,13 @@ export default function FieldModal({close, field= {}}) {
     if (!window.confirm("Are you sure? This will delete all data for this field.")) {
       return
     }
-    await dispatch(fetch_(`fields/${fid}`, 'DELETE'))
+    await fetch({route: `fields/${fid}`, method: 'DELETE'})
     close()
   }
 
   const excludeField = async (exclude=true) => {
     const body = {excluded_at: exclude ? new Date() : null}
-    await dispatch(fetch_(`fields/${fid}/exclude`, 'PUT', body))
+    await fetch({route: `fields/${fid}/exclude`, method: 'PUT', body})
     close(false)
   }
 

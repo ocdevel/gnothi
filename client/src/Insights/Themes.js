@@ -5,20 +5,20 @@ import {Button, Form} from "react-bootstrap"
 import _ from "lodash"
 import {BsGear, BsQuestionCircle} from "react-icons/bs"
 
-import { useSelector, useDispatch } from 'react-redux'
-import { setInsights, getInsights } from '../redux/actions'
+import {useStoreState, useStoreActions} from 'easy-peasy'
 
 export default function Themes() {
   const [advanced, setAdvanced] = useState(false)
-  const aiStatus = useSelector(state => state.aiStatus)
-  const insights = useSelector(state => state.insights)
-  const dispatch = useDispatch()
+  const aiStatus = useStoreState(state => state.server.ai)
+  const insight = useStoreState(state => state.insights.themes)
+  const setInsight = useStoreActions(actions => actions.insights.setInsight)
+  const getInsight = useStoreActions(actions => actions.insights.getInsight)
 
-  const {themes_req, themes_res1, themes_res2, themes_fetching} = insights
-  const {code, message, data} = themes_res2
+  const {req, res1, res2, fetching} = insight
+  const {code, message, data} = res2
 
   const fetchThemes = async () => {
-    dispatch(getInsights('themes'))
+    getInsight('themes')
   }
 
   if (code === 401) { return <h5>{message}</h5> }
@@ -81,8 +81,8 @@ export default function Themes() {
               {a.label} <a href={a.url} target='_blank'><BsQuestionCircle /></a>
             </span>}
             id={`algo-${a.k}`}
-            checked={themes_req === a.k}
-            onChange={() => dispatch(setInsights({'themes_req': a.k}))}
+            checked={req === a.k}
+            onChange={() => setInsight(['themes', {req: a.k}])}
           />
         ))}
         <Form.Text>If the output seems off, try a different clustering algorithm. Don't worry about the tech (unless you're curious), just click the other one and submit.</Form.Text>
@@ -92,7 +92,7 @@ export default function Themes() {
   }
 
   return <>
-    {themes_fetching ? <Spinner job={themes_res1} /> : <>
+    {fetching ? <Spinner job={res1} /> : <>
       {renderAdvanced()}
       <Button
         disabled={aiStatus !== 'on'}

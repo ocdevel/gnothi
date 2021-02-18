@@ -3,8 +3,7 @@ import {CardElement, useStripe, useElements, Elements} from "@stripe/react-strip
 import {Form, Button, Alert} from 'react-bootstrap'
 import {loadStripe} from "@stripe/stripe-js";
 
-import { useDispatch, useSelector } from 'react-redux'
-import { fetch_, setServerError, getUser } from '../redux/actions'
+import {useStoreState, useStoreActions} from "easy-peasy";
 
 function CheckoutForm() {
   const [amount, setAmount] = useState(0);
@@ -16,19 +15,20 @@ function CheckoutForm() {
   const stripe = useStripe();
   const elements = useElements();
 
-  const error = useSelector(state => state.serverError);
-
-  const dispatch = useDispatch()
+  const error = useStoreState(state => state.server.error)
+  const fetch = useStoreActions(actions => actions.server.fetch)
+  const setServerError = useStoreActions(actions => actions.server.setError)
+  const getUser = useStoreActions(actions => actions.user.getUser)
 
   async function setupStripe() {
     // Step 1: Fetch product details such as amount and currency from
     // API to make sure it can't be tampered with in the client.
-    const {data: productDetails} = await dispatch(fetch_("stripe/product-details"))
+    const {data: productDetails} = await fetch({route: "stripe/product-details"})
     setAmount(productDetails.amount / 100);
     setCurrency(productDetails.currency);
 
     // Step 2: Create PaymentIntent over Stripe API
-    const {data: clientSecret} = await dispatch(fetch_("stripe/create-payment-intent", 'POST'))
+    const {data: clientSecret} = await fetch({route: "stripe/create-payment-intent", method: 'POST'})
     setClientSecret(clientSecret.client_secret);
   }
 
@@ -62,7 +62,7 @@ function CheckoutForm() {
       setMetadata(payload.paymentIntent);
       console.log("[PaymentIntent]", payload.paymentIntent);
       setTimeout(() => {
-        dispatch(getUser())
+        getUser()
       }, 4000)
     }
   };
@@ -140,9 +140,10 @@ function CheckoutForm() {
 
 export default function Stripe() {
   const [stripe, setStripe] = useState()
-  const dispatch = useDispatch()
+  const fetch = useStoreActions(actions => actions.server.fetch)
+
   async function loadStripe_() {
-    const {data} = await dispatch(fetch_("stripe/public-key"))
+    const {data} = await fetch({route: "stripe/public-key"})
     setStripe(loadStripe(data.publicKey))
   }
 

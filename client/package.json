@@ -10,6 +10,7 @@
     "@testing-library/user-event": "^7.1.2",
     "axios": "^0.21.1",
     "bootstrap": "^4.4.1",
+    "easy-peasy": "^4.0.1",
     "js-file-download": "^0.4.12",
     "lodash": "^4.17.15",
     "markdown-it": "^11.0.0",

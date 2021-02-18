@@ -1,7 +1,20 @@
-import { createStore, applyMiddleware } from 'redux'
-import mainReducer from './reducer'
-import thunk from 'redux-thunk';
-// import { composeWithDevTools } from 'redux-devtools-extension';
+import {action, createStore} from 'easy-peasy'
+import {store as user} from './user'
+import {store as insights} from './insights'
+import {store as server} from './server'
+import {store as ws} from './ws'
+import {store as j} from './journal'
 
-// export default createStore(chatReducer, composeWithDevTools(applyMiddleware(thunk)));
-export default createStore(mainReducer, applyMiddleware(thunk));
+const store = createStore({
+  user,
+  insights,
+  server,
+  ws,
+  j
+})
+
+store.getActions().ws.initWebsocket()
+
+export default store
+
+

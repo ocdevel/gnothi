@@ -21,8 +21,7 @@ import {
 } from 'react-icons/fa'
 import Entry from "./Entry"
 import './Entries.scss'
-import { useSelector, useDispatch } from 'react-redux'
-import { fetch_ } from '../redux/actions'
+import {useStoreState, useStoreActions} from "easy-peasy";
 import {NotesAll} from "./Notes";
 import {MainTags} from "../Tags";
 import MediaQuery from 'react-responsive'
@@ -68,13 +67,13 @@ function EntryTeaser({e, gotoForm}) {
 
 
 export default function Entries() {
+  const as = useStoreState(state => state.user.as)
+  const entries = useStoreState(state => state.j.entries)
+  const selected = useStoreState(state => state.j.selectedTags)
+  const fetch = useStoreActions(actions => actions.server.fetch)
+
   const [page, setPage] = useState(0)
   let [search, setSearch] = useState('')
-  const selected = useSelector(state => state.selectedTags)
-
-  const dispatch = useDispatch()
-  const as = useSelector(state => state.as)
-  const entries = useSelector(state => state.entries)
 
   let history = useHistory()
   let match = useRouteMatch()

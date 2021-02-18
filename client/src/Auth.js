@@ -10,17 +10,19 @@ import {useLocation, useHistory} from "react-router-dom"
 import Error from './Error'
 import {spinner} from './utils'
 
-import { useSelector, useDispatch } from 'react-redux'
-import { fetch_, setJwt } from './redux/actions';
+import {useStoreState, useStoreActions} from "easy-peasy";
 
 function Auth() {
+  const as = useStoreState(state => state.user.as)
+  const fetch = useStoreActions(actions => actions.server.fetch)
+  const setJwt = useStoreActions(actions => actions.user.setJwt)
+
   const [submitting, setSubmitting] = useState(false)
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [passwordConfirm, setPasswordConfirm] = useState('')
   const [error, setError] = useState(null)
 
-  const dispatch = useDispatch();
   let location = useLocation()
 
   // Reset password
@@ -33,7 +35,7 @@ function Auth() {
   const submit_ = async (url, method, body) => {
     setError(null)
     setSubmitting(true)
-    const {code, message, data} = await dispatch(fetch_(url, method, body))
+    const {code, message, data} = await fetch({route: url, method, body})
     setSubmitting(false)
     console.log(code, message, data)
     if (code >= 400) {
@@ -50,7 +52,7 @@ function Auth() {
     formData.append('password', password)
     const res = await submit_('auth/login', 'POST', formData)
     if (res === false) {return}
-    dispatch(setJwt(res))
+    setJwt(res)
   }
 
   const submitLogin = async e => {
@@ -196,12 +198,14 @@ function Auth() {
 }
 
 function ResetPassword() {
+  const as = useStoreState(state => state.user.as)
+  const fetch = useStoreActions(actions => actions.server.fetch)
+
   const [submitting, setSubmitting] = useState(false)
   const [password, setPassword] = useState('')
   const [passwordConfirm, setPasswordConfirm] = useState('')
   const [error, setError] = useState(null)
 
-  const dispatch = useDispatch()
   const history = useHistory()
   let location = useLocation()
 
@@ -219,7 +223,7 @@ function ResetPassword() {
     }
     setError(null)
     setSubmitting(true)
-    const {code, message, data} = await dispatch(fetch_('auth/reset-password', 'POST', {token, password}))
+    const {code, message, data} = await fetch({route: 'auth/reset-password', method: 'POST', body: {token, password}})
     setSubmitting(false)
     if (code !== 200) {
       setError(message)

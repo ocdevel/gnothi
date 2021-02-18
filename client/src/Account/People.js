@@ -1,15 +1,14 @@
 import React, {useEffect, useState} from "react"
 import {Button, Col, Form, Modal, Table} from "react-bootstrap"
 
-import { useSelector, useDispatch } from 'react-redux'
-import { fetch_ } from '../redux/actions'
+import {useStoreActions, useStoreState} from "easy-peasy";
 
 function Person({close, person=null}) {
+  const as = useStoreState(state => state.user.as)
+  const fetch = useStoreActions(actions => actions.server.fetch)
+
   const default_form = {name: '', relation: '', issues: '', bio: ''}
   const [form, setForm] = useState(person ? person : default_form)
-
-  const as = useSelector(state => state.as)
-  const dispatch = useDispatch()
 
   const changeForm = (k, direct=false) => e => {
     const v = direct ? e : e.target.value
@@ -19,9 +18,9 @@ function Person({close, person=null}) {
   const submit = async (e) => {
     e.preventDefault()
     if (person) {
-      await dispatch(fetch_(`people/${person.id}`, 'PUT', form))
+      await fetch({route:`people/${person.id}`, method: 'PUT', body: form})
     } else {
-      await dispatch(fetch_('people', 'POST', form))
+      await fetch({route: 'people', method: 'POST', body: form})
     }
     close()
   }
@@ -29,7 +28,7 @@ function Person({close, person=null}) {
   const destroy = async () => {
     if (!person) {return}
     if (window.confirm("Delete person, are you sure?")) {
-      await dispatch(fetch_(`people/${person.id}`, 'DELETE'))
+      await fetch({route: `people/${person.id}`, method: 'DELETE'})
     }
     close()
   }
@@ -87,14 +86,14 @@ function Person({close, person=null}) {
 }
 
 export default function People() {
+  const as = useStoreState(state => state.user.as)
+  const fetch = useStoreActions(actions => actions.server.fetch)
+
   const [people, setPeople] = useState([])
   const [person, setPerson] = useState(null)
 
-  const as = useSelector(state => state.as)
-  const dispatch = useDispatch()
-
   const fetchPeople = async () => {
-    const {data} = await dispatch(fetch_('people'))
+    const {data} = await fetch({route: 'people'})
     setPerson(null)
     setPeople(data)
   }

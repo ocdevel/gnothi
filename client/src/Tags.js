@@ -4,14 +4,15 @@ import React, {useEffect, useState} from "react"
 import { FaPen } from 'react-icons/fa'
 
 import {SimplePopover, trueKeys} from "./utils"
-import { useSelector, useDispatch } from 'react-redux'
-import { fetch_, getTags } from './redux/actions'
+import {useStoreState, useStoreActions} from "easy-peasy";
 import {FaTags} from "react-icons/fa/index";
 
 function TagForm({tag=null}) {
   const [name, setName] = useState(tag ? tag.name : '')
-  const dispatch = useDispatch()
-  const onSubmit = () => dispatch(getTags())
+  const fetch = useStoreActions(actions => actions.server.fetch)
+  const getTags = useStoreActions(actions => actions.j.tags)
+
+  const onSubmit = () => getTags()
 
   const id = tag && tag.id
 
@@ -21,16 +22,16 @@ function TagForm({tag=null}) {
     if (!window.confirm("Are you sure? This will remove this tag from all entries (your entries will stay).")) {
       return
     }
-    await dispatch(fetch_(`tags/${id}`, 'DELETE'))
+    await fetch({route: `tags/${id}`, method: 'DELETE'})
     onSubmit()
   }
 
   const submit = async e => {
     e.preventDefault()
     if (id) {
-      await dispatch(fetch_(`tags/${id}`, 'PUT', {name}))
+      await fetch({route: `tags/${id}`, method: 'PUT', body: {name}})
     } else {
-      await dispatch(fetch_(`tags`, 'POST', {name}))
+      await fetch({route: `tags`, method: 'POST', body: {name}})
     }
     onSubmit()
   }
@@ -64,7 +65,7 @@ function TagForm({tag=null}) {
 }
 
 function TagModal({close}) {
-  const tags = useSelector(state => state.tags)
+  const tags = useStoreState(state => state.j.tags)
 
   return (
     <Modal show={true} onHide={close}>
@@ -88,11 +89,12 @@ export default function Tags({
   preSelectMain=false
 }) {
   const [editTags, setEditTags] = useState(false)
-  const as = useSelector(state => state.as)
+  const as = useStoreState(state => state.user.as)
+  const fetch = useStoreActions(actions => actions.server.fetch)
+  const getTags = useStoreActions(actions => actions.j.getTags)
   // tags sorted on server
-  const tags = useSelector(state => state.tags)
-  const selectedTags = useSelector(state => state.selectedTags)
-  const dispatch = useDispatch()
+  const tags = useStoreState(state => state.j.tags)
+  const selectedTags = useStoreState(state => state.j.selectedTags)
 
   // no selected,setSelected props indicates using global tags
   const selectedTags_ = selected || selectedTags
@@ -111,8 +113,8 @@ export default function Tags({
     if (setSelected) {
       setSelected({...selectedTags_, [id]: v})
     } else {
-      await dispatch(fetch_(`tags/${id}/toggle`, 'POST'))
-      await dispatch(getTags())
+      await fetch({route: `tags/${id}/toggle`, method: 'POST'})
+      await getTags()
     }
   }
   // const clear = async () => {

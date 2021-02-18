@@ -1,14 +1,14 @@
 import React, {useEffect, useState} from "react";
-import {useDispatch} from "react-redux";
-import {fetch_} from "../redux/actions";
+import {useStoreState, useStoreActions} from "easy-peasy";
 import {Alert, Card} from "react-bootstrap";
 
 export default function Therapists({setShowTherapists}) {
+  const fetch = useStoreActions(actions => actions.server.fetch)
+
   const [therapists, setTherapists] = useState([])
-  const dispatch = useDispatch()
 
   const fetchTherapists = async () => {
-    const {data} = await dispatch(fetch_('therapists'))
+    const {data} = await fetch({route: 'therapists'})
     setTherapists(data)
     if (data.length) {
       setShowTherapists(true)

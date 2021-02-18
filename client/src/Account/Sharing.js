@@ -3,8 +3,7 @@ import React, {useEffect, useState} from "react"
 import _ from 'lodash'
 import Tags from '../Tags'
 
-import {useSelector, useDispatch} from "react-redux"
-import { fetch_ } from '../redux/actions'
+import {useStoreState, useStoreActions} from 'easy-peasy'
 
 const feature_map = {
   fields: {
@@ -22,11 +21,11 @@ const feature_map = {
 }
 
 function ShareForm({fetchShared, share=null}) {
+  const fetch = useStoreActions(actions => actions.server.fetch)
+
   const [form, setForm] = useState(share ? _.pick(share, ['email', ..._.keys(feature_map)]) : {})
   const [tags, setTags] = useState(share ? share.tags : {})
   const [saved, setSaved] = useState(false)
-
-  const dispatch = useDispatch()
 
   const submit = async e => {
     e.preventDefault()
@@ -36,10 +35,10 @@ function ShareForm({fetchShared, share=null}) {
     }
     if (share) {
       setSaved(true)
-      await dispatch(fetch_(`shares/${share.id}`, 'PUT', body))
+      await fetch({route: `shares/${share.id}`, method: 'PUT', body})
       setTimeout(() => {setSaved(false)}, 2000)
     } else {
-      await dispatch(fetch_('shares', 'POST', body))
+      await fetch({route: 'shares', method: 'POST', body})
       setForm({})
       setTags({})
     }
@@ -56,7 +55,7 @@ function ShareForm({fetchShared, share=null}) {
   }
 
   const unshare = async () => {
-    await dispatch(fetch_(`shares/${share.id}`, 'DELETE'))
+    await fetch({route: `shares/${share.id}`, method: 'DELETE'})
     fetchShared()
   }
 
@@ -124,14 +123,14 @@ function ShareForm({fetchShared, share=null}) {
 }
 
 export default function Sharing() {
+  const as = useStoreState(state => state.user.as)
+  const fetch = useStoreActions(actions => actions.server.fetch)
+
   const [shared, setShared] = useState([])
   const [notShared, setNotShared] = useState()
-  const as = useSelector(state => state.as)
-
-  const dispatch = useDispatch()
 
   const fetchShared = async () => {
-    const {data, code, message} = await dispatch(fetch_('shares', 'GET'))
+    const {data, code, message} = await fetch({routE: 'shares'})
     if (code === 401) {return setNotShared(message)}
     setShared(data)
   }

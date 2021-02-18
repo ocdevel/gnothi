@@ -18,17 +18,17 @@ import {
   FaBook
 } from "react-icons/all";
 
-import { useDispatch, useSelector } from 'react-redux'
-import { fetch_ } from '../redux/actions'
+import {useStoreState, useStoreActions} from "easy-peasy";
 import {FaAmazon} from "react-icons/fa";
 // import Ads from "./Ads";
 
 function TopBooks() {
+  const fetch = useStoreActions(actions => actions.server.fetch)
+
   const [books, setBooks] = useState([])
-  const dispatch = useDispatch()
 
   const fetchBooks = async () => {
-    const {data} = await dispatch(fetch_('top-books'))
+    const {data} = await fetch({route: 'top-books'})
     setBooks(data)
   }
 
@@ -50,7 +50,8 @@ function TopBooks() {
 }
 
 export default function Sidebar() {
-  const user = useSelector(state => state.user)
+  const user = useStoreState(state => state.user.user)
+  const fetch = useStoreActions(actions => actions.server.fetch)
 
   return <>
     <Accordion defaultActiveKey="fields">

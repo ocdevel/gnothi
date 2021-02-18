@@ -19,22 +19,20 @@ import {
 } from "react-icons/fa"
 import {Link} from 'react-router-dom'
 
-import { useSelector, useDispatch } from 'react-redux'
-import { fetch_ } from '../redux/actions'
+import {useStoreState, useStoreActions} from "easy-peasy";
 
 export default function Books() {
+  const as = useStoreState(state => state.user.as)
+  const fetch = useStoreActions(actions => actions.server.fetch)
+
   const [books, setBooks] = useState([])
   const [fetching, setFetching] = useState(false)
   const [notShared, setNotShared] = useState(false)
   const [shelf, setShelf] = useState('ai')  // like|dislike|already_read|remove|recommend
 
-  const dispatch = useDispatch()
-  const as = useSelector(state => state.as)
-  const user = useSelector(state => state.user)
-
   const fetchShelf = async () => {
     setFetching(true)
-    const {data, code, message} = await dispatch(fetch_(`books/${shelf}`, 'GET'))
+    const {data, code, message} = await fetch({route: `books/${shelf}`})
     setFetching(false)
     if (code === 401) {return setNotShared(message)}
     setBooks(data)
@@ -52,7 +50,7 @@ export default function Books() {
   }
 
   const putOnShelf = async (id, shelf_) => {
-    await dispatch(fetch_(`books/${id}/${shelf_}`, 'POST'))
+    await fetch({route: `books/${id}/${shelf_}`, method: 'POST'})
     // _.remove(books, {id})
     setBooks(_.reject(books, {id}))
     // fetchBooks()

@@ -1,14 +1,11 @@
 import React, {useState, useEffect} from 'react'
 import {Card, Button, Modal} from "react-bootstrap";
-import {useDispatch, useSelector} from "react-redux";
+import {useStoreState, useStoreActions} from "easy-peasy";
 import Stripe from "./Stripe.js";
 import "./Ads.scss";
-import {fetch_, getFields, getUser} from "../redux/actions";
 import _ from 'lodash'
 
 function PaymentModal({show, close}) {
-  const dispatch = useDispatch()
-
   return (
     <Modal show={show} onHide={close} >
       <Modal.Header closeButton>
@@ -43,9 +40,10 @@ const ads = [
 const ad = _.sample(ads)
 
 export default function Ads() {
+  const user = useStoreState(state => state.user.user)
+  const entries = useStoreState(state => state.j.entries)
+
   const [show, setShow] = useState(false)
-  const user = useSelector(state => state.user)
-  const entries = useSelector(state => state.entries)
 
   if (user.paid || entries.length < 3) {return null}
 

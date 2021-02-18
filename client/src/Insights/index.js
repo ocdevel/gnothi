@@ -17,8 +17,7 @@ import {
   FaLock
 } from "react-icons/fa/index"
 import React, {useState} from "react"
-import { useSelector, useDispatch } from 'react-redux'
-import { setInsights } from '../redux/actions'
+import {useStoreState, useStoreActions} from "easy-peasy";
 import {aiStatusEmoji} from "../utils"
 import _ from 'lodash'
 
@@ -48,10 +47,10 @@ const tools = [
 ]
 
 export default function Insights() {
-  const days = useSelector(state => state.insights.days)
-  const entries = useSelector(state => state.entries)
-  const dispatch = useDispatch()
-  const aiStatus = useSelector(state => state.aiStatus)
+  const days = useStoreState(state => state.insights.days)
+  const entries = useStoreState(state => state.j.entries)
+  const aiStatus = useStoreState(state => state.server.ai)
+  const setDays = useStoreActions(actions => actions.insights.setDays)
 
   const ne = entries.length
   const nTools = _.reduce(tools, (m,v,k) => {
@@ -59,7 +58,7 @@ export default function Insights() {
   }, 0)
 
   const changeDays = e => {
-    dispatch(setInsights({days: e.target.value}))
+    setDays(e.target.value)
   }
 
   const renderDaysForm = () => <>
