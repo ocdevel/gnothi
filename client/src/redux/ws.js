@@ -1,7 +1,11 @@
-import {action, thunk, createStore} from 'easy-peasy'
+import {action, thunk, createStore, useStoreState, useStoreActions} from 'easy-peasy'
 import {API_URL} from './server'
+import { useState, useEffect } from 'react';
+import io from "socket.io-client";
+
 
 const host = API_URL.replace(/^https?/, 'ws')
+// const host = API_URL
 
 export const store = {
   messages: {},
@@ -29,7 +33,6 @@ export const store = {
     state.users = {...users, [user_id]: new Date()}
   }),
 
-
   addMessage: thunk( async (actions, msg, helpers) => {
     const {user_id} = msg
     const {messages} = helpers.getState()
@@ -37,14 +40,21 @@ export const store = {
     if (user_id === 'server') {msg.server = true}
     actions.setMessages({...messages, [new Date()]: msg})
   }),
+}
 
-  /** Handle an incoming message from the websocket connection. */
-  onWebsocketMessage: thunk(async (actions, message, helpers) => {
+export function useSocket() {
+  const fetch = useStoreActions(actions => actions.server.fetch)
+  const setAi = useStoreActions(actions => actions.server.setAi)
+  const users = useStoreState(state => state.ws.users)
+  const messages = useStoreState(state => state.ws.messages)
+  const actions = useStoreActions(actions => actions.ws)
+  const [isOnline, setIsOnline] = useState(null);
+
+
+  function onMessage(message) {
     console.log('Got message from websocket:', message)
-    const {setAi} = helpers.getStoreActions().server
     const payload = JSON.parse(message.data)
     const {type, data} = payload
-    let {users, messages} = helpers.getState()
     switch(type) {
       case 'JOBS_STATUS':
         setAi(data.status)
@@ -75,52 +85,24 @@ export const store = {
         throw new TypeError('Unknown message type: ' + payload.type);
         break
     }
-  }),
+  }
 
-  ws: {ws: null, interval: null},
-  setWs: action((state, ws) => {
-    state.ws = ws
-  }),
+  async function setup() {
+    // const socket = socketIOClient(`${host}/ws`);
 
-  onWebsocketOpen: action((state, payload) => {
-    state.status = 'on'
-    if (state.ws.interval) {
-      clearInterval(state.ws.interval)
-      delete state.ws.interval
-    }
-  }),
+    const socket = io(host, {path: `/ws/socket.io`, upgrade: true});
+    // {auth: {token: "123"}}
 
-  onWebsocketError: thunk(async (actions, err, helpers) => {
-    actions.onWebSocketClose(err)
-  }),
-
-  onWebsocketClose: thunk( async (actions, e, helpers) => {
-    const {setError} = helpers.getStoreActions().server
-    const {ws} = helpers.getState()
-    if (typeof e === "string") {
-      console.error('Websocket error: ', e)
-      setError(e)
-      actions.setStatus("off")
-    }
-    console.log('Closing WebSocket connection');
-
-    if (!ws.interval) {
-      ws.interval = setInterval(actions.initWebsocket, 5000)  // try to reconnect
-    }
-  }),
-
-  fetchRoom: thunk(async (actions, payload, helpers) => {
-    const {fetch} = helpers.getStoreActions().server
     const {data} = await fetch({route: 'users2'})
     data.users.forEach(actions.addToUsersList)
-  }),
+    socket.on("FromAPI", data => {
+      console.log(data);
+    });
+  }
 
-  initWebsocket: thunk(async (actions, payload) => {
-    const ws = new WebSocket(`${host}/ws`);
-    ws.onopen = actions.onWebsocketOpen;
-    ws.onerror = actions.onWebsocketError;
-    ws.onclose = actions.onWebsocketClose;
-    ws.onmessage = actions.onWebsocketMessage;
-    actions.setWs(ws)
-  }),
+  useEffect(() => {
+    setup()
+  }, [])
+
+  return isOnline;
 }

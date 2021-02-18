@@ -20,6 +20,7 @@ import Footer from './Footer'
 
 import { StoreProvider, useStoreActions, useStoreState } from 'easy-peasy'
 import store from './redux/store'
+import {useSocket} from "./redux/ws";
 
 import Insights from "./Insights";
 import Tags, {MainTags} from "./Tags";
@@ -40,6 +41,7 @@ function App() {
 
 	const history = useHistory()
   const location = useLocation()
+  const socket = useSocket()
 
   useEffect(() => {
     // FIXME only do after first load

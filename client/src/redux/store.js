@@ -13,8 +13,6 @@ const store = createStore({
   j
 })
 
-store.getActions().ws.initWebsocket()
-
 export default store
 
 

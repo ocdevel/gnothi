@@ -14,9 +14,9 @@ export default function Groups() {
   const fetchRoom = useStoreActions(actions => actions.ws.fetchRoom)
   const setMessage = useStoreActions(actions => actions.ws.setMessage)
 
-  useEffect(() => {
-    fetchRoom()
-  }, [])
+  // useEffect(() => {
+  //   fetchRoom()
+  // }, [])
 
   messages = _(messages).toPairs().sortBy(o => o[0]).map(o => o[1]).value()
   users = _(users).toPairs().sortBy(o => o[1]).map(o => o[0]).value()

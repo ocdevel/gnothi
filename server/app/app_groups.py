@@ -5,20 +5,15 @@ TODO implement react websockets https://www.pluralsight.com/guides/using-web-soc
 # https://github.com/tiangolo/fastapi/issues/129
 """
 
+from app.app_app import app
 import pdb, re, datetime, logging, boto3, io
 import common.models as M
-from fastapi import APIRouter
-
-logger = logging.getLogger(__name__)
-
-getuser = M.User.snoop
-
 from typing import List
 from fastapi_sqlalchemy import db
+from fastapi import APIRouter
 from fastapi import WebSocket #, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
-
-router = APIRouter()
+from fastapi_socketio import SocketManager
 
 
 """Demonstration of websocket chat app using FastAPI, Starlette, and an in-memory
@@ -37,6 +32,18 @@ from starlette.requests import Request
 from starlette.responses import FileResponse
 from starlette.types import ASGIApp, Receive, Scope, Send
 from starlette.websockets import WebSocket
+
+
+logger = logging.getLogger(__name__)
+getuser = M.User.snoop
+router = APIRouter()
+
+sio = SocketManager(app=app, cors_allowed_origins=[])
+
+@sio.on('connect')
+async def connect(sid, environ):
+    logger.info(M.Machine.gpu_status(db.session))
+    logger.info('connect')
 
 
 # app.debug = True
@@ -370,3 +377,6 @@ class RoomLive(WebSocketEndpoint):
         if not isinstance(msg, str):
             raise ValueError(f"RoomLive.on_receive() passed unhandleable data: {msg}")
         await self.room.broadcast_message(self.user_id, msg)
+
+app.include_router(router)
+app.add_middleware(RoomEventMiddleware)

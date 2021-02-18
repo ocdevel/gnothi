@@ -4,9 +4,10 @@ import dateutil.parser
 from typing import List, Dict, Any
 from fastapi import Depends, HTTPException, File, UploadFile, BackgroundTasks, WebSocket
 from app.app_app import app
+from app.app_groups import router as groups_router
 from app.app_jwt import fastapi_users, jwt_user
 from app.app_stripe import stripe_router
-from app.app_groups import router as groups_router, RoomEventMiddleware
+from app.app_groups import router as groups_router
 from fastapi_sqlalchemy import db  # an object to provide global access to a database session
 import sqlalchemy as sa
 from sqlalchemy import text
@@ -34,9 +35,6 @@ def cant_snoop(feature=None):
     message = f"{feature} isn't shared" if feature else "This feature isn't shared"
     return send_error(message, 401)
 
-
-app.include_router(groups_router)
-app.add_middleware(RoomEventMiddleware)
 
 @app.get('/health')
 def health_get():
