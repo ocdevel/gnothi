@@ -31,7 +31,9 @@ RUN pip install \
   boto3 \
   dynaconf \
   stripe \
-  petname
+  petname \
+  fastapi-socketio \
+  fastapi-utils
 
 COPY ./server/app /app/app
 COPY ./common /app/common

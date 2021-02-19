@@ -57,3 +57,14 @@ services:
     device_requests:
       - capabilities:
           - "gpu"
+
+  postgres:
+    container_name: postgres
+    restart: always
+    image: postgres
+    environment:
+      POSTGRES_PASSWORD: nPXtAX5rCvnsBf2PYh1s
+    volumes:
+      - ./storage/gnothidb:/var/lib/postgresql/data
+    ports:
+      - 5432:5432

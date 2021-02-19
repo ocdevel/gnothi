@@ -5,44 +5,35 @@ TODO implement react websockets https://www.pluralsight.com/guides/using-web-soc
 # https://github.com/tiangolo/fastapi/issues/129
 """
 
-from app.app_app import app
 import pdb, re, datetime, logging, boto3, io
+from pprint import pprint
+from app.app_app import app
+from app.app_jwt import jwt_user
 import common.models as M
-from typing import List
 from fastapi_sqlalchemy import db
-from fastapi import APIRouter
-from fastapi import WebSocket #, WebSocketDisconnect
-from fastapi.responses import HTMLResponse
 from fastapi_socketio import SocketManager
-
-
-"""Demonstration of websocket chat app using FastAPI, Starlette, and an in-memory
-broadcast backend.
-"""
 
 import logging, time, asyncio
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
-from fastapi import Body, FastAPI, HTTPException
+from fastapi import HTTPException, Depends, APIRouter
 from pydantic import BaseModel
-from starlette.endpoints import WebSocketEndpoint
-from starlette.middleware.cors import CORSMiddleware
 from starlette.requests import Request
-from starlette.responses import FileResponse
 from starlette.types import ASGIApp, Receive, Scope, Send
-from starlette.websockets import WebSocket
+from fastapi_utils.cbv import cbv
+from fastapi_utils.inferring_router import InferringRouter
 
 
 logger = logging.getLogger(__name__)
 getuser = M.User.snoop
-router = APIRouter()
+router = InferringRouter()
 
 import socketio
 sio = SocketManager(app=app, cors_allowed_origins=[])
 
 
-class MyCustomNamespace(socketio.AsyncNamespace):
+class GroupsNamespace(socketio.AsyncNamespace):
     def __init__(self, *args, **kwargs):
         self._clients = {}
         super().__init__(*args, **kwargs)
@@ -58,7 +49,16 @@ class MyCustomNamespace(socketio.AsyncNamespace):
     async def on_message(self, sid, data):
         await self.emit('message', data)
 
-sio._sio.register_namespace(MyCustomNamespace('/groups'))
+    async def on_room(self, sid, gid):
+        # old = await self.get_session(sid, '/groups')
+        # if old:
+        #     self.leave_room(old['gid'],  '/groups')
+        # pprint(dict(sid=sid, old=old, gid=gid))
+        # await self.save_session(sid, {"gid": gid}, "/groups")
+        self.enter_room(sid, gid)
+
+
+sio._sio.register_namespace(GroupsNamespace('/groups'))
 
 
 # @sio.on('connect')
@@ -103,20 +103,79 @@ class RoomEventMiddleware:  # pylint: disable=too-few-public-methods
                 await asyncio.sleep(2)
 
 
-class UserListResponse(BaseModel):
-    """Response model for /list_users endpoint.
-    """
+@cbv(router)
+class Groups:
+    as_user: str = None
+    viewer: M.User = Depends(jwt_user)
 
-    users: List[str]
+    @router.post("/groups")
+    def groups_post(self, data: M.SIGroup):
+        db.session.add(M.Group(
+            title=data.title,
+            text=data.text,
+            privacy=data.privacy,
+            owner=self.viewer.id,
+        ))
+        db.session.commit()
+        return {"ok": True}
+
+    @router.get("/groups")
+    def groups_get(self) -> List[M.SOGroup]:
+        # user, snooping = getuser(viewer, as_user)
+        # if snooping and not user.share_data.profile:
+        #     return cant_snoop()
+        # TODO only show public/paid, unless they're a member
+        return db.session.query(M.Group).all()
+
+    # @router.put("/item/{item_id}")
+    # def update_item(self, item_id: ItemID, item: ItemCreate) -> ItemInDB:
+
+    # @router.delete("/item/{item_id}")
+    # def delete_item(self, item_id: ItemID) -> APIMessage:
 
 
-@router.get("/users2", response_model=UserListResponse)
-async def list_users(request: Request):
-    return {"users": []}
-    # room: Optional[Room] = request.get("room")
-    # if room is None:
-    #     raise HTTPException(500, detail="Global `Room` instance unavailable!")
-    # return {"users": room.user_list}
+@cbv(router)
+class Group:
+    as_user: str = None
+    viewer: M.User = Depends(jwt_user)
+
+    @router.get("/groups/{gid}")
+    def group_get(self, gid: str) -> M.SOGroup:
+        return db.session.query(M.Group).get(gid)
+
+    @router.get("/groups/{gid}/users")
+    def users_get(self, request: Request):
+        return {"users": []}
+
+    @router.get("/groups/{gid}/messages")
+    def messages_get(self, gid: str):
+        res = db.session.query(M.Message)\
+            .filter(M.Message.group_id == gid)\
+            .order_by(M.Message.created_at.asc())\
+            .all()
+        return [dict(
+            id=str(m.user_id),
+            message=m.text,
+        ) for m in res]
+
+    @router.post("/groups/{gid}/messages")
+    async def messages_post(self, gid: str, data: M.SIMessage):
+        msg = dict(
+            message=data.message,
+            id=str(self.viewer.id),
+            senderName=self.viewer.first_name or "Anonymous"
+        )
+        await sio.emit("message", msg, room=gid, namespace="/groups")
+        db.session.add(M.Message(
+            # TODO what was owner_id?
+            owner_id=self.viewer.id,
+            user_id=self.viewer.id,
+            group_id=gid,
+            recipient_type=M.MatchTypes.groups,
+            text=data.message
+        ))
+        db.session.commit()
+
 
 app.include_router(router)
 app.add_middleware(RoomEventMiddleware)

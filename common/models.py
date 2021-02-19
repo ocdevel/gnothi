@@ -1076,14 +1076,34 @@ class Match(Base):
     score = Column(Float, nullable=False)
 
 
+class GroupPrivacy(enum.Enum):
+    public = "public"
+    private = "private"  # invite-only
+    paid = "paid"
+
+
 class Group(Base):
     __tablename__ = 'groups'
     id = IDCol()
     owner = FKCol('users.id', index=True)
     title = Encrypt(Unicode, nullable=False)
     text = Encrypt(Unicode, nullable=False)
+    privacy = Column(Enum(GroupPrivacy))
     created_at = DateCol()
     updated_at = DateCol(update=True)
+
+
+class SIGroup(BaseModel):
+    title: str
+    text: Optional[str] = ""
+    privacy: GroupPrivacy
+
+
+class SOGroup(SIGroup, SOut):
+    id: UUID4
+    owner: UUID4
+    privacy: GroupPrivacy
+    created_at: datetime.datetime
 
 
 class GroupRoles(enum.Enum):
@@ -1117,6 +1137,10 @@ class Message(Base):
     created_at = DateCol()
     updated_at = DateCol(update=True)
     text = Encrypt(Unicode, nullable=False)
+
+
+class SIMessage(BaseModel):
+    message: str
 
 
 class MessagePing(Base):

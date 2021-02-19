@@ -1,55 +1,19 @@
-import {action, thunk, createStore, useStoreState, useStoreActions} from 'easy-peasy'
+import {useStoreState, useStoreActions} from 'easy-peasy'
 import {API_URL} from './server'
 import { useState, useEffect } from 'react';
 import io, {Manager} from "socket.io-client";
-
+import _ from 'lodash'
 
 const host = API_URL.replace(/^https?/, 'ws')
-// const host = API_URL
-
-export const store = {
-  messages: {},
-  setMessages: action((state, payload) => {
-    state.messages = payload
-  }),
-
-  users: {},
-  setUsers: action((state, payload) => {
-    state.users = payload
-  }),
-
-  message: "",
-  setMessage: action((state, payload) => {
-    state.message = payload
-  }),
-
-  status: "off",
-  setStatus: action((state, payload) => {
-    state.status = payload
-  }),
-
-  addToUsersList: action((state, user_id) => {
-    const {users} = state
-    state.users = {...users, [user_id]: new Date()}
-  }),
-
-  addMessage: thunk( async (actions, msg, helpers) => {
-    const {user_id} = msg
-    const {messages} = helpers.getState()
-    if (user_id === 'error') {msg.error = true}
-    if (user_id === 'server') {msg.server = true}
-    actions.setMessages({...messages, [new Date()]: msg})
-  }),
-}
 
 let manager;
-export function useSocket() {
+export function useSocketManager() {
   const setAi = useStoreActions(actions => actions.server.setAi)
   const jwt = useStoreState(state => state.user.jwt)
 
-  async function setup() {
+  useEffect(() => {
     // don't initialize for browsing home page
-    if (!jwt) {return}
+    if (!jwt) {return _.noop}
 
     if (!manager) {
       console.log("-----Setup Socket.io-----")
@@ -60,16 +24,30 @@ export function useSocket() {
         auth: {token: jwt}
       });
 
-      const socket = manager.socket("/")
+      // manager.socket("/").on(...)
       manager.on("AI_STATUS", data => {
         setAi(data.status)
       })
     }
-  }
-
-  useEffect(() => {
-    setup()
-  }, [])
+  }, [jwt])
 
   return manager;
+}
+
+let groups;
+export function useGroupsSocket() {
+  const mgr = useSocketManager()
+  const onAny = useStoreActions(actions => actions.groups.onAny)
+
+  useEffect(() => {
+    if (!mgr) {return _.noop}
+    groups = manager.socket('/groups')
+    groups.onAny((event, ...args) => onAny([event, args]))
+    return () => {
+      groups = null
+      groups.close()
+    }
+  }, [mgr])
+
+  return groups;
 }
