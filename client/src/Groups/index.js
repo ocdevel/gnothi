@@ -1,22 +1,56 @@
 import React, {useState, useEffect} from 'react'
 import _ from 'lodash'
 import {useStoreState, useStoreActions} from "easy-peasy";
+import {useSocket} from "../redux/ws";
 
 
 export default function Groups() {
-  const ws = useStoreState(state => state.ws)
+  const socket = useSocket().socket("/groups")
   const [disabled, setDisabled] = useState(false)
   const [room, setRoom] = useState()
 
+  const fetch = useStoreActions(actions => actions.server.fetch)
   let users = useStoreState(state => state.ws.users);
   let messages = useStoreState(state => state.ws.messages);
   const message = useStoreState(state => state.ws.message);
-  const fetchRoom = useStoreActions(actions => actions.ws.fetchRoom)
-  const setMessage = useStoreActions(actions => actions.ws.setMessage)
+  const actions = useStoreActions(actions => actions.ws)
 
-  // useEffect(() => {
-  //   fetchRoom()
-  // }, [])
+  async function fetchRoom() {
+    const {data} = await fetch({route: 'users2'})
+    data.users.forEach(actions.addToUsersList)
+    socket.on('message', onMessage)
+    socket.on('error', onMessage)
+    socket.on('room_kick', onRoomKick)
+    socket.on('user_join', onUserJoin)
+    socket.on('user_leave', onUserLeave)
+    socket.on('room_join', onRoomJoin)
+  }
+
+  useEffect(() => {
+    fetchRoom()
+  }, [])
+
+  function onUserJoin(data) {
+    actions.addToUsersList(data)
+    actions.addMessage({msg: `**User ${data}** joined the room`, user_id: 'server'})
+  }
+
+  function onUserLeave(data) {
+    actions.addMessage({msg: `**User ${data}** left the room`, user_id: 'server'})
+  }
+
+  function onRoomJoin(data) {
+    actions.addToUsersList(data.user_id);
+  }
+
+  function onRoomKick(data) {
+    actions.setUsers({})
+  }
+
+  function onMessage(data) {
+      const {msg, user_id} = data
+      actions.addMessage({msg, user_id})
+  }
 
   messages = _(messages).toPairs().sortBy(o => o[0]).map(o => o[1]).value()
   users = _(users).toPairs().sortBy(o => o[1]).map(o => o[0]).value()
@@ -24,8 +58,8 @@ export default function Groups() {
   function onSubmit(e) {
     e.preventDefault();
     if (message === '') { return }
-    ws.ws.send(message);
-    setMessage('')
+    socket.emit("message", {msg: message, user_id:1});
+    actions.setMessage('')
   }
 
   const myUserId = false
@@ -61,7 +95,7 @@ export default function Groups() {
                   id="chat-input"
                   placeholder="Enter message..."
                   value={message}
-                  onChange={(e) => setMessage(e.target.value)}
+                  onChange={(e) => actions.setMessage(e.target.value)}
                 />
               </div>
               <div className="col-sm-2">

@@ -1,7 +1,7 @@
 import {action, thunk, createStore, useStoreState, useStoreActions} from 'easy-peasy'
 import {API_URL} from './server'
 import { useState, useEffect } from 'react';
-import io from "socket.io-client";
+import io, {Manager} from "socket.io-client";
 
 
 const host = API_URL.replace(/^https?/, 'ws')
@@ -42,67 +42,34 @@ export const store = {
   }),
 }
 
+let manager;
 export function useSocket() {
-  const fetch = useStoreActions(actions => actions.server.fetch)
   const setAi = useStoreActions(actions => actions.server.setAi)
-  const users = useStoreState(state => state.ws.users)
-  const messages = useStoreState(state => state.ws.messages)
-  const actions = useStoreActions(actions => actions.ws)
-  const [isOnline, setIsOnline] = useState(null);
-
-
-  function onMessage(message) {
-    console.log('Got message from websocket:', message)
-    const payload = JSON.parse(message.data)
-    const {type, data} = payload
-    switch(type) {
-      case 'JOBS_STATUS':
-        setAi(data.status)
-        return
-      case 'MESSAGE':
-      case 'ERROR':
-      case 'ROOM_KICK':
-        const {msg, user_id} = data
-        actions.addMessage({msg, user_id})
-        if (type === 'ROOM_KICK') {
-          actions.setUsers({})
-        }
-        break
-      case 'USER_JOIN':
-        actions.addToUsersList(data)
-        actions.addMessage({msg: `**User ${data}** joined the room`, user_id: 'server'})
-        break
-      case 'USER_LEAVE':
-        // FIXME
-        // delete ws_users[data]
-        actions.addMessage({msg: `**User ${data}** left the room`, user_id: 'server'})
-        break
-      case 'ROOM_JOIN':
-        // setMyUserId(data.user_id);
-        actions.addToUsersList(data.user_id);
-        break
-      default:
-        throw new TypeError('Unknown message type: ' + payload.type);
-        break
-    }
-  }
+  const jwt = useStoreState(state => state.user.jwt)
 
   async function setup() {
-    // const socket = socketIOClient(`${host}/ws`);
+    // don't initialize for browsing home page
+    if (!jwt) {return}
 
-    const socket = io(host, {path: `/ws/socket.io`, upgrade: true});
-    // {auth: {token: "123"}}
+    if (!manager) {
+      console.log("-----Setup Socket.io-----")
+      manager = true // flag true immediately, so no race condition
+      manager = new Manager(host, {
+        path: `/ws/socket.io`,
+        upgrade: true,
+        auth: {token: jwt}
+      });
 
-    const {data} = await fetch({route: 'users2'})
-    data.users.forEach(actions.addToUsersList)
-    socket.on("FromAPI", data => {
-      console.log(data);
-    });
+      const socket = manager.socket("/")
+      manager.on("AI_STATUS", data => {
+        setAi(data.status)
+      })
+    }
   }
 
   useEffect(() => {
     setup()
   }, [])
 
-  return isOnline;
+  return manager;
 }
