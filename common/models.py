@@ -1092,6 +1092,15 @@ class Group(Base):
     created_at = DateCol()
     updated_at = DateCol(update=True)
 
+    @property
+    def members(self):
+        res = db.session.query(UserGroup)\
+            .filter(UserGroup.group_id == self.id).all()
+        return {
+            str(ug.user_id): ug.username
+            for ug in res
+        }
+
 
 class SIGroup(BaseModel):
     title: str
@@ -1104,6 +1113,7 @@ class SOGroup(SIGroup, SOut):
     owner: UUID4
     privacy: GroupPrivacy
     created_at: datetime.datetime
+    members: Optional[Dict[str, str]] = {}
 
 
 class GroupRoles(enum.Enum):
@@ -1126,6 +1136,16 @@ class UserGroup(Base):
     joined_at = DateCol()
     role = Column(Enum(GroupRoles))
 
+    @staticmethod
+    def get_unames(sess, gid, uids):
+        res = sess.query(UserGroup)\
+            .filter(UserGroup.group_id == gid, UserGroup.user_id.in_(uids))\
+            .all()
+        return {
+            ug.user_id: ug.username or "*system*"
+            for ug in res
+        }
+
 
 class Message(Base):
     __tablename__ = 'messages'
@@ -1137,6 +1157,7 @@ class Message(Base):
     created_at = DateCol()
     updated_at = DateCol(update=True)
     text = Encrypt(Unicode, nullable=False)
+
 
 
 class SIMessage(BaseModel):

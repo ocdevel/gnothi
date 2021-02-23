@@ -42,9 +42,10 @@ export function useGroupsSocket() {
   useEffect(() => {
     if (!mgr) {return _.noop}
     groups = manager.socket('/groups')
-    groups.onAny((event, ...args) => onAny([event, args]))
+    groups.onAny((event, ...args) => {
+      onAny([event, args])
+    })
     return () => {
-      groups = null
       groups.close()
     }
   }, [mgr])

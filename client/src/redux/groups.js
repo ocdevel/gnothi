@@ -27,6 +27,7 @@ export const store = {
   }),
 
   onAny: thunk((actions, payload, helpers) => {
+    console.log(payload)
     if (payload[0] === 'message') {
       actions.addMessage(payload[1][0])
     }

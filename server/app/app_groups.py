@@ -1,10 +1,3 @@
-"""
-Adapted from https://github.com/cthwaite/fastapi-websocket-broadcast
-
-TODO implement react websockets https://www.pluralsight.com/guides/using-web-sockets-in-your-reactredux-app
-# https://github.com/tiangolo/fastapi/issues/129
-"""
-
 import pdb, re, datetime, logging, boto3, io
 from pprint import pprint
 from app.app_app import app
@@ -38,13 +31,14 @@ class GroupsNamespace(socketio.AsyncNamespace):
         self._clients = {}
         super().__init__(*args, **kwargs)
 
-    def on_connect(self, sid, environ):
+    async def on_connect(self, sid, environ):
         self._clients[sid] = True
         logger.info(self._clients)
-        sio.emit(f"{sid} connected")
+        await sio.emit(f"{sid} connected")
 
     def on_disconnect(self, sid):
-        pass
+        self._clients.pop(sid)
+        print(sid, 'disconnected')
 
     async def on_message(self, sid, data):
         await self.emit('message', data)
@@ -143,9 +137,17 @@ class Group:
     def group_get(self, gid: str) -> M.SOGroup:
         return db.session.query(M.Group).get(gid)
 
-    @router.get("/groups/{gid}/users")
-    def users_get(self, request: Request):
-        return {"users": []}
+    async def send_message(self, msg, db):
+        msg = M.Message(**msg)
+        db.session.add(msg)
+        db.session.commit()
+        gid = str(msg.group_id)
+        msg = dict(
+            message=msg.text,
+            id=str(msg.owner_id) if msg.owner_id else None,
+        )
+        print(gid, msg)
+        await sio.emit("message", msg, room=gid, namespace="/groups")
 
     @router.get("/groups/{gid}/messages")
     def messages_get(self, gid: str):
@@ -161,21 +163,33 @@ class Group:
     @router.post("/groups/{gid}/messages")
     async def messages_post(self, gid: str, data: M.SIMessage):
         msg = dict(
-            message=data.message,
-            id=str(self.viewer.id),
-            senderName=self.viewer.first_name or "Anonymous"
-        )
-        await sio.emit("message", msg, room=gid, namespace="/groups")
-        db.session.add(M.Message(
-            # TODO what was owner_id?
+            text=data.message,
+            group_id=gid,
             owner_id=self.viewer.id,
+            recipient_type=M.MatchTypes.groups,
+        )
+        await self.send_message(msg, db)
+
+    @router.post("/groups/{gid}/join")
+    async def join_post(self, gid: str):
+        UG = M.UserGroup
+        if db.session.query(UG)\
+            .filter(UG.user_id==self.viewer.id, UG.group_id==gid)\
+            .first():
+            return {}
+        ug = UG(
             user_id=self.viewer.id,
             group_id=gid,
-            recipient_type=M.MatchTypes.groups,
-            text=data.message
-        ))
+            role='member'
+        )
+        db.session.add(ug)
         db.session.commit()
-
+        msg = dict(
+            group_id=gid,
+            recipient_type=M.MatchTypes.groups,
+            text=f"{ug.username} just joined!"
+        )
+        await self.send_message(msg, db)
 
 app.include_router(router)
 app.add_middleware(RoomEventMiddleware)

@@ -59,3 +59,9 @@ body {
   max-width: none !important;
 }
 
+.groups {
+  .chat-feed {
+    max-height: 600px;
+    overflow-y: scroll;
+  }
+}
