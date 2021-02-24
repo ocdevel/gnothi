@@ -135,7 +135,7 @@ export default function CreateGroup({show, close}) {
                 privacy
               </Form.Label>
               <Col sm={10}>
-                {privacies.map(({k, v, p}) => <>
+                {privacies.map(({k, v, p}) => (
                   <Form.Check
                     checked={k === form.privacy}
                     onChange={() => setForm({...form, privacy: k})}
@@ -145,7 +145,7 @@ export default function CreateGroup({show, close}) {
                     name={k}
                     id={`radio-${k}`}
                   />
-                </>)}
+                ))}
               </Col>
             </Form.Group>
           </fieldset>

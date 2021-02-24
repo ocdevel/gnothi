@@ -5,7 +5,7 @@ import React from "react";
 
 export default function staticRoutes() {
   return [
-     <Route path="/privacy"><Privacy /></Route>,
-     <Route path="/terms"><Terms /></Route>
+     <Route path="/privacy" key={'privacy'}><Privacy /></Route>,
+     <Route path="/terms" key={'terms'}><Terms /></Route>
   ]
 }

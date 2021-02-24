@@ -1132,6 +1132,7 @@ class UserGroup(Base):
     # If they opt to expose real username, it will be used instead
     username = Encrypt(default=petname.Generate)  # auto-generate a random name (adjective-animal)
     user_group_id = IDCol()
+    # show_username = Column(Boolean)
 
     joined_at = DateCol()
     role = Column(Enum(GroupRoles))
@@ -1157,7 +1158,6 @@ class Message(Base):
     created_at = DateCol()
     updated_at = DateCol(update=True)
     text = Encrypt(Unicode, nullable=False)
-
 
 
 class SIMessage(BaseModel):

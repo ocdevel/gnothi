@@ -1,4 +1,5 @@
 import {action, thunk} from "easy-peasy";
+import {sockets} from './ws'
 
 function onUserJoin(data) {
   // actions.addToUsersList(data)
@@ -26,13 +27,24 @@ export const store = {
     state.messages.push(payload)
   }),
 
+  online: [],
+  setOnline: action((state, payload) => {
+    state.online = payload
+  }),
+
+  emit: thunk((actions, payload, helpers) => {
+    const {jwt} = helpers.getStoreState().user
+    const [event, data] = payload
+    sockets.groups.emit(event, data)
+  }),
+
   onAny: thunk((actions, payload, helpers) => {
     console.log(payload)
     if (payload[0] === 'message') {
       actions.addMessage(payload[1][0])
     }
     if (payload[0] === 'users') {
-      console.log(payload[1])
+      actions.setOnline(payload[1][0])
     }
   })
 }

@@ -44,7 +44,10 @@ export default function MainNav() {
         </NavDropdown.Item>
       )}
       {shares.map(s => s.id != as && (
-        <NavDropdown.Item onClick={() => changeAs(s.id)}>
+        <NavDropdown.Item
+          onClick={() => changeAs(s.id)}
+          key={s.id}
+        >
           {emoji("🔀")}
           {s.new_entries ? <Badge pill variant='danger'>{s.new_entries}</Badge> : null}
           {s.email}

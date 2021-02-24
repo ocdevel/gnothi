@@ -173,12 +173,12 @@ function Overviews() {
     body: "All text is industry-standard encrypted."
   }, {
     title: <><FaRobot /> Future</>,
-    body: <p>The sky's the limit with <a target='_blank' href='https://huggingface.co/transformers/'>BERT</a> language models! Astrology? Dream analysis? </p>
+    body: <>The sky's the limit with <a target='_blank' href='https://huggingface.co/transformers/'>BERT</a> language models! Astrology? Dream analysis? </>
   }], [])
 
   return <>
     <Row lg={3} sm={2} xs={1}>
-      {features.map(f => <Col>
+      {features.map((f, i) => <Col key={i}>
         <h3>{f.title}</h3>
         <p>{f.body}</p>
         {f.k && <>

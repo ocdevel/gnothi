@@ -2,11 +2,12 @@ import {Button, Card} from "react-bootstrap";
 import {Link, useParams} from "react-router-dom";
 import React, {useState, useEffect} from "react";
 import CreateGroup from "./CreateGroup";
-import {useStoreActions} from "easy-peasy";
+import {useStoreActions, useStoreState} from "easy-peasy";
 import _ from 'lodash'
 
 export default function Sidebar({group}) {
   const fetch = useStoreActions(actions => actions.server.fetch)
+  const online = useStoreState(state => state.groups.online)
   const [groups, setGroups] = useState([])
   const [showCreate, setShowCreate] = useState(false)
 
@@ -42,8 +43,11 @@ export default function Sidebar({group}) {
       <Card.Body>
         <p>{group.text}</p>
         <Card.Subtitle>Members</Card.Subtitle>
-        <ul id="users">
-          {_.map(group.members, u => <li id="users-list-' + userId + '">{u}</li>)}
+        <ul className="list-unstyled">
+          {_.map(group.members, (uname, uid) => <li key={uid}>
+            {~online.indexOf(uid) && 'online'}
+            {uname}
+          </li>)}
         </ul>
       </Card.Body>
     </Card>
@@ -63,13 +67,13 @@ export default function Sidebar({group}) {
         >Create Group</span>
       </Card.Header>
       <Card.Body>
-        {groups_.map((g, i) => <>
+        {groups_.map((g, i) => <div key={g.id}>
           <Card.Subtitle className='mb-2'>
             <Link to={`/groups/${g.id}`}>{g.title}</Link>
           </Card.Subtitle>
           <div className='text-muted'>{g.text}</div>
           {i < groups_.length - 1 && <hr />}
-        </>)}
+        </div>)}
       </Card.Body>
     </Card>
   </div>

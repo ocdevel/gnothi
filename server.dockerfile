@@ -32,8 +32,9 @@ RUN pip install \
   dynaconf \
   stripe \
   petname \
-  #fastapi-socketio \
-  fastapi-utils
+  fastapi-socketio \
+  fastapi-utils \
+  aioredis
 
 COPY ./server/app /app/app
 COPY ./common /app/common

@@ -1,7 +1,6 @@
 import {useStoreActions, useStoreState} from "easy-peasy";
 import {ChatFeed, Message} from "react-chat-ui";
 import {useParams} from "react-router-dom";
-import {useGroupsSocket} from "../redux/ws";
 import React, {useEffect, useLayoutEffect, useState, useRef} from "react";
 import _ from "lodash";
 import Sidebar from './Sidebar'
@@ -48,21 +47,19 @@ function Messages({messages, users}) {
 
 export default function Group() {
   const {gid} = useParams()
-  const socket = useGroupsSocket()
 
   const fetch = useStoreActions(actions => actions.server.fetch)
   const [message, setMessage] = useState("")
   const messages = useStoreState(state => state.groups.messages);
   const setMessages = useStoreActions(actions => actions.groups.setMessages);
+  const emit = useStoreActions(actions => actions.groups.emit);
   const [group, setGroup] = useState({})
 
   useEffect(() => {
     fetchMessages()
     fetchGroup()
-    if (socket) {
-      socket.emit('room', gid)
-    }
-  }, [socket, gid])
+    emit(['room', gid])
+  }, [gid])
 
   async function fetchMessages() {
     const {data} = await fetch({route: `groups/${gid}/messages`})
