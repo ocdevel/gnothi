@@ -4,7 +4,7 @@ from app.app_app import app
 from app.app_jwt import jwt_user
 import common.models as M
 from fastapi_sqlalchemy import db
-from fastapi_socketio import SocketManager
+from app.socket_manager import SocketManager
 
 import logging, time, asyncio
 from enum import Enum
@@ -17,13 +17,14 @@ from starlette.types import ASGIApp, Receive, Scope, Send
 from fastapi_utils.cbv import cbv
 from fastapi_utils.inferring_router import InferringRouter
 
+import socketio
 
 logger = logging.getLogger(__name__)
 getuser = M.User.snoop
 router = InferringRouter()
-
-import socketio
-sio = SocketManager(app=app, cors_allowed_origins=[])
+mgr = SocketManager(app=app, cors_allowed_origins=[])
+redis = mgr._mgr
+sio = mgr._sio
 
 
 class GroupsNamespace(socketio.AsyncNamespace):
@@ -50,9 +51,13 @@ class GroupsNamespace(socketio.AsyncNamespace):
         # pprint(dict(sid=sid, old=old, gid=gid))
         # await self.save_session(sid, {"gid": gid}, "/groups")
         self.enter_room(sid, gid)
+        users = redis.get_participants('/groups', gid)
+        users = [u[0] for u in users]
+        print(users)
+        await self.emit("users", users)
 
 
-sio._sio.register_namespace(GroupsNamespace('/groups'))
+sio.register_namespace(GroupsNamespace('/groups'))
 
 
 # @sio.on('connect')

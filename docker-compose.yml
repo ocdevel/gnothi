@@ -5,7 +5,7 @@ services:
     build:
       context: .
       dockerfile: ./server.dockerfile
-    container_name: jserver
+    container_name: gnothi-server
     entrypoint: /bin/bash
     environment:
       ENVIRONMENT: development
@@ -26,7 +26,7 @@ services:
       context: .
       dockerfile: ./client.dockerfile
     entrypoint: /bin/bash
-    container_name: jclient
+    container_name: gnothi-client
     ports:
       - 3002:3000
     stdin_open: true
@@ -41,7 +41,7 @@ services:
     build:
       context: .
       dockerfile: ./gpu.dockerfile
-    container_name: jgpu-dev
+    container_name: gnothi-gpu-dev
     entrypoint: /bin/bash
     stdin_open: true
     restart: unless-stopped
@@ -59,7 +59,7 @@ services:
           - "gpu"
 
   postgres:
-    container_name: postgres
+    container_name: gnothi-postgres
     restart: always
     image: postgres
     environment:
@@ -68,3 +68,9 @@ services:
       - ./storage/gnothidb:/var/lib/postgresql/data
     ports:
       - 5432:5432
+
+  redis:
+    container_name: gnothi-redis
+    image: redis
+    ports:
+      - 6379:6379

@@ -31,5 +31,8 @@ export const store = {
     if (payload[0] === 'message') {
       actions.addMessage(payload[1][0])
     }
+    if (payload[0] === 'users') {
+      console.log(payload[1])
+    }
   })
 }

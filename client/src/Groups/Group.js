@@ -16,7 +16,6 @@ function Messages({messages, users}) {
     el_.scrollTop = el_.scrollHeight
   })
 
-  if (!(users && messages)) {return null}
   messages = messages.map(m => new Message({
     ...m,
     id: uid === m.id ? 0 : 1,
@@ -65,8 +64,6 @@ export default function Group() {
     }
   }, [socket, gid])
 
-  if (!group) {return null}
-
   async function fetchMessages() {
     const {data} = await fetch({route: `groups/${gid}/messages`})
     setMessages(data)
@@ -88,7 +85,7 @@ export default function Group() {
   return <div>
     <div id="main" className="row">
       <div className="col-md-9">
-        <Messages messages={messages} users={group.members} />
+        {group.id && <Messages messages={messages} users={group.members} />}
         <form onSubmit={onSubmit}>
           <div className="form-group row">
             <label htmlFor="chat-input" className="col-sm-1 col-form-label">Message</label>
