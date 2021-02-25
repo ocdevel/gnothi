@@ -27,6 +27,16 @@ export const store = {
     state.messages.push(payload)
   }),
 
+  group: {},
+  setGroup: action((state, group) => {
+    state.group = group
+  }),
+  fetchGroup: thunk(async (actions, gid, helpers) => {
+    const fetch = helpers.getStoreActions().server.fetch
+    const {data} = await fetch({route: `groups/${gid}`})
+    actions.setGroup(data)
+  }),
+
   online: [],
   setOnline: action((state, payload) => {
     state.online = payload

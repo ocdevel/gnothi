@@ -76,13 +76,8 @@ class Groups:
 
     @router.post("/groups")
     def groups_post(self, data: M.SIGroup):
-        db.session.add(M.Group(
-            title=data.title,
-            text=data.text,
-            privacy=data.privacy,
-            owner=self.viewer.id,
-        ))
-        db.session.commit()
+        M.Group.create_group(db.session, data.title, data.text,
+                             self.viewer.id, data.privacy)
         return {"ok": True}
 
     @router.get("/groups")
@@ -107,7 +102,7 @@ class Group:
 
     @router.get("/groups/{gid}")
     def group_get(self, gid: str) -> M.SOGroup:
-        return db.session.query(M.Group).get(gid)
+        return M.Group.group_with_membership(db.session, gid, self.viewer.id)
 
     async def send_message(self, msg, db):
         msg = M.Message(**msg)
@@ -144,22 +139,24 @@ class Group:
 
     @router.post("/groups/{gid}/join")
     async def join_post(self, gid: str):
-        UG = M.UserGroup
-        if db.session.query(UG)\
-            .filter(UG.user_id==self.viewer.id, UG.group_id==gid)\
-            .first():
-            return {}
-        ug = UG(
-            user_id=self.viewer.id,
-            group_id=gid,
-            role='member'
-        )
-        db.session.add(ug)
-        db.session.commit()
+        uid = self.viewer.id
+        ug = M.Group.join_group(db.session, gid, uid)
+        if not ug: return {}
         msg = dict(
             group_id=gid,
             recipient_type=M.MatchTypes.groups,
             text=f"{ug.username} just joined!"
+        )
+        await self.send_message(msg, db)
+        return {"role": ug.role}
+
+    @router.post("/groups/{gid}/leave")
+    async def leave_post(self, gid: str):
+        ug = M.Group.leave_group(db.session, gid, self.viewer.id)
+        msg = dict(
+            group_id=gid,
+            recipient_type=M.MatchTypes.groups,
+            text=f"{ug['username']} just left :("
         )
         await self.send_message(msg, db)
 

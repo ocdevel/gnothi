@@ -53,22 +53,18 @@ export default function Group() {
   const messages = useStoreState(state => state.groups.messages);
   const setMessages = useStoreActions(actions => actions.groups.setMessages);
   const emit = useStoreActions(actions => actions.groups.emit);
-  const [group, setGroup] = useState({})
+  const group = useStoreState(state => state.groups.group)
+  const fetchGroup = useStoreActions(actions => actions.groups.fetchGroup)
 
   useEffect(() => {
     fetchMessages()
-    fetchGroup()
+    fetchGroup(gid)
     emit(['room', gid])
   }, [gid])
 
   async function fetchMessages() {
     const {data} = await fetch({route: `groups/${gid}/messages`})
     setMessages(data)
-  }
-
-  async function fetchGroup() {
-    const {data} = await fetch({route: `groups/${gid}`})
-    setGroup(data)
   }
 
   function onSubmit(e) {
@@ -103,7 +99,7 @@ export default function Group() {
         </form>
       </div>
       <div className="col-md-3">
-        <Sidebar group={group} key={group.id} />
+        <Sidebar />
       </div>
     </div>
   </div>

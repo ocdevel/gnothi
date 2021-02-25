@@ -1082,6 +1082,13 @@ class GroupPrivacy(enum.Enum):
     paid = "paid"
 
 
+class GroupRoles(enum.Enum):
+    member = "member"
+    owner = "owner"
+    admin = "admin"
+    banned = "banned"
+
+
 class Group(Base):
     __tablename__ = 'groups'
     id = IDCol()
@@ -1101,6 +1108,56 @@ class Group(Base):
             for ug in res
         }
 
+    @staticmethod
+    def create_group(sess, title, text, owner, privacy=GroupPrivacy.public):
+        g = Group(
+            title=title,
+            text=text,
+            privacy=privacy,
+            owner=owner,
+        )
+        sess.add(g)
+        sess.commit()
+        sess.refresh(g)
+        sess.add(UserGroup(
+            group_id=g.id,
+            user_id=owner,
+            role=GroupRoles.owner
+        ))
+        sess.commit()
+
+    @staticmethod
+    def group_with_membership(sess, gid, uid):
+        group = sess.query(Group).get(gid)
+        group.role = sess.query(UserGroup.role)\
+           .filter_by(user_id=uid, group_id=gid).scalar()
+        return group
+
+    @staticmethod
+    def join_group(sess, gid, uid, role=GroupRoles.member):
+        if sess.query(UserGroup).filter_by(user_id=uid, group_id=gid).first():
+            return None
+        ug = UserGroup(
+            user_id=uid,
+            group_id=gid,
+            role=role
+        )
+        sess.add(ug)
+        sess.commit()
+        return ug
+
+    @staticmethod
+    def leave_group(sess, gid, uid):
+        ug = sess.query(UserGroup) \
+            .filter_by(user_id=uid, group_id=gid)
+        ug_ = ug.first()
+        if ug_:
+            #  since won't be available after delete
+            ug_ = ug_.__dict__
+        ug.delete()
+        db.session.commit()
+        return ug_
+
 
 class SIGroup(BaseModel):
     title: str
@@ -1114,13 +1171,7 @@ class SOGroup(SIGroup, SOut):
     privacy: GroupPrivacy
     created_at: datetime.datetime
     members: Optional[Dict[str, str]] = {}
-
-
-class GroupRoles(enum.Enum):
-    member = "member"
-    owner = "owner"
-    admin = "admin"
-    banned = "banned"
+    role: Optional[GroupRoles] = None
 
 
 class UserGroup(Base):
