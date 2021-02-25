@@ -46,24 +46,38 @@ class GroupsNamespace(socketio.AsyncNamespace):
         token = dict(parse_qsl(environ['QUERY_STRING']))['token']
         decoded = jwt.decode(token, SECRET)
         uid = decoded['sub']
-        await self.save_session(sid, {'uid': uid}, '/groups')
+        await self.save_session(sid, {'uid': uid})
 
-    def on_disconnect(self, sid):
-        print(sid, 'disconnected')
+    async def on_disconnect(self, sid):
+        try:
+            sess = await self.get_session(sid, '/groups')
+            await self.emit("online", {sess['uid']: False})
+            print(sid, 'disconnected')
+        except:
+            pass
 
     async def on_message(self, sid, data):
         await self.emit('message', data)
 
     async def on_room(self, sid, gid):
         self.enter_room(sid, gid)
+        await self.refresh_online(gid)
+        await self.on_get_members(sid, gid)
+
+    async def on_get_members(self, sid, gid):
+        with db():
+            members = M.UserGroup.get_members(db.session, gid)
+            await self.emit("members", members, room=gid)
+
+    async def refresh_online(self, gid):
         sids = redis.get_participants('/groups', gid)
-        uids = []
+        uids = {}
         for s in next(sids):
             try:
-                sess = await self.get_session(s, '/groups')
+                sess = await self.get_session(s)
+                uids[sess['uid']] = True
             except: continue
-            uids.append(sess['uid'])
-        await self.emit("users", uids)
+        await self.emit("online", uids, room=gid)
 
 
 sio.register_namespace(GroupsNamespace('/groups'))
@@ -139,7 +153,7 @@ class Group:
 
     @router.post("/groups/{gid}/join")
     async def join_post(self, gid: str):
-        uid = self.viewer.id
+        uid = str(self.viewer.id)
         ug = M.Group.join_group(db.session, gid, uid)
         if not ug: return {}
         msg = dict(
@@ -148,16 +162,18 @@ class Group:
             text=f"{ug.username} just joined!"
         )
         await self.send_message(msg, db)
-        return {"role": ug.role}
+        await sio.emit("new_member", gid, room=gid, namespace="/groups")
 
     @router.post("/groups/{gid}/leave")
     async def leave_post(self, gid: str):
+        uid = str(self.viewer.id)
         ug = M.Group.leave_group(db.session, gid, self.viewer.id)
         msg = dict(
             group_id=gid,
             recipient_type=M.MatchTypes.groups,
             text=f"{ug['username']} just left :("
         )
+        await sio.emit("new_member", gid, room=gid, namespace="/groups")
         await self.send_message(msg, db)
 
 app.include_router(router)

@@ -58,8 +58,8 @@ export default function Group() {
 
   useEffect(() => {
     fetchMessages()
-    fetchGroup(gid)
     emit(['room', gid])
+    fetchGroup(gid)
   }, [gid])
 
   async function fetchMessages() {

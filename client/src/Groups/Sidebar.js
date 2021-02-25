@@ -5,23 +5,24 @@ import CreateGroup from "./CreateGroup";
 import {useStoreActions, useStoreState} from "easy-peasy";
 import _ from 'lodash'
 import emoji from 'react-easy-emoji'
+import {FaCrown} from "react-icons/all";
 
 export default function Sidebar() {
   const history = useHistory()
+  const {gid} = useParams()
   const fetch = useStoreActions(actions => actions.server.fetch)
   const online = useStoreState(state => state.groups.online)
+  const members = useStoreState(state => state.groups.members)
   const myId = useStoreState(state => state.user.user.id)
   const [groups, setGroups] = useState([])
   const [showCreate, setShowCreate] = useState(false)
   const group = useStoreState(state => state.groups.group)
   const fetchGroup = useStoreActions(actions => actions.groups.fetchGroup)
+  const emit = useStoreActions(actions => actions.groups.emit);
 
   useEffect(() => {
     fetchGroups()
   }, [])
-
-  if (!group.id) {return null}
-  const gid = group.id
 
   async function fetchGroups() {
     const {data} = await fetch({route: 'groups'})
@@ -30,7 +31,7 @@ export default function Sidebar() {
 
   async function joinGroup() {
     const {data} = await fetch({route: `groups/${gid}/join`, method: 'POST'})
-    fetchGroup(group.id)
+    fetchGroup(gid)
   }
 
   async function leaveGroup() {
@@ -42,7 +43,8 @@ export default function Sidebar() {
   const onlineIcon = emoji("🟢")
 
   function renderOptions() {
-    if (!group.members[myId]) {
+    const role = _.get(members, `${myId}.role`)
+    if (!role) {
       return <div>
         Not a member
         <Button
@@ -55,7 +57,7 @@ export default function Sidebar() {
         </Button>
       </div>
     }
-    if (group.role === 'member') {
+    if (role === 'member') {
       return <div>
         You are a member
         <Button
@@ -68,9 +70,11 @@ export default function Sidebar() {
         </Button>
       </div>
     }
-    return <>
-
-    </>
+    if (role === 'owner') {
+      return <div>
+        You are the owner
+      </div>
+    }
   }
 
   function renderGroup() {
@@ -83,9 +87,10 @@ export default function Sidebar() {
         <p>{group.text}</p>
         <Card.Subtitle>Members</Card.Subtitle>
         <ul className="list-unstyled">
-          {_.map(group.members, (uname, uid) => <li key={uid}>
-            {~online.indexOf(uid) && onlineIcon}
-            {uname}
+          {_.map(members, (member, uid) => member && <li key={uid}>
+            {online[uid] && onlineIcon}
+            {_.get(members, `${uid}.role`) === 'owner' && <FaCrown />}
+            {member.username}
           </li>)}
         </ul>
         <hr />

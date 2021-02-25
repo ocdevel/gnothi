@@ -1099,15 +1099,6 @@ class Group(Base):
     created_at = DateCol()
     updated_at = DateCol(update=True)
 
-    @property
-    def members(self):
-        res = db.session.query(UserGroup)\
-            .filter(UserGroup.group_id == self.id).all()
-        return {
-            str(ug.user_id): ug.username
-            for ug in res
-        }
-
     @staticmethod
     def create_group(sess, title, text, owner, privacy=GroupPrivacy.public):
         g = Group(
@@ -1189,12 +1180,11 @@ class UserGroup(Base):
     role = Column(Enum(GroupRoles))
 
     @staticmethod
-    def get_unames(sess, gid, uids):
-        res = sess.query(UserGroup)\
-            .filter(UserGroup.group_id == gid, UserGroup.user_id.in_(uids))\
-            .all()
+    def get_members(sess, gid):
+        res = sess.query(UserGroup) \
+            .filter_by(group_id=gid).all()
         return {
-            ug.user_id: ug.username or "*system*"
+            str(ug.user_id): dict(username=ug.username, role=ug.role.value)
             for ug in res
         }
 

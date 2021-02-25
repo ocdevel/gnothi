@@ -1,23 +1,6 @@
 import {action, thunk} from "easy-peasy";
 import {sockets} from './ws'
 
-function onUserJoin(data) {
-  // actions.addToUsersList(data)
-  // actions.addMessage({msg: `**User ${data}** joined the room`, user_id: 'server'})
-}
-
-function onUserLeave(data) {
-  // actions.addMessage({msg: `**User ${data}** left the room`, user_id: 'server'})
-}
-
-function onRoomJoin(data) {
-  // actions.addToUsersList(data.user_id);
-}
-
-function onRoomKick(data) {
-  // actions.setUsers({})
-}
-
 export const store = {
   messages: [],
   setMessages: action((state, payload) => {
@@ -35,15 +18,20 @@ export const store = {
     const fetch = helpers.getStoreActions().server.fetch
     const {data} = await fetch({route: `groups/${gid}`})
     actions.setGroup(data)
+    // actions.emit(['get_members', gid])
   }),
 
-  online: [],
+  members: {},
+  setMembers: action((state, payload) => {
+    state.members = payload
+  }),
+
+  online: {},
   setOnline: action((state, payload) => {
-    state.online = payload
+    state.online = {...state.online, ...payload}
   }),
 
   emit: thunk((actions, payload, helpers) => {
-    const {jwt} = helpers.getStoreState().user
     const [event, data] = payload
     sockets.groups.emit(event, data)
   }),
@@ -53,8 +41,14 @@ export const store = {
     if (payload[0] === 'message') {
       actions.addMessage(payload[1][0])
     }
-    if (payload[0] === 'users') {
+    if (payload[0] === 'online') {
       actions.setOnline(payload[1][0])
+    }
+    if (payload[0] === 'members') {
+      actions.setMembers(payload[1][0])
+    }
+    if (payload[0] === 'new_member') {
+      actions.emit(["get_members", payload[1][0]])
     }
   })
 }
