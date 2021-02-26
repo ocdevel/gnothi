@@ -1,4 +1,4 @@
-import {Button, Card} from "react-bootstrap";
+import {Button, Card, Col, Form, Row} from "react-bootstrap";
 import {Link, useHistory, useParams} from "react-router-dom";
 import React, {useState, useEffect} from "react";
 import CreateGroup from "./CreateGroup";
@@ -6,6 +6,30 @@ import {useStoreActions, useStoreState} from "easy-peasy";
 import _ from 'lodash'
 import emoji from 'react-easy-emoji'
 import {FaCrown} from "react-icons/all";
+
+const privacies = [{
+  k: 'show_username',
+  v: 'Show Username',
+  h: "Let members of this group see your username. By default, every group-join assigns a random name to protect your privacy. Set your username on the Profile page, otherwise it falls back to this random name."
+}, {
+  k: 'show_first_name',
+  v: 'Show First Name',
+  h: "Let members see your first name. Set it in Profile, else falls back to username"
+}, {
+  k: 'show_last_name',
+  v: 'Show Last Name',
+  h: "Let members see your last name. Set it in Profile, else falls back to first name"
+}, {
+  k: 'show_bio',
+  v: 'Show Bio',
+  h: "Let members see your bio (profile). Set it in Profile"
+}, {
+  k: 'show_avatar',
+  v: 'Show Avatar',
+  h: "Let members see your avatar. Set it in Profile"
+}]
+
+const disabled = ['show_username', 'show_avatar']
 
 export default function Sidebar() {
   const history = useHistory()
@@ -39,6 +63,15 @@ export default function Sidebar() {
     history.push("/groups")
   }
 
+  async function onSubmit(e) {
+    e.preventDefault()
+  }
+
+  const changePrivacy = key => e => {
+    emit(["change_privacy", {gid, key, value: e.target.checked}])
+    // () => setForm({...form, [k]: !form[k]})
+  }
+
   const groups_ = _.filter(groups, g => g.id != gid)
   const onlineIcon = emoji("🟢")
 
@@ -57,8 +90,9 @@ export default function Sidebar() {
         </Button>
       </div>
     }
+    let el
     if (role === 'member') {
-      return <div>
+      el = <div>
         You are a member
         <Button
           size='sm'
@@ -71,10 +105,29 @@ export default function Sidebar() {
       </div>
     }
     if (role === 'owner') {
-      return <div>
+      el = <div>
         You are the owner
       </div>
     }
+    return <div>
+      {el}
+      {privacies.map(({k, v, h}) => <div key={k}>
+        <Form.Check
+          disabled={~disabled.indexOf(k)}
+          checked={members[myId] && members[myId][k]}
+          onChange={changePrivacy(k)}
+          key={k}
+          type="checkbox"
+          label={v}
+          name={k}
+          id={`check-${k}`}
+        />
+        <Form.Text className='text-muted'>
+          <div>{h}</div>
+          {~disabled.indexOf(k)? <div className='text-warning'>This feature isn't yet available</div> : null}
+        </Form.Text>
+      </div>)}
+    </div>
   }
 
   function renderGroup() {

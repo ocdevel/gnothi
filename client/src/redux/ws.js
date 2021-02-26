@@ -27,6 +27,8 @@ export function useSockets() {
       sockets.manager = new Manager(host, {
         path: `/ws/socket.io`,
         upgrade: true,
+        transports: ["websocket", "polling"],
+        rejectUnauthorized: false,
         query: {token: jwt}
       });
 

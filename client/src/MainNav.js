@@ -104,7 +104,7 @@ export default function MainNav() {
             <Nav.Link><FaBook /> Resources</Nav.Link>
           </LinkContainer>
           <LinkContainer to='/groups'>
-            <Nav.Link><FaRegComments /> Groups</Nav.Link>
+            <Nav.Link><FaRegComments /> Community</Nav.Link>
           </LinkContainer>
           {/* Want resources as Resources->[Books|Therapists]? */}
           {/*<NavDropdown title="Resources" id="collasible-nav-dropdown">

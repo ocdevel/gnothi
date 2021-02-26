@@ -20,6 +20,7 @@ from sqlalchemy.dialects import postgresql
 from sqlalchemy.dialects.postgresql import UUID, JSONB, ARRAY
 from sqlalchemy_utils.types import EmailType
 from sqlalchemy_utils.types.encrypted.encrypted_type import StringEncryptedType, FernetEngine
+import sqlalchemy as sa
 import petname
 
 
@@ -1174,19 +1175,51 @@ class UserGroup(Base):
     # If they opt to expose real username, it will be used instead
     username = Encrypt(default=petname.Generate)  # auto-generate a random name (adjective-animal)
     user_group_id = IDCol()
-    # show_username = Column(Boolean)
+
+    show_username = Column(Boolean)
+    show_avatar = Column(Boolean)
+    show_first_name = Column(Boolean)
+    show_last_name = Column(Boolean)
+    show_bio = Column(Boolean)
 
     joined_at = DateCol()
     role = Column(Enum(GroupRoles))
 
     @staticmethod
     def get_members(sess, gid):
-        res = sess.query(UserGroup) \
-            .filter_by(group_id=gid).all()
-        return {
-            str(ug.user_id): dict(username=ug.username, role=ug.role.value)
-            for ug in res
-        }
+        user_fields = "first_name last_name bio".split() # username avatar
+        rows = sess.query(UserGroup, User)\
+            .join(User, User.id == UserGroup.user_id)\
+            .filter(UserGroup.group_id == gid)\
+            .options(
+                sa.orm.Load(User).load_only(*user_fields)
+            ).all()
+        res = {}
+        for (ug, u) in rows:
+            obj = dict(
+                username=ug.username,
+                show_first_name=ug.show_first_name,
+                show_last_name=ug.show_last_name,
+                show_bio=ug.show_bio,
+                joined_at=ug.joined_at.timestamp(),
+                role=ug.role.value
+            )
+            for f in user_fields:
+                if obj[f"show_{f}"]:
+                    obj[f] = getattr(u, f, None)
+            # Display name based on per-member privacies
+            uname = []
+            if ug.show_first_name and u.first_name: uname.append(u.first_name)
+            if ug.show_last_name and u.last_name: uname.append(u.last_name)
+            obj['username'] = ' '.join(uname) if uname else ug.username
+            
+            res[str(ug.user_id)] = obj
+        print(res)
+        return res
+        # return {
+        #     str(ug.user_id): dict(username=ug.username, role=ug.role.value)
+        #     for ug in res
+        # }
 
 
 class Message(Base):

@@ -79,6 +79,16 @@ class GroupsNamespace(socketio.AsyncNamespace):
             except: continue
         await self.emit("online", uids, room=gid)
 
+    async def on_change_privacy(self, sid, data):
+        with db():
+            sess = await self.get_session(sid, '/groups')
+            uid, gid = sess['uid'], data['gid']
+            ug = db.session.query(M.UserGroup)\
+                    .filter_by(user_id=uid, group_id=gid).first()
+            setattr(ug, data['key'], data['value'])
+            db.session.commit()
+            await self.on_get_members(sid, gid)
+
 
 sio.register_namespace(GroupsNamespace('/groups'))
 
@@ -137,7 +147,7 @@ class Group:
             .order_by(M.Message.created_at.asc())\
             .all()
         return [dict(
-            id=str(m.user_id),
+            id=str(m.owner_id),
             message=m.text,
         ) for m in res]
 
@@ -167,7 +177,7 @@ class Group:
     @router.post("/groups/{gid}/leave")
     async def leave_post(self, gid: str):
         uid = str(self.viewer.id)
-        ug = M.Group.leave_group(db.session, gid, self.viewer.id)
+        ug = M.Group.leave_group(db.session, gid, uid)
         msg = dict(
             group_id=gid,
             recipient_type=M.MatchTypes.groups,

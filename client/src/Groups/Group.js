@@ -4,10 +4,21 @@ import {useParams} from "react-router-dom";
 import React, {useEffect, useLayoutEffect, useState, useRef} from "react";
 import _ from "lodash";
 import Sidebar from './Sidebar'
+import {Button, Col, Form, Row} from "react-bootstrap";
 
-function Messages({messages, users}) {
+function Messages() {
+  const {gid} = useParams()
+
+  const fetch = useStoreActions(actions => actions.server.fetch)
   const uid = useStoreState(state => state.user.user.id)
+  const messages = useStoreState(state => state.groups.messages)
+  const setMessages = useStoreActions(actions => actions.groups.setMessages)
+  const members = useStoreState(state => state.groups.members)
   const el = useRef()
+
+  useEffect(() => {
+    fetchMessages()
+  }, [gid])
 
   useLayoutEffect(() => {
     const el_ = el.current
@@ -15,10 +26,19 @@ function Messages({messages, users}) {
     el_.scrollTop = el_.scrollHeight
   })
 
-  messages = messages.map(m => new Message({
+  async function fetchMessages() {
+    if (!gid) {return}
+    const {data} = await fetch({route: `groups/${gid}/messages`})
+    setMessages(data)
+  }
+
+  console.log(messages)
+  console.log(members)
+
+  const messages_ = messages.map(m => new Message({
     ...m,
     id: uid === m.id ? 0 : 1,
-    senderName: users[m.id] || "*system*"
+    senderName: members[m.id] || "*system*"
   }))
 
   // https://github.com/brandonmowat/react-chat-ui
@@ -35,7 +55,7 @@ function Messages({messages, users}) {
 
   return <div className='chat-feed' ref={el}>
       <ChatFeed
-        messages={messages} // Array: list of message objects
+        messages={messages_} // Array: list of message objects
         hasInputField={false} // Boolean: use our input, or use your own
         showSenderName // show the name of the user who sent the message
         bubblesCentered={false} //Boolean should the bubbles be centered in the feed?
@@ -50,22 +70,15 @@ export default function Group() {
 
   const fetch = useStoreActions(actions => actions.server.fetch)
   const [message, setMessage] = useState("")
-  const messages = useStoreState(state => state.groups.messages);
-  const setMessages = useStoreActions(actions => actions.groups.setMessages);
   const emit = useStoreActions(actions => actions.groups.emit);
   const group = useStoreState(state => state.groups.group)
   const fetchGroup = useStoreActions(actions => actions.groups.fetchGroup)
 
   useEffect(() => {
-    fetchMessages()
     emit(['room', gid])
     fetchGroup(gid)
   }, [gid])
 
-  async function fetchMessages() {
-    const {data} = await fetch({route: `groups/${gid}/messages`})
-    setMessages(data)
-  }
 
   function onSubmit(e) {
     e.preventDefault();
@@ -76,31 +89,29 @@ export default function Group() {
   }
 
   return <div>
-    <div id="main" className="row">
-      <div className="col-md-9">
-        {group.id && <Messages messages={messages} users={group.members} />}
-        <form onSubmit={onSubmit}>
-          <div className="form-group row">
-            <label htmlFor="chat-input" className="col-sm-1 col-form-label">Message</label>
-            <div className="col-sm-9">
-              <input
+    <Row>
+      <Col md={9}>
+        <Messages />
+        <Form onSubmit={onSubmit}>
+          <Form.Group as={Row}>
+            <Form.Label column sm="1">Message</Form.Label>
+            <Col sm="9">
+              <Form.Control
                 type="text"
-                className="form-control"
-                id="chat-input"
                 placeholder="Enter message..."
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
               />
-            </div>
+            </Col>
             <div className="col-sm-2">
-              <button type="submit" className="btn btn-primary">Send</button>
+              <Button type="submit" variant="primary">Send</Button>
             </div>
-          </div>
-        </form>
-      </div>
-      <div className="col-md-3">
+          </Form.Group>
+        </Form>
+      </Col>
+      <Col md={3}>
         <Sidebar />
-      </div>
-    </div>
+      </Col>
+    </Row>
   </div>
 }
