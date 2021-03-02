@@ -32,8 +32,10 @@ export const store = {
   }),
 
   emit: thunk((actions, payload, helpers) => {
-    const [event, data] = payload
-    sockets.groups.emit(event, data)
+    const {ws} = helpers.getStoreState().ws
+    let [event, data] = payload
+    event = `server/groups/${event}`
+    ws.emit(event, data)
   }),
 
   onAny: thunk((actions, payload, helpers) => {
