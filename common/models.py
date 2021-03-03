@@ -71,7 +71,9 @@ class User(Base, SQLAlchemyBaseUserTable):
     updated_at = DateCol(update=True)
 
     # username = Encrypt()
-    # socket_id = Column(Unicode)
+    # socket_id = Column(Unicode, index=True)
+    # as = FKCol('users.id')
+
     first_name = Encrypt()
     last_name = Encrypt()
     gender = Encrypt()

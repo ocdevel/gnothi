@@ -3,8 +3,7 @@ from pprint import pprint
 from app.app_app import app
 from app.app_jwt import jwt_user
 import common.models as M
-from fastapi_sqlalchemy import db, DBSessionMiddleware
-from app.socket_manager import SocketManager
+from fastapi_sqlalchemy import db
 from urllib.parse import urlsplit, parse_qsl
 from fastapi_jwt_auth import AuthJWT
 from box import Box
@@ -24,89 +23,25 @@ from fastapi_utils.inferring_router import InferringRouter
 
 import socketio
 
+from app.app_socketio import sio, redis, on_
+
+
 logger = logging.getLogger(__name__)
 getuser = M.User.snoop
 router = InferringRouter()
-mgr = SocketManager(app=app, cors_allowed_origins=[])
-redis = mgr._mgr
-sio = mgr._sio
-
-
-async def job_status_loop():
-    with db():
-        while True:
-            res = M.Machine.gpu_status(db.session)
-            await sio.emit("AI_STATUS", {"status": res})
-            await asyncio.sleep(2)
-
-sio.start_background_task(job_status_loop)
-
-
-def jwt_auth(args):
-    # TODO more robust authentication here
-    # if 'QUERY_STRING' in data[1]:
-    #     environ = data[1]
-    #     token = dict(parse_qsl(environ['QUERY_STRING']))['token']
-    # else:
-    #     token = data[1]['jwt']
-    token = args[1]['jwt']
-    try:
-        decoded = jwt.decode(token, SECRET)
-        return decoded['sub']
-    except:
-        return None
-
-
-def on_(event, auth=False, viewer=False, snooping=False, sess=False):
-    def wrap(f):
-        @sio.on(event)
-        async def orig(*args, **kwargs):
-            uid, viewer_, snooping_ = None, None, None
-            if auth:
-                uid = jwt_auth(args)
-                if not uid:
-                    return {"error": "jwt_expired"}
-            with db():
-                if snooping:
-                    pass
-                elif viewer:
-                    viewer_ = db.session.query(M.User).get(uid)
-                deps_ = Box(uid=uid, viewer=viewer_, snooping=snooping_, sess=db.session)
-                # return await f(*args, **kwargs, d=deps_)
-                res = await f(args[0], args[1]['data'], d=deps_)
-                return res or {}
-        return orig
-    return wrap
-
-
-@sio.on("connect")
-async def on_connect(sid, environ):
-    print(sid, 'connected')
-    # await sio.save_session(sid, {'uid': d.uid})
-
-
-@sio.on("disconnect")
-async def on_disconnect(sid):
-    try:
-        sess = await sio.get_session(sid)
-        await sio.emit("client/groups/online", {sess['uid']: False})
-        print(sid, 'disconnected')
-    except:
-        pass
-
-
-@on_("server/auth/jwt", auth=True)
-async def on_jwt(sid, data, d=None):
-    await sio.save_session(sid, {'uid': d.uid})
 
 
 @on_("server/groups/message")
 async def on_message(sid, data):
+    # gid inferred from join_room
     await sio.emit('client/groups/message', data)
 
 
 @on_("server/groups/room", auth=True, sess=True)
 async def on_room(sid, gid, d=None):
+    rooms = sio.rooms(sid)
+    for r in rooms:
+        sio.leave_room(sid, r)
     sio.enter_room(sid, gid)
     await refresh_online(gid)
     await get_members(sid, gid, d=d)
