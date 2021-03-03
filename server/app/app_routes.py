@@ -4,10 +4,9 @@ import dateutil.parser
 from typing import List, Dict, Any
 from fastapi import Depends, HTTPException, File, UploadFile, BackgroundTasks, WebSocket
 from app.app_app import app
-from app.app_groups import router as groups_router
 from app.app_jwt import fastapi_users, jwt_user
 from app.app_stripe import stripe_router
-from app.app_groups import router as groups_router
+from app.app_groups import groups
 from fastapi_sqlalchemy import db  # an object to provide global access to a database session
 import sqlalchemy as sa
 from sqlalchemy import text
@@ -39,11 +38,6 @@ def cant_snoop(feature=None):
 @app.get('/health')
 def health_get():
     return {'ok': True}
-
-
-@app.get('/jobs-status')
-def jobs_status_get():
-    return M.Machine.gpu_status(db.session)
 
 
 @app.get('/user', response_model=M.SOUser)

@@ -1121,13 +1121,18 @@ class Group(Base):
             role=GroupRoles.owner
         ))
         sess.commit()
+        return g
 
-    @staticmethod
-    def group_with_membership(sess, gid, uid):
-        group = sess.query(Group).get(gid)
-        group.role = sess.query(UserGroup.role)\
-           .filter_by(user_id=uid, group_id=gid).scalar()
-        return group
+    def to_json(self):
+        return dict(
+            id=str(self.id),
+            owner=str(self.owner),
+            title=self.title,
+            text=self.text,
+            privacy=self.privacy.value,
+            created_at=str(self.created_at),
+            updated_at=str(self.updated_at)  # .__str__() ?
+        )
 
     @staticmethod
     def join_group(sess, gid, uid, role=GroupRoles.member):
@@ -1218,7 +1223,6 @@ class UserGroup(Base):
             obj['username'] = ' '.join(uname) if uname else ug.username
 
             res[str(ug.user_id)] = obj
-        print(res)
         return res
         # return {
         #     str(ug.user_id): dict(username=ug.username, role=ug.role.value)

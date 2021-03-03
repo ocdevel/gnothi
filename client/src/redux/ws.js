@@ -12,11 +12,12 @@ export const store = {
     return new Promise((resolve, reject) => {
       let {jwt} = helpers.getStoreState().user
       if (!jwt) {return resolve(null)}
-      // if (!ws) {return resolve()}
+      if (!ws) {return resolve()}
 
       const data = {data: payload[1], jwt}
       ws.emit(`server/${payload[0]}`, data, (res) => {
-        if (!res.error) {resolve(res)}
+        if (!res) {return resolve()}
+        if (!res.error) {return resolve(res)}
         if (res.error === "jwt_expired") {
           // TODO setup refresh via socketio
           data['jwt'] = refreshToken(helpers)

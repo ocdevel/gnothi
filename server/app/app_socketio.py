@@ -68,7 +68,7 @@ def on_(event, auth=False, viewer=False, snooping=False, sess=False):
         @sio.on(event)
         async def orig(*args, **kwargs):
             uid, viewer_, snooping_ = None, None, None
-            if auth:
+            if auth or viewer or snooping:
                 uid = jwt_auth(args)
                 if not uid:
                     return {"error": "jwt_expired"}

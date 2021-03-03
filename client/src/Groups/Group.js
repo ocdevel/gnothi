@@ -8,30 +8,16 @@ import {Button, Col, Form, Row} from "react-bootstrap";
 import {useSockets} from "../redux/ws";
 
 function Messages() {
-  const {gid} = useParams()
-
-  const fetch = useStoreActions(actions => actions.server.fetch)
   const uid = useStoreState(state => state.user.user.id)
   const messages = useStoreState(state => state.groups.messages)
-  const setMessages = useStoreActions(actions => actions.groups.setMessages)
   const members = useStoreState(state => state.groups.members)
   const el = useRef()
-
-  useEffect(() => {
-    fetchMessages()
-  }, [gid])
 
   useLayoutEffect(() => {
     const el_ = el.current
     if (!el_) {return}
     el_.scrollTop = el_.scrollHeight
   })
-
-  async function fetchMessages() {
-    if (!gid) {return}
-    const {data} = await fetch({route: `groups/${gid}/messages`})
-    setMessages(data)
-  }
 
   const messages_ = messages.map(m => new Message({
     ...m,
@@ -65,25 +51,18 @@ function Messages() {
 
 export default function Group() {
   const {gid} = useParams()
-
-  const fetch = useStoreActions(actions => actions.server.fetch)
   const [message, setMessage] = useState("")
   const emit = useStoreActions(actions => actions.ws.emit);
-  const group = useStoreState(state => state.groups.group)
-  const fetchGroup = useStoreActions(actions => actions.groups.fetchGroup)
-  useSockets()
 
   useEffect(() => {
-    emit(['groups/room', gid])
-    fetchGroup(gid)
+    emit(['groups/group.enter', gid])
   }, [gid])
 
 
   function onSubmit(e) {
     e.preventDefault();
     if (message === '') { return }
-    // socket.emit("message", {msg: message, user_id:1});
-    fetch({route: `groups/${gid}/messages`, method: 'POST', body: {message}})
+    emit([`groups/messages.post`, {message}])
     setMessage('')
   }
 

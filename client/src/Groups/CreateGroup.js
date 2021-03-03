@@ -78,16 +78,17 @@ export default function CreateGroup({show, close}) {
   const setServerError = useStoreActions(actions => actions.server.setError)
 
   const as = useStoreState(state => state.user.as)
-  const fetch = useStoreActions(actions => actions.server.fetch)
+  const emit = useStoreActions(actions => actions.ws.emit)
 
   const submit = async e => {
     e.preventDefault()
     setServerError(false)
     setSubmitting(true)
-    const res = await fetch({route: `groups`, method: 'POST', body: form})
+    const res = await emit(["groups/groups.post", form])
     setSubmitting(false)
-    if (res.code !== 200) {return}
-    history.push(`/groups/${res.data.id}`)
+    if (!res.id) {return}
+    history.push(`/groups/${res.id}`)
+    close()
   }
 
   const changeTitle = e => {

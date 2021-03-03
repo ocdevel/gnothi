@@ -1,5 +1,4 @@
 import {action, thunk} from "easy-peasy";
-import {sockets} from './ws'
 
 export const store = {
   messages: [],
@@ -7,18 +6,17 @@ export const store = {
     state.messages = payload
   }),
   addMessage: action((state, payload) => {
-    state.messages.push(payload)
+    state.messages = [...state.messages, payload]
   }),
 
   group: {},
   setGroup: action((state, group) => {
     state.group = group
   }),
-  fetchGroup: thunk(async (actions, gid, helpers) => {
-    const fetch = helpers.getStoreActions().server.fetch
-    const {data} = await fetch({route: `groups/${gid}`})
-    actions.setGroup(data)
-    // actions.emit(['get_members', gid])
+
+  groups: [],
+  setGroups: action((state, groups) => {
+    state.groups = groups
   }),
 
   members: {},
@@ -33,17 +31,20 @@ export const store = {
 
   onAny: thunk((actions, payload, helpers) => {
     const {emit} = helpers.getStoreState().ws
-    if (payload[0] === 'message') {
-      actions.addMessage(payload[1][0])
-    }
-    if (payload[0] === 'online') {
-      actions.setOnline(payload[1][0])
-    }
-    if (payload[0] === 'members') {
-      actions.setMembers(payload[1][0])
-    }
-    if (payload[0] === 'new_member') {
-      emit(["get_members", payload[1][0]])
+    let [event, data] = payload
+    data = data[0]
+    if (event === 'message') {
+      actions.addMessage(data)
+    } else if (event === 'messages') {
+      actions.setMessages(data)
+    } else if (event === 'online') {
+      actions.setOnline(data)
+    } else if (event === 'members') {
+      actions.setMembers(data)
+    } else if (event === 'group') {
+      actions.setGroup(data)
+    } else if (event === 'groups') {
+      actions.setGroups(data)
     }
   })
 }

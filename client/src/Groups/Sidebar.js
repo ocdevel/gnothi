@@ -38,37 +38,23 @@ export default function Sidebar() {
   const online = useStoreState(state => state.groups.online)
   const members = useStoreState(state => state.groups.members)
   const myId = useStoreState(state => state.user.user.id)
-  const [groups, setGroups] = useState([])
+  const groups = useStoreState(state => state.groups.groups)
   const [showCreate, setShowCreate] = useState(false)
   const group = useStoreState(state => state.groups.group)
   const fetchGroup = useStoreActions(actions => actions.groups.fetchGroup)
   const emit = useStoreActions(actions => actions.ws.emit);
 
-  useEffect(() => {
-    fetchGroups()
-  }, [])
-
-  async function fetchGroups() {
-    const {data} = await fetch({route: 'groups'})
-    setGroups(data)
-  }
-
   async function joinGroup() {
-    const {data} = await fetch({route: `groups/${gid}/join`, method: 'POST'})
-    fetchGroup(gid)
+    emit(["groups/group.join", {gid}])
   }
 
   async function leaveGroup() {
-    const {data} = await fetch({route: `groups/${gid}/leave`, method: 'POST'})
+    emit(["groups/group.leave", {gid}])
     history.push("/groups")
   }
 
-  async function onSubmit(e) {
-    e.preventDefault()
-  }
-
   const changePrivacy = key => e => {
-    emit(["groups/change_privacy", {gid, key, value: e.target.checked}])
+    emit(["groups/privacy.put", {gid, key, value: e.target.checked}])
     // () => setForm({...form, [k]: !form[k]})
   }
 

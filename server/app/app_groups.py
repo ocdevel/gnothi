@@ -1,60 +1,123 @@
-import pdb, re, datetime, logging, boto3, io
-from pprint import pprint
-from app.app_app import app
-from app.app_jwt import jwt_user
+import pdb, logging, asyncio
 import common.models as M
-from fastapi_sqlalchemy import db
-from urllib.parse import urlsplit, parse_qsl
-from fastapi_jwt_auth import AuthJWT
-from box import Box
-
-import logging, time, asyncio
-from enum import Enum
-from typing import Any, Dict, List, Optional
-
-from fastapi import HTTPException, Depends, APIRouter
-from pydantic import BaseModel
-from starlette.requests import Request
-from starlette.types import ASGIApp, Receive, Scope, Send
-import jwt
-from common.utils import SECRET
-from fastapi_utils.cbv import cbv
-from fastapi_utils.inferring_router import InferringRouter
-
-import socketio
-
 from app.app_socketio import sio, redis, on_
-
 
 logger = logging.getLogger(__name__)
 getuser = M.User.snoop
-router = InferringRouter()
+
+S = "server/groups"
+C = "client/groups"
 
 
-@on_("server/groups/message")
-async def on_message(sid, data):
-    # gid inferred from join_room
-    await sio.emit('client/groups/message', data)
+def get_gid(sid):
+    rooms = sio.rooms(sid)
+    assert len(rooms) == 1
+    return rooms[0]
 
 
-@on_("server/groups/room", auth=True, sess=True)
-async def on_room(sid, gid, d=None):
+async def send_message(msg, sess):
+    msg = M.Message(**msg)
+    sess.add(msg)
+    sess.commit()
+    gid = str(msg.group_id)
+    msg = dict(
+        message=msg.text,
+        id=str(msg.owner_id) if msg.owner_id else None,
+    )
+    await sio.emit("client/groups/message", msg, room=gid)
+
+
+@on_(f"{S}/messages.post", viewer=True)
+async def on_messages_post(sid, data: M.SIMessage, d=None):
+    gid = get_gid(sid)
+    msg = dict(
+        text=data['message'],
+        group_id=gid,
+        owner_id=d.uid,
+        recipient_type=M.MatchTypes.groups,
+    )
+    await send_message(msg, d.sess)
+
+
+@on_(f"{S}/group.join", viewer=True)
+async def on_group_join(sid, data, d=None):
+    gid = get_gid(sid)  # TODO use data.gid?
+    uid = str(d.uid)
+    ug = M.Group.join_group(d.sess, gid, uid)
+    if not ug: return {}
+    msg = dict(
+        group_id=gid,
+        recipient_type=M.MatchTypes.groups,
+        text=f"{ug.username} just joined!"
+    )
+    asyncio.ensure_future(send_message(msg, d.sess))
+    asyncio.ensure_future(get_members(sid, gid, d))
+
+
+@on_(f"{S}/group.leave", viewer=True)
+async def on_group_leave(sid, data, d=None):
+    gid = get_gid(sid)  # TODO use data.gid?
+    uid = str(d.uid)
+    ug = M.Group.leave_group(d.sess, gid, uid)
+    msg = dict(
+        group_id=gid,
+        recipient_type=M.MatchTypes.groups,
+        text=f"{ug['username']} just left :("
+    )
+    asyncio.ensure_future(get_members(sid, gid, d))
+    asyncio.ensure_future(send_message(msg, d.sess))
+
+
+@on_(f"{S}/group.enter", auth=True, sess=True)
+async def on_group_enter(sid, gid, d=None):
     rooms = sio.rooms(sid)
     for r in rooms:
+        print('leave_room', r)
         sio.leave_room(sid, r)
     sio.enter_room(sid, gid)
-    await refresh_online(gid)
-    await get_members(sid, gid, d=d)
+
+    # skipping await statements, so we can just shove things down the pipe
+    
+    # await refresh_online(gid)
+    # await get_members(sid, gid, d=d)
+    asyncio.ensure_future(refresh_online(gid))
+    asyncio.ensure_future(get_members(sid, gid, d=d))
+
+    # Fetch group
+    group = d.sess.query(M.Group).get(gid)
+    group = group.to_json()
+    asyncio.ensure_future(
+        sio.emit(f"{C}/group", group, sid=sid, gid=gid)
+    )
+
+    messages = d.sess.query(M.Message) \
+        .filter(M.Message.group_id == gid) \
+        .order_by(M.Message.created_at.asc()) \
+        .all()
+    messages = [dict(
+        id=str(m.owner_id),
+        message=m.text,
+    ) for m in messages]
+    asyncio.ensure_future(
+        sio.emit(f"{C}/messages", messages, sid=sid, gid=gid)
+    )
 
 
-@on_("server/groups/members", sess=True, auth=True)
-async def on_get_members(sid, gid, d=None):
+@on_(f"{S}/groups.get", sess=True, auth=True)
+async def on_groups_get(sid, data, d=None):
+    groups = d.sess.query(M.Group).all()
+    groups = [g.to_json() for g in groups]
+    await sio.emit(f"{C}/groups", groups, sid=sid)
+
+
+@on_(f"{S}/members.get", sess=True, auth=True)
+async def on_members_get(sid, gid, d=None):
     await get_members(sid, gid, d=d)
 
 
 async def get_members(sid, gid, d=None):
     members = M.UserGroup.get_members(d.sess, gid)
-    await sio.emit("client/groups/members", members, room=gid)
+    await sio.emit(f"{C}/members", members, room=gid)
 
 
 async def refresh_online(gid):
@@ -65,11 +128,11 @@ async def refresh_online(gid):
             sess = await sio.get_session(s)
             uids[sess['uid']] = True
         except: continue
-    await sio.emit("client/groups/online", uids, room=gid)
+    await sio.emit(f"{C}/online", uids, room=gid)
 
 
-@on_("server/groups/change_privacy", sess=True)
-async def on_change_privacy(sid, data, d=None):
+@on_(f"{S}/privacy.put", sess=True)
+async def on_privacy_put(sid, data, d=None):
     sess = await sio.get_session(sid)
     uid, gid = sess['uid'], data['gid']
     ug = d.sess.query(M.UserGroup)\
@@ -79,97 +142,10 @@ async def on_change_privacy(sid, data, d=None):
     await get_members(sid, gid, d=d)
 
 
-@cbv(router)
-class Groups:
-    as_user: str = None
-    viewer: M.User = Depends(jwt_user)
-
-    @router.post("/groups")
-    def groups_post(self, data: M.SIGroup):
-        M.Group.create_group(db.session, data.title, data.text,
-                             self.viewer.id, data.privacy)
-        return {"ok": True}
-
-    @router.get("/groups")
-    def groups_get(self) -> List[M.SOGroup]:
-        # user, snooping = getuser(viewer, as_user)
-        # if snooping and not user.share_data.profile:
-        #     return cant_snoop()
-        # TODO only show public/paid, unless they're a member
-        return db.session.query(M.Group).all()
-
-    # @router.put("/item/{item_id}")
-    # def update_item(self, item_id: ItemID, item: ItemCreate) -> ItemInDB:
-
-    # @router.delete("/item/{item_id}")
-    # def delete_item(self, item_id: ItemID) -> APIMessage:
+@on_(f"{S}/groups.post", viewer=True)
+async def on_groups_post(sid, data, d=None):
+    group = M.Group.create_group(d.sess, data["title"], data["text"], d.uid, data["privacy"])
+    return group.to_json()
 
 
-@cbv(router)
-class Group:
-    as_user: str = None
-    viewer: M.User = Depends(jwt_user)
-
-    @router.get("/groups/{gid}")
-    def group_get(self, gid: str) -> M.SOGroup:
-        return M.Group.group_with_membership(db.session, gid, self.viewer.id)
-
-    async def send_message(self, msg, db):
-        msg = M.Message(**msg)
-        db.session.add(msg)
-        db.session.commit()
-        gid = str(msg.group_id)
-        msg = dict(
-            message=msg.text,
-            id=str(msg.owner_id) if msg.owner_id else None,
-        )
-        print(gid, msg)
-        await sio.emit("client/groups/message", msg, room=gid)
-
-    @router.get("/groups/{gid}/messages")
-    def messages_get(self, gid: str):
-        res = db.session.query(M.Message)\
-            .filter(M.Message.group_id == gid)\
-            .order_by(M.Message.created_at.asc())\
-            .all()
-        return [dict(
-            id=str(m.owner_id),
-            message=m.text,
-        ) for m in res]
-
-    @router.post("/groups/{gid}/messages")
-    async def messages_post(self, gid: str, data: M.SIMessage):
-        msg = dict(
-            text=data.message,
-            group_id=gid,
-            owner_id=self.viewer.id,
-            recipient_type=M.MatchTypes.groups,
-        )
-        await self.send_message(msg, db)
-
-    @router.post("/groups/{gid}/join")
-    async def join_post(self, gid: str):
-        uid = str(self.viewer.id)
-        ug = M.Group.join_group(db.session, gid, uid)
-        if not ug: return {}
-        msg = dict(
-            group_id=gid,
-            recipient_type=M.MatchTypes.groups,
-            text=f"{ug.username} just joined!"
-        )
-        await self.send_message(msg, db)
-        await sio.emit("client/groups/new_member", gid, room=gid)
-
-    @router.post("/groups/{gid}/leave")
-    async def leave_post(self, gid: str):
-        uid = str(self.viewer.id)
-        ug = M.Group.leave_group(db.session, gid, uid)
-        msg = dict(
-            group_id=gid,
-            recipient_type=M.MatchTypes.groups,
-            text=f"{ug['username']} just left :("
-        )
-        await sio.emit("client/groups/new_member", gid, room=gid)
-        await self.send_message(msg, db)
-
-app.include_router(router)
+groups = {}
