@@ -18,33 +18,31 @@ import getZodiacSign from "./zodiac"
 import People from './People'
 
 import {useStoreState, useStoreActions} from "easy-peasy";
-
-const timezones = moment.tz.names().map(n => ({value: n, label: n}))
+import {useSockets} from "../redux/ws";
+import {timezones} from "../redux/user";
 
 function Profile_() {
   const as = useStoreState(state => state.user.as)
   const fetch = useStoreActions(actions => actions.server.fetch)
-
-  const [profile, setProfile] = useState({
-    first_name: '',
-    last_name: '',
-    gender: null,
-    orientation: null,
-    birthday: '',
-    timezone: null,
-    bio: '',
-    therapist: false
-  })
+  const emit = useStoreActions(actions => actions.ws.emit)
+  const profile_ = useStoreState(state => state.user.profile)
+  const [profile, setProfile] = useState({})
   const [dirty, setDirty] = useState({dirty: false, saved: false})
+  const socket = useSockets()
 
-  const fetchProfile = async () => {
-    const {data} = await fetch({route: "profile"})
-    if (!data) {return}
-    data.timezone = _.find(timezones, t => t.value === data.timezone)
-    setProfile(data)
+  function fetchProfile() {
+    if (!socket) {return}
+    emit(["users/profile.get", {as_user: as}])
   }
 
-  useEffect(() => {fetchProfile()}, [])
+  useEffect(() => {
+    fetchProfile()
+  }, [socket])
+
+  useEffect(() => {
+    // set the form to copy from server
+    setProfile(profile_)
+  }, [profile_])
 
   let zodiac = null
   if (profile.birthday && profile.birthday.match(/\d{4}-\d{2}-\d{2}/)) {
@@ -66,9 +64,8 @@ function Profile_() {
   const submit = async e => {
     e.preventDefault()
     profile.timezone = _.get(profile, 'timezone.value', profile.timezone)
-    await fetch({route: 'profile', method: 'PUT', body: profile})
+    emit(['users/profile.put', profile])
     setDirty({dirty: false, saved: true})
-    fetchProfile()
   }
 
   const textField = ({k, v, attrs, children}) => (
@@ -142,13 +139,11 @@ export default function Profile() {
       <Col>
         <Card><Card.Body>
           <Card.Title><BsPersonFill /> Profile</Card.Title>
-          <Card.Text>
-            <Alert variant='info'>
-              <div>Optionally fill out a profile.</div>
-              <small className='text-muted'>You can optionally share your profile with therapists. Fields which might be important (like gender, orientation) might be used in AI. I'm still experimenting with how AI would use this stuff.</small>
-            </Alert>
-            <Profile_ />
-          </Card.Text>
+          <Alert variant='info'>
+            <div>Optionally fill out a profile.</div>
+            <small className='text-muted'>You can optionally share your profile with therapists. Fields which might be important (like gender, orientation) might be used in AI. I'm still experimenting with how AI would use this stuff.</small>
+          </Alert>
+          <Profile_ />
         </Card.Body></Card>
       </Col>
       <Col>

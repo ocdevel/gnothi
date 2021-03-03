@@ -1,4 +1,4 @@
-import asyncio, socketio, jwt
+import asyncio, socketio, jwt, pdb
 from typing import Union
 from fastapi import FastAPI
 from fastapi_sqlalchemy import db
@@ -6,6 +6,26 @@ import common.models as M
 from app.app_app import app
 from common.utils import SECRET
 from box import Box
+from app.google_analytics import ga
+import sqlalchemy as sa
+
+
+class SocketError(Exception):
+    def __init__(self, code, title, message):
+        self.code = code
+        self.title = title
+        self.message = message
+        super().__init__(message)
+
+
+class CantSnoop(SocketError):
+    def __init__(self, message=None):
+        message = message or "Can't access this user's feature"
+        super().__init__(401, "CANT_SNOOP", message)
+
+
+# TODO handle other JWT errors
+JWT_EXPIRED = dict(code=401, error=dict(title="JWT_EXPIRED", message="JWT Expired"))
 
 
 # Adapted from fastapi-socketio. That lib doesn't do much, below is all that's
@@ -63,23 +83,48 @@ def jwt_auth(args):
         return None
 
 
-def on_(event, auth=False, viewer=False, snooping=False, sess=False):
+async def log_checkin(uid, sess):
+    ga(uid, 'user', 'checkin')
+    sql = sa.text(f"update users set updated_at=now() where id=:uid")
+    sess.execute(sql, {'uid': uid})
+    sess.commit()
+    return {}
+
+
+def on_(event, auth=True, viewer=True, sess=True, checkin=True, model_in=None, model_out=None):
     def wrap(f):
         @sio.on(event)
         async def orig(*args, **kwargs):
             uid, viewer_, snooping_ = None, None, None
-            if auth or viewer or snooping:
+            if auth or viewer or checkin:
                 uid = jwt_auth(args)
                 if not uid:
-                    return {"error": "jwt_expired"}
+                    return JWT_EXPIRED
             with db():
-                if snooping:
-                    pass
-                elif viewer:
+                body = args[1]
+                deps_ = Box(uid=uid, sess=db.session)
+                if checkin:
+                    asyncio.ensure_future(log_checkin(uid, db.session))
+                if viewer:
                     viewer_ = db.session.query(M.User).get(uid)
-                deps_ = Box(uid=uid, viewer=viewer_, snooping=snooping_, sess=db.session)
+                    as_user, snooping = M.User.snoop(viewer_, body.get('as_user', None))
+                    deps_['viewer'] = viewer_
+                    deps_['user'] = as_user
+                    deps_['snooping'] = snooping_
                 # return await f(*args, **kwargs, d=deps_)
-                res = await f(args[0], args[1]['data'], d=deps_)
+                try:
+                    body_ = body['data']
+                    if model_in:
+                        body_ = model_in(**body_)
+                    res = await f(args[0], body_, deps_)
+                except SocketError as err:
+                    print(err)
+                    return dict(code=err.code, error=err.__dict__)
+                except Exception as err:
+                    print(err)
+                    return dict(code=500, error=dict(title="SERVER_ERROR", message=str(err)))
+                if res and model_out:
+                    res = model_out.from_orm(res).json()
                 return res or {}
         return orig
     return wrap
@@ -101,6 +146,6 @@ async def on_disconnect(sid):
         pass
 
 
-@on_("server/auth/jwt", auth=True)
-async def on_jwt(sid, data, d=None):
+@on_("server/auth/jwt", auth=True, viewer=False, sess=False, checkin=False)
+async def on_jwt(sid, data, d):
     await sio.save_session(sid, {'uid': d.uid})

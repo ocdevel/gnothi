@@ -5,8 +5,9 @@ from typing import List, Dict, Any
 from fastapi import Depends, HTTPException, File, UploadFile, BackgroundTasks, WebSocket
 from app.app_app import app
 from app.app_jwt import fastapi_users, jwt_user
-from app.app_stripe import stripe_router
-from app.app_groups import groups
+from app.routes.users import users_router
+from app.routes.stripe import stripe_router
+from app.routes.groups import groups_router
 from fastapi_sqlalchemy import db  # an object to provide global access to a database session
 import sqlalchemy as sa
 from sqlalchemy import text
@@ -18,121 +19,16 @@ from urllib.parse import quote as urlencode
 from app.google_analytics import ga
 import pandas as pd
 from fastapi.responses import StreamingResponse
+from app.utils import cant_snoop, send_error, getuser
 
 logger = logging.getLogger(__name__)
 
-getuser = M.User.snoop
-
 app.include_router(stripe_router, prefix='/stripe')
-
-
-def send_error(message: str, code: int = 400):
-    raise HTTPException(status_code=code, detail=message)
-
-
-def cant_snoop(feature=None):
-    message = f"{feature} isn't shared" if feature else "This feature isn't shared"
-    return send_error(message, 401)
 
 
 @app.get('/health')
 def health_get():
     return {'ok': True}
-
-
-@app.get('/user', response_model=M.SOUser)
-def user_get(as_user: str = None,  viewer = Depends(jwt_user)):
-    user, snooping = getuser(viewer, as_user)
-    if snooping: return cant_snoop()  # FIXME not handling this?
-    return user
-
-
-@app.get('/user/checkin')
-def checkin_get(
-    background_tasks: BackgroundTasks,
-    viewer: M.User = Depends(jwt_user),
-):
-    background_tasks.add_task(ga, viewer.id, 'user', 'checkin')
-    sql = text(f"update users set updated_at=now() where id=:uid")
-    db.session.execute(sql, {'uid': viewer.id})
-    db.session.commit()
-    return {}
-
-@app.get('/profile', response_model=M.SOProfile)
-def profile_get(as_user: str = None, viewer: M.User = Depends(jwt_user)):
-    user, snooping = getuser(viewer, as_user)
-    if snooping and not user.share_data.profile:
-        return cant_snoop()
-    return user
-
-
-@app.put('/profile/timezone')
-def profile_timezone_put(data: M.SITimezone, as_user: str = None, viewer: M.User = Depends(jwt_user)):
-    user, snooping = getuser(viewer, as_user)
-    if snooping: return cant_snoop()
-    user.timezone = data.timezone
-    db.session.commit()
-    return {}
-
-
-@app.put('/profile', response_model=M.SOProfile)
-def profile_put(
-    data: M.SIProfile,
-    background_tasks: BackgroundTasks,
-    as_user: str = None,
-    viewer: M.User = Depends(jwt_user)
-):
-    if data.therapist:
-        background_tasks.add_task(ga, viewer.id, 'user', 'therapist')
-    user, snooping = getuser(viewer, as_user)
-    if snooping: return cant_snoop()
-    for k, v in data.dict().items():
-        v = v or None  # remove empty strings
-        if k == 'paid': continue
-        setattr(user, k, v)
-    db.session.commit()
-    M.Job.create_job(method='profiles', data_in={'args': [str(user.id)]})
-    return user
-
-
-@app.get('/people', response_model=List[M.SOPerson])
-def people_get(as_user: str = None, viewer: M.User = Depends(jwt_user)):
-    user, snooping = getuser(viewer, as_user)
-    if snooping and not user.share_data.profile:
-        return cant_snoop()
-    return user.people
-
-
-@app.post('/people')
-def people_post(data: M.SIPerson, as_user: str = None,  viewer: M.User = Depends(jwt_user)):
-    user, snooping = getuser(viewer, as_user)
-    if snooping: return cant_snoop()
-    p = M.Person(**data.dict())
-    user.people.append(p)
-    db.session.commit()
-    return {}
-
-
-@app.put('/people/{person_id}')
-def person_put(data: M.SIPerson, person_id: str, as_user: str = None,  viewer: M.User = Depends(jwt_user)):
-    user, snooping = getuser(viewer, as_user)
-    if snooping: return cant_snoop()
-    # TODO and share_id = ...
-    p = db.session.query(M.Person).filter_by(user_id=user.id, id=person_id).first()
-    for k, v in data.dict().items():
-        setattr(p, k, v)
-    db.session.commit()
-    return {}
-
-
-@app.delete('/people/{person_id}')
-def person_delete(person_id: str, as_user: str = None, viewer: M.User = Depends(jwt_user)):
-    user, snooping = getuser(viewer, as_user)
-    if snooping: return cant_snoop()
-    pq = db.session.query(M.Person).filter_by(user_id=user.id, id=person_id)
-    pq.delete()
-    db.session.commit()
-    return {}
 
 
 @app.get('/tags', response_model=List[M.SOTag])

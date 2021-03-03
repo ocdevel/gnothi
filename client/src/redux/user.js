@@ -2,6 +2,8 @@ import {action, thunk} from "easy-peasy";
 import moment from "moment-timezone";
 import _ from "lodash";
 
+export const timezones = moment.tz.names().map(n => ({value: n, label: n}))
+
 export const store = {
   user: null,
   setUser: action((state, payload) => {
@@ -25,6 +27,7 @@ export const store = {
   getUser: thunk(async (actions, payload, helpers) => {
     const {jwt, as, user} = helpers.getState()
     const {fetch} = helpers.getStoreActions().server
+    const {emit} = helpers.getStoreActions().ws
 
     if (!jwt) {return}
     const {data, code} = await fetch({route: 'user'})
@@ -40,7 +43,7 @@ export const store = {
     if (!data.timezone) {
        // Guess their default timezone (TODO should call this out?)
       const timezone = moment.tz.guess(true)
-      fetch({route: 'profile/timezone', metohd: 'PUT', body: {timezone}})
+      emit(["users/profile.timezone.put", {timezone}])
     }
   }),
 
@@ -55,4 +58,28 @@ export const store = {
     actions.setAs(payload)
     helpers.getStoreActions().insights.clearInsights('all')
   }),
+
+  profile: {
+    first_name: '',
+    last_name: '',
+    gender: null,
+    orientation: null,
+    birthday: '',
+    timezone: null,
+    bio: '',
+    therapist: false
+  },
+  setProfile: action((state, payload) => {
+    state.profile = payload
+  }),
+
+  onAny: thunk((actions, payload, helpers) => {
+    const {emit} = helpers.getStoreState().ws
+    let [event, data] = payload
+    data = data[0]
+    if (event === 'profile') {
+      data.timezone = _.find(timezones, t => t.value === data.timezone)
+      actions.setProfile(data)
+    }
+  })
 }

@@ -1,9 +1,9 @@
 import pdb, logging, asyncio
 import common.models as M
-from app.app_socketio import sio, redis, on_
+from app.socketio import sio, redis, on_
+from app.utils import getuser
 
 logger = logging.getLogger(__name__)
-getuser = M.User.snoop
 
 S = "server/groups"
 C = "client/groups"
@@ -27,8 +27,8 @@ async def send_message(msg, sess):
     await sio.emit("client/groups/message", msg, room=gid)
 
 
-@on_(f"{S}/messages.post", viewer=True)
-async def on_messages_post(sid, data: M.SIMessage, d=None):
+@on_(f"{S}/messages.post")
+async def on_messages_post(sid, data: M.SIMessage, d):
     gid = get_gid(sid)
     msg = dict(
         text=data['message'],
@@ -39,8 +39,8 @@ async def on_messages_post(sid, data: M.SIMessage, d=None):
     await send_message(msg, d.sess)
 
 
-@on_(f"{S}/group.join", viewer=True)
-async def on_group_join(sid, data, d=None):
+@on_(f"{S}/group.join")
+async def on_group_join(sid, data, d):
     gid = get_gid(sid)  # TODO use data.gid?
     uid = str(d.uid)
     ug = M.Group.join_group(d.sess, gid, uid)
@@ -54,8 +54,8 @@ async def on_group_join(sid, data, d=None):
     asyncio.ensure_future(get_members(sid, gid, d))
 
 
-@on_(f"{S}/group.leave", viewer=True)
-async def on_group_leave(sid, data, d=None):
+@on_(f"{S}/group.leave")
+async def on_group_leave(sid, data, d):
     gid = get_gid(sid)  # TODO use data.gid?
     uid = str(d.uid)
     ug = M.Group.leave_group(d.sess, gid, uid)
@@ -68,8 +68,8 @@ async def on_group_leave(sid, data, d=None):
     asyncio.ensure_future(send_message(msg, d.sess))
 
 
-@on_(f"{S}/group.enter", auth=True, sess=True)
-async def on_group_enter(sid, gid, d=None):
+@on_(f"{S}/group.enter")
+async def on_group_enter(sid, gid, d):
     rooms = sio.rooms(sid)
     for r in rooms:
         print('leave_room', r)
@@ -79,9 +79,9 @@ async def on_group_enter(sid, gid, d=None):
     # skipping await statements, so we can just shove things down the pipe
     
     # await refresh_online(gid)
-    # await get_members(sid, gid, d=d)
+    # await get_members(sid, gid, d)
     asyncio.ensure_future(refresh_online(gid))
-    asyncio.ensure_future(get_members(sid, gid, d=d))
+    asyncio.ensure_future(get_members(sid, gid, d))
 
     # Fetch group
     group = d.sess.query(M.Group).get(gid)
@@ -103,19 +103,19 @@ async def on_group_enter(sid, gid, d=None):
     )
 
 
-@on_(f"{S}/groups.get", sess=True, auth=True)
-async def on_groups_get(sid, data, d=None):
+@on_(f"{S}/groups.get")
+async def on_groups_get(sid, data, d):
     groups = d.sess.query(M.Group).all()
     groups = [g.to_json() for g in groups]
     await sio.emit(f"{C}/groups", groups, sid=sid)
 
 
-@on_(f"{S}/members.get", sess=True, auth=True)
-async def on_members_get(sid, gid, d=None):
-    await get_members(sid, gid, d=d)
+@on_(f"{S}/members.get")
+async def on_members_get(sid, gid, d):
+    await get_members(sid, gid, d)
 
 
-async def get_members(sid, gid, d=None):
+async def get_members(sid, gid, d):
     members = M.UserGroup.get_members(d.sess, gid)
     await sio.emit(f"{C}/members", members, room=gid)
 
@@ -131,21 +131,21 @@ async def refresh_online(gid):
     await sio.emit(f"{C}/online", uids, room=gid)
 
 
-@on_(f"{S}/privacy.put", sess=True)
-async def on_privacy_put(sid, data, d=None):
+@on_(f"{S}/privacy.put", viewer=False)
+async def on_privacy_put(sid, data, d):
     sess = await sio.get_session(sid)
     uid, gid = sess['uid'], data['gid']
     ug = d.sess.query(M.UserGroup)\
             .filter_by(user_id=uid, group_id=gid).first()
     setattr(ug, data['key'], data['value'])
     d.sess.commit()
-    await get_members(sid, gid, d=d)
+    await get_members(sid, gid, d)
 
 
-@on_(f"{S}/groups.post", viewer=True)
-async def on_groups_post(sid, data, d=None):
+@on_(f"{S}/groups.post")
+async def on_groups_post(sid, data, d):
     group = M.Group.create_group(d.sess, data["title"], data["text"], d.uid, data["privacy"])
     return group.to_json()
 
 
-groups = {}
+groups_router = None

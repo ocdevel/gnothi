@@ -11,19 +11,24 @@ export const store = {
   emit: thunk(async (actions, payload, helpers) => {
     return new Promise((resolve, reject) => {
       let {jwt} = helpers.getStoreState().user
+      const {setError} = helpers.getStoreActions().server
       if (!jwt) {return resolve(null)}
       if (!ws) {return resolve()}
 
       const data = {data: payload[1], jwt}
       ws.emit(`server/${payload[0]}`, data, (res) => {
         if (!res) {return resolve()}
-        if (!res.error) {return resolve(res)}
-        if (res.error === "jwt_expired") {
+        const err = res.error
+        if (!err) {return resolve(res)}
+
+        if (err.title === "JWT_EXPIRED") {
           // TODO setup refresh via socketio
           data['jwt'] = refreshToken(helpers)
           // return ws.emit("server/auth/refresh", {jwt})
-
-          ws.emit(`server/${payload[0]}`, data, resolve)
+          return ws.emit(`server/${payload[0]}`, data, resolve)
+        } else {
+          console.error(err)
+          setError(err.message)
         }
       })
     })
@@ -35,6 +40,7 @@ export function useSockets() {
   const jwt = useStoreState(state => state.user.jwt)
   const setAi = useStoreActions(actions => actions.server.setAi)
   const onAnyGroups = useStoreActions(actions => actions.groups.onAny)
+  const onAnyUsers = useStoreActions(actions => actions.user.onAny)
 
   function close() {
     // ws.close()
@@ -66,7 +72,10 @@ export function useSockets() {
       const nsp = event.split('/')
       if (nsp[0] !== 'client') {return}
       if (nsp[1] == 'groups') {
-        onAnyGroups([nsp[2], args])
+        return onAnyGroups([nsp[2], args])
+      }
+      if (nsp[1] == 'users') {
+        return onAnyUsers([nsp[2], args])
       }
     })
 

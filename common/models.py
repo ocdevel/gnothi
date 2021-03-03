@@ -28,11 +28,29 @@ from fastapi_sqlalchemy import db  # an object to provide global access to a dat
 from fastapi_users import models as fu_models
 from fastapi_users.db import SQLAlchemyBaseUserTable, SQLAlchemyUserDatabase
 
+import orjson
+
 
 # Schemas naming convention: SOModel for "schema out model", SIModel for "schema in"
 class SOut(BaseModel):
     class Config:
         orm_mode = True
+        # json_loads = orjson.loads
+        # json_dumps = orjson.dumps
+
+
+def to_json(data, pyd_model=None, to_dict=True):
+    """
+    FastAPI routes will convert responses to json properly via response_model,
+    but I can't get it working manually with Pydantic (for Socket.IO). Help function
+    that uses orjson to convert things like datetime.datetime properly, then back to dict
+    """
+    if pyd_model:
+        data = pyd_model.from_orm(data).dict()
+    data = orjson.dumps(data)
+    if to_dict:
+        data = orjson.loads(data)
+    return data
 
 
 # https://dev.to/zchtodd/sqlalchemy-cascading-deletes-8hk
