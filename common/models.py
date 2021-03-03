@@ -70,6 +70,8 @@ class User(Base, SQLAlchemyBaseUserTable):
     created_at = DateCol()
     updated_at = DateCol(update=True)
 
+    # username = Encrypt()
+    # socket_id = Column(Unicode)
     first_name = Encrypt()
     last_name = Encrypt()
     gender = Encrypt()
@@ -1212,7 +1214,7 @@ class UserGroup(Base):
             if ug.show_first_name and u.first_name: uname.append(u.first_name)
             if ug.show_last_name and u.last_name: uname.append(u.last_name)
             obj['username'] = ' '.join(uname) if uname else ug.username
-            
+
             res[str(ug.user_id)] = obj
         print(res)
         return res

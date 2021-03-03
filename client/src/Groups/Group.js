@@ -5,6 +5,7 @@ import React, {useEffect, useLayoutEffect, useState, useRef} from "react";
 import _ from "lodash";
 import Sidebar from './Sidebar'
 import {Button, Col, Form, Row} from "react-bootstrap";
+import {useSockets} from "../redux/ws";
 
 function Messages() {
   const {gid} = useParams()
@@ -31,9 +32,6 @@ function Messages() {
     const {data} = await fetch({route: `groups/${gid}/messages`})
     setMessages(data)
   }
-
-  console.log(messages)
-  console.log(members)
 
   const messages_ = messages.map(m => new Message({
     ...m,
@@ -70,12 +68,13 @@ export default function Group() {
 
   const fetch = useStoreActions(actions => actions.server.fetch)
   const [message, setMessage] = useState("")
-  const emit = useStoreActions(actions => actions.groups.emit);
+  const emit = useStoreActions(actions => actions.ws.emit);
   const group = useStoreState(state => state.groups.group)
   const fetchGroup = useStoreActions(actions => actions.groups.fetchGroup)
+  useSockets()
 
   useEffect(() => {
-    emit(['room', gid])
+    emit(['groups/room', gid])
     fetchGroup(gid)
   }, [gid])
 

@@ -29,9 +29,18 @@ import Entries from "./Entries/Entries";
 import Groups from "./Groups";
 import staticRoutes from "./Static";
 
-function App() {
+function LoggedOut() {
+  return <Switch>
+    {staticRoutes()}
+    <Route>
+      <Splash />
+    </Route>
+    <Redirect from="/j" to="/" />
+  </Switch>
+}
+
+function LoggedIn() {
   const jwt = useStoreState(state => state.user.jwt);
-  const user = useStoreState(state => state.user.user);
   const as = useStoreState(state => state.user.as);
   const error = useStoreState(state => state.server.error);
 	const getUser = useStoreActions(actions => actions.user.getUser)
@@ -40,8 +49,7 @@ function App() {
 	const getFields = useStoreActions(actions => actions.j.getFields)
 
 	const history = useHistory()
-  const location = useLocation()
-  const sockets = useSockets()
+  useSockets()
 
   useEffect(() => {
     // FIXME only do after first load
@@ -49,22 +57,11 @@ function App() {
   }, [as])
 
   useEffect(() => {
-    if (!jwt) { return }
     getUser()
     getTags()
     getEntries()
     getFields()
   }, [jwt, as])
-
-  if (!user) {
-    return <Switch>
-      {staticRoutes()}
-      <Route>
-        <Splash />
-      </Route>
-      <Redirect from="/j" to="/" />
-    </Switch>
-  }
 
   // key={as} triggers refresh on these components (triggering fetches)
   return <div key={as}>
@@ -98,6 +95,20 @@ function App() {
 
     </Container>
   </div>
+}
+
+function App() {
+  const jwt = useStoreState(state => state.user.jwt);
+  const getUser = useStoreActions(actions => actions.user.getUser)
+  const user = useStoreState(state => state.user.user);
+
+  useEffect(() => {
+    if (!jwt) { return }
+    getUser()
+  }, [jwt])
+
+  if (!user) return <LoggedOut />
+  return <LoggedIn />
 }
 
 export default () => <>

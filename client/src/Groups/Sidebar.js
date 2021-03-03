@@ -42,7 +42,7 @@ export default function Sidebar() {
   const [showCreate, setShowCreate] = useState(false)
   const group = useStoreState(state => state.groups.group)
   const fetchGroup = useStoreActions(actions => actions.groups.fetchGroup)
-  const emit = useStoreActions(actions => actions.groups.emit);
+  const emit = useStoreActions(actions => actions.ws.emit);
 
   useEffect(() => {
     fetchGroups()
@@ -68,7 +68,7 @@ export default function Sidebar() {
   }
 
   const changePrivacy = key => e => {
-    emit(["change_privacy", {gid, key, value: e.target.checked}])
+    emit(["groups/change_privacy", {gid, key, value: e.target.checked}])
     // () => setForm({...form, [k]: !form[k]})
   }
 

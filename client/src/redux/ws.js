@@ -1,29 +1,49 @@
-import {useStoreState, useStoreActions, action} from 'easy-peasy'
-import {API_URL} from './server'
+import {useStoreState, useStoreActions, action, thunk} from 'easy-peasy'
+import {API_URL, refreshToken} from './server'
 import { useState, useEffect } from 'react';
 import io, {Manager} from "socket.io-client";
 import _ from 'lodash'
 
 const host = API_URL.replace(/^https?/, 'ws')
+let ws;
 
 export const store = {
-  ws: null,
-  setWs: action((state, payload) => {
-    state.ws = payload
+  emit: thunk(async (actions, payload, helpers) => {
+    return new Promise((resolve, reject) => {
+      let {jwt} = helpers.getStoreState().user
+      if (!jwt) {return resolve(null)}
+      // if (!ws) {return resolve()}
+
+      const data = {data: payload[1], jwt}
+      ws.emit(`server/${payload[0]}`, data, (res) => {
+        if (!res.error) {resolve(res)}
+        if (res.error === "jwt_expired") {
+          // TODO setup refresh via socketio
+          data['jwt'] = refreshToken(helpers)
+          // return ws.emit("server/auth/refresh", {jwt})
+
+          ws.emit(`server/${payload[0]}`, data, resolve)
+        }
+      })
+    })
   })
 }
 
-let ws;
 export function useSockets() {
-  const setWs = useStoreActions(actions => actions.ws.setWs)
-  const setAi = useStoreActions(actions => actions.server.setAi)
+  const emit = useStoreActions(actions => actions.ws.emit)
   const jwt = useStoreState(state => state.user.jwt)
+  const setAi = useStoreActions(actions => actions.server.setAi)
   const onAnyGroups = useStoreActions(actions => actions.groups.onAny)
+
+  function close() {
+    // ws.close()
+    // ws = null
+  }
 
   useEffect(() => {
     // don't initialize for browsing home page
-    if (!jwt) {return _.noop}
-    if (ws) {return _.noop}
+    if (!jwt) {return}
+    if (ws) {return close}
     ws = true
 
     console.log("-----Setup Socket.io-----")
@@ -32,8 +52,10 @@ export function useSockets() {
       upgrade: true,
       transports: ["websocket", "polling"],
       rejectUnauthorized: false,
-      query: {token: jwt}
-    });
+    })
+
+    // check if we need to refresh first (future calls will do the same)
+    emit(["auth/jwt", {}])
 
     ws.on("AI_STATUS", data => {
       setAi(data.status)
@@ -47,15 +69,8 @@ export function useSockets() {
       }
     })
 
-    // will need it in other locations
-    setWs(ws)
-
-    return () => {
-      ws.close()
-      ws = null
-      setWs(ws)
-    }
-  }, [jwt])
+    return close
+  }, [])
 
   return ws;
 }

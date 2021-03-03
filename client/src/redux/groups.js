@@ -31,15 +31,8 @@ export const store = {
     state.online = {...state.online, ...payload}
   }),
 
-  emit: thunk((actions, payload, helpers) => {
-    const {ws} = helpers.getStoreState().ws
-    let [event, data] = payload
-    event = `server/groups/${event}`
-    ws.emit(event, data)
-  }),
-
   onAny: thunk((actions, payload, helpers) => {
-    console.log(payload)
+    const {emit} = helpers.getStoreState().ws
     if (payload[0] === 'message') {
       actions.addMessage(payload[1][0])
     }
@@ -50,7 +43,7 @@ export const store = {
       actions.setMembers(payload[1][0])
     }
     if (payload[0] === 'new_member') {
-      actions.emit(["get_members", payload[1][0]])
+      emit(["get_members", payload[1][0]])
     }
   })
 }

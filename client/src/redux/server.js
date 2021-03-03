@@ -24,7 +24,7 @@ const checkin = _.debounce((store) => {
   })
 }, 1000)
 
-async function refreshToken(store) {
+export async function refreshToken(store) {
   const actions = store.getStoreActions()
 
   try {
