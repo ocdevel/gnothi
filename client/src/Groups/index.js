@@ -12,6 +12,7 @@ export default function Index() {
 
   useEffect(() => {
     emit(['groups/groups.get',  {}])
+    emit(['users/profile.get', {}])
   }, [socket])
 
   if (!socket) {return null}

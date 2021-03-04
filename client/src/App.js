@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import './App.scss'
 import {
   Container,
+  Spinner
 } from 'react-bootstrap';
 import {
   BrowserRouter as Router,
@@ -41,15 +42,14 @@ function LoggedOut() {
 
 function LoggedIn() {
   const jwt = useStoreState(state => state.user.jwt);
+  const getUser = useStoreActions(actions => actions.user.getUser)
   const as = useStoreState(state => state.user.as);
   const error = useStoreState(state => state.server.error);
-	const getUser = useStoreActions(actions => actions.user.getUser)
 	const getTags = useStoreActions(actions => actions.j.getTags)
 	const getEntries = useStoreActions(actions => actions.j.getEntries)
 	const getFields = useStoreActions(actions => actions.j.getFields)
 
 	const history = useHistory()
-  useSockets()
 
   useEffect(() => {
     // FIXME only do after first load
@@ -97,18 +97,24 @@ function LoggedIn() {
   </div>
 }
 
-function App() {
-  const jwt = useStoreState(state => state.user.jwt);
+function WaitForSetup() {
+  useSockets()
+  const socketReady = useStoreState(actions => actions.ws.ready)
   const getUser = useStoreActions(actions => actions.user.getUser)
-  const user = useStoreState(state => state.user.user);
+  const user = useStoreState(actions => actions.user.user)
 
   useEffect(() => {
-    if (!jwt) { return }
+    if (!socketReady) {return}
     getUser()
-  }, [jwt])
+  }, [socketReady])
 
-  if (!user) return <LoggedOut />
-  return <LoggedIn />
+  return user ? <LoggedIn /> : null
+}
+
+function App() {
+  const jwt = useStoreState(state => state.user.jwt);
+  if (!jwt) return <LoggedOut />
+  return <WaitForSetup />
 }
 
 export default () => <>

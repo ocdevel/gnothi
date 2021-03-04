@@ -28,8 +28,6 @@ from fastapi_sqlalchemy import db  # an object to provide global access to a dat
 from fastapi_users import models as fu_models
 from fastapi_users.db import SQLAlchemyBaseUserTable, SQLAlchemyUserDatabase
 
-import orjson
-
 
 # Schemas naming convention: SOModel for "schema out model", SIModel for "schema in"
 class SOut(BaseModel):
@@ -39,23 +37,10 @@ class SOut(BaseModel):
         # json_dumps = orjson.dumps
 
 
-def to_json(data, pyd_model=None, to_dict=True):
-    """
-    FastAPI routes will convert responses to json properly via response_model,
-    but I can't get it working manually with Pydantic (for Socket.IO). Help function
-    that uses orjson to convert things like datetime.datetime properly, then back to dict
-    """
-    if pyd_model:
-        data = pyd_model.from_orm(data).dict()
-    data = orjson.dumps(data)
-    if to_dict:
-        data = orjson.loads(data)
-    return data
-
-
 # https://dev.to/zchtodd/sqlalchemy-cascading-deletes-8hk
 parent_cascade = dict(cascade="all, delete", passive_deletes=True)
 child_cascade = dict(ondelete="cascade")
+
 
 # Note: using sa.Unicode for all Text/Varchar columns to be consistent with sqlalchemy_utils examples. Also keeping all
 # text fields unlimited (no varchar(max_length)) as Postgres doesn't incur penalty, unlike MySQL, and we don't know
@@ -64,6 +49,7 @@ def Encrypt(Col=Unicode, array=False, **args):
     enc = StringEncryptedType(Col, vars.FLASK_KEY, FernetEngine)
     if array: enc = ARRAY(enc)
     return Column(enc, **args)
+
 
 # TODO should all date-cols be index=True? (eg sorting, filtering)
 def DateCol(default=True, update=False, **kwargs):
@@ -74,12 +60,13 @@ def DateCol(default=True, update=False, **kwargs):
     if update: args['onupdate'] = satext("now()")
     return Column(TIMESTAMP(timezone=True), index=True, **args, **kwargs)
 
+
 def IDCol():
     return Column(UUID(as_uuid=True), primary_key=True, server_default=satext("uuid_generate_v4()"))
 
+
 def FKCol(fk, **kwargs):
     return Column(UUID(as_uuid=True), ForeignKey(fk, **child_cascade), **kwargs)
-
 
 
 class User(Base, SQLAlchemyBaseUserTable):
@@ -133,14 +120,6 @@ class User(Base, SQLAlchemyBaseUserTable):
         else:
             as_user = viewer
         return as_user, snooping
-
-    @property
-    def shared_with_me(self):
-        # 9cc44d55: sqlalchemy join. Can't figure out sa select diff cols from join tables
-        return db.session.execute("""
-        select s.*, u.* from users u
-        inner join shares s on s.email=:email and u.id=s.user_id
-        """, {'email': self.email}).fetchall()
 
     def profile_to_text(self):
         txt = ''
@@ -219,12 +198,13 @@ class SOSharedWithMe(SOProfile):
         fields = {'fields_': 'fields'}
 
 
-class SOUser(FU_User, fu_models.BaseUserDB):
+class SOUser(SOut):
+    id: UUID4
+    email: str
     timezone: Optional[Any] = None
     habitica_user_id: Optional[str] = None
     habitica_api_token: Optional[str] = None
     is_cool: Optional[bool] = False
-    shared_with_me: Optional[List[SOSharedWithMe]]
     paid: Optional[bool] = False
 
 
@@ -643,6 +623,13 @@ class Share(Base):
     @property
     def tags(self):
         return {t.tag_id: True for t in self.share_tags}
+
+    @staticmethod
+    def shared_with_me(email):
+        return db.session.execute("""
+        select s.*, u.* from users u
+        inner join shares s on s.email=:email and u.id=s.user_id
+        """, {'email': email}).fetchall()
 
 
 class SIShare(BaseModel):

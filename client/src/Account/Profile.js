@@ -32,7 +32,7 @@ function Profile_() {
 
   function fetchProfile() {
     if (!socket) {return}
-    emit(["users/profile.get", {as_user: as}])
+    emit(["users/profile.get", {}])
   }
 
   useEffect(() => {

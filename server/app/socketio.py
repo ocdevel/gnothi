@@ -8,6 +8,8 @@ from common.utils import SECRET
 from box import Box
 from app.google_analytics import ga
 import sqlalchemy as sa
+import orjson
+from typing import List
 
 
 class SocketError(Exception):
@@ -26,6 +28,21 @@ class CantSnoop(SocketError):
 
 # TODO handle other JWT errors
 JWT_EXPIRED = dict(code=401, error=dict(title="JWT_EXPIRED", message="JWT Expired"))
+
+
+def to_io(data, model=None, multi=False):
+    """
+    FastAPI routes will convert responses to json properly via response_model,
+    but I can't get it working manually with Pydantic (for Socket.IO). Help function
+    that uses orjson to convert things like datetime.datetime properly, then back to dict
+    """
+    if model:
+        def to_io_(obj):
+            return model.from_orm(obj).dict()
+        data = [to_io_(x) for x in data]\
+            if multi else to_io_(data)
+    data = orjson.dumps(data)
+    return orjson.loads(data)
 
 
 # Adapted from fastapi-socketio. That lib doesn't do much, below is all that's
@@ -113,7 +130,7 @@ def on_(event, auth=True, viewer=True, sess=True, checkin=True, model_in=None, m
                     deps_['snooping'] = snooping_
                 # return await f(*args, **kwargs, d=deps_)
                 try:
-                    body_ = body['data']
+                    body_ = body.get('data', {})
                     if model_in:
                         body_ = model_in(**body_)
                     res = await f(args[0], body_, deps_)
@@ -123,9 +140,9 @@ def on_(event, auth=True, viewer=True, sess=True, checkin=True, model_in=None, m
                 except Exception as err:
                     print(err)
                     return dict(code=500, error=dict(title="SERVER_ERROR", message=str(err)))
-                if res and model_out:
-                    res = model_out.from_orm(res).json()
-                return res or {}
+                # if res and model_out:
+                #     res = to_io(res, model_out)
+                return dict(code=200, data=res or {})
         return orig
     return wrap
 

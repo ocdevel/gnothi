@@ -37,7 +37,8 @@ export default function Sidebar() {
   const fetch = useStoreActions(actions => actions.server.fetch)
   const online = useStoreState(state => state.groups.online)
   const members = useStoreState(state => state.groups.members)
-  const myId = useStoreState(state => state.user.user.id)
+  const user = useStoreState(state => state.user.user)
+  const profile = useStoreState(state => state.user.profile)
   const groups = useStoreState(state => state.groups.groups)
   const [showCreate, setShowCreate] = useState(false)
   const group = useStoreState(state => state.groups.group)
@@ -60,9 +61,35 @@ export default function Sidebar() {
 
   const groups_ = _.filter(groups, g => g.id != gid)
   const onlineIcon = emoji("🟢")
+  const uid = user.id
+
+  function renderPrivacyOpt({k, v, h}) {
+    const unavail = ~disabled.indexOf(k)
+    const unset = !profile[k.replace('show_', '')]
+
+    const notice = unavail ? <>This feature isn't yet available</> :
+      unset ? <>You haven't set this field, go to <Link to='/account/profile'>Profile</Link> to set it up</> :
+      null
+    return <div key={k}>
+      <Form.Check
+        disabled={unavail || unset}
+        checked={members[uid] && members[uid][k]}
+        onChange={changePrivacy(k)}
+        key={k}
+        type="checkbox"
+        label={v}
+        name={k}
+        id={`check-${k}`}
+      />
+      <Form.Text className='text-muted'>
+        <div>{h}</div>
+        {notice && <div className='text-warning'>{notice}</div>}
+      </Form.Text>
+    </div>
+  }
 
   function renderOptions() {
-    const role = _.get(members, `${myId}.role`)
+    const role = _.get(members, `${uid}.role`)
     if (!role) {
       return <div>
         Not a member
@@ -97,22 +124,7 @@ export default function Sidebar() {
     }
     return <div>
       {el}
-      {privacies.map(({k, v, h}) => <div key={k}>
-        <Form.Check
-          disabled={~disabled.indexOf(k)}
-          checked={members[myId] && members[myId][k]}
-          onChange={changePrivacy(k)}
-          key={k}
-          type="checkbox"
-          label={v}
-          name={k}
-          id={`check-${k}`}
-        />
-        <Form.Text className='text-muted'>
-          <div>{h}</div>
-          {~disabled.indexOf(k)? <div className='text-warning'>This feature isn't yet available</div> : null}
-        </Form.Text>
-      </div>)}
+      {privacies.map(renderPrivacyOpt)}
     </div>
   }
 

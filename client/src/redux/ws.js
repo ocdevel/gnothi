@@ -8,14 +8,19 @@ const host = API_URL.replace(/^https?/, 'ws')
 let ws;
 
 export const store = {
+  ready: false,
+  setReady: action((state, payload) => {
+    state.ready = true
+  }),
+
   emit: thunk(async (actions, payload, helpers) => {
     return new Promise((resolve, reject) => {
-      let {jwt} = helpers.getStoreState().user
+      let {jwt, as} = helpers.getStoreState().user
       const {setError} = helpers.getStoreActions().server
       if (!jwt) {return resolve(null)}
       if (!ws) {return resolve()}
 
-      const data = {data: payload[1], jwt}
+      const data = {data: payload[1], jwt, as_user: as}
       ws.emit(`server/${payload[0]}`, data, (res) => {
         if (!res) {return resolve()}
         const err = res.error
@@ -37,6 +42,7 @@ export const store = {
 
 export function useSockets() {
   const emit = useStoreActions(actions => actions.ws.emit)
+  const setReady = useStoreActions(actions => actions.ws.setReady)
   const jwt = useStoreState(state => state.user.jwt)
   const setAi = useStoreActions(actions => actions.server.setAi)
   const onAnyGroups = useStoreActions(actions => actions.groups.onAny)
@@ -78,6 +84,8 @@ export function useSockets() {
         return onAnyUsers([nsp[2], args])
       }
     })
+
+    setReady(true)
 
     return close
   }, [])

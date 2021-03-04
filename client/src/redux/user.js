@@ -15,7 +15,20 @@ export const store = {
   setAs: action((state, payload) => {
     state.as = payload
     state.asUser = !payload ? null
-        : _.find(state.user.shared_with_me, {id: payload})
+        : _.find(state.shares, {id: payload})
+  }),
+
+  shares: [],
+  setShares: action((state, payload) => {
+    state.shares = payload
+  }),
+  getShares: thunk(async (actions, payload, helpers) => {
+    const {jwt} = helpers.getState()
+    const {emit} = helpers.getStoreActions().ws
+
+    if (!jwt) {return}
+    const {data, code} = await emit(["users/shares.get", {}])
+    actions.setShares(data)
   }),
 
   logout: action((state, payload) => {
@@ -30,7 +43,7 @@ export const store = {
     const {emit} = helpers.getStoreActions().ws
 
     if (!jwt) {return}
-    const {data, code} = await fetch({route: 'user'})
+    const {data, code} = await emit(["users/user.get", {}])
     if (as) {
       // FIXME fetch basic info from user, limited by permissions
       // dispatch(setAsUser(data))
@@ -39,11 +52,12 @@ export const store = {
     if (code === 401) {
       return actions.logout()
     }
+    actions.getShares()
     actions.setUser(data)
     if (!data.timezone) {
        // Guess their default timezone (TODO should call this out?)
       const timezone = moment.tz.guess(true)
-      emit(["users/profile.timezone.put", {timezone}])
+      emit(["users/profile.put", {timezone}])
     }
   }),
 

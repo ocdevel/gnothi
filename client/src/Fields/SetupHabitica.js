@@ -39,6 +39,7 @@ function DisconnectModal({show, close}) {
 export default function Habitica() {
   const fetch = useStoreActions(actions => actions.server.fetch)
   const getFields = useStoreActions(actions => actions.j.getFields)
+  const emit = useStoreActions(actions => actions.ws.emit)
 
   const [habiticaUserId, setHabiticaUserId] = useState('')
   const [habiticaApiToken, setHabiticaApiToken] = useState('')
@@ -46,7 +47,7 @@ export default function Habitica() {
 
   // TODO use reducer.user
   const fetchUser = async () => {
-    const {data} = await fetch({route: `user`})
+    const {data} = await emit(["users/user.get", {}])
     setHabiticaUserId(data.habitica_user_id)
     setHabiticaApiToken(data.habitica_api_token)
   }

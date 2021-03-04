@@ -84,10 +84,10 @@ export default function CreateGroup({show, close}) {
     e.preventDefault()
     setServerError(false)
     setSubmitting(true)
-    const res = await emit(["groups/groups.post", form])
+    const {data} = await emit(["groups/groups.post", form])
     setSubmitting(false)
-    if (!res.id) {return}
-    history.push(`/groups/${res.id}`)
+    if (!data.id) {return}
+    history.push(`/groups/${data.id}`)
     close()
   }
 

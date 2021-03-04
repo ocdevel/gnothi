@@ -27,11 +27,10 @@ export default function MainNav() {
   const logout = useStoreActions(actions => actions.user.logout)
 
   const user = useStoreState(state => state.user.user)
+  const shares = useStoreState(state => state.user.shares)
   const as = useStoreState(state => state.user.as)
   const asUser = useStoreState(state => state.user.asUser)
   const aiStatus = useStoreState(state => state.server.ai)
-
-  const shares = user.shared_with_me || []
 
   const renderAsSelect = () => {
     if (!shares.length) {
