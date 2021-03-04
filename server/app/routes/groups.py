@@ -8,11 +8,10 @@ logger = logging.getLogger(__name__)
 S = "server/groups"
 C = "client/groups"
 
-
-def get_gid(sid):
-    rooms = sio.rooms(sid)
-    assert len(rooms) == 1
-    return rooms[0]
+# 835723e9: leave other rooms on group.enter, and get gid for leave/join from sid.rooms
+async def get_gid(sid):
+    sess = await sio.get_session(sid)
+    return sess['gid']
 
 
 async def send_message(msg, sess):
@@ -29,7 +28,7 @@ async def send_message(msg, sess):
 
 @on_(f"{S}/messages.post")
 async def on_messages_post(sid, data: M.SIMessage, d):
-    gid = get_gid(sid)
+    gid = await get_gid(sid)
     msg = dict(
         text=data['message'],
         group_id=gid,
@@ -41,7 +40,7 @@ async def on_messages_post(sid, data: M.SIMessage, d):
 
 @on_(f"{S}/group.join")
 async def on_group_join(sid, data, d):
-    gid = get_gid(sid)  # TODO use data.gid?
+    gid = await get_gid(sid)
     uid = str(d.uid)
     ug = M.Group.join_group(d.sess, gid, uid)
     if not ug: return {}
@@ -56,7 +55,7 @@ async def on_group_join(sid, data, d):
 
 @on_(f"{S}/group.leave")
 async def on_group_leave(sid, data, d):
-    gid = get_gid(sid)  # TODO use data.gid?
+    gid = await get_gid(sid)
     uid = str(d.uid)
     ug = M.Group.leave_group(d.sess, gid, uid)
     msg = dict(
@@ -70,10 +69,9 @@ async def on_group_leave(sid, data, d):
 
 @on_(f"{S}/group.enter")
 async def on_group_enter(sid, gid, d):
-    # rooms = sio.rooms(sid)
-    # for r in rooms:
-    #     print('leave_room', r)
-    #     sio.leave_room(sid, r)
+    sess = await sio.get_session(sid)
+    sess['gid'] = gid
+    await sio.save_session(sid, sess)
     sio.enter_room(sid, gid)
 
     # skipping await statements, so we can just shove things down the pipe
