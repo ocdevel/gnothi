@@ -70,10 +70,10 @@ async def on_group_leave(sid, data, d):
 
 @on_(f"{S}/group.enter")
 async def on_group_enter(sid, gid, d):
-    rooms = sio.rooms(sid)
-    for r in rooms:
-        print('leave_room', r)
-        sio.leave_room(sid, r)
+    # rooms = sio.rooms(sid)
+    # for r in rooms:
+    #     print('leave_room', r)
+    #     sio.leave_room(sid, r)
     sio.enter_room(sid, gid)
 
     # skipping await statements, so we can just shove things down the pipe

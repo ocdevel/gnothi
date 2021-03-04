@@ -28,6 +28,7 @@ function Profile_() {
   const profile_ = useStoreState(state => state.user.profile)
   const [profile, setProfile] = useState({})
   const [dirty, setDirty] = useState({dirty: false, saved: false})
+  const [usernameValid, setUsernameValid] = useState({checked: false, valid: null})
   const socket = useSockets()
 
   function fetchProfile() {
@@ -68,6 +69,17 @@ function Profile_() {
     setDirty({dirty: false, saved: true})
   }
 
+  async function changeUsername(e) {
+    setUsernameValid({checked: false, valid: null})
+    changeProfile('username')(e)
+  }
+
+  async function checkUsername(e) {
+    const val = e.target.value
+    const {data} = await emit(["users/check-username", val])
+    setUsernameValid({...data, checked: true})
+  }
+
   const textField = ({k, v, attrs, children}) => (
     <Form.Group as={Col} controlId={k}>
       <Form.Label>{v}</Form.Label>
@@ -83,8 +95,21 @@ function Profile_() {
     </Form.Group>
   )
 
+  function usernameField() {
+    const {checked, valid} = usernameValid
+    const attrs = {
+      onBlur: checkUsername,
+      onChange: changeUsername
+    }
+    const children = !(profile.username && checked) ? null:
+      valid ? <div className='text-success'>Valid Username</div>
+      :   <div className='text-danger'>Username taken</div>
+    return textField({k: 'username', v: 'Username', attrs, children})
+  }
+
   return <div>
     <Form onSubmit={submit}>
+      {usernameField()}
       <Form.Row>
         {textField({k: 'first_name', v: 'First Name'})}
         {textField({k: 'last_name', v: 'Last Name'})}

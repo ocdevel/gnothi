@@ -8,7 +8,7 @@ import sqlalchemy as sa
 import common.models as M
 from app.google_analytics import ga
 from app.utils import getuser, cant_snoop, send_error
-from app.socketio import on_, sio, CantSnoop, to_io
+from app.socketio import on_, sio, CantSnoop, to_io, SocketError
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +42,19 @@ def checkin_get(
     return {}
 
 
+def check_username(username, d):
+    res = d.sess.execute(sa.text("""
+    select 1 from users where username=:username and id!=:uid
+    """), dict(username=username, uid=d.uid)).first()
+    if res: return False
+    return True
+
+@on_(f"{S}/check-username")
+async def on_check_username(sid, username, d):
+    valid = check_username(username, d)
+    return {"valid": valid}
+
+
 async def profile_get(sid, user):
     res = to_io(user, M.SOProfile)
     await sio.emit(f"{C}/profile", res, to=sid)
@@ -57,6 +70,8 @@ async def on_profile_get(sid, data, d):
 @on_(f'{S}/profile.put', model_out=M.SOProfile, model_in=M.SIProfile)
 async def on_profile_put(sid, data, d):
     if d.snooping: raise CantSnoop()
+    if data.username and not check_username(data.username, d):
+        raise SocketError(401, "USERNAME_TAKEN", "That username is already taken, try another")
     if data.therapist and not d.viewer.therapist:
         ga(d.uid, 'user', 'therapist')
     for k, v in data.dict().items():

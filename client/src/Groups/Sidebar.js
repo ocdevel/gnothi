@@ -29,21 +29,49 @@ const privacies = [{
   h: "Let members see your avatar. Set it in Profile"
 }]
 
-const disabled = ['show_username', 'show_avatar']
+const disabled = ['show_avatar']
 
-export default function Sidebar() {
-  const history = useHistory()
+function PrivacyOpt({p, me}) {
+  const {h, v, k} = p
   const {gid} = useParams()
-  const fetch = useStoreActions(actions => actions.server.fetch)
-  const online = useStoreState(state => state.groups.online)
-  const members = useStoreState(state => state.groups.members)
-  const user = useStoreState(state => state.user.user)
   const profile = useStoreState(state => state.user.profile)
-  const groups = useStoreState(state => state.groups.groups)
-  const [showCreate, setShowCreate] = useState(false)
-  const group = useStoreState(state => state.groups.group)
-  const fetchGroup = useStoreActions(actions => actions.groups.fetchGroup)
   const emit = useStoreActions(actions => actions.ws.emit);
+
+  const changePrivacy = key => e => {
+    emit(["groups/privacy.put", {gid, key, value: e.target.checked}])
+    // () => setForm({...form, [k]: !form[k]})
+  }
+
+  const unavail = ~disabled.indexOf(k)
+  const unset = !profile[k.replace('show_', '')]
+
+  const notice = unavail ? <>This feature isn't yet available</> :
+    unset ? <>You haven't set this field, go to <Link to='/account/profile'>Profile</Link> to set it up</> :
+    null
+  return <div key={k}>
+    <Form.Check
+      disabled={unavail || unset}
+      checked={me && me[k]}
+      onChange={changePrivacy(k)}
+      key={k}
+      type="checkbox"
+      label={v}
+      name={k}
+      id={`check-${k}`}
+    />
+    <Form.Text className='text-muted'>
+      <div>{h}</div>
+      {notice && <div className='text-warning'>{notice}</div>}
+    </Form.Text>
+  </div>
+}
+
+function Controls() {
+  const {gid} = useParams()
+  const history = useHistory()
+  const emit = useStoreActions(actions => actions.ws.emit);
+  const uid = useStoreState(state => state.user.user.id)
+  const me = useStoreState(state => state.groups.members[uid])
 
   async function joinGroup() {
     emit(["groups/group.join", {gid}])
@@ -54,79 +82,58 @@ export default function Sidebar() {
     history.push("/groups")
   }
 
-  const changePrivacy = key => e => {
-    emit(["groups/privacy.put", {gid, key, value: e.target.checked}])
-    // () => setForm({...form, [k]: !form[k]})
+  const role = me && me.role
+
+  if (!role) {
+    return <div>
+      Not a member
+      <Button
+        size='sm'
+        className='float-right'
+        variant='primary'
+        onClick={joinGroup}
+      >
+        Join Group
+      </Button>
+    </div>
   }
+  let el
+  if (role === 'member') {
+    el = <div>
+      You are a member
+      <Button
+        size='sm'
+        className='float-right text-danger p-0'
+        variant='link'
+        onClick={leaveGroup}
+      >
+        Leave Group
+      </Button>
+    </div>
+  }
+  if (role === 'owner') {
+    el = <div>
+      You are the owner
+    </div>
+  }
+  return <div>
+    {el}
+    {privacies.map(p => (
+      <PrivacyOpt key={p.k} p={p} me={me} />)
+    )}
+  </div>
+}
+
+export default function Sidebar() {
+  const {gid} = useParams()
+  const online = useStoreState(state => state.groups.online)
+  const members = useStoreState(state => state.groups.members)
+  const groups = useStoreState(state => state.groups.groups)
+  const [showCreate, setShowCreate] = useState(false)
+  const group = useStoreState(state => state.groups.group)
 
   const groups_ = _.filter(groups, g => g.id != gid)
   const onlineIcon = emoji("🟢")
-  const uid = user.id
-
-  function renderPrivacyOpt({k, v, h}) {
-    const unavail = ~disabled.indexOf(k)
-    const unset = !profile[k.replace('show_', '')]
-
-    const notice = unavail ? <>This feature isn't yet available</> :
-      unset ? <>You haven't set this field, go to <Link to='/account/profile'>Profile</Link> to set it up</> :
-      null
-    return <div key={k}>
-      <Form.Check
-        disabled={unavail || unset}
-        checked={members[uid] && members[uid][k]}
-        onChange={changePrivacy(k)}
-        key={k}
-        type="checkbox"
-        label={v}
-        name={k}
-        id={`check-${k}`}
-      />
-      <Form.Text className='text-muted'>
-        <div>{h}</div>
-        {notice && <div className='text-warning'>{notice}</div>}
-      </Form.Text>
-    </div>
-  }
-
-  function renderOptions() {
-    const role = _.get(members, `${uid}.role`)
-    if (!role) {
-      return <div>
-        Not a member
-        <Button
-          size='sm'
-          className='float-right'
-          variant='primary'
-          onClick={joinGroup}
-        >
-          Join Group
-        </Button>
-      </div>
-    }
-    let el
-    if (role === 'member') {
-      el = <div>
-        You are a member
-        <Button
-          size='sm'
-          className='float-right text-danger p-0'
-          variant='link'
-          onClick={leaveGroup}
-        >
-          Leave Group
-        </Button>
-      </div>
-    }
-    if (role === 'owner') {
-      el = <div>
-        You are the owner
-      </div>
-    }
-    return <div>
-      {el}
-      {privacies.map(renderPrivacyOpt)}
-    </div>
-  }
 
   function renderGroup() {
     if (!gid) {return null}
@@ -145,7 +152,7 @@ export default function Sidebar() {
           </li>)}
         </ul>
         <hr />
-        {renderOptions()}
+        <Controls />
       </Card.Body>
     </Card>
   }

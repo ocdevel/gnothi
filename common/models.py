@@ -75,7 +75,7 @@ class User(Base, SQLAlchemyBaseUserTable):
     created_at = DateCol()
     updated_at = DateCol(update=True)
 
-    # username = Encrypt()
+    username = Column(Unicode, index=True)
     # socket_id = Column(Unicode, index=True)
     # as = FKCol('users.id')
 
@@ -171,6 +171,7 @@ class SIHabitica(BaseModel):
 
 
 class SIProfile(SITimezone):
+    username: Optional[str] = None
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     orientation: Optional[str] = None
@@ -1201,7 +1202,7 @@ class UserGroup(Base):
 
     @staticmethod
     def get_members(sess, gid):
-        user_fields = "first_name last_name bio".split() # username avatar
+        user_fields = "username first_name last_name bio".split() # username avatar
         rows = sess.query(UserGroup, User)\
             .join(User, User.id == UserGroup.user_id)\
             .filter(UserGroup.group_id == gid)\
@@ -1214,6 +1215,7 @@ class UserGroup(Base):
                 username=ug.username,
                 show_first_name=ug.show_first_name,
                 show_last_name=ug.show_last_name,
+                show_username=ug.show_username,
                 show_bio=ug.show_bio,
                 joined_at=ug.joined_at.timestamp(),
                 role=ug.role.value
@@ -1225,6 +1227,7 @@ class UserGroup(Base):
             uname = []
             if ug.show_first_name and u.first_name: uname.append(u.first_name)
             if ug.show_last_name and u.last_name: uname.append(u.last_name)
+            if ug.show_username and u.username and not uname: uname.append(u.username)
             obj['username'] = ' '.join(uname) if uname else ug.username
 
             res[str(ug.user_id)] = obj
