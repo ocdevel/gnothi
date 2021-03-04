@@ -1,4 +1,12 @@
-import React, { useState, useEffect } from 'react'
+import React, {useState, useEffect, useRef} from 'react'
+import Amplify from 'aws-amplify';
+import {AmplifyAuthenticator, AmplifySignOut, AmplifySignUp, AmplifySignIn} from "@aws-amplify/ui-react";
+import { AuthState, onAuthUIStateChange } from '@aws-amplify/ui-components';
+import _ from 'lodash'
+
+
+import '@aws-amplify/ui/dist/style.css'
+
 import './App.scss'
 import {
   Container,
@@ -29,6 +37,8 @@ import Resources from "./Resources";
 import Entries from "./Entries/Entries";
 import Groups from "./Groups";
 import staticRoutes from "./Static";
+import axios from "axios";
+import {API_URL, refreshToken} from "./redux/server";
 
 function LoggedOut() {
   return <Switch>
@@ -109,6 +119,87 @@ function WaitForSetup() {
   }, [socketReady])
 
   return user ? <LoggedIn /> : null
+}
+
+Amplify.configure({
+  Auth: {
+    mandatorySignIn: true,
+    region: "us-east-1",
+    userPoolId: "us-east-1_Tsww98VBH",
+    userPoolWebClientId: "5rh3bkhtmcskqer9t17gg5fn65"
+  },
+});
+
+async function checkJwt(jwt) {
+  const obj = {
+    url: "http://localhost:5002/cognito",
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    data: {jwt}
+  }
+  const res = await axios(obj)
+  debugger
+}
+
+const AuthStateApp = () => {
+  const setJwt = useStoreActions(actions => actions.user.setJwt)
+  const [authState, setAuthState] = React.useState();
+  const [user, setUser] = React.useState();
+
+  React.useEffect(() => {
+    return onAuthUIStateChange((nextAuthState, authData) => {
+      console.log('nextAuthState', nextAuthState)
+      console.log('authData', authData)
+      setAuthState(nextAuthState);
+      setUser(authData)
+      const jwt = _.get(authData, "signInUserSession.accessToken.jwtToken")
+      // checkJwt(jwt)
+      // setJwt(jwt)
+    });
+  }, []);
+
+  // const mySubmit = async (a,b,c,d) => {
+  //   const form = ref.current
+  //   debugger
+  // }
+
+  return authState === AuthState.SignedIn && user ? (
+    <div className="App">
+      <div>Hello, {user.username}</div>
+      <AmplifySignOut />
+    </div>
+    ) : (
+    <AmplifyAuthenticator usernameAlias="email">
+      <AmplifySignUp
+        slot="sign-up"
+        usernameAlias="email"
+        formFields={[
+          {
+            type: "email",
+            label: "Email",
+            placeholder: "Enter your email address",
+            required: true,
+          },
+          {
+            type: "password",
+            label: "Password",
+            placeholder: "Enter your password",
+            required: true,
+          },
+          // {
+          //   type: "phone_number",
+          //   label: "Custom Phone Label",
+          //   placeholder: "custom Phone placeholder",
+          //   required: false,
+          // },
+        ]}
+      />
+      <AmplifySignIn
+        slot="sign-in"
+        usernameAlias="email"
+      />
+    </AmplifyAuthenticator>
+  );
 }
 
 function App() {

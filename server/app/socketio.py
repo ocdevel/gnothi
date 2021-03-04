@@ -9,6 +9,7 @@ from box import Box
 from app.google_analytics import ga
 import sqlalchemy as sa
 import orjson
+import requests
 from typing import List
 
 

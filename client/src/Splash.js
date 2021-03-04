@@ -19,7 +19,7 @@ import {
   FaSmile
 } from 'react-icons/fa'
 import Error from "./Error";
-import {Auth, ResetPassword} from "./Auth"
+import {Authenticate, ResetPassword} from "./Auth"
 import './Splash.css'
 import {
   Switch,
@@ -223,7 +223,7 @@ export default function Splash() {
           </Route>
           <Route path='/auth'>
             <div className='auth-block'>
-              <Auth />
+              <Authenticate />
             </div>
           </Route>
         </Switch>

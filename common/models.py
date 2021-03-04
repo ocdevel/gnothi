@@ -72,6 +72,8 @@ def FKCol(fk, **kwargs):
 class User(Base, SQLAlchemyBaseUserTable):
     __tablename__ = 'users'
 
+    cognito_id = Column(Unicode, index=True)
+
     created_at = DateCol()
     updated_at = DateCol(update=True)
 

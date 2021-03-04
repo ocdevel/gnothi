@@ -8,6 +8,7 @@ from app.app_jwt import fastapi_users, jwt_user
 from app.routes.users import users_router
 from app.routes.stripe import stripe_router
 from app.routes.groups import groups_router
+from app.routes.auth import auth_router
 from fastapi_sqlalchemy import db  # an object to provide global access to a database session
 import sqlalchemy as sa
 from sqlalchemy import text

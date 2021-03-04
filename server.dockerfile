@@ -34,7 +34,9 @@ RUN pip install \
   petname \
   fastapi-socketio \
   fastapi-utils \
-  aioredis
+  aioredis \
+  orjson \
+  python-jose
 
 COPY ./server/app /app/app
 COPY ./common /app/common
