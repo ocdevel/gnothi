@@ -67,10 +67,10 @@ function EntryTeaser({e, gotoForm}) {
 
 
 export default function Entries() {
-  const as = useStoreState(state => state.user.as)
-  const entries = useStoreState(state => state.j.entries)
-  const selected = useStoreState(state => state.j.selectedTags)
-  const fetch = useStoreActions(actions => actions.server.fetch)
+  const as = useStoreState(s => s.ws.as)
+  const entries = useStoreState(s => s.ws.data['entries/entries/get'])
+  const entriesRes = useStoreState(s => s.ws.res['entries/entries/get'])
+  const selected = useStoreState(s => s.ws.data.selectedTags)
 
   const [page, setPage] = useState(0)
   let [search, setSearch] = useState('')
@@ -82,9 +82,12 @@ export default function Entries() {
     setPage(0)
   }, [selected])
 
-  if (entries.code) {return <h5>{entries.message}</h5>}
+  if (entriesRes?.code >= 401 && entriesRes?.code < 500) {
+    return <h5>{entriesRes.detail}</h5>
+  }
 
-  let filtered = _(entries)
+
+  let filtered = _(entries || [])
       .filter(e => _.reduce(selected, (m, v, k) => e.entry_tags[k] || m, false))
       .filter(e => !search.length || ~(e.title + e.text).toLowerCase().indexOf(search))
       .value()

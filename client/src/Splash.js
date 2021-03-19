@@ -29,6 +29,7 @@ import {
   useParams
 } from "react-router-dom"
 import {LinkContainer} from 'react-router-bootstrap'
+import AmplifyAuth from './Account/AmplifyAuth'
 
 import {useStoreActions, useStoreState} from 'easy-peasy'
 
@@ -216,12 +217,17 @@ export default function Splash() {
           </header>
         </LinkContainer>
         <Switch>
-          <Route path='/reset-password'>
+          {/*<Route path='/reset-password'>
             <div className='auth-block'>
               <ResetPassword />
             </div>
+          </Route>*/}
+          <Route path='/auth' exact>
+            <div className='custom-amplify-container'>
+              <AmplifyAuth />
+            </div>
           </Route>
-          <Route path='/auth'>
+          <Route path='/auth/old'>
             <div className='auth-block'>
               <Authenticate />
             </div>

@@ -4,8 +4,8 @@ import {Button, Col, Form, Modal, Table} from "react-bootstrap"
 import {useStoreActions, useStoreState} from "easy-peasy";
 
 function Person({close, person=null}) {
-  const as = useStoreState(state => state.user.as)
-  const fetch = useStoreActions(actions => actions.server.fetch)
+  const emit = useStoreActions(a => a.ws.emit)
+  const as = useStoreState(state => state.ws.as)
 
   const default_form = {name: '', relation: '', issues: '', bio: ''}
   const [form, setForm] = useState(person ? person : default_form)
@@ -18,9 +18,9 @@ function Person({close, person=null}) {
   const submit = async (e) => {
     e.preventDefault()
     if (person) {
-      await fetch({route:`people/${person.id}`, method: 'PUT', body: form})
+      emit(['users/person/put', {...form, id: person.id}])
     } else {
-      await fetch({route: 'people', method: 'POST', body: form})
+      emit(['users/people/post', form])
     }
     close()
   }
@@ -28,7 +28,7 @@ function Person({close, person=null}) {
   const destroy = async () => {
     if (!person) {return}
     if (window.confirm("Delete person, are you sure?")) {
-      await fetch({route: `people/${person.id}`, method: 'DELETE'})
+      emit(['users/person/delete',  {id: person.id}])
     }
     close()
   }
@@ -86,19 +86,19 @@ function Person({close, person=null}) {
 }
 
 export default function People() {
-  const as = useStoreState(state => state.user.as)
-  const fetch = useStoreActions(actions => actions.server.fetch)
-
-  const [people, setPeople] = useState([])
+  const as = useStoreState(state => state.ws.as)
+  const emit = useStoreActions(a => a.ws.emit)
+  const people = useStoreState(s => s.ws.data['users/people/get'])
   const [person, setPerson] = useState(null)
 
-  const fetchPeople = async () => {
-    const {data} = await fetch({route: 'people'})
-    setPerson(null)
-    setPeople(data)
-  }
+  useEffect(() => {
+    fetchPeople()
+  }, [])
 
-  useEffect(() => {fetchPeople()}, [])
+  function fetchPeople() {
+    emit(['users/people/get', {}])
+    setPerson(null)
+  }
 
   const choosePerson = p => setPerson(p)
 
@@ -122,7 +122,7 @@ export default function People() {
         </tr>
       </thead>
       <tbody>
-      {people.map(p => (
+      {people?.map(p => (
         <tr
           className='cursor-pointer'
           onClick={() => choosePerson(p)}

@@ -9,19 +9,29 @@ import {useStoreState, useStoreActions} from 'easy-peasy'
 
 export default function Themes() {
   const [advanced, setAdvanced] = useState(false)
-  const aiStatus = useStoreState(state => state.server.ai)
-  const insight = useStoreState(state => state.insights.themes)
-  const setInsight = useStoreActions(actions => actions.insights.setInsight)
-  const getInsight = useStoreActions(actions => actions.insights.getInsight)
+  const emit = useStoreActions(a => a.ws.emit)
+  const aiStatus = useStoreState(s => s.ws.data['jobs/status'].status)
+  const days = useStoreState(s => s.insights.days)
+  const res = useStoreState(s => s.ws.res['insights/themes/post'])
+  const job = useStoreState(s => s.ws.data['insights/themes/post'])
+  const form = useStoreState(s => s.insights.themes)
+  const reply = useStoreState(s => s.ws.data['insights/themes/get'])
+  const a = useStoreActions(a => a.insights)
+  const [waiting, setWaiting] = useState(false)
 
-  const {req, res1, res2, fetching} = insight
-  const {code, message, data} = res2
+  useEffect(() => {
+    if (res) {setWaiting(true)}
+  }, [res])
+  useEffect(() => {
+    if (reply) {setWaiting(false)}
+  }, [reply])
 
-  const fetchThemes = async () => {
-    getInsight('themes')
+  if (res?.code === 401) { return <h5>{res.detail}</h5> }
+
+  function submit(e) {
+    e.preventDefault()
+    a.postInsight('themes')
   }
-
-  if (code === 401) { return <h5>{message}</h5> }
 
   const renderTerms = terms => {
     if (!terms) {return null}
@@ -32,11 +42,14 @@ export default function Themes() {
   }
 
   const renderThemes = () => {
-    const themes_ =_.sortBy(data.themes, 'n_entries').slice().reverse()
+    const themes_ =_.sortBy(reply.themes, 'n_entries').slice().reverse()
+    if (!themes_.length) {
+      return <p>No patterns found in your entries yet, come back later</p>
+    }
     return <>
       <div className='mb-3'>
         <h5>Top terms</h5>
-        <p>{renderTerms(data.terms)}</p>
+        <p>{renderTerms(reply.terms)}</p>
         <hr/>
       </div>
       {themes_.map((t, i) => (
@@ -81,8 +94,8 @@ export default function Themes() {
               {a.label} <a href={a.url} target='_blank'><BsQuestionCircle /></a>
             </span>}
             id={`algo-${a.k}`}
-            checked={req === a.k}
-            onChange={() => setInsight(['themes', {req: a.k}])}
+            checked={form === a.k}
+            onChange={() => a.setInsight(['themes', a.k])}
           />
         ))}
         <Form.Text>If the output seems off, try a different clustering algorithm. Don't worry about the tech (unless you're curious), just click the other one and submit.</Form.Text>
@@ -92,15 +105,15 @@ export default function Themes() {
   }
 
   return <>
-    {fetching ? <Spinner job={res1} /> : <>
+    {waiting ? <Spinner job={job} /> : <>
       {renderAdvanced()}
       <Button
         disabled={aiStatus !== 'on'}
         className='mb-3'
         variant='primary'
-        onClick={fetchThemes}
+        onClick={submit}
       >Show Themes</Button>
     </>}
-    {data && renderThemes()}
+    {reply && renderThemes()}
   </>
 }

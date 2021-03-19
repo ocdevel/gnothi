@@ -5,12 +5,11 @@ import React, {useEffect, useLayoutEffect, useState, useRef} from "react";
 import _ from "lodash";
 import Sidebar from './Sidebar'
 import {Button, Col, Form, Row} from "react-bootstrap";
-import {useSockets} from "../redux/ws";
 
 function Messages() {
-  const uid = useStoreState(state => state.user.user.id)
-  const messages = useStoreState(state => state.groups.messages)
-  const members = useStoreState(state => state.groups.members)
+  const uid = useStoreState(s => s.ws.data['users/user/get']?.id)
+  let messages = useStoreState(s => s.ws.data['groups/messages/get'])
+  let members = useStoreState(s => s.ws.data['groups/members/get'])
   const el = useRef()
 
   useLayoutEffect(() => {
@@ -19,10 +18,10 @@ function Messages() {
     el_.scrollTop = el_.scrollHeight
   })
 
-  const messages_ = messages.map(m => new Message({
-    ...m,
-    id: uid === m.id ? 0 : 1,
-    senderName: members[m.id] || "*system*"
+  messages = messages.map(m => new Message({
+    message: m.text,
+    id: uid === m.owner_id ? 0 : 1,
+    senderName: members[m.owner_id]?.username || "*system*"
   }))
 
   // https://github.com/brandonmowat/react-chat-ui
@@ -39,7 +38,7 @@ function Messages() {
 
   return <div className='chat-feed' ref={el}>
       <ChatFeed
-        messages={messages_} // Array: list of message objects
+        messages={messages} // Array: list of message objects
         hasInputField={false} // Boolean: use our input, or use your own
         showSenderName // show the name of the user who sent the message
         bubblesCentered={false} //Boolean should the bubbles be centered in the feed?
@@ -55,14 +54,14 @@ export default function Group() {
   const emit = useStoreActions(actions => actions.ws.emit);
 
   useEffect(() => {
-    emit(['groups/group.enter', gid])
+    emit(['groups/group/enter', {id: gid}])
   }, [gid])
 
 
   function onSubmit(e) {
     e.preventDefault();
     if (message === '') { return }
-    emit([`groups/messages.post`, {message}])
+    emit([`groups/messages/post`, {id: gid, text: message}])
     setMessage('')
   }
 

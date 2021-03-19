@@ -20,8 +20,10 @@ import MdEditor from 'react-markdown-editor-lite'
 import 'react-markdown-editor-lite/lib/index.css'
 import {AddNotes} from './Notes'
 import _ from 'lodash'
+import {EE} from '../redux/ws'
 
 import {useStoreActions, useStoreState} from "easy-peasy";
+import Error from "../Error";
 
 const mdParser = new MarkdownIt(/* Markdown-it options */);
 
@@ -78,48 +80,76 @@ function Editor({text, changeText}) {
   )
 }
 
+function Notes({entry_id}) {
+  const emit = useStoreActions(a => a.ws.emit)
+  const notes = useStoreState(s => s.ws.data['entries/notes/get'])
+
+  useEffect(() => {
+    emit(['entries/notes/get', {entry_id}])
+  }, [entry_id])
+
+  if (!notes.length) {return null}
+
+  return <div style={{marginTop: '1rem'}}>
+    {notes.map(n => <Card className='mb-3'>
+      <Card.Body>
+        <Badge variant="primary">{n.type}</Badge>{' '}
+        {n.private ? "[private] " : null}
+        {n.text}
+      </Card.Body>
+    </Card>)}
+  </div>
+}
+
 export default function Entry() {
   const {entry_id} = useParams()
   const history = useHistory()
+  const as = useStoreState(state => state.ws.as)
+  const emit = useStoreActions(a => a.ws.emit)
   const [editing, setEditing] = useState(!entry_id)
   const [form, setForm] = useState({title: '', text: '', no_ai: false, created_at: null})
   const [formOrig, setFormOrig] = useState()
-  const [entry, setEntry] = useState({})
-  const [submitting, setSubmitting] = useState(false)
   const [tags, setTags] = useState({})
   const [advanced, setAdvanced] = useState(false)
-  const [notes, setNotes] = useState([])
   const [cacheEntry, setCacheEntry] = useState()
+  const entry = useStoreState(s => s.ws.data['entries/entry/get'])
+  const entryGet = useStoreState(s => s.ws.res['entries/entry/get'])
+  const entryPost = useStoreState(s => s.ws.res['entries/entries/post'])
+  const entryPut = useStoreState(s => s.ws.res['entries/entry/put'])
+  const cache = useStoreState(s => s.ws.data['entries/entry/cache/get'])
 
-  const as = useStoreState(state => state.user.as)
-  const fetch = useStoreActions(actions => actions.server.fetch)
-  const getEntries = useStoreActions(actions => actions.j.getEntries)
-  const setServerError = useStoreActions(actions => actions.server.error)
 
   const showCacheEntry = !editing && entry_id && cacheEntry
   const draftId = `draft-${entry_id || "new"}`
 
-  const fetchEntry = async () => {
+  useEffect(() => {
     if (!entry_id) { return loadDraft() }
-    const {data} = await fetch({route:`entries/${entry_id}`})
-    if (!data) {return} // I think if they refresh on entry/{id} while snooping?
-    const form = _.pick(data, 'title text no_ai created_at'.split(' '))
-    setForm(form)
-    setFormOrig(form)
-    setEntry(data)
-    setTags(data.entry_tags)
-  }
-
-  const fetchNotes = async () => {
-    if (!entry_id) { return }
-    const {data} = await fetch({route:`entries/${entry_id}/notes`})
-    setNotes(data)
-  }
+    emit(['entries/entry/get', {id: entry_id}])
+  }, [entry_id])
 
   useEffect(() => {
-    fetchEntry()
-    fetchNotes()
-  }, [entry_id])
+    if (!entry) {return}
+    const form = _.pick(entry, 'title text no_ai created_at'.split(' '))
+    setForm(form)
+    setFormOrig(form)
+    setTags(entry.entry_tags)
+  }, [entry])
+
+  useEffect(() => {
+    setCacheEntry(cache)
+  }, [cache])
+
+  useEffect(() => {
+    EE.on("wsResponse", data => {
+      if (data.action === 'entries/entries/post' && data.code === 200) {
+        return go(`/j/entry/${data.id}`)
+      }
+      if (data.action === 'entries/entry/delete' && data.code === 200) {
+        return go()
+      }
+    })
+    return () => EE.off("wsResponse")
+  }, [])
 
   const loadDraft = () => {
     const draft = localStorage.getItem(draftId)
@@ -138,36 +168,31 @@ export default function Entry() {
 
   const go = (to='/j') => {
     clearDraft()
-    getEntries()
+    emit(['entries/entries/get', {}])
     history.push(to)
   }
 
   const submit = async e => {
     e.preventDefault()
-    setServerError(false)
-    setSubmitting(true)
     let {title, text, no_ai, created_at} = form
     const body = {title, text, no_ai, created_at, tags}
-    const res = entry_id ? await fetch({route: `entries/${entry_id}`, method: 'PUT', body})
-      : await fetch({route: `entries`, method: 'POST', body})
-    setSubmitting(false)
-    if (res.code !== 200) {return}
-    setEditing(false)
-    go(`/j/entry/${res.data.id}`)
+    if (entry_id) {
+      emit(['entries/entry/put', {...body, id: entry_id}])
+    } else {
+      emit(['entries/entries/post', body])
+    }
   }
 
   const deleteEntry = async () => {
     if (window.confirm(`Delete "${entry.title}"`)) {
-      await fetch({route: `entries/${entry_id}`, method: 'DELETE'})
-      go()
+      emit(['entries/entry/delete', {id: entry_id}])
     }
   }
 
   const showAiSees = async () => {
     if (!entry_id) { return }
     if (cacheEntry) {return setCacheEntry(null)}
-    const {data} = await fetch({route: `entries/${entry_id}/cache`})
-    setCacheEntry(data)
+    emit(['entries/entry/cache/get', {id: entry_id}])
   }
 
   const changeTitle = e => setForm({...form, title: e.target.value})
@@ -189,8 +214,10 @@ export default function Entry() {
   }
 
   const renderButtons = () => {
-    if (as) return null
-    if (submitting) return spinner
+    if (as) {return null}
+    if (entryPost?.submitting || entryPut?.submitting) {
+      return spinner
+    }
     if (!editing) return <>
       <Button
         variant='outline-primary'
@@ -271,20 +298,26 @@ export default function Entry() {
           </>}
           <br/>
         </Form>
+        <Error
+          action={/entries\/entr(ies|y).*/g}
+          codeRange={[400,500]}
+        />
       </Col>
 
       {showCacheEntry && <Col>
         <Alert variant='info'>Paragraphs get split in the following way, and AI considers each paraph independently from the other (as if they're separate entries).</Alert>
         <div>{
-          cacheEntry.paras ? cacheEntry.paras.map(p => <><p>{p}</p><hr/></>)
+          cacheEntry.paras ? cacheEntry.paras.map((p, i) => <div key={i}>
+              <p>{p}</p><hr/>
+            </div>)
             : <p>Nothing here yet.</p>
         }</div>
         <Alert variant='info'>Keywords generated for use in Themes</Alert>
         <div>{
-          cacheEntry.clean ? cacheEntry.clean.map(p => <>
+          cacheEntry.clean ? cacheEntry.clean.map((p, i) => <div key={i}>
             <p>{_.uniq(p.split(' ')).join(' ')}</p>
             <hr/>
-          </>)
+          </div>)
             : <p>Nothing here yet.</p>
         }</div>
       </Col>}
@@ -308,19 +341,6 @@ export default function Entry() {
     </div>
   </>
 
-  const renderNotes = () => {
-    if (editing || !entry_id || notes.length === 0) { return }
-    return <div style={{marginTop: '1rem'}}>
-      {notes.map(n => <Card className='mb-3'>
-        <Card.Body>
-          <Badge variant="primary">{n.type}</Badge>{' '}
-          {n.private ? "[private] " : null}
-          {n.text}
-        </Card.Body>
-      </Card>)}
-    </div>
-  }
-
   return <>
     <Modal
       show={true}
@@ -336,13 +356,13 @@ export default function Entry() {
 
       <Modal.Body>
         {renderForm()}
-        {renderNotes()}
+        {!editing && entry_id && <Notes entry_id={entry_id} />}
       </Modal.Body>
 
 
       <Modal.Footer>
         {!editing && entry_id && <div className='mr-auto'>
-          <AddNotes entry_id={entry_id} onSubmit={fetchNotes} />
+          <AddNotes entry_id={entry_id} />
         </div>}
         {renderButtons()}
       </Modal.Footer>

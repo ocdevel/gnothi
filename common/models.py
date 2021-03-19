@@ -1,6 +1,6 @@
-import enum, pdb, re, threading, time, datetime, traceback
+import enum, pdb, re, threading, time, datetime, traceback, orjson, json
 from typing import Optional, List, Any, Dict, Union
-from pydantic import BaseModel, UUID4
+from pydantic import UUID4
 import pytz
 from uuid import uuid4
 import dateutil
@@ -8,10 +8,10 @@ import pandas as pd
 import logging
 logger = logging.getLogger(__name__)
 
-from common.database import Base, fa_users_db, session
+from common.database import Base, fa_users_db, with_db
 from common.utils import vars
 
-from sqlalchemy import text as satext, Column, Integer, Enum, Float, ForeignKey, Boolean, JSON, Date, Unicode, \
+from sqlalchemy import Column, Integer, Enum, Float, ForeignKey, Boolean, JSON, Date, Unicode, \
     func, TIMESTAMP, select, or_, and_
 from psycopg2.extras import Json as jsonb
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -21,20 +21,12 @@ from sqlalchemy.dialects.postgresql import UUID, JSONB, ARRAY
 from sqlalchemy_utils.types import EmailType
 from sqlalchemy_utils.types.encrypted.encrypted_type import StringEncryptedType, FernetEngine
 import sqlalchemy as sa
+from sqlalchemy.orm import Session
 import petname
 
 
-from fastapi_sqlalchemy import db  # an object to provide global access to a database session
 from fastapi_users import models as fu_models
 from fastapi_users.db import SQLAlchemyBaseUserTable, SQLAlchemyUserDatabase
-
-
-# Schemas naming convention: SOModel for "schema out model", SIModel for "schema in"
-class SOut(BaseModel):
-    class Config:
-        orm_mode = True
-        # json_loads = orjson.loads
-        # json_dumps = orjson.dumps
 
 
 # https://dev.to/zchtodd/sqlalchemy-cascading-deletes-8hk
@@ -56,13 +48,13 @@ def DateCol(default=True, update=False, **kwargs):
     args = {}
     # Using utcnow here caused double utc (add more hours), why? Just using now() for now,
     # and assuming you're DB server is set on UTC
-    if default: args['server_default'] = satext("now()")
-    if update: args['onupdate'] = satext("now()")
+    if default: args['server_default'] = sa.text("now()")
+    if update: args['onupdate'] = sa.text("now()")
     return Column(TIMESTAMP(timezone=True), index=True, **args, **kwargs)
 
 
 def IDCol():
-    return Column(UUID(as_uuid=True), primary_key=True, server_default=satext("uuid_generate_v4()"))
+    return Column(UUID(as_uuid=True), primary_key=True, server_default=sa.text("uuid_generate_v4()"))
 
 
 def FKCol(fk, **kwargs):
@@ -73,6 +65,7 @@ class User(Base, SQLAlchemyBaseUserTable):
     __tablename__ = 'users'
 
     cognito_id = Column(Unicode, index=True)
+    # ws_id = Column(Unicode, index=True)
 
     created_at = DateCol()
     updated_at = DateCol(update=True)
@@ -107,16 +100,16 @@ class User(Base, SQLAlchemyBaseUserTable):
     tags = relationship("Tag", order_by='Tag.name.asc()', **parent_cascade)
 
     @staticmethod
-    def snoop(viewer, as_id=None):
+    def snoop(db, viewer, as_id=None):
         as_user, snooping = None, False
         if as_id and viewer.id != as_id:
             snooping = True
-            as_user = db.session.query(User) \
+            as_user = db.query(User) \
                 .join(Share) \
                 .filter(Share.email == viewer.email, Share.user_id == as_id) \
                 .first()
         if as_user:
-            as_user.share_data = db.session.query(Share) \
+            as_user.share_data = db.query(Share) \
                 .filter_by(user_id=as_id, email=viewer.email) \
                 .first()
         else:
@@ -141,8 +134,8 @@ class User(Base, SQLAlchemyBaseUserTable):
         return txt
 
     @staticmethod
-    def last_checkin(sess):
-        return sess.execute(f"""
+    def last_checkin(db):
+        return db.execute(f"""
         select extract(
             epoch FROM (now() - max(updated_at))
         ) / 60 as mins
@@ -150,8 +143,8 @@ class User(Base, SQLAlchemyBaseUserTable):
         """).fetchone().mins or 99
 
     @staticmethod
-    def tz(sess, user_id):
-        return sess.execute(satext(f"""
+    def tz(db, user_id):
+        return db.execute(sa.text(f"""
         select coalesce(timezone, 'America/Los_Angeles') as tz
         from users where id=:user_id
         """), dict(user_id=user_id)).fetchone().tz
@@ -161,54 +154,6 @@ class FU_UserCreate(fu_models.BaseUserCreate): pass
 class FU_UserUpdate(FU_User, fu_models.BaseUserUpdate): pass
 class FU_UserDB(FU_User, fu_models.BaseUserDB): pass
 user_db = SQLAlchemyUserDatabase(FU_UserDB, fa_users_db, User.__table__)
-
-
-class SITimezone(BaseModel):
-    timezone: Optional[str] = None
-
-
-class SIHabitica(BaseModel):
-    habitica_user_id: Optional[str] = None
-    habitica_api_token: Optional[str] = None
-
-
-class SIProfile(SITimezone):
-    username: Optional[str] = None
-    first_name: Optional[str] = None
-    last_name: Optional[str] = None
-    orientation: Optional[str] = None
-    gender: Optional[str] = None
-    birthday: Optional[Any] = None
-    bio: Optional[str] = None
-    therapist: Optional[bool] = False
-
-
-class SOProfile(SIProfile, SOut):
-    pass
-
-
-class SOSharedWithMe(SOProfile):
-    id: UUID4
-    email: str
-    new_entries: Optional[int]
-    last_seen: Optional[datetime.datetime]
-
-    profile: Optional[bool]
-    books: Optional[bool]
-    fields_: Optional[bool]
-
-    class Config:
-        fields = {'fields_': 'fields'}
-
-
-class SOUser(SOut):
-    id: UUID4
-    email: str
-    timezone: Optional[Any] = None
-    habitica_user_id: Optional[str] = None
-    habitica_api_token: Optional[str] = None
-    is_cool: Optional[bool] = False
-    paid: Optional[bool] = False
 
 
 class Entry(Base):
@@ -236,10 +181,11 @@ class Entry(Base):
 
     @property
     def entry_tags(self):
-        return {t.tag_id: True for t in self.entry_tags_}
+        return {str(t.tag_id): True for t in self.entry_tags_}
 
     @staticmethod
     def snoop(
+        db: Session,
         viewer_email: str,
         target_id: str,
         snooping: bool = False,
@@ -250,9 +196,9 @@ class Entry(Base):
         for_ai: bool = False
     ):
         if not snooping:
-            q = db.session.query(Entry).filter(Entry.user_id == target_id)
+            q = db.query(Entry).filter(Entry.user_id == target_id)
         if snooping:
-            q = db.session.query(Entry)\
+            q = db.query(Entry)\
                 .join(EntryTag, Entry.id == EntryTag.entry_id)\
                 .join(ShareTag, EntryTag.tag_id == ShareTag.tag_id)\
                 .join(Share, ShareTag.share_id == Share.id)\
@@ -262,8 +208,8 @@ class Entry(Base):
             update shares set last_seen=now(), new_entries=0
             where email=:email and user_id=:uid
             """
-            db.session.execute(satext(sql), dict(email=viewer_email, uid=target_id))
-            db.session.commit()
+            db.execute(sa.text(sql), dict(email=viewer_email, uid=target_id))
+            db.commit()
 
         if entry_id:
             q = q.filter(Entry.id == entry_id)
@@ -288,7 +234,7 @@ class Entry(Base):
             order_by = Entry.created_at.desc()
         return q.order_by(order_by)
 
-    def run_models(self):
+    def run_models(self, db):
         self.ai_ran = False
         if self.no_ai:
             self.title_summary = self.text_summary = self.sentiment = None
@@ -300,10 +246,10 @@ class Entry(Base):
         self.text_summary = "🕒 AI is generating a summary"
         # not used in nlp, but some other meta stuff
         data_in = dict(args=[str(self.id)])
-        Job.create_job(method='entries', data_in=data_in)
+        Job.create_job(db, user_id=self.user_id, method='entries', data_in=data_in)
 
 
-    def update_snoopers(self):
+    def update_snoopers(self, db):
         """Updates snoopers with n_new_entries since last_seen"""
         sql = """
         with news as (
@@ -318,29 +264,8 @@ class Entry(Base):
         )
         update shares s set new_entries=n.ct from news n where n.id=s.id
         """
-        db.session.execute(satext(sql), {'uid': self.user_id})
-        db.session.commit()
-
-
-class SEntry(BaseModel):
-    title: Optional[str] = None
-    text: str
-    no_ai: Optional[bool] = False
-
-
-class SIEntry(SEntry):
-    tags: dict
-    created_at: Optional[str] = None
-
-
-class SOEntry(SEntry, SOut):
-    id: UUID4
-    created_at: datetime.datetime
-    ai_ran: Optional[bool] = None
-    title_summary: Optional[str] = None
-    text_summary: Optional[str] = None
-    sentiment: Optional[str] = None
-    entry_tags: Dict
+        db.execute(sa.text(sql), {'uid': self.user_id})
+        db.commit()
 
 
 class NoteTypes(enum.Enum):
@@ -361,12 +286,13 @@ class Note(Base):
 
     @staticmethod
     def snoop(
+        db: Session,
         viewer_id: UUID4,
         target_id: UUID4,
         entry_id: UUID4,
     ):
         # TODO use .join(ShareTag) for non-private permissions?
-        return db.session.query(Note)\
+        return db.query(Note)\
             .join(Entry)\
             .filter(
                 Note.entry_id == entry_id,
@@ -377,18 +303,6 @@ class Note(Base):
                     and_(Note.private.is_(False), Entry.user_id.in_((viewer_id, target_id)))
                 ))\
             .order_by(Note.created_at.asc())
-
-
-class SINote(BaseModel):
-    type: NoteTypes
-    text: str
-    private: bool
-
-
-class SONote(SOut, SINote):
-    id: UUID4
-    user_id: UUID4
-    created_at: datetime.datetime
 
 
 class FieldType(enum.Enum):
@@ -450,59 +364,23 @@ class Field(Base):
     avg = Column(Float, server_default="0")
 
     @staticmethod
-    def update_avg(fid):
-        db.session.execute(satext("""
+    def update_avg(db, fid):
+        db.execute(sa.text("""
         update fields set avg=(
             select avg(value) from field_entries2 fe
             where fe.field_id=:fid and fe.value is not null
         ) where id=:fid
         """), dict(fid=fid))
-        db.session.commit()
+        db.commit()
 
     @staticmethod
-    def get_history(fid):
+    def get_history(db, fid):
         FE = FieldEntry
-        return db.session.query(FE)\
+        return db.query(FE)\
             .with_entities(FE.value, FE.created_at)\
             .filter(FE.field_id == fid, FE.value.isnot(None), FE.created_at.isnot(None))\
             .order_by(FE.created_at.asc())\
             .all()
-
-
-class SIFieldExclude(BaseModel):
-    excluded_at: Optional[datetime.datetime] = None
-
-
-class SIField(SIFieldExclude):
-    type: FieldType
-    name: str
-    default_value: DefaultValueTypes
-    default_value_value: Optional[float] = None
-
-
-class SOFieldHistory(SOut):
-    value: float
-    created_at: datetime.datetime
-
-
-# TODO can't get __root__ setup working
-class SOField(SOut):
-    id: UUID4
-    type: FieldType
-    name: str
-    created_at: Optional[datetime.datetime] = None
-    excluded_at: Optional[datetime.datetime] = None
-    default_value: Optional[DefaultValueTypes] = DefaultValueTypes.value
-    default_value_value: Optional[float] = None
-    service: Optional[str] = None
-    service_id: Optional[str] = None
-    avg: Optional[float] = 0.
-    influencer_score: Optional[float] = 0.
-    next_pred: Optional[float] = 0.
-
-# class SOFields(SOut):
-#     __root__: Dict[UUID4, SOField]
-SOFields = Dict[UUID4, SOField]
 
 
 class FieldEntryOld(Base):
@@ -537,10 +415,10 @@ class FieldEntry(Base):
     dupe = Column(Integer, server_default="0")
 
     @staticmethod
-    def get_day_entries(sess, user_id, day=None):
+    def get_day_entries(db, user_id, day=None):
         user_id = str(user_id)
-        tz = User.tz(sess, user_id)
-        res = sess.execute(satext(f"""
+        tz = User.tz(db, user_id)
+        res = db.execute(sa.text(f"""
         select fe.* from field_entries2 fe
         where fe.user_id=:user_id
         and date({tz_read})=
@@ -550,7 +428,7 @@ class FieldEntry(Base):
         return res.fetchall()
 
     @staticmethod
-    def upsert(sess, user_id, field_id, value, day:str=None):
+    def upsert(db, user_id, field_id, value, day:str=None):
         """
         Create a field-entry, but if one exists for the specified day update it instead.
         """
@@ -558,8 +436,8 @@ class FieldEntry(Base):
         # to one system as much as possible. Below says "if they said a day (like '2020-11-19'), convert that
         # to a timestamp at UTC; then convert that to their own timezone". timestamptz cast first is important, see
         # https://stackoverflow.com/a/25123558/362790
-        tz = User.tz(sess, user_id)
-        res = sess.execute(satext(f"""
+        tz = User.tz(db, user_id)
+        res = db.execute(sa.text(f"""
         insert into field_entries2 (user_id, field_id, value, day, created_at)
         values (:user_id, :field_id, :value, date({tz_read}), {tz_write})
         on conflict (field_id, day) do update set value=:value, dupes=null, dupe=0
@@ -571,17 +449,8 @@ class FieldEntry(Base):
             day=day,
             tz=tz
         ))
-        sess.commit()
+        db.commit()
         return res.fetchone()
-
-
-class SIFieldEntry(BaseModel):
-    value: float
-
-
-class SIFieldEntryPick(BaseModel):
-    value: float
-    day: str
 
 
 class Person(Base):
@@ -593,18 +462,6 @@ class Person(Base):
     bio = Encrypt()
 
     user_id = FKCol('users.id', index=True)
-
-
-class SIPerson(BaseModel):
-    name: Optional[str] = None
-    relation: Optional[str] = None
-    issues: Optional[str] = None
-    bio: Optional[str] = None
-
-
-class SOPerson(SIPerson, SOut):
-    id: UUID4
-    pass
 
 
 class Share(Base):
@@ -621,38 +478,19 @@ class Share(Base):
     tags_ = relationship("Tag", secondary="shares_tags")
 
     last_seen = DateCol()
-    new_entries = Column(Integer, server_default=satext("0"))
+    new_entries = Column(Integer, server_default=sa.text("0"))
 
     @property
     def tags(self):
-        return {t.tag_id: True for t in self.share_tags}
+        return {str(t.tag_id): True for t in self.share_tags}
 
     @staticmethod
-    def shared_with_me(email):
-        return db.session.execute("""
+    def shared_with_me(db: Session, email):
+        return db.execute("""
         select s.*, u.* from users u
         inner join shares s on s.email=:email and u.id=s.user_id
         """, {'email': email}).fetchall()
 
-
-class SIShare(BaseModel):
-    email: str
-    fields_: Optional[bool] = False
-    books: Optional[bool] = False
-    profile: Optional[bool] = False
-    tags: Optional[dict] = {}
-
-    class Config:
-        fields = {'fields_': 'fields'}
-
-
-class SOShare(SIShare):
-    id: UUID4
-    user_id: UUID4
-
-    class Config:
-        fields = {'fields_': 'fields'}
-        orm_mode = True
 
 
 class Tag(Base):
@@ -668,28 +506,15 @@ class Tag(Base):
     shares = relationship("Share", secondary="shares_tags")
 
     @staticmethod
-    def snoop(from_email, to_id, snooping=False):
+    def snoop(db: Session, from_email, to_id, snooping=False):
         if snooping:
-            q = db.session.query(Tag)\
+            q = db.query(Tag)\
                 .with_entities(Tag.id, Tag.user_id, Tag.name, Tag.created_at, Tag.main, ShareTag.selected)\
                 .join(ShareTag, Share)\
                 .filter(Share.email == from_email, Share.user_id == to_id)
         else:
-            q = db.session.query(Tag).filter_by(user_id=to_id)
+            q = db.query(Tag).filter_by(user_id=to_id)
         return q.order_by(Tag.main.desc(), Tag.created_at.asc(), Tag.name.asc())
-
-
-class SITag(BaseModel):
-    name: str
-    selected: Optional[bool] = False
-
-
-class SOTag(SITag, SOut):
-    id: UUID4
-    user_id: UUID4
-    name: str
-    selected: Optional[bool] = False
-    main: Optional[bool] = False
 
 
 class EntryTag(Base):
@@ -716,7 +541,7 @@ class Book(Base):
     author = Column(Unicode)
     topic = Column(Unicode)
 
-    thumbs = Column(Integer, server_default=satext("0"))
+    thumbs = Column(Integer, server_default=sa.text("0"))
     amazon = Column(Unicode)
 
 
@@ -741,48 +566,45 @@ class Bookshelf(Base):
     score = Column(Float)  # only for ai-recs
 
     @staticmethod
-    def update_books(user_id):
-        with db():
-            # every x thumbs, update book recommendations
-            sql = """
-            select count(*)%8=0 as ct from bookshelf 
-            where user_id=:uid and shelf not in ('ai', 'cosine')
-            """
-            should_update = db.session.execute(satext(sql), {'uid':user_id}).fetchone().ct
-            if should_update:
-                Job.create_job(method='books', data_in={'args': [str(user_id)]})
+    def update_books(db, user_id):
+        # every x thumbs, update book recommendations
+        sql = """
+        select count(*)%8=0 as ct from bookshelf 
+        where user_id=:uid and shelf not in ('ai', 'cosine')
+        """
+        should_update = db.execute(sa.text(sql), {'uid':user_id}).fetchone().ct
+        if should_update:
+            Job.create_job(db, user_id=user_id, method='books', data_in={'args': [str(user_id)]})
 
     @staticmethod
-    def upsert(user_id, book_id, shelf):
-        db.session.execute(satext("""
+    def upsert(db, user_id, book_id, shelf):
+        db.execute(sa.text("""
         insert into bookshelf(book_id, user_id, shelf)  
         values (:book_id, :user_id, :shelf)
         on conflict (book_id, user_id) do update set shelf=:shelf
         """), dict(user_id=user_id, book_id=int(book_id), shelf=shelf))
 
         dir = dict(ai=0, cosine=0, like=1, already_read=1, dislike=-1, remove=0, recommend=1)[shelf]
-        db.session.execute(satext("""
+        db.execute(sa.text("""
         update books set thumbs=thumbs+:dir where id=:bid
         """), dict(dir=dir, bid=book_id))
 
-        db.session.commit()
-        threading.Thread(target=Bookshelf.update_books, args=(user_id,)).start()
+        db.commit()
+        Bookshelf.update_books(db, user_id)
 
     @staticmethod
-    def get_shelf(user_id, shelf):
-        books = db.session.execute(satext(f"""
+    def get_shelf(db, user_id, shelf):
+        books = db.execute(sa.text(f"""
         select b.id, b.title, b.text, b.author, b.topic, b.amazon
         from books b 
         inner join bookshelf bs on bs.book_id=b.id 
             and bs.user_id=:uid and bs.shelf=:shelf
         order by bs.score asc
         """), dict(uid=user_id, shelf=shelf)).fetchall()
-        print(len(books))
         return books
-        # return [dict(b) for b in books]
 
     @staticmethod
-    def books_with_scores(sess, uid):
+    def books_with_scores(db: Session, uid):
         """
         Get all thumbs for books. This is used by gpu/books.py for predicting recommendations, and the thumbs
         push up-votes closer; down-votes further. Weight this-user's thumbs very high (of course), but also factor
@@ -815,11 +637,11 @@ class Bookshelf(Base):
         -- sort id asc since that's how we mapped to numpy vectors in first place (order_values)
         order by b.id asc
         """
-        return pd.read_sql(sql, sess.bind, params={'uid': uid})\
+        return pd.read_sql(sql, db.bind, params={'uid': uid})\
             .set_index('id', drop=False)
 
     @staticmethod
-    def top_books():
+    def top_books(db):
         sql = f"""
         with books_ as (
             select b.id, count(s.shelf) ct from books b
@@ -831,7 +653,7 @@ class Bookshelf(Base):
         inner join books_ b_ on b_.id=b.id
         order by b_.ct desc limit 10
         """
-        return db.session.execute(sql).fetchall()
+        return db.execute(sql).fetchall()
 
 
 class MachineTypes(enum.Enum):
@@ -842,6 +664,7 @@ class MachineTypes(enum.Enum):
 class Job(Base):
     __tablename__ = 'jobs'
     id = IDCol()
+    user_id = FKCol('users.id')
     created_at = DateCol()
     updated_at = DateCol(update=True)
     method = Column(Unicode, index=True, nullable=False)
@@ -853,47 +676,46 @@ class Job(Base):
     data_out = Column(JSONB)
 
     @staticmethod
-    def create_job(method, data_in={}, **kwargs):
+    def create_job(db, user_id, method, data_in={}, **kwargs):
         """
         Ensures certain jobs only created once at a time. Never manually add Job() call this instead
         """
-        with session() as sess:
-            arg0 = data_in.get('args', [None])[0]
-            if type(arg0) != str: arg0 = None
+        arg0 = data_in.get('args', [None])[0]
+        if type(arg0) != str: arg0 = None
 
-            # For entries, profiles: set ai_ran=False to queue them into the next batch
-            if method in ('entries', 'profiles') and arg0:
-                table = dict(entries='entries', profiles='users')[method]
-                sess.execute(satext(f"""
-                update {table} set ai_ran=False where id=:id;
-                """), dict(id=arg0))
-                sess.commit()
+        # For entries, profiles: set ai_ran=False to queue them into the next batch
+        if method in ('entries', 'profiles') and arg0:
+            table = dict(entries='entries', profiles='users')[method]
+            db.execute(sa.text(f"""
+            update {table} set ai_ran=False where id=:id;
+            """), dict(id=arg0))
+            db.commit()
 
-            exists = sess.execute(satext("""
-            select 1 from jobs
-            -- maybe if we're mid-job, things have changed; so don't incl. working? rethink 
-            --where method=:method and state in ('new', 'working') and
-            where method=:method and state='new' and
-            case
-                when method='influencers' then true
-                when method='books' and data_in->'args'->>0=:arg0 then true
-                when method='entries' and data_in->'args'->>0=:arg0 then true
-                when method='profiles' and data_in->'args'->>0=:arg0 then true
-                when method='habitica' then true
-                else false
-            end
-            """), dict(method=method, arg0=arg0)).fetchone()
-            if exists: return False
+        exists = db.execute(sa.text("""
+        select 1 from jobs
+        -- maybe if we're mid-job, things have changed; so don't incl. working? rethink 
+        --where method=:method and state in ('new', 'working') and
+        where method=:method and state='new' and
+        case
+            when method='influencers' then true
+            when method='books' and data_in->'args'->>0=:arg0 then true
+            when method='entries' and data_in->'args'->>0=:arg0 then true
+            when method='profiles' and data_in->'args'->>0=:arg0 then true
+            when method='habitica' then true
+            else false
+        end
+        """), dict(method=method, arg0=arg0)).fetchone()
+        if exists: return False
 
-            j = Job(method=method, data_in=data_in, **kwargs)
-            sess.add(j)
-            sess.commit()
-            sess.refresh(j)
-            return str(j.id)
+        j = Job(user_id=user_id, method=method, data_in=data_in, **kwargs)
+        db.add(j)
+        db.commit()
+        db.refresh(j)
+        return str(j.id)
 
     @staticmethod
-    def place_in_queue(jid):
-        return db.session.execute(satext(f"""
+    def place_in_queue(db, jid):
+        return db.execute(sa.text(f"""
         select (
             (select count(*) from jobs where state in ('working', 'new') and created_at < (select created_at from jobs where id=:jid))
             / greatest((select count(*) from machines where status in ('on', 'pending')), 1)
@@ -913,13 +735,14 @@ class Job(Base):
             res = dict(error=err)
             sql = "update jobs set state='error', data_out=:data where id=:jid"
             logger.error(f"Job {method} error {time.time() - start} {err}")
-        with session() as sess:
-            sess.execute(satext(sql), dict(data=jsonb(res), jid=str(jid)))
-            sess.commit()
+        with with_db() as db:
+            db.execute(sa.text(sql), dict(data=jsonb(res), jid=str(jid)))
+            db.execute(sa.text("select pg_notify('jobs', :jid)"), dict(jid=str(jid)))
+            db.commit()
 
     @staticmethod
-    def take_job(sess, sql_frag):
-        job = sess.execute(satext(f"""
+    def take_job(db, sql_frag):
+        job = db.execute(sa.text(f"""
         update jobs set state='working', machine_id=:machine 
         where id = (
             select id from jobs 
@@ -930,19 +753,18 @@ class Job(Base):
         )
         returning id, method
         """), dict(machine=vars.MACHINE)).fetchone()
-        sess.commit()
+        db.commit()
         return job
 
     @staticmethod
-    def prune():
-        with session() as sess:
-            """prune completed or stuck jobs. Completed jobs aren't too useful for admins; error is."""
-            sess.execute(f"""
-            delete from jobs 
-            where updated_at < now() - interval '10 minutes' 
-                and state in ('working', 'done') 
-            """)
-            sess.commit()
+    def prune(db):
+        """prune completed or stuck jobs. Completed jobs aren't too useful for admins; error is."""
+        db.execute(f"""
+        delete from jobs 
+        where updated_at < now() - interval '10 minutes' 
+            and state in ('working', 'done') 
+        """)
+        db.commit()
 
     # ea063dfa: last_job()
 
@@ -959,9 +781,10 @@ class Machine(Base):
     updated_at = DateCol(update=True)
 
     @staticmethod
-    def gpu_status(sess):
-        res = sess.execute(f"""
+    def gpu_status(db):
+        res = db.execute(f"""
         select status from machines
+        where updated_at > now() - interval '5 minutes'
         -- prefer 'on' over others, to show online if so
         order by case 
             when status='on' then 1
@@ -973,48 +796,30 @@ class Machine(Base):
         return res.status if res else "off"
 
     @staticmethod
-    def notify_online(sess, id, status='on'):
+    def notify_online(db, id, status='on'):
         # missing vals get server_default
-        sess.execute(satext(f"""
+        db.execute(sa.text(f"""
         insert into machines (id, status) values (:id, :status)
         on conflict(id) do update set status=:status, updated_at=now()
         """), dict(id=id, status=status))
-        sess.commit()
+        db.commit()
 
     @staticmethod
-    def prune():
-        with session() as sess:
-            """prune machines which haven't removed themselves properly"""
-            sess.execute(f"""
-            delete from machines where updated_at < now() - interval '5 minutes' 
-            """)
-            sess.commit()
+    def prune(db):
+        """prune machines which haven't removed themselves properly"""
+        db.execute(f"""
+        delete from machines where updated_at < now() - interval '5 minutes' 
+        """)
+        db.commit()
 
     @staticmethod
-    def job_ct_on_machine(sess, id):
-        return sess.execute(satext(f"""
+    def job_ct_on_machine(db, id):
+        return db.execute(sa.text(f"""
         select count(*) ct from jobs where state='working'
             and machine_id=:id
             -- check time in case broken/stale
             and created_at > now() - interval '2 minutes'
         """), dict(id=id)).fetchone().ct
-
-
-class SILimitEntries(BaseModel):
-    days: int
-    tags: List[str] = None
-
-
-class SIQuestion(SILimitEntries):
-    question: str
-
-
-class SISummarize(SILimitEntries):
-    words: int
-
-
-class SIThemes(SILimitEntries):
-    algo: Optional[str] = 'agglomorative'
 
 
 ###
@@ -1029,7 +834,7 @@ class CacheEntry(Base):
     vectors = Column(ARRAY(Float, dimensions=2))
 
     @staticmethod
-    def get_paras(entries_q, profile_id=None):
+    def get_paras(db, entries_q, profile_id=None):
         CE, CU = CacheEntry, CacheUser
         entries = entries_q.join(CE, CE.entry_id == Entry.id) \
             .filter(func.array_length(CE.paras,1)>0) \
@@ -1037,7 +842,7 @@ class CacheEntry(Base):
         paras = [p for e in entries for p in e.paras if e.paras]
 
         if profile_id:
-            profile = db.session.query(CU) \
+            profile = db.query(CU) \
                 .filter(func.array_length(CU.paras,1)>0, CU.user_id == profile_id) \
                 .with_entities(CU.paras) \
                 .first()
@@ -1113,22 +918,22 @@ class Group(Base):
     updated_at = DateCol(update=True)
 
     @staticmethod
-    def create_group(sess, title, text, owner, privacy=GroupPrivacy.public):
+    def create_group(db, title, text, owner, privacy=GroupPrivacy.public):
         g = Group(
             title=title,
             text=text,
             privacy=privacy,
             owner=owner,
         )
-        sess.add(g)
-        sess.commit()
-        sess.refresh(g)
-        sess.add(UserGroup(
+        db.add(g)
+        db.commit()
+        db.refresh(g)
+        db.add(UserGroup(
             group_id=g.id,
             user_id=owner,
             role=GroupRoles.owner
         ))
-        sess.commit()
+        db.commit()
         return g
 
     def to_json(self):
@@ -1143,44 +948,29 @@ class Group(Base):
         )
 
     @staticmethod
-    def join_group(sess, gid, uid, role=GroupRoles.member):
-        if sess.query(UserGroup).filter_by(user_id=uid, group_id=gid).first():
+    def join_group(db, gid, uid, role=GroupRoles.member):
+        if db.query(UserGroup).filter_by(user_id=uid, group_id=gid).first():
             return None
         ug = UserGroup(
             user_id=uid,
             group_id=gid,
             role=role
         )
-        sess.add(ug)
-        sess.commit()
+        db.add(ug)
+        db.commit()
         return ug
 
     @staticmethod
-    def leave_group(sess, gid, uid):
-        ug = sess.query(UserGroup) \
+    def leave_group(db, gid, uid):
+        ug = db.query(UserGroup) \
             .filter_by(user_id=uid, group_id=gid)
         ug_ = ug.first()
         if ug_:
             #  since won't be available after delete
             ug_ = ug_.__dict__
         ug.delete()
-        db.session.commit()
+        db.commit()
         return ug_
-
-
-class SIGroup(BaseModel):
-    title: str
-    text: Optional[str] = ""
-    privacy: GroupPrivacy
-
-
-class SOGroup(SIGroup, SOut):
-    id: UUID4
-    owner: UUID4
-    privacy: GroupPrivacy
-    created_at: datetime.datetime
-    members: Optional[Dict[str, str]] = {}
-    role: Optional[GroupRoles] = None
 
 
 class UserGroup(Base):
@@ -1203,9 +993,9 @@ class UserGroup(Base):
     role = Column(Enum(GroupRoles))
 
     @staticmethod
-    def get_members(sess, gid):
+    def get_members(db, gid):
         user_fields = "username first_name last_name bio".split() # username avatar
-        rows = sess.query(UserGroup, User)\
+        rows = db.query(UserGroup, User)\
             .join(User, User.id == UserGroup.user_id)\
             .filter(UserGroup.group_id == gid)\
             .options(
@@ -1239,6 +1029,22 @@ class UserGroup(Base):
         #     for ug in res
         # }
 
+    @staticmethod
+    def get_uids(db, gid):
+        UG = UserGroup
+        res = db.query(UG.user_id) \
+            .filter(UG.group_id == gid, UG.role != GroupRoles.banned)\
+            .all()
+        return [r.user_id for r in res]
+
+    @staticmethod
+    def get_role(db: Session, uid, gid):
+        UG = UserGroup
+        role = db.query(UG.role)\
+            .filter(UG.user_id==uid, UG.group_id==gid, UG.role!=GroupRoles.banned)\
+            .scalar()
+        return role.value if role else None
+
 
 class Message(Base):
     __tablename__ = 'messages'
@@ -1250,10 +1056,6 @@ class Message(Base):
     created_at = DateCol()
     updated_at = DateCol(update=True)
     text = Encrypt(Unicode, nullable=False)
-
-
-class SIMessage(BaseModel):
-    message: str
 
 
 class MessagePing(Base):
@@ -1271,10 +1073,10 @@ class MessageReaction(Base):
     created_at = DateCol()
 
 
-def await_row(sess, sql, args={}, wait=.5, timeout=None):
+def await_row(db, sql, args={}, wait=.5, timeout=None):
     i = 0
     while True:
-        res = sess.execute(satext(sql), args).fetchone()
+        res = db.execute(sa.text(sql), args).fetchone()
         if res: return res
         time.sleep(wait)
         if timeout and wait * i >= timeout:

@@ -22,15 +22,14 @@ import {useStoreState, useStoreActions} from "easy-peasy";
 
 
 export default function MainNav() {
-  const fetch = useStoreActions(actions => actions.server.fetch)
-  const changeAs = useStoreActions(actions => actions.user.changeAs)
+  const changeAs = useStoreActions(a => a.ws.changeAs)
   const logout = useStoreActions(actions => actions.user.logout)
 
-  const user = useStoreState(state => state.user.user)
-  const shares = useStoreState(state => state.user.shares)
-  const as = useStoreState(state => state.user.as)
-  const asUser = useStoreState(state => state.user.asUser)
-  const aiStatus = useStoreState(state => state.server.ai)
+  const user = useStoreState(s => s.ws.data['users/user/get'])
+  const shares = useStoreState(s => s.ws.data['users/shares/get'])
+  const as = useStoreState(s => s.ws.as)
+  const asUser = useStoreState(s => s.ws.asUser)
+  const aiStatus = useStoreState(s => s.ws.data['jobs/status'].status)
 
   const renderAsSelect = () => {
     if (!shares.length) {

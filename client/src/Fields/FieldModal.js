@@ -5,7 +5,7 @@ import {Button, Form, Modal} from "react-bootstrap";
 import {useStoreActions, useStoreState} from "easy-peasy";
 
 export default function FieldModal({close, field= {}}) {
-  const fetch = useStoreActions(actions => actions.server.fetch)
+  const emit = useStoreActions(a => a.ws.emit)
 
   const form_ =
     field.id ? _.pick(field, ['name', 'type', 'default_value', 'default_value_value'])
@@ -24,9 +24,9 @@ export default function FieldModal({close, field= {}}) {
       default_value_value: _.isEmpty(form.default_value_value) ? null : form.default_value_value,
     }
     if (fid) {
-      await fetch({route: `fields/${fid}`, method: 'PUT', body})
+       emit(['fields/field/put', {id: fid, ...body}])
     } else {
-      await fetch({route: `fields`, method: 'POST', body})
+       emit(['fields/fields/post', body])
     }
 
     close()
@@ -39,13 +39,13 @@ export default function FieldModal({close, field= {}}) {
     if (!window.confirm("Are you sure? This will delete all data for this field.")) {
       return
     }
-    await fetch({route: `fields/${fid}`, method: 'DELETE'})
+    emit(['fields/field/delete', {id: fid}])
     close()
   }
 
   const excludeField = async (exclude=true) => {
     const body = {excluded_at: exclude ? new Date() : null}
-    await fetch({route: `fields/${fid}/exclude`, method: 'PUT', body})
+    emit(['fields/field/exclude', {id: fid, body}])
     close(false)
   }
 

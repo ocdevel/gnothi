@@ -15,16 +15,13 @@ import {SimplePopover} from "../utils";
 import {useStoreActions, useStoreState} from "easy-peasy";
 
 export function NotesAll() {
-  const as = useStoreState(state => state.user.as)
-  const fetch = useStoreActions(actions => actions.server.fetch)
+  return null
+  const as = useStoreState(state => state.ws.as)
+  const emit = useStoreActions(a => a.ws.emit)
+  const notes = useStoreState(s => s.ws.data['entries/notes/get'])
 
-  const [notes, setNotes] = useState([])
-  const fetchNotes = async () => {
-    const {data} = await fetch({route: `notes`})
-    setNotes(data)
-  }
   useEffect(() => {
-    fetchNotes()
+    emit(['entries/notes/get', {}])
   }, [as])
 
   if (!notes.length) {return null}
@@ -77,8 +74,8 @@ const noteTypes = [{
 }]
 
 export function AddNotes({entry_id, onSubmit}) {
-  const as = useStoreState(state => state.user.as)
-  const fetch = useStoreActions(actions => actions.server.fetch)
+  const as = useStoreState(state => state.ws.as)
+  const emit = useStoreActions(a => a.ws.emit)
 
   const [adding, setAdding] = useState(null)
   const [text, setText] = useState('')
@@ -152,10 +149,9 @@ export function AddNotes({entry_id, onSubmit}) {
 
   const submit = async (e) => {
     e.preventDefault()
-    const body = {type: adding, text, private: private_}
-    await fetch({route: `entries/${entry_id}/notes`, method: 'POST', body})
+    const body = {entry_id, type: adding, text, private: private_}
+    emit(['entries/notes/post', body])
     clear()
-    onSubmit()
   }
 
   const renderForm = () => {

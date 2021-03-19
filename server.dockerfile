@@ -6,6 +6,7 @@ RUN curl -s https://raw.githubusercontent.com/lefnire/ml-tools/master/dockerfile
 RUN apt-get install -y default-libmysqlclient-dev
 
 RUN pip install \
+  sqlalchemy==1.3.23 \
   python-multipart \
   fastapi-sqlalchemy \
   psycopg2-binary \
@@ -36,7 +37,8 @@ RUN pip install \
   fastapi-utils \
   aioredis \
   orjson \
-  python-jose
+  python-jose \
+  broadcaster[postgres]
 
 COPY ./server/app /app/app
 COPY ./common /app/common

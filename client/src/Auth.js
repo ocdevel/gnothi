@@ -11,7 +11,7 @@ import Error from './Error'
 import {spinner} from './utils'
 import {useStoreState, useStoreActions} from "easy-peasy";
 import axios from 'axios'
-import {API_URL} from "./redux/server";
+import {API_URL} from "./redux/ws";
 
 import { useForm } from "react-hook-form";
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -244,7 +244,7 @@ export function Authenticate() {
 }
 
 export function ResetPassword() {
-  const as = useStoreState(state => state.user.as)
+  const as = useStoreState(state => state.ws.as)
   const fetch = useStoreActions(actions => actions.server.fetch)
 
   const [submitting, setSubmitting] = useState(false)

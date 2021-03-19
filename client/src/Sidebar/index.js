@@ -23,22 +23,12 @@ import {FaAmazon} from "react-icons/fa";
 // import Ads from "./Ads";
 
 function TopBooks() {
-  const fetch = useStoreActions(actions => actions.server.fetch)
-
-  const [books, setBooks] = useState([])
-
-  const fetchBooks = async () => {
-    const {data} = await fetch({route: 'top-books'})
-    setBooks(data)
-  }
-
-  useEffect(() => {
-    fetchBooks()
-  }, [])
+  const emit = useStoreActions(actions => actions.ws.emit)
+  const books = useStoreState(s => s.ws.data['insights/top_books/get'])
 
   return <>
     <Alert variant='info'>To see books recommended to you based on your journal entries, go to <Link to='/resources'><FaBook /> Resources</Link>. Below are some (non-personalized) popular books in the community.</Alert>
-    {books.map((b, i) => <div>
+    {books.map((b, i) => <div key={i}>
       <a href={b.amazon} target='_blank'>{b.title}</a> -{' '}
       <small className='text-muted'>
         {b.author} - {b.topic} -{' '}
@@ -50,8 +40,6 @@ function TopBooks() {
 }
 
 export default function Sidebar() {
-  const user = useStoreState(state => state.user.user)
-  const fetch = useStoreActions(actions => actions.server.fetch)
 
   return <>
     <Accordion defaultActiveKey="fields">

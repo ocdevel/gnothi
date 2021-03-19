@@ -1,9 +1,6 @@
 import pdb, re, datetime, logging, boto3, io
-from app.app_app import app
-from app.app_jwt import jwt_user
-from fastapi import Depends
-from sqlalchemy.orm import Session
-from common.database import get_db
+from typing import Dict, List, Any
+from common.database import with_db
 import sqlalchemy as sa
 import common.models as M
 from passlib.context import CryptContext
@@ -21,43 +18,8 @@ S = "server/auth"
 C = "client/auth"
 
 
-def get_cognito_user(token):
-    # claims = decode_jwt(token)
-    return cognito_client.get_user(AccessToken=token)
-
-
-class JWT(BaseModel):
+class JWTIn(BaseModel):
     jwt: str
-
-
-@app.post("/cognito")
-async def on_cognito(data: JWT):
-    print(get_cognito_user(data.jwt))
-
-
-async def migrate_user(db, email, password=None):
-    response = cognito_client.admin_create_user(
-        UserPoolId=userpool_id,
-        Username=email,
-        UserAttributes=[
-            dict(Name='email', Value=email)
-        ],
-        MessageAction='SUPPRESS' if password else 'RESEND',
-    )
-    cognito_id = response['User']['Username']
-    db.execute(sa.text("""
-    update users set cognito_id=:cognito_id, password=null
-    where email=:email
-    """), cognito_id=cognito_id, email=email)
-    db.commit()
-    if not password:
-        return
-    return cognito_client.admin_set_user_password(
-        UserPoolId=userpool_id,
-        Username=cognito_id,
-        Password=password,
-        Permanent=True
-    )
 
 
 class SIEmail(BaseModel):
@@ -68,30 +30,86 @@ class SILogin(SIEmail):
     password: str
 
 
-@app.post("/auth/old/login")
-async def auth_old_login(data: SILogin, db: Session = Depends(get_db)):
-    user = db.query(M.User).filter_by(email=data.email)\
-        .with_entities(M.User.email, M.User.hashed_password)\
-        .filter(M.User.hashed_password.isnot(None))\
-        .first()
-    if not user:
-        return dict(notexists=True)
-    verified, _ = pwd_context.verify_and_update(data.password, user.hashed_password)
-    if not verified:
-        return dict(wrong=True)
-    await migrate_user(db, data.email, data.password)
-    return dict(migrated=True)
+class Auth:
+    @staticmethod
+    def _get_cognito_user(token):
+        # claims = decode_jwt(token)
+        res = cognito_client.get_user(AccessToken=token)
+        return dict(
+            id=res['Username'],
+            email=next(x['Value'] for x in res['UserAttributes'] if x['Name'] == 'email')
+        )
+
+    @staticmethod
+    def _cognito_to_uid(token):
+        claims = decode_jwt(token)
+        cog_id = claims['sub']
+        with with_db() as db:
+            uid = db.query(M.User.id).filter_by(cognito_id=cog_id).scalar()
+            if uid: return uid
+            cog_user = Auth._get_cognito_user(token)
+            user = db.query(M.User).filter_by(email=cog_user['email']).first()
+            if not user:
+                # TODO create new user
+                return
+            user.cognito_id = cog_user['id']
+            db.commit()
+            return user.id
 
 
-@app.post("/auth/old/reset-password")
-async def auth_old_reset(data: SIEmail, db: Session = Depends(get_db)):
-    user = db.query(M.User).filter_by(email=data.email) \
-        .with_entities(M.User.email) \
-        .first()
-    if not user:
-        return dict(notexists=False)
-    await migrate_user(db, data.email)
-    return dict(migrated=True)
+    async def jwt(self, data: JWTIn, d) -> BaseModel:
+        res = d.db.execute("select 1").first()
+        return {}
+
+
+    @staticmethod
+    async def _migrate_user(db, email, password=None):
+        response = cognito_client.admin_create_user(
+            UserPoolId=userpool_id,
+            Username=email,
+            UserAttributes=[
+                dict(Name='email', Value=email)
+            ],
+            MessageAction='SUPPRESS' if password else 'RESEND',
+        )
+        cognito_id = response['User']['Username']
+        db.execute(sa.text("""
+        update users set cognito_id=:cognito_id, password=null
+        where email=:email
+        """), cognito_id=cognito_id, email=email)
+        db.commit()
+        if not password:
+            return
+        return cognito_client.admin_set_user_password(
+            UserPoolId=userpool_id,
+            Username=cognito_id,
+            Password=password,
+            Permanent=True
+        )
+
+    @staticmethod
+    async def on_old_login(data: SILogin, d) -> Dict:
+        user = d.db.query(M.User).filter_by(email=data.email)\
+            .with_entities(M.User.email, M.User.hashed_password)\
+            .filter(M.User.hashed_password.isnot(None))\
+            .first()
+        if not user:
+            return dict(notexists=True)
+        verified, _ = pwd_context.verify_and_update(data.password, user.hashed_password)
+        if not verified:
+            return dict(wrong=True)
+        await Auth.migrate_user(d.db, data.email, data.password)
+        return dict(migrated=True)
+
+    @staticmethod
+    async def on_old_password_reset(data: SIEmail, d) -> Dict:
+        user = d.db.query(M.User).filter_by(email=data.email) \
+            .with_entities(M.User.email) \
+            .first()
+        if not user:
+            return dict(notexists=False)
+        await Auth.migrate_user(d.db, data.email)
+        return dict(migrated=True)
 
 
 auth_router = {}

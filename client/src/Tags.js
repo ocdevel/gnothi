@@ -9,10 +9,9 @@ import {FaTags} from "react-icons/fa/index";
 
 function TagForm({tag=null}) {
   const [name, setName] = useState(tag ? tag.name : '')
-  const fetch = useStoreActions(actions => actions.server.fetch)
-  const getTags = useStoreActions(actions => actions.j.tags)
+  const emit = useStoreActions(actions => actions.ws.emit)
 
-  const onSubmit = () => getTags()
+  const onSubmit = () => emit(['tags/tags/get', {}])
 
   const id = tag && tag.id
 
@@ -22,16 +21,16 @@ function TagForm({tag=null}) {
     if (!window.confirm("Are you sure? This will remove this tag from all entries (your entries will stay).")) {
       return
     }
-    await fetch({route: `tags/${id}`, method: 'DELETE'})
+    emit(['tags/tag/delete', {id}])
     onSubmit()
   }
 
   const submit = async e => {
     e.preventDefault()
     if (id) {
-      await fetch({route: `tags/${id}`, method: 'PUT', body: {name}})
+      emit(['tags/tag/put', {id, name}])
     } else {
-      await fetch({route: `tags`, method: 'POST', body: {name}})
+      emit(['tags/tags/post', {name}])
     }
     onSubmit()
   }
@@ -65,7 +64,7 @@ function TagForm({tag=null}) {
 }
 
 function TagModal({close}) {
-  const tags = useStoreState(state => state.j.tags)
+  const tags = useStoreState(s => s.ws.data['tags/tags/get'])
 
   return (
     <Modal show={true} onHide={close}>
@@ -89,12 +88,11 @@ export default function Tags({
   preSelectMain=false
 }) {
   const [editTags, setEditTags] = useState(false)
-  const as = useStoreState(state => state.user.as)
-  const fetch = useStoreActions(actions => actions.server.fetch)
-  const getTags = useStoreActions(actions => actions.j.getTags)
+  const as = useStoreState(state => state.ws.as)
+  const emit = useStoreActions(actions => actions.ws.emit)
   // tags sorted on server
-  const tags = useStoreState(state => state.j.tags)
-  const selectedTags = useStoreState(state => state.j.selectedTags)
+  const tags = useStoreState(s => s.ws.data['tags/tags/get'])
+  const selectedTags = useStoreState(s => s.ws.data.selectedTags)
 
   // no selected,setSelected props indicates using global tags
   const selectedTags_ = selected || selectedTags
@@ -113,8 +111,8 @@ export default function Tags({
     if (setSelected) {
       setSelected({...selectedTags_, [id]: v})
     } else {
-      await fetch({route: `tags/${id}/toggle`, method: 'POST'})
-      await getTags()
+      emit(['tags/tag/toggle', {id}])
+      // await getTags()  # fixme
     }
   }
   // const clear = async () => {
@@ -125,14 +123,13 @@ export default function Tags({
 
   const renderTag = t => {
     const selected_ = selectedTags_[t.id]
-    return <>
-      <Button
-        disabled={noClick}
-        variant="link"
-        className={`mr-1 ${selected_ ? 'tag-selected' : 'tag-unselected'}`}
-        onClick={() => selectTag(t.id, !selected_)}
-      >{t.name}</Button>
-    </>
+    return <Button
+      key={t.id}
+      disabled={noClick}
+      variant="link"
+      className={`mr-1 ${selected_ ? 'tag-selected' : 'tag-unselected'}`}
+      onClick={() => selectTag(t.id, !selected_)}
+    >{t.name}</Button>
   }
 
   return <>

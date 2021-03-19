@@ -1,6 +1,6 @@
 import React, {useEffect, useState, useCallback} from "react";
 import {SimplePopover, spinner} from "../utils";
-import {API_URL} from '../redux/server'
+import {API_URL} from '../redux/ws'
 import _ from "lodash";
 import {
   Accordion,
@@ -40,21 +40,11 @@ const iso = (day=null) => {
 
 
 function FieldsAdvanced({fetchFieldEntries}) {
+  const emit = useStoreActions(a => a.ws.emit)
   const jwt = useStoreState(state => state.user.jwt)
-  const fetch = useStoreActions(actions => actions.server.fetch)
   const setServerError = useStoreActions(actions => actions.server.error)
-
-  const [hasDupes, setHasDupes] = useState(false)
+  const hasDupes = useStoreState(s => s.ws.data['fields/field_entries/has_dupes/get'])
   const [confirmWipe, setConfirmWipe] = useState('')
-
-  useEffect(() => {
-    fetchHasDupes()
-  }, [])
-
-  async function fetchHasDupes() {
-    const {data} = await fetch({route: 'field-entries/has-dupes'})
-    setHasDupes(!!data)
-  }
 
   async function downloadCsv(version) {
     // TODO refactor this into actions.js/fetch_
@@ -77,15 +67,11 @@ function FieldsAdvanced({fetchFieldEntries}) {
   }
 
   async function acceptDupes() {
-    await fetch({route: 'field-entries/clear-dupes', method: 'POST'})
-    await fetchHasDupes()
-    fetchFieldEntries()
+    emit(['fields/field_entries/clear_dupes/post', {}])
   }
 
   async function startOver() {
-    await fetch({route: 'field-entries/clear-entries', method: 'POST'})
-    await fetchHasDupes()
-    fetchFieldEntries()
+    emit(['fields/field_entries/clear_entries/post', {}])
   }
 
   function changeConfirmWipe(e) {
@@ -137,16 +123,17 @@ function FieldsAdvanced({fetchFieldEntries}) {
 
 
 export default function Fields() {
-  const as = useStoreState(state => state.user.as)
-  const user = useStoreState(state => state.user.user)
-  const fields = useStoreState(state => state.j.fields)
-  const fetch = useStoreActions(actions => actions.server.fetch)
-  const getFields = useStoreActions(actions => actions.j.getFields)
+  const emit = useStoreActions(a => a.ws.emit)
+  const as = useStoreState(state => state.ws.as)
+  const user = useStoreState(s => s.ws.data['users/user/get'])
+  const fields = useStoreState(state => state.ws.data['fields/fields/get'])
+  const fieldsGet = useStoreState(state => state.ws.res['fields/fields/get'])
+  const fieldEntries = useStoreState(s => s.ws.data['fields/field_entries/get'])
+  const fieldValues = useStoreState(s => s.ws.data.fieldValues)
+  const setFieldValues = useStoreActions(a => a.ws.setFieldValue)
+  const syncRes = useStoreState(s => s.ws.res['habitica/sync'])
 
   const [day, setDay] = useState(iso())
-  const [fetchingSvc, setFetchingSvc] = useState(false)
-  const [fieldEntries, setFieldEntries] = useState({})
-  const [fieldValues, setFieldValues] = useState({})
   const [showForm, setShowForm] = useState(false)
   const [showChart, setShowChart] = useState(false)
   // having lots of trouble refreshing certain things, esp. dupes list after picking. Force it for now
@@ -166,37 +153,30 @@ export default function Fields() {
     [day] // re-initialize with day-change
   )
 
-  if (_.get(fields, 'code') === 401) {
-    return <h5>{fields.message}</h5>
+  if (fieldsGet?.code === 401) {
+    return <h5>{fieldsGet?.message}</h5>
   }
 
   async function fetchFieldEntries() {
     if (_.isEmpty(fields)) {return}
-    const {data} = await fetch({route: `field-entries?day=${day}`})
-    const obj = _.keyBy(data, 'field_id')
-    setFieldEntries(obj)
-    setFieldValues(_.mapValues(obj, 'value'))
-    // 3e896062: something about field_entries default_values?
+    emit(['fields/field_entries/get', {day}])
   }
 
   async function postFieldVal_(fid, value) {
     if (value === "") {return}
     value = parseFloat(value) // until we support strings
-    const body = {value}
-    const params = isToday ? "" : `?day=${day}`
-    await fetch({route: `field-entries/${fid}${params}`, method: 'POST', body})
+    const body = {id: fid, value}
+    if (!isToday) {body['day'] = day}
+    emit([`fields/field_entries/post`, body])
   }
 
   const fetchService = async (service) => {
-    setFetchingSvc(true)
-    await fetch({route: `${service}/sync`, method: 'POST'})
-    await getFields()
-    setFetchingSvc(false)
+    emit(['habitica/sync'])
   }
 
   const changeFieldVal = (fid, direct=false) => e => {
     let value = direct ? e : e.target.value
-    setFieldValues({...fieldValues, [fid]: value})
+    setFieldValues({[fid]: value})
     postFieldVal(fid, value)
   }
 
@@ -216,7 +196,7 @@ export default function Fields() {
     if (!~['habitica'].indexOf(service)) {return null}
     if (as) {return null}
     if (!user.habitica_user_id) {return null}
-    if (fetchingSvc) {return spinner}
+    if (syncRes?.sending) {return spinner}
     return <>
       <SimplePopover text='Gnothi auto-syncs every hour'>
         <Button size='sm' onClick={() => fetchService(service)}>Sync</Button>
@@ -226,7 +206,6 @@ export default function Fields() {
 
   const onFormClose = () => {
     setShowForm(false)
-    getFields()
   }
 
   const onChartClose = () => {

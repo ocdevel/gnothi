@@ -34,11 +34,11 @@ const disabled = ['show_avatar']
 function PrivacyOpt({p, me}) {
   const {h, v, k} = p
   const {gid} = useParams()
-  const profile = useStoreState(state => state.user.profile)
-  const emit = useStoreActions(actions => actions.ws.emit);
+  const emit = useStoreActions(a => a.ws.emit);
+  const profile = useStoreState(s => s.ws.data['users/profile/get'])
 
   const changePrivacy = key => e => {
-    emit(["groups/privacy.put", {gid, key, value: e.target.checked}])
+    emit(["groups/privacy/put", {id: gid, key, value: e.target.checked}])
     // () => setForm({...form, [k]: !form[k]})
   }
 
@@ -70,15 +70,15 @@ function Controls() {
   const {gid} = useParams()
   const history = useHistory()
   const emit = useStoreActions(actions => actions.ws.emit);
-  const uid = useStoreState(state => state.user.user.id)
-  const me = useStoreState(state => state.groups.members[uid])
+  const uid = useStoreState(s => s.ws.data['users/user/get']?.id)
+  const me = useStoreState(s => s.ws.data['groups/members/get']?.[uid] || {})
 
   async function joinGroup() {
-    emit(["groups/group.join", {gid}])
+    emit(["groups/group/join", {id: gid}])
   }
 
   async function leaveGroup() {
-    emit(["groups/group.leave", {gid}])
+    emit(["groups/group/leave", {id: gid}])
     history.push("/groups")
   }
 
@@ -119,20 +119,18 @@ function Controls() {
   return <div>
     {el}
     {privacies.map(p => (
-      <PrivacyOpt key={p.k} p={p} me={me} />)
+      <PrivacyOpt key={`${p.k}=${p.v}`} p={p} me={me} />)
     )}
   </div>
 }
 
 export default function Sidebar() {
   const {gid} = useParams()
-  const online = useStoreState(state => state.groups.online)
-  const members = useStoreState(state => state.groups.members)
-  const groups = useStoreState(state => state.groups.groups)
+  const members = useStoreState(s => s.ws.data['groups/members/get'])
+  const groups = useStoreState(s => s.ws.data['groups/groups/get'])
+  const group = useStoreState(s => s.ws.data['groups/group/get'])
   const [showCreate, setShowCreate] = useState(false)
-  const group = useStoreState(state => state.groups.group)
 
-  const groups_ = _.filter(groups, g => g.id != gid)
   const onlineIcon = emoji("🟢")
 
   function renderGroup() {
@@ -146,7 +144,7 @@ export default function Sidebar() {
         <Card.Subtitle>Members</Card.Subtitle>
         <ul className="list-unstyled">
           {_.map(members, (member, uid) => member && <li key={uid}>
-            {online[uid] && onlineIcon}
+            {member.online && onlineIcon}
             {_.get(members, `${uid}.role`) === 'owner' && <FaCrown />}
             {member.username}
           </li>)}
@@ -175,12 +173,12 @@ export default function Sidebar() {
         >Create Group</Button>
       </Card.Header>
       <Card.Body>
-        {groups_.map((g, i) => <div key={g.id}>
+        {groups.map((g, i) => <div key={g.id}>
           <Card.Subtitle className='mb-2'>
             <Link to={`/groups/${g.id}`}>{g.title}</Link>
           </Card.Subtitle>
           <div className='text-muted'>{g.text}</div>
-          {i < groups_.length - 1 && <hr />}
+          {i < groups.length - 1 && <hr />}
         </div>)}
       </Card.Body>
     </Card>

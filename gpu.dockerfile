@@ -25,7 +25,9 @@ RUN \
   dynaconf \
   pytest \
   git+git://github.com/lefnire/ml-tools.git@9316d42c \
-  petname
+  petname \
+  fastapi-utils \
+  orjson
 
 COPY ./gpu /paperspace
 COPY ./common /paperspace/common

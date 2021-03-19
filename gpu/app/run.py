@@ -11,7 +11,7 @@ from sqlalchemy import text
 from app.themes import themes
 from app.influencers import influencers
 from common.utils import vars, is_prod
-from common.database import session
+from common.database import with_db
 import common.models as M
 from common.cloud_updown import cloud_down_maybe
 from app.nlp import nlp_
@@ -37,8 +37,8 @@ m = Box({
 def run_job(job):
     jid_, k = str(job.id), job.method
     jid = {'jid': jid_}
-    with session() as sess:
-        data = sess.execute("select data_in from jobs where id=:jid", jid).fetchone().data_in
+    with with_db() as db:
+        data = db.execute("select data_in from jobs where id=:jid", jid).fetchone().data_in
     args = data.get('args', [])
     kwargs = data.get('kwargs', {})
 
@@ -62,24 +62,24 @@ if __name__ == '__main__':
     logger.info(f"torch.cuda.is_available() {torch.cuda.is_available()}")
     logger.info("\n\n")
 
-    with session() as sess:
+    with with_db() as db:
         while True:
-            M.Machine.notify_online(sess, vars.MACHINE)
-            cloud_down_maybe(sess)
+            M.Machine.notify_online(db, vars.MACHINE)
+            cloud_down_maybe(db)
 
             # only allow 2 jobs at a time.
-            if M.Machine.job_ct_on_machine(sess, vars.MACHINE) >= 2:
+            if M.Machine.job_ct_on_machine(db, vars.MACHINE) >= 2:
                 time.sleep(1)
                 continue
 
             # Find jobs
-            job = M.Job.take_job(sess, "run_on='gpu'")
+            job = M.Job.take_job(db, "run_on='gpu'")
             if job:
                 # aaf1ec95: multiprocessing.Process for problem models
                 threading.Thread(target=run_job, args=(job,)).start()
                 # run_job(job.id)
 
-            if M.User.last_checkin(sess) > 10 and is_prod():
+            if M.User.last_checkin(db) > 10 and is_prod():
                 nlp_.clear()
             time.sleep(1)
 

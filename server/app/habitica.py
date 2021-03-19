@@ -1,16 +1,15 @@
 import requests, pdb, time, random
 from dateutil.parser import parse as dparse
 from common.utils import is_dev, vars
-from common.database import session
+from common.database import session, with_db
 import common.models as M
 from sqlalchemy import text
-from fastapi_sqlalchemy import db
 import logging
 logger = logging.getLogger(__name__)
 
 
-def sync_for(user):
-    if is_dev(): return
+def sync_for(db, user):
+    # if is_dev(): return
     if not (user.habitica_user_id and user.habitica_api_token):
         return
     # https://habitica.com/apidoc/#api-Task-GetUserTasks
@@ -34,8 +33,8 @@ def sync_for(user):
     if huser['preferences']['sleep']: return
 
     # Use SQL to determine day, so not managing timezones in python + sql
-    tz = M.User.tz(db.session, user.id)
-    last_cron = db.session.execute(text("""
+    tz = M.User.tz(db, user.id)
+    last_cron = db.execute(text("""
     select date(:lastCron ::timestamptz at time zone :tz)::text last_cron
     """), dict(lastCron=huser['lastCron'], tz=tz)).fetchone().last_cron
 
@@ -46,8 +45,8 @@ def sync_for(user):
     for f in user.fields:
         if f.service != 'habitica': continue
         if f.service_id not in t_map:
-            db.session.delete(f)
-    db.session.commit()
+            db.delete(f)
+    db.commit()
 
     # Add/update tasks from Habitica
     for task in tasks:
@@ -73,7 +72,7 @@ def sync_for(user):
         if f.name != task['text']:
             f.name = task['text']
 
-        db.session.commit()  # for f to have f.id
+        db.commit()  # for f to have f.id
 
         value = 0.
         # Habit
@@ -90,27 +89,26 @@ def sync_for(user):
             if (not task['completed']) and any(c['completed'] for c in cl):
                 value = sum(c['completed'] for c in cl) / len(cl)
 
-        M.FieldEntry.upsert(db.session, user_id=user.id, field_id=f.id, value=value, day=last_cron)
-        M.Field.update_avg(f.id)
+        M.FieldEntry.upsert(db, user_id=user.id, field_id=f.id, value=value, day=last_cron)
+        M.Field.update_avg(db, f.id)
         logger.info(task['text'] + " done")
 
 
-def cron():
-    with db():
-        k = 'habitica'
-        logger.info(f"Running {k}")
-        users = db.session.execute(f"""
-        select id from users 
-        where char_length(habitica_user_id) > 0 and char_length(habitica_api_token) > 0
-            -- stop tracking inactive users
-            and updated_at > now() - interval '3 days'
-        """).fetchall()
+def cron(db):
+    k = 'habitica'
+    logger.info(f"Running {k}")
+    users = db.execute(f"""
+    select id from users 
+    where char_length(habitica_user_id) > 0 and char_length(habitica_api_token) > 0
+        -- stop tracking inactive users
+        and updated_at > now() - interval '3 days'
+    """).fetchall()
 
-        errs = ""
-        for u in users:
-            try:
-                sync_for(db.session.query(M.User).get(u.id))
-            except Exception as err:
-                errs += "\n" + str(err)
-        if errs: logger.error(errs)
-        return {}
+    errs = ""
+    for u in users:
+        try:
+            sync_for(db.query(M.User).get(u.id))
+        except Exception as err:
+            errs += "\n" + str(err)
+    if errs: logger.error(errs)
+    return {}

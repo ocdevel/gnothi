@@ -3,21 +3,18 @@ import {useStoreState, useStoreActions} from "easy-peasy";
 import {Alert, Card} from "react-bootstrap";
 
 export default function Therapists({setShowTherapists}) {
-  const fetch = useStoreActions(actions => actions.server.fetch)
-
-  const [therapists, setTherapists] = useState([])
-
-  const fetchTherapists = async () => {
-    const {data} = await fetch({route: 'therapists'})
-    setTherapists(data)
-    if (data.length) {
-      setShowTherapists(true)
-    }
-  }
+  const emit = useStoreActions(a => a.ws.emit)
+  const therapists = useStoreState(s => s.ws.data['users/therapists/get'])
 
   useEffect(() => {
-    fetchTherapists()
+    emit(['users/therapists/get', {}])
   }, [])
+
+  useEffect(() => {
+    if (therapists?.length) {
+      setShowTherapists(true)
+    }
+  }, [therapists])
 
   const renderTherapist = (t) => {
     let name = '';
@@ -40,7 +37,7 @@ export default function Therapists({setShowTherapists}) {
         <div>If you're a therapist wanting listed, check "therapist" under Account > Profile.</div>
       </small>
     </Alert>
-    {therapists.length ? therapists.map(renderTherapist) : (
+    {therapists?.length ? therapists.map(renderTherapist) : (
       <Alert variant='warning'>No therapist matches yet.</Alert>
     )}
   </div>

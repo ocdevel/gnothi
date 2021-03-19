@@ -15,8 +15,10 @@ import ReactMarkdown from "react-markdown"
 import MarkdownIt from 'markdown-it'
 import MdEditor from 'react-markdown-editor-lite'
 import _ from 'lodash'
+import {EE} from '../redux/ws'
 
 import {useStoreActions, useStoreState} from "easy-peasy";
+import Error from "../Error";
 
 const mdParser = new MarkdownIt(/* Markdown-it options */);
 
@@ -38,8 +40,6 @@ const plugins = [
 ]
 
 function Editor({text, changeText}) {
-  const fetch = useStoreActions(actions => actions.server.fetch)
-
   function onChange({html, text}) {
     changeText(text)
   }
@@ -73,22 +73,27 @@ const privacies = [{
 
 export default function CreateGroup({show, close}) {
   const history = useHistory()
-  const [form, setForm] = useState({title: '', text: '', privacy: "public"})
-  const [submitting, setSubmitting] = useState(false)
-  const setServerError = useStoreActions(actions => actions.server.setError)
-
-  const as = useStoreState(state => state.user.as)
   const emit = useStoreActions(actions => actions.ws.emit)
+  const as = useStoreState(s => s.ws.as)
+
+  const [form, setForm] = useState({title: '', text: '', privacy: "public"})
+  const postRes = useStoreState(s => s.ws.res['groups/groups/post'])
+
+  useEffect(() => {
+    EE.on("wsResponse", onPost)
+    return () => EE.off("wsResponse", )
+  }, [])
+
+  function onPost(data) {
+    if (data.action === 'groups/groups/post' && data?.id) {
+      close()
+      history.push(postRes?.data.id)
+    }
+  }
 
   const submit = async e => {
     e.preventDefault()
-    setServerError(false)
-    setSubmitting(true)
-    const {data} = await emit(["groups/groups.post", form])
-    setSubmitting(false)
-    if (!data.id) {return}
-    history.push(`/groups/${data.id}`)
-    close()
+    emit(["groups/groups/post", form])
   }
 
   const changeTitle = e => {
@@ -100,7 +105,7 @@ export default function CreateGroup({show, close}) {
 
   const renderButtons = () => {
     if (as) return null
-    if (submitting) return spinner
+    if (postRes?.submitting) return spinner
 
     return <>
       <Button variant='link' className='text-secondary' size="sm" onClick={close}>
@@ -172,8 +177,8 @@ export default function CreateGroup({show, close}) {
 
       <Modal.Body>
         {renderForm()}
+        <Error action={/groups\/groups\/post/g} codeRange={[400,499]}/>
       </Modal.Body>
-
 
       <Modal.Footer>
         {renderButtons()}

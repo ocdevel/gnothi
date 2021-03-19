@@ -20,8 +20,8 @@ const feature_map = {
   },
 }
 
-function ShareForm({fetchShared, share=null}) {
-  const fetch = useStoreActions(actions => actions.server.fetch)
+function ShareForm({share=null}) {
+  const emit = useStoreActions(a => a.ws.emit)
 
   const [form, setForm] = useState(share ? _.pick(share, ['email', ..._.keys(feature_map)]) : {})
   const [tags, setTags] = useState(share ? share.tags : {})
@@ -35,14 +35,13 @@ function ShareForm({fetchShared, share=null}) {
     }
     if (share) {
       setSaved(true)
-      await fetch({route: `shares/${share.id}`, method: 'PUT', body})
+      emit(['shares/put', {...body, id: share.id}])
       setTimeout(() => {setSaved(false)}, 2000)
     } else {
-      await fetch({route: 'shares', method: 'POST', body})
+      emit(['shares/post', body])
       setForm({})
       setTags({})
     }
-    await fetchShared()
   }
 
   const changeEmail = e => {
@@ -55,8 +54,7 @@ function ShareForm({fetchShared, share=null}) {
   }
 
   const unshare = async () => {
-    await fetch({route: `shares/${share.id}`, method: 'DELETE'})
-    fetchShared()
+    emit(['shares/delete', {id: share.id}])
   }
 
   const ctrlId = 'form' + (share ? share.id : 'new')
@@ -123,43 +121,34 @@ function ShareForm({fetchShared, share=null}) {
 }
 
 export default function Sharing() {
-  const as = useStoreState(state => state.user.as)
-  const fetch = useStoreActions(actions => actions.server.fetch)
+  const as = useStoreState(state => state.ws.as)
+  const emit = useStoreActions(a => a.ws.emit)
+  const sharesRes = useStoreState(s => s.ws.res['shares/get'])
+  const shares = useStoreState(s => s.ws.data['shares/get'])
 
-  const [shared, setShared] = useState([])
-  const [notShared, setNotShared] = useState()
+  useEffect(() => {
+    emit(['shares/get', {}])
+  }, [as])
 
-  const fetchShared = async () => {
-    const {data, code, message} = await fetch({routE: 'shares'})
-    if (code === 401) {return setNotShared(message)}
-    setShared(data)
+  if (sharesRes?.code === 401) {
+    return <h5>{sharesRes.detail}</h5>
   }
 
-  useEffect(() => {fetchShared()}, [as])
-
-  if (notShared) {return <h5>{notShared}</h5>}
-
-  const newForm = <ShareForm
-    fetchShared={fetchShared}
-  />
-
-  if (_.isEmpty(shared)) {return newForm}
+  const newForm = <ShareForm />
+  if (!shares.length) {return newForm}
 
   return  <>
     {newForm}
     <hr/>
     <p>Sharing with</p>
     <Row lg={3} sm={2} xs={1}>
-      {_.sortBy(shared.slice(), 'id').map(s => (
+      {_.sortBy(shares.slice(), 'id').map(s => (
         <Col key={s.id}>
           <Card>
             <Card.Body>
               <Card.Title>{s.email}</Card.Title>
               <Card.Text>
-                <ShareForm
-                  fetchShared={fetchShared}
-                  share={s}
-                />
+                <ShareForm share={s} />
               </Card.Text>
             </Card.Body>
           </Card>

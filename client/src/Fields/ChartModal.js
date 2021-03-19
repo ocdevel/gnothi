@@ -12,21 +12,17 @@ import {FieldName} from "./utils";
 const round_ = (v) => v ? v.toFixed(2) : null
 
 export default function ChartModal({close, field=null, overall=false}) {
-  const as = useStoreState(state => state.user.as)
-  const fetch = useStoreActions(actions => actions.server.fetch)
+  const as = useStoreState(state => state.ws.as)
+  const emit = useStoreActions(a => a.ws.emit)
+  const history = useStoreState(s => s.ws.data['fields/history/get'])
 
-  const [history, setHistory] = useState([])
-  const fields = useStoreState(state => state.j.fields)
-  const influencers = useStoreState(state => state.j.influencers)
-
-  const getHistory = async () => {
-    if (!field) { return }
-    const {data, code, message} = await fetch({route: `fields/${field.id}/history`})
-    setHistory(data)
-  }
+  const fields = useStoreState(s => s.ws.data['fields/fields/get'])
+  const influencers = useStoreState(s => s.ws.data['insights/influencers/get'])
 
   useEffect(() => {
-    getHistory()
+    if (field) {
+      emit(['fields/history/get', {id: field.id}])
+    }
   }, [field])
 
   let influencers_ = _.isEmpty(influencers) ? false

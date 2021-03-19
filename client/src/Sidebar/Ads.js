@@ -40,8 +40,8 @@ const ads = [
 const ad = _.sample(ads)
 
 export default function Ads() {
-  const user = useStoreState(state => state.user.user)
-  const entries = useStoreState(state => state.j.entries)
+  const user = useStoreState(s => s.ws['users/user/get']?.data)
+  const entries = useStoreState(s => s.ws['entries/entries/get']?.data)
 
   const [show, setShow] = useState(false)
 

@@ -48,8 +48,8 @@ const tools = [
 
 export default function Insights() {
   const days = useStoreState(state => state.insights.days)
-  const entries = useStoreState(state => state.j.entries)
-  const aiStatus = useStoreState(state => state.server.ai)
+  const entries = useStoreState(s => s.ws.data['entries/entries/get'])
+  const aiStatus = useStoreState(s => s.ws.data['jobs/status'].status)
   const setDays = useStoreActions(actions => actions.insights.setDays)
 
   const ne = entries.length

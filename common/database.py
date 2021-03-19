@@ -27,6 +27,9 @@ def _get_fastapi_sessionmaker() -> FastAPISessionMaker:
     return FastAPISessionMaker(vars.DB_FULL)
 
 
+with_db = FastAPISessionMaker(vars.DB_FULL).context_session
+
+
 def init_db():
     engine.execute('CREATE EXTENSION IF NOT EXISTS "uuid-ossp"')
     # add `import app.models` in calling code beforehand (after `import database`)

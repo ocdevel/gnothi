@@ -4,15 +4,10 @@ import {Button, Form, Modal} from "react-bootstrap";
 import {useStoreState, useStoreActions} from 'easy-peasy'
 
 function DisconnectModal({show, close}) {
-  const fetch = useStoreActions(actions => actions.server.fetch)
+  const emit = useStoreActions(a => a.ws.emit)
 
-  const getFields = useStoreActions(actions => actions.j.getFields)
-  const getUser = useStoreActions(actions => actions.user.getUser)
-
-  const disconnect = async () => {
-    await fetch({route: 'habitica', method: 'DELETE'})
-    getFields()
-    getUser()
+  function disconnect() {
+    emit(['habitica/delete', {}])
     close()
   }
   return (
@@ -37,24 +32,12 @@ function DisconnectModal({show, close}) {
 }
 
 export default function Habitica() {
-  const fetch = useStoreActions(actions => actions.server.fetch)
-  const getFields = useStoreActions(actions => actions.j.getFields)
   const emit = useStoreActions(actions => actions.ws.emit)
+  const user = useStoreState(s => s.ws.data['users/user/get'])
 
-  const [habiticaUserId, setHabiticaUserId] = useState('')
-  const [habiticaApiToken, setHabiticaApiToken] = useState('')
+  const [habiticaUserId, setHabiticaUserId] = useState(user?.habitica_user_id)
+  const [habiticaApiToken, setHabiticaApiToken] = useState(user?.habitica_api_token)
   const [showModal, setShowModal] = useState(false)
-
-  // TODO use reducer.user
-  const fetchUser = async () => {
-    const {data} = await emit(["users/user.get", {}])
-    setHabiticaUserId(data.habitica_user_id)
-    setHabiticaApiToken(data.habitica_api_token)
-  }
-
-  useEffect(() => {
-    fetchUser()
-  }, [])
 
   const saveHabitica = async e => {
     e.preventDefault()
@@ -62,9 +45,7 @@ export default function Habitica() {
       habitica_user_id: habiticaUserId,
       habitica_api_token: habiticaApiToken
     }
-    await fetch({route: `habitica`, method: 'POST', body})
-    fetchUser()
-    getFields()
+    emit(['habitica/post', body])
   }
 
   const changeHabiticaUserId = e => setHabiticaUserId(e.target.value)

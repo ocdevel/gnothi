@@ -18,32 +18,34 @@ import getZodiacSign from "./zodiac"
 import People from './People'
 
 import {useStoreState, useStoreActions} from "easy-peasy";
-import {useSockets} from "../redux/ws";
-import {timezones} from "../redux/user";
+import {timezones} from "../redux/ws";
 
 function Profile_() {
-  const as = useStoreState(state => state.user.as)
-  const fetch = useStoreActions(actions => actions.server.fetch)
-  const emit = useStoreActions(actions => actions.ws.emit)
-  const profile_ = useStoreState(state => state.user.profile)
+  const emit = useStoreActions(a => a.ws.emit)
+  const as = useStoreState(state => state.ws.as)
+  const uname = useStoreState(s => s.ws.data['users/check_username'])
+  const profile_ = useStoreState(s => s.ws.data['users/profile/get'])
   const [profile, setProfile] = useState({})
   const [dirty, setDirty] = useState({dirty: false, saved: false})
   const [usernameValid, setUsernameValid] = useState({checked: false, valid: null})
-  const socket = useSockets()
 
   function fetchProfile() {
-    if (!socket) {return}
-    emit(["users/profile.get", {}])
+    emit(["users/profile/get", {}])
   }
 
   useEffect(() => {
     fetchProfile()
-  }, [socket])
+  }, [])
 
   useEffect(() => {
     // set the form to copy from server
     setProfile(profile_)
   }, [profile_])
+
+  useEffect(() => {
+    if (!uname) {return}
+    setUsernameValid({...uname, checked: true})
+  }, [uname])
 
   let zodiac = null
   if (profile.birthday && profile.birthday.match(/\d{4}-\d{2}-\d{2}/)) {
@@ -65,7 +67,7 @@ function Profile_() {
   const submit = async e => {
     e.preventDefault()
     profile.timezone = _.get(profile, 'timezone.value', profile.timezone)
-    emit(['users/profile.put', profile])
+    emit(['users/profile/put', profile])
     setDirty({dirty: false, saved: true})
   }
 
@@ -76,8 +78,7 @@ function Profile_() {
 
   async function checkUsername(e) {
     const val = e.target.value
-    const {data} = await emit(["users/check-username", val])
-    setUsernameValid({...data, checked: true})
+    emit(["users/check_username", {username: val}])
   }
 
   const textField = ({k, v, attrs, children}) => (

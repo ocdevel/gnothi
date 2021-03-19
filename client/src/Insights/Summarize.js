@@ -1,4 +1,4 @@
-import React, {useState} from 'react'
+import React, {useState, useEffect} from 'react'
 import {Form, InputGroup, Button, Col} from "react-bootstrap"
 import {sent2face} from "../utils"
 import {Spinner} from "./utils"
@@ -6,24 +6,32 @@ import {Spinner} from "./utils"
 import {useStoreState, useStoreActions} from "easy-peasy";
 
 export default function Summarize() {
-  const aiStatus = useStoreState(state => state.server.ai)
-  const insight = useStoreState(state => state.insights.summarize)
-  const setInsight = useStoreActions(actions => actions.insights.setInsight)
-  const getInsight = useStoreActions(actions => actions.insights.getInsight)
+  const aiStatus = useStoreState(s => s.ws.data['jobs/status'].status)
+  const res = useStoreState(s => s.ws.res['insights/summarize/post'])
+  const job = useStoreState(s => s.ws.data['insights/summarize/post'])
+  const form = useStoreState(s => s.insights.summarize)
+  const reply = useStoreState(s => s.ws.data['insights/summarize/get'])
+  const a = useStoreActions(a => a.insights)
+  const [waiting, setWaiting] = useState(false)
 
-  const {req, res1, res2, fetching} = insight
-  const {code, message, data} = res2
+  useEffect(() => {
+    if (res) {setWaiting(true)}
+  }, [res])
+  useEffect(() => {
+    if (reply) {setWaiting(false)}
+  }, [reply])
 
-  if (code === 401) { return <h5>{message}</h5> }
+  if (res?.code === 401) { return <h5>{res.detail}</h5> }
 
   const changeWords = e => {
-    setInsight(['summarize', {req: e.target.value}])
+    a.setInsight(['summarize', e.target.value])
   }
 
-  const submit = async e => {
+  function submit(e) {
     e.preventDefault();
-    getInsight('summarize')
+    a.postInsight('summarize')
   }
+
 
   const renderForm = () => (
     <Form.Group as={Col}>
@@ -36,7 +44,7 @@ export default function Summarize() {
           id={`xWords`}
           type="number"
           min={5}
-          value={req}
+          value={form}
           onChange={changeWords}
         />
       </InputGroup>
@@ -46,11 +54,22 @@ export default function Summarize() {
     </Form.Group>
   )
 
+  function renderReply() {
+    const reply_ = reply?.[0]
+    if (!reply_) {return null}
+    if (!reply_.summary) {
+      return <p>Nothing to summarize (try adjusting date range)</p>
+    }
+    return <>
+      <hr/>
+      <p>{sent2face(reply_.sentiment)} {reply_.summary}</p>
+    </>
+  }
 
   return <>
     {renderForm()}
     <Form onSubmit={submit}>
-      {fetching ? <Spinner job={res1} /> : <>
+      {waiting ? <Spinner job={job} /> : <>
         <Button
           disabled={aiStatus !== 'on'}
           type="submit"
@@ -58,10 +77,7 @@ export default function Summarize() {
           className='mb-3'
         >Submit</Button>
       </>}
-      {data && <>
-        <hr/>
-        <p>{sent2face(data.sentiment)} {data.summary}</p>
-      </>}
+      {renderReply()}
     </Form>
   </>
 }

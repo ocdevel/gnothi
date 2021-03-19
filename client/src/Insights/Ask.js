@@ -5,41 +5,47 @@ import {Spinner} from './utils'
 import {useStoreActions, useStoreState} from "easy-peasy";
 
 export default function Ask() {
-  const aiStatus = useStoreState(state => state.server.ai)
-  const insight = useStoreState(state => state.insights.ask)
-  const getInsight = useStoreActions(actions => actions.insights.getInsight)
-  const setInsight = useStoreActions(actions => actions.insights.setInsight)
+  const aiStatus = useStoreState(s => s.ws.data['jobs/status'].status)
+  const res = useStoreState(s => s.ws.res['insights/question/post'])
+  const job = useStoreState(s => s.ws.data['insights/question/post'])
+  const form = useStoreState(s => s.insights.question)
+  const reply = useStoreState(s => s.ws.data['insights/question/get'])
+  const a = useStoreActions(a => a.insights)
+  const [waiting, setWaiting] = useState(false)
 
-  const {req, fetching, res1, res2} = insight
-  const {code, message, data: answers} = res2
+  useEffect(() => {
+    if (res) {setWaiting(true)}
+  }, [res])
+  useEffect(() => {
+    if (reply) {setWaiting(false)}
+  }, [reply])
 
-  if (code === 401) { return <h5>{message}</h5> }
+  if (res?.code === 401) { return <h5>{res.detail}</h5> }
 
-  const fetchAnswer = async (e) => {
+  function submit(e) {
     e.preventDefault()
-    if (!req.length) {return}
-    getInsight('ask')
+    if (!form.length) {return}
+    a.postInsight('question')
   }
 
-  const changeQuestion = e => setInsight(['ask', {req: e.target.value}])
+  const changeQuestion = e => a.setInsight(['question', e.target.value])
 
   return <>
-    <Form onSubmit={fetchAnswer}>
-      <Form.Group controlId="formQuery">
+    <Form onSubmit={submit}>
+      <Form.Group controlId="question-form">
         {/*<Form.Label for='question-answering'>Question</Form.Label>*/}
         <Form.Control
-          id='question-answering'
           placeholder="How do I feel about x?"
           as="textarea"
           rows={3}
-          value={req}
+          value={form}
           onChange={changeQuestion}
         />
         <Form.Text muted>
            Use proper English & grammar. Use personal pronouns.
         </Form.Text>
       </Form.Group>
-      {fetching ? <Spinner job={res1} /> : <>
+      {waiting ? <Spinner job={job} /> : <>
         <Button
           disabled={aiStatus !== 'on'}
           variant="primary"
@@ -47,9 +53,9 @@ export default function Ask() {
         >Ask</Button>
       </>}
     </Form>
-    {answers && answers.length && <>
+    {reply?.length && <>
       <hr/>
-      {answers.map((a, i) => <>
+      {reply.map((a, i) => <>
         <Card className='mb-3'>
           <Card.Body>
             <Card.Text>{a.answer}</Card.Text>

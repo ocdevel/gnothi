@@ -2,54 +2,10 @@ import axios from "axios";
 import _ from "lodash";
 import {thunk, action} from 'easy-peasy'
 
-// e52c6629: dynamic host/port
-let host = window.location.host
-if (~host.indexOf('gnothi')) { // prod
-  host = 'https://api.gnothiai.com'
-} else { // dev
-  host = 'http://localhost:5002'
-}
+import {API_URL} from './ws'
 
-export const API_URL = host;
-
-// Every fetch (except jobs-status) will check the user in, so debounce it a bit since
-// we're often fetching a ton at once
-const checkin = _.debounce((store) => {
-  // don't pass in jwt, since it may change due to refresh token. Pass getState instead
-  const {jwt} = store.getStoreState().user
-  axios({
-    method: 'GET',
-    url: `${API_URL}/user/checkin`,
-    headers: {'Authorization': `Bearer ${jwt}`}
-  })
-}, 1000)
-
-export async function refreshToken(store) {
-  const actions = store.getStoreActions()
-
-  try {
-    const {data} = await axios({
-      method: 'POST',
-      url: `${API_URL}/auth/refresh`,
-      headers: {'Authorization': `Bearer ${localStorage.getItem('refresh_token')}`}
-    })
-    actions.user.setJwt(data)
-    return data.access_token
-  } catch (error) {
-    if (error.response.status === 422) {
-      // TODO investigate why server sending 422 here
-      actions.user.logout()
-    }
-    return false
-  }
-}
 
 export const store = {
-  ai: "off",
-  setAi: action((state, payload) => {
-    state.ai = payload
-  }),
-
   error: null,
   setError: action((state, payload) => {
     state.error = payload
@@ -79,10 +35,6 @@ export const store = {
     }
     obj['url'] = url
 
-    if (route !== 'jobs-status') {
-      checkin(helpers)
-    }
-
     try {
       const {status: code, data} = await axios(obj)
       return {code, data}
@@ -92,7 +44,7 @@ export const store = {
 
       if (data.jwt_error) {
         // try refreshing the token, then try again
-        jwt = await refreshToken(helpers)
+        // jwt = await refreshToken(helpers)
         if (jwt) {
           obj['headers']['Authorization'] = `Bearer ${jwt}`
           try {

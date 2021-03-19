@@ -65,3 +65,10 @@ body {
     overflow-y: scroll;
   }
 }
+
+.custom-amplify-container {
+  height: 460px;
+  display: flex;
+  justify-content: center;
+  align-items: center
+}

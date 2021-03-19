@@ -22,27 +22,21 @@ import {Link} from 'react-router-dom'
 import {useStoreState, useStoreActions} from "easy-peasy";
 
 export default function Books() {
-  const as = useStoreState(state => state.user.as)
-  const fetch = useStoreActions(actions => actions.server.fetch)
-
-  const [books, setBooks] = useState([])
-  const [fetching, setFetching] = useState(false)
-  const [notShared, setNotShared] = useState(false)
+  const emit = useStoreActions(a => a.ws.emit)
+  const as = useStoreState(state => state.ws.as)
+  const booksGet = useStoreState(s => s.ws.res['insights/books/get'])
+  const books = useStoreState(s => s.ws.data['insights/books/get'])
   const [shelf, setShelf] = useState('ai')  // like|dislike|already_read|remove|recommend
-
-  const fetchShelf = async () => {
-    setFetching(true)
-    const {data, code, message} = await fetch({route: `books/${shelf}`})
-    setFetching(false)
-    if (code === 401) {return setNotShared(message)}
-    setBooks(data)
-  }
+  const [removed, setRemoved] = useState([])
 
   useEffect(() => {
-    fetchShelf()
+    emit(["insights/books/get", {shelf}])
+    setRemoved([])
   }, [shelf])
 
-  if (notShared) {return <h5>{notShared}</h5>}
+  if (booksGet?.code === 401) {
+    return <h5>{booksGet.detail}</h5>
+  }
 
   const changeShelf = (shelf_) => {
     if (shelf === shelf_) {return}
@@ -50,10 +44,8 @@ export default function Books() {
   }
 
   const putOnShelf = async (id, shelf_) => {
-    await fetch({route: `books/${id}/${shelf_}`, method: 'POST'})
-    // _.remove(books, {id})
-    setBooks(_.reject(books, {id}))
-    // fetchBooks()
+    emit(['insights/books/post', {id, shelf: shelf_}])
+    setRemoved([...removed, id])
   }
 
   const ShelfButton = ({bid, shelf, icon, popover}) => (
@@ -105,10 +97,16 @@ export default function Books() {
     </div>
   )
 
+  const books_ = books.length ?
+    _(books).reject(b => ~removed.indexOf(b.id)).map(renderBook).value()
+    : shelf === 'ai' ? <p>No AI recommendations yet. This will populate when you have enough entries.</p>
+    : null
+
+
   return <>
     <div>
       {renderTabs()}
-      {fetching && spinner}
+      {booksGet?.sending && spinner}
     </div>
     <div>
       <Alert variant='info'>
@@ -117,9 +115,7 @@ export default function Books() {
           <div>Use thumbs <FaThumbsUp /> to improve AI's recommendations. Wikipedia & other resources coming soon. If the recommendations are bad, <a href="https://github.com/lefnire/gnothi/issues/101" target="_blank">try this</a>.</div>
         </small>
       </Alert>
-      {books.length > 0 ? books.map(renderBook)
-        : shelf === 'ai' ? <p>No AI recommendations yet. This will populate when you have enough entries.</p>
-        : null}
+      {books_}
     </div>
   </>
 }
