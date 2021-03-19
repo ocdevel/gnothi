@@ -204,7 +204,7 @@ const AuthStateApp = () => {
 
 function App() {
   const jwt = useStoreState(state => state.user.jwt);
-  if (!jwt) return <LoggedOut />
+  if (!jwt) return <AuthStateApp />
   return <WaitForSetup />
 }
 

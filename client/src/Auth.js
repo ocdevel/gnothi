@@ -11,6 +11,7 @@ import Error from './Error'
 import {spinner} from './utils'
 import {useStoreState, useStoreActions} from "easy-peasy";
 import axios from 'axios'
+import {API_URL} from "./redux/server";
 
 import { useForm } from "react-hook-form";
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -41,45 +42,21 @@ function Login({setError, submitting}) {
     mode: "onBlur"
   });
 
-  async function tryOldSystem(data, cognitoError) {
-    try {
-      const res = await axios({
-        url: "http://localhost:5002/auth/old/verify",  // FIXME server url
-        method: "POST",
-        data
-      })
-      // User never registered
-      console.log(res)
-      if (!res.data.exists) {
-        setError(cognitoError.message)
-        return
-      // User is in the old system, but didn't use the right password
-      }
-      if (!res.data.verified) {
-        setError("Incorrect password")
-        return
-      // User is in the old system and has been migrated over
-      }
-      // User was migrated on the server, so now try again
-      await Auth.signIn(data.email, data.password);
-    } catch (error) {
-      console.log(error)
-      setError(error.message)
-      debugger
+  async function onSubmit(form) {
+    // Check old auth first
+    const {data} = await axios({
+      url: `${API_URL}/auth/old/login`,
+      method: "POST",
+      data: form
+    })
+    if (data.wrong) {
+      return setError("Incorrect email or password")
     }
-  }
-
-  async function onSubmit(data) {
+    // else notexists (let Cognito handle) or migrated (now auth them)
     try {
-      const user = await Auth.signIn(data.email, data.password);
+      await Auth.signIn(form.email, form.password);
     } catch (error) {
-      if (error.code === "NotAuthorizedException") {
-        // invalid email/username, check first if part of old system. If
-        // so, we'll migrate them to Cognito.
-        await tryOldSystem(data, error)
-      } else {
-        setError(error.message)
-      }
+      setError(error.message)
     }
   }
 

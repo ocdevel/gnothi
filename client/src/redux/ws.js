@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import io, {Manager} from "socket.io-client";
 import _ from 'lodash'
 
-const host = API_URL.replace(/^https?/, 'ws')
+const host = API_URL.replace(/^https?/, 'wss')
 let ws;
 
 export const store = {

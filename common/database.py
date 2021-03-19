@@ -1,8 +1,11 @@
 import os
 from box import Box
+from functools import lru_cache
+from typing import Iterator
+from fastapi_utils.session import FastAPISessionMaker
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import scoped_session, sessionmaker
+from sqlalchemy.orm import scoped_session, sessionmaker, Session
 from common.utils import vars
 # just for fastapi-users (I'm using sqlalchemy+engine+session everywhere else)
 import databases
@@ -11,6 +14,35 @@ from contextlib import contextmanager
 logger = logging.getLogger(__name__)
 
 Base = declarative_base()
+
+
+def get_db() -> Iterator[Session]:
+    """ FastAPI dependency that provides a sqlalchemy session """
+    yield from _get_fastapi_sessionmaker().get_db()
+
+
+@lru_cache()
+def _get_fastapi_sessionmaker() -> FastAPISessionMaker:
+    """ This function could be replaced with a global variable if preferred """
+    return FastAPISessionMaker(vars.DB_FULL)
+
+
+def init_db():
+    engine.execute('CREATE EXTENSION IF NOT EXISTS "uuid-ossp"')
+    # add `import app.models` in calling code beforehand (after `import database`)
+    Base.metadata.create_all(bind=engine)
+    # e6dfbbd8: kick off create_all with sess.execute()
+    engine.execute("select 1")
+
+
+def shutdown_db():
+    # using context-vars session-makers now
+    pass
+
+###
+# TODO phase out then delete the below code, have moved to sqlalchemy-utils
+###
+
 
 engine = create_engine(
     vars.DB_FULL,
@@ -60,16 +92,3 @@ def session(k='main', commit=True):
 
 
 fa_users_db = databases.Database(vars.DB_FULL)
-
-
-def init_db():
-    engine.execute('CREATE EXTENSION IF NOT EXISTS "uuid-ossp"')
-    # add `import app.models` in calling code beforehand (after `import database`)
-    Base.metadata.create_all(bind=engine)
-    # e6dfbbd8: kick off create_all with sess.execute()
-    engine.execute("select 1")
-
-
-def shutdown_db():
-    # using context-vars session-makers now
-    pass
