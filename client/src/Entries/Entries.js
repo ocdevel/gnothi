@@ -22,7 +22,7 @@ import {
 import Entry from "./Entry"
 import './Entries.scss'
 import {useStoreState, useStoreActions} from "easy-peasy";
-import {NotesAll} from "./Notes";
+import {NotesAll, NotesNotifs} from "./Notes";
 import {MainTags} from "../Tags";
 import MediaQuery from 'react-responsive'
 import Sidebar from "../Sidebar";
@@ -51,16 +51,15 @@ function EntryTeaser({e, gotoForm}) {
       <Card.Subtitle className='mb-2 text-muted'>
         {fmtDate(e.created_at)}
       </Card.Subtitle>
-      <Card.Text>
-        {isSummary ? <>
-          <div className='blur-summary'>
-            {sentiment}{summary}
-          </div>
-          {hovered && <div className='text-info'>You're viewing an AI-generated summary of this entry. Click to read the original.</div>}
-        </> : <div>
+      {isSummary ? <>
+        <div className='blur-summary'>
           {sentiment}{summary}
-        </div>}
-      </Card.Text>
+        </div>
+        {hovered && <div className='text-info'>You're viewing an AI-generated summary of this entry. Click to read the original.</div>}
+      </> : <div>
+        {sentiment}{summary}
+      </div>}
+      <NotesNotifs entry_id={e.id} />
     </Card.Body>
   )
 }

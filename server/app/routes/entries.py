@@ -1,6 +1,5 @@
-import pdb, re, datetime, logging, boto3, io
+import pdb, re, logging, boto3, asyncio
 import shortuuid
-import dateutil.parser
 from typing import List, Dict, Any
 from fastapi import File, UploadFile
 from app.app_app import app
@@ -10,7 +9,9 @@ import common.models as M
 from urllib.parse import quote as urlencode
 from common.pydantic.utils import BM, BM_ORM, BM_ID
 import common.pydantic.entries as PyE
+from common.pydantic.ws import MessageOut
 from app.utils.errors import NotFound, CantSnoop, GnothiException
+from app.routes.notifs import Notifs
 
 class Entries:
     @staticmethod
@@ -112,25 +113,21 @@ class Entries:
         d.db.commit()
         return {'id': data.id}
 
-    # @app.get('/notes', response_model=List[M.SONote])
-    # def notes_get_all(as_user: str = None, viewer: M.User = Depends(jwt_user)):
-    #     return []  # FIXME
-    #     user, snooping = getuser(viewer, as_user)
-    #     # TODO handle snooping
-    #     return db.query(M.Note).filter_by(user_id=viewer.id).all()
-
     @staticmethod
-    async def on_notes_get(data: PyE.NoteGet, d) -> List[PyE.NoteOut]:
-        # TODO handle snooping
-        return M.Note.snoop(d.db, d.viewer.id, d.user.id, data.entry_id).all()
+    async def on_notes_get(data: PyE.NoteGet, d) -> Dict[str, List[PyE.NoteOut]]:
+        return M.Note.snoop(d.db, d.viewer.id, d.user.id, data.entry_id)
 
     @staticmethod
     async def on_notes_post(data: PyE.NotePost, d) -> List[PyE.NoteOut]:
         # TODO handle snooping
-        d.db.add(M.Note(user_id=d.viewer.id, **data.dict()))
-        M.Notif.send_notifs(data.entry_id, M.NotifTypes.notes)
-        d.db.commit()
-        await d.mgr.send_other('entries/notes/get', data, d)
+        db = d.db
+        db.add(M.Note(user_id=d.viewer.id, **data.dict()))
+        db.commit()
+        notifs = M.NoteNotif.create_notifs(db, data.entry_id)
+        await asyncio.wait([
+            d.mgr.send_other('entries/notes/get', data, d, uids=[n.user_id for n in notifs]),
+            Notifs._send_notifs(d, 'notifs/notes/get', notifs)
+        ])
 
     @staticmethod
     async def on_note_put():

@@ -23,6 +23,8 @@ import petname
 parent_cascade = dict(cascade="all, delete", passive_deletes=True)
 child_cascade = dict(ondelete="cascade")
 
+fernet = FernetEngine()
+fernet._update_key(vars.FLASK_KEY)
 
 # Note: using sa.sa.Unicode for all Text/Varchar columns to be consistent with sqlalchemy_utils examples. Also keeping all
 # text fields unlimited (no varchar(max_length)) as Postgres doesn't incur penalty, unlike MySQL, and we don't know
@@ -148,6 +150,7 @@ class User(Base):
         select coalesce(timezone, 'America/Los_Angeles') as tz
         from users where id=:user_id
         """), dict(user_id=user_id)).fetchone().tz
+
 
 class Entry(Base):
     __tablename__ = 'entries'
@@ -281,20 +284,39 @@ class Note(Base):
         db: Session,
         viewer_id: UUID4,
         target_id: UUID4,
-        entry_id: UUID4,
+        entry_id: UUID4 = None,
     ):
-        # TODO use .join(ShareTag) for non-private permissions?
-        return db.query(Note)\
-            .join(Entry)\
-            .filter(
-                Note.entry_id == entry_id,
-                sa.or_(
-                    # My own private note
-                    sa.and_(Note.private.is_(True), Note.user_id == viewer_id),
-                    # Or this user can view it
-                    sa.and_(Note.private.is_(False), Entry.user_id.in_((viewer_id, target_id)))
-                ))\
-            .order_by(Note.created_at.asc())
+        res = db.execute(sa.text(f"""
+        with users_ as (
+            -- owner 
+            select n.user_id as id 
+            from notes n where n.entry_id=:eid
+                and n.user_id=:vid
+            -- and anyone shared
+            union
+            select u.id from users u
+            inner join shares s on s.email=u.email
+                and u.id=:vid
+            inner join shares_tags st on st.share_id=s.id
+            inner join entries_tags et on st.tag_id=et.tag_id
+            inner join notes n on {"n.entry_id=:eid and" if entry_id else ""} 
+                n.private=false
+        )
+        select n.id::varchar, n.entry_id::varchar, n.user_id::varchar,
+            n.created_at, n.type, n.text, n.private
+        from notes n 
+        inner join users u on u.id=n.user_id
+        order by n.created_at asc
+        """), dict(vid=viewer_id, tid=target_id, eid=entry_id))
+        obj = {}
+        for r in res.fetchall():
+            r = Note(**r)
+            if r.entry_id not in obj:
+                obj[r.entry_id] = []
+            r.text = fernet.decrypt(r.text)
+            obj[r.entry_id].append(r)
+        print(obj)
+        return obj
 
 
 class FieldType(enum.Enum):
@@ -1049,41 +1071,70 @@ class Message(Base):
     text = Encrypt(sa.Unicode, nullable=False)
 
 
-class NotifTypes(enum.Enum):
-    entries = "entries"
-    notes = "notes"
-    messages = "messages"
-
-
-class Notif(Base):
-    __tablename__ = 'notifs'
+class GroupNotif(Base):
+    __tablename__ = 'groups_notifs'
     user_id = FKCol('users.id', primary_key=True)
-    type = sa.Column(sa.Enum(NotifTypes), index=True)
+    obj_id = FKCol('groups.id', primary_key=True)
     count = sa.Column(sa.Integer, server_default="0")
-
-    entry_id = FKCol('entries.id', index=True)
-    note_id = FKCol('notes.id', index=True)
-    # For group.messages (reconsider)
-    group_id = FKCol('groups.id', index=True)
-
-    created_at = DateCol()
     last_seen = DateCol()
 
     @staticmethod
-    def send_notifs(db, id, type):
-        return
+    def create_notifs(db, gid):
+        res = db.execute(sa.text("""
+        with users_ as (
+            select user_id as id from user_groups ug
+            where ug.group_id=:gid and ug.role != 'banned'
+        )
+        insert into groups_notifs (user_id, group_id, count)
+        select u.id, :gid, 1 from users_ u
+        on conflict (user_id, group_id) do update
+        set count=group_notifs.count+1
+        returning obj_id, user_id, count
+        """), dict(gid=gid))
+        db.commit()
+        return res.fetchall()
 
-        obj = {'type': type}
-        k = {
-            NotifTypes.entries: 'entry_id',
-            NotifTypes.notes: 'note_id',
-            NotifTypes.messages: 'group_id'
-        }[type]
-        obj[k] = id
-        # TODO get users who have access
-        for user in users_with_access():
-            curr = db.query(Notif).filter_by(type=type)
-            db.add(Notif(type=type, ))
+
+class NoteNotif(Base):
+    __tablename__ = 'notes_notifs'
+    user_id = FKCol('users.id', primary_key=True)
+    obj_id = FKCol('entries.id', primary_key=True)
+    count = sa.Column(sa.Integer, server_default="0")
+    last_seen = DateCol()
+
+    @staticmethod
+    def create_notifs(db, eid):
+        res = db.execute(sa.text("""
+        with users_ as (
+            -- owner 
+            select e.user_id as id 
+            from entries e where e.id=:eid
+            -- and anyone shared
+            union
+            select u.id from users u
+            inner join shares s on s.email=u.email
+            inner join shares_tags st on st.share_id=s.id
+            inner join entries_tags et on st.tag_id=et.tag_id
+            inner join entries e on e.id=et.entry_id and e.id=:eid
+            
+        )
+        insert into notes_notifs (user_id, obj_id, count)
+        select u.id, :eid, 1 from users_ u
+        on conflict (user_id, obj_id) do update
+        set count=notes_notifs.count+1
+        returning obj_id, user_id, count
+        """), dict(eid=eid))
+        db.commit()
+        return res.fetchall()
+
+
+class ShareNotif(Base):
+    __tablename__ = 'shares_notifs'
+    user_id = FKCol('users.id', primary_key=True)
+    obj_id = FKCol('shares.id', primary_key=True)
+    count = sa.Column(sa.Integer, server_default="0")
+    last_seen = DateCol()
+
 
 
 class MessageReaction(Base):
@@ -1092,14 +1143,3 @@ class MessageReaction(Base):
     message_id = FKCol('messages.id', primary_key=True)
     reaction = sa.Column(sa.Unicode)  # deal with emoji enums later
     created_at = DateCol()
-
-
-def await_row(db, sql, args={}, wait=.5, timeout=None):
-    i = 0
-    while True:
-        res = db.execute(sa.text(sql), args).fetchone()
-        if res: return res
-        time.sleep(wait)
-        if timeout and wait * i >= timeout:
-            return None
-        i += 1

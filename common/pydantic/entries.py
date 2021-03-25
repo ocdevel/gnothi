@@ -31,10 +31,11 @@ class EntryGet(Entry, BM_ORM):
 
 
 class NoteGet(BM):
-    entry_id: UUID4
+    entry_id: Optional[UUID4] = None
 
 
 class NotePost(NoteGet):
+    entry_id: UUID4
     type: NoteTypes
     text: str
     private: bool

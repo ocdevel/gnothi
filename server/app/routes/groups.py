@@ -30,6 +30,9 @@ class Groups:
 
         msg = Groups._wrap(msg, PyG.MessageOut, gid, action='groups/message/get')
         await mgr.send(msg, uids=uids)
+        uids = M.GroupNotif.create_notifs(db, gid)
+        msg = MessageOut(action='notifs/group', data=dict(id=gid))
+        await mgr.send(msg, uids=uids)
 
     @staticmethod
     async def _send_members(gid, d, to_all=True):

@@ -24,11 +24,14 @@ class Users:
             send('users/user/get', {}, d),
             send('tags/tags/get', {}, d),
             send('entries/entries/get', {}, d),
+            send('entries/notes/get', {}, d),
             send('fields/fields/get', {}, d),
             send('fields/field_entries/get', {}, d),
             send('fields/field_entries/has_dupes/get', {}, d),
             send('users/shares/get', {}, d),
-            send('insights/top_books/get', {}, d)
+            send('insights/top_books/get', {}, d),
+            send('notifs/notes/get', {}, d),
+            send('notifs/groups/get', {}, d),
         ])
 
     @staticmethod

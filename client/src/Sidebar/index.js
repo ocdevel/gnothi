@@ -28,7 +28,7 @@ function TopBooks() {
 
   return <>
     <Alert variant='info'>To see books recommended to you based on your journal entries, go to <Link to='/resources'><FaBook /> Resources</Link>. Below are some (non-personalized) popular books in the community.</Alert>
-    {books.map((b, i) => <div key={i}>
+    {books?.map((b, i) => <div key={i}>
       <a href={b.amazon} target='_blank'>{b.title}</a> -{' '}
       <small className='text-muted'>
         {b.author} - {b.topic} -{' '}

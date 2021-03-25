@@ -32,6 +32,7 @@ from app.routes.tags import Tags
 from app.routes.fields import Fields
 from app.routes.habitica import Habitica
 from app.routes.shares import Shares
+from app.routes.notifs import Notifs
 
 
 handlers = Box(
@@ -43,7 +44,8 @@ handlers = Box(
     tags=Tags,
     fields=Fields,
     habitica=Habitica,
-    shares=Shares
+    shares=Shares,
+    notifs=Notifs
 )
 
 

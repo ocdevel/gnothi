@@ -13,12 +13,12 @@ import {
 } from "react-bootstrap"
 import ReactMarkdown from "react-markdown"
 import './Entry.css'
-import {FaTags, FaPen} from "react-icons/fa"
+import {FaTags, FaPen, FaRegComments} from "react-icons/fa"
 import Tags from "../Tags"
 import MarkdownIt from 'markdown-it'
 import MdEditor from 'react-markdown-editor-lite'
 import 'react-markdown-editor-lite/lib/index.css'
-import {AddNotes} from './Notes'
+import {AddNotes, NotesNotifs, NotesList} from './Notes'
 import _ from 'lodash'
 import {EE} from '../redux/ws'
 
@@ -78,27 +78,6 @@ function Editor({text, changeText}) {
       placeholder={placeholder}
     />
   )
-}
-
-function Notes({entry_id}) {
-  const emit = useStoreActions(a => a.ws.emit)
-  const notes = useStoreState(s => s.ws.data['entries/notes/get'])
-
-  useEffect(() => {
-    emit(['entries/notes/get', {entry_id}])
-  }, [entry_id])
-
-  if (!notes.length) {return null}
-
-  return <div style={{marginTop: '1rem'}}>
-    {notes.map(n => <Card className='mb-3'>
-      <Card.Body>
-        <Badge variant="primary">{n.type}</Badge>{' '}
-        {n.private ? "[private] " : null}
-        {n.text}
-      </Card.Body>
-    </Card>)}
-  </div>
 }
 
 export default function Entry() {
@@ -356,7 +335,7 @@ export default function Entry() {
 
       <Modal.Body>
         {renderForm()}
-        {!editing && entry_id && <Notes entry_id={entry_id} />}
+        {!editing && entry_id && <NotesList entry_id={entry_id} />}
       </Modal.Body>
 
 

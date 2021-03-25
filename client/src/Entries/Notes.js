@@ -6,13 +6,14 @@ import {
   Row,
   Modal,
   Tabs,
-  Tab
+  Tab, Card
 } from "react-bootstrap";
 import React, {useEffect, useState} from "react";
 import {FaQuestionCircle} from "react-icons/all";
 import {SimplePopover} from "../utils";
 
 import {useStoreActions, useStoreState} from "easy-peasy";
+import {FaRegComments} from "react-icons/fa";
 
 export function NotesAll() {
   return null
@@ -208,4 +209,38 @@ export function AddNotes({entry_id, onSubmit}) {
     {showHelp && renderHelpModal()}
     {adding ? renderForm() : renderButtons()}
   </>
+}
+
+export function NotesNotifs({entry_id}) {
+  const notes = useStoreState(s => s.ws.data['entries/notes/get']?.[entry_id])
+  const notifs = useStoreState(s => s.ws.data['notifs/notes/get']?.[entry_id])
+
+  if (!(notes?.length || notifs?.length)) {return null}
+
+  return <div>
+    <FaRegComments /> {notes?.length || 0}
+    {notifs && <Badge className='ml-2' variant='success'>{notifs} new</Badge>}
+  </div>
+}
+
+export function NotesList({entry_id}) {
+  const emit = useStoreActions(a => a.ws.emit)
+  const notes = useStoreState(s => s.ws.data['entries/notes/get']?.[entry_id])
+
+  useEffect(() => {
+    emit(['entries/notes/get', {entry_id}])
+  }, [entry_id])
+
+  if (!notes?.length) {return null}
+
+  return <div style={{marginTop: '1rem'}}>
+    <NotesNotifs entry_id={entry_id} />
+    {notes.map(n => <Card className='mb-3' key={n.id}>
+      <Card.Body>
+        <Badge variant="primary">{n.type}</Badge>{' '}
+        {n.private ? "[private] " : null}
+        {n.text}
+      </Card.Body>
+    </Card>)}
+  </div>
 }
