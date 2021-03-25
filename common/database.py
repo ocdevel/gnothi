@@ -8,7 +8,6 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import scoped_session, sessionmaker, Session
 from common.utils import vars
 # just for fastapi-users (I'm using sqlalchemy+engine+session everywhere else)
-import databases
 import logging
 from contextlib import contextmanager
 logger = logging.getLogger(__name__)
@@ -92,6 +91,3 @@ def session(k='main', commit=True):
         raise
     finally:
         sess.close()
-
-
-fa_users_db = databases.Database(vars.DB_FULL)

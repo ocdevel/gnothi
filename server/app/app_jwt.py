@@ -7,9 +7,6 @@ from fastapi.responses import JSONResponse
 
 from fastapi_jwt_auth.exceptions import AuthJWTException
 from fastapi_jwt_auth import AuthJWT
-from fastapi_users.router.common import ErrorCode
-from fastapi_users.authentication import JWTAuthentication
-from fastapi_users import FastAPIUsers
 
 from app.app_app import app
 from app.mail import send_mail
@@ -17,12 +14,7 @@ from app.google_analytics import ga
 import common.models as M
 
 
-jwt_authentication = JWTAuthentication(secret=SECRET, lifetime_seconds=60*5)
-fastapi_users = FastAPIUsers(
-    M.user_db, [jwt_authentication], M.FU_User, M.FU_UserCreate, M.FU_UserUpdate, M.FU_UserDB,
-)
-
-def on_after_register(user: M.FU_UserDB, request: Request):
+def on_after_register(user):
     ga(user.id, 'user', 'register')
     with db():
         t = M.Tag(user_id=user.id, main=True, selected=True, name='Main')
@@ -30,20 +22,6 @@ def on_after_register(user: M.FU_UserDB, request: Request):
         db.session.commit()
     send_mail(user.email, "welcome", {})
 
-def on_after_forgot_password(user: M.FU_UserDB, token: str, request: Request):
-    send_mail(user.email, "forgot-password", token)
-
-app.include_router(
-    fastapi_users.get_register_router(on_after_register), prefix="/auth", tags=["auth"]
-)
-
-app.include_router(
-    fastapi_users.get_reset_password_router(
-        SECRET, after_forgot_password=on_after_forgot_password
-    ),
-    prefix="/auth",
-    tags=["auth"],
-)
 
 # 233da7ae: fastapi-users gutted here, only using for bells/whistles (model setup, registration,
 # reset-password, and soon verify password). Using instead fastapi-jwt-auth for per-route jwt

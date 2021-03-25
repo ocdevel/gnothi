@@ -20,7 +20,7 @@ RUN pip install \
   mysqlclient \
   cryptography \
   # else fastapi-jwt-auth breaks
-  fastapi-users[sqlalchemy]==4.0.0 \
+  passlib \
   fastapi-jwt-auth \
   PyJWT==1.7.1 \
   asyncpg \
@@ -33,9 +33,7 @@ RUN pip install \
   dynaconf \
   stripe \
   petname \
-  fastapi-socketio \
   fastapi-utils \
-  aioredis \
   orjson \
   python-jose \
   broadcaster[postgres]

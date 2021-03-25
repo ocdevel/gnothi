@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi_sqlalchemy import DBSessionMiddleware  # middleware helper
 
 # Database
-from common.database import init_db, shutdown_db, fa_users_db, engine
+from common.database import init_db, shutdown_db, engine
 from common.utils import vars, SECRET
 
 import common.models as M
@@ -37,13 +37,11 @@ def init_groups():
 
 @app.on_event("startup")
 async def startup():
-    await fa_users_db.connect()
     init_db()
     init_groups()
 
 
 @app.on_event("shutdown")
 async def shutdown_session():
-    await fa_users_db.disconnect()
     shutdown_db()
 

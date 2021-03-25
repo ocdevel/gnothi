@@ -5,7 +5,7 @@ import pandas as pd
 import logging
 logger = logging.getLogger(__name__)
 
-from common.database import Base, fa_users_db, with_db
+from common.database import Base, with_db
 from common.utils import vars
 
 import sqlalchemy as sa
@@ -17,9 +17,6 @@ from sqlalchemy_utils.types.encrypted.encrypted_type import StringEncryptedType,
 from sqlalchemy.orm import Session
 import petname
 
-
-from fastapi_users import models as fu_models
-from fastapi_users.db import SQLAlchemyBaseUserTable, SQLAlchemyUserDatabase
 
 
 # https://dev.to/zchtodd/sqlalchemy-cascading-deletes-8hk
@@ -54,9 +51,19 @@ def FKCol(fk, **kwargs):
     return sa.Column(psql.UUID(as_uuid=True), sa.ForeignKey(fk, **child_cascade), **kwargs)
 
 
-class User(Base, SQLAlchemyBaseUserTable):
+class AuthOld(Base):
+    __tablename__ = 'auth_old'
+
+    id = FKCol('users.id', index=True, primary_key=True)
+    email = sa.Column(sa.String(length=320), unique=True, index=True, nullable=False)
+    hashed_password = sa.Column(sa.String(length=72), nullable=False)
+
+
+class User(Base):
     __tablename__ = 'users'
 
+    id = IDCol()
+    email = sa.Column(sa.String(length=320), unique=True, index=True, nullable=False)
     cognito_id = sa.Column(sa.Unicode, index=True)
     # ws_id = sa.Column(sa.Unicode, index=True)
 
@@ -141,13 +148,6 @@ class User(Base, SQLAlchemyBaseUserTable):
         select coalesce(timezone, 'America/Los_Angeles') as tz
         from users where id=:user_id
         """), dict(user_id=user_id)).fetchone().tz
-
-class FU_User(fu_models.BaseUser): pass
-class FU_UserCreate(fu_models.BaseUserCreate): pass
-class FU_UserUpdate(FU_User, fu_models.BaseUserUpdate): pass
-class FU_UserDB(FU_User, fu_models.BaseUserDB): pass
-user_db = SQLAlchemyUserDatabase(FU_UserDB, fa_users_db, User.__table__)
-
 
 class Entry(Base):
     __tablename__ = 'entries'
@@ -482,7 +482,6 @@ class Share(Base):
         select s.*, u.* from users u
         inner join shares s on s.email=:email and u.id=s.user_id
         """, {'email': email}).fetchall()
-
 
 
 class Tag(Base):

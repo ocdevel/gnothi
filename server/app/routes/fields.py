@@ -2,7 +2,7 @@ import pdb, io, asyncio
 from typing import List, Dict, Any
 from fastapi import Depends
 from app.app_app import app
-from app.app_jwt import fastapi_users, jwt_user
+from app.app_jwt import jwt_user
 import sqlalchemy as sa
 from sqlalchemy import text
 import common.models as M
