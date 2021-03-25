@@ -1,9 +1,6 @@
 import enum, pdb, re, threading, time, datetime, traceback, orjson, json
 from typing import Optional, List, Any, Dict, Union
 from pydantic import UUID4
-import pytz
-from uuid import uuid4
-import dateutil
 import pandas as pd
 import logging
 logger = logging.getLogger(__name__)
@@ -11,16 +8,12 @@ logger = logging.getLogger(__name__)
 from common.database import Base, fa_users_db, with_db
 from common.utils import vars
 
-from sqlalchemy import Column, Integer, Enum, Float, ForeignKey, Boolean, JSON, Date, Unicode, \
-    func, TIMESTAMP, select, or_, and_
-from psycopg2.extras import Json as jsonb
-from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy.orm import relationship, backref, object_session, column_property
-from sqlalchemy.dialects import postgresql
-from sqlalchemy.dialects.postgresql import UUID, JSONB, ARRAY
+import sqlalchemy as sa
+import sqlalchemy.orm as orm
+from psycopg2.extras import Json as to_jsonb
+from sqlalchemy.dialects import postgresql as psql
 from sqlalchemy_utils.types import EmailType
 from sqlalchemy_utils.types.encrypted.encrypted_type import StringEncryptedType, FernetEngine
-import sqlalchemy as sa
 from sqlalchemy.orm import Session
 import petname
 
@@ -34,13 +27,13 @@ parent_cascade = dict(cascade="all, delete", passive_deletes=True)
 child_cascade = dict(ondelete="cascade")
 
 
-# Note: using sa.Unicode for all Text/Varchar columns to be consistent with sqlalchemy_utils examples. Also keeping all
+# Note: using sa.sa.Unicode for all Text/Varchar columns to be consistent with sqlalchemy_utils examples. Also keeping all
 # text fields unlimited (no varchar(max_length)) as Postgres doesn't incur penalty, unlike MySQL, and we don't know
 # how long str will be after encryption.
-def Encrypt(Col=Unicode, array=False, **args):
+def Encrypt(Col=sa.Unicode, array=False, **args):
     enc = StringEncryptedType(Col, vars.FLASK_KEY, FernetEngine)
-    if array: enc = ARRAY(enc)
-    return Column(enc, **args)
+    if array: enc = psql.ARRAY(enc)
+    return sa.Column(enc, **args)
 
 
 # TODO should all date-cols be index=True? (eg sorting, filtering)
@@ -50,54 +43,54 @@ def DateCol(default=True, update=False, **kwargs):
     # and assuming you're DB server is set on UTC
     if default: args['server_default'] = sa.text("now()")
     if update: args['onupdate'] = sa.text("now()")
-    return Column(TIMESTAMP(timezone=True), index=True, **args, **kwargs)
+    return sa.Column(sa.TIMESTAMP(timezone=True), index=True, **args, **kwargs)
 
 
 def IDCol():
-    return Column(UUID(as_uuid=True), primary_key=True, server_default=sa.text("uuid_generate_v4()"))
+    return sa.Column(psql.UUID(as_uuid=True), primary_key=True, server_default=sa.text("uuid_generate_v4()"))
 
 
 def FKCol(fk, **kwargs):
-    return Column(UUID(as_uuid=True), ForeignKey(fk, **child_cascade), **kwargs)
+    return sa.Column(psql.UUID(as_uuid=True), sa.ForeignKey(fk, **child_cascade), **kwargs)
 
 
 class User(Base, SQLAlchemyBaseUserTable):
     __tablename__ = 'users'
 
-    cognito_id = Column(Unicode, index=True)
-    # ws_id = Column(Unicode, index=True)
+    cognito_id = sa.Column(sa.Unicode, index=True)
+    # ws_id = sa.Column(sa.Unicode, index=True)
 
     created_at = DateCol()
     updated_at = DateCol(update=True)
 
-    username = Column(Unicode, index=True)
-    # socket_id = Column(Unicode, index=True)
+    username = sa.Column(sa.Unicode, index=True)
+    # socket_id = sa.Column(sa.Unicode, index=True)
     # as = FKCol('users.id')
 
     first_name = Encrypt()
     last_name = Encrypt()
     gender = Encrypt()
     orientation = Encrypt()
-    birthday = Column(Date)  # TODO encrypt (how to store/migrate dates?)
-    timezone = Column(Unicode)
+    birthday = sa.Column(sa.Date)  # TODO encrypt (how to store/migrate dates?)
+    timezone = sa.Column(sa.Unicode)
     bio = Encrypt()
-    is_cool = Column(Boolean, server_default='false')
-    therapist = Column(Boolean, server_default='false')
-    paid = Column(Boolean)
+    is_cool = sa.Column(sa.Boolean, server_default='false')
+    therapist = sa.Column(sa.Boolean, server_default='false')
+    paid = sa.Column(sa.Boolean)
 
-    ai_ran = Column(Boolean, server_default='false')
+    ai_ran = sa.Column(sa.Boolean, server_default='false')
     last_books = DateCol(default=False)
     last_influencers = DateCol(default=False)
 
     habitica_user_id = Encrypt()
     habitica_api_token = Encrypt()
 
-    entries = relationship("Entry", order_by='Entry.created_at.desc()', **parent_cascade)
-    field_entries = relationship("FieldEntry", order_by='FieldEntry.created_at.desc()', **parent_cascade)
-    fields = relationship("Field", order_by='Field.created_at.asc()', **parent_cascade)
-    people = relationship("Person", order_by='Person.name.asc()', **parent_cascade)
-    shares = relationship("Share", **parent_cascade)
-    tags = relationship("Tag", order_by='Tag.name.asc()', **parent_cascade)
+    entries = orm.relationship("Entry", order_by='Entry.created_at.desc()', **parent_cascade)
+    field_entries = orm.relationship("FieldEntry", order_by='FieldEntry.created_at.desc()', **parent_cascade)
+    fields = orm.relationship("Field", order_by='Field.created_at.asc()', **parent_cascade)
+    people = orm.relationship("Person", order_by='Person.name.asc()', **parent_cascade)
+    shares = orm.relationship("Share", **parent_cascade)
+    tags = orm.relationship("Tag", order_by='Tag.name.asc()', **parent_cascade)
 
     @staticmethod
     def snoop(db, viewer, as_id=None):
@@ -165,9 +158,9 @@ class Entry(Base):
 
     # Title optional, otherwise generated from text. topic-modeled, or BERT summary, etc?
     title = Encrypt()
-    text = Encrypt(Unicode, nullable=False)
-    no_ai = Column(Boolean, server_default='false')
-    ai_ran = Column(Boolean, server_default='false')
+    text = Encrypt(sa.Unicode, nullable=False)
+    no_ai = sa.Column(sa.Boolean, server_default='false')
+    ai_ran = sa.Column(sa.Boolean, server_default='false')
 
     # Generated
     title_summary = Encrypt()
@@ -175,9 +168,9 @@ class Entry(Base):
     sentiment = Encrypt()
 
     user_id = FKCol('users.id', index=True)
-    entry_tags_ = relationship("EntryTag", **parent_cascade)
+    entry_tags_ = orm.relationship("EntryTag", **parent_cascade)
 
-    # share_tags = relationship("EntryTag", secondary="shares_tags")
+    # share_tags = orm.relationship("EntryTag", secondary="shares_tags")
 
     @property
     def entry_tags(self):
@@ -248,7 +241,6 @@ class Entry(Base):
         data_in = dict(args=[str(self.id)])
         Job.create_job(db, user_id=self.user_id, method='entries', data_in=data_in)
 
-
     def update_snoopers(self, db):
         """Updates snoopers with n_new_entries since last_seen"""
         sql = """
@@ -280,9 +272,9 @@ class Note(Base):
     created_at = DateCol()
     entry_id = FKCol('entries.id', index=True)
     user_id = FKCol('users.id', index=True)
-    type = Column(Enum(NoteTypes), nullable=False)
-    text = Encrypt(Unicode, nullable=False)
-    private = Column(Boolean, server_default='false')
+    type = sa.Column(sa.Enum(NoteTypes), nullable=False)
+    text = Encrypt(sa.Unicode, nullable=False)
+    private = sa.Column(sa.Boolean, server_default='false')
 
     @staticmethod
     def snoop(
@@ -296,11 +288,11 @@ class Note(Base):
             .join(Entry)\
             .filter(
                 Note.entry_id == entry_id,
-                or_(
+                sa.or_(
                     # My own private note
-                    and_(Note.private.is_(True), Note.user_id == viewer_id),
+                    sa.and_(Note.private.is_(True), Note.user_id == viewer_id),
                     # Or this user can view it
-                    and_(Note.private.is_(False), Entry.user_id.in_((viewer_id, target_id)))
+                    sa.and_(Note.private.is_(False), Entry.user_id.in_((viewer_id, target_id)))
                 ))\
             .order_by(Note.created_at.asc())
 
@@ -340,28 +332,28 @@ class Field(Base):
 
     id = IDCol()
 
-    type = Column(Enum(FieldType))
+    type = sa.Column(sa.Enum(FieldType))
     name = Encrypt()
     # Start entries/graphs/correlations here
     created_at = DateCol()
     # Don't actually delete fields, unless it's the same day. Instead
     # stop entries/graphs/correlations here
     excluded_at = DateCol(default=False)
-    default_value = Column(Enum(DefaultValueTypes), server_default="value")
-    default_value_value = Column(Float)
+    default_value = sa.Column(sa.Enum(DefaultValueTypes), server_default="value")
+    default_value_value = sa.Column(sa.Float)
     # option{single_or_multi, options:[], ..}
     # number{float_or_int, ..}
-    attributes = Column(JSON)
+    attributes = sa.Column(sa.JSON)
     # Used if pulling from external service
-    service = Column(Unicode)
-    service_id = Column(Unicode)
+    service = sa.Column(sa.Unicode)
+    service_id = sa.Column(sa.Unicode)
 
     user_id = FKCol('users.id', index=True)
 
     # Populated via ml.influencers.
-    influencer_score = Column(Float, server_default='0')
-    next_pred = Column(Float, server_default='0')
-    avg = Column(Float, server_default="0")
+    influencer_score = sa.Column(sa.Float, server_default='0')
+    next_pred = sa.Column(sa.Float, server_default='0')
+    avg = sa.Column(sa.Float, server_default="0")
 
     @staticmethod
     def update_avg(db, fid):
@@ -391,7 +383,7 @@ class FieldEntryOld(Base):
     """
     __tablename__ = 'field_entries'
     id = IDCol()
-    value = Column(Float)
+    value = sa.Column(sa.Float)
     created_at = DateCol()
     user_id = FKCol('users.id', index=True)
     field_id = FKCol('fields.id')
@@ -404,15 +396,15 @@ class FieldEntry(Base):
     __tablename__ = 'field_entries2'
     # day & field_id may be queries independently, so compound primary-key not enough - index too
     field_id = FKCol('fields.id', primary_key=True, index=True)
-    day = Column(Date, primary_key=True, index=True)
+    day = sa.Column(sa.Date, primary_key=True, index=True)
 
     created_at = DateCol()
-    value = Column(Float)  # Later consider more storage options than float
+    value = sa.Column(sa.Float)  # Later consider more storage options than float
     user_id = FKCol('users.id', index=True)
 
     # remove these after duplicates bug handled
-    dupes = Column(JSONB)
-    dupe = Column(Integer, server_default="0")
+    dupes = sa.Column(psql.JSONB)
+    dupe = sa.Column(sa.Integer, server_default="0")
 
     @staticmethod
     def get_day_entries(db, user_id, day=None):
@@ -468,17 +460,17 @@ class Share(Base):
     __tablename__ = 'shares'
     id = IDCol()
     user_id = FKCol('users.id', index=True)
-    email = Column(EmailType, index=True)  # TODO encrypt?
+    email = sa.Column(EmailType, index=True)  # TODO encrypt?
 
-    fields = Column(Boolean)
-    books = Column(Boolean)
-    profile = Column(Boolean)
+    fields = sa.Column(sa.Boolean)
+    books = sa.Column(sa.Boolean)
+    profile = sa.Column(sa.Boolean)
 
-    share_tags = relationship("ShareTag", **parent_cascade)
-    tags_ = relationship("Tag", secondary="shares_tags")
+    share_tags = orm.relationship("ShareTag", **parent_cascade)
+    tags_ = orm.relationship("Tag", secondary="shares_tags")
 
     last_seen = DateCol()
-    new_entries = Column(Integer, server_default=sa.text("0"))
+    new_entries = sa.Column(sa.Integer, server_default=sa.text("0"))
 
     @property
     def tags(self):
@@ -497,13 +489,13 @@ class Tag(Base):
     __tablename__ = 'tags'
     id = IDCol()
     user_id = FKCol('users.id', index=True)
-    name = Encrypt(Unicode, nullable=False)
+    name = Encrypt(sa.Unicode, nullable=False)
     created_at = DateCol()
     # Save user's selected tags between sessions
-    selected = Column(Boolean, server_default="true")
-    main = Column(Boolean, server_default="false")
+    selected = sa.Column(sa.Boolean, server_default="true")
+    main = sa.Column(sa.Boolean, server_default="false")
 
-    shares = relationship("Share", secondary="shares_tags")
+    shares = orm.relationship("Share", secondary="shares_tags")
 
     @staticmethod
     def snoop(db: Session, from_email, to_id, snooping=False):
@@ -527,22 +519,22 @@ class ShareTag(Base):
     __tablename__ = 'shares_tags'
     share_id = FKCol('shares.id', primary_key=True)
     tag_id = FKCol('tags.id', primary_key=True)
-    selected = Column(Boolean, server_default="true")
+    selected = sa.Column(sa.Boolean, server_default="true")
 
-    tag = relationship(Tag, backref=backref("tags"))
-    share = relationship(Share, backref=backref("shares"))
+    tag = orm.relationship(Tag, backref=orm.backref("tags"))
+    share = orm.relationship(Share, backref=orm.backref("shares"))
 
 
 class Book(Base):
     __tablename__ = 'books'
-    id = Column(Integer, primary_key=True)
-    title = Column(Unicode, nullable=False)
-    text = Column(Unicode, nullable=False)
-    author = Column(Unicode)
-    topic = Column(Unicode)
+    id = sa.Column(sa.Integer, primary_key=True)
+    title = sa.Column(sa.Unicode, nullable=False)
+    text = sa.Column(sa.Unicode, nullable=False)
+    author = sa.Column(sa.Unicode)
+    topic = sa.Column(sa.Unicode)
 
-    thumbs = Column(Integer, server_default=sa.text("0"))
-    amazon = Column(Unicode)
+    thumbs = sa.Column(sa.Integer, server_default=sa.text("0"))
+    amazon = sa.Column(sa.Unicode)
 
 
 class Shelves(enum.Enum):
@@ -560,10 +552,10 @@ class Bookshelf(Base):
     created_at = DateCol()
     updated_at = DateCol(update=True)
 
-    book_id = Column(Integer, primary_key=True)  # no FK, books change often
+    book_id = sa.Column(sa.Integer, primary_key=True)  # no FK, books change often
     user_id = FKCol('users.id', primary_key=True)
-    shelf = Column(Enum(Shelves), nullable=False)
-    score = Column(Float)  # only for ai-recs
+    shelf = sa.Column(sa.Enum(Shelves), nullable=False)
+    score = sa.Column(sa.Float)  # only for ai-recs
 
     @staticmethod
     def update_books(db, user_id):
@@ -667,13 +659,13 @@ class Job(Base):
     user_id = FKCol('users.id')
     created_at = DateCol()
     updated_at = DateCol(update=True)
-    method = Column(Unicode, index=True, nullable=False)
-    state = Column(Unicode, server_default="new", index=True)
-    run_on = Column(Enum(MachineTypes), server_default="gpu", index=True)
+    method = sa.Column(sa.Unicode, index=True, nullable=False)
+    state = sa.Column(sa.Unicode, server_default="new", index=True)
+    run_on = sa.Column(sa.Enum(MachineTypes), server_default="gpu", index=True)
     # FK of Machine.id (but don't use FK, since we delete Machines w/o invalidating jobs)
-    machine_id = Column(Unicode, index=True)
-    data_in = Column(JSONB)
-    data_out = Column(JSONB)
+    machine_id = sa.Column(sa.Unicode, index=True)
+    data_in = sa.Column(psql.JSONB)
+    data_out = sa.Column(psql.JSONB)
 
     @staticmethod
     def create_job(db, user_id, method, data_in={}, **kwargs):
@@ -736,7 +728,7 @@ class Job(Base):
             sql = "update jobs set state='error', data_out=:data where id=:jid"
             logger.error(f"Job {method} error {time.time() - start} {err}")
         with with_db() as db:
-            db.execute(sa.text(sql), dict(data=jsonb(res), jid=str(jid)))
+            db.execute(sa.text(sql), dict(data=to_jsonb(res), jid=str(jid)))
             db.execute(sa.text("select pg_notify('jobs', :jid)"), dict(jid=str(jid)))
             db.commit()
 
@@ -774,9 +766,9 @@ class Machine(Base):
     List of running machines (gpu, server)
     """
     __tablename__ = 'machines'
-    id = Column(Unicode, primary_key=True)  # socket.hostname()
-    #type = Column(Enum(MachineTypes), server_default="gpu")
-    status = Column(Unicode)
+    id = sa.Column(sa.Unicode, primary_key=True)  # socket.hostname()
+    #type = sa.Column(sa.Enum(MachineTypes), server_default="gpu")
+    status = sa.Column(sa.Unicode)
     created_at = DateCol()
     updated_at = DateCol(update=True)
 
@@ -831,19 +823,19 @@ class CacheEntry(Base):
     entry_id = FKCol('entries.id', primary_key=True)
     paras = Encrypt(array=True)
     clean = Encrypt(array=True)
-    vectors = Column(ARRAY(Float, dimensions=2))
+    vectors = sa.Column(psql.ARRAY(sa.Float, dimensions=2))
 
     @staticmethod
     def get_paras(db, entries_q, profile_id=None):
         CE, CU = CacheEntry, CacheUser
         entries = entries_q.join(CE, CE.entry_id == Entry.id) \
-            .filter(func.array_length(CE.paras,1)>0) \
+            .filter(sa.func.array_length(CE.paras,1)>0) \
             .with_entities(CE.paras).all()
         paras = [p for e in entries for p in e.paras if e.paras]
 
         if profile_id:
             profile = db.query(CU) \
-                .filter(func.array_length(CU.paras,1)>0, CU.user_id == profile_id) \
+                .filter(sa.func.array_length(CU.paras,1)>0, CU.user_id == profile_id) \
                 .with_entities(CU.paras) \
                 .first()
             if profile:
@@ -857,26 +849,26 @@ class CacheUser(Base):
     user_id = FKCol('users.id', primary_key=True)
     paras = Encrypt(array=True)
     clean = Encrypt(array=True)
-    vectors = Column(ARRAY(Float, dimensions=2))
+    vectors = sa.Column(psql.ARRAY(sa.Float, dimensions=2))
 
 
 class Influencer(Base):
     __tablename__ = 'influencers'
     field_id = FKCol('fields.id', primary_key=True)
     influencer_id = FKCol('fields.id', primary_key=True)
-    score = Column(Float, nullable=False)
+    score = sa.Column(sa.Float, nullable=False)
 
 
 class ModelHypers(Base):
     __tablename__ = 'model_hypers'
     id = IDCol()
-    model = Column(Unicode, nullable=False, index=True)
-    model_version = Column(Integer, nullable=False, index=True)
+    model = sa.Column(sa.Unicode, nullable=False, index=True)
+    model_version = sa.Column(sa.Integer, nullable=False, index=True)
     user_id = FKCol('users.id')
     created_at = DateCol()
-    score = Column(Float, nullable=False)
-    hypers = Column(JSONB, nullable=False)
-    meta = Column(JSONB)  # for xgboost it's {n_rows, n_cols}
+    score = sa.Column(sa.Float, nullable=False)
+    hypers = sa.Column(psql.JSONB, nullable=False)
+    meta = sa.Column(psql.JSONB)  # for xgboost it's {n_rows, n_cols}
 
 
 class MatchTypes(enum.Enum):
@@ -890,8 +882,8 @@ class Match(Base):
     owner_id = FKCol('users.id', index=True, nullable=False)
     user_id = FKCol('users.id', index=True)
     groups_id = FKCol('groups.id', index=True)
-    match_type = Column(Enum(MatchTypes), nullable=False)
-    score = Column(Float, nullable=False)
+    match_type = sa.Column(sa.Enum(MatchTypes), nullable=False)
+    score = sa.Column(sa.Float, nullable=False)
 
 
 class GroupPrivacy(enum.Enum):
@@ -911,9 +903,9 @@ class Group(Base):
     __tablename__ = 'groups'
     id = IDCol()
     owner = FKCol('users.id', index=True)
-    title = Encrypt(Unicode, nullable=False)
-    text = Encrypt(Unicode, nullable=False)
-    privacy = Column(Enum(GroupPrivacy))
+    title = Encrypt(sa.Unicode, nullable=False)
+    text = Encrypt(sa.Unicode, nullable=False)
+    privacy = sa.Column(sa.Enum(GroupPrivacy))
     created_at = DateCol()
     updated_at = DateCol(update=True)
 
@@ -983,14 +975,14 @@ class UserGroup(Base):
     username = Encrypt(default=petname.Generate)  # auto-generate a random name (adjective-animal)
     user_group_id = IDCol()
 
-    show_username = Column(Boolean)
-    show_avatar = Column(Boolean)
-    show_first_name = Column(Boolean)
-    show_last_name = Column(Boolean)
-    show_bio = Column(Boolean)
+    show_username = sa.Column(sa.Boolean)
+    show_avatar = sa.Column(sa.Boolean)
+    show_first_name = sa.Column(sa.Boolean)
+    show_last_name = sa.Column(sa.Boolean)
+    show_bio = sa.Column(sa.Boolean)
 
     joined_at = DateCol()
-    role = Column(Enum(GroupRoles))
+    role = sa.Column(sa.Enum(GroupRoles))
 
     @staticmethod
     def get_members(db, gid):
@@ -1052,24 +1044,54 @@ class Message(Base):
     owner_id = FKCol('users.id', index=True)
     user_id = FKCol('users.id', index=True)
     group_id = FKCol('groups.id', index=True)
-    recipient_type = Column(Enum(MatchTypes))
+    recipient_type = sa.Column(sa.Enum(MatchTypes))
     created_at = DateCol()
     updated_at = DateCol(update=True)
-    text = Encrypt(Unicode, nullable=False)
+    text = Encrypt(sa.Unicode, nullable=False)
 
 
-class MessagePing(Base):
-    __tablename__ = 'message_pings'
+class NotifTypes(enum.Enum):
+    entries = "entries"
+    notes = "notes"
+    messages = "messages"
+
+
+class Notif(Base):
+    __tablename__ = 'notifs'
     user_id = FKCol('users.id', primary_key=True)
-    message_id = FKCol('messages.id', primary_key=True)
+    type = sa.Column(sa.Enum(NotifTypes), index=True)
+    count = sa.Column(sa.Integer, server_default="0")
+
+    entry_id = FKCol('entries.id', index=True)
+    note_id = FKCol('notes.id', index=True)
+    # For group.messages (reconsider)
+    group_id = FKCol('groups.id', index=True)
+
     created_at = DateCol()
+    last_seen = DateCol()
+
+    @staticmethod
+    def send_notifs(db, id, type):
+        return
+
+        obj = {'type': type}
+        k = {
+            NotifTypes.entries: 'entry_id',
+            NotifTypes.notes: 'note_id',
+            NotifTypes.messages: 'group_id'
+        }[type]
+        obj[k] = id
+        # TODO get users who have access
+        for user in users_with_access():
+            curr = db.query(Notif).filter_by(type=type)
+            db.add(Notif(type=type, ))
 
 
 class MessageReaction(Base):
     __tablename__ = 'message_reactions'
     user_id = FKCol('users.id', primary_key=True)
     message_id = FKCol('messages.id', primary_key=True)
-    reaction = Column(Unicode)  # deal with emoji enums later
+    reaction = sa.Column(sa.Unicode)  # deal with emoji enums later
     created_at = DateCol()
 
 
