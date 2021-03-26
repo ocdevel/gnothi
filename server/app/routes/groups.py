@@ -6,6 +6,7 @@ from pydantic import parse_obj_as, UUID4
 from app.utils.errors import CantInteract, CantSnoop
 from common.pydantic.utils import BM_ID, BM
 from common.pydantic.ws import MessageOut
+import sqlalchemy as sa
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +18,6 @@ class Groups:
         if action:
             out = MessageOut(action=action, data=out, id=str(gid))
         return out
-
 
     @staticmethod
     async def _send_message(msg, d):
@@ -74,7 +74,7 @@ class Groups:
         ])
 
     @staticmethod
-    async def group_leave(data: BM_ID, d) -> Dict:
+    async def on_group_leave(data: BM_ID, d) -> Dict:
         uid, gid = str(d.vid), data.id
         ug = M.Group.leave_group(d.db, data.id, uid)
         msg = dict(
@@ -85,6 +85,7 @@ class Groups:
         await asyncio.wait([
             Groups._send_members(gid, d),
             Groups._send_message(msg, d),
+            d.mgr.send_other('groups/mine/get', {}, d)
         ])
         return {'ok': True}
 
@@ -131,6 +132,15 @@ class Groups:
         uids = [uid for uid, _ in d.mgr.users.items()]
         await d.mgr.send_other('groups/groups/get', data, d, uids=uids)
         return g
+
+    @staticmethod
+    async def on_mine_get(data: BM, d) -> List[PyG.GroupOut]:
+        return d.db.query(M.Group)\
+            .join(M.UserGroup, sa.and_(
+                M.UserGroup.group_id == M.Group.id,
+                M.UserGroup.user_id == d.vid,
+                M.UserGroup.role != M.GroupRoles.banned
+            )).all()
 
 
 groups_router = None

@@ -31,7 +31,27 @@ function IconItem({icon, text}) {
   </div>
 }
 
-export function Sidebar() {
+function ToggleSection({icon, text, children}) {
+  const [show, setShow] = useState(true)
+  function toggle() {
+    setShow(!show)
+  }
+
+  return <li className="nav-sb-bb">
+    <a
+      onClick={toggle}
+      data-toggle="collapse"
+      className="dropdown-toggle"
+    >
+      <IconItem icon={icon} text={text} />
+    </a>
+    <ul className={`collapse list-unstyled ${show && 'show'}`}>
+      {children}
+    </ul>
+  </li>
+}
+
+function AccountSection() {
   const changeAs = useStoreActions(a => a.ws.changeAs)
   const logout = useStoreActions(actions => actions.user.logout)
 
@@ -39,11 +59,6 @@ export function Sidebar() {
   const shares = useStoreState(s => s.ws.data['users/shares/get'])
   const as = useStoreState(s => s.ws.as)
   const asUser = useStoreState(s => s.ws.asUser)
-  const aiStatus = useStoreState(s => s.ws.data['jobs/status'].status)
-
-  const [showAccount, setShowAccount] = useState(true)
-  const [showGroups, setShowGroups] = useState(true)
-  const [showInsights, setShowInsights] = useState(true)
 
   function renderSwitcher (s, i, last) {
     if (s.id == as) {return null}
@@ -86,6 +101,36 @@ export function Sidebar() {
 
   const canProfile = !as || (asUser && asUser.profile)
 
+  return <ToggleSection icon={<FaUser />} text={email}>
+    {renderAsSelect()}
+    {canProfile && <li>
+      <Link to="/account/profile">Profile</Link>
+    </li>}
+    {!as && <li>
+      <Link to="/account/sharing">Sharing</Link>
+    </li>}
+    <li><a onClick={() => logout()}>Logout</a></li>
+  </ToggleSection>
+}
+
+function GroupsSection() {
+  const groups = useStoreState(s => s.ws.data['groups/mine/get'])
+
+  function renderGroup(g) {
+    return <li><Link to={`/groups/${g.id}`}>{g.title}</Link></li>
+  }
+
+  return <ToggleSection icon={<FaRegComments />} text="Community">
+    <li><Link to='/groups'>All Groups</Link></li>
+    {groups?.length ? groups.map(renderGroup) : null}
+  </ToggleSection>
+}
+
+export function Sidebar() {
+  const aiStatus = useStoreState(s => s.ws.data['jobs/status'].status)
+
+  const [showInsights, setShowInsights] = useState(true)
+
   let aiStatus_ = null
   if (~['off', 'pending'].indexOf(aiStatus)) {
     aiStatus_ = {
@@ -97,57 +142,24 @@ export function Sidebar() {
     </SimplePopover>
   }
 
-
   return <nav className='nav-sb'>
     <div className='nav-sb-header'>
       <div>Gnothi {aiStatus_}</div>
     </div>
     <ul className="list-unstyled components">
-
       <li className='nav-sb-bb'>
         <Link to='/j'><IconItem icon={<FaRegListAlt />} text="Journal" /></Link>
       </li>
-      <li className="nav-sb-bb">
-        <a
-          onClick={() => setShowInsights(!showInsights)}
-          data-toggle="collapse"
-          className="dropdown-toggle"
-        >
-          <IconItem icon={<FaRobot />} text='AI' />
-        </a>
-        <ul className={`collapse list-unstyled ${showInsights && 'show'}`}>
-          <li>
-            <Link to='/insights'><IconItem icon={<FaQuestion />} text="Insights" /></Link>
-          </li>
-          <li>
-            <Link to='/resources'><IconItem icon={<FaBook />} text="Books" /></Link>
-          </li>
-        </ul>
-      </li>
-      <li className='nav-sb-bb'>
-        <Link to='/groups'>
-          <IconItem icon={<FaRegComments />} text="Community" />
-        </Link>
-      </li>
-      <li className="nav-sb-bb">
-        <a
-          onClick={() => setShowAccount(!showAccount)}
-          data-toggle="collapse"
-          className="dropdown-toggle"
-        >
-          <IconItem icon={<FaUser />} text={email} />
-        </a>
-        <ul className={`collapse list-unstyled ${showAccount && 'show'}`}>
-          {renderAsSelect()}
-          {canProfile && <li>
-            <Link to="/account/profile">Profile</Link>
-          </li>}
-          {!as && <li>
-            <Link to="/account/sharing">Sharing</Link>
-          </li>}
-          <li><a onClick={() => logout()}>Logout</a></li>
-        </ul>
-      </li>
+      <ToggleSection icon={<FaRobot />} text='AI'>
+        <li>
+          <Link to='/insights'><IconItem icon={<FaQuestion />} text="Insights" /></Link>
+        </li>
+        <li>
+          <Link to='/resources'><IconItem icon={<FaBook />} text="Books" /></Link>
+        </li>
+      </ToggleSection>
+      <GroupsSection />
+      <AccountSection />
     </ul>
   </nav>
 }

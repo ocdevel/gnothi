@@ -29,6 +29,7 @@ class Users:
             send('fields/field_entries/has_dupes/get', {}, d),
             send('users/shares/get', {}, d),
             send('insights/top_books/get', {}, d),
+            send('groups/mine/get', {}, d),
             send('notifs/notes/get', {}, d),
             send('notifs/groups/get', {}, d),
         ])
