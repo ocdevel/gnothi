@@ -34,16 +34,12 @@ export default function Resources() {
     {tabs}
     <Row lg={lg} md={lg} sm={1} xs={1}>
       {books && <Col>
-        <Card><Card.Body>
-          <Card.Title><FaBook /> Books</Card.Title>
-          <Card.Text><Books /></Card.Text>
-        </Card.Body></Card>
+        <h5><FaBook /> Books</h5>
+        <Books />
       </Col>}
       {therapists && <Col>
-        <Card><Card.Body>
-          <Card.Title><FaCouch /> Therapists</Card.Title>
-          <Card.Text><Therapists setShowTherapists={setTherapists} /></Card.Text>
-        </Card.Body></Card>
+        <h5><FaCouch /> Therapists</h5>
+        <Therapists setShowTherapists={setTherapists} />
       </Col>}
     </Row>
   </div>

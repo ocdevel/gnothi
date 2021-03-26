@@ -5,7 +5,8 @@ import '@aws-amplify/ui/dist/style.css'
 
 import './App.scss'
 import {
-  Container,
+  Col,
+  Container, Row,
   Spinner
 } from 'react-bootstrap';
 import {
@@ -20,7 +21,7 @@ import {
 import Splash from './Splash'
 import Account from './Account'
 import Error from './Error'
-import MainNav from './MainNav'
+import {Sidebar} from './Navbar'
 import Footer from './Footer'
 
 import { StoreProvider, useStoreActions, useStoreState } from 'easy-peasy'
@@ -63,9 +64,9 @@ function LoggedIn() {
   if (!user) {return null}
 
   // key={as} triggers refresh on these components (triggering fetches)
-  return <div key={as}>
-    <MainNav />
-    <Container fluid style={{marginTop: 5}}>
+  return <div key={as} className='app-wrapper'>
+    <Sidebar />
+    <Container fluid style={{marginTop: 5}} className='app-content'>
       <Error message={error} />
       <Error codeRange={[400,500]} />
 

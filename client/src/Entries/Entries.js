@@ -37,11 +37,15 @@ function EntryTeaser({e, gotoForm}) {
   const isSummary = e.text_summary && e.text !== e.text_summary
   const summary = e.text_summary || e.text
   const sentiment = e.sentiment && sent2face(e.sentiment)
+  let klass = 'cursor-pointer mb-3 entries-entry'
+  if (hovered) {
+    klass += ' hovered shadow-sm'
+  }
   return (
     <Card.Body
       key={e.id}
       onClick={() => gotoForm(e.id)}
-      className={`cursor-pointer mb-3 entries-entry ${hovered ? 'hovered shadow-sm' : ''}`}
+      className={klass}
       onMouseEnter={onHover}
       onMouseLeave={onLeave}
     >
