@@ -16,7 +16,7 @@ from app.routes.notifs import Notifs
 class Entries:
     @staticmethod
     def _entries_put_post(data, d, entry=None):
-        user, db = d.user, d.db
+        vid, db = d.vid, d.db
         data = data.dict()
         if not any(v for k, v in data['tags'].items()):
             raise GnothiException(
@@ -27,7 +27,7 @@ class Entries:
 
         new_entry = entry is None
         if new_entry:
-            entry = M.Entry(user_id=user.id)
+            entry = M.Entry(user_id=vid)
             db.add(entry)
         else:
             db.query(M.EntryTag).filter_by(entry_id=entry.id).delete()
@@ -41,7 +41,7 @@ class Entries:
         iso_fmt = r"^\d{4}-([0]\d|1[0-2])-([0-2]\d|3[01])$"
         created_at = data.get('created_at', None)
         if created_at and re.match(iso_fmt, created_at):
-            tz = M.User.tz(db, user.id)
+            tz = M.User.tz(db, vid)
             db.execute(text("""
             update entries set created_at=(:day ::timestamp at time zone :tz)
             where id=:id
@@ -62,7 +62,7 @@ class Entries:
 
     @staticmethod
     async def on_entries_get(data: BM, d) -> List[PyE.EntryGet]:
-        return M.Entry.snoop(d.db, d.viewer.email, d.user.id, snooping=d.snooping).all()
+        return M.Entry.snoop(d.db, d.vid, d.uid).all()
 
     @staticmethod
     async def on_entries_post(data: PyE.EntryPost, d) -> PyE.EntryGet:
@@ -75,7 +75,7 @@ class Entries:
 
     @staticmethod
     async def on_entry_get(data: BM_ID, d) -> PyE.EntryGet:
-        entry = M.Entry.snoop(d.db, d.viewer.email, d.user.id, snooping=d.snooping, entry_id=data.id).first()
+        entry = M.Entry.snoop(d.db, d.vid, d.uid, entry_id=data.id).first()
         if not entry:
             raise NotFound("Entry not found")
         return entry
@@ -96,7 +96,7 @@ class Entries:
         if d.snooping:
             raise CantSnoop()
 
-        entry = M.Entry.snoop(d.db, d.viewer.email, d.user.id, entry_id=data.id).first()
+        entry = M.Entry.snoop(d.db, d.vid, d.uid, entry_id=data.id).first()
         if not entry:
             raise NotFound("Entry not found")
         return Entries._entries_put_post(data, d, entry)
@@ -106,7 +106,7 @@ class Entries:
         if d.snooping:
             raise CantSnoop()
 
-        entry = d.db.query(M.Entry).filter_by(id=data.id, user_id=d.viewer.id)
+        entry = d.db.query(M.Entry).filter_by(id=data.id, user_id=d.vid)
         if not entry.first():
             raise NotFound("Entry not found")
         entry.delete()
@@ -115,13 +115,13 @@ class Entries:
 
     @staticmethod
     async def on_notes_get(data: PyE.NoteGet, d) -> Dict[str, List[PyE.NoteOut]]:
-        return M.Note.snoop(d.db, d.viewer.id, d.user.id, data.entry_id)
+        return M.Note.snoop(d.db, d.vid, entry_id=data.entry_id)
 
     @staticmethod
     async def on_notes_post(data: PyE.NotePost, d) -> List[PyE.NoteOut]:
         # TODO handle snooping
         db = d.db
-        db.add(M.Note(user_id=d.viewer.id, **data.dict()))
+        db.add(M.Note(user_id=d.vid, **data.dict()))
         db.commit()
         notifs = M.NoteNotif.create_notifs(db, data.entry_id)
         await asyncio.wait([

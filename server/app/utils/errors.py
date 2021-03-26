@@ -29,3 +29,8 @@ class CantInteract(GnothiException):
 class AIOffline(GnothiException):
     def __init__(self, detail="AI server offline, check back later"):
         super().__init__(200, "JOBS_OFFLINE", detail)
+
+
+class InvalidJwt(GnothiException):
+    def __init__(self, detail="Invalid JWT for authentication"):
+        super().__init__(401, "INVALID_JWT", detail)

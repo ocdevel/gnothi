@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import _ from 'lodash'
 import EventEmitter from 'eventemitter3'
 import moment from "moment-timezone";
+import {Auth} from 'aws-amplify'
 export const timezones = moment.tz.names().map(n => ({value: n, label: n}))
 
 // e52c6629: dynamic host/port
@@ -123,14 +124,17 @@ export const store = {
   ...custom,
 
   emit: thunk(async (actions, payload, helpers) => {
-    let {jwt, as: as_user} = helpers.getStoreState().user
+    let {jwt} = helpers.getStoreState().user
+    let {as: as_user} = helpers.getStoreState().ws
     let [action, data] = payload
 
     // set sending. Clears data & error
     actions.setRes({action, data: {sending: true}})
     // actions.setData({action, data: {}})
 
-    ws.send(JSON.stringify({jwt, as_user, action, data}))
+    const body = {jwt, as_user, action, data}
+    console.log(body)
+    ws.send(JSON.stringify(body))
   }),
 
   // Each emit([action, data]) will return a response {action, code, error, detail, data}
@@ -155,6 +159,10 @@ export const store = {
 
   onAny: thunk(async (actions, res, helpers) => {
     const {emit, setRes, setData} = helpers.getStoreActions().ws
+
+    if (res.error == "INVALID_JWT") {
+      return Auth.logout()
+    }
 
     // Push response to listeners
     setRes(res)

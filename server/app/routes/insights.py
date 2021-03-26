@@ -31,7 +31,7 @@ class Insights:
             raise CantSnoop('Fields')
         rows = d.db.query(M.Influencer) \
             .join(M.Field, M.Field.id == M.Influencer.influencer_id) \
-            .filter(M.Field.user_id == d.user.id).all()
+            .filter(M.Field.user_id == d.uid).all()
         obj = {}
         for r in rows:
             fid, iid = str(r.field_id), str(r.influencer_id)
@@ -62,9 +62,8 @@ class Insights:
     async def on_themes_post(data: PyI.ThemesPost, d) -> PyI.JobSubmitGet:
         entries = M.Entry.snoop(
             d.db,
-            d.viewer.email,
-            d.user.id,
-            snooping=d.snooping,
+            d.vid,
+            d.uid,
             days=data.days,
             tags=data.tags,
             for_ai=True
@@ -88,16 +87,15 @@ class Insights:
         question = data.question
         context = M.Entry.snoop(
             d.db,
-            d.viewer.email,
-            d.user.id,
-            snooping=d.snooping,
+            d.vid,
+            d.uid,
             days=data.days,
             tags=data.tags,
             for_ai=True
         )
 
         w_profile = (not d.snooping) or d.user.share_data.profile
-        profile_id = d.user.id if w_profile else None
+        profile_id = d.uid if w_profile else None
         context = M.CacheEntry.get_paras(d.db, context, profile_id=profile_id)
 
         return submit_job(d, 'question-answering', dict(args=[question, context]))
@@ -107,9 +105,8 @@ class Insights:
         # background_tasks.add_task(ga, viewer.id, 'feature', 'summarize')
         entries = M.Entry.snoop(
             d.db,
-            d.viewer.email,
-            d.user.id,
-            snooping=d.snooping,
+            d.vid,
+            d.uid,
             days=data.days,
             tags=data.tags,
             for_ai=True
@@ -125,14 +122,15 @@ class Insights:
         # background_tasks.add_task(ga, viewer.id, 'bookshelf', shelf)
         if d.snooping and not d.user.share_data.books:
             raise CantSnoop('Books')
-        M.Bookshelf.upsert(d.db, d.user.id, data.id, data.shelf)
+        shelf = 'recommend' if d.snooping else data.shelf
+        M.Bookshelf.upsert(d.db, d.uid, data.id, shelf)
         # await d.mgr.send_other('insights/books/get', data, d)
 
     @staticmethod
     async def on_books_get(data: PyI.ShelfGet, d) -> List[PyI.BookOut]:
         if d.snooping and not d.user.share_data.books:
             raise CantSnoop('Books')
-        return M.Bookshelf.get_shelf(d.db, d.user.id, data.shelf)
+        return M.Bookshelf.get_shelf(d.db, d.uid, data.shelf)
 
     @staticmethod
     async def on_top_books_get(data: BM, d) -> List[PyI.TopBooksOut]:

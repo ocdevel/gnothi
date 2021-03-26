@@ -15,6 +15,7 @@ from sqlalchemy.dialects import postgresql as psql
 from sqlalchemy_utils.types import EmailType
 from sqlalchemy_utils.types.encrypted.encrypted_type import StringEncryptedType, FernetEngine
 from sqlalchemy.orm import Session
+import sqlalchemy.sql.expression as expr
 import petname
 
 
@@ -22,9 +23,6 @@ import petname
 # https://dev.to/zchtodd/sqlalchemy-cascading-deletes-8hk
 parent_cascade = dict(cascade="all, delete", passive_deletes=True)
 child_cascade = dict(ondelete="cascade")
-
-fernet = FernetEngine()
-fernet._update_key(vars.FLASK_KEY)
 
 # Note: using sa.sa.Unicode for all Text/Varchar columns to be consistent with sqlalchemy_utils examples. Also keeping all
 # text fields unlimited (no varchar(max_length)) as Postgres doesn't incur penalty, unlike MySQL, and we don't know
@@ -59,9 +57,11 @@ class AuthOld(Base):
     id = FKCol('users.id', index=True, primary_key=True)
     email = sa.Column(sa.String(length=320), unique=True, index=True, nullable=False)
     hashed_password = sa.Column(sa.String(length=72), nullable=False)
+    updated_at = DateCol()
 
 
 profile_fields = [
+    'id',
     'username',
     'first_name',
     'last_name',
@@ -72,13 +72,14 @@ profile_fields = [
     'bio'
 ]
 
+
 class User(Base):
     __tablename__ = 'users'
 
     # Core
     id = IDCol()
     email = sa.Column(sa.String(length=320), unique=True, index=True, nullable=False)
-    cognito_id = sa.Column(sa.Unicode, index=True)
+    cognito_id = sa.Column(sa.Unicode, index=True, unique=True)
     # ws_id = sa.Column(sa.Unicode, index=True)
     # as = FKCol('users.id')
 
@@ -86,7 +87,7 @@ class User(Base):
     updated_at = DateCol(update=True)
 
     # Profile Fields
-    username = sa.Column(sa.Unicode, index=True)
+    username = sa.Column(sa.Unicode, index=True, unique=True)
     first_name = Encrypt()
     last_name = Encrypt()
     gender = Encrypt()
@@ -119,21 +120,25 @@ class User(Base):
     tags = orm.relationship("Tag", order_by='Tag.name.asc()', **parent_cascade)
 
     @staticmethod
-    def snoop(db, viewer, as_id=None):
-        as_user, snooping = None, False
-        if as_id and viewer.id != as_id:
-            snooping = True
-            as_user = db.query(User) \
-                .join(Share) \
-                .filter(Share.email == viewer.email, Share.user_id == as_id) \
-                .first()
-        if as_user:
-            as_user.share_data = db.query(Share) \
-                .filter_by(user_id=as_id, email=viewer.email) \
-                .first()
-        else:
-            as_user = viewer
-        return as_user, snooping
+    def snoop(db, viewer, sid=None):
+        vid = viewer.id
+        if not sid or vid == sid:
+            return viewer, False
+        res = (
+            db.query(User, Share)
+            .select_from(User)
+            .join(UserShare, sa.and_(
+                UserShare.obj_id == vid,
+                UserShare.user_id == sid
+            ))
+            .join(Share, Share.id == UserShare.share_id)
+            .first()
+        )
+        if not res:
+            return viewer, False
+        as_user = res[0]
+        as_user.share_data = res[1]
+        return as_user, True
 
     def profile_to_text(self):
         txt = ''
@@ -199,30 +204,47 @@ class Entry(Base):
     @staticmethod
     def snoop(
         db: Session,
-        viewer_email: str,
-        target_id: str,
-        snooping: bool = False,
-        entry_id: str = None,
+        vid: UUID4,
+        sid: UUID4,
+        entry_id: UUID4 = None,
+        group_id: UUID4 = None,
         order_by=None,
-        tags: List[str] = None,
+        tags: List[UUID4] = None,
         days: int = None,
         for_ai: bool = False
     ):
+        snooping = sid and (vid != sid)
         if not snooping:
-            q = db.query(Entry).filter(Entry.user_id == target_id)
-        if snooping:
-            q = db.query(Entry)\
-                .join(EntryTag, Entry.id == EntryTag.entry_id)\
-                .join(ShareTag, EntryTag.tag_id == ShareTag.tag_id)\
-                .join(Share, ShareTag.share_id == Share.id)\
-                .filter(Share.email == viewer_email, Share.user_id == target_id)
-            # TODO use ORM partial thus far for this query command, not raw sql
-            sql = f"""
-            update shares set last_seen=now(), new_entries=0
-            where email=:email and user_id=:uid
-            """
-            db.execute(sa.text(sql), dict(email=viewer_email, uid=target_id))
-            db.commit()
+            q = db.query(Entry).filter(Entry.user_id == vid)
+        elif group_id:
+            q = (
+                db.query(Entry)
+                .join(EntryTag, Entry.id == EntryTag.entry_id)
+                .join(ShareTag, EntryTag.tag_id == ShareTag.tag_id)
+                .join(GroupShare, GroupShare.share_id == ShareTag.share_id)
+                .join(UserGroup, sa.and_(
+                    UserGroup.group_id == GroupShare.obj_id,
+                    GroupShare.obj_id == group_id
+                ))
+            )
+        else:
+            q = (
+                db.query(Entry)
+                .join(EntryTag, Entry.id == EntryTag.entry_id)
+                .join(ShareTag, EntryTag.tag_id == ShareTag.tag_id)
+                .join(UserShare, sa.and_(
+                    ShareTag.share_id == UserShare.user_id,
+                    UserShare.obj_id == sid,
+                    UserShare.user_id == vid
+                ))
+            )
+            # # TODO use ORM partial thus far for this query command, not raw sql
+            # sql = f"""
+            # update shares set last_seen=now(), new_entries=0
+            # where email=:email and user_id=:uid
+            # """
+            # db.execute(sa.text(sql), dict(email=viewer_email, uid=target_id))
+            # db.commit()
 
         if entry_id:
             q = q.filter(Entry.id == entry_id)
@@ -262,24 +284,6 @@ class Entry(Base):
         data_in = dict(args=[str(entry.id)])
         Job.create_job(db, user_id=entry.user_id, method='entries', data_in=data_in)
 
-    def update_snoopers(self, db):
-        """Updates snoopers with n_new_entries since last_seen"""
-        sql = """
-        with news as (
-          select s.id, count(e.id) ct 
-          from shares s 
-          inner join shares_tags st on st.share_id=s.id
-          inner join entries_tags et on et.tag_id=st.tag_id
-          inner join entries e on e.id=et.entry_id
-          where e.user_id=:uid 
-            and e.created_at > s.last_seen
-          group by s.id
-        )
-        update shares s set new_entries=n.ct from news n where n.id=s.id
-        """
-        db.execute(sa.text(sql), {'uid': self.user_id})
-        db.commit()
-
 
 class NoteTypes(enum.Enum):
     label = "label"
@@ -300,19 +304,40 @@ class Note(Base):
     @staticmethod
     def snoop(
         db: Session,
-        viewer_id: UUID4,
-        target_id: UUID4,
+        vid: UUID4,
         entry_id: UUID4 = None,
+        group_id: UUID4 = None
     ):
-        mine = db.query(Note.user_id).filter(Note.user_id == viewer_id)
+        mine = db.query(Note.user_id).filter(Note.user_id == vid)
         if entry_id:
             mine = mine.filter(Note.entry_id == entry_id)
-        can_view = db.query(Note.user_id)\
-            .filter(Note.private.is_(False))\
-            .join(EntryTag, Note.entry_id == EntryTag.entry_id)\
-            .join(ShareTag, EntryTag.tag_id == ShareTag.tag_id)\
-            .join(Share, ShareTag.share_id == Share.id)\
-            .join(User, sa.and_(Share.email == User.email, User.id == viewer_id))
+        can_view = (
+            db.query(Note.user_id)
+            .filter(Note.private.is_(False))
+            .join(EntryTag, Note.entry_id == EntryTag.entry_id)
+            .join(ShareTag, EntryTag.tag_id == ShareTag.tag_id)
+        )
+        if group_id:
+            can_view = (
+                can_view.join(GroupShare, sa.and_(
+                    ShareTag.share_id == GroupShare.share_id,
+                    GroupShare.obj_id == group_id,
+                )).join(UserGroup, sa.and_(
+                    UserGroup.user_id == vid,
+                    UserGroup.group_id == group_id
+                ))
+            )
+        else:
+            can_view = (
+                can_view.join(UserShare, sa.and_(
+                    ShareTag.share_id == UserShare.share_id,
+                    UserShare.obj_id == vid,
+                )).join(UserGroup, sa.and_(
+                    UserGroup.user_id == vid,
+                    UserGroup.group_id == group_id
+                ))
+            )
+
         if entry_id:
             can_view = can_view.filter(Note.entry_id == entry_id)
 
@@ -494,28 +519,38 @@ class Share(Base):
     __tablename__ = 'shares'
     id = IDCol()
     user_id = FKCol('users.id', index=True)
-    email = sa.Column(EmailType, index=True)  # TODO encrypt?
 
-    fields = sa.Column(sa.Boolean)
-    books = sa.Column(sa.Boolean)
-    profile = sa.Column(sa.Boolean)
+    username = sa.Column(sa.Boolean, server_default="true")
+    first_name = sa.Column(sa.Boolean, server_default="false")
+    last_name = sa.Column(sa.Boolean, server_default="false")
+    gender = sa.Column(sa.Boolean, server_default="false")
+    orientation = sa.Column(sa.Boolean, server_default="false")
+    birthday = sa.Column(sa.Boolean, server_default="false")
+    timezone = sa.Column(sa.Boolean, server_default="false")
+    bio = sa.Column(sa.Boolean, server_default="false")
+
+    fields = sa.Column(sa.Boolean, server_default="false")
+    books = sa.Column(sa.Boolean, server_default="false")
+    # profile = sa.Column(sa.Boolean, server_default="false")
 
     share_tags = orm.relationship("ShareTag", **parent_cascade)
     tags_ = orm.relationship("Tag", secondary="shares_tags")
 
-    last_seen = DateCol()
-    new_entries = sa.Column(sa.Integer, server_default=sa.text("0"))
+    # last_seen = DateCol()
+    # new_entries = sa.Column(sa.Integer, server_default=sa.text("0"))
 
     @property
     def tags(self):
         return {str(t.tag_id): True for t in self.share_tags}
 
     @staticmethod
-    def shared_with_me(db: Session, email):
-        return db.execute("""
-        select s.*, u.* from users u
-        inner join shares s on s.email=:email and u.id=s.user_id
-        """, {'email': email}).fetchall()
+    def shared_with_me(db: Session, vid):
+        pf = ", ".join([f"u.{f}" for f in profile_fields])
+        return db.execute(f"""
+        select s.*, u.email, {pf} from users u
+        inner join users_shares us on us.user_id=u.id and us.obj_id=:vid
+        inner join shares s on us.share_id=s.id
+        """, {'vid': vid}).fetchall()
 
 
 class Tag(Base):
@@ -531,14 +566,16 @@ class Tag(Base):
     shares = orm.relationship("Share", secondary="shares_tags")
 
     @staticmethod
-    def snoop(db: Session, from_email, to_id, snooping=False):
+    def snoop(db: Session, vid, sid=None):
+        snooping = sid and (vid != sid)
         if snooping:
             q = db.query(Tag)\
                 .with_entities(Tag.id, Tag.user_id, Tag.name, Tag.created_at, Tag.main, ShareTag.selected)\
-                .join(ShareTag, Share)\
-                .filter(Share.email == from_email, Share.user_id == to_id)
+                .join(ShareTag, Tag.id==ShareTag.tag_id)\
+                .join(UserShare.share_id == ShareTag.share_id)\
+                .filter(UserShare.obj_id == vid, Share.user_id == sid)
         else:
-            q = db.query(Tag).filter_by(user_id=to_id)
+            q = db.query(Tag).filter_by(user_id=vid)
         return q.order_by(Tag.main.desc(), Tag.created_at.asc(), Tag.name.asc())
 
 
@@ -556,6 +593,20 @@ class ShareTag(Base):
 
     tag = orm.relationship(Tag, backref=orm.backref("tags"))
     share = orm.relationship(Share, backref=orm.backref("shares"))
+
+
+class UserShare(Base):
+    __tablename__ = 'users_shares'
+    share_id = FKCol('shares.id', primary_key=True)
+    user_id = FKCol('users.id', primary_key=True)
+    obj_id = FKCol('users.id', primary_key=True)
+
+
+class GroupShare(Base):
+    __tablename__ = 'groups_shares'
+    share_id = FKCol('shares.id', primary_key=True)
+    user_id = FKCol('users.id', primary_key=True)
+    obj_id = FKCol('groups.id', primary_key=True)
 
 
 class Book(Base):
@@ -667,6 +718,7 @@ class Bookshelf(Base):
 
     @staticmethod
     def top_books(db):
+        return []
         sql = f"""
         with books_ as (
             select b.id, count(s.shelf) ct from books b
@@ -904,19 +956,19 @@ class ModelHypers(Base):
     meta = sa.Column(psql.JSONB)  # for xgboost it's {n_rows, n_cols}
 
 
-class MatchTypes(enum.Enum):
-    users = "users"
-    groups = "groups"
-
-
-class Match(Base):
-    __tablename__ = 'matches'
-    id = IDCol()
-    owner_id = FKCol('users.id', index=True, nullable=False)
-    user_id = FKCol('users.id', index=True)
-    groups_id = FKCol('groups.id', index=True)
-    match_type = sa.Column(sa.Enum(MatchTypes), nullable=False)
-    score = sa.Column(sa.Float, nullable=False)
+# class MatchTypes(enum.Enum):
+#     users = "users"
+#     groups = "groups"
+#
+#
+# class Match(Base):
+#     __tablename__ = 'matches'
+#     id = IDCol()
+#     owner_id = FKCol('users.id', index=True, nullable=False)
+#     user_id = FKCol('users.id', index=True)
+#     groups_id = FKCol('groups.id', index=True)
+#     match_type = sa.Column(sa.Enum(MatchTypes), nullable=False)
+#     score = sa.Column(sa.Float, nullable=False)
 
 
 class GroupPrivacy(enum.Enum):
@@ -961,17 +1013,6 @@ class Group(Base):
         db.commit()
         return g
 
-    def to_json(self):
-        return dict(
-            id=str(self.id),
-            owner=str(self.owner),
-            title=self.title,
-            text=self.text,
-            privacy=self.privacy.value,
-            created_at=str(self.created_at),
-            updated_at=str(self.updated_at)  # .__str__() ?
-        )
-
     @staticmethod
     def join_group(db, gid, uid, role=GroupRoles.member):
         if db.query(UserGroup).filter_by(user_id=uid, group_id=gid).first():
@@ -1007,24 +1048,22 @@ class UserGroup(Base):
     # If they opt to expose real username, it will be used instead
     username = Encrypt(default=petname.Generate)  # auto-generate a random name (adjective-animal)
 
-    show_username = sa.Column(sa.Boolean)
-    show_avatar = sa.Column(sa.Boolean)
-    show_first_name = sa.Column(sa.Boolean)
-    show_last_name = sa.Column(sa.Boolean)
-    show_bio = sa.Column(sa.Boolean)
-
     joined_at = DateCol()
     role = sa.Column(sa.Enum(GroupRoles))
 
     @staticmethod
     def get_members(db, gid):
         user_fields = "username first_name last_name bio".split() # username avatar
-        rows = db.query(UserGroup, User)\
-            .join(User, User.id == UserGroup.user_id)\
-            .filter(UserGroup.group_id == gid)\
+        rows = (db.query(UserGroup, User)
+            .join(User, User.id == UserGroup.user_id)
+            .outerjoin(GroupShare, sa.and_(
+                GroupShare.user_id == UserGroup.user_id,
+                GroupShare.obj_id == gid
+            ))
+            .filter(UserGroup.group_id == gid)
             .options(
-                sa.orm.Load(User).load_only(*user_fields)
-            ).all()
+                orm.Load(User).load_only(*user_fields)
+            ).all())
         res = {}
         for (ug, u) in rows:
             obj = dict(
@@ -1070,13 +1109,21 @@ class UserGroup(Base):
         return role.value if role else None
 
 
-class Message(Base):
-    __tablename__ = 'messages'
+class UserMessage(Base):
+    __tablename__ = 'users_messages'
     id = IDCol()
-    owner_id = FKCol('users.id', index=True)
     user_id = FKCol('users.id', index=True)
-    group_id = FKCol('groups.id', index=True)
-    recipient_type = sa.Column(sa.Enum(MatchTypes))
+    obj_id = FKCol('users.id', index=True)
+    created_at = DateCol()
+    updated_at = DateCol(update=True)
+    text = Encrypt(sa.Unicode, nullable=False)
+
+
+class GroupMessage(Base):
+    __tablename__ = 'groups_messages'
+    id = IDCol()
+    user_id = FKCol('users.id', index=True)
+    obj_id = FKCol('groups.id', index=True)
     created_at = DateCol()
     updated_at = DateCol(update=True)
     text = Encrypt(sa.Unicode, nullable=False)
@@ -1147,10 +1194,9 @@ class ShareNotif(Base):
     last_seen = DateCol()
 
 
-
-class MessageReaction(Base):
-    __tablename__ = 'message_reactions'
-    user_id = FKCol('users.id', primary_key=True)
-    message_id = FKCol('messages.id', primary_key=True)
-    reaction = sa.Column(sa.Unicode)  # deal with emoji enums later
-    created_at = DateCol()
+# class MessageReaction(Base):
+#     __tablename__ = 'message_reactions'
+#     user_id = FKCol('users.id', primary_key=True)
+#     message_id = FKCol('messages.id', primary_key=True)
+#     reaction = sa.Column(sa.Unicode)  # deal with emoji enums later
+#     created_at = DateCol()

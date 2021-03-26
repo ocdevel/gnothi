@@ -42,7 +42,7 @@ class Users:
     # @on_(f'{S}/shares.get') #, model_out=List[M.SOSharedWithMe])
     @staticmethod
     async def on_shares_get(data: BM, d) -> List[PyU.SharedWithMeOut]:
-        return M.Share.shared_with_me(d.db, d.viewer.email)
+        return M.Share.shared_with_me(d.db, d.vid)
 
     @staticmethod
     async def on_check_username(data: PyU.CheckUsernameIn, d) -> PyU.CheckUsernameOut:
@@ -108,7 +108,7 @@ class Users:
     async def on_person_put(data: PyU.PersonPut, d):
         if d.snooping: raise CantSnoop()
         # TODO and share_id = ...
-        p = d.db.query(M.Person).filter_by(user_id=d.user.id, id=data.id).first()
+        p = d.db.query(M.Person).filter_by(user_id=d.vid, id=data.id).first()
         for k, v in data.dict().items():
             if k == 'id': continue
             setattr(p, k, v)
@@ -119,7 +119,7 @@ class Users:
     @staticmethod
     async def on_person_delete(data: BM_ID, d):
         if d.snooping: raise CantSnoop()
-        pq = d.db.query(M.Person).filter_by(user_id=d.user.id, id=data.id)
+        pq = d.db.query(M.Person).filter_by(user_id=d.vid, id=data.id)
         pq.delete()
         d.db.commit()
         await d.mgr.send_other("users/people/get", {}, d)

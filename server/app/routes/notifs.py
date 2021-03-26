@@ -20,10 +20,10 @@ class Notifs:
 
     @staticmethod
     async def on_notes_get(data: BM, d):
-        res = d.db.query(M.NoteNotif).filter_by(user_id=d.viewer.id).all()
+        res = d.db.query(M.NoteNotif).filter_by(user_id=d.vid).all()
         await Notifs._send_notifs(d, 'notifs/notes/get', res)
 
     @staticmethod
     async def on_groups_get(data: BM, d):
-        res = d.db.query(M.GroupNotif).filter_by(user_id=d.viewer.id).all()
+        res = d.db.query(M.GroupNotif).filter_by(user_id=d.vid).all()
         await Notifs._send_notifs(d, 'notifs/groups/get', res)

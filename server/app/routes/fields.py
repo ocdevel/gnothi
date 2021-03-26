@@ -38,7 +38,7 @@ class Fields:
     @staticmethod
     async def on_field_put(data: PyF.FieldPut, d):
         if d.snooping: raise CantSnoop()
-        f = d.db.query(M.Field).filter_by(user_id=d.user.id, id=data.id).first()
+        f = d.db.query(M.Field).filter_by(user_id=d.vid, id=data.id).first()
         for k, v in data.dict().items():
             if k == 'id': continue
             setattr(f, k, v)
@@ -48,7 +48,7 @@ class Fields:
     @staticmethod
     async def on_field_exclude(data: PyF.FieldExcludeIn, d):
         if d.snooping: raise CantSnoop()
-        f = d.db.query(M.Field).filter_by(user_id=d.user.id, id=data.id).first()
+        f = d.db.query(M.Field).filter_by(user_id=d.vid, id=data.id).first()
         f.excluded_at = data.excluded_at  # just do datetime.utcnow()?
         d.db.commit()
         await d.mgr.send_other('fields/fields/get', {}, d)
@@ -56,7 +56,7 @@ class Fields:
     @staticmethod
     async def on_field_delete(data: BM_ID, d):
         if d.snooping: raise CantSnoop()
-        d.db.query(M.Field).filter_by(user_id=d.user.id, id=data.id).delete()
+        d.db.query(M.Field).filter_by(user_id=d.vid, id=data.id).delete()
         d.db.commit()
         await d.mgr.send_other('fields/fields/get', {}, d)
 
@@ -64,12 +64,12 @@ class Fields:
     async def on_field_entries_get(data: PyF.FieldEntriesIn, d) -> List[PyF.FieldEntryOut]:
         if d.snooping and not d.user.share_data.fields:
             raise CantSnoop('Fields')
-        return M.FieldEntry.get_day_entries(d.db, d.user.id, day=data.day)
+        return M.FieldEntry.get_day_entries(d.db, d.uid, day=data.day)
 
     @staticmethod
     async def on_field_entries_post(data: PyF.FieldEntryIn, d) -> PyF.FieldEntryOut:
         if d.snooping: raise CantSnoop()
-        fe = M.FieldEntry.upsert(d.db, d.user.id, data.id, data.value, data.day)
+        fe = M.FieldEntry.upsert(d.db, d.vid, data.id, data.value, data.day)
         M.Field.update_avg(d.db, data.id)
         return fe
 
@@ -80,7 +80,7 @@ class Fields:
         if d.snooping: raise CantSnoop('Fields')
         return d.db.execute(text("""
         select 1 has_dupes from field_entries2 where user_id=:uid and dupes is not null limit 1
-        """), dict(uid=d.viewer.id)).fetchone()
+        """), dict(uid=d.vid)).fetchone()
 
     @staticmethod
     async def on_field_entries_clear_dupes_post(data: BM, d) -> Any:
@@ -89,7 +89,7 @@ class Fields:
         db.execute(text("""
         delete from field_entries where user_id=:uid;
         update field_entries2 set dupes=null, dupe=0 where user_id=:uid
-        """), dict(uid=d.viewer.id))
+        """), dict(uid=d.vid))
         db.commit()
         await asyncio.wait([
             send('fields/field_entries/has_dupes/get', {}, d),
@@ -103,7 +103,7 @@ class Fields:
         db.execute(text("""
         delete from field_entries where user_id=:uid;
         delete from field_entries2 where user_id=:uid;
-        """), dict(uid=d.viewer.id))
+        """), dict(uid=d.vid))
         db.commit()
         await asyncio.wait([
             send('fields/field_entries/get', {}, d),

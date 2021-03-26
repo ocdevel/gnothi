@@ -13,7 +13,7 @@ import sqlalchemy.orm as orm
 from starlette.websockets import WebSocketDisconnect, WebSocket
 from pydantic import BaseModel, parse_obj_as
 from common.pydantic.ws import MessageIn, MessageOut, JobStatusOut
-from app.utils.errors import GnothiException, NotFound
+from app.utils.errors import GnothiException, NotFound, InvalidJwt
 import logging
 from starlette.concurrency import run_until_first_complete
 from broadcaster import Broadcast
@@ -121,9 +121,14 @@ class WSManager(BroadcastHelpers):
 
     async def init_socket(self, websocket, token):
         await websocket.accept()  # FastAPI
-        asyncio.ensure_future(self.connect_user(websocket, token))
         try:
+            await self.connect_user(websocket, token)
             await self.run_both(websocket)
+        except InvalidJwt as exc:
+            await self.send(MessageOut(
+                action='connect/error',
+                error=exc.error, detail=exc.detail, code=exc.code
+            ), websockets=[websocket])
         except WebSocketDisconnect:
             await self.disconnect(websocket)
         finally:
@@ -131,6 +136,8 @@ class WSManager(BroadcastHelpers):
 
     async def connect_user(self, websocket, token):
         uid = Auth._cognito_to_uid(token)
+        if not uid:
+            raise InvalidJwt()
         self.users[str(uid)] = websocket
         # await self.send(MessageOut(action='user/ready'), uids=[uid])
 
@@ -158,7 +165,7 @@ class WSManager(BroadcastHelpers):
         as_user, snooping = M.User.snoop(db, viewer, message.as_user)
         return Deps(
             mgr=self, action=message.action, db=db,
-            vid=vid, viewer=viewer, uid=as_user.id, user=as_user, snooping=snooping
+            vid=str(vid), viewer=viewer, uid=str(as_user.id), user=as_user, snooping=snooping
         )
 
     def checkin(self, data, d: Deps):
@@ -188,7 +195,7 @@ class WSManager(BroadcastHelpers):
             uid = self.ws_to_uid(websocket)
             d = self.get_deps(db, uid, message)
             await self.exec_handler(fn, data, d)
-            await aioify(obj=self.checkin)(data, d)
+            # await aioify(obj=self.checkin)(data, d)
 
     async def receive_message(self, websocket, message):
         message = MessageIn.parse_raw(message)
