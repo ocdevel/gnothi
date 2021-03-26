@@ -1,5 +1,8 @@
 FROM tiangolo/uvicorn-gunicorn-fastapi:python3.8
 
+RUN apt-get update -y &&\
+  curl -s https://raw.githubusercontent.com/lefnire/ml-tools/master/dockerfiles/psql-client.sh | bash
+
 RUN pip install \
   sqlalchemy==1.3.23 \
   python-multipart \

@@ -68,15 +68,15 @@ if args.migrate:
     if method == 'push':
         raise NotImplemented("push --migrate not yet supported")
     tmp_url = to_url.replace('dev', 'tmp')
-    if not args.from_cach:
+    if not args.from_cache:
         if database_exists(tmp_url):
             drop_database(tmp_url)
         create_database(tmp_url)
         os.system(f"{cmd} {from_url} | psql {tmp_url}")
-    migrate_before(engine(tmp_url))
-    wipe(to_url, and_init=True)
+    # migrate_before(engine(tmp_url))
+    wipe(to_url, and_init=False)
     os.system(f"{cmd} {tmp_url} --data-only | psql {to_url}")
-    migrate_after(engine(to_url))
+    # migrate_after(engine(to_url))
 else:
     wipe(to_url, and_init=False)
     os.system(f"{cmd} {from_url} | psql {to_url}")

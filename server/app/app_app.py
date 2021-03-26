@@ -19,23 +19,9 @@ app.add_middleware(
 # 9131155e: attempted log-filtering
 
 
-def init_groups():
-    with with_db() as db:
-        ct = db.execute('select count(*) ct from groups').first().ct
-        if ct > 0: return
-        db.add(M.Group(
-            id='ebcf0a39-9c30-4a6f-8364-8ccb7c0c9035',
-            owner=db.execute("select id from users where email='tylerrenelle@gmail.com'").first().id,
-            title='Gnothi',
-            text='Main Gnothi group. Basically a global chatroom, see topical groups on the right',
-            privacy=M.GroupPrivacy.public
-        ))
-        db.commit()
-
 @app.on_event("startup")
 async def startup():
     init_db()
-    init_groups()
 
 
 @app.on_event("shutdown")
