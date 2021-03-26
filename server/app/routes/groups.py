@@ -42,25 +42,25 @@ class Groups:
 
         out = Groups._wrap(members, PyG.MembersOut, gid, action='groups/members/get')
         uids = [uid for uid, _ in members.items()] \
-            if to_all else [d.uid]
+            if to_all else [d.vid]
         await d.mgr.send(out, uids=uids)
 
     @staticmethod
     async def on_messages_post(data: PyG.MessageIn, d):
         if d.snooping: raise CantSnoop()
-        if not M.UserGroup.get_role(d.db, d.uid, data.id):
+        if not M.UserGroup.get_role(d.db, d.vid, data.id):
             raise CantInteract()
         msg = dict(
             text=data.text,
             group_id=data.id,
-            owner_id=d.uid,
+            owner_id=d.vid,
             recipient_type=M.MatchTypes.groups,
         )
         await Groups._send_message(msg, d)
 
     @staticmethod
     async def on_group_join(data: BM_ID, d):
-        ug = M.Group.join_group(d.db, data.id, d.uid)
+        ug = M.Group.join_group(d.db, data.id, d.vid)
         if not ug:
             return
         msg = dict(
@@ -75,7 +75,7 @@ class Groups:
 
     @staticmethod
     async def group_leave(data: BM_ID, d) -> Dict:
-        uid, gid = str(d.uid), data.id
+        uid, gid = str(d.vid), data.id
         ug = M.Group.leave_group(d.db, data.id, uid)
         msg = dict(
             group_id=gid,
@@ -120,14 +120,14 @@ class Groups:
     @staticmethod
     async def on_privacy_put(data: PyG.PrivacyIn, d):
         ug = d.db.query(M.UserGroup)\
-                .filter_by(user_id=d.uid, group_id=data.id).first()
+                .filter_by(user_id=d.vid, group_id=data.id).first()
         setattr(ug, data.key, data.value)
         d.db.commit()
         await Groups._send_members(data.id, d)
 
     @staticmethod
     async def on_groups_post(data: PyG.GroupIn, d) -> PyG.GroupOut:
-        g = M.Group.create_group(d.db, data.title, data.text, d.uid, data.privacy)
+        g = M.Group.create_group(d.db, data.title, data.text, d.vid, data.privacy)
         uids = [uid for uid, _ in d.mgr.users.items()]
         await d.mgr.send_other('groups/groups/get', data, d, uids=uids)
         return g

@@ -14,7 +14,7 @@ class Tags:
     @staticmethod
     async def on_tags_post(data: PyT.TagIn, d):
         if d.snooping: raise CantSnoop()
-        tag = M.Tag(name=data.name, user_id=d.uid)
+        tag = M.Tag(name=data.name, user_id=d.vid)
         d.db.add(tag)
         d.db.commit()
         # d.db.refresh(tag)
@@ -48,7 +48,7 @@ class Tags:
                 .filter(M.Share.email == d.viewer.email, M.ShareTag.tag_id == data.id)\
                 .first()
         else:
-            row = M.Tag.snoop(d.db, d.viewer.email, d.uid, snooping=d.snooping) \
+            row = M.Tag.snoop(d.db, d.viewer.email, d.vid, snooping=d.snooping) \
                 .filter(M.Tag.id == data.id).first()
         if not row:
             return

@@ -1,6 +1,7 @@
 from typing import Optional, List, Dict, Any
 from common.pydantic.utils import BM
 from pydantic import UUID4
+from sqlalchemy.orm import Session
 
 
 class MessageIn(BM):

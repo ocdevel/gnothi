@@ -16,7 +16,7 @@ def submit_job(d, method, data):
     if status == 'off':
         raise AIOffline()
 
-    jid = M.Job.create_job(d.db, d.uid, method=method, data_in=data)
+    jid = M.Job.create_job(d.db, d.vid, method=method, data_in=data)
     if not jid: return {}
     return dict(
         id=jid,

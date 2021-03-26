@@ -61,21 +61,32 @@ class AuthOld(Base):
     hashed_password = sa.Column(sa.String(length=72), nullable=False)
 
 
+profile_fields = [
+    'username',
+    'first_name',
+    'last_name',
+    'gender',
+    'orientation',
+    'birthday',
+    'timezone',
+    'bio'
+]
+
 class User(Base):
     __tablename__ = 'users'
 
+    # Core
     id = IDCol()
     email = sa.Column(sa.String(length=320), unique=True, index=True, nullable=False)
     cognito_id = sa.Column(sa.Unicode, index=True)
     # ws_id = sa.Column(sa.Unicode, index=True)
+    # as = FKCol('users.id')
 
     created_at = DateCol()
     updated_at = DateCol(update=True)
 
+    # Profile Fields
     username = sa.Column(sa.Unicode, index=True)
-    # socket_id = sa.Column(sa.Unicode, index=True)
-    # as = FKCol('users.id')
-
     first_name = Encrypt()
     last_name = Encrypt()
     gender = Encrypt()
@@ -83,17 +94,23 @@ class User(Base):
     birthday = sa.Column(sa.Date)  # TODO encrypt (how to store/migrate dates?)
     timezone = sa.Column(sa.Unicode)
     bio = Encrypt()
+
+    # Administrative
+    is_superuser = sa.Column(sa.Boolean, server_default='false')
     is_cool = sa.Column(sa.Boolean, server_default='false')
     therapist = sa.Column(sa.Boolean, server_default='false')
     paid = sa.Column(sa.Boolean)
 
+    # ML
     ai_ran = sa.Column(sa.Boolean, server_default='false')
     last_books = DateCol(default=False)
     last_influencers = DateCol(default=False)
 
+    # Habitica
     habitica_user_id = Encrypt()
     habitica_api_token = Encrypt()
 
+    # Relationships
     entries = orm.relationship("Entry", order_by='Entry.created_at.desc()', **parent_cascade)
     field_entries = orm.relationship("FieldEntry", order_by='FieldEntry.created_at.desc()', **parent_cascade)
     fields = orm.relationship("Field", order_by='Field.created_at.asc()', **parent_cascade)
@@ -230,19 +247,20 @@ class Entry(Base):
             order_by = Entry.created_at.desc()
         return q.order_by(order_by)
 
-    def run_models(self, db):
-        self.ai_ran = False
-        if self.no_ai:
-            self.title_summary = self.text_summary = self.sentiment = None
+    @staticmethod
+    def run_models(db, entry):
+        entry.ai_ran = False
+        if entry.no_ai:
+            entry.title_summary = entry.text_summary = entry.sentiment = None
             return
 
         # Run summarization/sentiment in background thread, so (a) user can get back to business;
         # (b) if AI server offline, wait till online
-        self.title_summary = "🕒 AI is generating a title"
-        self.text_summary = "🕒 AI is generating a summary"
+        entry.title_summary = "🕒 AI is generating a title"
+        entry.text_summary = "🕒 AI is generating a summary"
         # not used in nlp, but some other meta stuff
-        data_in = dict(args=[str(self.id)])
-        Job.create_job(db, user_id=self.user_id, method='entries', data_in=data_in)
+        data_in = dict(args=[str(entry.id)])
+        Job.create_job(db, user_id=entry.user_id, method='entries', data_in=data_in)
 
     def update_snoopers(self, db):
         """Updates snoopers with n_new_entries since last_seen"""
@@ -298,6 +316,7 @@ class Note(Base):
         if entry_id:
             can_view = can_view.filter(Note.entry_id == entry_id)
 
+        # TODO if fetching all, just fetch counts to save bandwidth
         cte = mine.union(can_view).subquery()
 
         res = db.query(Note).join(cte, Note.user_id.in_(cte))\
@@ -987,7 +1006,6 @@ class UserGroup(Base):
     # Temporary/private name & id assigned for this user for this group.
     # If they opt to expose real username, it will be used instead
     username = Encrypt(default=petname.Generate)  # auto-generate a random name (adjective-animal)
-    user_group_id = IDCol()
 
     show_username = sa.Column(sa.Boolean)
     show_avatar = sa.Column(sa.Boolean)

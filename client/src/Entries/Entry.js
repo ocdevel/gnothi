@@ -121,7 +121,7 @@ export default function Entry() {
   useEffect(() => {
     EE.on("wsResponse", data => {
       if (data.action === 'entries/entries/post' && data.code === 200) {
-        return go(`/j/entry/${data.id}`)
+        return go(`/j/entry/${data.data.id}`)
       }
       if (data.action === 'entries/entry/delete' && data.code === 200) {
         return go()
@@ -141,6 +141,7 @@ export default function Entry() {
     []
   )
   const clearDraft = () => {
+    console.log('clearDraft')
     localStorage.removeItem(draftId)
     if (formOrig) {setForm(formOrig)}
   }

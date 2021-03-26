@@ -9,13 +9,12 @@ from fastapi_jwt_auth import AuthJWT
 
 from app.app_app import app
 from app.mail import send_mail
-from app.google_analytics import ga
 from common.database import with_db
 import common.models as M
 
 
 def on_after_register(user):
-    ga(user.id, 'user', 'register')
+    #ga(user.id, 'user', 'register')
     with with_db() as db:
         t = M.Tag(user_id=user.id, main=True, selected=True, name='Main')
         db.add(t)

@@ -55,7 +55,7 @@ class Entries:
         db.refresh(entry)
 
         entry.update_snoopers(d.db)
-        entry.run_models()
+        M.Entry.run_models(db, entry)
         db.commit()
 
         return entry
@@ -70,7 +70,7 @@ class Entries:
         if d.snooping:
             raise CantSnoop()
         entry = Entries._entries_put_post(data, d)
-        await d.mgr.send_other(['entries/entries/get'], {}, d)
+        await d.mgr.send_other('entries/entries/get', {}, d)
         return entry
 
     @staticmethod

@@ -6,7 +6,6 @@ from fastapi.responses import JSONResponse
 from app.app_app import app
 from app.app_jwt import jwt_user
 from app.mail import send_mail
-from app.google_analytics import ga
 from common.database import with_db
 import common.models as M
 from sqlalchemy import text

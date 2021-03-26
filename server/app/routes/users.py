@@ -5,7 +5,6 @@ from app.app_app import app
 from app.app_jwt import jwt_user
 import sqlalchemy as sa
 import common.models as M
-from app.google_analytics import ga
 from app.utils.http import getuser, cant_snoop, send_error
 from app.utils.errors import CantSnoop, GnothiException
 # from app.socketio import on_, sio, CantSnoop, to_io, SocketError
@@ -60,15 +59,15 @@ class Users:
         if d.snooping: raise CantSnoop()
         if data.username and not Users._check_username(data.username, d):
             raise GnothiException(401, "USERNAME_TAKEN", "That username is already taken, try another")
-        if data.therapist and not d.viewer.therapist:
-            ga(d.uid, 'user', 'therapist')
+        #if data.therapist and not d.viewer.therapist:
+        #    ga(d.vid, 'user', 'therapist')
         for k, v in data.dict().items():
             if k == 'paid': continue
             v = v or None  # remove empty strings
             setattr(d.viewer, k, v)
         d.db.commit()
         if data.bio:
-            M.Job.create_job(d.db, user_id=d.uid, method='profiles', data_in={'args': [d.uid]})
+            M.Job.create_job(d.db, user_id=d.vid, method='profiles', data_in={'args': [d.vid]})
         return d.viewer
 
     @staticmethod
@@ -86,7 +85,7 @@ class Users:
     def _check_username(username, d):
         res = d.db.execute(sa.text("""
         select 1 from users where username=:username and id!=:uid
-        """), dict(username=username, uid=d.uid)).first()
+        """), dict(username=username, uid=d.vid)).first()
         if res: return False
         return True
 

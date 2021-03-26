@@ -1,4 +1,5 @@
 import asyncio, jwt, pdb, json
+from aioify import aioify
 from typing import Union, List, Dict, Any
 from fastapi import FastAPI
 from common.database import with_db
@@ -6,10 +7,9 @@ import common.models as M
 from app.app_app import app
 from common.utils import SECRET, vars
 from box import Box
-from app.google_analytics import ga
+from app.analytics import ga
 import sqlalchemy as sa
-import orjson
-import requests
+import sqlalchemy.orm as orm
 from starlette.websockets import WebSocketDisconnect, WebSocket
 from pydantic import BaseModel, parse_obj_as
 from common.pydantic.ws import MessageIn, MessageOut, JobStatusOut
@@ -81,6 +81,29 @@ class BroadcastHelpers:
         )
 
 
+class Deps:
+    def __init__(
+        self,
+        mgr: Any,  # WSManager, not defined yet
+        action: str,
+        db: orm.Session,
+
+        vid: str,
+        viewer: M.User,
+        uid: str,
+        user: M.User,
+        snooping: bool = False
+    ):
+        self.mgr = mgr
+        self.action = action
+        self.db = db
+        self.vid = vid
+        self.viewer = viewer
+        self.uid = uid
+        self.user = user
+        self.snooping = snooping
+
+
 class WSManager(BroadcastHelpers):
     def __init__(self):
         super().__init__()
@@ -130,20 +153,20 @@ class WSManager(BroadcastHelpers):
             raise NotFound(action)
         return fn
 
-    def get_deps(self, db, uid, message):
-        d = Box(mgr=self, uid=uid, db=db, message=message)
-        # if checkin:
-        #     asyncio.ensure_future(log_checkin(uid, db.session))
-        viewer = db.query(M.User).get(uid)
-        db.execute(sa.text("update users set updated_at=now() where id=:uid"), dict(uid=uid))
-        db.commit()
+    def get_deps(self, db, vid, message):
+        viewer = db.query(M.User).get(vid)
         as_user, snooping = M.User.snoop(db, viewer, message.as_user)
-        d['viewer'] = viewer
-        d['user'] = as_user
-        d['snooping'] = snooping
-        return d
+        return Deps(
+            mgr=self, action=message.action, db=db,
+            vid=vid, viewer=viewer, uid=as_user.id, user=as_user, snooping=snooping
+        )
 
-    async def exec_handler(self, fn, data, deps, action=None, uids=None):
+    def checkin(self, data, d: Deps):
+        d.db.execute(sa.text("update users set updated_at=now() where id=:id"), dict(id=d.vid))
+        d.db.commit()
+        ga(data, d)
+
+    async def exec_handler(self, fn, data, deps: Deps, action=None, uids=None):
         sig = signature(fn)
         model_in = sig.parameters['data'].annotation
         model_out = sig.return_annotation
@@ -152,8 +175,8 @@ class WSManager(BroadcastHelpers):
         if not out or model_out == Signature.empty:
             return
         out = parse_obj_as(model_out, out)
-        action = action or deps.message.action
-        uids = uids or [deps.uid]
+        action = action or deps.action
+        uids = uids or [deps.vid]
         pk = getattr(data, 'id', None)
         out = MessageOut(action=action, data=out, id=str(pk))
         await self.send(out, uids=uids)
@@ -163,8 +186,9 @@ class WSManager(BroadcastHelpers):
             action, data = message.action, message.data
             fn = self.get_handler(action)
             uid = self.ws_to_uid(websocket)
-            deps = self.get_deps(db, uid, message)
-            await self.exec_handler(fn, data, deps)
+            d = self.get_deps(db, uid, message)
+            await self.exec_handler(fn, data, d)
+            await aioify(obj=self.checkin)(data, d)
 
     async def receive_message(self, websocket, message):
         message = MessageIn.parse_raw(message)
@@ -189,6 +213,7 @@ class WSManager(BroadcastHelpers):
             )
             await self.send(out, websockets=[websocket])
             # logger.error(exc)
+            logger.error(message.action)
             raise exc
 
     async def send(
