@@ -10,6 +10,7 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("method", help="backup|pull|push|wipe")
 parser.add_argument("--migrate", action='store_true', help="Run a migration")
+parser.add_argument("--from-cache", action='store_true', help="Try again, with local tmp db (don't re-pull)")
 args = parser.parse_args()
 
 method = args.method
@@ -67,10 +68,11 @@ if args.migrate:
     if method == 'push':
         raise NotImplemented("push --migrate not yet supported")
     tmp_url = to_url.replace('dev', 'tmp')
-    if database_exists(tmp_url):
-        drop_database(tmp_url)
-    create_database(tmp_url)
-    os.system(f"{cmd} {from_url} | psql {tmp_url}")
+    if not args.from_cach:
+        if database_exists(tmp_url):
+            drop_database(tmp_url)
+        create_database(tmp_url)
+        os.system(f"{cmd} {from_url} | psql {tmp_url}")
     migrate_before(engine(tmp_url))
     wipe(to_url, and_init=True)
     os.system(f"{cmd} {tmp_url} --data-only | psql {to_url}")
