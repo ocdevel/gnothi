@@ -286,36 +286,29 @@ class Note(Base):
         target_id: UUID4,
         entry_id: UUID4 = None,
     ):
-        res = db.execute(sa.text(f"""
-        with users_ as (
-            -- owner 
-            select n.user_id as id 
-            from notes n where n.entry_id=:eid
-                and n.user_id=:vid
-            -- and anyone shared
-            union
-            select u.id from users u
-            inner join shares s on s.email=u.email
-                and u.id=:vid
-            inner join shares_tags st on st.share_id=s.id
-            inner join entries_tags et on st.tag_id=et.tag_id
-            inner join notes n on {"n.entry_id=:eid and" if entry_id else ""} 
-                n.private=false
-        )
-        select n.id::varchar, n.entry_id::varchar, n.user_id::varchar,
-            n.created_at, n.type, n.text, n.private
-        from notes n 
-        inner join users u on u.id=n.user_id
-        order by n.created_at asc
-        """), dict(vid=viewer_id, tid=target_id, eid=entry_id))
+        mine = db.query(Note.user_id).filter(Note.user_id == viewer_id)
+        if entry_id:
+            mine = mine.filter(Note.entry_id == entry_id)
+        can_view = db.query(Note.user_id)\
+            .filter(Note.private.is_(False))\
+            .join(EntryTag, Note.entry_id == EntryTag.entry_id)\
+            .join(ShareTag, EntryTag.tag_id == ShareTag.tag_id)\
+            .join(Share, ShareTag.share_id == Share.id)\
+            .join(User, sa.and_(Share.email == User.email, User.id == viewer_id))
+        if entry_id:
+            can_view = can_view.filter(Note.entry_id == entry_id)
+
+        cte = mine.union(can_view).subquery()
+
+        res = db.query(Note).join(cte, Note.user_id.in_(cte))\
+            .order_by(Note.created_at.desc())\
+            .all()
+
         obj = {}
-        for r in res.fetchall():
-            r = Note(**r)
-            if r.entry_id not in obj:
-                obj[r.entry_id] = []
-            r.text = fernet.decrypt(r.text)
-            obj[r.entry_id].append(r)
-        print(obj)
+        for r in res:
+            eid = str(r.entry_id)
+            if eid not in obj: obj[eid] = []
+            obj[eid].append(r)
         return obj
 
 
