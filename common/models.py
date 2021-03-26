@@ -118,6 +118,7 @@ class User(Base):
     people = orm.relationship("Person", order_by='Person.name.asc()', **parent_cascade)
     shares = orm.relationship("Share", **parent_cascade)
     tags = orm.relationship("Tag", order_by='Tag.name.asc()', **parent_cascade)
+    groups = orm.relationship("Group", secondary="users_groups")
 
     @staticmethod
     def snoop(db, viewer, sid=None):
@@ -194,6 +195,8 @@ class Entry(Base):
 
     user_id = FKCol('users.id', index=True)
     entry_tags_ = orm.relationship("EntryTag", **parent_cascade)
+
+    user = orm.relationship("User")
 
     # share_tags = orm.relationship("EntryTag", secondary="shares_tags")
 
@@ -300,6 +303,9 @@ class Note(Base):
     type = sa.Column(sa.Enum(NoteTypes), nullable=False)
     text = Encrypt(sa.Unicode, nullable=False)
     private = sa.Column(sa.Boolean, server_default='false')
+
+    user = orm.relationship("User")
+    entry = orm.relationship("Entry")
 
     @staticmethod
     def snoop(
@@ -414,6 +420,8 @@ class Field(Base):
     next_pred = sa.Column(sa.Float, server_default='0')
     avg = sa.Column(sa.Float, server_default="0")
 
+    user = orm.relationship("User")
+
     @staticmethod
     def update_avg(db, fid):
         db.execute(sa.text("""
@@ -447,6 +455,9 @@ class FieldEntryOld(Base):
     user_id = FKCol('users.id', index=True)
     field_id = FKCol('fields.id')
 
+    user = orm.relationship("User")
+    field = orm.relationship("Field")
+
 
 at_tz = "at time zone :tz"
 tz_read = f"coalesce(:day ::timestamp {at_tz}, now() {at_tz})"
@@ -464,6 +475,9 @@ class FieldEntry(Base):
     # remove these after duplicates bug handled
     dupes = sa.Column(psql.JSONB)
     dupe = sa.Column(sa.Integer, server_default="0")
+
+    user = orm.relationship("User")
+    field = orm.relationship("Field")
 
     @staticmethod
     def get_day_entries(db, user_id, day=None):
@@ -514,6 +528,8 @@ class Person(Base):
 
     user_id = FKCol('users.id', index=True)
 
+    user = orm.relationship("User")
+
 
 class Share(Base):
     __tablename__ = 'shares'
@@ -533,8 +549,9 @@ class Share(Base):
     books = sa.Column(sa.Boolean, server_default="false")
     # profile = sa.Column(sa.Boolean, server_default="false")
 
+    user = orm.relationship("User")
     share_tags = orm.relationship("ShareTag", **parent_cascade)
-    tags_ = orm.relationship("Tag", secondary="shares_tags")
+    # tags_ = orm.relationship("Tag", secondary="shares_tags")
 
     # last_seen = DateCol()
     # new_entries = sa.Column(sa.Integer, server_default=sa.text("0"))
@@ -563,7 +580,7 @@ class Tag(Base):
     selected = sa.Column(sa.Boolean, server_default="true")
     main = sa.Column(sa.Boolean, server_default="false")
 
-    shares = orm.relationship("Share", secondary="shares_tags")
+    user = orm.relationship("User")
 
     @staticmethod
     def snoop(db: Session, vid, sid=None):
@@ -584,6 +601,9 @@ class EntryTag(Base):
     entry_id = FKCol('entries.id', primary_key=True)
     tag_id = FKCol('tags.id', primary_key=True)
 
+    entry = orm.relationship("Entry")
+    tag = orm.relationship("Tag")
+
 
 class ShareTag(Base):
     __tablename__ = 'shares_tags'
@@ -591,8 +611,8 @@ class ShareTag(Base):
     tag_id = FKCol('tags.id', primary_key=True)
     selected = sa.Column(sa.Boolean, server_default="true")
 
-    tag = orm.relationship(Tag, backref=orm.backref("tags"))
-    share = orm.relationship(Share, backref=orm.backref("shares"))
+    tag = orm.relationship("Tag")
+    share = orm.relationship("Share")
 
 
 class UserShare(Base):
@@ -601,12 +621,20 @@ class UserShare(Base):
     user_id = FKCol('users.id', primary_key=True)
     obj_id = FKCol('users.id', primary_key=True)
 
+    share = orm.relationship("Share")
+    user = orm.relationship("User", foreign_keys=[user_id])
+    obj = orm.relationship("User", foreign_keys=[obj_id])
+
 
 class GroupShare(Base):
     __tablename__ = 'groups_shares'
     share_id = FKCol('shares.id', primary_key=True)
     user_id = FKCol('users.id', primary_key=True)
     obj_id = FKCol('groups.id', primary_key=True)
+
+    share = orm.relationship("Share")
+    user = orm.relationship("Group")
+    obj = orm.relationship("User")
 
 
 class Book(Base):
@@ -640,6 +668,9 @@ class Bookshelf(Base):
     user_id = FKCol('users.id', primary_key=True)
     shelf = sa.Column(sa.Enum(Shelves), nullable=False)
     score = sa.Column(sa.Float)  # only for ai-recs
+
+    # book = orm.relationship("Book")
+    user = orm.relationship("User")
 
     @staticmethod
     def update_books(db, user_id):
@@ -751,6 +782,8 @@ class Job(Base):
     machine_id = sa.Column(sa.Unicode, index=True)
     data_in = sa.Column(psql.JSONB)
     data_out = sa.Column(psql.JSONB)
+
+    user = orm.relationship("User")
 
     @staticmethod
     def create_job(db, user_id, method, data_in={}, **kwargs):
@@ -910,6 +943,8 @@ class CacheEntry(Base):
     clean = Encrypt(array=True)
     vectors = sa.Column(psql.ARRAY(sa.Float, dimensions=2))
 
+    entry = orm.relationship("Entry")
+
     @staticmethod
     def get_paras(db, entries_q, profile_id=None):
         CE, CU = CacheEntry, CacheUser
@@ -936,12 +971,17 @@ class CacheUser(Base):
     clean = Encrypt(array=True)
     vectors = sa.Column(psql.ARRAY(sa.Float, dimensions=2))
 
+    user = orm.relationship("User")
+
 
 class Influencer(Base):
     __tablename__ = 'influencers'
     field_id = FKCol('fields.id', primary_key=True)
     influencer_id = FKCol('fields.id', primary_key=True)
     score = sa.Column(sa.Float, nullable=False)
+
+    field = orm.relationship("Field", foreign_keys=[field_id])
+    influencer = orm.relationship("Field", foreign_keys=[influencer_id])
 
 
 class ModelHypers(Base):
@@ -955,12 +995,14 @@ class ModelHypers(Base):
     hypers = sa.Column(psql.JSONB, nullable=False)
     meta = sa.Column(psql.JSONB)  # for xgboost it's {n_rows, n_cols}
 
+    user = orm.relationship("User")
+
 
 # class MatchTypes(enum.Enum):
 #     users = "users"
 #     groups = "groups"
-#
-#
+
+
 # class Match(Base):
 #     __tablename__ = 'matches'
 #     id = IDCol()
@@ -987,12 +1029,26 @@ class GroupRoles(enum.Enum):
 class Group(Base):
     __tablename__ = 'groups'
     id = IDCol()
-    owner = FKCol('users.id', index=True)
+    owner = FKCol('users.id', index=True, nullable=False)
     title = Encrypt(sa.Unicode, nullable=False)
     text = Encrypt(sa.Unicode, nullable=False)
     privacy = sa.Column(sa.Enum(GroupPrivacy))
     created_at = DateCol()
     updated_at = DateCol(update=True)
+
+    owner_ = orm.relationship("User")
+    members_ = orm.relationship("User", secondary="users_groups")
+
+    @staticmethod
+    def my_groups(db, vid):
+        return (
+            db.query(Group)
+            .join(UserGroup, sa.and_(
+                UserGroup.group_id == Group.id,
+                UserGroup.user_id == vid,
+                UserGroup.role != GroupRoles.banned
+            )).all()
+        )
 
     @staticmethod
     def create_group(db, title, text, owner, privacy=GroupPrivacy.public):
@@ -1051,38 +1107,43 @@ class UserGroup(Base):
     joined_at = DateCol()
     role = sa.Column(sa.Enum(GroupRoles))
 
+    user = orm.relationship("User")
+    group = orm.relationship("Group")
+
     @staticmethod
     def get_members(db, gid):
-        user_fields = "username first_name last_name bio".split() # username avatar
-        rows = (db.query(UserGroup, User)
-            .join(User, User.id == UserGroup.user_id)
-            .outerjoin(GroupShare, sa.and_(
-                GroupShare.user_id == UserGroup.user_id,
-                GroupShare.obj_id == gid
-            ))
+        pf = "username first_name last_name bio".split()
+        rows = (db.query(User, UserGroup, Share)
+            .select_from(UserGroup)
             .filter(UserGroup.group_id == gid)
+            .join(User)
+            .outerjoin(GroupShare, Share)
             .options(
-                orm.Load(User).load_only(*user_fields)
+                orm.Load(User).load_only(*profile_fields)
             ).all())
         res = {}
-        for (ug, u) in rows:
+        for (u, ug, s) in rows:
+            print(u, ug, s)
             obj = dict(
                 username=ug.username,
-                show_first_name=ug.show_first_name,
-                show_last_name=ug.show_last_name,
-                show_username=ug.show_username,
-                show_bio=ug.show_bio,
+                show_first_name=s and s.first_name,
+                show_last_name=s and s.last_name,
+                show_username=s and s.username,
+                show_bio=s and s.bio,
                 joined_at=ug.joined_at.timestamp(),
                 role=ug.role.value
             )
-            for f in user_fields:
+            for f in pf:
                 if obj[f"show_{f}"]:
                     obj[f] = getattr(u, f, None)
             # Display name based on per-member privacies
             uname = []
-            if ug.show_first_name and u.first_name: uname.append(u.first_name)
-            if ug.show_last_name and u.last_name: uname.append(u.last_name)
-            if ug.show_username and u.username and not uname: uname.append(u.username)
+            if s and s.first_name and u.first_name:
+                uname.append(u.first_name)
+            if s and s.last_name and u.last_name:
+                uname.append(u.last_name)
+            if s and s.username and u.username and not uname:
+                uname.append(u.username)
             obj['username'] = ' '.join(uname) if uname else ug.username
 
             res[str(ug.user_id)] = obj
@@ -1108,15 +1169,35 @@ class UserGroup(Base):
             .scalar()
         return role.value if role else None
 
+    @staticmethod
+    def put_privacy(db, vid, data):
+        k, v = data.key.replace('show_', ''), data.value
+        res = (db.query(UserGroup, Share)
+          .select_from(UserGroup)
+          .filter(UserGroup.user_id == vid, UserGroup.group_id == data.id)
+          .join(User, GroupShare, Share)
+          .first())
+        if res:
+            s = res[1]
+            setattr(s, k, v)
+            db.commit()
+            return
+        s = {k: v, 'user_id': vid}
+        s = Share(**s)
+        gs = GroupShare(share=s, user_id=vid, obj_id=data.id)
+        db.add(gs)
+        db.commit()
 
-class UserMessage(Base):
-    __tablename__ = 'users_messages'
-    id = IDCol()
-    user_id = FKCol('users.id', index=True)
-    obj_id = FKCol('users.id', index=True)
-    created_at = DateCol()
-    updated_at = DateCol(update=True)
-    text = Encrypt(sa.Unicode, nullable=False)
+
+
+# class UserMessage(Base):
+#     __tablename__ = 'users_messages'
+#     id = IDCol()
+#     user_id = FKCol('users.id', index=True)
+#     obj_id = FKCol('users.id', index=True)
+#     created_at = DateCol()
+#     updated_at = DateCol(update=True)
+#     text = Encrypt(sa.Unicode, nullable=False)
 
 
 class GroupMessage(Base):
@@ -1128,6 +1209,9 @@ class GroupMessage(Base):
     updated_at = DateCol(update=True)
     text = Encrypt(sa.Unicode, nullable=False)
 
+    user = orm.relationship("User")
+    obj = orm.relationship("Group")
+
 
 class GroupNotif(Base):
     __tablename__ = 'groups_notifs'
@@ -1136,17 +1220,20 @@ class GroupNotif(Base):
     count = sa.Column(sa.Integer, server_default="0")
     last_seen = DateCol()
 
+    user = orm.relationship("User")
+    obj = orm.relationship("Group")
+
     @staticmethod
     def create_notifs(db, gid):
         res = db.execute(sa.text("""
         with users_ as (
-            select user_id as id from user_groups ug
+            select user_id as id from users_groups ug
             where ug.group_id=:gid and ug.role != 'banned'
         )
-        insert into groups_notifs (user_id, group_id, count)
+        insert into groups_notifs (user_id, obj_id, count)
         select u.id, :gid, 1 from users_ u
-        on conflict (user_id, group_id) do update
-        set count=group_notifs.count+1
+        on conflict (user_id, obj_id) do update
+        set count=groups_notifs.count+1
         returning obj_id, user_id, count
         """), dict(gid=gid))
         db.commit()
@@ -1159,6 +1246,9 @@ class NoteNotif(Base):
     obj_id = FKCol('entries.id', primary_key=True)
     count = sa.Column(sa.Integer, server_default="0")
     last_seen = DateCol()
+
+    user = orm.relationship("User")
+    obj = orm.relationship("Entry")
 
     @staticmethod
     def create_notifs(db, eid):
@@ -1192,6 +1282,9 @@ class ShareNotif(Base):
     obj_id = FKCol('shares.id', primary_key=True)
     count = sa.Column(sa.Integer, server_default="0")
     last_seen = DateCol()
+
+    user = orm.relationship("User")
+    obj = orm.relationship("Share")
 
 
 # class MessageReaction(Base):

@@ -22,9 +22,9 @@ class Groups:
     @staticmethod
     async def _send_message(msg, d):
         db, mgr = d.db, d.mgr
-        gid = msg['group_id']
-        uids = M.UserGroup.get_uids(db, msg['group_id'])
-        msg = M.Message(**msg)
+        gid = msg['obj_id']
+        uids = M.UserGroup.get_uids(db, msg['obj_id'])
+        msg = M.GroupMessage(**msg)
         db.add(msg)
         db.commit()
 
@@ -52,9 +52,8 @@ class Groups:
             raise CantInteract()
         msg = dict(
             text=data.text,
-            group_id=data.id,
-            owner_id=d.vid,
-            recipient_type=M.MatchTypes.groups,
+            obj_id=data.id,
+            user_id=d.vid,
         )
         await Groups._send_message(msg, d)
 
@@ -64,8 +63,7 @@ class Groups:
         if not ug:
             return
         msg = dict(
-            group_id=data.id,
-            recipient_type=M.MatchTypes.groups,
+            obj_id=data.id,
             text=f"{ug.username} just joined!"
         )
         await asyncio.wait([
@@ -78,8 +76,7 @@ class Groups:
         uid, gid = str(d.vid), data.id
         ug = M.Group.leave_group(d.db, data.id, uid)
         msg = dict(
-            group_id=gid,
-            recipient_type=M.MatchTypes.groups,
+            obj_id=gid,
             text=f"{ug['username']} just left :("
         )
         await asyncio.wait([
@@ -92,9 +89,9 @@ class Groups:
     @staticmethod
     async def on_messages_get(data: BM_ID, d) -> List[PyG.MessageOut]:
         # TODO check perms
-        return d.db.query(M.Message) \
-            .filter(M.Message.group_id == data.id) \
-            .order_by(M.Message.created_at.asc()) \
+        return d.db.query(M.GroupMessage) \
+            .filter(M.GroupMessage.obj_id == data.id) \
+            .order_by(M.GroupMessage.created_at.asc()) \
             .all()
 
     @staticmethod
@@ -120,10 +117,7 @@ class Groups:
 
     @staticmethod
     async def on_privacy_put(data: PyG.PrivacyIn, d):
-        ug = d.db.query(M.UserGroup)\
-                .filter_by(user_id=d.vid, group_id=data.id).first()
-        setattr(ug, data.key, data.value)
-        d.db.commit()
+        M.UserGroup.put_privacy(d.db, d.vid, data)
         await Groups._send_members(data.id, d)
 
     @staticmethod
@@ -135,12 +129,7 @@ class Groups:
 
     @staticmethod
     async def on_mine_get(data: BM, d) -> List[PyG.GroupOut]:
-        return d.db.query(M.Group)\
-            .join(M.UserGroup, sa.and_(
-                M.UserGroup.group_id == M.Group.id,
-                M.UserGroup.user_id == d.vid,
-                M.UserGroup.role != M.GroupRoles.banned
-            )).all()
+        return M.Group.my_groups(d.db, d.vid)
 
 
 groups_router = None

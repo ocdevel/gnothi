@@ -174,19 +174,28 @@ class WSManager(BroadcastHelpers):
         ga(data, d)
 
     async def exec_handler(self, fn, data, deps: Deps, action=None, uids=None):
-        sig = signature(fn)
-        model_in = sig.parameters['data'].annotation
-        model_out = sig.return_annotation
-        data = parse_obj_as(model_in, data)
-        out = await fn(data, deps)
-        if not out or model_out == Signature.empty:
-            return
-        out = parse_obj_as(model_out, out)
-        action = action or deps.action
-        uids = uids or [deps.vid]
-        pk = getattr(data, 'id', None)
-        out = MessageOut(action=action, data=out, id=str(pk))
-        await self.send(out, uids=uids)
+        try:
+            sig = signature(fn)
+            model_in = sig.parameters['data'].annotation
+            model_out = sig.return_annotation
+            data = parse_obj_as(model_in, data)
+            out = await fn(data, deps)
+            if not out or model_out == Signature.empty:
+                return
+            out = parse_obj_as(model_out, out)
+            action = action or deps.action
+            uids = uids or [deps.vid]
+            pk = getattr(data, 'id', None)
+            out = MessageOut(action=action, data=out, id=str(pk))
+            await self.send(out, uids=uids)
+        except GnothiException as exc:
+            out = MessageOut(
+                action=deps.action,
+                error=exc.error,
+                detail=exc.detail,
+                code=exc.code,
+            )
+            return await self.send(out, uids=[deps.vid])
 
     async def receive_message_(self, websocket, message):
         with with_db() as db:

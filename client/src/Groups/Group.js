@@ -20,8 +20,8 @@ function Messages() {
 
   messages = messages.map(m => new Message({
     message: m.text,
-    id: uid === m.owner_id ? 0 : 1,
-    senderName: members[m.owner_id]?.username || "*system*"
+    id: uid === m.user_id ? 0 : 1,
+    senderName: members[m.user_id]?.username || "*system*"
   }))
 
   // https://github.com/brandonmowat/react-chat-ui
