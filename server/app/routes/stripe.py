@@ -3,11 +3,11 @@ from pydantic import BaseModel
 from fastapi import APIRouter, Depends, HTTPException, Response, Request
 from fastapi.responses import JSONResponse
 
-from fastapi_sqlalchemy import db
 from app.app_app import app
 from app.app_jwt import jwt_user
 from app.mail import send_mail
 from app.google_analytics import ga
+from common.database import with_db
 import common.models as M
 from sqlalchemy import text
 from common.utils import vars
@@ -87,16 +87,17 @@ async def webhook_received(request: Request):
 
     logger.info('event ' + event_type)
 
-    if event_type == 'payment_intent.succeeded':
-        # Fulfill any orders, e-mail receipts, etc
-        db.session.execute(text("update users set paid=true where id=:uid"), uid)
-        db.session.commit()
-        logger.info("💰 Payment received!")
+    with with_db() as db:
+        if event_type == 'payment_intent.succeeded':
+            # Fulfill any orders, e-mail receipts, etc
+            db.execute(text("update users set paid=true where id=:uid"), uid)
+            db.commit()
+            logger.info("💰 Payment received!")
 
-    if event_type == 'payment_intent.payment_failed':
-        # TODO Notify the customer that their order was not fulfilled
-        db.session.execute(text("update users set paid=false where id=:uid"), uid)
-        db.session.commit()
-        logger.error("❌ Payment failed.")
+        if event_type == 'payment_intent.payment_failed':
+            # TODO Notify the customer that their order was not fulfilled
+            db.execute(text("update users set paid=false where id=:uid"), uid)
+            db.commit()
+            logger.error("❌ Payment failed.")
 
     return {'status': 'success'}

@@ -1,14 +1,8 @@
 FROM tiangolo/uvicorn-gunicorn-fastapi:python3.8
-RUN apt-get update -y && apt-get install -y wget unzip
-
-RUN curl -s https://raw.githubusercontent.com/lefnire/ml-tools/master/dockerfiles/psql-client.sh | bash
-
-RUN apt-get install -y default-libmysqlclient-dev
 
 RUN pip install \
   sqlalchemy==1.3.23 \
   python-multipart \
-  fastapi-sqlalchemy \
   psycopg2-binary \
   sqlalchemy_utils \
   pandas \
@@ -17,7 +11,6 @@ RUN pip install \
   markdown \
   python-box \
   tqdm \
-  mysqlclient \
   cryptography \
   # else fastapi-jwt-auth breaks
   passlib \
@@ -36,7 +29,8 @@ RUN pip install \
   fastapi-utils \
   orjson \
   python-jose \
-  broadcaster[postgres]
+  broadcaster[postgres] \
+  alembic
 
 COPY ./server/app /app/app
 COPY ./common /app/common

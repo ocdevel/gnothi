@@ -1,7 +1,7 @@
 import requests
 from app.mail import send_mail
 from common.utils import vars, is_dev
-from common.database import session
+from common.database import with_db
 from sqlalchemy import text
 from typing import Union
 from pydantic import UUID4
@@ -31,8 +31,8 @@ def ga(uid: Union[str, UUID4], category: str, action: str):
     # if DEBUG: print(res.json())
 
     if action in ('register', 'like', 'dislike', 'therapist', 'notes'):
-        with session() as sess:
-            if sess.execute(text("""
+        with with_db() as db:
+            if db.execute(text("""
             select is_superuser su from users where id=:uid
             """), dict(uid=uid)).fetchone().su:
                 # don't notify of my own or Lisa's entries
