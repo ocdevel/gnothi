@@ -130,7 +130,7 @@ export default function Sharing() {
     emit(['shares/get', {}])
   }, [as])
 
-  if (sharesRes?.code === 401) {
+  if (sharesRes?.code === 403) {
     return <h5>{sharesRes.detail}</h5>
   }
 

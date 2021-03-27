@@ -7,8 +7,17 @@ class GnothiException(Exception):
 
 
 class CantSnoop(GnothiException):
-    def __init__(self, detail="Can't access this user's feature"):
-        super().__init__(401, "CANT_SNOOP", detail)
+    def __init__(self, k=None):
+        msgs = {
+            'fields': "This user hasn't shared their fields.",
+            'people': "This user hasn't shared their people.",
+            'books': "This user hasn't shared their book recommendations."
+        }
+        if k and k in msgs:
+            detail = msgs[k]
+        else:
+            detail = "You can't perform this operation for this user."
+        super().__init__(403, "CANT_SNOOP", detail)
 
 
 class JWTError(GnothiException):
@@ -23,7 +32,7 @@ class NotFound(GnothiException):
 
 class CantInteract(GnothiException):
     def __init__(self, detail="You don't have permissions for this group"):
-        super().__init__(401, "CANT_INTERACT", detail)
+        super().__init__(403, "CANT_INTERACT", detail)
 
 
 class AIOffline(GnothiException):

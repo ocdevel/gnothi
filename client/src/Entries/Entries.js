@@ -85,10 +85,9 @@ export default function Entries() {
     setPage(0)
   }, [selected])
 
-  if (entriesRes?.code >= 401 && entriesRes?.code < 500) {
+  if (entriesRes?.code === 403) {
     return <h5>{entriesRes.detail}</h5>
   }
-
 
   let filtered = _(entries || [])
       .filter(e => _.reduce(selected, (m, v, k) => e.entry_tags[k] || m, false))

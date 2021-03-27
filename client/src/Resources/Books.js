@@ -34,7 +34,7 @@ export default function Books() {
     setRemoved([])
   }, [shelf])
 
-  if (booksGet?.code === 401) {
+  if (booksGet?.code === 403) {
     return <h5>{booksGet.detail}</h5>
   }
 

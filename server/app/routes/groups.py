@@ -73,8 +73,8 @@ class Groups:
 
     @staticmethod
     async def on_group_leave(data: BM_ID, d) -> Dict:
-        uid, gid = str(d.vid), data.id
-        ug = M.Group.leave_group(d.db, data.id, uid)
+        vid, gid = str(d.vid), data.id
+        ug = M.Group.leave_group(d.db, data.id, vid)
         msg = dict(
             obj_id=gid,
             text=f"{ug['username']} just left :("

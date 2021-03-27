@@ -17,14 +17,14 @@ class Fields:
     @staticmethod
     async def on_fields_get(data: BM, d) -> PyF.FieldsOut:
         if d.snooping and not d.user.share_data.fields:
-            raise CantSnoop('Fields')
+            raise CantSnoop('fields')
         await d.mgr.send_other('insights/influencers/get', {}, d)
         return {str(f.id): f for f in d.user.fields}
 
     @staticmethod
     async def on_history_get(data: BM_ID, d) -> List[PyF.FieldHistoryOut]:
         if d.snooping and not d.user.share_data.fields:
-            raise CantSnoop('Fields')
+            raise CantSnoop('fields')
         return M.Field.get_history(d.db, data.id)
 
     @staticmethod
@@ -63,7 +63,7 @@ class Fields:
     @staticmethod
     async def on_field_entries_get(data: PyF.FieldEntriesIn, d) -> List[PyF.FieldEntryOut]:
         if d.snooping and not d.user.share_data.fields:
-            raise CantSnoop('Fields')
+            raise CantSnoop('fields')
         return M.FieldEntry.get_day_entries(d.db, d.uid, day=data.day)
 
     @staticmethod
@@ -77,14 +77,14 @@ class Fields:
 
     @staticmethod
     async def on_field_entries_has_dupes_get(data: BM, d) -> Any:
-        if d.snooping: raise CantSnoop('Fields')
+        if d.snooping: raise CantSnoop()
         return d.db.execute(text("""
         select 1 has_dupes from field_entries2 where user_id=:uid and dupes is not null limit 1
         """), dict(uid=d.vid)).fetchone()
 
     @staticmethod
     async def on_field_entries_clear_dupes_post(data: BM, d) -> Any:
-        if d.snooping: raise CantSnoop('Fields')
+        if d.snooping: raise CantSnoop()
         db, send = d.db, d.mgr.send_other
         db.execute(text("""
         delete from field_entries where user_id=:uid;
@@ -98,7 +98,7 @@ class Fields:
 
     @staticmethod
     async def on_field_entries_clear_entries_post(data: BM, d) -> Any:
-        if d.snooping: raise CantSnoop('Fields')
+        if d.snooping: raise CantSnoop()
         db, send = d.db, d.mgr.send_other
         db.execute(text("""
         delete from field_entries where user_id=:uid;

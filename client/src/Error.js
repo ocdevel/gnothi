@@ -6,12 +6,12 @@ import {EE} from './redux/ws'
 export default function Error({
   message=null,  // manual
   action=null,  // regex
-  codeRange=null
+  codes=null
 }) {
   const [detail, setDetail] = useState(null)
 
   useEffect(() => {
-    if (!(action || codeRange)) {return}
+    if (!(action || codes)) {return}
     EE.on("wsResponse", checkWsReponse)
     return () => EE.off("wsResponse")
   }, [])
@@ -21,9 +21,9 @@ export default function Error({
   }, [message])
 
   function checkWsReponse(data) {
-    const cm = data.code >= codeRange[0] && data.code <= codeRange[1]
+    const cm = codes && ~codes.indexOf(data.code)
     const am = action && data.action?.match(action)
-    const match = (codeRange && action) ? (cm && am) : (cm || am)
+    const match = (codes && action) ? (cm && am) : (cm || am)
     if (match) {
       setDetail(`${data.error}: ${data.detail}`)
     }

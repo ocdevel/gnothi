@@ -28,7 +28,7 @@ class Insights:
     @staticmethod
     async def on_influencers_get(data: BM, d) -> Dict:
         if d.snooping and not d.user.share_data.fields:
-            raise CantSnoop('Fields')
+            raise CantSnoop('fields')
         rows = d.db.query(M.Influencer) \
             .join(M.Field, M.Field.id == M.Influencer.influencer_id) \
             .filter(M.Field.user_id == d.uid).all()
@@ -121,7 +121,7 @@ class Insights:
     async def on_books_post(data: PyI.ShelfPost, d):
         # background_tasks.add_task(ga, viewer.id, 'bookshelf', shelf)
         if d.snooping and not d.user.share_data.books:
-            raise CantSnoop('Books')
+            raise CantSnoop()
         shelf = 'recommend' if d.snooping else data.shelf
         M.Bookshelf.upsert(d.db, d.uid, data.id, shelf)
         # await d.mgr.send_other('insights/books/get', data, d)
@@ -129,7 +129,7 @@ class Insights:
     @staticmethod
     async def on_books_get(data: PyI.ShelfGet, d) -> List[PyI.BookOut]:
         if d.snooping and not d.user.share_data.books:
-            raise CantSnoop('Books')
+            raise CantSnoop('books')
         return M.Bookshelf.get_shelf(d.db, d.uid, data.shelf)
 
     @staticmethod

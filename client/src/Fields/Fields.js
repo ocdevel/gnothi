@@ -153,8 +153,10 @@ export default function Fields() {
     [day] // re-initialize with day-change
   )
 
-  if (fieldsGet?.code === 401) {
-    return <h5>{fieldsGet?.message}</h5>
+  console.log(fieldsGet)
+
+  if (fieldsGet?.code === 403) {
+    return <h5>{fieldsGet?.detail}</h5>
   }
 
   async function fetchFieldEntries() {

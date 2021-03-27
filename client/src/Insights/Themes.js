@@ -26,7 +26,7 @@ export default function Themes() {
     if (reply) {setWaiting(false)}
   }, [reply])
 
-  if (res?.code === 401) { return <h5>{res.detail}</h5> }
+  if (res?.code === 403) { return <h5>{res.detail}</h5> }
 
   function submit(e) {
     e.preventDefault()

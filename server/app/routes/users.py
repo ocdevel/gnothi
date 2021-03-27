@@ -19,19 +19,27 @@ class Users:
     @staticmethod
     async def on_user_everything(data: BM, d):
         send = d.mgr.send_other
+        routes = [
+            'tags/tags/get',
+            'entries/entries/get',
+            'entries/notes/get',
+            'fields/fields/get',
+            'fields/field_entries/get',
+            # These are pulled for viewer, not user
+            'notifs/notes/get',
+            'notifs/groups/get'
+        ]
+        if not d.snooping:
+            routes += [
+                'users/user/get',
+                'fields/field_entries/has_dupes/get',
+                'users/shares/get',
+                'insights/top_books/get',
+                'groups/mine/get'
+            ]
         await asyncio.wait([
-            send('users/user/get', {}, d),
-            send('tags/tags/get', {}, d),
-            send('entries/entries/get', {}, d),
-            send('entries/notes/get', {}, d),
-            send('fields/fields/get', {}, d),
-            send('fields/field_entries/get', {}, d),
-            send('fields/field_entries/has_dupes/get', {}, d),
-            send('users/shares/get', {}, d),
-            send('insights/top_books/get', {}, d),
-            send('groups/mine/get', {}, d),
-            send('notifs/notes/get', {}, d),
-            send('notifs/groups/get', {}, d),
+            d.mgr.send_other(r, {}, d)
+            for r in routes
         ])
 
     @staticmethod
@@ -93,7 +101,7 @@ class Users:
     @staticmethod
     async def on_people_get(data: BM, d) -> List[PyU.PersonOut]:
         if d.snooping and not d.user.share_data.profile:
-            raise CantSnoop("People")
+            raise CantSnoop("people")
         return d.user.people
 
     @staticmethod

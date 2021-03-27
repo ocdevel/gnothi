@@ -60,19 +60,6 @@ class AuthOld(Base):
     updated_at = DateCol()
 
 
-profile_fields = [
-    'id',
-    'username',
-    'first_name',
-    'last_name',
-    'gender',
-    'orientation',
-    'birthday',
-    'timezone',
-    'bio'
-]
-
-
 class User(Base):
     __tablename__ = 'users'
 
@@ -121,6 +108,14 @@ class User(Base):
     groups = orm.relationship("Group", secondary="users_groups")
 
     @staticmethod
+    def profile_fields(as_orm=False):
+        if as_orm:
+            return [User.id, User.username, User.last_name, User.gender,
+                    User.orientation, User.birthday, User.timezone, User.bio]
+        return ['id', 'username', 'first_name', 'last_name', 'gender', 'orientation',
+            'birthday', 'timezone', 'bio']
+
+    @staticmethod
     def snoop(db, viewer, sid=None):
         vid = viewer.id
         if not sid or vid == sid:
@@ -128,11 +123,12 @@ class User(Base):
         res = (
             db.query(User, Share)
             .select_from(User)
+            .join(Share)
             .join(UserShare, sa.and_(
+                Share.id == UserShare.share_id,
+                Share.user_id == sid,
                 UserShare.obj_id == vid,
-                UserShare.user_id == sid
             ))
-            .join(Share, Share.id == UserShare.share_id)
             .first()
         )
         if not res:
@@ -231,8 +227,11 @@ class Entry(Base):
                 ))
             )
         else:
-            q = db.query(Entry).join(EntryTag, Tag, ShareTag, Share, UserShare)\
-                .filter(UserShare.obj_id == sid, UserShare.user_id == vid)
+            q = (db.query(Entry)
+                .join(EntryTag)
+                .join(ShareTag, ShareTag.tag_id == EntryTag.tag_id)
+                .join(Share, UserShare)
+                .filter(UserShare.obj_id == vid, Share.user_id == sid))
             # # TODO use ORM partial thus far for this query command, not raw sql
             # sql = f"""
             # update shares set last_seen=now(), new_entries=0
@@ -554,12 +553,15 @@ class Share(Base):
 
     @staticmethod
     def shared_with_me(db: Session, vid):
-        pf = ", ".join([f"u.{f}" for f in profile_fields])
-        return db.execute(f"""
-        select s.*, u.email, {pf} from users u
-        inner join users_shares us on us.user_id=u.id and us.obj_id=:vid
-        inner join shares s on us.share_id=s.id
-        """, {'vid': vid}).fetchall()
+        return (db.query(Share)
+            .join(UserShare, sa.and_(
+                UserShare.obj_id == vid,
+                UserShare.share_id == Share.id,
+            ))
+            .join(User, User.id == Share.user_id)
+            .with_entities(Share, User.id, User.email, *User.profile_fields(True))
+            .all()
+        )
 
 
 class Tag(Base):
@@ -578,12 +580,14 @@ class Tag(Base):
     def snoop(db: Session, vid, sid=None):
         snooping = sid and (vid != sid)
         if snooping:
-            q = (
-                db.query(Tag)
-                .join(ShareTag, Share, UserShare)
-                .filter(UserShare.obj_id == vid, UserShare.user_id == sid)
-                .with_entities(Tag.id, Tag.user_id, Tag.name, Tag.created_at, Tag.main, ShareTag.selected)
-            )
+            q = (db.query(Tag)
+                .join(ShareTag, Share)
+                .join(UserShare, sa.and_(
+                    ShareTag.share_id == UserShare.share_id,
+                    UserShare.obj_id == vid,
+                    Share.user_id == sid
+                ))
+                .with_entities(Tag.id, Tag.user_id, Tag.name, Tag.created_at, Tag.main, ShareTag.selected))
         else:
             q = db.query(Tag).filter_by(user_id=vid)
         return q.order_by(Tag.main.desc(), Tag.created_at.asc(), Tag.name.asc())
@@ -611,23 +615,19 @@ class ShareTag(Base):
 class UserShare(Base):
     __tablename__ = 'users_shares'
     share_id = FKCol('shares.id', primary_key=True)
-    user_id = FKCol('users.id', primary_key=True)
     obj_id = FKCol('users.id', primary_key=True)
 
     share = orm.relationship("Share")
-    user = orm.relationship("User", foreign_keys=[user_id])
-    obj = orm.relationship("User", foreign_keys=[obj_id])
+    obj = orm.relationship("User")
 
 
 class GroupShare(Base):
     __tablename__ = 'groups_shares'
     share_id = FKCol('shares.id', primary_key=True)
-    user_id = FKCol('users.id', primary_key=True)
     obj_id = FKCol('groups.id', primary_key=True)
 
     share = orm.relationship("Share")
-    user = orm.relationship("Group")
-    obj = orm.relationship("User")
+    obj = orm.relationship("Group")
 
 
 class Book(Base):
@@ -1029,7 +1029,7 @@ class Group(Base):
     created_at = DateCol()
     updated_at = DateCol(update=True)
 
-    owner_ = orm.relationship("User")
+    owner_ = orm.relationship("User", foreign_keys=[owner])
     members_ = orm.relationship("User", secondary="users_groups")
 
     @staticmethod
@@ -1045,21 +1045,11 @@ class Group(Base):
 
     @staticmethod
     def create_group(db, title, text, owner, privacy=GroupPrivacy.public):
-        g = Group(
-            title=title,
-            text=text,
-            privacy=privacy,
-            owner=owner,
-        )
-        db.add(g)
+        g = Group(title=title, text=text, privacy=privacy, owner=owner)
+        ug = UserGroup(group=g, user_id=owner, role=GroupRoles.owner)
+        db.add(ug)
         db.commit()
         db.refresh(g)
-        db.add(UserGroup(
-            group_id=g.id,
-            user_id=owner,
-            role=GroupRoles.owner
-        ))
-        db.commit()
         return g
 
     @staticmethod
@@ -1110,9 +1100,13 @@ class UserGroup(Base):
             .select_from(UserGroup)
             .filter(UserGroup.group_id == gid)
             .join(User)
-            .outerjoin(GroupShare, Share)
+            .outerjoin(Share)
+            .outerjoin(GroupShare, sa.and_(
+                GroupShare.share_id == Share.id,
+                GroupShare.obj_id == gid
+            ))
             .options(
-                orm.Load(User).load_only(*profile_fields)
+                orm.Load(User).load_only(*User.profile_fields())
             ).all())
         res = {}
         for (u, ug, s) in rows:
@@ -1140,6 +1134,7 @@ class UserGroup(Base):
             obj['username'] = ' '.join(uname) if uname else ug.username
 
             res[str(ug.user_id)] = obj
+        print(res)
         return res
         # return {
         #     str(ug.user_id): dict(username=ug.username, role=ug.role.value)
@@ -1168,7 +1163,7 @@ class UserGroup(Base):
         res = (db.query(UserGroup, Share)
           .select_from(UserGroup)
           .filter(UserGroup.user_id == vid, UserGroup.group_id == data.id)
-          .join(User, GroupShare, Share)
+          .join(Group, GroupShare, Share)
           .first())
         if res:
             s = res[1]
@@ -1177,7 +1172,7 @@ class UserGroup(Base):
             return
         s = {k: v, 'user_id': vid}
         s = Share(**s)
-        gs = GroupShare(share=s, user_id=vid, obj_id=data.id)
+        gs = GroupShare(share=s, obj_id=data.id)
         db.add(gs)
         db.commit()
 

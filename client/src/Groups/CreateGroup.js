@@ -177,7 +177,7 @@ export default function CreateGroup({show, close}) {
 
       <Modal.Body>
         {renderForm()}
-        <Error action={/groups\/groups\/post/g} codeRange={[400,499]}/>
+        <Error action={/groups\/groups\/post/g} codes={[400,401,403,422]}/>
       </Modal.Body>
 
       <Modal.Footer>

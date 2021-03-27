@@ -68,7 +68,7 @@ function LoggedIn() {
     <Sidebar />
     <Container fluid style={{marginTop: 5}} className='app-content'>
       <Error message={error} />
-      <Error codeRange={[400,500]} />
+      <Error codes={[422,401,500]} />
 
       <Switch>
         <Route path='/about'>
