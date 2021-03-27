@@ -1195,7 +1195,8 @@ class GroupMessage(Base):
     obj_id = FKCol('groups.id', index=True)
     created_at = DateCol()
     updated_at = DateCol(update=True)
-    text = Encrypt(sa.Unicode, nullable=False)
+    text_short = Encrypt(sa.Unicode, nullable=False)
+    text_long = Encrypt(sa.Unicode)
 
     user = orm.relationship("User")
     obj = orm.relationship("Group")
@@ -1281,3 +1282,9 @@ class ShareNotif(Base):
 #     message_id = FKCol('messages.id', primary_key=True)
 #     reaction = sa.Column(sa.Unicode)  # deal with emoji enums later
 #     created_at = DateCol()
+
+
+class Misc(Base):
+    __tablename__ = 'misc'
+    key = sa.Column(sa.Unicode, primary_key=True)
+    val = sa.Column(sa.Unicode)

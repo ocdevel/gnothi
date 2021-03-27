@@ -38,17 +38,6 @@ def migrate_users(bind, sess):
     # op.alter_column('users', 'is_superuser', existing_type=sa.BOOLEAN(), nullable=True)
     
     
-def migrate_groups(bind, sess):
-    sess.add(M.Group(
-        id='ebcf0a39-9c30-4a6f-8364-8ccb7c0c9035',
-        owner=sess.execute("select id from users where email='tylerrenelle@gmail.com'").first().id,
-        title='Gnothi',
-        text='Main Gnothi group. Basically a global chatroom, see topical groups on the right',
-        privacy=M.GroupPrivacy.public
-    ))
-    sess.commit()
-    
-
 def migrate_shares(bind, sess):
     op.add_column('shares', sa.Column('bio', sa.Boolean(), server_default='false', nullable=True))
     op.add_column('shares', sa.Column('birthday', sa.Boolean(), server_default='false', nullable=True))
@@ -85,7 +74,6 @@ def upgrade():
     Base.metadata.create_all(bind=bind)
     
     migrate_users(bind, session)
-    migrate_groups(bind, session)
     migrate_shares(bind, session)
 
     op.drop_table('profile_matches')

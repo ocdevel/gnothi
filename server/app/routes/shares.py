@@ -10,7 +10,7 @@ class Shares:
     @staticmethod
     async def on_get(data: BM, d) -> List[PyS.ShareGet]:
         if d.snooping: raise CantSnoop()
-        return d.db.query(M.Share).filter_by(user_id=d.user.id).all()
+        return d.db.query(M.Share).filter_by(user_id=d.vid).all()
 
     @staticmethod
     async def _shares_put_post(d, data, share_id=None):
