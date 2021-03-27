@@ -231,16 +231,8 @@ class Entry(Base):
                 ))
             )
         else:
-            q = (
-                db.query(Entry)
-                .join(EntryTag, Entry.id == EntryTag.entry_id)
-                .join(ShareTag, EntryTag.tag_id == ShareTag.tag_id)
-                .join(UserShare, sa.and_(
-                    ShareTag.share_id == UserShare.user_id,
-                    UserShare.obj_id == sid,
-                    UserShare.user_id == vid
-                ))
-            )
+            q = db.query(Entry).join(EntryTag, Tag, ShareTag, Share, UserShare)\
+                .filter(UserShare.obj_id == sid, UserShare.user_id == vid)
             # # TODO use ORM partial thus far for this query command, not raw sql
             # sql = f"""
             # update shares set last_seen=now(), new_entries=0
@@ -586,11 +578,12 @@ class Tag(Base):
     def snoop(db: Session, vid, sid=None):
         snooping = sid and (vid != sid)
         if snooping:
-            q = db.query(Tag)\
-                .with_entities(Tag.id, Tag.user_id, Tag.name, Tag.created_at, Tag.main, ShareTag.selected)\
-                .join(ShareTag, Tag.id==ShareTag.tag_id)\
-                .join(UserShare.share_id == ShareTag.share_id)\
-                .filter(UserShare.obj_id == vid, Share.user_id == sid)
+            q = (
+                db.query(Tag)
+                .join(ShareTag, Share, UserShare)
+                .filter(UserShare.obj_id == vid, UserShare.user_id == sid)
+                .with_entities(Tag.id, Tag.user_id, Tag.name, Tag.created_at, Tag.main, ShareTag.selected)
+            )
         else:
             q = db.query(Tag).filter_by(user_id=vid)
         return q.order_by(Tag.main.desc(), Tag.created_at.asc(), Tag.name.asc())

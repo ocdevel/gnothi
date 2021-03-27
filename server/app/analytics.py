@@ -14,7 +14,7 @@ def ga(data, d):
     are being used and important bits like sign-ups & book-thumbs. user-id is obfuscated
     https://developers.google.com/analytics/devguides/collection/protocol/v1/devguide#event
     """
-    split = d.action.split('/')
+    split = d.message.action.split('/')
     category = split[0]
     action = '/'.join(split[1:])
 

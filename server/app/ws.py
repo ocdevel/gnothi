@@ -1,4 +1,5 @@
 import asyncio, jwt, pdb, json
+from contextlib import contextmanager
 from aioify import aioify
 from typing import Union, List, Dict, Any
 from fastapi import FastAPI
@@ -85,17 +86,17 @@ class Deps:
     def __init__(
         self,
         mgr: Any,  # WSManager, not defined yet
-        action: str,
+        message: Any,
         db: orm.Session,
 
         vid: str,
         viewer: M.User,
         uid: str,
         user: M.User,
-        snooping: bool = False
+        snooping: bool = False,
     ):
         self.mgr = mgr
-        self.action = action
+        self.message = message
         self.db = db
         self.vid = vid
         self.viewer = viewer
@@ -160,77 +161,65 @@ class WSManager(BroadcastHelpers):
             raise NotFound(action)
         return fn
 
-    def get_deps(self, db, vid, message):
-        viewer = db.query(M.User).get(vid)
-        as_user, snooping = M.User.snoop(db, viewer, message.as_user)
-        return Deps(
-            mgr=self, action=message.action, db=db,
-            vid=str(vid), viewer=viewer, uid=str(as_user.id), user=as_user, snooping=snooping
-        )
+    @contextmanager
+    def with_deps(self, websocket, message):
+        vid = self.ws_to_uid(websocket)
+        with with_db() as db:
+            viewer = db.query(M.User).get(vid)
+            as_user, snooping = M.User.snoop(db, viewer, message.as_user)
+            yield Deps(
+                mgr=self, message=message, db=db,
+                vid=str(vid), viewer=viewer, uid=str(as_user.id), user=as_user, snooping=snooping
+            )
 
     def checkin(self, data, d: Deps):
         d.db.execute(sa.text("update users set updated_at=now() where id=:id"), dict(id=d.vid))
         d.db.commit()
         ga(data, d)
 
-    async def exec_handler(self, fn, data, deps: Deps, action=None, uids=None):
+    async def exec(self, fn, data, d: Deps, action=None, uids=None):
         try:
+            if type(fn) == str:
+                fn = self.get_handler(fn)
+            # allow overriding return-route
+            action = action or d.message.action
+
             sig = signature(fn)
             model_in = sig.parameters['data'].annotation
             model_out = sig.return_annotation
             data = parse_obj_as(model_in, data)
-            out = await fn(data, deps)
-            if not out or model_out == Signature.empty:
+            out = await fn(data, d)
+            if out is None or model_out == Signature.empty:
                 return
             out = parse_obj_as(model_out, out)
-            action = action or deps.action
-            uids = uids or [deps.vid]
+            uids = uids or [d.vid]
             pk = getattr(data, 'id', None)
             out = MessageOut(action=action, data=out, id=str(pk))
             await self.send(out, uids=uids)
-        except GnothiException as exc:
-            out = MessageOut(
-                action=deps.action,
-                error=exc.error,
-                detail=exc.detail,
-                code=exc.code,
-            )
-            return await self.send(out, uids=[deps.vid])
+        except (GnothiException) as exc:
+            return await self.send_error(self.users[d.vid], action, exc)
 
-    async def receive_message_(self, websocket, message):
-        with with_db() as db:
-            action, data = message.action, message.data
-            fn = self.get_handler(action)
-            uid = self.ws_to_uid(websocket)
-            d = self.get_deps(db, uid, message)
-            await self.exec_handler(fn, data, d)
-            # await aioify(obj=self.checkin)(data, d)
+    async def send_error(self, websocket, action, exc):
+        out = MessageOut(
+            action=action,
+            error=getattr(exc, 'error', str(exc)),
+            detail=getattr(exc, 'detail', str(exc)),
+            code=getattr(exc, 'code', 500),
+        )
+        logger.error(action)
+        logger.error(exc)
+        return await self.send(out, websockets=[websocket])
 
     async def receive_message(self, websocket, message):
-        message = MessageIn.parse_raw(message)
         try:
-            await self.receive_message_(websocket, message)
-        except GnothiException as exc:
-            out = MessageOut(
-                action=message.action,
-                error=exc.error,
-                detail=exc.detail,
-                code=exc.code,
-            )
-            return await self.send(out, websockets=[websocket])
+            message = MessageIn.parse_raw(message)
+            with self.with_deps(websocket, message) as d:
+                await self.exec(message.action, message.data, d)
+                await aioify(obj=self.checkin)(message, d)
         except WebSocketDisconnect:
             raise WebSocketDisconnect()
-        except Exception as exc:
-            out = MessageOut(
-                action=message.action,
-                error=str(exc),
-                detail=str(exc),
-                code=500
-            )
-            await self.send(out, websockets=[websocket])
-            # logger.error(exc)
-            logger.error(message.action)
-            raise exc
+        except (GnothiException, Exception) as exc:
+            await self.send_error(websocket, message.action, exc)
 
     async def send(
         self,
@@ -250,8 +239,7 @@ class WSManager(BroadcastHelpers):
         ])
 
     async def send_other(self, action, data, d, uids=None):
-        fn = self.get_handler(action)
-        await self.exec_handler(fn, data, d, action=action, uids=uids)
+        await self.exec(action, data, d, action=action, uids=uids)
 
 
 def jwt_auth(args):
