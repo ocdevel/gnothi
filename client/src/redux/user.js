@@ -1,7 +1,16 @@
 import {action, thunk} from "easy-peasy";
 import moment from "moment-timezone";
 import _ from "lodash";
+import {Auth} from "aws-amplify";
 
+
+export async function getJwt() {
+  return new Promise((resolve, reject) => {
+    Auth.currentSession().then(res => {
+      resolve(_.get(res, "accessToken.jwtToken"))
+    })
+  })
+}
 
 
 export const store = {
@@ -9,30 +18,31 @@ export const store = {
   setJwt: action((state, jwt) => {
     state.jwt = jwt
   }),
-
-  logout: action((state, payload) => {
-    // localStorage.removeItem('access_token')
-    // localStorage.removeItem('refresh_token')
-    // window.location.href = "/"
+  checkJwt: thunk(async (actions, payload, helpers) => {
+    const jwt = await getJwt()
+    actions.setJwt(jwt)
   }),
 
-  onAny: thunk((actions, payload, helpers) => {
-    const {jwt, as, user} = helpers.getState()
+  as: null,
+  asUser: null,
+  setAs: action((state, id) => {
+    state.as = id
+    const shares = state.data['users/shares/get']
+    state.asUser = id && _.find(shares, {id})
+  }),
+  changeAs: thunk(async (actions, payload, helpers) => {
     const {emit} = helpers.getStoreActions().ws
+    actions.setAs(payload)
+    helpers.getStoreActions().insights.clearInsights('all')
+    actions.emit(['users/user/everything', {}])
+  }),
 
-    const [action, res] = payload
-    const data = res.data
-    // console.log(action, data)
-    switch (action) {
-      case "user/get":
-        // if (as) {
-        //   // FIXME fetch basic info from user, limited by permissions
-        //   // dispatch(setAsUser(data))
-        //   break
-        // }
-        // if (res.code === 401) {
-        //   return actions.logout()
-        // }
-    }
-  })
+  logout: action((state, payload) => {
+    Auth.signOut()
+    window.location.href = "/"
+  }),
+
+  // {create: bool, list: bool, group: str, ..}
+  sharePage: {list: true},
+  setSharePage: action((s, p) => {s.sharePage = p})
 }

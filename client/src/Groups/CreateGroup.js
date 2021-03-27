@@ -74,7 +74,7 @@ const privacies = [{
 export default function CreateGroup({show, close}) {
   const history = useHistory()
   const emit = useStoreActions(actions => actions.ws.emit)
-  const as = useStoreState(s => s.ws.as)
+  const as = useStoreState(s => s.user.as)
 
   const [form, setForm] = useState({title: '', text: '', privacy: "public"})
   const postRes = useStoreState(s => s.ws.res['groups/groups/post'])

@@ -4,6 +4,7 @@ import _ from 'lodash'
 import EventEmitter from 'eventemitter3'
 import moment from "moment-timezone";
 import {Auth} from 'aws-amplify'
+import {getJwt} from './user'
 export const timezones = moment.tz.names().map(n => ({value: n, label: n}))
 
 // e52c6629: dynamic host/port
@@ -75,22 +76,6 @@ const defaultVals = {
 }
 
 const custom = {
-  user: null,
-  as: null,
-  asUser: null,
-
-  setAs: action((state, id) => {
-    state.as = id
-    const shares = state.data['users/shares/get']
-    state.asUser = id && _.find(shares, {id})
-  }),
-
-  changeAs: thunk(async (actions, payload, helpers) => {
-    actions.setAs(payload)
-    helpers.getStoreActions().insights.clearInsights('all')
-    actions.emit(['users/user/everything', {}])
-  }),
-
   'set_groups/message/get': action((state, data) => {
     const k = 'groups/messages/get'
     state.data[k] = [...state.data[k], data]
@@ -124,7 +109,7 @@ export const store = {
   ...custom,
 
   emit: thunk(async (actions, payload, helpers) => {
-    let {jwt} = helpers.getStoreState().user
+    const jwt = await getJwt()
     let {as: as_user} = helpers.getStoreState().ws
     let [action, data] = payload
 
@@ -199,7 +184,7 @@ export const store = {
 
 export function useSockets() {
   const emit = useStoreActions(actions => actions.ws.emit)
-  const jwt = useStoreState(state => state.user.jwt)
+  const jwt = useStoreState(s => s.user.jwt)
   const onAny = useStoreActions(actions => actions.ws.onAny)
   const onAnyInsights = useStoreActions(actions => actions.insights.onAny)
   const setError = useStoreActions(actions => actions.server.setError)

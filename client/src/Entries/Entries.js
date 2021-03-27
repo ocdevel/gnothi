@@ -70,7 +70,7 @@ function EntryTeaser({e, gotoForm}) {
 
 
 export default function Entries() {
-  const as = useStoreState(s => s.ws.as)
+  const as = useStoreState(s => s.user.as)
   const entries = useStoreState(s => s.ws.data['entries/entries/get'])
   const entriesRes = useStoreState(s => s.ws.res['entries/entries/get'])
   const selected = useStoreState(s => s.ws.data.selectedTags)

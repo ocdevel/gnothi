@@ -17,7 +17,7 @@ import {FaRegComments} from "react-icons/fa";
 
 export function NotesAll() {
   return null
-  const as = useStoreState(state => state.ws.as)
+  const as = useStoreState(state => state.user.as)
   const emit = useStoreActions(a => a.ws.emit)
   const notes = useStoreState(s => s.ws.data['entries/notes/get'])
 
@@ -75,7 +75,7 @@ const noteTypes = [{
 }]
 
 export function AddNotes({entry_id, onSubmit}) {
-  const as = useStoreState(state => state.ws.as)
+  const as = useStoreState(state => state.user.as)
   const emit = useStoreActions(a => a.ws.emit)
 
   const [adding, setAdding] = useState(null)

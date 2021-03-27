@@ -33,7 +33,8 @@ RUN pip install \
   orjson \
   python-jose \
   broadcaster[postgres] \
-  alembic
+  alembic \
+  aioify
 
 COPY ./server/app /app/app
 COPY ./common /app/common

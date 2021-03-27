@@ -23,7 +23,7 @@ import {useStoreState, useStoreActions} from "easy-peasy";
 
 export default function Books() {
   const emit = useStoreActions(a => a.ws.emit)
-  const as = useStoreState(state => state.ws.as)
+  const as = useStoreState(state => state.user.as)
   const booksGet = useStoreState(s => s.ws.res['insights/books/get'])
   const books = useStoreState(s => s.ws.data['insights/books/get'])
   const [shelf, setShelf] = useState('ai')  // like|dislike|already_read|remove|recommend

@@ -83,7 +83,7 @@ function Editor({text, changeText}) {
 export default function Entry() {
   const {entry_id} = useParams()
   const history = useHistory()
-  const as = useStoreState(state => state.ws.as)
+  const as = useStoreState(state => state.user.as)
   const emit = useStoreActions(a => a.ws.emit)
   const [editing, setEditing] = useState(!entry_id)
   const [form, setForm] = useState({title: '', text: '', no_ai: false, created_at: null})

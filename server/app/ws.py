@@ -215,7 +215,7 @@ class WSManager(BroadcastHelpers):
             message = MessageIn.parse_raw(message)
             with self.with_deps(websocket, message) as d:
                 await self.exec(message.action, message.data, d)
-                await aioify(obj=self.checkin)(message, d)
+                # await aioify(obj=self.checkin)(message, d)
         except WebSocketDisconnect:
             raise WebSocketDisconnect()
         except (GnothiException, Exception) as exc:

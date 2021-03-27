@@ -12,7 +12,7 @@ import {FieldName} from "./utils";
 const round_ = (v) => v ? v.toFixed(2) : null
 
 export default function ChartModal({close, field=null, overall=false}) {
-  const as = useStoreState(state => state.ws.as)
+  const as = useStoreState(state => state.user.as)
   const emit = useStoreActions(a => a.ws.emit)
   const history = useStoreState(s => s.ws.data['fields/history/get'])
 

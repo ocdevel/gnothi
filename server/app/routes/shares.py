@@ -2,53 +2,41 @@ import pdb
 from typing import List, Dict, Any
 import common.models as M
 from common.pydantic.utils import BM, BM_ID
-from app.utils.errors import CantSnoop
+from app.utils.errors import CantSnoop, NotFound, GnothiException
 import common.pydantic.shares as PyS
+import sqlalchemy as sa
+import sqlalchemy.orm as orm
 
 
 class Shares:
     @staticmethod
-    async def on_get(data: BM, d) -> List[PyS.ShareGet]:
-        if d.snooping: raise CantSnoop()
-        return d.db.query(M.Share).filter_by(user_id=d.vid).all()
+    async def on_shares_get(data: BM, d) -> List[PyS.ShareGet]:
+        return M.Share.my_shares(d.db, d.vid)
 
     @staticmethod
-    async def _shares_put_post(d, data, share_id=None):
-        vid, db, send = d.vid, d.db, d.mgr.send_other
+    async def on_email_check(data: PyS.EmailCheckPost, d) -> PyS.EmailCheckPost:
+        if d.viewer.email == data.email:
+            raise GnothiException(400, "PUNK", "That's you, silly!")
+        res = (d.db.query(M.User.email)
+            .filter_by(email=data.email)
+            .scalar())
+        if not res:
+            raise NotFound("No Gnothi user with that email. Have them sign up first.")
+        return dict(email=res)
+
+    @staticmethod
+    async def on_shares_post(data: PyS.SharePost, d) -> PyS.Valid:
         data = data.dict()
-        tags = data.pop('tags')
-        data['fields'] = data['fields_'];
-        del data['fields_']  # pydantic conflict
-        if share_id:
-            s = db.query(M.Share).filter_by(user_id=vid, id=share_id).first()
-            db.query(M.ShareTag).filter_by(share_id=s.id).delete()
-            for k, v in data.items():
-                setattr(s, k, v)
-        else:
-            s = M.Share(user_id=vid, **data)
-            db.add(s)
-        db.commit()
-        for tag, v in tags.items():
-            if not v: continue
-            db.add(M.ShareTag(share_id=vid, tag_id=tag))
-        db.commit()
-        await send('shares/get', {}, d)
+        data['share']['fields'] = data['share'].pop('fields_', False)
+        data['users'].pop(d.viewer.email, None)
+        M.Share.put_post_share(d.db, d.vid, data)
+        await d.mgr.send_other('shares/shares/get', {}, d)
+        return dict(valid=True)
 
     @staticmethod
-    async def on_post(data: PyS.SharePost, d):
-        # background_tasks.add_task(ga, viewer.id, 'feature', 'share')
-        if d.snooping: raise CantSnoop()
-        await Shares._shares_put_post(d, data)
-
-    @staticmethod
-    async def on_put(data: PyS.SharePut, d):
-        if d.snooping: raise CantSnoop()
-        await Shares._shares_put_post(d, data, share_id=data.id)
-
-    @staticmethod
-    async def on_delete(data: BM_ID, d):
+    async def on_share_delete(data: BM_ID, d):
         if d.snooping: raise CantSnoop()
         d.db.query(M.Share).filter_by(user_id=d.vid, id=data.id).delete()
         d.db.commit()
         # FIXME this isn't getting received for some reason? (the others above work)
-        await d.mgr.send_other('shares/get', {}, d)
+        await d.mgr.send_other('shares/shares/get', {}, d)

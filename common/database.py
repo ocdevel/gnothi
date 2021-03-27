@@ -7,8 +7,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import scoped_session, sessionmaker, Session
 from common.utils import vars
-from common.seed_data import seed_data
-# just for fastapi-users (I'm using sqlalchemy+engine+session everywhere else)
+# from common.seed_data import seed_data
 import logging
 from contextlib import contextmanager
 logger = logging.getLogger(__name__)
@@ -34,7 +33,7 @@ def init_db():
     engine.execute('CREATE EXTENSION IF NOT EXISTS "uuid-ossp"')
     # add `import app.models` in calling code beforehand (after `import database`)
     Base.metadata.create_all(bind=engine)
-    seed_data(engine)
+    # seed_data(engine)
 
 
 def shutdown_db():

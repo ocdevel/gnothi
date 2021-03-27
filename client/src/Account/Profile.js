@@ -22,20 +22,12 @@ import {timezones} from "../redux/ws";
 
 function Profile_() {
   const emit = useStoreActions(a => a.ws.emit)
-  const as = useStoreState(state => state.ws.as)
+  const as = useStoreState(state => state.user.as)
   const uname = useStoreState(s => s.ws.data['users/check_username'])
   const profile_ = useStoreState(s => s.ws.data['users/profile/get'])
   const [profile, setProfile] = useState({})
   const [dirty, setDirty] = useState({dirty: false, saved: false})
   const [usernameValid, setUsernameValid] = useState({checked: false, valid: null})
-
-  function fetchProfile() {
-    emit(["users/profile/get", {}])
-  }
-
-  useEffect(() => {
-    fetchProfile()
-  }, [])
 
   useEffect(() => {
     // set the form to copy from server

@@ -26,6 +26,8 @@ export default function Error({
     const match = (codes && action) ? (cm && am) : (cm || am)
     if (match) {
       setDetail(`${data.error}: ${data.detail}`)
+    } else {
+      setDetail(null)
     }
   }
 

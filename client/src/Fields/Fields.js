@@ -41,7 +41,7 @@ const iso = (day=null) => {
 
 function FieldsAdvanced({fetchFieldEntries}) {
   const emit = useStoreActions(a => a.ws.emit)
-  const jwt = useStoreState(state => state.user.jwt)
+  const jwt = useStoreState(s => s.user.jwt)
   const setServerError = useStoreActions(actions => actions.server.error)
   const hasDupes = useStoreState(s => s.ws.data['fields/field_entries/has_dupes/get'])
   const [confirmWipe, setConfirmWipe] = useState('')
@@ -124,7 +124,7 @@ function FieldsAdvanced({fetchFieldEntries}) {
 
 export default function Fields() {
   const emit = useStoreActions(a => a.ws.emit)
-  const as = useStoreState(state => state.ws.as)
+  const as = useStoreState(state => state.user.as)
   const user = useStoreState(s => s.ws.data['users/user/get'])
   const fields = useStoreState(state => state.ws.data['fields/fields/get'])
   const fieldsGet = useStoreState(state => state.ws.res['fields/fields/get'])

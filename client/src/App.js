@@ -50,7 +50,7 @@ function LoggedOut() {
 function LoggedIn() {
   useSockets()
   const emit = useStoreActions(a => a.ws.emit)
-  const as = useStoreState(s => s.ws.as);
+  const as = useStoreState(s => s.user.as);
   const error = useStoreState(state => state.server.error);
   const user = useStoreState(s => s.ws.data['users/user/get'])
 
@@ -100,14 +100,9 @@ function LoggedIn() {
 
 function App() {
   const jwt = useStoreState(state => state.user.jwt);
-  const setJwt = useStoreActions(actions => actions.user.setJwt);
+  const checkJwt = useStoreActions(a => a.user.checkJwt)
 
-  useEffect(() => {
-    Auth.currentSession().then(res => {
-      const jwt = _.get(res, "accessToken.jwtToken")
-      if (jwt) {setJwt(jwt)}
-    })
-  }, [])
+  useEffect(() => {checkJwt()}, [])
 
   if (!jwt) return <LoggedOut />
   return <LoggedIn />

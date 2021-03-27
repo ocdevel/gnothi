@@ -18,6 +18,7 @@ from sqlalchemy.orm import Session
 import sqlalchemy.sql.expression as expr
 import petname
 
+MAIN_GROUP = 'ebcf0a39-9c30-4a6f-8364-8ccb7c0c9035'
 
 
 # https://dev.to/zchtodd/sqlalchemy-cascading-deletes-8hk
@@ -526,7 +527,9 @@ class Share(Base):
     __tablename__ = 'shares'
     id = IDCol()
     user_id = FKCol('users.id', index=True)
+    # created_at = DateCol()
 
+    email = sa.Column(sa.Boolean, server_default="false")
     username = sa.Column(sa.Boolean, server_default="true")
     first_name = sa.Column(sa.Boolean, server_default="false")
     last_name = sa.Column(sa.Boolean, server_default="false")
@@ -547,6 +550,13 @@ class Share(Base):
     # last_seen = DateCol()
     # new_entries = sa.Column(sa.Integer, server_default=sa.text("0"))
 
+    @staticmethod
+    def share_fields(profile=True, share=True):
+        res = []
+        if profile: res += 'email username first_name last_name gender orientation birthday timezone bio'.split()
+        if share: res += 'fields books'.split()
+        return res
+
     @property
     def tags(self):
         return {str(t.tag_id): True for t in self.share_tags}
@@ -562,6 +572,81 @@ class Share(Base):
             .with_entities(Share, User.id, User.email, *User.profile_fields(True))
             .all()
         )
+
+    @staticmethod
+    def my_shares(db, vid):
+        # TODO optimize this into fewer queries
+        shares = db.query(Share)\
+            .filter(Share.user_id == vid)
+            # .order_by(Share.created_at)
+        gs = (db.query(Group)
+            .join(GroupShare, Share)
+              .filter(Share.user_id == vid)
+              .with_entities(GroupShare.share_id, Group.id, Group.title)
+          )
+        us = (db.query(User)
+          .join(UserShare, Share)
+          .filter(Share.user_id == vid)
+          .with_entities(UserShare.share_id, User.id, User.email)
+        )
+        return [
+            dict(
+                share=s,
+                users=[r for r in us if r.share_id==s.id],
+                groups=[r for r in gs if r.share_id==s.id],
+            )
+            for s in shares
+        ]
+
+    @staticmethod
+    def put_post_share(db, vid, data):
+        # Set the share itself
+        print(data)
+        share, tags, users, groups = data.pop('share', {}), data.pop('tags', {}),\
+            data.pop('users', {}), data.pop('groups', {})
+        sid = share.pop('id', {})
+        if sid:
+            sid = db.query(Share.id).filter_by(user_id=vid, id=sid).scalar()
+        if not sid:
+            stmt = sa.insert(Share).values(user_id=vid).returning(Share.id)
+            sid = db.execute(stmt).id
+        stmt = sa.update(Share).where(Share.id==sid).values(**{
+            k: v for k, v in share.items()
+            if k in Share.share_fields()
+        })
+        db.execute(stmt)
+        db.commit()
+
+        # Set share-tags
+        if tags:
+            db.query(ShareTag)\
+                .filter(ShareTag.share_id==sid).delete()
+            add_ = [k for k, v in tags.items() if v is True]
+            stmt = psql.insert(ShareTag)\
+                .values([dict(share_id=sid, tag_id=t) for t in add_])
+                # .on_conflict_do_nothing(index_elements=['share_id', 'tag_id'])
+            db.execute(stmt)
+
+        # Set users
+        if users:
+            db.query(UserShare) \
+                .filter(UserShare.share_id == sid).delete()
+            add_ = [k for k, v in users.items() if v is True]
+            # TODO use insert().from_select()
+            add_ = db.query(User.id).filter(User.email.in_(add_)).all()
+            stmt = sa.insert(UserShare)\
+                .values([dict(share_id=sid, obj_id=u) for u in add_])
+            db.execute(stmt)
+
+        # Set groups
+        if groups:
+            db.query(GroupShare) \
+                .filter(GroupShare.share_id == sid).delete()
+            add_ = [k for k, v in groups.items() if v is True]
+            stmt = sa.insert(GroupShare) \
+                .values([dict(share_id=sid, obj_id=g) for g in add_])
+            db.execute(stmt)
+        db.commit()
 
 
 class Tag(Base):
@@ -624,6 +709,8 @@ class UserShare(Base):
 class GroupShare(Base):
     __tablename__ = 'groups_shares'
     share_id = FKCol('shares.id', primary_key=True)
+    # can't be 'users_groups.group_id' because not unique.
+    # just make sure to delete GroupShare manually when user leaves a group
     obj_id = FKCol('groups.id', primary_key=True)
 
     share = orm.relationship("Share")
@@ -1024,7 +1111,8 @@ class Group(Base):
     id = IDCol()
     owner = FKCol('users.id', index=True, nullable=False)
     title = Encrypt(sa.Unicode, nullable=False)
-    text = Encrypt(sa.Unicode, nullable=False)
+    text_short = Encrypt(sa.Unicode, nullable=False)
+    text_long = Encrypt(sa.Unicode, nullable=True)
     privacy = sa.Column(sa.Enum(GroupPrivacy))
     created_at = DateCol()
     updated_at = DateCol(update=True)
@@ -1035,8 +1123,10 @@ class Group(Base):
     @staticmethod
     def my_groups(db, vid):
         return (
-            db.query(Group)
-            .join(UserGroup, sa.and_(
+            db.query(Group).filter(Group.id == MAIN_GROUP)
+            .union(db.query(Group)
+            .join(UserGroup.group)
+            .filter(
                 UserGroup.group_id == Group.id,
                 UserGroup.user_id == vid,
                 UserGroup.role != GroupRoles.banned
@@ -1045,7 +1135,7 @@ class Group(Base):
 
     @staticmethod
     def create_group(db, title, text, owner, privacy=GroupPrivacy.public):
-        g = Group(title=title, text=text, privacy=privacy, owner=owner)
+        g = Group(title=title, text_short=text, privacy=privacy, owner=owner)
         ug = UserGroup(group=g, user_id=owner, role=GroupRoles.owner)
         db.add(ug)
         db.commit()

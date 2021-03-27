@@ -7,7 +7,8 @@ from common.models import GroupPrivacy, GroupRoles
 
 class GroupIn(BM):
     title: str
-    text: Optional[str] = ""
+    text_short: Optional[str] = ""
+    text_long: Optional[str] = ""
     privacy: GroupPrivacy
 
 

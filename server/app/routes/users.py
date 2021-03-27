@@ -27,7 +27,8 @@ class Users:
             'fields/field_entries/get',
             # These are pulled for viewer, not user
             'notifs/notes/get',
-            'notifs/groups/get'
+            'notifs/groups/get',
+            'users/profile/get'
         ]
         if not d.snooping:
             routes += [

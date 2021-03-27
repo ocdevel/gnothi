@@ -57,8 +57,8 @@ function AccountSection() {
 
   const user = useStoreState(s => s.ws.data['users/user/get'])
   const shares = useStoreState(s => s.ws.data['users/shares/get'])
-  const as = useStoreState(s => s.ws.as)
-  const asUser = useStoreState(s => s.ws.asUser)
+  const as = useStoreState(s => s.user.as)
+  const asUser = useStoreState(s => s.user.asUser)
 
   function renderSwitcher (s, i, last) {
     if (s.id == as) {return null}

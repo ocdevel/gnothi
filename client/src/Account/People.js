@@ -5,7 +5,7 @@ import {useStoreActions, useStoreState} from "easy-peasy";
 
 function Person({close, person=null}) {
   const emit = useStoreActions(a => a.ws.emit)
-  const as = useStoreState(state => state.ws.as)
+  const as = useStoreState(state => state.user.as)
 
   const default_form = {name: '', relation: '', issues: '', bio: ''}
   const [form, setForm] = useState(person ? person : default_form)
@@ -86,7 +86,7 @@ function Person({close, person=null}) {
 }
 
 export default function People() {
-  const as = useStoreState(state => state.ws.as)
+  const as = useStoreState(state => state.user.as)
   const emit = useStoreActions(a => a.ws.emit)
   const people = useStoreState(s => s.ws.data['users/people/get'])
   const [person, setPerson] = useState(null)

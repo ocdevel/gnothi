@@ -10,7 +10,6 @@ export default function Index() {
 
   useEffect(() => {
     emit(['groups/groups/get',  {}])
-    emit(['users/profile/get', {}])
   }, [])
 
   return <div className='groups'>

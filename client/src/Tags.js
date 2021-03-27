@@ -88,7 +88,7 @@ export default function Tags({
   preSelectMain=false
 }) {
   const [editTags, setEditTags] = useState(false)
-  const as = useStoreState(state => state.ws.as)
+  const as = useStoreState(state => state.user.as)
   const emit = useStoreActions(actions => actions.ws.emit)
   // tags sorted on server
   const tags = useStoreState(s => s.ws.data['tags/tags/get'])

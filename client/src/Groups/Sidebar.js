@@ -140,7 +140,7 @@ export default function Sidebar() {
         {group.title}
       </Card.Header>
       <Card.Body>
-        <p>{group.text}</p>
+        <p>{group.text_short}</p>
         <Card.Subtitle>Members</Card.Subtitle>
         <ul className="list-unstyled">
           {_.map(members, (member, uid) => member && <li key={uid}>
@@ -177,7 +177,7 @@ export default function Sidebar() {
           <Card.Subtitle className='mb-2'>
             <Link to={`/groups/${g.id}`}>{g.title}</Link>
           </Card.Subtitle>
-          <div className='text-muted'>{g.text}</div>
+          <div className='text-muted'>{g.text_short}</div>
           {i < groups.length - 1 && <hr />}
         </div>)}
       </Card.Body>

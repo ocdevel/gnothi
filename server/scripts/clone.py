@@ -75,7 +75,8 @@ if args.migrate:
         os.system(f"{cmd} {from_url} | psql {tmp_url}")
     # migrate_before(engine(tmp_url))
     wipe(to_url, and_init=False)
-    os.system(f"{cmd} {tmp_url} --data-only | psql {to_url}")
+    os.system(f"{cmd} {tmp_url} | psql {to_url}")
+    # os.system(f"{cmd} {tmp_url} --data-only | psql {to_url}")
     # migrate_after(engine(to_url))
 else:
     wipe(to_url, and_init=False)
