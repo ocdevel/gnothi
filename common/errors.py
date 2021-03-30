@@ -30,9 +30,14 @@ class NotFound(GnothiException):
         super().__init__(404, "NOT_FOUND", detail)
 
 
-class CantInteract(GnothiException):
+class AccessDenied(GnothiException):
+    def __init__(self, detail="You don't have permissions"):
+        super().__init__(403, "ACCESS_DENIED", detail)
+
+
+class GroupDenied(AccessDenied):
     def __init__(self, detail="You don't have permissions for this group"):
-        super().__init__(403, "CANT_INTERACT", detail)
+        super().__init__(detail)
 
 
 class AIOffline(GnothiException):

@@ -2,7 +2,7 @@ import asyncio
 import sqlalchemy as sa
 import common.models as M
 from app import habitica
-from app.utils.errors import CantSnoop
+from common.errors import CantSnoop
 from common.pydantic.utils import BM
 import common.pydantic.users as PyU
 

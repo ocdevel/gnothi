@@ -2,7 +2,7 @@ import pdb
 from typing import List, Dict, Any
 import common.models as M
 from common.pydantic.utils import BM, BM_ID
-from app.utils.errors import CantSnoop, NotFound, GnothiException
+from common.errors import CantSnoop, NotFound, GnothiException
 import common.pydantic.shares as PyS
 import sqlalchemy as sa
 import sqlalchemy.orm as orm

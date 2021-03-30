@@ -6,7 +6,7 @@ from app.app_jwt import jwt_user
 import sqlalchemy as sa
 import common.models as M
 from app.utils.http import getuser, cant_snoop, send_error
-from app.utils.errors import CantSnoop, GnothiException
+from common.errors import CantSnoop, GnothiException
 # from app.socketio import on_, sio, CantSnoop, to_io, SocketError
 from common.pydantic.utils import BM, BM_ID
 import common.pydantic.users as PyU

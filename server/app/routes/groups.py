@@ -3,7 +3,7 @@ import common.pydantic.groups as PyG
 import common.models as M
 from typing import List, Dict, Any, Optional
 from pydantic import parse_obj_as, UUID4
-from app.utils.errors import CantInteract, CantSnoop
+from common.errors import AccessDenied, CantSnoop
 from common.pydantic.utils import BM_ID, BM
 from common.pydantic.ws import MessageOut
 import sqlalchemy as sa
@@ -22,11 +22,8 @@ class Groups:
     @staticmethod
     async def _send_message(msg, d):
         db, mgr = d.db, d.mgr
-        gid = msg['obj_id']
-        uids = M.UserGroup.get_uids(db, msg['obj_id'])
-        msg = M.GroupMessage(**msg)
-        db.add(msg)
-        db.commit()
+        gid = msg.obj_id
+        uids = M.UserGroup.get_uids(db, gid)
 
         msg = Groups._wrap(msg, PyG.MessageOut, gid, action='groups/message/get')
         await mgr.send(msg, uids=uids)
@@ -47,14 +44,7 @@ class Groups:
 
     @staticmethod
     async def on_messages_post(data: PyG.MessageIn, d):
-        if d.snooping: raise CantSnoop()
-        if not M.UserGroup.get_role(d.db, d.vid, data.id):
-            raise CantInteract()
-        msg = dict(
-            text=data.text,
-            obj_id=data.id,
-            user_id=d.vid,
-        )
+        msg = M.GroupMessage.create_message(d.db, data.id, data.text, d.vid)
         await Groups._send_message(msg, d)
 
     @staticmethod
@@ -75,10 +65,7 @@ class Groups:
     async def on_group_leave(data: BM_ID, d) -> Dict:
         vid, gid = str(d.vid), data.id
         ug = M.Group.leave_group(d.db, data.id, vid)
-        msg = dict(
-            obj_id=gid,
-            text=f"{ug['username']} just left :("
-        )
+        msg = M.GroupMessage.create_message(d.db, data.id, f"{ug['username']} just left :(")
         await asyncio.wait([
             Groups._send_members(gid, d),
             Groups._send_message(msg, d),
@@ -88,11 +75,7 @@ class Groups:
 
     @staticmethod
     async def on_messages_get(data: BM_ID, d) -> List[PyG.MessageOut]:
-        # TODO check perms
-        return d.db.query(M.GroupMessage) \
-            .filter(M.GroupMessage.obj_id == data.id) \
-            .order_by(M.GroupMessage.created_at.asc()) \
-            .all()
+        return M.GroupMessage.get_messages(d.db, data.id, d.vid)
 
     @staticmethod
     async def on_group_enter(data: BM_ID, d):

@@ -11,7 +11,7 @@ from fastapi.responses import StreamingResponse
 from app.utils.http import cant_snoop, send_error, getuser
 import common.pydantic.fields as PyF
 from common.pydantic.utils import BM, BM_ID
-from app.utils.errors import CantSnoop
+from common.errors import CantSnoop
 
 class Fields:
     @staticmethod

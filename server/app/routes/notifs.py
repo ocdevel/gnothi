@@ -3,7 +3,7 @@ from typing import List, Dict, Any
 import common.models as M
 from common.pydantic.utils import BM, BM_ID
 from common.pydantic.ws import MessageOut
-from app.utils.errors import CantSnoop
+from common.errors import CantSnoop
 
 
 class Notifs:

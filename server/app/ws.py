@@ -14,7 +14,7 @@ import sqlalchemy.orm as orm
 from starlette.websockets import WebSocketDisconnect, WebSocket
 from pydantic import BaseModel, parse_obj_as
 from common.pydantic.ws import MessageIn, MessageOut, JobStatusOut
-from app.utils.errors import GnothiException, NotFound, InvalidJwt
+from common.errors import GnothiException, NotFound, InvalidJwt
 import logging
 from starlette.concurrency import run_until_first_complete
 from broadcaster import Broadcast

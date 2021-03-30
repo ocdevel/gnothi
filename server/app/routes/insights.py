@@ -4,7 +4,7 @@ from pydantic import parse_obj_as
 import common.pydantic.insights as PyI
 from common.pydantic.ws import MessageOut
 from common.pydantic.utils import BM, BM_ORM, BM_ID
-from app.utils.errors import CantSnoop, NotFound, AIOffline, GnothiException
+from common.errors import CantSnoop, NotFound, AIOffline, GnothiException
 
 from common.database import with_db
 import common.models as M

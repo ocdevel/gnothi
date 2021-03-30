@@ -10,7 +10,7 @@ from urllib.parse import quote as urlencode
 from common.pydantic.utils import BM, BM_ORM, BM_ID
 import common.pydantic.entries as PyE
 from common.pydantic.ws import MessageOut
-from app.utils.errors import NotFound, CantSnoop, GnothiException
+from common.errors import NotFound, CantSnoop, GnothiException
 from app.routes.notifs import Notifs
 
 class Entries:

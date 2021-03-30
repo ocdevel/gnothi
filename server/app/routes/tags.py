@@ -1,6 +1,6 @@
 from typing import List, Dict, Any
 import common.models as M
-from app.utils.errors import CantSnoop, GnothiException
+from common.errors import CantSnoop, GnothiException
 from common.pydantic.utils import BM, BM_ID
 import common.pydantic.tags as PyT
 import common.pydantic.ws as PyW

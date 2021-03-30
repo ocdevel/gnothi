@@ -7,6 +7,8 @@ logger = logging.getLogger(__name__)
 
 from common.database import Base, with_db
 from common.utils import vars
+from common.errors import AccessDenied, GroupDenied
+from common.seed import ADMIN_ID, GROUP_ID as MAIN_GROUP
 
 import sqlalchemy as sa
 from sqlalchemy import func
@@ -18,8 +20,6 @@ from sqlalchemy_utils.types.encrypted.encrypted_type import StringEncryptedType,
 from sqlalchemy.orm import Session
 import sqlalchemy.sql.expression as expr
 import petname
-
-MAIN_GROUP = 'ebcf0a39-9c30-4a6f-8364-8ccb7c0c9035'
 
 
 # https://dev.to/zchtodd/sqlalchemy-cascading-deletes-8hk
@@ -528,7 +528,7 @@ class Share(Base):
     __tablename__ = 'shares'
     id = IDCol()
     user_id = FKCol('users.id', index=True)
-    # created_at = DateCol()  # TODO
+    created_at = DateCol()
 
     email = sa.Column(sa.Boolean, server_default="false")
     username = sa.Column(sa.Boolean, server_default="true")
@@ -1113,7 +1113,7 @@ class Group(Base):
     owner = FKCol('users.id', index=True, nullable=False)
     title = Encrypt(sa.Unicode, nullable=False)
     text_short = Encrypt(sa.Unicode, nullable=False)
-    text_long = Encrypt(sa.Unicode, nullable=True)
+    text_long = Encrypt(sa.Unicode)
     privacy = sa.Column(sa.Enum(GroupPrivacy))
     created_at = DateCol()
     updated_at = DateCol(update=True)
@@ -1241,12 +1241,16 @@ class UserGroup(Base):
         return [r.user_id for r in res]
 
     @staticmethod
-    def get_role(db: Session, uid, gid):
-        UG = UserGroup
-        role = db.query(UG.role)\
-            .filter(UG.user_id==uid, UG.group_id==gid, UG.role!=GroupRoles.banned)\
-            .scalar()
-        return role.value if role else None
+    def check_access(db: Session, gid, vid):
+        if str(gid) == str(MAIN_GROUP):
+            return
+        role = (db.query(UserGroup.role)
+            .filter(
+                UserGroup.user_id == vid,
+                UserGroup.group_id==gid,
+                UserGroup.role!=GroupRoles.banned
+            ).scalar())
+        if not role: raise GroupDenied()
 
     @staticmethod
     def put_privacy(db, vid, data):
@@ -1286,11 +1290,29 @@ class GroupMessage(Base):
     obj_id = FKCol('groups.id', index=True)
     created_at = DateCol()
     updated_at = DateCol(update=True)
-    text_short = Encrypt(sa.Unicode, nullable=False)
-    text_long = Encrypt(sa.Unicode)
+    text = Encrypt(sa.Unicode, nullable=False)
 
     user = orm.relationship("User")
     obj = orm.relationship("Group")
+
+    @staticmethod
+    def get_messages(db, gid, vid):
+        UserGroup.check_access(db, gid, vid)
+        return db.query(GroupMessage) \
+            .filter(GroupMessage.obj_id == gid) \
+            .order_by(GroupMessage.created_at.asc()) \
+            .all()
+
+    @staticmethod
+    def create_message(db, gid, msg, vid=None):
+        if vid:
+            UserGroup.check_access(db, gid, vid)
+        else:
+            vid = ADMIN_ID
+        msg = GroupMessage(user_id=vid, text=msg, obj_id=gid)
+        db.add(msg); db.commit(); db.refresh(msg)
+        return msg
+
 
 
 class GroupNotif(Base):

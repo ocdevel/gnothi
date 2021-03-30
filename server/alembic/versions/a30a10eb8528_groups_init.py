@@ -20,8 +20,7 @@ down_revision = None
 branch_labels = None
 depends_on = None
 
-# TODO setup the seed-data script for new devs, and skip alembic versions
-
+from common.seed import seed_data
 
 def migrate_users(bind, sess):
     bind.execute(f"""
@@ -49,6 +48,7 @@ def migrate_shares(bind, sess):
     op.add_column('shares', sa.Column('orientation', sa.Boolean(), server_default='false', nullable=True))
     op.add_column('shares', sa.Column('birthday', sa.Boolean(), server_default='false', nullable=True))
     op.add_column('shares', sa.Column('timezone', sa.Boolean(), server_default='false', nullable=True))
+    op.add_column('shares', sa.Column('created_at', sa.TIMESTAMP(timezone=True), index=True, server_default='now()'))
 
     bind.execute(f"""
     with shares_ as (
@@ -83,7 +83,7 @@ def upgrade():
     op.add_column('jobs', sa.Column('user_id', postgresql.UUID(as_uuid=True), nullable=True))
     op.create_foreign_key(None, 'jobs', 'users', ['user_id'], ['id'], ondelete='cascade')
 
-
+    seed_data(session, M)
 
 def downgrade():
     pass
