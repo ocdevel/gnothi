@@ -1,7 +1,7 @@
 import {Link} from "react-router-dom";
 import * as yup from "yup";
 import _ from "lodash";
-import React, {useState} from "react";
+import React, {useEffect, useRef, useState} from "react";
 import {FaChevronDown, FaChevronRight, FaRegQuestionCircle} from "react-icons/fa";
 import {Button, Card, Col, Form, Row} from "react-bootstrap";
 import {useStoreActions, useStoreState} from "easy-peasy";
@@ -10,6 +10,8 @@ import Users from './Users'
 import Tags from "../../Tags";
 import Error from "../../Error";
 import {AiOutlineWarning} from "react-icons/all";
+import {trueObj} from "../../utils";
+import {EE} from '../../redux/ws'
 
 const profile_fields = {
   username: {
@@ -143,27 +145,33 @@ function ShareCheck({k, form, setForm, profile=false}) {
   </>
 }
 
-export default function ShareForm({
-  share_={},
-  tags_={},
-  users_= {},
-  groups_= {},
-}) {
+export default function ShareForm({s={}}) {
   const emit = useStoreActions(a => a.ws.emit)
   const postRes = useStoreState(s => s.ws.res['shares/shares/post'])
   const setSharePage = useStoreActions(a => a.user.setSharePage)
   const [entriesHelp, setEntriesHelp] = useState(false)
-  const [share, setShare] = useState(share_)
-  const [tags, setTags] = useState(tags_)
-  const [users, setUsers] = useState(users_)
-  const [groups, setGroups] = useState(groups_)
+  const [share, setShare] = useState(s.share || {})
+  const [tags, setTags] = useState(trueObj(s?.tags) || {})
+  const [users, setUsers] = useState(trueObj(s?.users) || {})
+  const [groups, setGroups] = useState(trueObj(s?.groups) || {})
 
-  const id = share_?.id
+  const id = share?.id
+
+  useEffect(() => {
+    EE.on("wsResponse", onResponse)
+    return () => EE.off("wsResponse", onResponse)
+  }, [])
+
+  function onResponse(res) {
+    if (!~['shares/shares/post', 'shares/share/delete'].indexOf(res.action)) {return}
+    if (res.code === 200) {
+      setSharePage({list: true})
+    }
+  }
 
   const submit = async e => {
     e.preventDefault()
     const body = {
-      id,
       share,
       tags,
       users,
@@ -176,9 +184,9 @@ export default function ShareForm({
     emit(['shares/share/delete', {id}])
   }
 
-  return <div>
-    <h5>Share</h5>
-    <Card><Card.Body>
+  return <Card className='mb-3'>
+    <Card.Header>Share</Card.Header>
+    <Card.Body>
       {_.map(feature_map, (v, k) => (
         <ShareCheck key={k} v={v} k={k} form={share} setForm={setShare} />
       ))}
@@ -197,36 +205,36 @@ export default function ShareForm({
         selected={tags}
         setSelected={setTags}
       />
-    </Card.Body></Card>
-    <h5 className='mt-2'>With</h5>
-    <Card><Card.Body>
+    </Card.Body>
+    <Card.Header className='border-top'>With</Card.Header>
+    <Card.Body>
       <Row>
         <Col><Users users={users} setUsers={setUsers} /></Col>
         <Col><Groups groups={groups} setGroups={setGroups} /></Col>
       </Row>
-    </Card.Body></Card>
+    </Card.Body>
 
-    <br />
-
-    <Button
-      onClick={submit}
-      variant="primary"
-      size='sm'
-      disabled={postRes?.submitting}
-    >
-      {id ? 'Save' : 'Submit'}
-    </Button>&nbsp;
-    {id && <Button
-      variant="link"
-      className='text-danger'
-      size="sm"
-      onClick={deleteShare}
-    >Delete</Button>}
-    <Button
-      variant='link'
-      className='text-secondary'
-      size='sm'
-      onClick={() => setSharePage({list: true})}
-    >Cancel</Button>
-  </div>
+    <Card.Footer>
+      <Button
+        onClick={submit}
+        variant="primary"
+        size='sm'
+        disabled={postRes?.submitting}
+      >
+        {id ? 'Save' : 'Submit'}
+      </Button>&nbsp;
+      {id && <Button
+        variant="link"
+        className='text-danger'
+        size="sm"
+        onClick={deleteShare}
+      >Delete</Button>}
+      <Button
+        variant='link'
+        className='text-secondary'
+        size='sm'
+        onClick={() => setSharePage({list: true})}
+      >Cancel</Button>
+    </Card.Footer>
+  </Card>
 }

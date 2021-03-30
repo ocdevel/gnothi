@@ -56,7 +56,18 @@ export const aiStatusEmoji = (status) => {
   }[status]
 }
 
-export const trueKeys = o => _.transform(o, (m,v,k) => {if (v) {m.push(k)}}, [])
+export function trueKeys(obj) {
+  return _.reduce(obj, (m, v, k) => {
+    if (v) { return [...m, k]}
+    return m
+  }, [])
+}
+export function trueObj(arr) {
+  return _.reduce(arr, (m, v) => {
+    if (v) { return {...m, [v]: true}}
+    return m
+  }, {})
+}
 
 export const fmtDate = d => moment(d).format('YYYY-MM-DD ha')
 

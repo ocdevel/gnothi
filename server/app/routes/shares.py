@@ -10,7 +10,7 @@ import sqlalchemy.orm as orm
 
 class Shares:
     @staticmethod
-    async def on_shares_get(data: BM, d) -> List[PyS.ShareGet]:
+    async def on_shares_get(data: BM, d) -> List[PyS.SharesGet]:
         return M.Share.my_shares(d.db, d.vid)
 
     @staticmethod
@@ -27,7 +27,6 @@ class Shares:
     @staticmethod
     async def on_shares_post(data: PyS.SharePost, d) -> PyS.Valid:
         data = data.dict()
-        data['share']['fields'] = data['share'].pop('fields_', False)
         data['users'].pop(d.viewer.email, None)
         M.Share.put_post_share(d.db, d.vid, data)
         await d.mgr.send_other('shares/shares/get', {}, d)

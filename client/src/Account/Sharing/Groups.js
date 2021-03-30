@@ -22,7 +22,7 @@ export default function Groups({groups, setGroups}) {
           type="checkbox"
           label={v.title}
           checked={groups[v.id]}
-          onChange={check(k)}
+          onChange={check(v.id)}
         />
     ))}
   </Form.Group>

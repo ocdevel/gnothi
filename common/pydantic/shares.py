@@ -35,6 +35,11 @@ class Share(BM):
     class Config:
         fields = {'fields_': 'fields'}
 
+    def dict(self, *args, **kwargs):
+        d = super().dict(*args, **kwargs)
+        d['fields'] = d.pop('fields_')
+        return d
+
 
 class SharePost(BM):
     share: Share
@@ -47,14 +52,16 @@ class ShareGet(Share, BM_ORM):
     pass
 
 
-class ShareGet(BM):
+class SharesGet(BM_ORM):
     share: ShareGet
-    users: List[User]
-    groups: List[Group]
+    tags: Optional[List[Any]] = []
+    users: Optional[List[Any]] = []
+    groups: Optional[List[Any]] = []
 
 
 class EmailCheckPost(BM):
     email: str
+
 
 class Valid(BM):
     valid: bool

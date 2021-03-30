@@ -9,6 +9,7 @@ from common.database import Base, with_db
 from common.utils import vars
 
 import sqlalchemy as sa
+from sqlalchemy import func
 import sqlalchemy.orm as orm
 from psycopg2.extras import Json as to_jsonb
 from sqlalchemy.dialects import postgresql as psql
@@ -527,7 +528,7 @@ class Share(Base):
     __tablename__ = 'shares'
     id = IDCol()
     user_id = FKCol('users.id', index=True)
-    # created_at = DateCol()
+    # created_at = DateCol()  # TODO
 
     email = sa.Column(sa.Boolean, server_default="false")
     username = sa.Column(sa.Boolean, server_default="true")
@@ -575,27 +576,30 @@ class Share(Base):
 
     @staticmethod
     def my_shares(db, vid):
-        # TODO optimize this into fewer queries
-        shares = db.query(Share)\
-            .filter(Share.user_id == vid)
-            # .order_by(Share.created_at)
-        gs = (db.query(Group)
-            .join(GroupShare, Share)
-              .filter(Share.user_id == vid)
-              .with_entities(GroupShare.share_id, Group.id, Group.title)
-          )
-        us = (db.query(User)
-          .join(UserShare, Share)
-          .filter(Share.user_id == vid)
-          .with_entities(UserShare.share_id, User.id, User.email)
-        )
+        share = (db.query(Share)
+                 .filter(Share.user_id == vid).cte())
+
+        tags = (db.query(func.array_agg(ShareTag.tag_id))
+                .filter(ShareTag.share_id == share.c.id)
+                .as_scalar())
+
+        groups = (db.query(func.array_agg(GroupShare.obj_id))
+                .filter(GroupShare.share_id == share.c.id)
+                .as_scalar())
+
+        users = (db.query(func.array_agg(User.email))
+            .join(UserShare).filter(UserShare.share_id == share.c.id)
+            .as_scalar())
+
+        res = (db.query(
+            orm.aliased(Share, share),
+            tags,
+            users,
+            groups,
+        ).all())
         return [
-            dict(
-                share=s,
-                users=[r for r in us if r.share_id==s.id],
-                groups=[r for r in gs if r.share_id==s.id],
-            )
-            for s in shares
+            dict(share=r[0], tags=r[1], users=r[2], groups=r[3])
+            for r in res
         ]
 
     @staticmethod
@@ -604,48 +608,45 @@ class Share(Base):
         print(data)
         share, tags, users, groups = data.pop('share', {}), data.pop('tags', {}),\
             data.pop('users', {}), data.pop('groups', {})
-        sid = share.pop('id', {})
+        s, sid = None, share.pop('id', None)
         if sid:
-            sid = db.query(Share.id).filter_by(user_id=vid, id=sid).scalar()
-        if not sid:
-            stmt = sa.insert(Share).values(user_id=vid).returning(Share.id)
-            sid = db.execute(stmt).id
-        stmt = sa.update(Share).where(Share.id==sid).values(**{
-            k: v for k, v in share.items()
-            if k in Share.share_fields()
-        })
-        db.execute(stmt)
-        db.commit()
+            s = db.query(Share).filter_by(user_id=vid, id=sid).first()
+        if not s:
+            s = Share(user_id=vid)
+            db.add(s); db.commit(); db.refresh(s)
+        sid = s.id
+        for k, v in share.items():
+            if k not in Share.share_fields(): continue
+            setattr(s, k, v)
 
         # Set share-tags
-        if tags:
-            db.query(ShareTag)\
-                .filter(ShareTag.share_id==sid).delete()
-            add_ = [k for k, v in tags.items() if v is True]
-            stmt = psql.insert(ShareTag)\
-                .values([dict(share_id=sid, tag_id=t) for t in add_])
-                # .on_conflict_do_nothing(index_elements=['share_id', 'tag_id'])
-            db.execute(stmt)
+        db.query(ShareTag)\
+            .filter(ShareTag.share_id==sid).delete()
+        db.add_all([
+            ShareTag(share_id=sid, tag_id=k)
+            for k, v in tags.items() if v
+        ])
+        # .on_conflict_do_nothing(index_elements=['share_id', 'tag_id'])
 
         # Set users
-        if users:
-            db.query(UserShare) \
-                .filter(UserShare.share_id == sid).delete()
-            add_ = [k for k, v in users.items() if v is True]
-            # TODO use insert().from_select()
-            add_ = db.query(User.id).filter(User.email.in_(add_)).all()
-            stmt = sa.insert(UserShare)\
-                .values([dict(share_id=sid, obj_id=u) for u in add_])
-            db.execute(stmt)
+        db.query(UserShare) \
+            .filter(UserShare.share_id == sid).delete()
+        add_ = [k for k, v in users.items() if v]
+        # TODO use insert().from_select()
+        add_ = db.query(User.id).filter(User.email.in_(add_)).all()
+        db.add_all([
+            UserShare(share_id=sid, obj_id=u)
+            for u in add_
+        ])
 
         # Set groups
-        if groups:
-            db.query(GroupShare) \
-                .filter(GroupShare.share_id == sid).delete()
-            add_ = [k for k, v in groups.items() if v is True]
-            stmt = sa.insert(GroupShare) \
-                .values([dict(share_id=sid, obj_id=g) for g in add_])
-            db.execute(stmt)
+        db.query(GroupShare) \
+            .filter(GroupShare.share_id == sid).delete()
+        db.add_all([
+            GroupShare(share_id=sid, obj_id=k)
+            for k, v in groups.items() if v
+        ])
+
         db.commit()
 
 
@@ -1029,13 +1030,13 @@ class CacheEntry(Base):
     def get_paras(db, entries_q, profile_id=None):
         CE, CU = CacheEntry, CacheUser
         entries = entries_q.join(CE, CE.entry_id == Entry.id) \
-            .filter(sa.func.array_length(CE.paras,1)>0) \
+            .filter(func.array_length(CE.paras,1)>0) \
             .with_entities(CE.paras).all()
         paras = [p for e in entries for p in e.paras if e.paras]
 
         if profile_id:
             profile = db.query(CU) \
-                .filter(sa.func.array_length(CU.paras,1)>0, CU.user_id == profile_id) \
+                .filter(func.array_length(CU.paras,1)>0, CU.user_id == profile_id) \
                 .with_entities(CU.paras) \
                 .first()
             if profile:

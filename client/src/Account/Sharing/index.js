@@ -5,19 +5,29 @@ import _ from 'lodash'
 import ShareForm from './Form'
 import {useStoreState, useStoreActions} from 'easy-peasy'
 import {EE} from '../../redux/ws'
-import {FaRegComments, FaUser} from "react-icons/fa";
+import {FaPlus, FaRegComments, FaUser} from "react-icons/fa";
+import {trueObj} from "../../utils";
+import {FaArrowLeft} from "react-icons/all";
 
-function Share({share}) {
+function Share({s}) {
+  let myGroups = useStoreState(s => s.ws.data['groups/mine/get'])
   const setSharePage = useStoreActions(a => a.user.setSharePage)
-  const emails = share?.users?.length ? _.map(share.users, 'email') : null
-  const groups = share?.groups?.length ? _.map(share.groups, 'title') : null
+
+  myGroups = myGroups?.length ? _.keyBy(myGroups, 'id') : {}
+
+  function renderList(icon, arr, map_=_.identity) {
+    arr = _.compact(arr)
+    if (!arr?.length) {return null}
+    return <div>{icon} {arr.map(map_).join(', ')}</div>
+  }
+
   return <Card
     className='mb-2 cursor-pointer'
-    onClick={() => setSharePage({id: share.share.id})}
+    onClick={() => setSharePage({id: s.share.id})}
   >
     <Card.Body>
-      {emails && <div><FaUser /> {emails.join(', ')}</div>}
-      {groups && <div><FaRegComments /> {groups.join(', ')}</div>}
+      {renderList(<FaUser />, s?.users)}
+      {renderList(<FaRegComments />, s?.groups, id => myGroups[id].title)}
     </Card.Body>
   </Card>
 }
@@ -30,44 +40,29 @@ export default function Sharing() {
 
   useEffect(() => {
     emit(['shares/shares/get', {}])
-    EE.on("wsResponse", handleRes)
-    return () => EE.off("wsResponse", handleRes)
   }, [])
-
-  function handleRes(data) {
-    if (data.action === 'shares/shares/post' && data.code === 200) {
-      setSharePage({list: true})
-    }
-  }
 
   // be23b9f8: show CantSnoop. New setup uses viewer data where attempting CantSnoop
 
-  if (sharePage.create) {
-    return <ShareForm />
-  }
-  if (sharePage.id) {
-    const s = _.find(shares, s => s.share.id === sharePage.id)
-    return <ShareForm
-      share_={s.share}
-      tags_={s.share.tags}
-      users_={_.reduce(s.users, (m, v) => ({...m, [v.email]: true}), {})}
-      groups_={_.reduce(s.groups, (m, v) => ({...m, [v.id]: true}), {})}
-    />
-  }
-  if (sharePage.list) {
-    const shares_ = shares?.length && _.sortBy(shares.slice(), 'id')
-    return <div>
-      <Button
-        variant='primary'
-        onClick={() => setSharePage({create: true})}
-        className='mb-2'
-      >
-        Share with users/groups
-      </Button>
-      {shares_ && shares_.map((s, i) => <Share
-        key={s.share.id}
-        share={s}
-      />)}
-    </div>
-  }
+  const arr = shares?.length ? _.sortBy(shares.slice(), 'share.id') : []
+  const obj = _.reduce(arr, (m, v) => ({...m, [v.share.id]: v}), {})
+
+  return <div>
+    {sharePage.list ? <Button
+      variant='primary'
+      onClick={() => setSharePage({create: true})}
+      className='mb-2'
+    >
+      <FaPlus /> New Share
+    </Button> : <Button
+      variant='link'
+      size='sm'
+      onClick={() => setSharePage({list: true})}
+    >
+      <FaArrowLeft /> List Shares
+    </Button>}
+    {sharePage.create && <ShareForm />}
+    {sharePage.id && <ShareForm s={obj[sharePage.id]} />}
+    {sharePage.list && arr.map(s => <Share key={s.share.id} s={s}/>)}
+  </div>
 }
