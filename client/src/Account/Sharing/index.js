@@ -34,12 +34,12 @@ function Share({s}) {
 
 export default function Sharing() {
   const emit = useStoreActions(a => a.ws.emit)
-  const shares = useStoreState(s => s.ws.data['shares/shares/get'])
+  const shares = useStoreState(s => s.ws.data['shares/egress/get'])
   const sharePage = useStoreState(s => s.user.sharePage)
   const setSharePage = useStoreActions(a => a.user.setSharePage)
 
   useEffect(() => {
-    emit(['shares/shares/get', {}])
+    emit(['shares/egress/get', {}])
   }, [])
 
   // be23b9f8: show CantSnoop. New setup uses viewer data where attempting CantSnoop

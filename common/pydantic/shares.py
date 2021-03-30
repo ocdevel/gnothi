@@ -2,6 +2,7 @@ from typing import Optional, Any, Dict, List
 from pydantic import UUID4
 import datetime
 from common.pydantic.utils import BM, BM_ORM
+from common.pydantic.users import ProfileOut
 
 
 class User(BM_ORM):
@@ -52,7 +53,17 @@ class ShareGet(Share, BM_ORM):
     pass
 
 
-class SharesGet(BM_ORM):
+class ProfileIngress(ProfileOut, BM_ORM):
+    id: UUID4
+    email: str
+
+
+class Ingress(BM_ORM):
+    share: ShareGet
+    user: ProfileIngress
+
+
+class Egress(BM_ORM):
     share: ShareGet
     tags: Optional[List[Any]] = []
     users: Optional[List[Any]] = []

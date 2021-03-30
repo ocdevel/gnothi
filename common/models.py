@@ -21,6 +21,8 @@ from sqlalchemy.orm import Session
 import sqlalchemy.sql.expression as expr
 import petname
 
+import sqlparse
+
 
 # https://dev.to/zchtodd/sqlalchemy-cascading-deletes-8hk
 parent_cascade = dict(cascade="all, delete", passive_deletes=True)
@@ -215,6 +217,7 @@ class Entry(Base):
         for_ai: bool = False
     ):
         snooping = sid and (vid != sid)
+        print(snooping, vid, sid)
         if not snooping:
             q = db.query(Entry).filter(Entry.user_id == vid)
         elif group_id:
@@ -563,19 +566,16 @@ class Share(Base):
         return {str(t.tag_id): True for t in self.share_tags}
 
     @staticmethod
-    def shared_with_me(db: Session, vid):
-        return (db.query(Share)
-            .join(UserShare, sa.and_(
-                UserShare.obj_id == vid,
-                UserShare.share_id == Share.id,
-            ))
+    def ingress(db: Session, vid):
+        res = (db.query(User, Share)
+            .select_from(UserShare).filter(UserShare.obj_id == vid)
+            .join(Share, Share.id == UserShare.share_id)
             .join(User, User.id == Share.user_id)
-            .with_entities(Share, User.id, User.email, *User.profile_fields(True))
-            .all()
-        )
+            .all())
+        return [dict(user=r[0], share=r[1]) for r in res]
 
     @staticmethod
-    def my_shares(db, vid):
+    def egress(db, vid):
         share = (db.query(Share)
                  .filter(Share.user_id == vid).cte())
 

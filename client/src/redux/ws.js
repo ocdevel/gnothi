@@ -36,7 +36,6 @@ const defaultVals = {
   'jobs/status': {status: 'off'},
 
   'users/user/get': null,
-  'users/shares/get': [],
   'users/people/get': [],
 
   'users/profile/get': {
@@ -72,7 +71,8 @@ const defaultVals = {
   'insights/books/get': [],
   // 'insights/question/post'
 
-  'shares/get': []
+  'shares/ingress/get': [],
+  'shares/egress/get': []
 }
 
 const custom = {
@@ -110,7 +110,7 @@ export const store = {
 
   emit: thunk(async (actions, payload, helpers) => {
     const jwt = await getJwt()
-    let {as: as_user} = helpers.getStoreState().ws
+    let {as: as_user} = helpers.getStoreState().user
     let [action, data] = payload
 
     // set sending. Clears data & error

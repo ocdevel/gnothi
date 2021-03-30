@@ -24,17 +24,27 @@ export const store = {
   }),
 
   as: null,
+  setAs: action((s, p) => {s.as = p}),
   asUser: null,
-  setAs: action((state, id) => {
-    state.as = id
-    const shares = state.data['users/shares/get']
-    state.asUser = id && _.find(shares, {id})
-  }),
-  changeAs: thunk(async (actions, payload, helpers) => {
+  setAsUser: action((s, p) => {s.asUser = p}),
+
+  changeAs: thunk(async (actions, id, helpers) => {
     const {emit} = helpers.getStoreActions().ws
-    actions.setAs(payload)
+    const {data} = helpers.getStoreState().ws
     helpers.getStoreActions().insights.clearInsights('all')
-    actions.emit(['users/user/everything', {}])
+
+    actions.setAs(id)
+    if (id) {
+      const found = _.find(
+        data['shares/ingress/get'],
+        s => s?.user?.id === id
+      )
+      actions.setAsUser(found)
+    } else {
+      actions.setAsUser(null)
+    }
+
+    emit(['users/user/everything', {}])
   }),
 
   logout: action((state, payload) => {

@@ -18,7 +18,6 @@ logger = logging.getLogger(__name__)
 class Users:
     @staticmethod
     async def on_user_everything(data: BM, d):
-        send = d.mgr.send_other
         routes = [
             'tags/tags/get',
             'entries/entries/get',
@@ -34,7 +33,7 @@ class Users:
             routes += [
                 'users/user/get',
                 'fields/field_entries/has_dupes/get',
-                'users/shares/get',
+                'shares/ingress/get',
                 'insights/top_books/get',
                 'groups/mine/get'
             ]
@@ -47,11 +46,6 @@ class Users:
     async def on_user_get(data: BM, d) -> PyU.UserOut:
         if d.snooping: raise CantSnoop()  # FIXME not handling this?
         return d.user
-
-    # @on_(f'{S}/shares.get') #, model_out=List[M.SOSharedWithMe])
-    @staticmethod
-    async def on_shares_get(data: BM, d) -> List[PyU.SharedWithMeOut]:
-        return M.Share.shared_with_me(d.db, d.vid)
 
     @staticmethod
     async def on_check_username(data: PyU.CheckUsernameIn, d) -> PyU.CheckUsernameOut:

@@ -28,20 +28,6 @@ class ProfileOut(ProfileIn, BM_ORM):
     pass
 
 
-class SharedWithMeOut(ProfileOut):
-    id: UUID4
-    email: str
-    new_entries: Optional[int]
-    last_seen: Optional[datetime.datetime]
-
-    profile: Optional[bool]
-    books: Optional[bool]
-    fields_: Optional[bool]
-
-    class Config:
-        fields = {'fields_': 'fields'}
-
-
 class UserOut(BM_ORM):
     id: UUID4
     email: str

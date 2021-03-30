@@ -51,25 +51,28 @@ function ToggleSection({icon, text, children}) {
   </li>
 }
 
+
+
 function AccountSection() {
-  const changeAs = useStoreActions(a => a.ws.changeAs)
+  const changeAs = useStoreActions(a => a.user.changeAs)
   const logout = useStoreActions(actions => actions.user.logout)
 
   const user = useStoreState(s => s.ws.data['users/user/get'])
-  const shares = useStoreState(s => s.ws.data['users/shares/get'])
+  const shares = useStoreState(s => s.ws.data['shares/ingress/get'])
   const as = useStoreState(s => s.user.as)
   const asUser = useStoreState(s => s.user.asUser)
 
   function renderSwitcher (s, i, last) {
-    if (s.id == as) {return null}
-    const klass = i == last ? 'nav-sb-bb' : ''
-    let children = s.new_entries ? <Badge pill variant='danger'>{s.new_entries}</Badge>
+    const {share, user} = s
+    if (user.id == as) {return null}
+    const klass = i === last ? 'nav-sb-bb' : ''
+    let children = share.new_entries ? <Badge pill variant='danger'>{share.new_entries}</Badge>
         : null
-    children = <>{children} {s.email}</>
-    return <li className={klass} key={s.id}>
+    children = <>{children} {user.email}</>
+    return <li className={klass} key={user.id}>
       <a
-        onClick={() => changeAs(s.id)}
-        key={s.id}
+        onClick={() => changeAs(user.id)}
+        key={user.id}
       >
         <IconItem icon={<AiOutlineUserSwitch />} text={children} />
       </a>
@@ -77,9 +80,7 @@ function AccountSection() {
   }
 
   const renderAsSelect = () => {
-    if (!shares.length) {
-      return
-    }
+    if (!shares?.length) {return null}
     const last = shares.length - 1
     return <>
       {as && (
@@ -93,13 +94,13 @@ function AccountSection() {
 
   let email = user.email
   if (asUser) {
-    email = <>{emoji("🕵️")} {asUser.email}</>
+    email = <>{emoji("🕵️")} {asUser.user.email}</>
   } else {
     const ne = _.reduce(shares, (m, v) => m + v.new_entries, 0)
     email = !ne ? email : <><Badge pill variant='danger'>{ne}</Badge> {email}</>
   }
 
-  const canProfile = !as || (asUser && asUser.profile)
+  const canProfile = !as || (asUser?.share?.profile)
 
   return <ToggleSection icon={<FaUser />} text={email}>
     {renderAsSelect()}

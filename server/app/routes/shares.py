@@ -9,9 +9,14 @@ import sqlalchemy.orm as orm
 
 
 class Shares:
+    # @on_(f'{S}/shares.get') #, model_out=List[M.SOSharedWithMe])
     @staticmethod
-    async def on_shares_get(data: BM, d) -> List[PyS.SharesGet]:
-        return M.Share.my_shares(d.db, d.vid)
+    async def on_ingress_get(data: BM, d) -> List[PyS.Ingress]:
+        return M.Share.ingress(d.db, d.vid)
+
+    @staticmethod
+    async def on_egress_get(data: BM, d) -> List[PyS.Egress]:
+        return M.Share.egress(d.db, d.vid)
 
     @staticmethod
     async def on_email_check(data: PyS.EmailCheckPost, d) -> PyS.EmailCheckPost:
