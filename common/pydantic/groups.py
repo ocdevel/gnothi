@@ -37,12 +37,13 @@ class MessageOut(BM_ORM):
     text: str
 
 
-class MemberOut(BM):
+class MemberOut(BM_ORM):
+    id: UUID4
     username: str
-    show_first_name: Optional[bool] = False
-    show_last_name: Optional[bool] = False
-    show_username: Optional[bool] = False
-    show_bio: Optional[bool] = False
+    email: Optional[str] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    show_bio: Optional[str] = None
     joined_at: datetime.datetime
     role: GroupRoles
     online: bool

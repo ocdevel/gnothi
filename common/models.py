@@ -21,8 +21,6 @@ from sqlalchemy.orm import Session
 import sqlalchemy.sql.expression as expr
 import petname
 
-import sqlparse
-
 
 # https://dev.to/zchtodd/sqlalchemy-cascading-deletes-8hk
 parent_cascade = dict(cascade="all, delete", passive_deletes=True)
@@ -114,10 +112,37 @@ class User(Base):
     @staticmethod
     def profile_fields(as_orm=False):
         if as_orm:
-            return [User.id, User.username, User.last_name, User.gender,
+            return [User.id, User.username, User.first_name, User.last_name, User.gender,
                     User.orientation, User.birthday, User.timezone, User.bio]
         return ['id', 'username', 'first_name', 'last_name', 'gender', 'orientation',
             'birthday', 'timezone', 'bio']
+
+    @staticmethod
+    def profile_q(db, usergroup=False):
+        q = (db.query(
+            User.id,
+            # This won't work due to concat first_name + " " + last_name needs decryption first
+            # sa.case([
+            #     (sa.and_(Share.first_name, Share.last_name), User.first_name + " " + User.last_name),
+            #     (Share.first_name, User.first_name),
+            #     (Share.last_name, User.last_name),
+            #     (Share.username, User.username),
+            #     (Share.email, User.email)
+            # ],
+            #     else_=UserGroup.username if usergroup else None
+            # ).label("username"),
+            sa.case([(Share.email, User.email)], else_=None).label("email"),
+            sa.case([(Share.username, User.username)], else_=None).label("username"),
+            sa.case([(Share.first_name, User.first_name)], else_=None).label("first_name"),
+            sa.case([(Share.last_name, User.last_name)], else_=None).label("last_name"),
+            sa.case([(Share.gender, User.gender)], else_=None).label("gender"),
+            sa.case([(Share.orientation, User.orientation)], else_=None).label("orientation"),
+            sa.case([(Share.birthday, User.birthday)], else_=None).label("birthday"),
+            sa.case([(Share.timezone, User.timezone)], else_=None).label("timezone"),
+            sa.case([(Share.bio, User.bio)], else_=None).label("bio"),
+            sa.or_(Share.email, Share.username, Share.first_name, Share.last_name, Share.gender, Share.orientation, Share.birthday, Share.timezone, Share.bio).label("any"),
+        ).subquery())
+        return orm.aliased(User, q)
 
     @staticmethod
     def snoop(db, viewer, sid=None):
@@ -217,7 +242,6 @@ class Entry(Base):
         for_ai: bool = False
     ):
         snooping = sid and (vid != sid)
-        print(snooping, vid, sid)
         if not snooping:
             q = db.query(Entry).filter(Entry.user_id == vid)
         elif group_id:
@@ -548,7 +572,9 @@ class Share(Base):
     # profile = sa.Column(sa.Boolean, server_default="false")
 
     user = orm.relationship("User")
-    share_tags = orm.relationship("ShareTag", **parent_cascade)
+    user_shares = orm.relationship("UserShare")
+    group_shares = orm.relationship("GroupShare")
+    # share_tags = orm.relationship("ShareTag", **parent_cascade)
     # tags_ = orm.relationship("Tag", secondary="shares_tags")
 
     # last_seen = DateCol()
@@ -562,16 +588,21 @@ class Share(Base):
         return res
 
     @property
-    def tags(self):
-        return {str(t.tag_id): True for t in self.share_tags}
+    def profile(self):
+        return any([getattr(self, k, False) for k in self.share_fields()])
 
     @staticmethod
     def ingress(db: Session, vid):
-        res = (db.query(User, Share)
-            .select_from(UserShare).filter(UserShare.obj_id == vid)
-            .join(Share, Share.id == UserShare.share_id)
-            .join(User, User.id == Share.user_id)
-            .all())
+        user = User.profile_q(db)
+        res = (db.query(UserShare)
+            .filter(UserShare.obj_id == vid)
+            .join(Share)
+            .join(user)
+            .with_entities(user, Share)
+            .all()
+        )
+        x = res[0][0]
+        print(x.id, x.email, res[0][1].user_id)
         return [dict(user=r[0], share=r[1]) for r in res]
 
     @staticmethod
@@ -1186,8 +1217,12 @@ class UserGroup(Base):
 
     @staticmethod
     def get_members(db, gid):
-        pf = "username first_name last_name bio".split()
-        rows = (db.query(User, UserGroup, Share)
+        rows = (
+            db.query(
+                User.profile_q(db, True),
+                UserGroup,
+                Share
+            )
             .select_from(UserGroup)
             .filter(UserGroup.group_id == gid)
             .join(User)
@@ -1195,35 +1230,21 @@ class UserGroup(Base):
             .outerjoin(GroupShare, sa.and_(
                 GroupShare.share_id == Share.id,
                 GroupShare.obj_id == gid
-            ))
-            .options(
-                orm.Load(User).load_only(*User.profile_fields())
-            ).all())
-        res = {}
+            )).all())
+        return {
+            str(r[0].id): dict(user=r[0], user_group=r[1], share=r[2])
+            for r in rows
+        }
         for (u, ug, s) in rows:
             print(u, ug, s)
             obj = dict(
-                username=ug.username,
-                show_first_name=s and s.first_name,
-                show_last_name=s and s.last_name,
-                show_username=s and s.username,
-                show_bio=s and s.bio,
+                username=u.username,
+                first_name=u.first_name,
+                last_name=u.last_name,
+                bio=u.bio,
                 joined_at=ug.joined_at.timestamp(),
                 role=ug.role.value
             )
-            for f in pf:
-                if obj[f"show_{f}"]:
-                    obj[f] = getattr(u, f, None)
-            # Display name based on per-member privacies
-            uname = []
-            if s and s.first_name and u.first_name:
-                uname.append(u.first_name)
-            if s and s.last_name and u.last_name:
-                uname.append(u.last_name)
-            if s and s.username and u.username and not uname:
-                uname.append(u.username)
-            obj['username'] = ' '.join(uname) if uname else ug.username
-
             res[str(ug.user_id)] = obj
         print(res)
         return res
