@@ -110,41 +110,6 @@ class User(Base):
     groups = orm.relationship("Group", secondary="users_groups")
 
     @staticmethod
-    def profile_fields(as_orm=False):
-        if as_orm:
-            return [User.id, User.username, User.first_name, User.last_name, User.gender,
-                    User.orientation, User.birthday, User.timezone, User.bio]
-        return ['id', 'username', 'first_name', 'last_name', 'gender', 'orientation',
-            'birthday', 'timezone', 'bio']
-
-    @staticmethod
-    def profile_q(db, usergroup=False):
-        q = (db.query(
-            User.id,
-            # This won't work due to concat first_name + " " + last_name needs decryption first
-            # sa.case([
-            #     (sa.and_(Share.first_name, Share.last_name), User.first_name + " " + User.last_name),
-            #     (Share.first_name, User.first_name),
-            #     (Share.last_name, User.last_name),
-            #     (Share.username, User.username),
-            #     (Share.email, User.email)
-            # ],
-            #     else_=UserGroup.username if usergroup else None
-            # ).label("username"),
-            sa.case([(Share.email, User.email)], else_=None).label("email"),
-            sa.case([(Share.username, User.username)], else_=None).label("username"),
-            sa.case([(Share.first_name, User.first_name)], else_=None).label("first_name"),
-            sa.case([(Share.last_name, User.last_name)], else_=None).label("last_name"),
-            sa.case([(Share.gender, User.gender)], else_=None).label("gender"),
-            sa.case([(Share.orientation, User.orientation)], else_=None).label("orientation"),
-            sa.case([(Share.birthday, User.birthday)], else_=None).label("birthday"),
-            sa.case([(Share.timezone, User.timezone)], else_=None).label("timezone"),
-            sa.case([(Share.bio, User.bio)], else_=None).label("bio"),
-            sa.or_(Share.email, Share.username, Share.first_name, Share.last_name, Share.gender, Share.orientation, Share.birthday, Share.timezone, Share.bio).label("any"),
-        ).subquery())
-        return orm.aliased(User, q)
-
-    @staticmethod
     def snoop(db, viewer, sid=None):
         vid = viewer.id
         if not sid or vid == sid:
@@ -593,16 +558,12 @@ class Share(Base):
 
     @staticmethod
     def ingress(db: Session, vid):
-        user = User.profile_q(db)
         res = (db.query(UserShare)
             .filter(UserShare.obj_id == vid)
-            .join(Share)
-            .join(user)
-            .with_entities(user, Share)
+            .join(Share).join(User)
+            .with_entities(User, Share)
             .all()
         )
-        x = res[0][0]
-        print(x.id, x.email, res[0][1].user_id)
         return [dict(user=r[0], share=r[1]) for r in res]
 
     @staticmethod
@@ -1166,8 +1127,8 @@ class Group(Base):
         )
 
     @staticmethod
-    def create_group(db, title, text, owner, privacy=GroupPrivacy.public):
-        g = Group(title=title, text_short=text, privacy=privacy, owner=owner)
+    def create_group(db, title, text_short, owner, privacy=GroupPrivacy.public):
+        g = Group(title=title, text_short=text_short, privacy=privacy, owner=owner)
         ug = UserGroup(group=g, user_id=owner, role=GroupRoles.owner)
         db.add(ug)
         db.commit()
@@ -1219,7 +1180,7 @@ class UserGroup(Base):
     def get_members(db, gid):
         rows = (
             db.query(
-                User.profile_q(db, True),
+                User,
                 UserGroup,
                 Share
             )
@@ -1231,27 +1192,7 @@ class UserGroup(Base):
                 GroupShare.share_id == Share.id,
                 GroupShare.obj_id == gid
             )).all())
-        return {
-            str(r[0].id): dict(user=r[0], user_group=r[1], share=r[2])
-            for r in rows
-        }
-        for (u, ug, s) in rows:
-            print(u, ug, s)
-            obj = dict(
-                username=u.username,
-                first_name=u.first_name,
-                last_name=u.last_name,
-                bio=u.bio,
-                joined_at=ug.joined_at.timestamp(),
-                role=ug.role.value
-            )
-            res[str(ug.user_id)] = obj
-        print(res)
-        return res
-        # return {
-        #     str(ug.user_id): dict(username=ug.username, role=ug.role.value)
-        #     for ug in res
-        # }
+        return [dict(user=r[0], user_group=r[1], share=r[2]) for r in rows]
 
     @staticmethod
     def get_uids(db, gid):

@@ -1,18 +1,19 @@
 from typing import Optional, Any, Dict, List
 from pydantic import UUID4
 import datetime
-from common.pydantic.utils import BM, BM_ORM
+from common.pydantic.utils import BM, BM_ORM, apply_privacies
 from common.models import GroupPrivacy, GroupRoles
+from common.pydantic.shares import ShareGet, ProfileIngress
 
 
-class GroupIn(BM):
+class GroupPost(BM):
     title: str
     text_short: Optional[str] = ""
     text_long: Optional[str] = ""
     privacy: GroupPrivacy
 
 
-class GroupOut(GroupIn, BM_ORM):
+class GroupOut(GroupPost, BM_ORM):
     id: UUID4
     owner: UUID4
     privacy: GroupPrivacy
@@ -37,18 +38,22 @@ class MessageOut(BM_ORM):
     text: str
 
 
-class MemberOut(BM_ORM):
-    id: UUID4
+class UserGroupOut(BM_ORM):
     username: str
-    email: Optional[str] = None
-    first_name: Optional[str] = None
-    last_name: Optional[str] = None
-    show_bio: Optional[str] = None
     joined_at: datetime.datetime
     role: GroupRoles
     online: bool
 
-MembersOut = Dict[str, MemberOut]
+
+class MembersOut(BM):
+    user: ProfileIngress
+    share: ShareGet
+    user_group: UserGroupOut
+
+    def dict(self, *args, **kwargs):
+        d = super().dict(*args, **kwargs)
+        apply_privacies(d, extra_privacies=['email'])
+        return d
 
 
 class GroupWrapOut(BM):

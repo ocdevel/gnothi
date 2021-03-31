@@ -33,13 +33,15 @@ class Groups:
 
     @staticmethod
     async def _send_members(gid, d, to_all=True):
-        members = M.UserGroup.get_members(d.db, gid)
-        for uid, m in members.items():
-            m['online'] = uid in d.mgr.users
+        res = M.UserGroup.get_members(d.db, gid)
+        uids = []
+        for r in res:
+            uid = str(r['user'].id)
+            uids.append(uid)
+            r['user_group'].online = uid in d.mgr.users
 
-        out = Groups._wrap(members, PyG.MembersOut, gid, action='groups/members/get')
-        uids = [uid for uid, _ in members.items()] \
-            if to_all else [d.vid]
+        out = Groups._wrap(res, List[PyG.MembersOut], gid, action='groups/members/get')
+        if not to_all: uids = [d.vid]
         await d.mgr.send(out, uids=uids)
 
     @staticmethod
@@ -104,8 +106,8 @@ class Groups:
         await Groups._send_members(data.id, d)
 
     @staticmethod
-    async def on_groups_post(data: PyG.GroupIn, d) -> PyG.GroupOut:
-        g = M.Group.create_group(d.db, data.title, data.text, d.vid, data.privacy)
+    async def on_groups_post(data: PyG.GroupPost, d) -> PyG.GroupOut:
+        g = M.Group.create_group(d.db, data.title, data.text_short, d.vid, data.privacy)
         uids = [uid for uid, _ in d.mgr.users.items()]
         await d.mgr.send_other('groups/groups/get', data, d, uids=uids)
         return g

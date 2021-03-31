@@ -76,7 +76,7 @@ export default function CreateGroup({show, close}) {
   const emit = useStoreActions(actions => actions.ws.emit)
   const as = useStoreState(s => s.user.as)
 
-  const [form, setForm] = useState({title: '', text: '', privacy: "public"})
+  const [form, setForm] = useState({title: '', text_short: '', privacy: "public"})
   const postRes = useStoreState(s => s.ws.res['groups/groups/post'])
 
   useEffect(() => {
@@ -99,8 +99,8 @@ export default function CreateGroup({show, close}) {
   const changeTitle = e => {
     setForm({...form, title: e.target.value})
   }
-  const changeText = text => {
-    setForm({...form, text})
+  const changeText = text_short => {
+    setForm({...form, text_short})
   }
 
   const renderButtons = () => {
@@ -133,7 +133,7 @@ export default function CreateGroup({show, close}) {
             />
           </Form.Group>
 
-          <Editor text={form.text} changeText={changeText} />
+          <Editor text={form.text_short} changeText={changeText} />
 
           <fieldset>
             <Form.Group as={Row}>

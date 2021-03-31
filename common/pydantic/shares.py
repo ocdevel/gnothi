@@ -1,7 +1,8 @@
-from typing import Optional, Any, Dict, List
+import pdb
+from typing import Optional, Any, Dict, List, Union
 from pydantic import UUID4
 import datetime
-from common.pydantic.utils import BM, BM_ORM
+from common.pydantic.utils import BM, BM_ORM, apply_privacies
 from common.pydantic.users import ProfileIn
 
 
@@ -61,6 +62,11 @@ class ProfileIngress(ProfileIn, BM_ORM):
 class Ingress(BM_ORM):
     share: ShareGet
     user: ProfileIngress
+
+    def dict(self, *args, **kwargs):
+        d = super().dict(*args, **kwargs)
+        apply_privacies(d)
+        return d
 
 
 class Egress(BM_ORM):

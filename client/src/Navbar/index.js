@@ -22,7 +22,7 @@ import './style.scss'
 
 import {useStoreState, useStoreActions} from "easy-peasy";
 import {FaQuestion} from "react-icons/fa/index";
-import {AiOutlineUserSwitch} from "react-icons/all";
+import {AiOutlineUserSwitch, GiSpy, RiSpyLine} from "react-icons/all";
 
 function IconItem({icon, text}) {
   return <div className='d-flex align-items-center'>
@@ -94,7 +94,7 @@ function AccountSection() {
 
   let email = user.email
   if (asUser) {
-    email = <>{emoji("🕵️")} {asUser.user.email}</>
+    email = asUser.user.display_name
   } else {
     const ne = _.reduce(shares, (m, v) => m + v.new_entries, 0)
     email = !ne ? email : <><Badge pill variant='danger'>{ne}</Badge> {email}</>
@@ -102,7 +102,7 @@ function AccountSection() {
 
   const canProfile = !as || (asUser?.share?.profile)
 
-  return <ToggleSection icon={<FaUser />} text={email}>
+  return <ToggleSection icon={asUser ? <RiSpyLine /> : <FaUser />} text={email}>
     {renderAsSelect()}
     {canProfile && <li>
       <Link to="/account/profile">Profile</Link>

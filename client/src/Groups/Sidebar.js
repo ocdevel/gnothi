@@ -8,23 +8,23 @@ import emoji from 'react-easy-emoji'
 import {FaCrown} from "react-icons/all";
 
 const privacies = [{
-  k: 'show_username',
+  k: 'username',
   v: 'Show Username',
   h: "Let members of this group see your username. By default, every group-join assigns a random name to protect your privacy. Set your username on the Profile page, otherwise it falls back to this random name."
 }, {
-  k: 'show_first_name',
+  k: 'first_name',
   v: 'Show First Name',
   h: "Let members see your first name. Set it in Profile, else falls back to username"
 }, {
-  k: 'show_last_name',
+  k: 'last_name',
   v: 'Show Last Name',
   h: "Let members see your last name. Set it in Profile, else falls back to first name"
 }, {
-  k: 'show_bio',
+  k: 'bio',
   v: 'Show Bio',
   h: "Let members see your bio (profile). Set it in Profile"
 }, {
-  k: 'show_avatar',
+  k: 'avatar',
   v: 'Show Avatar',
   h: "Let members see your avatar. Set it in Profile"
 }]
@@ -71,7 +71,11 @@ function Controls() {
   const history = useHistory()
   const emit = useStoreActions(actions => actions.ws.emit);
   const uid = useStoreState(s => s.ws.data['users/user/get']?.id)
-  const me = useStoreState(s => s.ws.data['groups/members/get']?.[uid] || {})
+  const members = useStoreState(s => s.ws.data['groups/members/get'])
+
+  const membersObj = _.reduce(members, (m, v) => ({...m, [m?.user?.id]: v}), {})
+  const me = membersObj?.[uid]
+  console.log('me', me)
 
   async function joinGroup() {
     emit(["groups/group/join", {id: gid}])
@@ -82,7 +86,7 @@ function Controls() {
     history.push("/groups")
   }
 
-  const role = me && me.role
+  const role = me?.user_group?.role
 
   if (!role) {
     return <div>
@@ -124,6 +128,18 @@ function Controls() {
   </div>
 }
 
+const onlineIcon = emoji("🟢")
+
+function Member({row}) {
+  const {user, user_group, share} = row
+  const {id} = user
+  return <li key={id}>
+    {user_group?.online && onlineIcon}
+    {user_group?.role === 'owner' && <FaCrown />}
+    {user.display_name}
+  </li>
+}
+
 export default function Sidebar() {
   const {gid} = useParams()
   const members = useStoreState(s => s.ws.data['groups/members/get'])
@@ -131,9 +147,8 @@ export default function Sidebar() {
   const group = useStoreState(s => s.ws.data['groups/group/get'])
   const [showCreate, setShowCreate] = useState(false)
 
-  const onlineIcon = emoji("🟢")
-
   function renderGroup() {
+    console.log(members)
     if (!gid) {return null}
     return <Card className='shadow-lg mb-5'>
       <Card.Header>
@@ -143,11 +158,7 @@ export default function Sidebar() {
         <p>{group.text_short}</p>
         <Card.Subtitle>Members</Card.Subtitle>
         <ul className="list-unstyled">
-          {_.map(members, (member, uid) => member && <li key={uid}>
-            {member.online && onlineIcon}
-            {_.get(members, `${uid}.role`) === 'owner' && <FaCrown />}
-            {member.username}
-          </li>)}
+          {members?.map(m => m?.user?.id && <Member row={m} key={m.user.id} />)}
         </ul>
         <hr />
         <Controls />

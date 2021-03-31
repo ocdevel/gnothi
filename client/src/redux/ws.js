@@ -66,7 +66,7 @@ const defaultVals = {
   'groups/groups/get': [],
   'groups/group/get': {},
   'groups/messages/get': [],
-  'groups/members/get': {},
+  'groups/members/get': [],
 
   'insights/books/get': [],
   // 'insights/question/post'
