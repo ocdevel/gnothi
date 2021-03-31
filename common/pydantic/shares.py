@@ -22,7 +22,9 @@ class Share(BM):
 
     fields_: Optional[bool] = False
     books: Optional[bool] = False
-    # profile: Optional[bool] = False
+
+    # model property, checks if any below are checked
+    profile: Optional[bool] = False
 
     email: Optional[bool] = False
     username: Optional[bool] = False

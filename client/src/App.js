@@ -31,7 +31,7 @@ import {useSockets} from "./redux/ws";
 import Insights from "./Insights";
 import Tags, {MainTags} from "./Tags";
 import Resources from "./Resources";
-import Entries from "./Entries/Entries";
+import {Entries} from "./Entries/Entries";
 import Groups from "./Groups";
 import staticRoutes from "./Static";
 import _ from "lodash";

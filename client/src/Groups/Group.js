@@ -4,7 +4,9 @@ import {useParams} from "react-router-dom";
 import React, {useEffect, useLayoutEffect, useState, useRef} from "react";
 import _ from "lodash";
 import Sidebar from './Sidebar'
-import {Button, Col, Form, Row} from "react-bootstrap";
+import {Button, Card, Col, Form, Row} from "react-bootstrap";
+import {EntryTeaser} from "../Entries/Entries";
+import {Entry} from "../Entries/Entry";
 
 function Messages() {
   const uid = useStoreState(s => s.ws.data['users/user/get']?.id)
@@ -48,6 +50,28 @@ function Messages() {
     </div>
 }
 
+function Entries() {
+  const entries = useStoreState(s => s.ws.data['groups/entries/get'])
+  const [eid, setEid] = useState(null)
+
+  function onOpen(id) {
+    setEid(id)
+  }
+
+  function close() {
+    setEid(null)
+  }
+
+  if (!entries?.length) {return null}
+  // return <Card className='group-entries'>
+  return <>
+    {eid && <Entry entry_id={eid} close={close} />}
+    <Card className='group-entries'>
+      {entries.map(e => <EntryTeaser e={e} gotoForm={onOpen} key={e.id}/> )}
+    </Card>
+  </>
+}
+
 export default function Group() {
   const {gid} = useParams()
   const [message, setMessage] = useState("")
@@ -68,6 +92,7 @@ export default function Group() {
   return <div>
     <Row>
       <Col md={9}>
+        <Entries />
         <Messages />
         <Form onSubmit={onSubmit}>
           <Form.Group as={Row}>

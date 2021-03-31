@@ -19,7 +19,7 @@ import {
 import {
   FaSearch,
 } from 'react-icons/fa'
-import Entry from "./Entry"
+import {EntryPage} from "./Entry"
 import './Entries.scss'
 import {useStoreState, useStoreActions} from "easy-peasy";
 import {NotesAll, NotesNotifs} from "./Notes";
@@ -28,7 +28,7 @@ import MediaQuery from 'react-responsive'
 import Sidebar from "../Sidebar";
 
 
-function EntryTeaser({e, gotoForm}) {
+export function EntryTeaser({e, gotoForm}) {
   const [hovered, setHovered] = useState(false)
   const onHover = () => setHovered(true)
   const onLeave = () => setHovered(false)
@@ -69,7 +69,7 @@ function EntryTeaser({e, gotoForm}) {
 }
 
 
-export default function Entries() {
+export function Entries({group_id=null}) {
   const as = useStoreState(s => s.user.as)
   const entries = useStoreState(s => s.ws.data['entries/entries/get'])
   const entriesRes = useStoreState(s => s.ws.res['entries/entries/get'])
@@ -153,11 +153,11 @@ export default function Entries() {
   return <>
     <Switch>
       <Route path={`${match.url}/entry/:entry_id`}>
-        <Entry />
+        <EntryPage />
       </Route>
       {!as && (
         <Route path={`${match.url}/entry`}>
-          <Entry />
+          <EntryPage />
         </Route>
       )}
     </Switch>

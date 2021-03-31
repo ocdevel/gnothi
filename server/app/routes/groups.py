@@ -7,6 +7,7 @@ from common.errors import AccessDenied, CantSnoop
 from common.pydantic.utils import BM_ID, BM
 from common.pydantic.ws import MessageOut
 import sqlalchemy as sa
+import common.pydantic.entries as PyE
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +59,8 @@ class Groups:
         await asyncio.wait([
             d.mgr.exec(d, action='groups/group/get', input=data),
             d.mgr.exec(d, action='groups/messages/get', input=data),
-            d.mgr.exec(d, action='groups/members/get', input=data, uids=True)
+            d.mgr.exec(d, action='groups/entries/get', input=data),
+            d.mgr.exec(d, action='groups/members/get', input=data, uids=True),
         ])
 
     @staticmethod
@@ -98,6 +100,14 @@ class Groups:
     @staticmethod
     async def on_mine_get(data: BM, d) -> List[PyG.GroupOut]:
         return M.Group.my_groups(d.db, d.vid)
+
+    @staticmethod
+    async def on_entries_get(data: BM_ID, d, uids=None) -> List[PyE.EntryGet]:
+        # TODO handle uids=[], need to not use d.vid
+        res = M.Entry.snoop(d.db, d.vid, d.vid, group_id=data.id).all()
+        if uids is True:
+            return res, [d.vid]
+        return res
 
 
 groups_router = None

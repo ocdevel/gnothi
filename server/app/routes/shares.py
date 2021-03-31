@@ -34,13 +34,11 @@ class Shares:
         data = data.dict()
         data['users'].pop(d.viewer.email, None)
         M.Share.put_post_share(d.db, d.vid, data)
-        print(data)
-        await asyncio.wait([
-           d.mgr.exec(d, action='shares/egress/get')
-        ] + [
-            d.mgr.exec(d, action='groups/members/get', input=dict(id=gid), uids=True)
-            for gid, v in data.get('groups', {}).items()
-        ])
+        exec = [d.mgr.exec(d, action='shares/egress/get')]
+        for gid, v in data.get('groups', {}).items():
+            exec.append(d.mgr.exec(d, action='groups/members/get', input=dict(id=gid), uids=True))
+            exec.append(d.mgr.exec(d, action='groups/entries/get', input=dict(id=gid), uids=True))
+        await asyncio.wait(exec)
         return dict(valid=True)
 
     @staticmethod

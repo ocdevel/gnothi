@@ -207,25 +207,12 @@ class Entry(Base):
         for_ai: bool = False
     ):
         snooping = sid and (vid != sid)
-        if not snooping:
-            q = db.query(Entry).filter(Entry.user_id == vid)
-        elif group_id:
-            q = (
-                db.query(Entry)
-                .join(EntryTag, Entry.id == EntryTag.entry_id)
-                .join(ShareTag, EntryTag.tag_id == ShareTag.tag_id)
-                .join(GroupShare, GroupShare.share_id == ShareTag.share_id)
-                .join(UserGroup, sa.and_(
-                    UserGroup.group_id == GroupShare.obj_id,
-                    GroupShare.obj_id == group_id
-                ))
-            )
-        else:
+        if snooping:
             q = (db.query(Entry)
-                .join(EntryTag)
-                .join(ShareTag, ShareTag.tag_id == EntryTag.tag_id)
-                .join(Share, UserShare)
-                .filter(UserShare.obj_id == vid, Share.user_id == sid))
+                 .join(EntryTag)
+                 .join(ShareTag, ShareTag.tag_id == EntryTag.tag_id)
+                 .join(Share, UserShare)
+                 .filter(UserShare.obj_id == vid, Share.user_id == sid))
             # # TODO use ORM partial thus far for this query command, not raw sql
             # sql = f"""
             # update shares set last_seen=now(), new_entries=0
@@ -233,6 +220,23 @@ class Entry(Base):
             # """
             # db.execute(sa.text(sql), dict(email=viewer_email, uid=target_id))
             # db.commit()
+
+        elif group_id:
+            q = (
+                db.query(Entry)
+                .join(EntryTag)
+                .join(ShareTag, ShareTag.tag_id == EntryTag.tag_id)
+                .join(GroupShare, sa.and_(
+                    GroupShare.share_id == ShareTag.share_id,
+                    GroupShare.obj_id == group_id
+                ))
+                .join(UserGroup, sa.and_(
+                    UserGroup.group_id == GroupShare.obj_id,
+                    UserGroup.user_id == vid
+                ))
+            )
+        else:
+            q = db.query(Entry).filter(Entry.user_id == vid)
 
         if entry_id:
             q = q.filter(Entry.id == entry_id)

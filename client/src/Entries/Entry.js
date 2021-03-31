@@ -80,8 +80,7 @@ function Editor({text, changeText}) {
   )
 }
 
-export default function Entry() {
-  const {entry_id} = useParams()
+export function Entry({entry_id, close=null}) {
   const history = useHistory()
   const as = useStoreState(state => state.user.as)
   const emit = useStoreActions(a => a.ws.emit)
@@ -96,7 +95,6 @@ export default function Entry() {
   const entryPost = useStoreState(s => s.ws.res['entries/entries/post'])
   const entryPut = useStoreState(s => s.ws.res['entries/entry/put'])
   const cache = useStoreState(s => s.ws.data['entries/entry/cache/get'])
-
 
   const showCacheEntry = !editing && entry_id && cacheEntry
   const draftId = `draft-${entry_id || "new"}`
@@ -147,6 +145,7 @@ export default function Entry() {
   }
 
   const go = (to='/j') => {
+    if (close) {return close()}
     clearDraft()
     emit(['entries/entries/get', {}])
     history.push(to)
@@ -348,4 +347,9 @@ export default function Entry() {
       </Modal.Footer>
     </Modal>
   </>
+}
+
+export function EntryPage() {
+  const {entry_id} = useParams()
+  return <Entry entry_id={entry_id} />
 }
