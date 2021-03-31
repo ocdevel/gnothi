@@ -13,54 +13,28 @@ logger = logging.getLogger(__name__)
 
 class Groups:
     @staticmethod
-    def _wrap(obj, py_model, gid, action=None):
-        out = parse_obj_as(py_model, obj)
-        if action:
-            out = MessageOut(action=action, data=out, id=str(gid))
-        return out
-
-    @staticmethod
-    async def _send_message(msg, d):
-        db, mgr = d.db, d.mgr
+    async def send_message(msg, d):
         gid = msg.obj_id
-        uids = M.UserGroup.get_uids(db, gid)
-
-        msg = Groups._wrap(msg, PyG.MessageOut, gid, action='groups/message/get')
-        await mgr.send(msg, uids=uids)
-        uids = M.GroupNotif.create_notifs(db, gid)
-        msg = MessageOut(action='notifs/group', data=dict(id=gid))
-        await mgr.send(msg, uids=uids)
-
-    @staticmethod
-    async def _send_members(gid, d, to_all=True):
-        res = M.UserGroup.get_members(d.db, gid)
-        uids = []
-        for r in res:
-            uid = str(r['user'].id)
-            uids.append(uid)
-            r['user_group'].online = uid in d.mgr.users
-
-        out = Groups._wrap(res, List[PyG.MembersOut], gid, action='groups/members/get')
-        if not to_all: uids = [d.vid]
-        await d.mgr.send(out, uids=uids)
+        uids = M.UserGroup.get_uids(d.db, gid)
+        await d.mgr.exec(d, output=msg, model=PyG.MessageOut, action='groups/message/get', uids=uids)
+        uids = M.GroupNotif.create_notifs(d.db, gid)
+        await d.mgr.exec(d, output=dict(id=gid), model=Dict, action='notifs/group', uids=uids)
 
     @staticmethod
     async def on_messages_post(data: PyG.MessageIn, d):
         msg = M.GroupMessage.create_message(d.db, data.id, data.text, d.vid)
-        await Groups._send_message(msg, d)
+        await Groups.send_message(msg, d)
 
     @staticmethod
     async def on_group_join(data: BM_ID, d):
         ug = M.Group.join_group(d.db, data.id, d.vid)
         if not ug:
             return
-        msg = dict(
-            obj_id=data.id,
-            text=f"{ug.username} just joined!"
-        )
+        text = f"{ug.username} just joined!"
+        msg = M.GroupMessage.create_message(d.db, data.id, text)
         await asyncio.wait([
-            Groups._send_message(msg, d),
-            Groups._send_members(data.id, d)
+            Groups.send_message(msg, d),
+            d.mgr.exec(d, action='groups/members/get', input=data, uids=True),
         ])
 
     @staticmethod
@@ -69,9 +43,9 @@ class Groups:
         ug = M.Group.leave_group(d.db, data.id, vid)
         msg = M.GroupMessage.create_message(d.db, data.id, f"{ug['username']} just left :(")
         await asyncio.wait([
-            Groups._send_members(gid, d),
-            Groups._send_message(msg, d),
-            d.mgr.send_other('groups/mine/get', {}, d)
+            d.mgr.exec(d, action='groups/members/get', input=data, uids=True),
+            Groups.send_message(msg, d),
+            d.mgr.exec(d, action='groups/mine/get')
         ])
         return {'ok': True}
 
@@ -82,14 +56,14 @@ class Groups:
     @staticmethod
     async def on_group_enter(data: BM_ID, d):
         await asyncio.wait([
-            d.mgr.send_other('groups/group/get', data, d),
-            d.mgr.send_other('groups/messages/get', data, d),
-            d.mgr.send_other('groups/members/get', data, d)
+            d.mgr.exec(d, action='groups/group/get', input=data),
+            d.mgr.exec(d, action='groups/messages/get', input=data),
+            d.mgr.exec(d, action='groups/members/get', input=data, uids=True)
         ])
 
     @staticmethod
     async def on_group_get(data: BM_ID, d) -> PyG.GroupOut:
-        # TODO check perms
+        M.UserGroup.check_access(d.db, data.id, d.vid)
         return d.db.query(M.Group).get(data.id)
 
     @staticmethod
@@ -97,17 +71,26 @@ class Groups:
         return d.db.query(M.Group).all()
 
     @staticmethod
-    async def on_members_get(data: BM_ID, d):
-        await Groups._send_members(data.id, d, to_all=False)
+    async def on_members_get(data: BM_ID, d, uids=None) -> List[PyG.MembersOut]:
+        res = M.UserGroup.get_members(d.db, data.id)
+        uids_ = []
+        for r in res:
+            uid = str(r['user'].id)
+            uids_.append(uid)
+            r['user_group'].online = uid in d.mgr.users
+        if uids is True:
+            return res, uids_
+        return res
 
     @staticmethod
     async def on_privacy_put(data: PyG.PrivacyIn, d):
         M.UserGroup.put_privacy(d.db, d.vid, data)
-        await Groups._send_members(data.id, d)
+        await d.mgr.send_other(d, action='groups/members/get', input=data, uids=True)
 
     @staticmethod
     async def on_groups_post(data: PyG.GroupPost, d) -> PyG.GroupOut:
         g = M.Group.create_group(d.db, data.title, data.text_short, d.vid, data.privacy)
+        # TODO what?
         uids = [uid for uid, _ in d.mgr.users.items()]
         await d.mgr.send_other('groups/groups/get', data, d, uids=uids)
         return g

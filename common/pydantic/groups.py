@@ -37,6 +37,11 @@ class MessageOut(BM_ORM):
     updated_at: datetime.datetime
     text: str
 
+    def dict(self, *args, **kwargs):
+        d = super().dict(*args, **kwargs)
+        d['group_id'] = d.pop('obj_id', None)
+        return d
+
 
 class UserGroupOut(BM_ORM):
     username: str
