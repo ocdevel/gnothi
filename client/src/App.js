@@ -36,6 +36,7 @@ import Groups from "./Groups";
 import staticRoutes from "./Static";
 import _ from "lodash";
 import moment from "moment-timezone";
+import {SharingModal} from "./Account/Sharing";
 
 function LoggedOut() {
   return <Switch>
@@ -93,8 +94,9 @@ function LoggedIn() {
         {staticRoutes()}
         <Redirect from="/" to="/j" />
       </Switch>
-
     </Container>
+
+    <SharingModal />
   </div>
 }
 

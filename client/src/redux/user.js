@@ -53,6 +53,6 @@ export const store = {
   }),
 
   // {create: bool, list: bool, group: str, ..}
-  sharePage: {list: true},
+  sharePage: null,
   setSharePage: action((s, p) => {s.sharePage = p})
 }

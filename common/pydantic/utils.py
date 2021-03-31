@@ -33,6 +33,7 @@ def apply_privacies(d, extra_privacies=[]):
     """
     privacies = default_privacies + extra_privacies
     u, s, ug = d['user'], d['share'], d.get('user_group', {})
+    s = s or {}
     for k in privacies:
         v = s.get(k, False)
         if v: u['profile'] = True

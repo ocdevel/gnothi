@@ -61,6 +61,7 @@ function AccountSection() {
   const shares = useStoreState(s => s.ws.data['shares/ingress/get'])
   const as = useStoreState(s => s.user.as)
   const asUser = useStoreState(s => s.user.asUser)
+  const setSharePage = useStoreActions(a => a.user.setSharePage)
 
   function renderSwitcher (s, i, last) {
     const {share, user} = s
@@ -108,7 +109,7 @@ function AccountSection() {
       <Link to="/account/profile">Profile</Link>
     </li>}
     {!as && <li>
-      <Link to="/account/sharing">Sharing</Link>
+      <a onClick={() => setSharePage({list: true})}>Sharing</a>
     </li>}
     <li><a onClick={() => logout()}>Logout</a></li>
   </ToggleSection>

@@ -1,4 +1,4 @@
-import pdb
+import pdb, asyncio
 from typing import List, Dict, Any
 import common.models as M
 from common.pydantic.utils import BM, BM_ID
@@ -34,7 +34,13 @@ class Shares:
         data = data.dict()
         data['users'].pop(d.viewer.email, None)
         M.Share.put_post_share(d.db, d.vid, data)
-        await d.mgr.send_other('shares/shares/get', {}, d)
+        print(data)
+        await asyncio.wait([
+           d.mgr.exec(d, action='shares/egress/get')
+        ] + [
+            d.mgr.exec(d, action='groups/members/get', input=dict(id=gid), uids=True)
+            for gid, v in data.get('groups', {}).items()
+        ])
         return dict(valid=True)
 
     @staticmethod

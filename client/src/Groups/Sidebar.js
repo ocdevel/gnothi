@@ -66,16 +66,17 @@ function PrivacyOpt({p, me}) {
   </div>
 }
 
-function Controls() {
+function Me() {
   const {gid} = useParams()
   const history = useHistory()
   const emit = useStoreActions(actions => actions.ws.emit);
   const uid = useStoreState(s => s.ws.data['users/user/get']?.id)
-  const members = useStoreState(s => s.ws.data['groups/members/get'])
+  const membersObj = useStoreState(s => s.ws.data.membersObj)
+  const setSharePage = useStoreActions(s => s.user.setSharePage)
 
-  const membersObj = _.reduce(members, (m, v) => ({...m, [m?.user?.id]: v}), {})
   const me = membersObj?.[uid]
-  console.log('me', me)
+  const role = me?.user_group?.role
+  const shareId = me?.share?.id
 
   async function joinGroup() {
     emit(["groups/group/join", {id: gid}])
@@ -86,25 +87,32 @@ function Controls() {
     history.push("/groups")
   }
 
-  const role = me?.user_group?.role
-
-  if (!role) {
-    return <div>
-      Not a member
-      <Button
-        size='sm'
-        className='float-right'
-        variant='primary'
-        onClick={joinGroup}
-      >
-        Join Group
-      </Button>
-    </div>
+  function gotoShare() {
+    if (shareId) {
+      setSharePage({id: shareId})
+    } else {
+      setSharePage({create: true, group: gid})
+    }
   }
-  let el
-  if (role === 'member') {
-    el = <div>
-      You are a member
+
+  function renderMembership() {
+    if (!role || role === 'banned') {
+      return <Card.Body>Not a member
+        <Button
+          size='sm'
+          className='float-right'
+          variant='primary'
+          onClick={joinGroup}
+        >
+          Join Group
+        </Button>
+      </Card.Body>
+    }
+    if (role === 'owner') {
+      return <div>You are the owner</div>
+    }
+    if (role === 'member') {
+      return <div>You are a member
       <Button
         size='sm'
         className='float-right text-danger p-0'
@@ -114,62 +122,91 @@ function Controls() {
         Leave Group
       </Button>
     </div>
+    }
   }
-  if (role === 'owner') {
-    el = <div>
-      You are the owner
+
+  function renderPrivacy() {
+    if (!shareId) {
+      return <div>
+        <p className='small'>Your username is auto-generated (unique in each group). You can change this by sharing your info with this group. You can also share your entries (limited by specific tags) with the group, if you'd like input!</p>
+        <Button
+          variant='primary'
+          size='sm'
+          onClick={gotoShare}
+        >Share with group</Button>
+      </div>
+    }
+    const sharing = _.intersection(_.keys(me.user), _.keys(me.share))
+    return <div className='small'>
+      You are sharing:
+      <ul>
+        <li>Attributes: {sharing.join(', ')}</li>
+      </ul>
+      <Button
+        variant='secondary'
+        size='sm'
+        onClick={gotoShare}
+      >Modify Sharing</Button>
     </div>
   }
-  return <div>
-    {el}
-    {privacies.map(p => (
-      <PrivacyOpt key={`${p.k}=${p.v}`} p={p} me={me} />)
-    )}
-  </div>
+
+  return <>
+    <Card.Header><Member row={me} /></Card.Header>
+    <Card.Body>
+      {renderMembership()}
+      {/*privacies.map(p => (
+        <PrivacyOpt key={`${p.k}=${p.v}`} p={p} me={me} />)
+      )*/}
+      {renderPrivacy()}
+    </Card.Body>
+  </>
 }
 
 const onlineIcon = emoji("🟢")
 
 function Member({row}) {
+  if (!row) {return null}
   const {user, user_group, share} = row
-  const {id} = user
-  return <li key={id}>
-    {user_group?.online && onlineIcon}
+  return <>
+    {user_group?.online && <span className='mr-2'>{onlineIcon}</span>}
     {user_group?.role === 'owner' && <FaCrown />}
     {user.display_name}
-  </li>
+  </>
+}
+
+function Members() {
+  const members = useStoreState(s => s.ws.data['groups/members/get'])
+  return <><Card.Subtitle>Members</Card.Subtitle>
+    <ul className="list-unstyled">
+      {members?.map(m => m?.user?.id && <li key={m.user.id}>
+        <Member row={m} />
+      </li>)}
+    </ul>
+  </>
 }
 
 export default function Sidebar() {
   const {gid} = useParams()
-  const members = useStoreState(s => s.ws.data['groups/members/get'])
   const groups = useStoreState(s => s.ws.data['groups/groups/get'])
   const group = useStoreState(s => s.ws.data['groups/group/get'])
   const [showCreate, setShowCreate] = useState(false)
 
-  function renderGroup() {
-    console.log(members)
-    if (!gid) {return null}
-    return <Card className='shadow-lg mb-5'>
-      <Card.Header>
-        {group.title}
-      </Card.Header>
-      <Card.Body>
-        <p>{group.text_short}</p>
-        <Card.Subtitle>Members</Card.Subtitle>
-        <ul className="list-unstyled">
-          {members?.map(m => m?.user?.id && <Member row={m} key={m.user.id} />)}
-        </ul>
-        <hr />
-        <Controls />
-      </Card.Body>
-    </Card>
-  }
+  if (!gid) {return null}
 
   return <div>
     <CreateGroup close={() => setShowCreate(false)} show={showCreate}/>
 
-    {renderGroup()}
+    <Card className='mb-2'>
+      <Card.Header>{group.title}</Card.Header>
+      <Card.Body>
+        <p>{group.text_short}</p>
+        <Members />
+      </Card.Body>
+    </Card>
+
+    <Card className='mb-2'>
+      <Me />
+    </Card>
 
     <Card className='border-0'>
       <Card.Header>

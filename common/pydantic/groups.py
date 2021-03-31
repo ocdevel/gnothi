@@ -52,7 +52,7 @@ class UserGroupOut(BM_ORM):
 
 class MembersOut(BM):
     user: ProfileIngress
-    share: ShareGet
+    share: Optional[ShareGet] = {}
     user_group: UserGroupOut
 
     def dict(self, *args, **kwargs):

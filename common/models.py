@@ -597,10 +597,9 @@ class Share(Base):
     @staticmethod
     def put_post_share(db, vid, data):
         # Set the share itself
-        print(data)
-        share, tags, users, groups = data.pop('share', {}), data.pop('tags', {}),\
-            data.pop('users', {}), data.pop('groups', {})
-        s, sid = None, share.pop('id', None)
+        share, tags, users, groups = data.get('share', {}), data.get('tags', {}),\
+            data.get('users', {}), data.get('groups', {})
+        s, sid = None, share.get('id', None)
         if sid:
             s = db.query(Share).filter_by(user_id=vid, id=sid).first()
         if not s:
@@ -1178,20 +1177,21 @@ class UserGroup(Base):
 
     @staticmethod
     def get_members(db, gid):
+        share = (db.query(Share).join(GroupShare, sa.and_(
+            GroupShare.obj_id == gid,
+            GroupShare.share_id == Share.id
+        )).subquery())
+        share = orm.aliased(Share, share)
         rows = (
             db.query(
                 User,
                 UserGroup,
-                Share
+                share
             )
-            .select_from(UserGroup)
-            .filter(UserGroup.group_id == gid)
+            .select_from(UserGroup).filter(UserGroup.group_id == gid)
             .join(User)
-            .outerjoin(Share)
-            .outerjoin(GroupShare, sa.and_(
-                GroupShare.share_id == Share.id,
-                GroupShare.obj_id == gid
-            )).all())
+            .outerjoin(share)
+            .all())
         return [dict(user=r[0], user_group=r[1], share=r[2]) for r in rows]
 
     @staticmethod

@@ -11,9 +11,9 @@ export default function Account() {
       <Route path={`${match.url}/profile`}>
         <Profile />
       </Route>
-      <Route path={`${match.url}/sharing`}>
+      {/*<Route path={`${match.url}/sharing`}>
         <Sharing />
-      </Route>
+      </Route>*/}
     </Switch>
   )
 }

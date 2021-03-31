@@ -148,12 +148,17 @@ function ShareCheck({k, form, setForm, profile=false}) {
 export default function ShareForm({s={}}) {
   const emit = useStoreActions(a => a.ws.emit)
   const postRes = useStoreState(s => s.ws.res['shares/shares/post'])
+  const sharePage = useStoreState(s => s.user.sharePage)
   const setSharePage = useStoreActions(a => a.user.setSharePage)
   const [entriesHelp, setEntriesHelp] = useState(false)
   const [share, setShare] = useState(s.share || {})
   const [tags, setTags] = useState(trueObj(s?.tags) || {})
   const [users, setUsers] = useState(trueObj(s?.users) || {})
-  const [groups, setGroups] = useState(trueObj(s?.groups) || {})
+  const [groups, setGroups] = useState(
+    share?.id ? trueObj(s.groups)
+    : sharePage.group ? {[sharePage.group]: true}
+    : {}
+  )
 
   const id = share?.id
 
