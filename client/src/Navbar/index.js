@@ -123,7 +123,9 @@ function GroupsSection() {
   }
 
   return <ToggleSection icon={<FaRegComments />} text="Community">
-    <li><Link to='/groups'>All Groups</Link></li>
+    <li>
+      <Link exact to='/groups'>All Groups</Link>
+    </li>
     {groups?.length ? groups.map(renderGroup) : null}
   </ToggleSection>
 }

@@ -83,3 +83,8 @@ export const bsSizes = {
   lg: 992, //960
   xl: 1200, //1140
 }
+
+export const DEFAULT_IDS = {
+  ADMIN_ID: '484b32c8-6463-49c5-83ca-75340f0abdc3',
+  GROUP_ID: 'ebcf0a39-9c30-4a6f-8364-8ccb7c0c9035',
+}

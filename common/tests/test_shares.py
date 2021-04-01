@@ -86,13 +86,13 @@ def share_users(db, u, tags, users=False, groups=False):
 
     db.commit()
 
-@pytest.mark.parametrize("user", [
-    Box(k='user1', users=True, groups=False, users_ct=0, groups_ct=0),
-    Box(k='user1', users=True, groups=True, users_ct=0, groups_ct=4),
-    Box(k='user2', users=True, groups=False, users_ct=3, groups_ct=0),
-    Box(k='user2', users=True, groups=True, users_ct=3, groups_ct=4),
-    Box(k='user3', users=True, groups=True, users_ct=3, groups_ct=4),
-])
+# @pytest.mark.parametrize("user", [
+#     Box(k='user1', users=True, groups=False, users_ct=0, groups_ct=0),
+#     Box(k='user1', users=True, groups=True, users_ct=0, groups_ct=4),
+#     Box(k='user2', users=True, groups=False, users_ct=3, groups_ct=0),
+#     Box(k='user2', users=True, groups=True, users_ct=3, groups_ct=4),
+#     Box(k='user3', users=True, groups=True, users_ct=3, groups_ct=4),
+# ])
 
 
 def test_user_shares(db, u, with_shared):
