@@ -1109,7 +1109,8 @@ class Group(Base):
     title = Encrypt(sa.Unicode, nullable=False)
     text_short = Encrypt(sa.Unicode, nullable=False)
     text_long = Encrypt(sa.Unicode)
-    privacy = sa.Column(sa.Enum(GroupPrivacy), default=GroupPrivacy.public)
+    privacy = sa.Column(sa.Enum(GroupPrivacy), server_default=GroupPrivacy.public.value, nullable=False)
+    official = sa.Column(sa.Boolean, server_default="false")
     created_at = DateCol()
     updated_at = DateCol(update=True)
 
@@ -1118,24 +1119,14 @@ class Group(Base):
     @staticmethod
     def my_groups(db, vid):
         return (
-            db.query(Group).filter(Group.id == MAIN_GROUP)
-            .union(db.query(Group)
+            db.query(Group)
             .join(UserGroup.group)
             .filter(
                 UserGroup.group_id == Group.id,
                 UserGroup.user_id == vid,
                 UserGroup.role != GroupRoles.banned
-            )).all()
+            ).all()
         )
-
-    @staticmethod
-    def create_group(db, title, text_short, owner, privacy=GroupPrivacy.public):
-        g = Group(title=title, text_short=text_short, privacy=privacy, owner_id=owner)
-        ug = UserGroup(group=g, user_id=owner, role=GroupRoles.owner)
-        db.add(ug)
-        db.commit()
-        db.refresh(g)
-        return g
 
     @staticmethod
     def join_group(db, gid, uid, role=GroupRoles.member):
@@ -1170,10 +1161,10 @@ class UserGroup(Base):
 
     # Temporary/private name & id assigned for this user for this group.
     # If they opt to expose real username, it will be used instead
-    username = Encrypt(default=petname.Generate)  # auto-generate a random name (adjective-animal)
+    username = Encrypt(default=petname.Generate, nullable=False)  # auto-generate a random name (adjective-animal)
 
     joined_at = DateCol()
-    role = sa.Column(sa.Enum(GroupRoles))
+    role = sa.Column(sa.Enum(GroupRoles), nullable=False, server_default=GroupRoles.member.value)
 
     user = orm.relationship("User")
     group = orm.relationship("Group")
@@ -1207,8 +1198,6 @@ class UserGroup(Base):
 
     @staticmethod
     def check_access(db: Session, gid, vid):
-        if str(gid) == str(MAIN_GROUP):
-            return
         role = (db.query(UserGroup.role)
             .filter(
                 UserGroup.user_id == vid,

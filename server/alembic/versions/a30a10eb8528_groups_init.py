@@ -20,7 +20,7 @@ down_revision = None
 branch_labels = None
 depends_on = None
 
-from common.seed import seed_data
+from common.seed import seed_data, GROUP_ID
 
 def migrate_users(bind, sess):
     bind.execute(f"""
@@ -68,7 +68,6 @@ def migrate_shares(bind, sess):
     op.drop_column('shares', 'new_entries')
     op.drop_column('shares', 'profile')
     op.add_column('shares', sa.Column('email', sa.Boolean(), server_default='false', nullable=True))
-    
 
 
 def upgrade():

@@ -5,6 +5,7 @@ import sqlalchemy as sa
 import common.models as M
 from passlib.context import CryptContext
 from pydantic import BaseModel
+from common.seed import GROUP_ID
 
 cognito_client = boto3.client('cognito-idp')
 region = 'us-east-1'
@@ -45,10 +46,10 @@ class Auth:
         # ga(user.id, 'user', 'register')
         user = M.User(cognito_id=cog_id, email=email)
         t = M.Tag(user=user, main=True, selected=True, name='Main')
-        db.add(t)
+        ug = M.UserGroup(user=user, obj_id=GROUP_ID)
+        db.add_all([t, ug])
         db.commit()
-        db.refresh(user)
-        return user.id
+        return db.query(M.User.id).filter_by(email=email).scalar()
 
     @staticmethod
     def _cognito_to_uid(token):

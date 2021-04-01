@@ -3,7 +3,7 @@ import common.pydantic.groups as PyG
 import common.models as M
 from typing import List, Dict, Any, Optional
 from pydantic import parse_obj_as, UUID4
-from common.errors import AccessDenied, CantSnoop
+from common.errors import AccessDenied, CantSnoop, NotFound
 from common.pydantic.utils import BM_ID, BM
 from common.pydantic.ws import MessageOut
 import sqlalchemy as sa
@@ -64,13 +64,20 @@ class Groups:
         ])
 
     @staticmethod
-    async def on_group_get(data: BM_ID, d) -> PyG.GroupOut:
+    async def on_group_get(data: BM_ID, d, uids=None) -> PyG.GroupOut:
         M.UserGroup.check_access(d.db, data.id, d.vid)
-        return d.db.query(M.Group).get(data.id)
+        g = d.db.query(M.Group).get(data.id)
+        if uids is True:
+            uids = M.UserGroup.get_uids(d.db, data.id)
+            return g, uids
+        return g
 
     @staticmethod
-    async def on_groups_get(data: BM, d) -> List[PyG.GroupOut]:
-        return d.db.query(M.Group).all()
+    async def on_groups_get(data: BM, d, uids=False) -> List[PyG.GroupOut]:
+        res = d.db.query(M.Group).all()
+        if uids is True:
+            return res, [uid for uid, _ in d.mgr.users.items()]
+        return res
 
     @staticmethod
     async def on_members_get(data: BM_ID, d, uids=None) -> List[PyG.MembersOut]:
@@ -86,11 +93,33 @@ class Groups:
 
     @staticmethod
     async def on_groups_post(data: PyG.GroupPost, d) -> PyG.GroupOut:
-        g = M.Group.create_group(d.db, data.title, data.text_short, d.vid, data.privacy)
-        # TODO what?
-        uids = [uid for uid, _ in d.mgr.users.items()]
-        await d.mgr.send_other('groups/groups/get', data, d, uids=uids)
+        db = d.db
+        g = M.Group(
+            title=data.title,
+            text_short=data.text_short,
+            privacy=data.privacy,
+            owner=d.viewer
+        )
+        ug = M.UserGroup(group=g, user=d.viewer, role=M.GroupRoles.owner)
+        db.add(ug)
+        db.commit()
+        db.refresh(g)
+        await asyncio.wait([
+            d.mgr.exec(d, action='groups/groups/get', uids=True),
+            d.mgr.exec(d, action='groups/mine/get'),
+        ])
         return g
+
+    @staticmethod
+    async def on_group_put(data: PyG.GroupPut, d) -> Dict:
+        db, mgr = d.db, d.mgr
+        g = db.query(M.Group).filter_by(owner_id=d.vid, id=data.id).first()
+        if not g: raise NotFound()
+        for k, v in data.dict().items():
+            setattr(g, k, v)
+        db.commit()
+        await mgr.exec(d, action='groups/group/get', input=dict(id=data.id), uids=True)
+        return dict(valid=True)
 
     @staticmethod
     async def on_mine_get(data: BM, d) -> List[PyG.GroupOut]:

@@ -13,6 +13,10 @@ class GroupPost(BM):
     privacy: GroupPrivacy
 
 
+class GroupPut(GroupPost):
+    id: UUID4
+
+
 class GroupOut(GroupPost, BM_ORM):
     id: UUID4
     owner_id: UUID4

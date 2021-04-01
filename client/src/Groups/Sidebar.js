@@ -1,12 +1,12 @@
 import {Button, Card, Col, Form, Row} from "react-bootstrap";
 import {Link, useHistory, useParams} from "react-router-dom";
 import React, {useState, useEffect} from "react";
-import CreateGroup from "./CreateGroup";
 import {useStoreActions, useStoreState} from "easy-peasy";
 import _ from 'lodash'
 import emoji from 'react-easy-emoji'
-import {FaCrown} from "react-icons/all";
+import {FaCrown, FaPencilAlt} from "react-icons/all";
 import {DEFAULT_IDS} from "../utils";
+import EditGroup from "./EditGroup";
 
 
 const disabled = ['show_avatar']
@@ -18,8 +18,6 @@ function Me() {
   const uid = useStoreState(s => s.ws.data['users/user/get']?.id)
   const membersObj = useStoreState(s => s.ws.data.membersObj)
   const setSharePage = useStoreActions(s => s.user.setSharePage)
-
-  if (gid === DEFAULT_IDS.GROUP_ID) {return null}
 
   const me = membersObj?.[uid]
   const role = me?.user_group?.role
@@ -120,7 +118,6 @@ function Member({row}) {
 
 function Members({gid}) {
   const members = useStoreState(s => s.ws.data['groups/members/get'])
-  if (gid === DEFAULT_IDS.GROUP_ID) {return null}
   return <><Card.Subtitle>Members</Card.Subtitle>
     <ul className="list-unstyled">
       {members?.map(m => m?.user?.id && <li key={m.user.id}>
@@ -133,15 +130,27 @@ function Members({gid}) {
 export default function Sidebar() {
   const {gid} = useParams()
   const group = useStoreState(s => s.ws.data['groups/group/get'])
-
+  const uid = useStoreState(s => s.ws.data['users/user/get']?.id)
+  const [showEdit, setShowEdit] = useState(false)
 
   if (!gid) {return null}
 
+  function toggle() {setShowEdit(!showEdit)}
+
   return <div>
+    {showEdit && <EditGroup show={true} close={toggle} group={group} />}
     <Card className='mb-2'>
       <Card.Header>{group.title}</Card.Header>
       <Card.Body>
         <p>{group.text_short}</p>
+        {uid === group.owner_id && <Button
+          variant='outline-secondary'
+          size='sm'
+          onClick={toggle}
+        >
+          <FaPencilAlt /> Edit Group
+        </Button>}
+        <hr />
         <Members gid={gid} />
       </Card.Body>
     </Card>

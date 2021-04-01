@@ -68,39 +68,66 @@ const privacies = [{
 }, {
   k: 'paid',
   v: 'Paid',
-  h: "You'll charge users a monthly fee for access to this group. You take 70%, Gnothi takes 30%. Setup on the next page."
+  h: "You'll charge users a monthly fee (that you decided) for access to this group. You take 70%, Gnothi takes 30%. Setup on the next page.",
+  disabled: "This feature coming soon."
 }]
 
-export default function CreateGroup({show, close}) {
+function PrivacyOpt({p, form, setForm}) {
+  const {k, v, h, disabled} = p
+  return <div>
+    <Form.Check
+      checked={k === form.privacy}
+      onChange={() => setForm({...form, privacy: k})}
+      disabled={!!disabled}
+      type="radio"
+      label={v}
+      name={k}
+      id={`radio-${k}`}
+    />
+    {h && <Form.Text className='muted'>{h}</Form.Text>}
+    {disabled && <Form.Text className='text-warning'>{disabled}</Form.Text>}
+  </div>
+}
+
+const default_form = {
+  title: '',
+  text_short: '',
+  text_long: '',
+  privacy: "public"
+}
+
+export default function EditGroup({show, close, group=null}) {
   const history = useHistory()
   const emit = useStoreActions(actions => actions.ws.emit)
   const as = useStoreState(s => s.user.as)
-
-  const [form, setForm] = useState({title: '', text_short: '', privacy: "public"})
   const postRes = useStoreState(s => s.ws.res['groups/groups/post'])
+
+  const [form, setForm] = useState(group || default_form)
 
   useEffect(() => {
     EE.on("wsResponse", onPost)
-    return () => EE.off("wsResponse", )
+    return () => EE.off("wsResponse", onPost)
   }, [])
 
   function onPost(data) {
-    if (data.action === 'groups/groups/post' && data?.id) {
+    if (data.action === 'groups/groups/post' && data.data?.id) {
       close()
-      history.push(postRes?.data.id)
+      history.push("groups/" + data.data.id)
+    }
+    if (data.action === 'groups/group/put') {
+      close()
     }
   }
 
   const submit = async e => {
     e.preventDefault()
-    emit(["groups/groups/post", form])
+    const action = group ? "groups/group/put" : "groups/groups/post"
+    emit([action, form])
   }
 
-  const changeTitle = e => {
-    setForm({...form, title: e.target.value})
-  }
-  const changeText = text_short => {
-    setForm({...form, text_short})
+  const changeText = k => e => {
+    const v = typeof e === 'string' ? e : e.target.value
+    setForm({...form, [k]: v})
   }
 
   const renderButtons = () => {
@@ -119,48 +146,48 @@ export default function CreateGroup({show, close}) {
     </>
   }
 
-  const renderForm = () => <>
-    <Row>
-      <Col>
-        <Form onSubmit={submit}>
-          <Form.Group controlId="formTitle">
-            <Form.Label>Title</Form.Label>
-            <Form.Control
-              type="text"
-              placeholder="Title"
-              value={form.title}
-              onChange={changeTitle}
-            />
-          </Form.Group>
+  const renderForm = () => {
+    let short_placeholder = "Short description of your group."
+    if (!group) {
+      short_placeholder += " You'll be able to add a long description with links, formatting, resources, etc on the next screen."
+    }
+    const text_long = form.text_long || ''
 
-          <Editor text={form.text_short} changeText={changeText} />
+    return <>
+      <Form onSubmit={submit}>
+        <Form.Group controlId="formTitle">
+          <Form.Label>Title</Form.Label>
+          <Form.Control
+            type="text"
+            placeholder="Title"
+            value={form.title}
+            onChange={changeText('title')}
+          />
+        </Form.Group>
 
-          <fieldset>
-            <Form.Group as={Row}>
-              <Form.Label as="legend" column sm={2}>
-                privacy
-              </Form.Label>
-              <Col sm={10}>
-                {privacies.map(({k, v, p}) => (
-                  <Form.Check
-                    checked={k === form.privacy}
-                    onChange={() => setForm({...form, privacy: k})}
-                    key={k}
-                    type="radio"
-                    label={v}
-                    name={k}
-                    id={`radio-${k}`}
-                  />
-                ))}
-              </Col>
-            </Form.Group>
-          </fieldset>
-        </Form>
-      </Col>
+        <Form.Group className='mb-2'>
+          <Form.Label>Short Description</Form.Label>
+          <Form.Control
+            as="textarea"
+            rows={3}
+            placeholder={short_placeholder}
+            value={form.text_short}
+            onChange={changeText('text_short')}
+          />
+        </Form.Group>
+        {group && <Editor text={text_long} changeText={changeText('text_long')} />}
 
-    </Row>
-
-  </>
+        <Form.Group>
+          <Form.Label>
+            Privacy
+          </Form.Label>
+          <Card><Card.Body>
+            {privacies.map((p) => <PrivacyOpt p={p} key={p.k} form={form} setForm={setForm}/>)}
+          </Card.Body></Card>
+        </Form.Group>
+      </Form>
+    </>
+  }
 
   return <>
     <Modal
