@@ -118,10 +118,10 @@ class User(Base):
             db.query(User, Share)
             .select_from(User)
             .join(Share)
-            .join(UserShare, sa.and_(
-                Share.id == UserShare.share_id,
+            .join(ShareUser, sa.and_(
+                Share.id == ShareUser.share_id,
                 Share.user_id == sid,
-                UserShare.obj_id == vid,
+                ShareUser.obj_id == vid,
             ))
             .first()
         )
@@ -211,8 +211,8 @@ class Entry(Base):
             q = (db.query(Entry)
                  .join(EntryTag)
                  .join(ShareTag, ShareTag.tag_id == EntryTag.tag_id)
-                 .join(Share, UserShare)
-                 .filter(UserShare.obj_id == vid, Share.user_id == sid))
+                 .join(Share, ShareUser)
+                 .filter(ShareUser.obj_id == vid, Share.user_id == sid))
             # # TODO use ORM partial thus far for this query command, not raw sql
             # sql = f"""
             # update shares set last_seen=now(), new_entries=0
@@ -226,12 +226,12 @@ class Entry(Base):
                 db.query(Entry)
                 .join(EntryTag)
                 .join(ShareTag, ShareTag.tag_id == EntryTag.tag_id)
-                .join(GroupShare, sa.and_(
-                    GroupShare.share_id == ShareTag.share_id,
-                    GroupShare.obj_id == group_id
+                .join(ShareGroup, sa.and_(
+                    ShareGroup.share_id == ShareTag.share_id,
+                    ShareGroup.obj_id == group_id
                 ))
                 .join(UserGroup, sa.and_(
-                    UserGroup.group_id == GroupShare.obj_id,
+                    UserGroup.group_id == ShareGroup.obj_id,
                     UserGroup.user_id == vid
                 ))
             )
@@ -314,9 +314,9 @@ class Note(Base):
         )
         if group_id:
             can_view = (
-                can_view.join(GroupShare, sa.and_(
-                    ShareTag.share_id == GroupShare.share_id,
-                    GroupShare.obj_id == group_id,
+                can_view.join(ShareGroup, sa.and_(
+                    ShareTag.share_id == ShareGroup.share_id,
+                    ShareGroup.obj_id == group_id,
                 )).join(UserGroup, sa.and_(
                     UserGroup.user_id == vid,
                     UserGroup.group_id == group_id
@@ -324,9 +324,9 @@ class Note(Base):
             )
         else:
             can_view = (
-                can_view.join(UserShare, sa.and_(
-                    ShareTag.share_id == UserShare.share_id,
-                    UserShare.obj_id == vid,
+                can_view.join(ShareUser, sa.and_(
+                    ShareTag.share_id == ShareUser.share_id,
+                    ShareUser.obj_id == vid,
                 )).join(UserGroup, sa.and_(
                     UserGroup.user_id == vid,
                     UserGroup.group_id == group_id
@@ -541,8 +541,8 @@ class Share(Base):
     # profile = sa.Column(sa.Boolean, server_default="false")
 
     user = orm.relationship("User")
-    user_shares = orm.relationship("UserShare")
-    group_shares = orm.relationship("GroupShare")
+    shares_users = orm.relationship("ShareUser")
+    shares_groups = orm.relationship("ShareGroup")
     # share_tags = orm.relationship("ShareTag", **parent_cascade)
     # tags_ = orm.relationship("Tag", secondary="shares_tags")
 
@@ -562,8 +562,8 @@ class Share(Base):
 
     @staticmethod
     def ingress(db: Session, vid):
-        res = (db.query(UserShare)
-            .filter(UserShare.obj_id == vid)
+        res = (db.query(ShareUser)
+            .filter(ShareUser.obj_id == vid)
             .join(Share).join(User)
             .with_entities(User, Share)
             .all()
@@ -579,12 +579,12 @@ class Share(Base):
                 .filter(ShareTag.share_id == share.c.id)
                 .as_scalar())
 
-        groups = (db.query(func.array_agg(GroupShare.obj_id))
-                .filter(GroupShare.share_id == share.c.id)
+        groups = (db.query(func.array_agg(ShareGroup.obj_id))
+                .filter(ShareGroup.share_id == share.c.id)
                 .as_scalar())
 
         users = (db.query(func.array_agg(User.email))
-            .join(UserShare).filter(UserShare.share_id == share.c.id)
+            .join(ShareUser).filter(ShareUser.share_id == share.c.id)
             .as_scalar())
 
         res = (db.query(
@@ -624,21 +624,21 @@ class Share(Base):
         # .on_conflict_do_nothing(index_elements=['share_id', 'tag_id'])
 
         # Set users
-        db.query(UserShare) \
-            .filter(UserShare.share_id == sid).delete()
+        db.query(ShareUser) \
+            .filter(ShareUser.share_id == sid).delete()
         add_ = [k for k, v in users.items() if v]
         # TODO use insert().from_select()
         add_ = db.query(User.id).filter(User.email.in_(add_)).all()
         db.add_all([
-            UserShare(share_id=sid, obj_id=u)
+            ShareUser(share_id=sid, obj_id=u)
             for u in add_
         ])
 
         # Set groups
-        db.query(GroupShare) \
-            .filter(GroupShare.share_id == sid).delete()
+        db.query(ShareGroup) \
+            .filter(ShareGroup.share_id == sid).delete()
         db.add_all([
-            GroupShare(share_id=sid, obj_id=k)
+            ShareGroup(share_id=sid, obj_id=k)
             for k, v in groups.items() if v
         ])
 
@@ -663,9 +663,9 @@ class Tag(Base):
         if snooping:
             q = (db.query(Tag)
                 .join(ShareTag, Share)
-                .join(UserShare, sa.and_(
-                    ShareTag.share_id == UserShare.share_id,
-                    UserShare.obj_id == vid,
+                .join(ShareUser, sa.and_(
+                    ShareTag.share_id == ShareUser.share_id,
+                    ShareUser.obj_id == vid,
                     Share.user_id == sid
                 ))
                 .with_entities(Tag.id, Tag.user_id, Tag.name, Tag.created_at, Tag.main, ShareTag.selected))
@@ -693,8 +693,8 @@ class ShareTag(Base):
     share = orm.relationship("Share")
 
 
-class UserShare(Base):
-    __tablename__ = 'users_shares'
+class ShareUser(Base):
+    __tablename__ = 'shares_users'
     share_id = FKCol('shares.id', primary_key=True)
     obj_id = FKCol('users.id', primary_key=True)
 
@@ -702,11 +702,11 @@ class UserShare(Base):
     obj = orm.relationship("User")
 
 
-class GroupShare(Base):
-    __tablename__ = 'groups_shares'
+class ShareGroup(Base):
+    __tablename__ = 'shares_groups'
     share_id = FKCol('shares.id', primary_key=True)
     # can't be 'users_groups.group_id' because not unique.
-    # just make sure to delete GroupShare manually when user leaves a group
+    # just make sure to delete ShareGroup manually when user leaves a group
     obj_id = FKCol('groups.id', primary_key=True)
 
     share = orm.relationship("Share")
@@ -1180,9 +1180,9 @@ class UserGroup(Base):
 
     @staticmethod
     def get_members(db, gid):
-        share = (db.query(Share).join(GroupShare, sa.and_(
-            GroupShare.obj_id == gid,
-            GroupShare.share_id == Share.id
+        share = (db.query(Share).join(ShareGroup, sa.and_(
+            ShareGroup.obj_id == gid,
+            ShareGroup.share_id == Share.id
         )).subquery())
         share = orm.aliased(Share, share)
         rows = (
@@ -1216,26 +1216,6 @@ class UserGroup(Base):
                 UserGroup.role!=GroupRoles.banned
             ).scalar())
         if not role: raise GroupDenied()
-
-    @staticmethod
-    def put_privacy(db, vid, data):
-        k, v = data.key.replace('show_', ''), data.value
-        res = (db.query(UserGroup, Share)
-          .select_from(UserGroup)
-          .filter(UserGroup.user_id == vid, UserGroup.group_id == data.id)
-          .join(Group, GroupShare, Share)
-          .first())
-        if res:
-            s = res[1]
-            setattr(s, k, v)
-            db.commit()
-            return
-        s = {k: v, 'user_id': vid}
-        s = Share(**s)
-        gs = GroupShare(share=s, obj_id=data.id)
-        db.add(gs)
-        db.commit()
-
 
 
 # class UserMessage(Base):

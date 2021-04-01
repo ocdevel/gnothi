@@ -15,7 +15,7 @@ class GroupPost(BM):
 
 class GroupOut(GroupPost, BM_ORM):
     id: UUID4
-    owner: UUID4
+    owner_id: UUID4
     privacy: GroupPrivacy
     created_at: datetime.datetime
     members: Optional[Dict[str, str]] = {}

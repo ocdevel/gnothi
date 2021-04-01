@@ -18,7 +18,7 @@ def seed_data(db, M):
     if not db.query(M.Group).get(GROUP_ID):
         db.add(M.Group(
             id=GROUP_ID,
-            owner=ADMIN_ID,
+            owner_id=ADMIN_ID,
             title='Gnothi',
             text_short='Official Gnothi group. A place to chat generally about mental health.',
             text_long='Official Gnothi group. A place to chat generally about mental health.',

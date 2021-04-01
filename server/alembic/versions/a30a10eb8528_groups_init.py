@@ -57,7 +57,7 @@ def migrate_shares(bind, sess):
         inner join shares s 
             on lower(s.email)=lower(u.email)
     )
-    insert into users_shares (share_id, obj_id)
+    insert into shares_users (share_id, obj_id)
     select s.share_id, s.obj_id from shares_ s
     """)
     

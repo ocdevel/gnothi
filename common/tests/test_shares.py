@@ -54,32 +54,45 @@ def with_groups(db, u):
     db.add(M.UserGroup(user=u.user2, group=g2))
     db.add(M.UserGroup(user=u.user5, group=g2))
     db.commit()
+    return Box(g1=g1, g2=g2)
 
 
-@pytest.fixture
-def with_shared(db, u, with_entries, with_groups, tags):
+def share_users(db, u, tags, users=False, groups=False):
     """
-    user1->user2
-    <no reply>
+    user1-> [user2] [group1]
+    user2-> None [group1 group2]
 
-    user3->user4
-    user4->user3
+    user3-> [user4] None
+    user4-> [user3] None
 
-    user5 solo
+    user5-> None [group2]
     """
     s = M.Share(user=u.user1)
     db.add(M.ShareTag(share=s, tag=tags.user1.user))
-    db.add(M.UserShare(share=s, obj=u.user2))
+    if users:
+        db.add(M.ShareUser(share=s, obj=u.user2))
+    if groups:
+        db.add(M.ShareGroup(share=s, obj=groups.g1))
 
     s = M.Share(user=u.user3)
     db.add(M.ShareTag(share=s, tag=tags.user3.user))
-    db.add(M.UserShare(share=s, obj=u.user4))
+    if users:
+        db.add(M.ShareUser(share=s, obj=u.user4))
 
     s = M.Share(user=u.user4)
     db.add(M.ShareTag(share=s, tag=tags.user4.user))
-    db.add(M.UserShare(share=s, obj=u.user3))
+    if users:
+        db.add(M.ShareUser(share=s, obj=u.user3))
 
     db.commit()
+
+@pytest.mark.parametrize("user", [
+    Box(k='user1', users=True, groups=False, users_ct=0, groups_ct=0),
+    Box(k='user1', users=True, groups=True, users_ct=0, groups_ct=4),
+    Box(k='user2', users=True, groups=False, users_ct=3, groups_ct=0),
+    Box(k='user2', users=True, groups=True, users_ct=3, groups_ct=4),
+    Box(k='user3', users=True, groups=True, users_ct=3, groups_ct=4),
+])
 
 
 def test_user_shares(db, u, with_shared):

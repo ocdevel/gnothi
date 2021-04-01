@@ -84,11 +84,6 @@ class Groups:
             return res, uids_
         return res
 
-    # @staticmethod
-    # async def on_privacy_put(data: PyG.PrivacyIn, d):
-    #     M.UserGroup.put_privacy(d.db, d.vid, data)
-    #     await d.mgr.send_other(d, action='groups/members/get', input=data, uids=True)
-
     @staticmethod
     async def on_groups_post(data: PyG.GroupPost, d) -> PyG.GroupOut:
         g = M.Group.create_group(d.db, data.title, data.text_short, d.vid, data.privacy)

@@ -44,8 +44,8 @@ class Tags:
     async def on_tag_toggle(data: BM_ID, d):
         if d.snooping:
             row = d.db.query(M.ShareTag)\
-                .join(M.Share).join(M.UserShare)\
-                .filter(M.UserShare.obj_id == d.vid, M.ShareTag.tag_id == data.id)\
+                .join(M.Share).join(M.ShareUser)\
+                .filter(M.ShareUser.obj_id == d.vid, M.ShareTag.tag_id == data.id)\
                 .first()
         else:
             row = M.Tag.snoop(d.db, d.vid, d.vid) \
