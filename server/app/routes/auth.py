@@ -41,6 +41,16 @@ class Auth:
         )
 
     @staticmethod
+    def _create_user(db, cog_id, email):
+        # ga(user.id, 'user', 'register')
+        user = M.User(cognito_id=cog_id, email=email)
+        t = M.Tag(user=user, main=True, selected=True, name='Main')
+        db.add(t)
+        db.commit()
+        db.refresh(user)
+        return user.id
+
+    @staticmethod
     def _cognito_to_uid(token):
         claims = decode_jwt(token)
         cog_id = claims['sub']
@@ -48,11 +58,11 @@ class Auth:
             uid = db.query(M.User.id).filter_by(cognito_id=cog_id).scalar()
             if uid: return uid
             cog_user = Auth._get_cognito_user(token)
-            user = db.query(M.User).filter_by(email=cog_user['email']).first()
+            email, cog_id = cog_user['email'], cog_user['id']
+            user = db.query(M.User).filter_by(email=email).first()
             if not user:
-                # TODO create new user
-                return
-            user.cognito_id = cog_user['id']
+                return Auth._create_user(db, cog_id, email)
+            user.cognito_id = cog_id
             db.commit()
             return user.id
 

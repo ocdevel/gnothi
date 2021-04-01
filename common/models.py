@@ -1105,16 +1105,15 @@ class GroupRoles(enum.Enum):
 class Group(Base):
     __tablename__ = 'groups'
     id = IDCol()
-    owner = FKCol('users.id', index=True, nullable=False)
+    owner_id = FKCol('users.id', index=True, nullable=False)
     title = Encrypt(sa.Unicode, nullable=False)
     text_short = Encrypt(sa.Unicode, nullable=False)
     text_long = Encrypt(sa.Unicode)
-    privacy = sa.Column(sa.Enum(GroupPrivacy))
+    privacy = sa.Column(sa.Enum(GroupPrivacy), default=GroupPrivacy.public)
     created_at = DateCol()
     updated_at = DateCol(update=True)
 
-    owner_ = orm.relationship("User", foreign_keys=[owner])
-    members_ = orm.relationship("User", secondary="users_groups")
+    owner = orm.relationship("User")
 
     @staticmethod
     def my_groups(db, vid):
@@ -1131,7 +1130,7 @@ class Group(Base):
 
     @staticmethod
     def create_group(db, title, text_short, owner, privacy=GroupPrivacy.public):
-        g = Group(title=title, text_short=text_short, privacy=privacy, owner=owner)
+        g = Group(title=title, text_short=text_short, privacy=privacy, owner_id=owner)
         ug = UserGroup(group=g, user_id=owner, role=GroupRoles.owner)
         db.add(ug)
         db.commit()
