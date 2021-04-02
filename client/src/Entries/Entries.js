@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from "react"
+import React, {useCallback, useEffect, useState} from "react"
 import {Route, Switch, useHistory, useRouteMatch} from "react-router-dom"
 import _ from 'lodash'
 import {
@@ -28,10 +28,13 @@ import MediaQuery from 'react-responsive'
 import Sidebar from "../Sidebar";
 
 
-export function EntryTeaser({e, gotoForm}) {
+export function EntryTeaser({eid, gotoForm}) {
+  const e = useStoreState(s => s.ws.data['entries/entries/get'].obj?.[eid])
   const [hovered, setHovered] = useState(false)
   const onHover = () => setHovered(true)
   const onLeave = () => setHovered(false)
+
+  if (!e) {return null}
 
   const title = e.title || e.title_summary
   const isSummary = e.text_summary && e.text !== e.text_summary
@@ -44,7 +47,7 @@ export function EntryTeaser({e, gotoForm}) {
   return (
     <Card.Body
       key={e.id}
-      onClick={() => gotoForm(e.id)}
+      onClick={() => gotoForm(eid)}
       className={klass}
       onMouseEnter={onHover}
       onMouseLeave={onLeave}
@@ -68,12 +71,46 @@ export function EntryTeaser({e, gotoForm}) {
   )
 }
 
+/**
+ * Entries() is expensive, so isolate <Search /> and only update the Entries.search
+ * periodically (debounce)
+ */
+function Search({trigger}) {
+  let [search, setSearch] = useState('')
+
+  const trigger_ = useCallback(_.debounce(trigger, 200), [])
+
+  function changeSearch(e) {
+    const s = e.target.value.toLowerCase()
+    setSearch(s)
+    trigger_(s)
+  }
+
+  return <div className='mb-3'>
+    <Form.Label htmlFor="formSearch" srOnly>Search</Form.Label>
+    <InputGroup>
+      <InputGroup.Prepend>
+        <InputGroup.Text><FaSearch /></InputGroup.Text>
+      </InputGroup.Prepend>
+      <Form.Control
+        id='formSearch'
+        type="text"
+        value={search}
+        onChange={changeSearch}
+        placeholder="Search"
+      />
+    </InputGroup>
+  </div>
+}
+
 
 export function Entries({group_id=null}) {
   const as = useStoreState(s => s.user.as)
   const entries = useStoreState(s => s.ws.data['entries/entries/get'])
   const entriesRes = useStoreState(s => s.ws.res['entries/entries/get'])
   const selected = useStoreState(s => s.ws.data.selectedTags)
+
+  const {arr, obj} = entries
 
   const [page, setPage] = useState(0)
   let [search, setSearch] = useState('')
@@ -89,17 +126,15 @@ export function Entries({group_id=null}) {
     return <h5>{entriesRes.detail}</h5>
   }
 
-  let filtered = _(entries || [])
-      .filter(e => _.reduce(selected, (m, v, k) => e.entry_tags[k] || m, false))
-      .filter(e => !search.length || ~(e.title + e.text).toLowerCase().indexOf(search))
+  let filtered = _(arr || [])
+      .filter(eid => _.reduce(selected, (m, v, k) => obj[eid].entry_tags[k] || m, false))
+      .filter(eid => !search.length || ~(obj[eid].title + obj[eid].text).toLowerCase().indexOf(search))
       .value()
 
   const gotoForm = (entry_id=null) => {
     const p = match.url + "/" + (entry_id ? `entry/${entry_id}` : 'entry')
     history.push(p)
   }
-
-  const changeSearch = e => setSearch(e.target.value.toLowerCase())
 
   const renderEntries = () => {
     if (!filtered.length) {
@@ -111,7 +146,7 @@ export function Entries({group_id=null}) {
     const filteredPage = !usePaging ? filtered :
         filtered.slice(page*pageSize, page*pageSize + pageSize)
     return <Card>
-      {filteredPage.map(e => <EntryTeaser e={e} gotoForm={gotoForm} key={e.id}/> )}
+      {filteredPage.map(eid => <EntryTeaser eid={eid} gotoForm={gotoForm} key={eid}/> )}
       <Card.Footer>
         {usePaging && <div style={{overflowX: 'scroll'}}>
           <ButtonGroup aria-label="Page">
@@ -127,21 +162,7 @@ export function Entries({group_id=null}) {
     </Card>
   }
 
-  const _search = <div className='mb-3'>
-    <Form.Label htmlFor="formSearch" srOnly>Search</Form.Label>
-    <InputGroup>
-      <InputGroup.Prepend>
-        <InputGroup.Text><FaSearch /></InputGroup.Text>
-      </InputGroup.Prepend>
-      <Form.Control
-        id='formSearch'
-        type="text"
-        value={search}
-        onChange={changeSearch}
-        placeholder="Search"
-      />
-    </InputGroup>
-  </div>
+  const _search = <Search trigger={setSearch} />
 
   const _newButton = as ? null : <div className='mb-3'>
     <Button

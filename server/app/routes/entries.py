@@ -8,6 +8,7 @@ from sqlalchemy import text
 import common.models as M
 from urllib.parse import quote as urlencode
 from common.pydantic.utils import BM, BM_ORM, BM_ID
+from common.pydantic.ws import ResWrap
 import common.pydantic.entries as PyE
 from common.pydantic.ws import MessageOut
 from common.errors import NotFound, CantSnoop, GnothiException
@@ -54,7 +55,8 @@ class Entries:
         db.commit()
         db.refresh(entry)
 
-        entry.update_snoopers(d.db)
+        # FIXME
+        # entry.update_snoopers(d.db)
         M.Entry.run_models(db, entry)
         db.commit()
 
@@ -62,16 +64,16 @@ class Entries:
 
     @staticmethod
     async def on_entries_get(data: BM, d) -> List[PyE.EntryGet]:
-        return M.Entry.snoop(d.db, d.vid, d.uid).all()
+        e = M.Entry.snoop(d.db, d.vid, d.uid).all()
+        return ResWrap(keyby='id', data=e)
 
     @staticmethod
-    async def on_entries_post(data: PyE.EntryPost, d) -> PyE.EntryGet:
+    async def on_entries_post(data: PyE.EntryPost, d) -> List[PyE.EntryGet]:
         # background_tasks.add_task(ga, viewer.id, 'feature', 'entry')
         if d.snooping:
             raise CantSnoop()
         entry = Entries._entries_put_post(data, d)
-        await d.mgr.send_other('entries/entries/get', {}, d)
-        return entry
+        return ResWrap(id=entry.id, keyby='id', action_as='entries/entries/get', data=[entry], op='prepend')
 
     @staticmethod
     async def on_entry_get(data: BM_ID, d) -> PyE.EntryGet:
@@ -92,14 +94,14 @@ class Entries:
             .first()
 
     @staticmethod
-    async def on_entry_put(data: PyE.EntryPut, d) -> PyE.EntryGet:
+    async def on_entry_put(data: PyE.EntryPut, d) -> List[PyE.EntryGet]:
         if d.snooping:
             raise CantSnoop()
-
         entry = M.Entry.snoop(d.db, d.vid, d.uid, entry_id=data.id).first()
         if not entry:
             raise NotFound("Entry not found")
-        return Entries._entries_put_post(data, d, entry)
+        entry = Entries._entries_put_post(data, d, entry)
+        return ResWrap(keyby='id', action_as='entries/entries/get', data=[entry], op='update')
 
     @staticmethod
     async def on_entry_delete(data: BM_ID, d) -> Dict:
@@ -111,6 +113,7 @@ class Entries:
             raise NotFound("Entry not found")
         entry.delete()
         d.db.commit()
+        await d.mgr.exec(d, action='entries/entries/get')
         return {'id': data.id}
 
     @staticmethod

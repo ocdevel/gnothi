@@ -1,3 +1,4 @@
+from typing import Any
 from pydantic import BaseModel, UUID4
 import orjson
 
@@ -25,6 +26,7 @@ class BM_ORM(BaseModel):
 
 
 default_privacies = 'username first_name last_name gender orientation birthday timezone bio'.split()
+
 
 def apply_privacies(d, extra_privacies=[]):
     """

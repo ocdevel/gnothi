@@ -11,14 +11,24 @@ class MessageIn(BM):
     data: Optional[Dict] = {}
 
 
-class MessageOut(BM):
+class ResWrap(BM):
+    """
+    Wraps WS responses in case extra info is needed.
+    """
+    data: Any
+    id: Optional[UUID4] = None
+    keyby: Optional[str] = None
+    op: Optional[str] = None
+    action_as: Optional[str] = None
+    uids: Optional[List[str]] = None
+
+
+class MessageOut(ResWrap):
     action: str
     error: Optional[str] = None
     detail: Optional[str] = None
     code: Optional[int] = 200
     data: Optional[Any] = {}
-    # ID of the primary object being requested, if necessary
-    id: Optional[str] = None
 
 
 class JobStatusOut(BM):

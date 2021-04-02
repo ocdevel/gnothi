@@ -13,7 +13,7 @@ import sqlalchemy as sa
 import sqlalchemy.orm as orm
 from starlette.websockets import WebSocketDisconnect, WebSocket
 from pydantic import BaseModel, parse_obj_as
-from common.pydantic.ws import MessageIn, MessageOut, JobStatusOut
+from common.pydantic.ws import MessageIn, MessageOut, JobStatusOut, ResWrap
 from common.errors import GnothiException, NotFound, InvalidJwt
 import logging
 from starlette.concurrency import run_until_first_complete
@@ -213,9 +213,12 @@ class WSManager(BroadcastHelpers):
                 output = output[0]
             elif uids is None:
                 uids = [d.vid]
+            msg_args = {}
+            if type(output) == ResWrap:
+                msg_args = output.dict()
+                output = msg_args.pop('data')
             output = parse_obj_as(model, output)
-            pk = getattr(input, 'id', None)
-            output = MessageOut(action=action, data=output, id=str(pk))
+            output = MessageOut(action=action, data=output, **msg_args)
             await self.send(output, uids=uids)
         except GnothiException as exc:
             return await self.send_error(self.users[d.vid], action, exc)

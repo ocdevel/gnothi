@@ -8,7 +8,7 @@ export default function Error({
   action=null,  // regex
   codes=null
 }) {
-  const [detail, setDetail] = useState(null)
+  const [details, setDetails] = useState([])
 
   useEffect(() => {
     if (!(action || codes)) {return}
@@ -17,31 +17,32 @@ export default function Error({
   }, [])
 
   useEffect(() => {
-    setDetail(message || null)
+    if (message) {addDetail(message)}
+    else {clearDetails()}
   }, [message])
+
+  function addDetail(detail) {
+    if (!detail?.length) {return}
+    setDetails([...details, detail])
+  }
+
+  function clearDetails() {setDetails([])}
 
   function checkWsReponse(data) {
     const cm = codes && ~codes.indexOf(data.code)
     const am = action && data.action?.match(action)
     const match = (codes && action) ? (cm && am) : (cm || am)
     if (match) {
-      setDetail(`${data.error}: ${data.detail}`)
-    } else {
-      setDetail(null)
+      addDetail(data.detail)
     }
   }
 
-  function close() {
-    setDetail(null)
-  }
+  if (!details.length) {return null}
 
-  if (!detail) {
-    return null
-  }
   return (
-    <Alert variant="danger" onClose={close} dismissible>
+    <Alert variant="danger" onClose={clearDetails} dismissible>
       {/*<Alert.Heading>Oh snap! You got an error!</Alert.Heading>*/}
-      <div>{detail}</div>
+      {details.map(d => <div key={d}>{d}</div>)}
     </Alert>
   );
 }

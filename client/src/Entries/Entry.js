@@ -90,12 +90,14 @@ export function Entry({entry_id, close=null}) {
   const [tags, setTags] = useState({})
   const [advanced, setAdvanced] = useState(false)
   const [cacheEntry, setCacheEntry] = useState()
-  const entry = useStoreState(s => s.ws.data['entries/entry/get'])
-  const entryGet = useStoreState(s => s.ws.res['entries/entry/get'])
+  const entries = useStoreState(s => s.ws.data['entries/entries/get'].obj)
   const entryPost = useStoreState(s => s.ws.res['entries/entries/post'])
   const entryPut = useStoreState(s => s.ws.res['entries/entry/put'])
+  const entryDel = useStoreState(s => s.ws.res['entries/entry/delete'])
   const cache = useStoreState(s => s.ws.data['entries/entry/cache/get'])
+  const clearRes = useStoreActions(a => a.ws.clearRes)
 
+  const entry = entry_id && entries?.[entry_id]
   const showCacheEntry = !editing && entry_id && cacheEntry
   const draftId = `draft-${entry_id || "new"}`
 
@@ -117,16 +119,25 @@ export function Entry({entry_id, close=null}) {
   }, [cache])
 
   useEffect(() => {
-    EE.on("wsResponse", data => {
-      if (data.action === 'entries/entries/post' && data.code === 200) {
-        return go(`/j/entry/${data.data.id}`)
-      }
-      if (data.action === 'entries/entry/delete' && data.code === 200) {
-        return go()
-      }
-    })
-    return () => EE.off("wsResponse")
+    return () => {
+      clearRes(['entries/entry/delete', 'entries/entries/post', 'entries/entry/put'])
+    }
   }, [])
+
+  useEffect(() => {
+    if (entryPost?.code === 200 && entryPost?.id) {
+      setEditing(false)
+      go(`/j/entry/${entryPost.id}`)
+    }
+  }, [entryPost])
+
+  useEffect(() => {
+    if (entryPut?.code === 200) {setEditing(false)}
+  }, [entryPut])
+
+  useEffect(() => {
+    if (entryDel?.code === 200) {go()}
+  }, [entryDel])
 
   const loadDraft = () => {
     const draft = localStorage.getItem(draftId)

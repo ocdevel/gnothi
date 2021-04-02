@@ -22,14 +22,6 @@ let ws;
 
 export const EE = new EventEmitter()
 
-// on certain ops, overwrite another value. Eg, when running PUT/POST we'll
-// want to overwrite the last GET value. We could trigger this server-side to
-// send back a new GET op, but this allows more efficiency since often the object
-// is already in hand (wouldn't need to re-load via the other operation)
-const mapTo = {
-  'entries/entries/post': 'entries/entry/get',
-  'entries/entry/put': 'entries/entry/get',
-}
 
 // Not strictly necessary, but saves time needing to do state.data[k] || x in components
 const defaultVals = {
@@ -49,7 +41,7 @@ const defaultVals = {
     therapist: false
   },
 
-  'entries/entries/get': [],
+  'entries/entries/get': {arr: [], obj: {}},
   'entries/notes/get': [],
   // entriesIds: [],
   // entriesObj: {},
@@ -138,14 +130,34 @@ export const store = {
     const {data, ...rest} = res
     state.res[res.action] = rest
   }),
+  clearRes: action((s, actions) => {
+    actions.forEach(a => {s.res[a] = null})
+  }),
   // Tracks actual response data
   data: defaultVals,
   setData: action((state, res) => {
-    const {data, ...rest} = res
-    state.data[rest.action] = data
-    const mapTo_ = mapTo[rest.action]
-    if (mapTo_) {
-      state.data[mapTo_] = data
+    let {data, action, keyby, action_as, op} = res
+
+    // Handle special responses (redirects, key-by for arr/obj, and opts
+    if (keyby) {
+      data = {
+        arr: _.map(data, d => _.get(d, keyby)),
+        obj: _.reduce(data, (m, v) => ({...m, [_.get(v, keyby)]: v}), {})
+      }
+    }
+
+    action = action_as || action
+    if (!op) {
+      state.data[action] = data
+      return
+    }
+
+    const curr = state.data[action]
+    if (~['update', 'prepend', 'append'].indexOf(op)) {
+      curr.obj = {...curr.obj, ...data.obj}
+    }
+    if (~['prepend', 'append'].indexOf(op)) {
+      curr.arr = op === 'prepend' ? [...data.arr, ...curr.arr] : [...curr.arr, ...data.arr]
     }
   }),
 
