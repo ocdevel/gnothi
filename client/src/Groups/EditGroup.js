@@ -185,6 +185,37 @@ export default function EditGroup({show, close, group=null}) {
             {privacies.map((p) => <PrivacyOpt p={p} key={p.k} form={form} setForm={setForm}/>)}
           </Card.Body></Card>
         </Form.Group>
+
+        <Form.Label>Perks</Form.Label>
+        <Card><Card.Body>
+          <Form.Control>
+            <Form.Label>
+              Membership
+            </Form.Label>
+            <Form.Control
+              type='number'
+              placeholder="Price of membership"
+            />
+          </Form.Control>
+          <Form.Control>
+            <Form.Label>
+              Personal Responses
+            </Form.Label>
+            <Form.Control
+              type='number'
+              placeholder="Price of personal responses"
+            />
+          </Form.Control>
+          <Form.Control>
+            <Form.Label>
+              Video sessions
+            </Form.Label>
+            <Form.Control
+              type='number'
+              placeholder="Price of membership"
+            />
+          </Form.Control>
+        </Card.Body></Card>
       </Form>
     </>
   }

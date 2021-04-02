@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 
 from common.database import Base, with_db
 from common.utils import vars
-from common.errors import AccessDenied, GroupDenied
+from common.errors import AccessDenied, GroupDenied, GnothiException
 from common.seed import ADMIN_ID, GROUP_ID as MAIN_GROUP
 
 import sqlalchemy as sa
@@ -171,6 +171,7 @@ class Entry(Base):
     id = IDCol()
     created_at = DateCol()
     updated_at = DateCol(update=True)
+    n_notes = sa.Column(sa.Integer, server_default="0")
 
     # Title optional, otherwise generated from text. topic-modeled, or BERT summary, etc?
     title = Encrypt()
@@ -281,6 +282,7 @@ class NoteTypes(enum.Enum):
     label = "label"
     note = "note"
     resource = "resource"
+    comment = "comment"
 
 
 class Note(Base):
@@ -289,12 +291,29 @@ class Note(Base):
     created_at = DateCol()
     entry_id = FKCol('entries.id', index=True)
     user_id = FKCol('users.id', index=True)
-    type = sa.Column(sa.Enum(NoteTypes), nullable=False)
+    type = sa.Column(sa.Enum(NoteTypes), nullable=False, default=NoteTypes.comment.value)
     text = Encrypt(sa.Unicode, nullable=False)
     private = sa.Column(sa.Boolean, server_default='false')
 
     user = orm.relationship("User")
     entry = orm.relationship("Entry")
+
+    @staticmethod
+    def add_note(db, vid, data):
+        eid = data.entry_id
+        db.add(Note(
+            user_id=vid,
+            entry_id=eid,
+            type=data.type,
+            text=data.text,
+            private=data.private
+        ))
+        db.commit()
+        db.execute(sa.text("""
+        update entries e set n_notes=(select count(*) from notes where entry_id=:eid)
+        where e.id=:eid
+        """), dict(eid=eid))
+        return NoteNotif.create_notifs(db, eid)
 
     @staticmethod
     def snoop(
@@ -526,6 +545,7 @@ class Share(Base):
     user_id = FKCol('users.id', index=True)
     created_at = DateCol()
 
+    # profile = sa.Column(sa.Boolean, server_default="false")
     email = sa.Column(sa.Boolean, server_default="false")
     username = sa.Column(sa.Boolean, server_default="true")
     first_name = sa.Column(sa.Boolean, server_default="false")
@@ -535,10 +555,10 @@ class Share(Base):
     birthday = sa.Column(sa.Boolean, server_default="false")
     timezone = sa.Column(sa.Boolean, server_default="false")
     bio = sa.Column(sa.Boolean, server_default="false")
+    people = sa.Column(sa.Boolean, server_default="false")
 
     fields = sa.Column(sa.Boolean, server_default="false")
     books = sa.Column(sa.Boolean, server_default="false")
-    # profile = sa.Column(sa.Boolean, server_default="false")
 
     user = orm.relationship("User")
     shares_users = orm.relationship("ShareUser")
@@ -1110,9 +1130,15 @@ class Group(Base):
     text_short = Encrypt(sa.Unicode, nullable=False)
     text_long = Encrypt(sa.Unicode)
     privacy = sa.Column(sa.Enum(GroupPrivacy), server_default=GroupPrivacy.public.value, nullable=False)
+    searchable = sa.Column(sa.Boolean, server_default="true")
     official = sa.Column(sa.Boolean, server_default="false")
     created_at = DateCol()
     updated_at = DateCol(update=True)
+    n_members = sa.Column(sa.Integer, server_default="0")
+
+    perk_membership = sa.Column(sa.Float, server_default="0")
+    perk_entries = sa.Column(sa.Float, server_default="0")
+    perk_videos = sa.Column(sa.Float, server_default="0")
 
     owner = orm.relationship("User")
 
@@ -1129,15 +1155,21 @@ class Group(Base):
         )
 
     @staticmethod
-    def join_group(db, gid, uid, role=GroupRoles.member):
-        if db.query(UserGroup).filter_by(user_id=uid, group_id=gid).first():
-            return None
+    def join_group(db, gid, vid, role=GroupRoles.member):
+        if db.query(UserGroup).filter(UserGroup.user_id == vid, UserGroup.group_id == gid).first():
+            # already joined
+            raise GnothiException(400, "ALREADY_JOINED", "You've already joined this group")
         ug = UserGroup(
-            user_id=uid,
+            user_id=vid,
             group_id=gid,
             role=role
         )
         db.add(ug)
+        db.execute(sa.text("""
+        update groups g 
+        set n_members=(select count(*) from users_groups ug where ug.group_id=:gid)
+        where g.id=:gid
+        """), dict(gid=gid))
         db.commit()
         return ug
 
@@ -1296,7 +1328,8 @@ class NoteNotif(Base):
             -- and anyone shared
             union
             select u.id from users u
-            inner join shares s on s.email=u.email
+            inner join shares_users su on su.obj_id=u.id
+            inner join shares s on s.id=su.share_id
             inner join shares_tags st on st.share_id=s.id
             inner join entries_tags et on st.tag_id=et.tag_id
             inner join entries e on e.id=et.entry_id and e.id=:eid

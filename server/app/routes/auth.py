@@ -99,6 +99,7 @@ class Auth:
         )
 
     @staticmethod
+    # @ratelimiter
     async def on_old_login(data: SILogin, d) -> Dict:
         user = d.db.query(M.User).filter_by(email=data.email)\
             .with_entities(M.User.email, M.User.hashed_password)\
@@ -110,16 +111,6 @@ class Auth:
         if not verified:
             return dict(wrong=True)
         await Auth.migrate_user(d.db, data.email, data.password)
-        return dict(migrated=True)
-
-    @staticmethod
-    async def on_old_password_reset(data: SIEmail, d) -> Dict:
-        user = d.db.query(M.User).filter_by(email=data.email) \
-            .with_entities(M.User.email) \
-            .first()
-        if not user:
-            return dict(notexists=False)
-        await Auth.migrate_user(d.db, data.email)
         return dict(migrated=True)
 
 

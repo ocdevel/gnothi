@@ -119,11 +119,7 @@ class Entries:
 
     @staticmethod
     async def on_notes_post(data: PyE.NotePost, d) -> List[PyE.NoteOut]:
-        # TODO handle snooping
-        db = d.db
-        db.add(M.Note(user_id=d.vid, **data.dict()))
-        db.commit()
-        notifs = M.NoteNotif.create_notifs(db, data.entry_id)
+        notifs = M.Note.add_note(d.db, d.vid, data)
         await asyncio.wait([
             d.mgr.send_other('entries/notes/get', data, d, uids=[n.user_id for n in notifs]),
             Notifs._send_notifs(d, 'notifs/notes/get', notifs)

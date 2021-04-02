@@ -36,9 +36,9 @@ class NoteGet(BM):
 
 class NotePost(NoteGet):
     entry_id: UUID4
-    type: NoteTypes
+    type: Optional[NoteTypes] = NoteTypes.comment
+    private: Optional[bool] = False
     text: str
-    private: bool
 
 
 class NoteOut(BM_ORM, NotePost):

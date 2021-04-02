@@ -235,6 +235,8 @@ class WSManager(BroadcastHelpers):
     async def receive_message(self, websocket, message):
         try:
             message = MessageIn.parse_raw(message)
+            try: decode_jwt(message.jwt)
+            except: raise WebSocketDisconnect()
             with self.with_deps(websocket, message) as d:
                 await self.exec(d, action=message.action, input=message.data)
                 # await aioify(obj=self.checkin)(message, d)

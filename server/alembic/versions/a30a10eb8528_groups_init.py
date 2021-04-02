@@ -70,6 +70,13 @@ def migrate_shares(bind, sess):
     op.add_column('shares', sa.Column('email', sa.Boolean(), server_default='false', nullable=True))
 
 
+def migrate_entries(bind, sess):
+    op.add_column('entries', sa.Column('n_notes', sa.Integer(), server_default='0', nullable=True))
+    bind.execute("""
+    update entries e set n_notes=(select count(*) from notes where entry_id=e.id)
+    """)
+
+
 def upgrade():
     bind = op.get_bind()
     session = orm.Session(bind=bind)
@@ -77,6 +84,7 @@ def upgrade():
     
     migrate_users(bind, session)
     migrate_shares(bind, session)
+    migrate_entries(bind, session)
 
     op.drop_table('profile_matches')
     op.add_column('jobs', sa.Column('user_id', postgresql.UUID(as_uuid=True), nullable=True))

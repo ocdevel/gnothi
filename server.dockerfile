@@ -34,7 +34,8 @@ RUN pip install \
   python-jose \
   broadcaster[postgres] \
   alembic \
-  aioify
+  aioify \
+  slowapi
 
 COPY ./server/app /app/app
 COPY ./common /app/common
