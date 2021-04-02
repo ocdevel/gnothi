@@ -75,7 +75,7 @@ class Groups:
     async def on_groups_get(data: BM, d, uids=None) -> List[PyG.GroupOut]:
         res = d.db.query(M.Group).all()
         if uids is True:
-            uids = [uid for uid, _ in d.mgr.users.items()]
+            uids = d.mgr.uids()
         return ResWrap(data=res, keyby='id', uids=uids)
 
     @staticmethod
@@ -85,7 +85,7 @@ class Groups:
         for r in res:
             uid = str(r['user'].id)
             uids_.append(uid)
-            r['user_group'].online = uid in d.mgr.users
+            r['user_group'].online = uid in d.mgr.uids()
         uids_ = dict(uids=uids_) if uids is True else {}
         return ResWrap(data=res, keyby='user.id', **uids_)
 

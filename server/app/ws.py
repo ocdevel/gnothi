@@ -113,7 +113,7 @@ class Deps:
 class WSManager(BroadcastHelpers):
     def __init__(self):
         super().__init__()
-        self.users: Dict[str, WebSocket] = {}
+        self.users: List[(str, WebSocket)] = []
         asyncio.ensure_future(self.job_status_loop())
 
     async def job_status_loop(self):
@@ -122,7 +122,7 @@ class WSManager(BroadcastHelpers):
                 res = M.Machine.gpu_status(db)
                 res = MessageOut(action='jobs/status', data=JobStatusOut(status=res))
                 if self.users:
-                    await self.send(res, uids=[uid for uid, _ in self.users.items()])
+                    await self.send(res, uids=[uid for uid, _ in self.users])
                 await asyncio.sleep(2)
 
     async def init_socket(self, websocket, token):
@@ -144,17 +144,16 @@ class WSManager(BroadcastHelpers):
         uid = Auth._cognito_to_uid(token)
         if not uid:
             raise InvalidJwt()
-        self.users[str(uid)] = websocket
+        self.users.append((str(uid), websocket))
         # await self.send(MessageOut(action='user/ready'), uids=[uid])
 
-    def ws_to_uid(self, websocket):
-        itr = iter([k for k, v in self.users.items() if v == websocket])
-        return next(itr, None)
+    def uids(self):
+        return [uid for uid, _ in self.users]
 
     async def disconnect(self, websocket):
-        uid = self.ws_to_uid(websocket)
-        if uid:
-            del self.users[uid]
+        for tup in self.users:
+            if tup[1] != websocket: continue
+            self.users.remove(tup)
 
     def get_handler(self, action):
         split = action.split('/')
@@ -165,6 +164,12 @@ class WSManager(BroadcastHelpers):
         if not fn:
             raise NotFound(action)
         return fn
+
+    def ws_to_uid(self, websocket):
+        return next(iter([uid for uid, ws in self.users if ws == websocket]), None)
+
+    def uid_to_ws(self, uid):
+        return next(iter([ws for uid, ws in self.users if uid == uid]), None)
 
     @contextmanager
     def with_deps(self, websocket, message):
@@ -219,7 +224,7 @@ class WSManager(BroadcastHelpers):
             output = MessageOut(action=action, data=output, **msg_args)
             await self.send(output, uids=uids)
         except GnothiException as exc:
-            return await self.send_error(self.users[d.vid], action, exc)
+            return await self.send_error(self.uid_to_ws(d.vid), action, exc)
         except Exception as exc:
             traceback.print_exc()
             raise exc
@@ -237,7 +242,10 @@ class WSManager(BroadcastHelpers):
         try:
             message = MessageIn.parse_raw(message)
             try: decode_jwt(message.jwt)
-            except: raise WebSocketDisconnect()
+            except:
+                # TODO how do I properly disconnect? Trying both below
+                websocket.close()
+                raise WebSocketDisconnect()
             with self.with_deps(websocket, message) as d:
                 await self.exec(d, action=message.action, input=message.data)
                 await aioify(obj=self.checkin)(message, d)
@@ -253,10 +261,11 @@ class WSManager(BroadcastHelpers):
         websockets: List[WebSocket] = None
     ):
         if uids:
+            uids = [str(uid) for uid in uids]
             websockets = [
-                self.users[str(uid)]
-                for uid in uids
-                if str(uid) in self.users]
+                ws for uid, ws in self.users
+                if uid in uids
+            ]
         if not websockets: return
         await asyncio.wait([
             ws.send_text(obj.json())
