@@ -845,7 +845,6 @@ class Bookshelf(Base):
 
     @staticmethod
     def top_books(db):
-        return []
         sql = f"""
         with books_ as (
             select b.id, count(s.shelf) ct from books b

@@ -34,7 +34,6 @@ class Users:
                 'users/user/get',
                 'fields/field_entries/has_dupes/get',
                 'shares/ingress/get',
-                'insights/top_books/get',
                 'groups/mine/get'
             ]
         await asyncio.wait([

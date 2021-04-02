@@ -22,7 +22,9 @@ import './style.scss'
 
 import {useStoreState, useStoreActions} from "easy-peasy";
 import {FaQuestion} from "react-icons/fa/index";
-import {AiOutlineUserSwitch, GiSpy, RiSpyLine} from "react-icons/all";
+import {AiOutlineUserSwitch, GiSpy, IoEllipsisHorizontalSharp, RiSpyLine} from "react-icons/all";
+import TopBooks from "./TopBooks";
+import Links from "./Links";
 
 function IconItem({icon, text}) {
   return <div className='d-flex align-items-center'>
@@ -31,8 +33,8 @@ function IconItem({icon, text}) {
   </div>
 }
 
-function ToggleSection({icon, text, children}) {
-  const [show, setShow] = useState(true)
+function ToggleSection({icon, text, children, open=true}) {
+  const [show, setShow] = useState(open)
   function toggle() {
     setShow(!show)
   }
@@ -123,18 +125,42 @@ function GroupsSection() {
     return <li><Link to={`/groups/${gid}`}>{obj[gid].title}</Link></li>
   }
 
-  return <ToggleSection icon={<FaRegComments />} text="Community">
-    <li>
-      <Link exact to='/groups'>All Groups</Link>
-    </li>
-    {arr?.length ? arr.map(renderGroup) : null}
-  </ToggleSection>
+  return <>
+    <ToggleSection icon={<FaRegComments />} text="Community">
+      <li>
+        <Link exact to='/groups'>All Groups</Link>
+      </li>
+      {arr?.length ? arr.map(renderGroup) : null}
+    </ToggleSection>
+  </>
+}
+
+function MiscSection() {
+  const [showTopBooks, setShowTopBooks] = useState(false)
+  const [showLinks, setShowLinks] = useState(false)
+  function toggleBooks() {
+    setShowTopBooks(!showTopBooks)
+  }
+  function toggleLinks() {
+    setShowLinks(!showLinks)
+  }
+
+  return <>
+    {showTopBooks && <TopBooks close={toggleBooks} />}
+    {showLinks && <Links close={toggleLinks} />}
+    <ToggleSection icon={<IoEllipsisHorizontalSharp />} text="Misc" open={false}>
+      <li>
+        <a onClick={toggleBooks}>Top Books</a>
+      </li>
+      <li>
+        <a onClick={toggleLinks}>Links</a>
+      </li>
+    </ToggleSection>
+  </>
 }
 
 export function Sidebar() {
   const aiStatus = useStoreState(s => s.ws.data['jobs/status'].status)
-
-  const [showInsights, setShowInsights] = useState(true)
 
   let aiStatus_ = null
   if (~['off', 'pending'].indexOf(aiStatus)) {
@@ -147,24 +173,27 @@ export function Sidebar() {
     </SimplePopover>
   }
 
-  return <nav className='nav-sb'>
-    <div className='nav-sb-header'>
-      <div>Gnothi {aiStatus_}</div>
-    </div>
-    <ul className="list-unstyled components">
-      <li className='nav-sb-bb'>
-        <Link to='/j'><IconItem icon={<FaRegListAlt />} text="Journal" /></Link>
-      </li>
-      <ToggleSection icon={<FaRobot />} text='AI'>
-        <li>
-          <Link to='/insights'><IconItem icon={<FaQuestion />} text="Insights" /></Link>
+  return <>
+    <nav className='nav-sb'>
+      <div className='nav-sb-header'>
+        <div>Gnothi {aiStatus_}</div>
+      </div>
+      <ul className="list-unstyled components">
+        <AccountSection />
+        <li className='nav-sb-bb'>
+          <Link to='/j'><IconItem icon={<FaRegListAlt />} text="Journal" /></Link>
         </li>
-        <li>
-          <Link to='/resources'><IconItem icon={<FaBook />} text="Books" /></Link>
-        </li>
-      </ToggleSection>
-      <GroupsSection />
-      <AccountSection />
-    </ul>
-  </nav>
+        <ToggleSection icon={<FaRobot />} text='AI'>
+          <li>
+            <Link to='/insights'><IconItem icon={<FaQuestion />} text="Insights" /></Link>
+          </li>
+          <li>
+            <Link to='/resources'><IconItem icon={<FaBook />} text="Book Recs" /></Link>
+          </li>
+        </ToggleSection>
+        <GroupsSection />
+        <MiscSection />
+      </ul>
+    </nav>
+  </>
 }
