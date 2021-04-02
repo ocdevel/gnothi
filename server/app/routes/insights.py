@@ -124,7 +124,7 @@ class Insights:
             raise CantSnoop()
         shelf = 'recommend' if d.snooping else data.shelf
         M.Bookshelf.upsert(d.db, d.uid, data.id, shelf)
-        # await d.mgr.send_other('insights/books/get', data, d)
+        # await d.mgr.exec(d, action='insights/books/get')
 
     @staticmethod
     async def on_books_get(data: PyI.ShelfGet, d) -> List[PyI.BookOut]:

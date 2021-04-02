@@ -11,13 +11,14 @@ import ReactMarkdown from "react-markdown";
 import Group from "./Group";
 import _ from 'lodash'
 
-export function GroupModal({show, close, group}) {
+export function GroupModal({show, close, gid}) {
   const history = useHistory()
   const emit = useStoreActions(a => a.ws.emit)
+  const group = useStoreState(s => s.ws.data['groups/groups/get']?.obj?.[gid])
 
   function joinGroup() {
-    emit(['groups/group/join', {id: group.id}])
-    history.push('/groups/' + group.id)
+    emit(['groups/group/join', {id: gid}])
+    history.push('/groups/' + gid)
   }
 
   return <>
@@ -54,14 +55,28 @@ export default function AllGroups() {
   const [showCreate, setShowCreate] = useState(false)
   const [showGroup, setShowGroup] = useState(null)
 
+  const {arr, obj} = groups
+  if (!arr?.length) {return null}
+
   function close() {setShowGroup(null)}
-  function openGroup(gid) {
-    const group = _.find(groups, {id: gid})
-    setShowGroup(group)
+
+  function renderGroup(gid) {
+    const g = obj[gid]
+    if (!g) {return null}
+    return <div key={gid}>
+      <Card className='mb-2 cursor-pointer' onClick={() => setShowGroup(gid)}>
+        <Card.Body>
+          <Card.Subtitle className='mb-2'>
+            {g.title}
+          </Card.Subtitle>
+          <div className='text-muted'>{g.text_short}</div>
+        </Card.Body>
+      </Card>
+    </div>
   }
 
   return <div>
-    {showGroup && <GroupModal show={true} close={close} group={showGroup} />}
+    {showGroup && <GroupModal show={true} close={close} gid={showGroup} />}
     <EditGroup
       close={() => setShowCreate(false)}
       show={showCreate}
@@ -73,15 +88,6 @@ export default function AllGroups() {
     >
       <FaPlus /> Create Group
     </Button>
-    {groups.map((g, i) => <div key={g.id}>
-      <Card className='mb-2 cursor-pointer' onClick={() => openGroup(g.id)}>
-        <Card.Body>
-          <Card.Subtitle className='mb-2'>
-            {g.title}
-          </Card.Subtitle>
-          <div className='text-muted'>{g.text_short}</div>
-        </Card.Body>
-      </Card>
-    </div>)}
+    {arr.map(renderGroup)}
   </div>
 }

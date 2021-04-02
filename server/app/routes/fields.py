@@ -18,7 +18,7 @@ class Fields:
     async def on_fields_get(data: BM, d) -> PyF.FieldsOut:
         if d.snooping and not d.user.share_data.fields:
             raise CantSnoop('fields')
-        await d.mgr.send_other('insights/influencers/get', {}, d)
+        await d.mgr.exec(d, action='insights/influencers/get')
         return {str(f.id): f for f in d.user.fields}
 
     @staticmethod
@@ -33,7 +33,7 @@ class Fields:
         f = M.Field(**data.dict())
         d.user.fields.append(f)
         d.db.commit()
-        await d.mgr.send_other('fields/fields/get', {}, d)
+        await d.mgr.exec(d, action='fields/fields/get')
 
     @staticmethod
     async def on_field_put(data: PyF.FieldPut, d):
@@ -43,7 +43,7 @@ class Fields:
             if k == 'id': continue
             setattr(f, k, v)
         d.db.commit()
-        await d.mgr.send_other('fields/fields/get', {}, d)
+        await d.mgr.exec(d, action='fields/fields/get')
 
     @staticmethod
     async def on_field_exclude(data: PyF.FieldExcludeIn, d):
@@ -51,14 +51,14 @@ class Fields:
         f = d.db.query(M.Field).filter_by(user_id=d.vid, id=data.id).first()
         f.excluded_at = data.excluded_at  # just do datetime.utcnow()?
         d.db.commit()
-        await d.mgr.send_other('fields/fields/get', {}, d)
+        await d.mgr.exec(d, 'fields/fields/get')
 
     @staticmethod
     async def on_field_delete(data: BM_ID, d):
         if d.snooping: raise CantSnoop()
         d.db.query(M.Field).filter_by(user_id=d.vid, id=data.id).delete()
         d.db.commit()
-        await d.mgr.send_other('fields/fields/get', {}, d)
+        await d.mgr.exec(d, action='fields/fields/get')
 
     @staticmethod
     async def on_field_entries_get(data: PyF.FieldEntriesIn, d) -> List[PyF.FieldEntryOut]:
@@ -85,31 +85,31 @@ class Fields:
     @staticmethod
     async def on_field_entries_clear_dupes_post(data: BM, d) -> Any:
         if d.snooping: raise CantSnoop()
-        db, send = d.db, d.mgr.send_other
+        db, send = d.db, d.mgr.exec
         db.execute(text("""
         delete from field_entries where user_id=:uid;
         update field_entries2 set dupes=null, dupe=0 where user_id=:uid
         """), dict(uid=d.vid))
         db.commit()
         await asyncio.wait([
-            send('fields/field_entries/has_dupes/get', {}, d),
-            send('fields/field_entries/get', {}, d),
+            send(d, action='fields/field_entries/has_dupes/get'),
+            send(d, action='fields/field_entries/get'),
         ])
 
     @staticmethod
     async def on_field_entries_clear_entries_post(data: BM, d) -> Any:
         if d.snooping: raise CantSnoop()
-        db, send = d.db, d.mgr.send_other
+        db, send = d.db, d.mgr.exec
         db.execute(text("""
         delete from field_entries where user_id=:uid;
         delete from field_entries2 where user_id=:uid;
         """), dict(uid=d.vid))
         db.commit()
         await asyncio.wait([
-            send('fields/field_entries/get', {}, d),
-            send('fields/field_entries/has_dupes/get', {}, d)
+            send(d, action='fields/field_entries/get'),
+            send(d, action='fields/field_entries/has_dupes/get')
         ])
-        await d.mgr.send_other('fields/field_entries/get', {}, d)
+        await send(d, action='fields/field_entries/get')
 
 
 @app.get('/field-entries/csv/{version}')

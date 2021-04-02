@@ -47,4 +47,4 @@ class Shares:
         d.db.query(M.Share).filter_by(user_id=d.vid, id=data.id).delete()
         d.db.commit()
         # FIXME this isn't getting received for some reason? (the others above work)
-        await d.mgr.send_other('shares/shares/get', {}, d)
+        await d.mgr.exec(d, action='shares/shares/get')

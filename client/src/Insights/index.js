@@ -52,7 +52,7 @@ export default function Insights() {
   const aiStatus = useStoreState(s => s.ws.data['jobs/status'].status)
   const setDays = useStoreActions(actions => actions.insights.setDays)
 
-  const ne = entries.length
+  const ne = entries?.arr?.length
   const nTools = _.reduce(tools, (m,v,k) => {
     return m + (ne >= v.minEntries ? 1 : 0)
   }, 0)

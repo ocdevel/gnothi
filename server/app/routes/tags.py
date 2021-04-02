@@ -18,7 +18,7 @@ class Tags:
         d.db.add(tag)
         d.db.commit()
         # d.db.refresh(tag)
-        await d.mgr.send_other('tags/tags/get', {}, d)
+        await d.mgr.exec(d, action='tags/tags/get')
 
     @staticmethod
     async def on_tag_put(data: PyT.TagIn, d):
@@ -28,7 +28,7 @@ class Tags:
         for k in ['name', 'selected']:
             if data.get(k): setattr(tag, k, data[k])
         d.db.commit()
-        await d.mgr.send_other('tags/tags/get', {}, d)
+        await d.mgr.exec(d, 'tags/tags/get')
 
     @staticmethod
     async def on_tag_delete(data: BM_ID, d):
@@ -38,7 +38,7 @@ class Tags:
             raise GnothiException(400, "CANT_DELETE", "Can't delete your main journal")
         tagq.delete()
         d.db.commit()
-        await d.mgr.send_other('tags/tags/get', {}, d)
+        await d.mgr.exec(d, 'tags/tags/get')
 
     @staticmethod
     async def on_tag_toggle(data: BM_ID, d):
@@ -54,4 +54,4 @@ class Tags:
             return
         row.selected = not row.selected
         d.db.commit()
-        await d.mgr.send_other('tags/tags/get', {}, d)
+        await d.mgr.exec(d, 'tags/tags/get')

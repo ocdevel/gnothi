@@ -55,12 +55,12 @@ const defaultVals = {
   fieldValues: {},
   'insights/influencers/get': {},
 
-  'groups/groups/get': [],
+  'groups/mine/get': {arr: [], obj: {}},
+  'groups/groups/get': {arr: [], obj: {}},
   'groups/group/get': {},
   'groups/messages/get': [],
-  'groups/members/get': [],
-  'groups/entries/get': [],
-  membersObj: {},
+  'groups/members/get': {arr: [], obj: {}},
+  'groups/entries/get': {arr: [], obj: []},
 
   'insights/books/get': [],
   // 'insights/question/post'
@@ -73,11 +73,6 @@ const custom = {
   'set_groups/message/get': action((state, data) => {
     const k = 'groups/messages/get'
     state.data[k] = [...state.data[k], data]
-  }),
-
-  'set_groups/members/get': action((s, d) => {
-    s.data['groups/members/get'] = d
-    s.data.membersObj = _.reduce(d, (m, v) => ({...m, [v.user.id]: v}), {})
   }),
 
   'set_tags/tags/get': action((state, data) => {

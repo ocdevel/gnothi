@@ -10,10 +10,10 @@ import common.pydantic.users as PyU
 class Habitica:
     @staticmethod
     async def _after_habitica(d):
-        send = d.mgr.send_other
+        send = d.mgr.exec
         await asyncio.wait([
-            send('users/user/get', {}, d),
-            send('fields/fields/get', {}, d)
+            send(d, action='users/user/get'),
+            send(d, action='fields/fields/get')
         ])
 
     @staticmethod

@@ -75,13 +75,6 @@ class Entries:
         entry = Entries._entries_put_post(data, d)
         return ResWrap(id=entry.id, keyby='id', action_as='entries/entries/get', data=[entry], op='prepend')
 
-    @staticmethod
-    async def on_entry_get(data: BM_ID, d) -> PyE.EntryGet:
-        entry = M.Entry.snoop(d.db, d.vid, d.uid, entry_id=data.id).first()
-        if not entry:
-            raise NotFound("Entry not found")
-        return entry
-
     # TODO fit this into current system, just threw it in
     @staticmethod
     async def on_entry_cache_get(data: BM_ID, d) -> PyE.CacheEntryGet:
@@ -124,7 +117,7 @@ class Entries:
     async def on_notes_post(data: PyE.NotePost, d) -> List[PyE.NoteOut]:
         notifs = M.Note.add_note(d.db, d.vid, data)
         await asyncio.wait([
-            d.mgr.send_other('entries/notes/get', data, d, uids=[n.user_id for n in notifs]),
+            d.mgr.exec(d, action='entries/notes/get', input=data, uids=[n.user_id for n in notifs]),
             Notifs._send_notifs(d, 'notifs/notes/get', notifs)
         ])
 

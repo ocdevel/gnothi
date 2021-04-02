@@ -10,10 +10,8 @@ import {trueObj} from "../../utils";
 import {FaArrowLeft} from "react-icons/all";
 
 function Share({s}) {
-  let myGroups = useStoreState(s => s.ws.data['groups/mine/get'])
+  let myGroups = useStoreState(s => s.ws.data['groups/mine/get']?.obj)
   const setSharePage = useStoreActions(a => a.user.setSharePage)
-
-  myGroups = myGroups?.length ? _.keyBy(myGroups, 'id') : {}
 
   function renderList(icon, arr, map_=_.identity) {
     arr = _.compact(arr)

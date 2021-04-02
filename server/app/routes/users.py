@@ -38,7 +38,7 @@ class Users:
                 'groups/mine/get'
             ]
         await asyncio.wait([
-            d.mgr.send_other(r, {}, d)
+            d.mgr.exec(d, action=r)
             for r in routes
         ])
 
@@ -105,7 +105,7 @@ class Users:
         p = M.Person(**data.dict())
         d.user.people.append(p)
         d.db.commit()
-        await d.mgr.send_other("users/people/get", {}, d)
+        await d.mgr.exec(d, action="users/people/get")
 
     @staticmethod
     async def on_person_put(data: PyU.PersonPut, d):
@@ -116,7 +116,7 @@ class Users:
             if k == 'id': continue
             setattr(p, k, v)
         d.db.commit()
-        await d.mgr.send_other("users/people/get", {}, d)
+        await d.mgr.exec(d, action="users/people/get")
 
 
     @staticmethod
@@ -125,6 +125,6 @@ class Users:
         pq = d.db.query(M.Person).filter_by(user_id=d.vid, id=data.id)
         pq.delete()
         d.db.commit()
-        await d.mgr.send_other("users/people/get", {}, d)
+        await d.mgr.exec(d, action="users/people/get")
 
 users_router = None

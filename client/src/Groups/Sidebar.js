@@ -16,10 +16,10 @@ function Me() {
   const history = useHistory()
   const emit = useStoreActions(actions => actions.ws.emit);
   const uid = useStoreState(s => s.ws.data['users/user/get']?.id)
-  const membersObj = useStoreState(s => s.ws.data.membersObj)
+  const members = useStoreState(s => s.ws.data['groups/members/get']?.obj)
   const setSharePage = useStoreActions(s => s.user.setSharePage)
 
-  const me = membersObj?.[uid]
+  const me = members?.[uid]
   const role = me?.user_group?.role
   const shareId = me?.share?.id
 
@@ -118,11 +118,20 @@ function Member({row}) {
 
 function Members({gid}) {
   const members = useStoreState(s => s.ws.data['groups/members/get'])
+  if (!members?.arr?.length) {return null}
+  const {arr, obj} = members
+
+  function renderMember(m) {
+    const member = obj?.[m]
+    if (!member?.user?.id) {return null}
+    return <li key={member.user.id}>
+      <Member row={member} />
+    </li>
+  }
+
   return <><Card.Subtitle>Members</Card.Subtitle>
     <ul className="list-unstyled">
-      {members?.map(m => m?.user?.id && <li key={m.user.id}>
-        <Member row={m} />
-      </li>)}
+      {arr.map(renderMember)}
     </ul>
   </>
 }

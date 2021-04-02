@@ -5,9 +5,9 @@ import React from "react";
 
 export default function Groups({groups, setGroups}) {
   const emit = useStoreActions(a => a.ws.emit)
-  const myGroups = useStoreState(s => s.ws.data['groups/mine/get'])
+  const {arr, obj} = useStoreState(s => s.ws.data['groups/mine/get'])
 
-  if (!myGroups) {return null}
+  if (!arr?.length) {return null}
 
   const check = k => e => {
     setGroups({...groups, [k]: e.target.checked})
@@ -15,14 +15,14 @@ export default function Groups({groups, setGroups}) {
 
   return <Form.Group>
     <Form.Label>Groups</Form.Label>
-    {_.map(myGroups, (v, k) => (
+    {arr.map(gid => (
         <Form.Check
-          key={v.id}
-          id={`groups-${v.id}`}
+          key={gid}
+          id={`groups-${gid}`}
           type="checkbox"
-          label={v.title}
-          checked={groups[v.id]}
-          onChange={check(v.id)}
+          label={obj[gid].title}
+          checked={groups[gid]}
+          onChange={check(gid)}
         />
     ))}
   </Form.Group>

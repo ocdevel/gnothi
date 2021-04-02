@@ -103,7 +103,6 @@ export function Entry({entry_id, close=null}) {
 
   useEffect(() => {
     if (!entry_id) { return loadDraft() }
-    emit(['entries/entry/get', {id: entry_id}])
   }, [entry_id])
 
   useEffect(() => {

@@ -5,7 +5,7 @@ from typing import List, Dict, Any, Optional
 from pydantic import parse_obj_as, UUID4
 from common.errors import AccessDenied, CantSnoop, NotFound
 from common.pydantic.utils import BM_ID, BM
-from common.pydantic.ws import MessageOut
+from common.pydantic.ws import ResWrap
 import sqlalchemy as sa
 import common.pydantic.entries as PyE
 
@@ -69,15 +69,14 @@ class Groups:
         g = d.db.query(M.Group).get(data.id)
         if uids is True:
             uids = M.UserGroup.get_uids(d.db, data.id)
-            return g, uids
-        return g
+        return ResWrap(data=g, uids=uids)
 
     @staticmethod
-    async def on_groups_get(data: BM, d, uids=False) -> List[PyG.GroupOut]:
+    async def on_groups_get(data: BM, d, uids=None) -> List[PyG.GroupOut]:
         res = d.db.query(M.Group).all()
         if uids is True:
-            return res, [uid for uid, _ in d.mgr.users.items()]
-        return res
+            uids = [uid for uid, _ in d.mgr.users.items()]
+        return ResWrap(data=res, keyby='id', uids=uids)
 
     @staticmethod
     async def on_members_get(data: BM_ID, d, uids=None) -> List[PyG.MembersOut]:
@@ -87,9 +86,8 @@ class Groups:
             uid = str(r['user'].id)
             uids_.append(uid)
             r['user_group'].online = uid in d.mgr.users
-        if uids is True:
-            return res, uids_
-        return res
+        uids_ = dict(uids=uids_) if uids is True else {}
+        return ResWrap(data=res, keyby='user.id', **uids_)
 
     @staticmethod
     async def on_groups_post(data: PyG.GroupPost, d) -> PyG.GroupOut:
@@ -123,15 +121,14 @@ class Groups:
 
     @staticmethod
     async def on_mine_get(data: BM, d) -> List[PyG.GroupOut]:
-        return M.Group.my_groups(d.db, d.vid)
+        g = M.Group.my_groups(d.db, d.vid)
+        return ResWrap(data=g, keyby='id')
 
     @staticmethod
     async def on_entries_get(data: BM_ID, d, uids=None) -> List[PyE.EntryGet]:
         # TODO handle uids=[], need to not use d.vid
         res = M.Entry.snoop(d.db, d.vid, d.vid, group_id=data.id).all()
-        if uids is True:
-            return res, [d.vid]
-        return res
+        return ResWrap(data=res, keyby='id', uids=[d.vid])
 
 
 groups_router = None

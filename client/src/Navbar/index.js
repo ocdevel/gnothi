@@ -117,16 +117,17 @@ function AccountSection() {
 
 function GroupsSection() {
   const groups = useStoreState(s => s.ws.data['groups/mine/get'])
+  const {arr, obj} = groups
 
-  function renderGroup(g) {
-    return <li><Link to={`/groups/${g.id}`}>{g.title}</Link></li>
+  function renderGroup(gid) {
+    return <li><Link to={`/groups/${gid}`}>{obj[gid].title}</Link></li>
   }
 
   return <ToggleSection icon={<FaRegComments />} text="Community">
     <li>
       <Link exact to='/groups'>All Groups</Link>
     </li>
-    {groups?.length ? groups.map(renderGroup) : null}
+    {arr?.length ? arr.map(renderGroup) : null}
   </ToggleSection>
 }
 

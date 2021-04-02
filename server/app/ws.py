@@ -185,8 +185,8 @@ class WSManager(BroadcastHelpers):
     async def exec(
         self,
         d: Deps,
-        fn: Callable = None,
         action: str = None,
+        fn: Callable = None,
         input: Any = {},
         output: Any = None,  # allow passing in response and skipping call
         model: BaseModel = None,  # allow sending output directly
@@ -208,15 +208,13 @@ class WSManager(BroadcastHelpers):
                 output = await fn(*args, **kwargs)
             if output is None or model == Signature.empty:
                 return
-            if uids is True:
-                uids = output[1]
-                output = output[0]
-            elif uids is None:
-                uids = [d.vid]
             msg_args = {}
+            uids = None
             if type(output) == ResWrap:
                 msg_args = output.dict()
                 output = msg_args.pop('data')
+                uids = msg_args.pop('uids')
+            uids = uids or [d.vid]
             output = parse_obj_as(model, output)
             output = MessageOut(action=action, data=output, **msg_args)
             await self.send(output, uids=uids)
@@ -242,7 +240,7 @@ class WSManager(BroadcastHelpers):
             except: raise WebSocketDisconnect()
             with self.with_deps(websocket, message) as d:
                 await self.exec(d, action=message.action, input=message.data)
-                # await aioify(obj=self.checkin)(message, d)
+                await aioify(obj=self.checkin)(message, d)
         except WebSocketDisconnect:
             raise WebSocketDisconnect()
         except (GnothiException, Exception) as exc:
@@ -264,9 +262,6 @@ class WSManager(BroadcastHelpers):
             ws.send_text(obj.json())
             for ws in websockets
         ])
-
-    async def send_other(self, action, data, d, uids=None):
-        await self.exec(d, action=action, input=data, uids=uids)
 
 
 def jwt_auth(args):

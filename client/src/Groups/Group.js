@@ -13,7 +13,7 @@ import ReactMarkdown from "react-markdown";
 function Messages() {
   const uid = useStoreState(s => s.ws.data['users/user/get']?.id)
   let messages = useStoreState(s => s.ws.data['groups/messages/get'])
-  let members = useStoreState(s => s.ws.data['groups/members/get'])
+  let members = useStoreState(s => s.ws.data['groups/members/get']?.obj)
   const el = useRef()
 
   useLayoutEffect(() => {
