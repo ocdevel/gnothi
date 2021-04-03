@@ -5,7 +5,6 @@ from typing import Union, List, Dict, Any, Callable
 from fastapi import FastAPI
 from common.database import with_db
 import common.models as M
-from app.app_app import app
 from common.utils import SECRET, vars
 from box import Box
 from app.analytics import ga
@@ -23,33 +22,8 @@ logger = logging.getLogger(__name__)
 
 from inspect import signature, Signature
 
-
-from app.routes.auth import Auth, decode_jwt
-from app.routes.users import Users
-from app.routes.groups import Groups
-from app.routes.insights import Insights
-from app.routes.entries import Entries
-from app.routes.tags import Tags
-from app.routes.fields import Fields
-from app.routes.habitica import Habitica
-from app.routes.shares import Shares
-from app.routes.notifs import Notifs
-from app.routes.payments import Payments
-
-
-handlers = Box(
-    auth=Auth,
-    groups=Groups,
-    users=Users,
-    insights=Insights,
-    entries=Entries,
-    tags=Tags,
-    fields=Fields,
-    habitica=Habitica,
-    shares=Shares,
-    notifs=Notifs,
-    payments=Payments
-)
+from . import handlers, Auth, Insights
+from app.ws.auth import decode_jwt
 
 
 class BroadcastHelpers:
@@ -226,19 +200,20 @@ class WSManager(BroadcastHelpers):
             output = MessageOut(action=action, data=output, **msg_args)
             await self.send(output, uids=uids)
         except GnothiException as exc:
-            return await self.send_error(self.uid_to_ws(d.vid), action, exc)
+            return await self.send_error(action, exc, uid=d.vid)
         except Exception as exc:
             traceback.print_exc()
             raise exc
 
-    async def send_error(self, websocket, action, exc):
+    async def send_error(self, action, exc, uid=None, websocket=None):
         out = MessageOut(
             action=action,
             error=getattr(exc, 'error', str(exc)),
             detail=getattr(exc, 'detail', str(exc)),
             code=getattr(exc, 'code', 500),
         )
-        return await self.send(out, websockets=[websocket])
+        args = dict(uids=[uid]) if uid else dict(websockets=[websocket])
+        return await self.send(out, **args)
 
     async def receive_message(self, websocket, message):
         try:
@@ -254,7 +229,7 @@ class WSManager(BroadcastHelpers):
         except WebSocketDisconnect:
             raise WebSocketDisconnect()
         except (GnothiException, Exception) as exc:
-            await self.send_error(websocket, message.action, exc)
+            await self.send_error(message.action, exc, websocket=websocket)
 
     async def send(
         self,

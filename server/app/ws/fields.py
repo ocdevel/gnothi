@@ -1,14 +1,7 @@
 import pdb, io, asyncio
 from typing import List, Dict, Any
-from fastapi import Depends
-from app.app_app import app
-from app.app_jwt import jwt_user
-import sqlalchemy as sa
 from sqlalchemy import text
 import common.models as M
-import pandas as pd
-from fastapi.responses import StreamingResponse
-from app.utils.http import cant_snoop, send_error, getuser
 import common.pydantic.fields as PyF
 from common.pydantic.utils import BM, BM_ID
 from common.errors import CantSnoop
@@ -110,31 +103,3 @@ class Fields:
             send(d, action='fields/field_entries/has_dupes/get')
         ])
         await send(d, action='fields/field_entries/get')
-
-
-@app.get('/field-entries/csv/{version}')
-async def field_entries_csv(
-    version: str,
-    as_user: str = None,
-    viewer: M.User = Depends(jwt_user)
-):
-    user, snooping = getuser(viewer, as_user)
-    if snooping: return cant_snoop('Fields')
-    if version not in ('new', 'old'):
-        return send_error("table must be in (new|old)")
-
-    m = {'new': M.FieldEntry, 'old': M.FieldEntryOld}[version]
-    # Can't make direct query, since need field-name decrypted via sqlalchemy
-    # https://stackoverflow.com/a/31300355/362790 - load_only from joined tables
-    rows = db.session.query(m.created_at, m.value, M.Field) \
-        .filter(m.user_id == viewer.id) \
-        .join(M.Field, M.Field.id == m.field_id) \
-        .order_by(m.created_at.asc()) \
-        .all()
-    # https://stackoverflow.com/a/61910803/362790
-    df = pd.DataFrame([
-        dict(name=f.name, date=date, value=value, type=f.type, excluded_at=f.excluded_at,
-             default_value=f.default_value, default_value_value=f.default_value_value, service=f.service)
-        for (date, value, f) in rows
-    ])
-    return StreamingResponse(io.StringIO(df.to_csv(index=False)), media_type="text/csv")

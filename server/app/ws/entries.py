@@ -1,18 +1,16 @@
-import pdb, re, logging, boto3, asyncio
-import shortuuid
+import pdb, re, asyncio
 from typing import List, Dict, Any
-from fastapi import File, UploadFile
-from app.app_app import app
 import sqlalchemy as sa
 from sqlalchemy import text
 import common.models as M
-from urllib.parse import quote as urlencode
 from common.pydantic.utils import BM, BM_ORM, BM_ID
 from common.pydantic.ws import ResWrap
 import common.pydantic.entries as PyE
 from common.pydantic.ws import MessageOut
 from common.errors import NotFound, CantSnoop, GnothiException
-from app.routes.notifs import Notifs
+from app.ws.notifs import Notifs
+import common.models as M
+
 
 class Entries:
     @staticmethod
@@ -128,16 +126,3 @@ class Entries:
     @staticmethod
     async def on_note_delete():
         pass
-
-
-@app.post("/upload-image")
-async def upload_image_post(file: UploadFile = File(...)):
-    s3 = boto3.client("s3")
-
-    # https://github.com/tiangolo/fastapi/issues/1152
-    # s3.put_object(Body=file.file, Bucket='gnothiai.com', ContentType=file.content_type, Key=f"images/{file.filename}")
-    key = f"images/{shortuuid.uuid()}-{file.filename}"
-    extra = {"ContentType": file.content_type}  # , "ACL": "public-read"}
-    s3.upload_fileobj(file.file, "gnothiai.com", key, ExtraArgs=extra)
-    url = "https://s3.amazonaws.com/gnothiai.com/"
-    return {"filename": f"{url}{urlencode(key)}"}

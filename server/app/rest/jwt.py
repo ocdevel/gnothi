@@ -7,7 +7,7 @@ from fastapi.responses import JSONResponse
 from fastapi_jwt_auth.exceptions import AuthJWTException
 from fastapi_jwt_auth import AuthJWT
 
-from app.app_app import app
+from app.singletons.app import app
 from app.mail import send_mail
 from common.database import with_db
 import common.models as M
@@ -41,6 +41,7 @@ def get_config():
 
 
 router = APIRouter()
+
 
 @app.exception_handler(AuthJWTException)
 def authjwt_exception_handler(request: Request, exc: AuthJWTException):
