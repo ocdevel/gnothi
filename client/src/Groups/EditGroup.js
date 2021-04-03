@@ -9,7 +9,7 @@ import {
   Modal,
   Row,
   Col,
-  Alert
+  Alert, InputGroup, FormControl
 } from "react-bootstrap"
 import ReactMarkdown from "react-markdown"
 import MarkdownIt from 'markdown-it'
@@ -19,6 +19,10 @@ import {EE} from '../redux/ws'
 
 import {useStoreActions, useStoreState} from "easy-peasy";
 import Error from "../Error";
+import * as yup from "yup";
+import {useForm} from "react-hook-form";
+import {yupResolver} from "@hookform/resolvers/yup";
+import Stripe from "./Stripe";
 
 const mdParser = new MarkdownIt(/* Markdown-it options */);
 
@@ -39,9 +43,12 @@ const plugins = [
   // f3b13052: auto-resize
 ]
 
-function Editor({text, changeText}) {
+function Editor({form}) {
+  const [text, setText] = useState("")
+
   function onChange({html, text}) {
-    changeText(text)
+    setText(text)
+    form.setValue('text_long', text)
   }
 
   return (
@@ -57,82 +64,133 @@ function Editor({text, changeText}) {
   )
 }
 
+const notYet = <b>This feature isn't yet built, but you can enable it now and I'll notify you when it's available.</b>
+
 const privacies = [{
   k: 'public',
   v: 'Public',
-  h: "Any user can join this group."
+  h: "Any user can join this group. It's listed in the groups directory, and matched to users via Gnothi AI."
+}, {
+  k: 'matchable',
+  v: 'Matchable',
+  h: <>Any user can join this group, but they won't see it unless Gnothi AI considers them a good fit based on their journal entries. This is a layer of privacy for sensitive groups, Gnothi strives to find good culture fits.</>
 }, {
   k: 'private',
   v: 'Private',
-  h: "Group administrators must manually send invite links to users for them to join this group."
+  h: <>Group administrators must manually send invite links to users for them to join this group. {notYet}</>
+}]
+const privaciesObj = _.keyBy(privacies, 'k')
+
+const perks = [{
+  k: 'perk_member',
+  v: "Membership",
+  h: "You can charge users to join this group, or suggest a donation for membership. Sounds mean, but consider groups who's moderator is donating time to ensure quality attention to its members."
 }, {
-  k: 'paid',
-  v: 'Paid',
-  h: "You'll charge users a monthly fee (that you decided) for access to this group. You take 70%, Gnothi takes 30%. Setup on the next page.",
-  disabled: "This feature coming soon."
+  k: "perk_entry",
+  v: "Journal Feedback",
+  h: "You can charge to provide personal feedback on journal entries which members share with the group. Anyone can comment on each others' entries, but perhaps you're an expert in the group's topic and they'd find your feedback particularly valuable. It's on you to keep up with the entries as they're created, but I'll do my best to provide good tooling for the moderators."
+}, {
+  k: "perk_video",
+  v: "Video Sessions",
+  h: <>You can charge to run scheduled video sessions with your members. When available, I'll provide scheduling and video tooling. {notYet}</>
 }]
 
-function PrivacyOpt({p, form, setForm}) {
-  const {k, v, h, disabled} = p
-  return <div>
-    <Form.Check
-      checked={k === form.privacy}
-      onChange={() => setForm({...form, privacy: k})}
-      disabled={!!disabled}
-      type="radio"
-      label={v}
-      name={k}
-      id={`radio-${k}`}
-    />
-    {h && <Form.Text className='muted'>{h}</Form.Text>}
-    {disabled && <Form.Text className='text-warning'>{disabled}</Form.Text>}
-  </div>
+const emailSchema = yup.object().shape({
+  title: yup.string().required(),
+  text_short: yup.string().required(),
+  text_long: yup.string(),
+  privacy: yup.string().required(),
+  perk_member: yup.boolean(),
+  perk_member_donation: yup.boolean(),
+  perk_entry: yup.boolean(),
+  perk_entry_donation: yup.boolean(),
+  perk_video: yup.boolean(),
+  perk_video_donation: yup.boolean(),
+})
+
+
+const defaultForm = {
+  title: "",
+  text_short: "",
+  text_long: "",
+  privacy: "public",
+  perk_member: yup.number().min(1),
+  perk_member_donation: false,
+  perk_entry: yup.number().min(1),
+  perk_entry_donation: false,
+  perk_video: yup.number().min(1),
+  perk_video_donation: false,
 }
 
-const default_form = {
-  title: '',
-  text_short: '',
-  text_long: '',
-  privacy: "public"
+function Perk({form, perk}) {
+  return <Col xs={1} sm={4}>
+    <Form.Group>
+      <Form.Label>{perk.v}</Form.Label>
+      <Form.Label htmlFor={`${perk.k}-price`} srOnly>Price</Form.Label>
+      <InputGroup className="mb-2">
+        <InputGroup.Prepend>
+          <InputGroup.Text>$</InputGroup.Text>
+        </InputGroup.Prepend>
+        <FormControl
+          id={`${perk.k}-price`}
+          placeholder="Free"
+          type="number"
+          {...form.register(perk.k)}
+        />
+      </InputGroup>
+      <Form.Check
+        type="checkbox"
+        className="mb-2"
+        label="Suggested Donation"
+        {...form.register(`${perk.k}_donation`)}
+      />
+      <Form.Text className='text-muted'>{perk.h}</Form.Text>
+    </Form.Group>
+  </Col>
 }
 
 export default function EditGroup({show, close, group=null}) {
   const history = useHistory()
   const emit = useStoreActions(actions => actions.ws.emit)
   const as = useStoreState(s => s.user.as)
-  const postRes = useStoreState(s => s.ws.res['groups/groups/post'])
+  const groupPut = useStoreState(s => s.ws.res['groups/groups/post'])
+  const groupPost = useStoreState(s => s.ws.res['groups/group/put'])
+  const clearRes = useStoreActions(a => a.ws.clearRes)
 
-  const [form, setForm] = useState(group || default_form)
+  const form = useForm({
+    defaultValues: group || defaultForm,
+    resolver: yupResolver(emailSchema),
+  })
+  const privacy = form.watch('privacy')
 
   useEffect(() => {
-    EE.on("wsResponse", onPost)
-    return () => EE.off("wsResponse", onPost)
+    return () => {
+      clearRes(['groups/groups/post', 'groups/group/put'])
+    }
   }, [])
 
-  function onPost(data) {
-    if (data.action === 'groups/groups/post' && data.data?.id) {
+  useEffect(() => {
+    if (groupPost?.code === 200 && groupPost?.id) {
       close()
-      history.push("groups/" + data.data.id)
+      history.push("groups/" + groupPost?.id)
     }
-    if (data.action === 'groups/group/put') {
-      close()
+  }, [groupPost])
+
+  useEffect(() => {
+    if (groupPut?.code === 200) {close()}
+  }, [groupPut])
+
+  function submit(form) {
+    if (group) {
+      emit(['groups/group/put', {id: group.id, ...form}])
+    } else {
+      emit(['groups/groups/post', form])
     }
-  }
-
-  const submit = async e => {
-    e.preventDefault()
-    const action = group ? "groups/group/put" : "groups/groups/post"
-    emit([action, form])
-  }
-
-  const changeText = k => e => {
-    const v = typeof e === 'string' ? e : e.target.value
-    setForm({...form, [k]: v})
   }
 
   const renderButtons = () => {
     if (as) return null
-    if (postRes?.submitting) return spinner
+    if (groupPost?.submitting) return spinner
 
     return <>
       <Button variant='link' className='text-secondary' size="sm" onClick={close}>
@@ -151,17 +209,15 @@ export default function EditGroup({show, close, group=null}) {
     if (!group) {
       short_placeholder += " You'll be able to add a long description with links, formatting, resources, etc on the next screen."
     }
-    const text_long = form.text_long || ''
 
     return <>
-      <Form onSubmit={submit}>
+      <Form onSubmit={form.handleSubmit(submit)}>
         <Form.Group controlId="formTitle">
           <Form.Label>Title</Form.Label>
           <Form.Control
             type="text"
             placeholder="Title"
-            value={form.title}
-            onChange={changeText('title')}
+            {...form.register("title")}
           />
         </Form.Group>
 
@@ -171,52 +227,38 @@ export default function EditGroup({show, close, group=null}) {
             as="textarea"
             rows={3}
             placeholder={short_placeholder}
-            value={form.text_short}
-            onChange={changeText('text_short')}
+            {...form.register("text_short")}
           />
         </Form.Group>
-        {group && <Editor text={text_long} changeText={changeText('text_long')} />}
+        {group && <Editor form={form} />}
 
         <Form.Group>
           <Form.Label>
             Privacy
           </Form.Label>
-          <Card><Card.Body>
-            {privacies.map((p) => <PrivacyOpt p={p} key={p.k} form={form} setForm={setForm}/>)}
-          </Card.Body></Card>
+          <Form.Control
+            as="select"
+            {...form.register("privacy")}
+          >
+            {privacies.map(p => <option key={p.k} value={p.k}>{p.v}</option>)}
+          </Form.Control>
+          <Form.Text>{privaciesObj[privacy].h}</Form.Text>
         </Form.Group>
 
-        <Form.Label>Perks</Form.Label>
-        <Card><Card.Body>
-          <Form.Control>
-            <Form.Label>
-              Membership
-            </Form.Label>
-            <Form.Control
-              type='number'
-              placeholder="Price of membership"
-            />
-          </Form.Control>
-          <Form.Control>
-            <Form.Label>
-              Personal Responses
-            </Form.Label>
-            <Form.Control
-              type='number'
-              placeholder="Price of personal responses"
-            />
-          </Form.Control>
-          <Form.Control>
-            <Form.Label>
-              Video sessions
-            </Form.Label>
-            <Form.Control
-              type='number'
-              placeholder="Price of membership"
-            />
-          </Form.Control>
-        </Card.Body></Card>
+        <Card className='mb-2'>
+          <Card.Header>Perks</Card.Header>
+          <Card.Body>
+            <Row>
+              {perks.map(p => <Perk key={p.k} perk={p} form={form} />)}
+            </Row>
+          </Card.Body>
+        </Card>
       </Form>
+
+      {!group && <Card className='mb-2'>
+        <Card.Header>Payment</Card.Header>
+        <Card.Body><Stripe submit={form.handleSubmit(submit)} product='create_group' /></Card.Body>
+      </Card>}
     </>
   }
 
@@ -237,10 +279,6 @@ export default function EditGroup({show, close, group=null}) {
         {renderForm()}
         <Error action={/groups\/groups\/post/g} codes={[400,401,403,422]}/>
       </Modal.Body>
-
-      <Modal.Footer>
-        {renderButtons()}
-      </Modal.Footer>
     </Modal>
   </>
 }

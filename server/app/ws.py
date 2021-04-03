@@ -34,6 +34,7 @@ from app.routes.fields import Fields
 from app.routes.habitica import Habitica
 from app.routes.shares import Shares
 from app.routes.notifs import Notifs
+from app.routes.payments import Payments
 
 
 handlers = Box(
@@ -46,7 +47,8 @@ handlers = Box(
     fields=Fields,
     habitica=Habitica,
     shares=Shares,
-    notifs=Notifs
+    notifs=Notifs,
+    payments=Payments
 )
 
 

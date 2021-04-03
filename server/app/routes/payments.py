@@ -2,6 +2,9 @@ import pdb, stripe, json, os
 from pydantic import BaseModel
 from fastapi import APIRouter, Depends, HTTPException, Response, Request
 from fastapi.responses import JSONResponse
+from typing import Dict
+from common.pydantic.utils import BM
+import common.pydantic.payments as PyP
 
 from app.app_app import app
 from app.app_jwt import jwt_user
@@ -20,47 +23,38 @@ stripe.api_key = vars.STRIPE_SECRET_KEY
 stripe.api_version = vars.STRIPE_API_VERSION
 
 
-def product_details():
-    return {
-        'currency': 'USD',
-        'amount': 500
-    }
+class Payments:
+    @staticmethod
+    def _products(k):
+        return {
+            PyP.Products.create_group: dict(
+                currency='USD',
+                amount=2900
+            )
+        }[k]
 
+    @staticmethod
+    async def on_public_key_get(data: BM, d) -> PyP.PublicKey:
+        return {'publicKey': vars.STRIPE_PUBLISHABLE_KEY}
 
-@stripe_router.get('/public-key')
-def PUBLISHABLE_KEY(viewer: M.User = Depends(jwt_user)):
-    return {
-        'publicKey': vars.STRIPE_PUBLISHABLE_KEY
-    }
+    @staticmethod
+    async def on_product_get(data: PyP.ProductPost, d) -> PyP.ProductGet:
+        return Payments._products(data.product)
 
-
-@stripe_router.get('/product-details')
-def get_product_details():
-    return product_details()
-
-
-@stripe_router.post('/create-payment-intent')
-def post_payment_intent(viewer: M.User = Depends(jwt_user)):
-    # Reads application/json and returns a response
-    data = {'metadata': {'uid': str(viewer.id)}}  # json.loads(request.data or '{}')
-
-    product = product_details()
-
-    options = dict()
-    options.update(data)
-    options.update(product)
-
-    # Create a PaymentIntent with the order amount and currency
-    payment_intent = stripe.PaymentIntent.create(**options)
-
-    try:
-        return payment_intent
-    except Exception as e:
-        raise HTTPException(status_code=403, detail=e)
+    @staticmethod
+    async def on_payment_intent_post(data: PyP.ProductPost, d) -> Dict:
+        # Create a PaymentIntent with the order amount and currency
+        return stripe.PaymentIntent.create(
+            metadata=dict(
+                uid=str(d.vid),
+                product=data.product.value
+            ),
+            **Payments._products(data.product)
+        )
 
 
 @app.post('/stripe/webhook')
-async def webhook_received(request: Request):
+async def stripe_webhook(request: Request):
     # You can use webhooks to receive information about asynchronous payment events.
     # For more about our webhook events check out https://stripe.com/docs/webhooks.
     webhook_secret = vars.STRIPE_WEBHOOK_SECRET
@@ -82,21 +76,22 @@ async def webhook_received(request: Request):
         data = request_data['data']
         event_type = request_data['type']
     data_object = data['object']
-    uid = {'uid': data_object['metadata']['uid']}
+    uid = data_object['metadata']['uid']
 
     logger.info('event ' + event_type)
 
     with with_db() as db:
+        db.add(M.Payment(user_id=uid, event_type=event_type, data=data))
         if event_type == 'payment_intent.succeeded':
             # Fulfill any orders, e-mail receipts, etc
-            db.execute(text("update users set paid=true where id=:uid"), uid)
-            db.commit()
+            # db.execute(text("update users set paid=true where id=:uid"), uid)
             logger.info("💰 Payment received!")
-
         if event_type == 'payment_intent.payment_failed':
             # TODO Notify the customer that their order was not fulfilled
-            db.execute(text("update users set paid=false where id=:uid"), uid)
-            db.commit()
+            # db.execute(text("update users set paid=false where id=:uid"), uid)
             logger.error("❌ Payment failed.")
+        db.commit()
 
     return {'status': 'success'}
+
+payments_router = {}

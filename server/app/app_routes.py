@@ -2,14 +2,12 @@ import pdb, logging
 from common.database import with_db
 from app.app_app import app
 from app.routes.users import users_router
-from app.routes.stripe import stripe_router
+from app.routes.payments import payments_router
 from app.routes.groups import groups_router
 from app.routes.auth import auth_router
 import sqlalchemy as sa
 
 logger = logging.getLogger(__name__)
-
-app.include_router(stripe_router, prefix='/stripe')
 
 
 @app.get('/health')

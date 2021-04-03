@@ -1110,8 +1110,8 @@ class ModelHypers(Base):
 
 class GroupPrivacy(enum.Enum):
     public = "public"
-    private = "private"  # invite-only
-    paid = "paid"
+    matchable = "matchable"
+    private = "private"
 
 
 class GroupRoles(enum.Enum):
@@ -1129,15 +1129,17 @@ class Group(Base):
     text_short = Encrypt(sa.Unicode, nullable=False)
     text_long = Encrypt(sa.Unicode)
     privacy = sa.Column(sa.Enum(GroupPrivacy), server_default=GroupPrivacy.public.value, nullable=False)
-    searchable = sa.Column(sa.Boolean, server_default="true")
     official = sa.Column(sa.Boolean, server_default="false")
     created_at = DateCol()
     updated_at = DateCol(update=True)
     n_members = sa.Column(sa.Integer, server_default="0")
 
-    perk_membership = sa.Column(sa.Float, server_default="0")
-    perk_entries = sa.Column(sa.Float, server_default="0")
-    perk_videos = sa.Column(sa.Float, server_default="0")
+    perk_member = sa.Column(sa.Float, server_default="0")
+    perk_member_donation = sa.Column(sa.Boolean, server_default="false")
+    perk_entry = sa.Column(sa.Float, server_default="0")
+    perk_entry_donation = sa.Column(sa.Boolean, server_default="false")
+    perk_video = sa.Column(sa.Float, server_default="0")
+    perk_video_donation = sa.Column(sa.Boolean, server_default="false")
 
     owner = orm.relationship("User")
 
@@ -1367,3 +1369,15 @@ class Misc(Base):
     __tablename__ = 'misc'
     key = sa.Column(sa.Unicode, primary_key=True)
     val = sa.Column(sa.Unicode)
+
+
+class Payment(Base):
+    __tablename__ = 'payments'
+
+    id = IDCol()
+    user_id = FKCol('users.id', index=True)
+    created_at = DateCol()
+    event_type = sa.Column(sa.Unicode, nullable=False)
+    data = sa.Column(psql.JSONB, nullable=False)
+
+    user = orm.relationship('User')
