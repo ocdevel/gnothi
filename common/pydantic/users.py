@@ -8,6 +8,10 @@ class TimezoneIn(BM):
     timezone: Optional[str] = None
 
 
+class AffiliateIn(BM):
+    affiliate: Optional[str] = None
+
+
 class HabiticaIn(BM):
     habitica_user_id: Optional[str] = None
     habitica_api_token: Optional[str] = None
@@ -36,6 +40,7 @@ class UserOut(BM_ORM):
     habitica_api_token: Optional[str] = None
     is_cool: Optional[bool] = False
     paid: Optional[bool] = False
+    affiliate: Optional[str] = None
 
 
 class PersonIn(BM):

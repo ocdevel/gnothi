@@ -1,3 +1,7 @@
+"""
+Mostly legacy REST routes, want to move these to ws/*.py wherever possible.
+Some can't go there (eg Stripe), some I don't know how yet (eg, file upload/download)
+"""
 import pdb, logging, boto3, shortuuid, io, stripe, json, os
 from common.database import with_db, get_db
 from fastapi import File, UploadFile, Depends, APIRouter, HTTPException, Response, Request
@@ -117,6 +121,7 @@ async def stripe_webhook(request: Request):
 
     logger.info('event ' + event_type)
 
+    # FIXME use publish so if this is received on one server, but Websocket connected on another
     mgr.send(MessageOut(action='payments/payment/get', data=data, uids=[uid]))
     with with_db() as db:
         db.add(M.Payment(user_id=uid, event_type=event_type, data=data))

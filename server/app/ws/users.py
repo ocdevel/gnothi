@@ -4,6 +4,7 @@ import sqlalchemy as sa
 import common.models as M
 from common.errors import CantSnoop, GnothiException
 from common.pydantic.utils import BM, BM_ID
+from common.pydantic.ws import ResWrap
 import common.pydantic.users as PyU
 
 logger = logging.getLogger(__name__)
@@ -58,14 +59,24 @@ class Users:
             raise GnothiException(401, "USERNAME_TAKEN", "That username is already taken, try another")
         #if data.therapist and not d.viewer.therapist:
         #    ga(d.vid, 'user', 'therapist')
+        # PyU.ProfileIn ensures they can only set safe values
         for k, v in data.dict().items():
-            if k == 'paid': continue
-            v = v or None  # remove empty strings
             setattr(d.viewer, k, v)
         d.db.commit()
         if data.bio:
             M.Job.create_job(d.db, user_id=d.vid, method='profiles', data_in={'args': [d.vid]})
         return d.viewer
+
+    @staticmethod
+    async def on_timezone_put(data: PyU.TimezoneIn, d) -> PyU.ProfileOut:
+        d.viewer.timezone = data.timezone
+        d.db.commit()
+        return ResWrap(data=d.viewer, action_as='users/profile/get')
+
+    @staticmethod
+    async def on_affiliate_put(data: PyU.AffiliateIn, d):
+        d.viewer.affiliate = data.affiliate
+        d.db.commit()
 
     @staticmethod
     async def on_therapists_get(data: BM, d) -> List[PyU.ProfileOut]:

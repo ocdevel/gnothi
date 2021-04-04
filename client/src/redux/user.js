@@ -47,6 +47,21 @@ export const store = {
     emit(['users/user/everything', {}])
   }),
 
+  onAny: thunk(async (actions, res, helpers) => {
+    const {emit} = helpers.getStoreActions().ws
+    if (res.action !== 'users/user/get') {return}
+    const user = res.data
+    if (!user.timezone) {
+      // Guess their default timezone (TODO should call this out?)
+      const timezone = moment.tz.guess(true)
+      emit(["users/timezone/put", {timezone}])
+    }
+    const code = localStorage.getItem("code")
+    if (code && code !== user.affiliate) {
+      emit(["users/affiliate/put", {affiliate: code}])
+    }
+  }),
+
   logout: action((state, payload) => {
     Auth.signOut()
     window.location.href = "/"

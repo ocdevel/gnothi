@@ -103,8 +103,16 @@ function LoggedIn() {
 function App() {
   const jwt = useStoreState(state => state.user.jwt);
   const checkJwt = useStoreActions(a => a.user.checkJwt)
+  const location = useLocation()
 
   useEffect(() => {checkJwt()}, [])
+  useEffect(() => {
+    const search = new URLSearchParams(location.search)
+    const code = search.get("code")
+    if (code) {
+      window.localStorage.setItem("affiliate", code)
+    }
+  }, [])
 
   if (!jwt) return <LoggedOut />
   return <LoggedIn />

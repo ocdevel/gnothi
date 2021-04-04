@@ -1,4 +1,4 @@
-import enum, pdb, re, threading, time, datetime, traceback, orjson, json
+import enum, pdb, re, threading, time, datetime, traceback, shortuuid
 from typing import Optional, List, Any, Dict, Union
 from pydantic import UUID4
 import pandas as pd
@@ -90,6 +90,7 @@ class User(Base):
     is_cool = sa.Column(sa.Boolean, server_default='false')
     therapist = sa.Column(sa.Boolean, server_default='false')
     paid = sa.Column(sa.Boolean)
+    affiliate = sa.Column(sa.Unicode, sa.ForeignKey('codes.code'))
 
     # ML
     ai_ran = sa.Column(sa.Boolean, server_default='false')
@@ -1381,3 +1382,24 @@ class Payment(Base):
     data = sa.Column(psql.JSONB, nullable=False)
 
     user = orm.relationship('User')
+
+
+class CodeTypes(enum.Enum):
+    coupon = "coupon"
+    affiliate = "affiliate"
+
+
+def gen_code():
+    return shortuuid.ShortUUID().random(length=8)
+
+
+class Codes(Base):
+    """
+    Users can generate a link to Gnothi via an affiliate code. Gets applied to clicking user's account,
+    any money they spend / make the affiliate gets a cut. Also allows for future coupon-code use
+    """
+    __tablename__ = "codes"
+
+    owner_id = FKCol('users.id', primary_key=True)
+    code = sa.Column(sa.Unicode, primary_key=True, default=gen_code)
+    amount = sa.Column(sa.Float, server_default="0")  # eg, .3 for 30% cut for affiliate

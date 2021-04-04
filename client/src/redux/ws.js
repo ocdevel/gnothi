@@ -158,6 +158,7 @@ export const store = {
 
   onAny: thunk(async (actions, res, helpers) => {
     const {emit, setRes, setData} = helpers.getStoreActions().ws
+    const {userExtra} = helpers.getStoreActions().user
 
     if (res.error == "INVALID_JWT") {
       return Auth.logout()
@@ -178,12 +179,6 @@ export const store = {
       setData(res)
     }
 
-    if (res.action === 'users/user/get' && !res.data.timezone) {
-      // Guess their default timezone (TODO should call this out?)
-      const timezone = moment.tz.guess(true)
-      emit(["users/profile/put", {timezone}])
-    }
-
     // if (err.title === "JWT_EXPIRED") {
     //   // TODO setup refresh via socketio
     //   data['jwt'] = refreshToken(helpers)
@@ -201,6 +196,7 @@ export function useSockets() {
   const jwt = useStoreState(s => s.user.jwt)
   const onAny = useStoreActions(actions => actions.ws.onAny)
   const onAnyInsights = useStoreActions(actions => actions.insights.onAny)
+  const onAnyUsers = useStoreActions(actions => actions.users.onAny)
   const setError = useStoreActions(actions => actions.server.setError)
 
   function connect() {
@@ -226,6 +222,7 @@ export function useSockets() {
       }
       const fn = {
         insights: onAnyInsights,
+        users: onAnyUsers,
       }[klass]
       if (!fn) {return}
       fn([action, data])
