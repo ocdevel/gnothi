@@ -186,14 +186,14 @@ export function Entries({group_id=null}) {
     <Row>
       <Col>
         {MainTags}
-        <MediaQuery maxWidth={bsSizes.md}>
+        <MediaQuery maxDeviceWidth={bsSizes.md - 1}>
           {_newButton}
           {_search}
         </MediaQuery>
         {renderEntries()}
       </Col>
       <Col lg={4} md={5}>
-        <MediaQuery minWidth={bsSizes.md}>
+        <MediaQuery minDeviceWidth={bsSizes.md}>
           {_newButton}
           {_search}
         </MediaQuery>

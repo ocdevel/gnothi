@@ -157,8 +157,7 @@ export const store = {
   }),
 
   onAny: thunk(async (actions, res, helpers) => {
-    const {emit, setRes, setData} = helpers.getStoreActions().ws
-    const {userExtra} = helpers.getStoreActions().user
+    const {setRes, setData} = helpers.getStoreActions().ws
 
     if (res.error == "INVALID_JWT") {
       return Auth.logout()
@@ -196,7 +195,7 @@ export function useSockets() {
   const jwt = useStoreState(s => s.user.jwt)
   const onAny = useStoreActions(actions => actions.ws.onAny)
   const onAnyInsights = useStoreActions(actions => actions.insights.onAny)
-  const onAnyUsers = useStoreActions(actions => actions.users.onAny)
+  const onAnyUsers = useStoreActions(actions => actions.user.onAny)
   const setError = useStoreActions(actions => actions.server.setError)
 
   function connect() {

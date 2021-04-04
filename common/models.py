@@ -89,7 +89,7 @@ class User(Base):
     is_superuser = sa.Column(sa.Boolean, server_default='false')
     is_cool = sa.Column(sa.Boolean, server_default='false')
     therapist = sa.Column(sa.Boolean, server_default='false')
-    paid = sa.Column(sa.Boolean)
+    n_tokens = sa.Column(sa.Integer, server_default="0")  # like free group-creations, etc
     affiliate = sa.Column(sa.Unicode, sa.ForeignKey('codes.code'))
 
     # ML
@@ -1065,7 +1065,7 @@ class CacheUser(Base):
     user_id = FKCol('users.id', primary_key=True)
     paras = Encrypt(array=True)
     clean = Encrypt(array=True)
-    vectors = sa.Column(psql.ARRAY(sa.Float, dimensions=2))
+    vector = sa.Column(psql.ARRAY(sa.Float, dimensions=1))
 
     user = orm.relationship("User")
 
@@ -1400,6 +1400,6 @@ class Codes(Base):
     """
     __tablename__ = "codes"
 
-    owner_id = FKCol('users.id', primary_key=True)
+    owner_id = FKCol('users.id', index=True)
     code = sa.Column(sa.Unicode, primary_key=True, default=gen_code)
     amount = sa.Column(sa.Float, server_default="0")  # eg, .3 for 30% cut for affiliate

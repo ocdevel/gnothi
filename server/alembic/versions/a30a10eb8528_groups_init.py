@@ -30,11 +30,15 @@ def migrate_users(bind, sess):
 
     op.add_column('users', sa.Column('cognito_id', sa.Unicode(), nullable=True))
     op.add_column('users', sa.Column('username', sa.Unicode(), nullable=True))
+    op.add_column('users', sa.Column('n_tokens', sa.Integer(), server_default="0", nullable=True))
     op.drop_column('users', 'is_active')
     op.drop_column('users', 'hashed_password')
+    op.drop_column('users', 'paid')
     op.create_index(op.f('ix_users_cognito_id'), 'users', ['cognito_id'], unique=True)
     op.create_index(op.f('ix_users_username'), 'users', ['username'], unique=True)
     # op.alter_column('users', 'is_superuser', existing_type=sa.BOOLEAN(), nullable=True)
+    op.add_column('users', sa.Column('affiliate', sa.Unicode(), nullable=True))
+    op.create_foreign_key(None, 'users', 'codes', ['affiliate'], ['code'])
     
     
 def migrate_shares(bind, sess):

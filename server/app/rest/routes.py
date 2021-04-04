@@ -52,6 +52,23 @@ def stats_get():
         )
 
 
+# @app.post('/auth/old')
+# @ratelimiter
+# async def on_old_login(data: SILogin, d) -> Dict:
+#     user = d.db.query(M.User).filter_by(email=data.email)\
+#         .with_entities(M.User.email, M.User.hashed_password)\
+#         .filter(M.User.hashed_password.isnot(None))\
+#         .first()
+#     if not user:
+#         return dict(notexists=True)
+#     verified, _ = pwd_context.verify_and_update(data.password, user.hashed_password)
+#     if not verified:
+#         return dict(wrong=True)
+#     await Auth.migrate_user(d.db, data.email, data.password)
+#     return dict(migrated=True)
+
+
+# TODO jwt_auth
 @app.post("/upload-image")
 async def upload_image_post(file: UploadFile = File(...)):
     s3 = boto3.client("s3")

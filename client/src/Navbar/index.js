@@ -4,7 +4,7 @@ import {
   Nav,
   Navbar,
   NavDropdown,
-  Badge,
+  Badge, Button, Form,
 } from 'react-bootstrap';
 import {LinkContainer} from 'react-router-bootstrap'
 import {
@@ -16,13 +16,21 @@ import {aiStatusEmoji, SimplePopover} from "../utils"
 import {
   FaRobot,
   FaRegListAlt,
-  FaBook, FaRegComments, FaUser,
+  FaBook, FaRegComments, FaUser, FaWindowClose,
 } from 'react-icons/fa'
 import './style.scss'
+import { useMediaQuery } from 'react-responsive'
 
 import {useStoreState, useStoreActions} from "easy-peasy";
 import {FaQuestion} from "react-icons/fa/index";
-import {AiOutlineUserSwitch, GiSpy, IoEllipsisHorizontalSharp, RiSpyLine} from "react-icons/all";
+import {
+  AiOutlineClose,
+  AiOutlineUserSwitch,
+  GiSpy,
+  IoEllipsisHorizontalSharp,
+  MdClose,
+  RiSpyLine
+} from "react-icons/all";
 import TopBooks from "./TopBooks";
 import Links from "./Links";
 
@@ -159,8 +167,10 @@ function MiscSection() {
   </>
 }
 
-export function Sidebar() {
+export function Sidebar({children}) {
   const aiStatus = useStoreState(s => s.ws.data['jobs/status'].status)
+  const isDesktop = useMediaQuery({ minWidth: 992 })
+  const [show, setShow] = useState(isDesktop)
 
   let aiStatus_ = null
   if (~['off', 'pending'].indexOf(aiStatus)) {
@@ -172,28 +182,73 @@ export function Sidebar() {
       <span>{aiStatusEmoji(aiStatus)}</span>
     </SimplePopover>
   }
+  const brand = <>Gnothi {aiStatus_}</>
+
+  function toggle() {setShow(!show)}
+
+
+  function renderNavHeader() {
+    return <>
+      <nav className="navbar navbar-light navbar-collapsed">
+        <div className="navbar-brand">{brand}</div>
+        <button
+          type="button"
+          className="close"
+          onClick={toggle}
+        >
+          <MdClose />
+        </button>
+      </nav>
+    </>
+  }
+
+  function renderContentHeader() {
+    return <div style={show ? {display: 'none'} : {}}>
+      <nav className="navbar navbar-light navbar-collapsed">
+        <button
+          type="button"
+          className="navbar-toggler collapsed"
+          onClick={toggle}
+        >
+          <span className="navbar-toggler-icon" />
+        </button>
+        <div className="navbar-brand">{brand}</div>
+        <div>{/*empty 3rd to center brand*/}</div>
+      </nav>
+    </div>
+  }
+
+  function renderSidebar() {
+    const style = show ? {} : {display: 'none'}
+    return <>
+      <nav className='nav-sb' style={style}>
+        {renderNavHeader()}
+        <ul className="list-unstyled components">
+          <AccountSection />
+          <li className='nav-sb-bb'>
+            <Link to='/j'><IconItem icon={<FaRegListAlt />} text="Journal" /></Link>
+          </li>
+          <ToggleSection icon={<FaRobot />} text='AI'>
+            <li>
+              <Link to='/insights'><IconItem icon={<FaQuestion />} text="Insights" /></Link>
+            </li>
+            <li>
+              <Link to='/resources'><IconItem icon={<FaBook />} text="Book Recs" /></Link>
+            </li>
+          </ToggleSection>
+          <GroupsSection />
+          <MiscSection />
+        </ul>
+      </nav>
+    </>
+  }
 
   return <>
-    <nav className='nav-sb'>
-      <div className='nav-sb-header'>
-        <div>Gnothi {aiStatus_}</div>
-      </div>
-      <ul className="list-unstyled components">
-        <AccountSection />
-        <li className='nav-sb-bb'>
-          <Link to='/j'><IconItem icon={<FaRegListAlt />} text="Journal" /></Link>
-        </li>
-        <ToggleSection icon={<FaRobot />} text='AI'>
-          <li>
-            <Link to='/insights'><IconItem icon={<FaQuestion />} text="Insights" /></Link>
-          </li>
-          <li>
-            <Link to='/resources'><IconItem icon={<FaBook />} text="Book Recs" /></Link>
-          </li>
-        </ToggleSection>
-        <GroupsSection />
-        <MiscSection />
-      </ul>
-    </nav>
+    {renderContentHeader()}
+    <div className='app-wrapper'>
+      {renderSidebar()}
+      {children}
+    </div>
   </>
+
 }

@@ -65,37 +65,37 @@ function LoggedIn() {
   if (!user) {return null}
 
   // key={as} triggers refresh on these components (triggering fetches)
-  return <div key={as} className='app-wrapper'>
-    <Sidebar />
-    <Container fluid style={{marginTop: 5}} className='app-content'>
-      <Error message={error} />
-      <Error codes={[422,401,500]} />
+  return <div key={as}>
+    <Sidebar>
+      <Container fluid style={{marginTop: 5}} className='app-content'>
+        <Error message={error} />
+        <Error codes={[422,401,500]} />
 
-      <Switch>
-        <Route path='/about'>
-          <Splash />
-        </Route>
-        <Route path="/j">
-          <Entries />
-        </Route>
-        <Route path="/insights">
-          {MainTags}
-          <Insights />
-        </Route>
-        <Route path="/resources">
-          <Resources />
-        </Route>
-        <Route path="/account">
-          <Account />
-        </Route>
-        <Route path="/groups">
-          <Groups />
-        </Route>
-        {staticRoutes()}
-        <Redirect from="/" to="/j" />
-      </Switch>
-    </Container>
-
+        <Switch>
+          <Route path='/about'>
+            <Splash />
+          </Route>
+          <Route path="/j">
+            <Entries />
+          </Route>
+          <Route path="/insights">
+            {MainTags}
+            <Insights />
+          </Route>
+          <Route path="/resources">
+            <Resources />
+          </Route>
+          <Route path="/account">
+            <Account />
+          </Route>
+          <Route path="/groups">
+            <Groups />
+          </Route>
+          {staticRoutes()}
+          <Redirect from="/" to="/j" />
+        </Switch>
+      </Container>
+    </Sidebar>
     <SharingModal />
   </div>
 }
