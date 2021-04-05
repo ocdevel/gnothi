@@ -4,6 +4,7 @@ import common.models as M
 from common.pydantic.utils import BM, BM_ID
 from common.pydantic.ws import MessageOut
 from common.errors import CantSnoop
+import sqlalchemy as sa
 
 
 class Notifs:
@@ -27,3 +28,21 @@ class Notifs:
     async def on_groups_get(data: BM, d):
         res = d.db.query(M.GroupNotif).filter_by(user_id=d.vid).all()
         await Notifs._send_notifs(d, 'notifs/groups/get', res)
+
+    @staticmethod
+    async def on_groups_seen(data: BM_ID, d):
+        d.db.execute(sa.text("""
+        update groups_notifs set "count"=0 
+        where user_id=:vid and obj_id=:gid
+        """), dict(vid=d.vid, gid=data.id))
+        d.db.commit()
+        await d.mgr.exec(d, "notifs/groups/get")
+
+    @staticmethod
+    async def on_notes_seen(data: BM_ID, d):
+        d.db.execute(sa.text("""
+        update notes_notifs set "count"=0 
+        where user_id=:vid and obj_id=:eid
+        """), dict(vid=d.vid, eid=data.id))
+        d.db.commit()
+        await d.mgr.exec(d, "notifs/notes/get")

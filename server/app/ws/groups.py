@@ -8,6 +8,7 @@ from common.pydantic.utils import BM_ID, BM
 from common.pydantic.ws import ResWrap
 import sqlalchemy as sa
 import common.pydantic.entries as PyE
+from app.ws.notifs import Notifs
 
 logger = logging.getLogger(__name__)
 
@@ -16,10 +17,13 @@ class Groups:
     @staticmethod
     async def send_message(msg, d):
         gid = msg.obj_id
-        uids = M.UserGroup.get_uids(d.db, gid)
-        await d.mgr.exec(d, output=msg, model=PyG.MessageOut, action='groups/message/get', uids=uids)
-        uids = M.GroupNotif.create_notifs(d.db, gid)
-        await d.mgr.exec(d, output=dict(id=gid), model=Dict, action='notifs/group', uids=uids)
+        msg_uids = M.UserGroup.get_uids(d.db, gid)
+        notifs = M.GroupNotif.create_notifs(d.db, gid)
+        await asyncio.wait([
+            d.mgr.exec(d, output=msg, model=PyG.MessageOut, action='groups/message/get', uids=msg_uids),
+            Notifs._send_notifs(d, 'notifs/groups/get', notifs)
+
+        ])
 
     @staticmethod
     async def on_messages_post(data: PyG.MessageIn, d):
@@ -57,6 +61,7 @@ class Groups:
     @staticmethod
     async def on_group_enter(data: BM_ID, d):
         await asyncio.wait([
+            d.mgr.exec(d, action='notifs/groups/seen', input=data),
             d.mgr.exec(d, action='groups/group/get', input=data),
             d.mgr.exec(d, action='groups/messages/get', input=data),
             d.mgr.exec(d, action='groups/entries/get', input=data),

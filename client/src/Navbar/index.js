@@ -9,7 +9,7 @@ import {
 import {LinkContainer} from 'react-router-bootstrap'
 import {
   NavLink as Link,
-  useHistory
+  useHistory, useParams
 } from "react-router-dom";
 import emoji from 'react-easy-emoji'
 import {aiStatusEmoji, SimplePopover} from "../utils"
@@ -125,20 +125,25 @@ function AccountSection() {
   </ToggleSection>
 }
 
+function GroupItem({g}) {
+  const notifs = useStoreState(s => s.ws.data['notifs/groups/get'])
+
+  const notif = notifs?.[g.id]
+      ? <Badge variant='success' size='sm' className='ml-1'>{notifs[g.id]}</Badge>
+      : null
+  return <li><Link to={`/groups/${g.id}`}>{g.title}{notif}</Link></li>
+}
+
 function GroupsSection() {
   const groups = useStoreState(s => s.ws.data['groups/mine/get'])
   const {arr, obj} = groups
-
-  function renderGroup(gid) {
-    return <li><Link to={`/groups/${gid}`}>{obj[gid].title}</Link></li>
-  }
 
   return <>
     <ToggleSection icon={<FaRegComments />} text="Community">
       <li>
         <Link exact to='/groups'>All Groups</Link>
       </li>
-      {arr?.length ? arr.map(renderGroup) : null}
+      {arr?.length > 0 && arr.map(gid => <GroupItem g={obj[gid]} key={gid}/>)}
     </ToggleSection>
   </>
 }
