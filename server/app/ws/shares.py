@@ -4,6 +4,7 @@ import common.models as M
 from common.pydantic.utils import BM, BM_ID
 from common.errors import CantSnoop, NotFound, GnothiException
 import common.pydantic.shares as PyS
+from common.pydantic.ws import ResWrap
 import sqlalchemy as sa
 import sqlalchemy.orm as orm
 
@@ -16,7 +17,8 @@ class Shares:
 
     @staticmethod
     async def on_egress_get(data: BM, d) -> List[PyS.Egress]:
-        return M.Share.egress(d.db, d.vid)
+        res = M.Share.egress(d.db, d.vid)
+        return ResWrap(data=res, keyby='share.id')
 
     @staticmethod
     async def on_email_check(data: PyS.EmailCheckPost, d) -> PyS.EmailCheckPost:
@@ -47,4 +49,4 @@ class Shares:
         d.db.query(M.Share).filter_by(user_id=d.vid, id=data.id).delete()
         d.db.commit()
         # FIXME this isn't getting received for some reason? (the others above work)
-        await d.mgr.exec(d, action='shares/shares/get')
+        await d.mgr.exec(d, action='shares/egress/get')

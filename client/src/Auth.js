@@ -57,11 +57,10 @@ function Login({setError, submitting}) {
     <Form.Group controlId="loginEmail">
       <Form.Label>Email address</Form.Label>
       <Form.Control
-        name="email"
         type="email"
         placeholder="Enter email"
         required
-        ref={register}
+        {...register('email')}
       />
       <FieldError err={errors.email} />
     </Form.Group>
@@ -69,11 +68,10 @@ function Login({setError, submitting}) {
     <Form.Group controlId="loginPassword">
       <Form.Label>Password</Form.Label>
       <Form.Control
-        name="password"
         type="password"
         placeholder="Password"
         required
-        ref={register}
+        {...register('password')}
       />
       <FieldError err={errors.password} />
     </Form.Group>

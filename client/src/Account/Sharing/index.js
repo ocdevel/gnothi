@@ -36,16 +36,15 @@ export default function Sharing() {
   const sharePage = useStoreState(s => s.user.sharePage)
   const setSharePage = useStoreActions(a => a.user.setSharePage)
 
+
   useEffect(() => {
     emit(['shares/egress/get', {}])
   }, [])
 
   if (!sharePage) {return null}
+  const {arr, obj} = shares
 
   // be23b9f8: show CantSnoop. New setup uses viewer data where attempting CantSnoop
-
-  const arr = shares?.length ? _.sortBy(shares.slice(), 'share.id') : []
-  const obj = _.reduce(arr, (m, v) => ({...m, [v.share.id]: v}), {})
 
   return <div>
     {sharePage.list ? <Button
@@ -63,7 +62,7 @@ export default function Sharing() {
     </Button>}
     {sharePage.create && <ShareForm />}
     {sharePage.id && <ShareForm s={obj[sharePage.id]} />}
-    {sharePage.list && arr.map(s => <Share key={s.share.id} s={s}/>)}
+    {sharePage.list && arr?.map(sid => <Share key={obj[sid]} s={obj[sid]}/>)}
   </div>
 }
 

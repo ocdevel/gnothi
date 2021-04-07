@@ -62,6 +62,26 @@ function ToggleSection({icon, text, children, open=true}) {
 }
 
 
+function UserSwitcher({s, isLast}) {
+  const changeAs = useStoreActions(a => a.user.changeAs)
+  const notifs = useStoreState(s => s.ws.data['notifs/notes/get'])
+  const as = useStoreState(s => s.user.as)
+
+  const {share, user} = s
+  if (user.id === as) {return null}
+  const klass = isLast ? 'nav-sb-bb' : ''
+  const notif = notifs?.[user.id]
+      ? <Badge variant='success' size='sm' className='ml-1'>{notifs[user.id]}</Badge>
+      : null
+  return <li className={klass} key={user.id}>
+    <a
+      onClick={() => changeAs(user.id)}
+      key={user.id}
+    >
+      <IconItem icon={<AiOutlineUserSwitch />} text={<>{user.email}{notif}</>} />
+    </a>
+  </li>
+}
 
 function AccountSection() {
   const changeAs = useStoreActions(a => a.user.changeAs)
@@ -73,23 +93,6 @@ function AccountSection() {
   const asUser = useStoreState(s => s.user.asUser)
   const setSharePage = useStoreActions(a => a.user.setSharePage)
 
-  function renderSwitcher (s, i, last) {
-    const {share, user} = s
-    if (user.id == as) {return null}
-    const klass = i === last ? 'nav-sb-bb' : ''
-    let children = share.new_entries ? <Badge pill variant='danger'>{share.new_entries}</Badge>
-        : null
-    children = <>{children} {user.email}</>
-    return <li className={klass} key={user.id}>
-      <a
-        onClick={() => changeAs(user.id)}
-        key={user.id}
-      >
-        <IconItem icon={<AiOutlineUserSwitch />} text={children} />
-      </a>
-    </li>
-  }
-
   const renderAsSelect = () => {
     if (!shares?.length) {return null}
     const last = shares.length - 1
@@ -99,7 +102,7 @@ function AccountSection() {
           <IconItem icon={<AiOutlineUserSwitch />} text={user.email} />
         </a></li>
       )}
-      {shares.map((s, i) => renderSwitcher(s, i, last))}
+      {shares.map((s, i) =><UserSwitcher key={s.user.id} s={s} isLast={i === last} />)}
     </>
   }
 

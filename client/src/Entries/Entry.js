@@ -80,30 +80,29 @@ function Editor({text, changeText}) {
   )
 }
 
-export function Entry({entry_id, close=null}) {
+export function Entry({entry=null, close=null}) {
   const history = useHistory()
   const as = useStoreState(state => state.user.as)
   const emit = useStoreActions(a => a.ws.emit)
-  const [editing, setEditing] = useState(!entry_id)
+  const [editing, setEditing] = useState(!entry)
   const [form, setForm] = useState({title: '', text: '', no_ai: false, created_at: null})
   const [formOrig, setFormOrig] = useState()
   const [tags, setTags] = useState({})
   const [advanced, setAdvanced] = useState(false)
   const [cacheEntry, setCacheEntry] = useState()
-  const entries = useStoreState(s => s.ws.data['entries/entries/get'].obj)
   const entryPost = useStoreState(s => s.ws.res['entries/entries/post'])
   const entryPut = useStoreState(s => s.ws.res['entries/entry/put'])
   const entryDel = useStoreState(s => s.ws.res['entries/entry/delete'])
   const cache = useStoreState(s => s.ws.data['entries/entry/cache/get'])
   const clearRes = useStoreActions(a => a.ws.clearRes)
 
-  const entry = entry_id && entries?.[entry_id]
-  const showCacheEntry = !editing && entry_id && cacheEntry
-  const draftId = `draft-${entry_id || "new"}`
+  const eid = entry?.id
+  const showCacheEntry = !editing && eid && cacheEntry
+  const draftId = `draft-${eid || "new"}`
 
   useEffect(() => {
-    if (!entry_id) { return loadDraft() }
-  }, [entry_id])
+    if (!eid) { return loadDraft() }
+  }, [eid])
 
   useEffect(() => {
     if (!entry) {return}
@@ -165,8 +164,8 @@ export function Entry({entry_id, close=null}) {
     e.preventDefault()
     let {title, text, no_ai, created_at} = form
     const body = {title, text, no_ai, created_at, tags}
-    if (entry_id) {
-      emit(['entries/entry/put', {...body, id: entry_id}])
+    if (eid) {
+      emit(['entries/entry/put', {...body, id: eid}])
     } else {
       emit(['entries/entries/post', body])
     }
@@ -174,14 +173,14 @@ export function Entry({entry_id, close=null}) {
 
   const deleteEntry = async () => {
     if (window.confirm(`Delete "${entry.title}"`)) {
-      emit(['entries/entry/delete', {id: entry_id}])
+      emit(['entries/entry/delete', {id: eid}])
     }
   }
 
   const showAiSees = async () => {
-    if (!entry_id) { return }
+    if (!eid) { return }
     if (cacheEntry) {return setCacheEntry(null)}
-    emit(['entries/entry/cache/get', {id: entry_id}])
+    emit(['entries/entry/cache/get', {id: eid}])
   }
 
   const changeTitle = e => setForm({...form, title: e.target.value})
@@ -216,7 +215,7 @@ export function Entry({entry_id, close=null}) {
     </>
 
     return <>
-      {entry_id && <>
+      {eid && <>
         <Button variant='link' className='text-danger mr-auto' size="sm" onClick={deleteEntry}>
           Delete
         </Button>
@@ -340,18 +339,18 @@ export function Entry({entry_id, close=null}) {
       backdrop='static'
     >
       <Modal.Header closeButton>
-        <Modal.Title>{fmtDate(entry_id ? form.created_at : Date.now())}</Modal.Title>
+        <Modal.Title>{fmtDate(eid ? form.created_at : Date.now())}</Modal.Title>
       </Modal.Header>
 
       <Modal.Body>
         {renderForm()}
-        {!editing && entry_id && <NotesList entry_id={entry_id} />}
+        {!editing && eid && <NotesList eid={eid} />}
       </Modal.Body>
 
 
       <Modal.Footer>
-        {!editing && entry_id && <div className='mr-auto'>
-          <AddNotes entry_id={entry_id} />
+        {!editing && eid && <div className='mr-auto'>
+          <AddNotes eid={eid} />
         </div>}
         {renderButtons()}
       </Modal.Footer>
@@ -361,5 +360,6 @@ export function Entry({entry_id, close=null}) {
 
 export function EntryPage() {
   const {entry_id} = useParams()
-  return <Entry entry_id={entry_id} />
+  const entry = useStoreState(s => s.ws.data['entries/entries/get']?.obj?.[entry_id])
+  return <Entry entry={entry} />
 }

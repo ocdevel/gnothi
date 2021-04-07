@@ -33,6 +33,7 @@ def migrate_users(bind, sess):
     op.add_column('users', sa.Column('n_tokens', sa.Integer(), server_default="0", nullable=True))
     op.drop_column('users', 'is_active')
     op.drop_column('users', 'hashed_password')
+    op.drop_column('users', 'is_verified')
     op.drop_column('users', 'paid')
     op.create_index(op.f('ix_users_cognito_id'), 'users', ['cognito_id'], unique=True)
     op.create_index(op.f('ix_users_username'), 'users', ['username'], unique=True)

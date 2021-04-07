@@ -57,12 +57,14 @@ export const aiStatusEmoji = (status) => {
 }
 
 export function trueKeys(obj) {
+  if (!obj) {return []}
   return _.reduce(obj, (m, v, k) => {
     if (v) { return [...m, k]}
     return m
   }, [])
 }
 export function trueObj(arr) {
+  if (!arr) {return {}}
   return _.reduce(arr, (m, v) => {
     if (v) { return {...m, [v]: true}}
     return m

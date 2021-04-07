@@ -53,11 +53,10 @@ export default function Users({users, setUsers}) {
         <Col sm={9}>
           <Form.Control
             type="email"
-            name='email'
             size='sm'
             required
             placeholder="Email address"
-            ref={form.register}
+            {...form.register('email')}
           />
         </Col>
         <Col sm={3}>
