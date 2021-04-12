@@ -60,12 +60,19 @@ body {
   max-width: none !important;
 }
 
-//.groups {
+.groups {
 //  .chat-feed, .group-entries {
 //    max-height: 40vh;
 //    overflow-y: scroll;
 //  }
-//}
+
+  .group-sidebar-member {
+    .member-controls {display: none}
+    &:hover {
+      .member-controls {display: initial}
+    }
+  }
+}
 
 .custom-amplify-container {
   height: 460px;

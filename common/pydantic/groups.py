@@ -1,8 +1,10 @@
 from typing import Optional, Any, Dict, List
 from pydantic import UUID4
 import datetime
+
+import common.models
 from common.pydantic.utils import BM, BM_ORM, apply_privacies
-from common.models import GroupPrivacy, GroupRoles
+import common.models as M
 from common.pydantic.shares import ShareGet, ProfileIngress
 
 
@@ -10,7 +12,7 @@ class GroupPost(BM):
     title: str
     text_short: Optional[str] = ""
     text_long: Optional[str] = ""
-    privacy: GroupPrivacy
+    privacy: M.GroupPrivacy
 
 
 class GroupPut(GroupPost):
@@ -20,10 +22,10 @@ class GroupPut(GroupPost):
 class GroupOut(GroupPost, BM_ORM):
     id: UUID4
     owner_id: UUID4
-    privacy: GroupPrivacy
+    privacy: M.GroupPrivacy
     created_at: datetime.datetime
     members: Optional[Dict[str, str]] = {}
-    role: Optional[GroupRoles] = None
+    role: Optional[M.GroupRoles] = None
 
 
 class MessageIn(BM):
@@ -50,7 +52,7 @@ class MessageOut(BM_ORM):
 class UserGroupOut(BM_ORM):
     username: str
     joined_at: datetime.datetime
-    role: GroupRoles
+    role: M.GroupRoles
     online: bool
 
 
@@ -79,3 +81,10 @@ class PrivacyIn(BM):
 class GroupInvitePost(BM):
     id: UUID4
     email: str
+
+
+class MemberModifyPost(BM):
+    id: UUID4
+    user_id: UUID4
+    role: Optional[M.GroupRoles] = None
+    remove: Optional[bool] = False

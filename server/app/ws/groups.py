@@ -137,10 +137,26 @@ class Groups:
         return ResWrap(data=res, keyby='id', uids=[d.vid])
 
     @staticmethod
-    async def on_group_invite(data: PyG.GroupInvitePost, d) -> Valid:
+    async def on_member_invite(data: PyG.GroupInvitePost, d) -> Valid:
         res = M.UserGroup.invite_member(d.db, data.id, d.vid, data.email)
         await d.mgr.exec(d, action='groups/members/get', input=data, uids=True)
         return res
+
+    @staticmethod
+    async def on_member_modify(data: PyG.MemberModifyPost, d) -> Valid:
+        db = d.db
+        if str(data.user_id) == str(d.vid):
+            return dict(valid=False)
+        M.UserGroup.check_access(db, data.id, d.vid, [M.GroupRoles.owner, M.GroupRoles.admin])
+        q = db.query(M.UserGroup).filter_by(user_id=data.user_id, group_id=data.id)
+        if data.remove:
+            q.delete()
+        elif data.role:
+            ug = q.first()
+            ug.role = data.role
+        db.commit()
+        await d.mgr.exec(d, action='groups/members/get', input=data, uids=True)
+        return dict(valid=True)
 
 
 groups_router = None

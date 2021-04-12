@@ -9,7 +9,7 @@ import Error from "../Error";
 export default function InviteMembers({gid, close}) {
   const emit = useStoreActions(a => a.ws.emit)
   const clear = useStoreActions(a => a.ws.clear)
-  const invite = useStoreState(s => s.ws.data['groups/group/invite'])
+  const invite = useStoreState(s => s.ws.data['groups/member/invite'])
 
   const form = useForm({
     resolver: yupResolver(yup.object().shape({
@@ -19,7 +19,7 @@ export default function InviteMembers({gid, close}) {
 
   useEffect(() => {
     return function() {
-      clear(['groups/group/invite'])
+      clear(['groups/member/invite'])
     }
   }, [])
 
@@ -30,7 +30,7 @@ export default function InviteMembers({gid, close}) {
   }, [invite])
 
   function submit(data) {
-    emit(['groups/group/invite', {...data, id: gid}])
+    emit(['groups/member/invite', {...data, id: gid}])
   }
 
   console.log(invite)

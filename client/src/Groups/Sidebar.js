@@ -4,9 +4,10 @@ import React, {useState, useEffect} from "react";
 import {useStoreActions, useStoreState} from "easy-peasy";
 import _ from 'lodash'
 import emoji from 'react-easy-emoji'
-import {FaCrown, FaPencilAlt, FaUsers} from "react-icons/all";
+import {FaBan, FaCrown, FaPencilAlt, FaUsers} from "react-icons/all";
 import EditGroup from "./EditGroup";
 import InviteMembers from "./InviteMembers";
+import {FaTrash} from "react-icons/fa";
 
 
 const disabled = ['show_avatar']
@@ -106,17 +107,34 @@ function Me() {
 
 const onlineIcon = emoji("🟢")
 
-function Member({row}) {
+function Member({row, isOwner, gid}) {
+  const emit = useStoreActions(a => a.ws.emit)
   if (!row) {return null}
   const {user, user_group, share} = row
-  return <>
+
+  function remove() {
+    emit(['groups/member/modify', {remove: true, id: gid, user_id: user.id}])
+  }
+  function ban() {
+    emit(['groups/member/modify', {id: gid, user_id: user.id, role: 'banned'}])
+  }
+
+  return <div className='group-sidebar-member'>
     {user_group?.online && <span className='mr-2'>{onlineIcon}</span>}
     {user_group?.role === 'owner' && <FaCrown />}
     {user.display_name}
-  </>
+    {isOwner && <span className='member-controls ml-2'>
+      <Button variant='link' className='text-danger' size='sm' onClick={remove}>
+        <FaTrash /> Remove
+      </Button>
+      <Button variant='link' className='text-danger' size='sm' onClick={ban}>
+        <FaBan /> Ban
+      </Button>
+    </span>}
+  </div>
 }
 
-function Members({gid}) {
+function Members({gid, isOwner}) {
   const members = useStoreState(s => s.ws.data['groups/members/get'])
   if (!members?.arr?.length) {return null}
   const {arr, obj} = members
@@ -125,7 +143,7 @@ function Members({gid}) {
     const member = obj?.[m]
     if (!member?.user?.id) {return null}
     return <li key={member.user.id}>
-      <Member row={member} />
+      <Member row={member} isOwner={isOwner} gid={gid} />
     </li>
   }
 
@@ -144,12 +162,13 @@ export default function Sidebar() {
   const [showInvite, setShowInvite] = useState(false)
 
   if (!gid) {return null}
+  const isOwner = uid === group.owner_id
 
   function toggleEdit() {setShowEdit(!showEdit)}
   function toggleInvite() {setShowInvite(!showInvite)}
 
   function ownerControls() {
-    if (uid !== group.owner_id) {return null}
+    if (!isOwner) {return null}
     return <div>
       <div>
         <Button
@@ -183,7 +202,7 @@ export default function Sidebar() {
         <p>{group.text_short}</p>
         {ownerControls()}
         <hr />
-        <Members gid={gid} />
+        <Members gid={gid} isOwner={isOwner} />
       </Card.Body>
     </Card>
 

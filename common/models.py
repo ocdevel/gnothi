@@ -1144,7 +1144,6 @@ class GroupRoles(enum.Enum):
     owner = "owner"
     admin = "admin"
     banned = "banned"
-    invited = "invited"
 
 
 class Group(Base):
