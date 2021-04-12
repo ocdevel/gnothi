@@ -22,7 +22,6 @@ import Error from "../Error";
 import * as yup from "yup";
 import {useForm} from "react-hook-form";
 import {yupResolver} from "@hookform/resolvers/yup";
-import Stripe from "./Stripe";
 
 const mdParser = new MarkdownIt(/* Markdown-it options */);
 
@@ -95,16 +94,22 @@ const perks = [{
   h: <>You can charge to run scheduled video sessions with your members. When available, I'll provide scheduling and video tooling. {notYet}</>
 }]
 
-const emailSchema = yup.object().shape({
+const perk_field = yup
+  .number()
+  .nullable()
+  .min(1)
+  .transform((value, originalValue) => (String(originalValue).trim() === '' ? null : value))
+
+const groupSchema = yup.object().shape({
   title: yup.string().required(),
   text_short: yup.string().required(),
   text_long: yup.string(),
   privacy: yup.string().required(),
-  perk_member: yup.boolean(),
+  perk_member: perk_field,
   perk_member_donation: yup.boolean(),
-  perk_entry: yup.boolean(),
+  perk_entry: perk_field,
   perk_entry_donation: yup.boolean(),
-  perk_video: yup.boolean(),
+  perk_video: perk_field,
   perk_video_donation: yup.boolean(),
 })
 
@@ -114,15 +119,16 @@ const defaultForm = {
   text_short: "",
   text_long: "",
   privacy: "public",
-  perk_member: yup.number().min(1),
+  perk_member: null,
   perk_member_donation: false,
-  perk_entry: yup.number().min(1),
+  perk_entry: null,
   perk_entry_donation: false,
-  perk_video: yup.number().min(1),
+  perk_video: null,
   perk_video_donation: false,
 }
 
 function Perk({form, perk}) {
+  const {formState: {errors}, register} = form
   return <Col xs={1} sm={4}>
     <Form.Group>
       <Form.Label>{perk.v}</Form.Label>
@@ -135,14 +141,16 @@ function Perk({form, perk}) {
           id={`${perk.k}-price`}
           placeholder="Free"
           type="number"
-          {...form.register(perk.k)}
+          isInvalid={errors?.[perk.k]}
+          {...register(perk.k)}
         />
+        {errors?.[perk.k] && <Form.Control.Feedback type="invalid">{errors[perk.k].message}</Form.Control.Feedback>}
       </InputGroup>
       <Form.Check
         type="checkbox"
         className="mb-2"
         label="Suggested Donation"
-        {...form.register(`${perk.k}_donation`)}
+        {...register(`${perk.k}_donation`)}
       />
       <Form.Text className='text-muted'>{perk.h}</Form.Text>
     </Form.Group>
@@ -153,26 +161,28 @@ export default function EditGroup({show, close, group=null}) {
   const history = useHistory()
   const emit = useStoreActions(actions => actions.ws.emit)
   const as = useStoreState(s => s.user.as)
-  const groupPut = useStoreState(s => s.ws.res['groups/groups/post'])
-  const groupPost = useStoreState(s => s.ws.res['groups/group/put'])
-  const clearRes = useStoreActions(a => a.ws.clearRes)
+  const groupPost = useStoreState(s => s.ws.data['groups/groups/post'])
+  const groupPut = useStoreState(s => s.ws.res['groups/group/put'])
+  const clear = useStoreActions(a => a.ws.clear)
 
   const form = useForm({
     defaultValues: group || defaultForm,
-    resolver: yupResolver(emailSchema),
+    resolver: yupResolver(groupSchema),
   })
   const privacy = form.watch('privacy')
+  const {register, formState: {errors}} = form
 
   useEffect(() => {
-    return () => {
-      clearRes(['groups/groups/post', 'groups/group/put'])
+    return function() {
+      clear(['groups/groups/post', 'groups/group/put'])
     }
   }, [])
 
   useEffect(() => {
-    if (groupPost?.code === 200 && groupPost?.id) {
+    console.log("groupPost", groupPost)
+    if (groupPost?.id) {
       close()
-      history.push("groups/" + groupPost?.id)
+      history.push("groups/" + groupPost.id)
     }
   }, [groupPost])
 
@@ -180,11 +190,11 @@ export default function EditGroup({show, close, group=null}) {
     if (groupPut?.code === 200) {close()}
   }, [groupPut])
 
-  function submit(form) {
+  function submit(data) {
     if (group) {
-      emit(['groups/group/put', {id: group.id, ...form}])
+      emit(['groups/group/put', {id: group.id, ...data}])
     } else {
-      emit(['groups/groups/post', form])
+      emit(['groups/groups/post', data])
     }
   }
 
@@ -198,7 +208,7 @@ export default function EditGroup({show, close, group=null}) {
       </Button>
       <Button
         variant="primary"
-        onClick={submit}
+        onClick={form.handleSubmit(submit)}
       >Submit
       </Button>
     </>
@@ -211,34 +221,37 @@ export default function EditGroup({show, close, group=null}) {
     }
 
     return <>
-      <Form onSubmit={form.handleSubmit(submit)}>
-        <Form.Group controlId="formTitle">
+      <Form>
+        <Form.Group controlId="form_title">
           <Form.Label>Title</Form.Label>
           <Form.Control
             type="text"
             placeholder="Title"
-            {...form.register("title")}
+            isInvalid={errors?.title}
+            {...register("title")}
           />
+          {errors?.title && <Form.Control.Feedback type="invalid">{errors.title.message}</Form.Control.Feedback>}
         </Form.Group>
 
-        <Form.Group className='mb-2'>
+        <Form.Group className='mb-2' controlId="form_text_short">
           <Form.Label>Short Description</Form.Label>
           <Form.Control
             as="textarea"
             rows={3}
+            isInvalid={errors?.text_short}
             placeholder={short_placeholder}
-            {...form.register("text_short")}
+            {...register("text_short")}
           />
         </Form.Group>
+        {errors?.text_short && <Form.Control.Feedback type="invalid">{errors.text_short.message}</Form.Control.Feedback>}
+
         {group && <Editor form={form} />}
 
-        <Form.Group>
-          <Form.Label>
-            Privacy
-          </Form.Label>
+        <Form.Group controlId='form_privacy'>
+          <Form.Label>Privacy</Form.Label>
           <Form.Control
             as="select"
-            {...form.register("privacy")}
+            {...register("privacy")}
           >
             {privacies.map(p => <option key={p.k} value={p.k}>{p.v}</option>)}
           </Form.Control>
@@ -254,11 +267,6 @@ export default function EditGroup({show, close, group=null}) {
           </Card.Body>
         </Card>
       </Form>
-
-      {!group && <Card className='mb-2'>
-        <Card.Header>Payment</Card.Header>
-        <Card.Body><Stripe submit={form.handleSubmit(submit)} product='create_group' /></Card.Body>
-      </Card>}
     </>
   }
 
@@ -272,13 +280,17 @@ export default function EditGroup({show, close, group=null}) {
       backdrop='static'
     >
       <Modal.Header closeButton>
-        <Modal.Title>Create a Group</Modal.Title>
+        <Modal.Title>{group ? "Edit Group" : "Create a Group"}</Modal.Title>
       </Modal.Header>
 
       <Modal.Body>
         {renderForm()}
         <Error action={/groups\/groups\/post/g} codes={[400,401,403,422]}/>
       </Modal.Body>
+
+      <Modal.Footer>
+        {renderButtons()}
+      </Modal.Footer>
     </Modal>
   </>
 }

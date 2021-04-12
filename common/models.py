@@ -1228,7 +1228,7 @@ class UserGroup(Base):
         res = db.query(UG.user_id) \
             .filter(UG.group_id == gid, UG.role != GroupRoles.banned)\
             .all()
-        return [r.user_id for r in res]
+        return [str(r.user_id) for r in res]
 
     @staticmethod
     def check_access(db: Session, gid, vid):
@@ -1280,7 +1280,6 @@ class GroupMessage(Base):
         msg = GroupMessage(user_id=vid, text=msg, obj_id=gid)
         db.add(msg); db.commit(); db.refresh(msg)
         return msg
-
 
 
 class GroupNotif(Base):

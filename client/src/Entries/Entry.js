@@ -94,7 +94,7 @@ export function Entry({entry=null, close=null}) {
   const entryPut = useStoreState(s => s.ws.res['entries/entry/put'])
   const entryDel = useStoreState(s => s.ws.res['entries/entry/delete'])
   const cache = useStoreState(s => s.ws.data['entries/entry/cache/get'])
-  const clearRes = useStoreActions(a => a.ws.clearRes)
+  const clear = useStoreActions(a => a.ws.clear)
 
   const eid = entry?.id
   const showCacheEntry = !editing && eid && cacheEntry
@@ -118,7 +118,7 @@ export function Entry({entry=null, close=null}) {
 
   useEffect(() => {
     return () => {
-      clearRes(['entries/entry/delete', 'entries/entries/post', 'entries/entry/put'])
+      clear(['entries/entry/delete', 'entries/entries/post', 'entries/entry/put'])
     }
   }, [])
 

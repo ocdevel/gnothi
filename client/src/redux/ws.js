@@ -125,8 +125,11 @@ export const store = {
     const {data, ...rest} = res
     state.res[res.action] = rest
   }),
-  clearRes: action((s, actions) => {
-    actions.forEach(a => {s.res[a] = null})
+  clear: action((s, actions) => {
+    actions.forEach(a => {
+      s.res[a] = null
+      s.data[a] = null
+    })
   }),
   // Tracks actual response data
   data: defaultVals,
