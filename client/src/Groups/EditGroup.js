@@ -179,7 +179,6 @@ export default function EditGroup({show, close, group=null}) {
   }, [])
 
   useEffect(() => {
-    console.log("groupPost", groupPost)
     if (groupPost?.id) {
       close()
       history.push("groups/" + groupPost.id)

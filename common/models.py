@@ -582,14 +582,38 @@ class Share(Base):
         return any([getattr(self, k, False) for k in self.share_fields()])
 
     @staticmethod
+    def merge_shares(rows):
+        """
+        For a user/group with multiple ingress shares, merge those into their maximum permissions.
+        TODO do this via SQL instead of Python
+        """
+        sf = Share.share_fields()
+        merged = {}
+        for r in rows:
+            uid = r['user'].id
+            exists = merged.get(uid, None)
+            if not exists:
+                merged[uid] = r
+                continue
+            exists = exists['share']
+            for k in sf:
+                v1 = getattr(exists, k, False)
+                v2 = getattr(r['share'], k, False)
+                setattr(exists, k, (v1 or v2))
+        return [v for v in merged.values()]
+
+    @staticmethod
     def ingress(db: Session, vid):
-        res = (db.query(ShareUser)
+        rows = (db.query(User, Share)
+            .select_from(ShareUser)
             .filter(ShareUser.obj_id == vid)
-            .join(Share).join(User)
-            .with_entities(User, Share)
+            .join(Share)
+            .join(User)
             .all()
         )
-        return [dict(user=r[0], share=r[1]) for r in res]
+        rows = [dict(user=r[0], share=r[1]) for r in rows]
+        return Share.merge_shares(rows)
+
 
     @staticmethod
     def egress(db, vid):
@@ -1120,6 +1144,7 @@ class GroupRoles(enum.Enum):
     owner = "owner"
     admin = "admin"
     banned = "banned"
+    invited = "invited"
 
 
 class Group(Base):
@@ -1146,15 +1171,16 @@ class Group(Base):
 
     @staticmethod
     def my_groups(db, vid):
-        return (
-            db.query(Group)
+        rows = (db.query(Group, UserGroup)
             .join(UserGroup.group)
             .filter(
                 UserGroup.group_id == Group.id,
                 UserGroup.user_id == vid,
                 UserGroup.role != GroupRoles.banned
-            ).all()
-        )
+            ).all())
+        for r in rows:
+            r[0].role = r[1].role
+        return [r[0] for r in rows]
 
     @staticmethod
     def join_group(db, gid, vid, role=GroupRoles.member):
@@ -1220,7 +1246,8 @@ class UserGroup(Base):
             .join(User)
             .outerjoin(share)
             .all())
-        return [dict(user=r[0], user_group=r[1], share=r[2]) for r in rows]
+        rows = [dict(user=r[0], user_group=r[1], share=r[2]) for r in rows]
+        return Share.merge_shares(rows)
 
     @staticmethod
     def get_uids(db, gid):

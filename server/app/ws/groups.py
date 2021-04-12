@@ -78,7 +78,8 @@ class Groups:
 
     @staticmethod
     async def on_groups_get(data: BM, d, uids=None) -> List[PyG.GroupOut]:
-        res = d.db.query(M.Group).all()
+        res = d.db.query(M.Group)\
+            .filter(M.Group.privacy != M.GroupPrivacy.private).all()
         if uids is True:
             uids = d.mgr.uids()
         return ResWrap(data=res, keyby='id', uids=uids)
