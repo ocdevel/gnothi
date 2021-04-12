@@ -4,7 +4,7 @@ import common.models as M
 from typing import List, Dict, Any, Optional
 from pydantic import parse_obj_as, UUID4
 from common.errors import AccessDenied, CantSnoop, NotFound
-from common.pydantic.utils import BM_ID, BM
+from common.pydantic.utils import BM_ID, BM, Valid
 from common.pydantic.ws import ResWrap
 import sqlalchemy as sa
 import common.pydantic.entries as PyE
@@ -135,6 +135,12 @@ class Groups:
         # TODO handle uids=[], need to not use d.vid
         res = M.Entry.snoop(d.db, d.vid, d.vid, group_id=data.id).all()
         return ResWrap(data=res, keyby='id', uids=[d.vid])
+
+    @staticmethod
+    async def on_group_invite(data: PyG.GroupInvitePost, d) -> Valid:
+        res = M.UserGroup.invite_member(d.db, data.id, d.vid, data.email)
+        await d.mgr.exec(d, action='groups/members/get', input=data, uids=True)
+        return res
 
 
 groups_router = None

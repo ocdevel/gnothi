@@ -25,6 +25,10 @@ class BM_ORM(BaseModel):
         orm_mode = True
 
 
+class Valid(BM):
+    valid: bool
+
+
 default_privacies = 'username first_name last_name gender orientation birthday timezone bio'.split()
 
 

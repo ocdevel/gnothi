@@ -1,12 +1,12 @@
-import {Button, Card, Col, Form, Row} from "react-bootstrap";
+import {Button, Card, Col, Form, Modal, Row} from "react-bootstrap";
 import {Link, useHistory, useParams} from "react-router-dom";
 import React, {useState, useEffect} from "react";
 import {useStoreActions, useStoreState} from "easy-peasy";
 import _ from 'lodash'
 import emoji from 'react-easy-emoji'
-import {FaCrown, FaPencilAlt} from "react-icons/all";
-import {DEFAULT_IDS} from "../utils";
+import {FaCrown, FaPencilAlt, FaUsers} from "react-icons/all";
 import EditGroup from "./EditGroup";
+import InviteMembers from "./InviteMembers";
 
 
 const disabled = ['show_avatar']
@@ -141,24 +141,47 @@ export default function Sidebar() {
   const group = useStoreState(s => s.ws.data['groups/group/get'])
   const uid = useStoreState(s => s.ws.data['users/user/get']?.id)
   const [showEdit, setShowEdit] = useState(false)
+  const [showInvite, setShowInvite] = useState(false)
 
   if (!gid) {return null}
 
-  function toggle() {setShowEdit(!showEdit)}
+  function toggleEdit() {setShowEdit(!showEdit)}
+  function toggleInvite() {setShowInvite(!showInvite)}
+
+  function ownerControls() {
+    if (uid !== group.owner_id) {return null}
+    return <div>
+      <div>
+        <Button
+          variant='outline-secondary'
+          className='w-100 mb-2'
+          size='sm'
+          onClick={toggleEdit}
+        >
+          <FaPencilAlt /> Edit Group
+        </Button>
+      </div>
+      <div>
+        <Button
+          variant='outline-secondary'
+          className='w-100'
+          size='sm'
+          onClick={toggleInvite}
+        >
+          <FaUsers /> Invite Members
+        </Button>
+      </div>
+    </div>
+  }
 
   return <div>
-    {showEdit && <EditGroup show={true} close={toggle} group={group} />}
+    {showEdit && <EditGroup show={true} close={toggleEdit} group={group} />}
+    {showInvite && <InviteMembers close={toggleInvite} gid={gid} />}
     <Card className='mb-2'>
       <Card.Header>{group.title}</Card.Header>
       <Card.Body>
         <p>{group.text_short}</p>
-        {uid === group.owner_id && <Button
-          variant='outline-secondary'
-          size='sm'
-          onClick={toggle}
-        >
-          <FaPencilAlt /> Edit Group
-        </Button>}
+        {ownerControls()}
         <hr />
         <Members gid={gid} />
       </Card.Body>

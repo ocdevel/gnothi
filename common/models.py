@@ -1258,14 +1258,29 @@ class UserGroup(Base):
         return [str(r.user_id) for r in res]
 
     @staticmethod
-    def check_access(db: Session, gid, vid):
-        role = (db.query(UserGroup.role)
+    def check_access(db: Session, gid, vid, roles=None):
+        q = db.query(UserGroup.role)\
             .filter(
                 UserGroup.user_id == vid,
-                UserGroup.group_id==gid,
-                UserGroup.role!=GroupRoles.banned
-            ).scalar())
-        if not role: raise GroupDenied()
+                UserGroup.group_id == gid,
+                UserGroup.role != GroupRoles.banned
+            )
+        if roles:
+            q = q.filter(UserGroup.role.in_(roles))
+        if not q.scalar(): raise GroupDenied()
+
+    @staticmethod
+    def invite_member(db: Session, gid, vid, email):
+        UserGroup.check_access(db, gid, vid, roles=[GroupRoles.owner, GroupRoles.admin])
+        uid = db.query(User.id).filter_by(email=email).scalar()
+        if not uid:
+            return dict(valid=False)
+        if db.query(UserGroup).filter_by(user_id=uid, group_id=gid).first():
+            # Already member
+            return dict(valid=True)
+        db.add(UserGroup(user_id=uid, group_id=gid))
+        db.commit()
+        return dict(valid=True)
 
 
 # class UserMessage(Base):

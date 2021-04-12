@@ -74,3 +74,8 @@ class PrivacyIn(BM):
     id: UUID4
     key: str
     value: bool
+
+
+class GroupInvitePost(BM):
+    id: UUID4
+    email: str
