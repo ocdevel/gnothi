@@ -1,50 +1,39 @@
 import {useStoreState} from "easy-peasy";
 import React, {useLayoutEffect, useRef} from "react";
-import {ChatFeed, Message} from "react-chat-ui";
 import {timeAgo} from "../utils";
+import {Alert, Badge, Button} from "react-bootstrap";
+import {onlineIcon, getUname} from "../Groups/utils";
 
 export function Messages({messages, members}) {
   const uid = useStoreState(s => s.ws.data['users/user/get']?.id)
-  const el = useRef()
 
-  useLayoutEffect(() => {
-    const el_ = el.current
-    if (!el_) {return}
-    el_.scrollTop = el_.scrollHeight
-  })
+  const msgs = messages.slice().reverse()
 
-  function message(m) {
-    let senderName = members[m.user_id]?.username || "*system*"
-    senderName += " " + timeAgo(m.createdAt)
-    const message = m.text
-    const id = uid === m.user_id ? 0 : 1
-    return new Message({id, message, senderName})
-  }
-
-  messages = messages.slice().reverse().map(message)
-
-  // https://github.com/brandonmowat/react-chat-ui
-  // isTyping={this.state.is_typing} // Boolean: is the recipient typing
-  const bubbleStyles = {
-    text: {
-      fontSize: 14
-    },
-    // chatbubble: {
-    //   borderRadius: 70,
-    //   padding: 40
-    // }
-  }
-
-  return <div className='chat-feed' ref={el}>
-      <ChatFeed
-        messages={messages} // Array: list of message objects
-        hasInputField={false} // Boolean: use our input, or use your own
-        showSenderName // show the name of the user who sent the message
-        bubblesCentered={false} //Boolean should the bubbles be centered in the feed?
-        // JSON: Custom bubble styles
-        bubbleStyles={bubbleStyles}
-      />
+  function renderMessage(m, i) {
+    const me = uid === m.user_id
+    const continued = i > 0 && msgs[i - 1].user_id === m.user_id
+    const float = me ? 'float-right' : 'float-left'
+    const variant = me ? 'primary' : 'secondary'
+    return <div>
+      {!continued && <div className='clearfix'>
+        <div className={`text-muted ${float}`}>
+          {members[m.user_id]?.user_group?.online && onlineIcon}
+          <Button variant='link'>{getUname(m.user_id, members)}</Button>
+          <span className='small text-muted'>{timeAgo(m.createdAt)}</span>
+        </div>
+      </div>}
+      <div className='clearfix'>
+        <Alert variant={variant} className={`border-0 rounded-lg my-1 ${float}`}>
+          {m.text}
+        </Alert>
+      </div>
     </div>
+  }
+
+  if (!messages?.length) {return null}
+  return <div>
+    {msgs.map(renderMessage)}
+  </div>
 }
 
 export function GroupMessages() {

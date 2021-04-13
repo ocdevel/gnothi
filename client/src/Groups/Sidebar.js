@@ -8,6 +8,7 @@ import {FaBan, FaCrown, FaPencilAlt, FaUsers} from "react-icons/all";
 import EditGroup from "./EditGroup";
 import InviteMembers from "./InviteMembers";
 import {FaTrash} from "react-icons/fa";
+import {onlineIcon, getUname} from "./utils";
 
 
 const disabled = ['show_avatar']
@@ -104,8 +105,6 @@ function Me() {
     </Card.Body>
   </Card>
 }
-
-const onlineIcon = emoji("🟢")
 
 function Member({row, isOwner, gid}) {
   const emit = useStoreActions(a => a.ws.emit)

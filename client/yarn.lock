@@ -11522,13 +11522,6 @@ react-bootstrap@^1.0.0:
     uncontrollable "^7.2.1"
     warning "^4.0.3"
 
-react-chat-ui@^0.4.0:
-  version "0.4.0"
-  resolved "https://registry.yarnpkg.com/react-chat-ui/-/react-chat-ui-0.4.0.tgz#4bdde4d7945ed3af04bd50e6c22b621fc246b7b5"
-  integrity sha512-bh6drhrV+rRpKXYlbF/aeBY3dtc9ZnbxRdLXFxUh+Q+6i6MbZ3SjDZAi/UmaOFkzaZ5xLzbTdAVkRSjA2r4JtA==
-  dependencies:
-    prop-types "^15.5.10"
-
 react-dev-utils@^11.0.3:
   version "11.0.4"
   resolved "https://registry.yarnpkg.com/react-dev-utils/-/react-dev-utils-11.0.4.tgz#a7ccb60257a1ca2e0efe7a83e38e6700d17aa37a"
