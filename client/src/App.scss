@@ -61,16 +61,29 @@ body {
 }
 
 .groups {
-//  .chat-feed, .group-entries {
-//    max-height: 40vh;
-//    overflow-y: scroll;
-//  }
+  .group-chat {height: 100%}
 
   .group-sidebar-member {
     .member-controls {display: none}
     &:hover {
       .member-controls {display: initial}
     }
+  }
+}
+
+.chat-wrapper {
+	height: 100%;
+  min-height: 100%;
+  max-height: calc(100vh - 75px);
+	display: flex;
+	flex-direction: column;
+
+  .chat-messages {
+    flex: 1;
+    overflow-y: scroll;
+  }
+  .chat-input {
+    height: 100px;
   }
 }
 

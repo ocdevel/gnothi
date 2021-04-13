@@ -1,20 +1,57 @@
-import {useStoreState} from "easy-peasy";
-import React, {useLayoutEffect, useRef} from "react";
+import {useStoreActions, useStoreState} from "easy-peasy";
+import React, {useLayoutEffect, useRef, useState} from "react";
 import {timeAgo} from "../utils";
-import {Alert, Badge, Button} from "react-bootstrap";
+import {Alert, Badge, Button, Col, Form, Row} from "react-bootstrap";
 import {onlineIcon, getUname} from "../Groups/utils";
+import {useParams} from "react-router-dom";
+import {useForm} from "react-hook-form";
 
-export function Messages({messages, members}) {
+export function Messages({messages, members, group_id=null, entry_id=null}) {
   const uid = useStoreState(s => s.ws.data['users/user/get']?.id)
+  const elWrapper = useRef()
+  const elMessages = useRef()
+  const emit = useStoreActions(actions => actions.ws.emit);
+  const form = useForm()
 
-  const msgs = messages.slice().reverse()
+  useLayoutEffect(() => {
+    const {current} = elMessages
+    if (!current) {return}
+    current.scrollTop = current.scrollHeight
+  }, [messages])
+
+  function submit(data) {
+    if (group_id) {
+      emit([`groups/messages/post`, {id: group_id, ...data}])
+    } else if (entry_id) {
+
+    }
+    form.reset({text: ""})
+  }
+
+  function renderInput() {
+    return <Form onSubmit={form.handleSubmit(submit)}>
+      <Form.Group as={Row}>
+        <Form.Label column sm="1">Message</Form.Label>
+        <Col sm="9">
+          <Form.Control
+            {...form.register('text', {required: true, minLength: 1})}
+            type="text"
+            placeholder="Enter message..."
+          />
+        </Col>
+        <div className="col-sm-2">
+          <Button type="submit" variant="primary">Send</Button>
+        </div>
+      </Form.Group>
+    </Form>
+  }
 
   function renderMessage(m, i) {
     const me = uid === m.user_id
-    const continued = i > 0 && msgs[i - 1].user_id === m.user_id
+    const continued = i > 0 && messages[i - 1].user_id === m.user_id
     const float = me ? 'float-right' : 'float-left'
     const variant = me ? 'primary' : 'secondary'
-    return <div>
+    return <div key={m.id}>
       {!continued && <div className='clearfix'>
         <div className={`text-muted ${float}`}>
           {members[m.user_id]?.user_group?.online && onlineIcon}
@@ -30,17 +67,21 @@ export function Messages({messages, members}) {
     </div>
   }
 
-  if (!messages?.length) {return null}
-  return <div>
-    {msgs.map(renderMessage)}
+  return <div ref={elWrapper} className='chat-wrapper'>
+    <div ref={elMessages} className='chat-messages'>
+      {messages?.length && messages.map(renderMessage)}
+    </div>
+    <div className='chat-input'>
+      {renderInput()}
+    </div>
   </div>
 }
 
-export function GroupMessages() {
+export function GroupMessages({group_id}) {
   let messages = useStoreState(s => s.ws.data['groups/messages/get'])
   let members = useStoreState(s => s.ws.data['groups/members/get']?.obj)
 
-  return <Messages messages={messages} members={members} />
+  return <Messages messages={messages} members={members} group_id={group_id} />
 }
 
 export function EntriesMessages() {
