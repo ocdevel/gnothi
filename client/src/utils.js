@@ -73,6 +73,8 @@ export function trueObj(arr) {
 
 export const fmtDate = d => moment(d).format('YYYY-MM-DD ha')
 
+export const timeAgo = d => moment(d).fromNow(true) + ' ago'
+
 export const bsSizes = {
   // Don't know what minWidth/maxWidth system is... just use arr[0] for now, figure out later
   // @media (min-width: 576px) {

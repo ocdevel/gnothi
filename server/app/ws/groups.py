@@ -78,8 +78,7 @@ class Groups:
 
     @staticmethod
     async def on_groups_get(data: BM, d, uids=None) -> List[PyG.GroupOut]:
-        res = d.db.query(M.Group)\
-            .filter(M.Group.privacy != M.GroupPrivacy.private).all()
+        res = M.Group.get_groups(d.db)
         if uids is True:
             uids = d.mgr.uids()
         return ResWrap(data=res, keyby='id', uids=uids)
@@ -97,17 +96,7 @@ class Groups:
 
     @staticmethod
     async def on_groups_post(data: PyG.GroupPost, d) -> PyG.GroupOut:
-        db = d.db
-        g = M.Group(
-            title=data.title,
-            text_short=data.text_short,
-            privacy=data.privacy,
-            owner=d.viewer
-        )
-        ug = M.UserGroup(group=g, user=d.viewer, role=M.GroupRoles.owner)
-        db.add(ug)
-        db.commit()
-        db.refresh(g)
+        g = M.Group.create_group(d.db, data, d.vid)
         await asyncio.wait([
             d.mgr.exec(d, action='groups/groups/get', uids=True),
             d.mgr.exec(d, action='groups/mine/get'),

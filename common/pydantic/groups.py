@@ -14,6 +14,13 @@ class GroupPost(BM):
     text_long: Optional[str] = ""
     privacy: M.GroupPrivacy
 
+    perk_member: Optional[float] = None
+    perk_member_donation: Optional[bool] = False
+    perk_entry: Optional[float] = None
+    perk_entry_donation: Optional[bool] = False
+    perk_video: Optional[float] = None
+    perk_video_donation: Optional[bool] = False
+
 
 class GroupPut(GroupPost):
     id: UUID4
@@ -22,10 +29,14 @@ class GroupPut(GroupPost):
 class GroupOut(GroupPost, BM_ORM):
     id: UUID4
     owner_id: UUID4
-    privacy: M.GroupPrivacy
     created_at: datetime.datetime
     members: Optional[Dict[str, str]] = {}
     role: Optional[M.GroupRoles] = None
+
+    n_members: Optional[int] = 1
+    n_messages: Optional[int] = 0
+    last_message: Optional[datetime.datetime] = None
+    owner_name: Optional[str] = None
 
 
 class MessageIn(BM):

@@ -22,6 +22,7 @@ depends_on = None
 
 from common.seed import seed_data, GROUP_ID
 
+
 def migrate_users(bind, sess):
     bind.execute(f"""
     insert into auth_old (id, email, hashed_password, updated_at)

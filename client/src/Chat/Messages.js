@@ -1,6 +1,7 @@
 import {useStoreState} from "easy-peasy";
 import React, {useLayoutEffect, useRef} from "react";
 import {ChatFeed, Message} from "react-chat-ui";
+import {timeAgo} from "../utils";
 
 export function Messages({messages, members}) {
   const uid = useStoreState(s => s.ws.data['users/user/get']?.id)
@@ -12,11 +13,15 @@ export function Messages({messages, members}) {
     el_.scrollTop = el_.scrollHeight
   })
 
-  messages = messages.slice().reverse().map(m => new Message({
-    message: m.text,
-    id: uid === m.user_id ? 0 : 1,
-    senderName: members[m.user_id]?.username || "*system*"
-  }))
+  function message(m) {
+    let senderName = members[m.user_id]?.username || "*system*"
+    senderName += " " + timeAgo(m.createdAt)
+    const message = m.text
+    const id = uid === m.user_id ? 0 : 1
+    return new Message({id, message, senderName})
+  }
+
+  messages = messages.slice().reverse().map(message)
 
   // https://github.com/brandonmowat/react-chat-ui
   // isTyping={this.state.is_typing} // Boolean: is the recipient typing

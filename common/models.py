@@ -1157,16 +1157,37 @@ class Group(Base):
     official = sa.Column(sa.Boolean, server_default="false")
     created_at = DateCol()
     updated_at = DateCol(update=True)
-    n_members = sa.Column(sa.Integer, server_default="0")
 
-    perk_member = sa.Column(sa.Float, server_default="0")
+    # On-updates to show on groups-list page, so don't need to run SQL each time
+    n_members = sa.Column(sa.Integer, server_default="1", nullable=False)
+    n_messages = sa.Column(sa.Integer, server_default="0", nullable=False)
+    last_message = sa.Column(sa.TIMESTAMP(timezone=True), server_default=sa.text("now()"), nullable=False)
+    owner_name = sa.Column(sa.Unicode)
+
+    # Perks
+    perk_member = sa.Column(sa.Float)
     perk_member_donation = sa.Column(sa.Boolean, server_default="false")
-    perk_entry = sa.Column(sa.Float, server_default="0")
+    perk_entry = sa.Column(sa.Float)
     perk_entry_donation = sa.Column(sa.Boolean, server_default="false")
-    perk_video = sa.Column(sa.Float, server_default="0")
+    perk_video = sa.Column(sa.Float)
     perk_video_donation = sa.Column(sa.Boolean, server_default="false")
 
     owner = orm.relationship("User")
+
+    @staticmethod
+    def create_group(db, data, vid):
+        g = Group(**data.dict(), owner_id=vid)
+        ug = UserGroup(group=g, user_id=vid, role=GroupRoles.owner)
+        db.add(ug)
+        g.owner_name = ug.username
+        db.commit()
+        db.refresh(g)
+        return g
+
+    @staticmethod
+    def get_groups(db):
+        return db.query(Group) \
+            .filter(Group.privacy == GroupPrivacy.public).all()
 
     @staticmethod
     def my_groups(db, vid):
@@ -1194,7 +1215,7 @@ class Group(Base):
         db.add(ug)
         db.execute(sa.text("""
         update groups g 
-        set n_members=(select count(*) from users_groups ug where ug.group_id=:gid)
+        set n_members=(select count(*) from users_groups ug where ug.group_id=:gid and ug.role!='banned')
         where g.id=:gid
         """), dict(gid=gid))
         db.commit()
@@ -1319,7 +1340,15 @@ class GroupMessage(Base):
         else:
             vid = ADMIN_ID
         msg = GroupMessage(user_id=vid, text=msg, obj_id=gid)
-        db.add(msg); db.commit(); db.refresh(msg)
+        db.add(msg)
+        db.execute(sa.text("""
+        update groups set
+            last_message=now(), 
+            n_messages=(select count(*) from groups_messages gm where gm.obj_id=:gid)
+        where id=:gid
+        """), dict(gid=gid))
+        db.commit()
+        db.refresh(msg)
         return msg
 
 

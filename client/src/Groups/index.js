@@ -8,7 +8,7 @@ export default function Index() {
   const emit = useStoreActions(a => a.ws.emit)
 
   useEffect(() => {
-    emit(['groups/groups/get',  {}])
+    emit(['groups/groups/get', {}])
   }, [])
 
   return <div className='groups'>

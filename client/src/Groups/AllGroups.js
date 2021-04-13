@@ -3,13 +3,15 @@ import React, {useEffect, useState} from "react";
 import {Button, Card, Form, Modal} from "react-bootstrap";
 import {Link, useHistory} from "react-router-dom";
 import {useStoreActions, useStoreState} from "easy-peasy";
-import {FaPlus} from "react-icons/fa";
+import {FaPlus, FaRegComments} from "react-icons/fa";
 import {EE} from "../redux/ws";
-import {spinner} from "../utils";
+import {spinner, timeAgo} from "../utils";
 import Error from "../Error";
 import ReactMarkdown from "react-markdown";
 import Group from "./Group";
 import _ from 'lodash'
+import moment from 'moment'
+import {FaUsers} from "react-icons/all";
 
 export function GroupModal({show, close, gid}) {
   const history = useHistory()
@@ -35,20 +37,29 @@ export function GroupModal({show, close, gid}) {
       </Modal.Header>
 
       <Modal.Body>
-        {group.text_short?.length ? <div>
-          <h5>Description</h5>
-          {group.text_short}
-        </div> : null}
+        <div><FaUsers /> {group.n_members} members</div>
+        <div>
+          <span><FaRegComments /> {group.n_messages} messages</span>
+          <small className='muted ml-2'>({timeAgo(group.last_message)})</small>
+        </div>
+        <hr />
+
+        <div>
+          <Card.Title>Description</Card.Title>
+          <div className='ml-2'>{group.text_short}</div>
+        </div>
         {group.text_long?.length ? <div>
-          <h5>About</h5>
-          <ReactMarkdown source={group.text_long} linkTarget='_blank' />
+          <hr />
+          <Card.Title>About</Card.Title>
+          <div className='ml-2'>
+            <ReactMarkdown source={group.text_long} linkTarget='_blank' />
+          </div>
         </div> : null}
         <Button variant='primary' onClick={joinGroup}>Join Group</Button>
       </Modal.Body>
     </Modal>
   </>
 }
-
 
 export default function AllGroups() {
   const groups = useStoreState(s => s.ws.data['groups/groups/get'])
@@ -66,9 +77,15 @@ export default function AllGroups() {
     return <div key={gid}>
       <Card className='mb-2 cursor-pointer' onClick={() => setShowGroup(gid)}>
         <Card.Body>
-          <Card.Subtitle className='mb-2'>
+          <Card.Title className='mb-2'>
             {g.title}
-          </Card.Subtitle>
+          </Card.Title>
+          <div><FaUsers /> {g.n_members} members</div>
+          <div>
+            <span><FaRegComments /> {g.n_messages} messages</span>
+            <small className='muted ml-2'>({timeAgo(g.last_message)})</small>
+          </div>
+          <hr />
           <div className='text-muted'>{g.text_short}</div>
         </Card.Body>
       </Card>

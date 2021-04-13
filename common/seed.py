@@ -26,14 +26,16 @@ def seed_data(db, M):
         db.commit()
 
     if not db.query(M.Group).get(GROUP_ID):
-        db.add(M.Group(
+        owner_id = db.query(M.User.id).filter_by(email=MAIN_USER).scalar()
+        g = M.Group(
             id=GROUP_ID,
-            owner_id=ADMIN_ID,
+            owner_id=owner_id,
             title='Gnothi',
             text_short=text_short,
             text_long=text_long,
             official=True
-        ))
+        )
+        db.add(M.UserGroup(user_id=owner_id, group=g, role=M.GroupRoles.owner))
         db.commit()
 
         # Add everyone to Gnothi (main group, they can leave if they want)
