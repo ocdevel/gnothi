@@ -1,6 +1,7 @@
 # handled separately
 storage
 ml-tools
+storage-dev
 
 # bloat
 **/.idea

@@ -1,8 +1,10 @@
 # handled separately
 storage
+storage-dev
 ml-tools
 
 # bloat
+**/node_modules
 **/.git
 **/.idea
 **/.pytest_cache

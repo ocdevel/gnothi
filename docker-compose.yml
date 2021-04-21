@@ -48,11 +48,11 @@ services:
     environment:
       ENVIRONMENT: development
     ports:
-      - 8888:8888
+      - 8889:8888
     volumes:
       - ./gpu:/paperspace
       - ./common:/paperspace/common
-      - ./storage:/storage
+      - ./storage-dev:/storage
       - ./ml-tools:/ml-tools
     device_requests:
       - capabilities:

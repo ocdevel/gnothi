@@ -2,10 +2,8 @@ import math, time, pdb, re, gc
 import torch
 import numpy as np
 from sentence_transformers import SentenceTransformer
-from transformers import pipeline, AutoTokenizer, AutoModelForSequenceClassification, AutoModelForSeq2SeqLM,\
-    AutoModelForSeq2SeqLM, AutoModelForQuestionAnswering
-from transformers import BartForConditionalGeneration, BartTokenizer
-from transformers import LongformerTokenizer, LongformerForQuestionAnswering
+from transformers import AutoTokenizer, AutoModelForSequenceClassification, AutoModelForSeq2SeqLM,\
+    AutoModelForQuestionAnswering, AutoModel
 from scipy.stats import mode as stats_mode
 from typing import Union, List, Dict, Callable, Tuple
 from common.utils import is_test
@@ -51,15 +49,17 @@ class NLP():
             # https://github.com/huggingface/transformers/issues/4501
             # https://github.com/huggingface/transformers/issues/4224
             max_tokens = 1024  # 4096
-            tokenizer = BartTokenizer.from_pretrained('facebook/bart-large-cnn')
-            model = BartForConditionalGeneration.from_pretrained('facebook/bart-large-cnn').to("cuda")
+            # model = 'sshleifer/distilbart-xsum-12-3'
+            model = 'facebook/bart-large-cnn'
+            tokenizer = AutoTokenizer.from_pretrained(model)
+            model = AutoModelForSeq2SeqLM.from_pretrained(model).to("cuda")
             model.eval()
-            # model = EncoderDecoderModel.from_pretrained("patrickvonplaten/longformer2roberta-cnn_dailymail-fp16").to("cuda")
-            # tokenizer = AutoTokenizer.from_pretrained("allenai/longformer-base-4096")
             m = (tokenizer, model, max_tokens)
         elif k == 'question-answering':
-            tokenizer = LongformerTokenizer.from_pretrained("allenai/longformer-large-4096-finetuned-triviaqa")
-            model = LongformerForQuestionAnswering.from_pretrained("allenai/longformer-large-4096-finetuned-triviaqa", return_dict=True).to("cuda")
+            model = "allenai/longformer-large-4096-finetuned-triviaqa"
+            # model = "google/bigbird-base-trivia-itc"
+            tokenizer = AutoTokenizer.from_pretrained(model)
+            model = AutoModelForQuestionAnswering.from_pretrained(model).to("cuda")
             model.eval()
             # tokenizer = AutoTokenizer.from_pretrained("mrm8488/longformer-base-4096-finetuned-squadv2")
             # model = AutoModelForQuestionAnswering.from_pretrained("mrm8488/longformer-base-4096-finetuned-squadv2", return_dict=True).to("cuda")
@@ -274,25 +274,21 @@ class NLP():
     def question_answering_call(self, loaded, batch, question:str, n_parts=None):
         tokenizer, model, max_tokens = loaded
         batch_size = len(batch)  # TODO right?
-        encoding = tokenizer(
+        inputs = tokenizer(
             [question] * batch_size,
             batch,
             max_length=max_tokens,
             **tokenizer_args
         )
-        input_ids = encoding["input_ids"].to("cuda")
-        attention_mask = encoding["attention_mask"].to("cuda")
+        inputs_ = {k: v.to("cuda") for k, v in inputs.items()}
 
-        with torch.no_grad():
-            outputs = model(input_ids, attention_mask=attention_mask)
+        outputs = model(**inputs_)
         for j, _ in enumerate(batch):
-            start_logits = outputs.start_logits[j]
-            end_logits = outputs.end_logits[j]
-            all_tokens = tokenizer.convert_ids_to_tokens(input_ids[j].tolist())
-
-            answer_tokens = all_tokens[torch.argmax(start_logits):torch.argmax(end_logits) + 1]
-            answer = tokenizer.decode(
-                tokenizer.convert_tokens_to_ids(answer_tokens))  # remove space prepending space token
+            start_, end_ = outputs.start_logits[j], outputs.end_logits[j]
+            start_, end_ = torch.argmax(start_), torch.argmax(end_) + 1
+            input_ids = inputs['input_ids'][j].tolist()
+            answer = tokenizer.convert_ids_to_tokens(input_ids[start_:end_])  # remove space prepending space token
+            answer = tokenizer.convert_tokens_to_string(answer)
 
             # TODO batch this up in question-answering post-process
             if len(answer) > 200:
