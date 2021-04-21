@@ -4,6 +4,7 @@ import numpy as np
 from sentence_transformers import SentenceTransformer
 from transformers import AutoTokenizer, AutoModelForSequenceClassification, AutoModelForSeq2SeqLM,\
     AutoModelForQuestionAnswering, AutoModel
+from transformers import LongformerTokenizer, EncoderDecoderModel
 from scipy.stats import mode as stats_mode
 from typing import Union, List, Dict, Callable, Tuple
 from common.utils import is_test
@@ -38,32 +39,49 @@ class NLP():
         logger.info(f"Load {k}")
         if k == 'sentence-encode':
             m = SentenceTransformer('roberta-base-nli-stsb-mean-tokens')
+
         elif k == 'sentiment-analysis':
-            tokenizer = AutoTokenizer.from_pretrained("mrm8488/t5-base-finetuned-emotion")
-            model = AutoModelForSeq2SeqLM.from_pretrained("mrm8488/t5-base-finetuned-emotion").to("cuda")
-            model.eval()
-            # TODO we sure it's not ForSequenceClassification? https://huggingface.co/mrm8488/t5-base-finetuned-emotion
-            m = (tokenizer, model, 512)
+            # TODO disabling sentiment-analysis for now, it's pretty useless
+            m = ({}, {}, 512)
+
+            # tokenizer = AutoTokenizer.from_pretrained("mrm8488/t5-base-finetuned-emotion")
+            # model = AutoModelForSeq2SeqLM.from_pretrained("mrm8488/t5-base-finetuned-emotion").to("cuda")
+            # model.eval()
+            # # TODO we sure it's not ForSequenceClassification? https://huggingface.co/mrm8488/t5-base-finetuned-emotion
+            # m = (tokenizer, model, 512)
+
         elif k == 'summarization':
             # Not using pipelines because can't handle >max_tokens
             # https://github.com/huggingface/transformers/issues/4501
             # https://github.com/huggingface/transformers/issues/4224
-            max_tokens = 1024  # 4096
-            # model = 'sshleifer/distilbart-xsum-12-3'
-            model = 'facebook/bart-large-cnn'
-            tokenizer = AutoTokenizer.from_pretrained(model)
-            model = AutoModelForSeq2SeqLM.from_pretrained(model).to("cuda")
+
+            # TODO try to get this working, it can handle *huge* documents
+            # https://huggingface.co/allenai/led-base-16384
+            # max_tokens = 16384
+            # model = "allenai/led-base-16384"
+
+            # max_tokens = 1024
+            # model = 'facebook/bart-large-cnn'
+            # tokenizer = AutoTokenizer.from_pretrained(model)
+            # model = AutoModelForSeq2SeqLM.from_pretrained(model).to("cuda")
+
+            # https://huggingface.co/patrickvonplaten/longformer2roberta-cnn_dailymail-fp16
+            max_tokens = 4096
+            model = EncoderDecoderModel.from_pretrained("patrickvonplaten/longformer2roberta-cnn_dailymail-fp16").to("cuda")
+            tokenizer = LongformerTokenizer.from_pretrained("allenai/longformer-base-4096")
+
             model.eval()
             m = (tokenizer, model, max_tokens)
+
         elif k == 'question-answering':
-            model = "allenai/longformer-large-4096-finetuned-triviaqa"
-            # model = "google/bigbird-base-trivia-itc"
+            # model = "allenai/longformer-large-4096-finetuned-triviaqa"
+            # model = "valhalla/longformer-base-4096-finetuned-squadv1"
+            model = "mrm8488/longformer-base-4096-finetuned-squadv2"
             tokenizer = AutoTokenizer.from_pretrained(model)
             model = AutoModelForQuestionAnswering.from_pretrained(model).to("cuda")
             model.eval()
-            # tokenizer = AutoTokenizer.from_pretrained("mrm8488/longformer-base-4096-finetuned-squadv2")
-            # model = AutoModelForQuestionAnswering.from_pretrained("mrm8488/longformer-base-4096-finetuned-squadv2", return_dict=True).to("cuda")
             m = (tokenizer, model, 4096)
+
         if CACHE_MODELS:
             self.m[k] = m
         return m
@@ -143,6 +161,9 @@ class NLP():
         return grouped
 
     def sentiment_analysis(self, paras):
+        logger.info("Skipping sentiment-analysis")
+        return [self.sentiment_analysis_wrap(None)] * len(paras)
+
         logger.info("Sentiment-analysis")
         return self.run_batch_model(
             self.load('sentiment-analysis'),
@@ -154,7 +175,7 @@ class NLP():
     def sentiment_analysis_call(self, loaded, batch, n_parts=None):
         tokenizer, model, max_tokens = loaded
         inputs = tokenizer(
-            batch, # [p + '</s>' for p in batch],  # getting </s> duplicate warning
+            batch,  # [p + '</s>' for p in batch],  # getting </s> duplicate warning
             max_length=max_tokens,
             **tokenizer_args
         ).to("cuda")
@@ -187,6 +208,7 @@ class NLP():
             call_args=call_args,
         )
 
+        # TODO disabling sentiment-analysis for now. It's not very useful anyway
         sents = self.sentiment_analysis(paras) if with_sentiment else\
             [self.sentiment_analysis_wrap(None)] * len(summs)
 
@@ -210,10 +232,10 @@ class NLP():
         # all paragraphs too short
         if not batch: return summarize_or_orig
 
-        inputs = tokenizer(batch, max_length=max_tokens, **tokenizer_args).to("cuda")
+        inputs = tokenizer(batch, max_length=max_tokens, **tokenizer_args)
+        inputs = {k: v.to("cuda") for k, v in inputs.items()}
         summary_ids = model.generate(
-            inputs.input_ids,
-            attention_mask=inputs.attention_mask,
+            **inputs,
             min_length=min_,
             max_length=max_,
 
@@ -280,21 +302,25 @@ class NLP():
             max_length=max_tokens,
             **tokenizer_args
         )
+
         inputs_ = {k: v.to("cuda") for k, v in inputs.items()}
-
         outputs = model(**inputs_)
-        for j, _ in enumerate(batch):
-            start_, end_ = outputs.start_logits[j], outputs.end_logits[j]
-            start_, end_ = torch.argmax(start_), torch.argmax(end_) + 1
-            input_ids = inputs['input_ids'][j].tolist()
-            answer = tokenizer.convert_ids_to_tokens(input_ids[start_:end_])  # remove space prepending space token
-            answer = tokenizer.convert_tokens_to_string(answer)
 
-            # TODO batch this up in question-answering post-process
-            if len(answer) > 200:
-                answer = self.summarization([answer], max_length=15, with_sentiment=False)
-                answer = answer[0]["summary"]
-            answer = answer if re.search("\S", answer) else "No answer"
+        for j, _ in enumerate(batch):
+            start_ = torch.argmax(outputs.start_logits[j])
+            end_ = torch.argmax(outputs.end_logits[j]) + 1
+            ids_ = inputs['input_ids'][j]
+
+            too_long = end_ - start_ > 20
+            if too_long:
+                end_ = start_ + 20
+
+            answer = tokenizer.convert_ids_to_tokens(ids_[start_:end_])  # remove space prepending space token
+            answer = tokenizer.convert_tokens_to_string(answer)
+            if not re.search("\S", answer):
+                answer = "No answer"
+            elif too_long:
+                answer = f'{answer} [...]'
             return [answer]
 
     def question_answering_wrap(self, val: List[str]):
