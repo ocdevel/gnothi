@@ -8,6 +8,7 @@ ml-tools
 **/.pytest_cache
 **/__pycache__
 **/tmp
+**/*.onnx
 
 # sensitive
 **/config.yml

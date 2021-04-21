@@ -54,14 +54,8 @@ def run_job(job):
     M.Job.wrap_job(jid_, k, fn)
     # 3eb71b3: unloading models. multiprocessing handles better
 
-if __name__ == '__main__':
-    logger.info(f"torch.cuda.current_device() {torch.cuda.current_device()}")
-    logger.info(f"torch.cuda.device(0) {torch.cuda.device(0)}")
-    logger.info(f"torch.cuda.device_count() {torch.cuda.device_count()}")
-    logger.info(f"torch.cuda.get_device_name(0) {torch.cuda.get_device_name(0)}")
-    logger.info(f"torch.cuda.is_available() {torch.cuda.is_available()}")
-    logger.info("\n\n")
 
+if __name__ == '__main__':
     with with_db() as db:
         while True:
             M.Machine.notify_online(db, vars.MACHINE)

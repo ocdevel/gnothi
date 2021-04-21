@@ -42,7 +42,7 @@ class NLP():
             m = SentenceTransformer('roberta-base-nli-stsb-mean-tokens')
         elif k == 'sentiment-analysis':
             tokenizer = AutoTokenizer.from_pretrained("mrm8488/t5-base-finetuned-emotion")
-            model = AutoModelForSeq2SeqLM.from_pretrained("mrm8488/t5-base-finetuned-emotion").to("cuda")
+            model = AutoModelForSeq2SeqLM.from_pretrained("mrm8488/t5-base-finetuned-emotion")
             model.eval()
             # TODO we sure it's not ForSequenceClassification? https://huggingface.co/mrm8488/t5-base-finetuned-emotion
             m = (tokenizer, model, 512)
@@ -52,17 +52,19 @@ class NLP():
             # https://github.com/huggingface/transformers/issues/4224
             max_tokens = 1024  # 4096
             tokenizer = BartTokenizer.from_pretrained('facebook/bart-large-cnn')
-            model = BartForConditionalGeneration.from_pretrained('facebook/bart-large-cnn').to("cuda")
+            model = BartForConditionalGeneration.from_pretrained('facebook/bart-large-cnn')
             model.eval()
-            # model = EncoderDecoderModel.from_pretrained("patrickvonplaten/longformer2roberta-cnn_dailymail-fp16").to("cuda")
-            # tokenizer = AutoTokenizer.from_pretrained("allenai/longformer-base-4096")
+            model = torch.quantization.quantize_dynamic(model, {torch.nn.Linear}, dtype=torch.qint8)
             m = (tokenizer, model, max_tokens)
         elif k == 'question-answering':
-            tokenizer = LongformerTokenizer.from_pretrained("allenai/longformer-large-4096-finetuned-triviaqa")
-            model = LongformerForQuestionAnswering.from_pretrained("allenai/longformer-large-4096-finetuned-triviaqa", return_dict=True).to("cuda")
+            # model = 'google/bigbird-base-trivia-itc'
+            model = 'allenai/longformer-large-4096-finetuned-triviaqa'
+            tokenizer = AutoTokenizer.from_pretrained(model)
+            model = AutoModelForQuestionAnswering.from_pretrained(model)
             model.eval()
+            model = torch.quantization.quantize_dynamic(model, {torch.nn.Linear}, dtype=torch.qint8)
             # tokenizer = AutoTokenizer.from_pretrained("mrm8488/longformer-base-4096-finetuned-squadv2")
-            # model = AutoModelForQuestionAnswering.from_pretrained("mrm8488/longformer-base-4096-finetuned-squadv2", return_dict=True).to("cuda")
+            # model = AutoModelForQuestionAnswering.from_pretrained("mrm8488/longformer-base-4096-finetuned-squadv2", return_dict=True)
             m = (tokenizer, model, 4096)
         if CACHE_MODELS:
             self.m[k] = m
@@ -157,7 +159,7 @@ class NLP():
             batch, # [p + '</s>' for p in batch],  # getting </s> duplicate warning
             max_length=max_tokens,
             **tokenizer_args
-        ).to("cuda")
+        )
         output = model.generate(
             inputs.input_ids,
             attention_mask=inputs.attention_mask,
@@ -210,7 +212,7 @@ class NLP():
         # all paragraphs too short
         if not batch: return summarize_or_orig
 
-        inputs = tokenizer(batch, max_length=max_tokens, **tokenizer_args).to("cuda")
+        inputs = tokenizer(batch, max_length=max_tokens, **tokenizer_args)
         summary_ids = model.generate(
             inputs.input_ids,
             attention_mask=inputs.attention_mask,
@@ -280,8 +282,8 @@ class NLP():
             max_length=max_tokens,
             **tokenizer_args
         )
-        input_ids = encoding["input_ids"].to("cuda")
-        attention_mask = encoding["attention_mask"].to("cuda")
+        input_ids = encoding["input_ids"]
+        attention_mask = encoding["attention_mask"]
 
         with torch.no_grad():
             outputs = model(input_ids, attention_mask=attention_mask)
