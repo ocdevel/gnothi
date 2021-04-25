@@ -49,21 +49,20 @@ export function Messages({messages, members, group_id=null, entry_id=null}) {
   function renderMessage(m, i) {
     const me = uid === m.user_id
     const continued = i > 0 && messages[i - 1].user_id === m.user_id
-    const float = me ? 'float-right' : 'float-left'
-    const variant = me ? 'primary' : 'secondary'
-    return <div key={m.id}>
-      {!continued && <div className='clearfix'>
-        <div className={`text-muted ${float}`}>
+    return <div key={m.id} className={me ? 'message-mine' : 'message-theirs'}>
+      {!continued && <div>
+        <div className='text-muted'>
           {members[m.user_id]?.user_group?.online && onlineIcon}
           <Button variant='link'>{getUname(m.user_id, members)}</Button>
           <span className='small text-muted'>{timeAgo(m.createdAt)}</span>
         </div>
       </div>}
-      <div className='clearfix'>
-        <Alert variant={variant} className={`border-0 rounded-lg my-1 ${float}`}>
-          {m.text}
-        </Alert>
-      </div>
+      <Alert
+        variant={me ? 'primary' : 'secondary'}
+        className={`border-0 rounded-lg my-1`}
+      >
+        {m.text}
+      </Alert>
     </div>
   }
 
@@ -71,7 +70,7 @@ export function Messages({messages, members, group_id=null, entry_id=null}) {
     <div ref={elMessages} className='chat-messages'>
       {messages?.length && messages.map(renderMessage)}
     </div>
-    <div className='chat-input'>
+    <div className='chat-input border-top'>
       {renderInput()}
     </div>
   </div>
