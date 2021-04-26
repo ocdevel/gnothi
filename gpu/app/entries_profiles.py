@@ -177,7 +177,7 @@ def gen_keywords(for_entries, uid, sess):
     if not rows: return
     paras_flat = [p for row in rows for p in row.paras]
     keywords = CleanText(paras_flat) \
-        .keywords(postags=['NOUN', 'ADJ', 'VERB', 'PROPN'], mode='fast', bigram_min_count=2, bigram_threshold=2) \
+        .keywords(postags=['NOUN', 'ADJ', 'VERB', 'PROPN'], bigram_min_count=2, bigram_threshold=2) \
         .join().value()
     for r in rows:
         ct = len(r.paras)
