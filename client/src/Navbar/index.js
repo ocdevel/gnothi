@@ -1,9 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import _ from 'lodash'
 import {
-  Nav,
-  Navbar,
-  NavDropdown,
   Badge, Button, Form,
 } from 'react-bootstrap';
 import {LinkContainer} from 'react-router-bootstrap'
@@ -11,12 +8,11 @@ import {
   NavLink as Link,
   useHistory, useParams
 } from "react-router-dom";
-import emoji from 'react-easy-emoji'
 import {aiStatusEmoji, SimplePopover} from "../utils"
 import {
   FaRobot,
   FaRegListAlt,
-  FaBook, FaRegComments, FaUser, FaWindowClose,
+  FaBook, FaRegComments, FaUser,
 } from 'react-icons/fa'
 import './style.scss'
 import { useMediaQuery } from 'react-responsive'
@@ -24,15 +20,14 @@ import { useMediaQuery } from 'react-responsive'
 import {useStoreState, useStoreActions} from "easy-peasy";
 import {FaQuestion} from "react-icons/fa/index";
 import {
-  AiOutlineClose,
   AiOutlineUserSwitch,
-  GiSpy,
   IoEllipsisHorizontalSharp,
   MdClose,
   RiSpyLine
 } from "react-icons/all";
 import TopBooks from "./TopBooks";
 import Links from "./Links";
+import ProfileModal from "../Account/Profile";
 
 function IconItem({icon, text}) {
   return <div className='d-flex align-items-center'>
@@ -83,6 +78,25 @@ function UserSwitcher({s, isLast}) {
   </li>
 }
 
+function ProfileLink({as, asUser}) {
+  const profile = useStoreState(s => s.user.profile)
+  const setProfile = useStoreActions(a => a.user.setProfile)
+  function toggle() {
+    if (profile) {
+      setProfile(null)
+    } else {
+      setProfile(true) // TODO use profile object
+    }
+  }
+  const canProfile = !as || (asUser?.share?.profile)
+  return <>
+    {profile && <ProfileModal close={toggle} />}
+    {canProfile && <li>
+      <a onClick={toggle}>Profile</a>
+    </li>}
+  </>
+}
+
 function AccountSection() {
   const changeAs = useStoreActions(a => a.user.changeAs)
   const logout = useStoreActions(actions => actions.user.logout)
@@ -114,18 +128,16 @@ function AccountSection() {
     email = !ne ? email : <><Badge pill variant='danger'>{ne}</Badge> {email}</>
   }
 
-  const canProfile = !as || (asUser?.share?.profile)
-
-  return <ToggleSection icon={asUser ? <RiSpyLine /> : <FaUser />} text={email}>
-    {renderAsSelect()}
-    {canProfile && <li>
-      <Link to="/account/profile">Profile</Link>
-    </li>}
-    {!as && <li>
-      <a onClick={() => setSharePage({list: true})}>Sharing</a>
-    </li>}
-    <li><a onClick={() => logout()}>Logout</a></li>
-  </ToggleSection>
+  return <>
+    <ToggleSection icon={asUser ? <RiSpyLine /> : <FaUser />} text={email}>
+      {renderAsSelect()}
+      <ProfileLink as={as} asUser={asUser}/>
+      {!as && <li>
+        <a onClick={() => setSharePage({list: true})}>Sharing</a>
+      </li>}
+      <li><a onClick={() => logout()}>Logout</a></li>
+    </ToggleSection>
+  </>
 }
 
 function GroupItem({g}) {

@@ -5,7 +5,7 @@ import {
   Row,
   Col,
   Card,
-  Alert
+  Alert, Modal
 } from "react-bootstrap"
 import {
   BsPersonFill,
@@ -151,31 +151,35 @@ function Profile_() {
   </div>
 }
 
-export default function Profile() {
+export default function Profile({close}) {
+  function renderProfile() {
+    return <div>
+      <div className='mb-3'>
+        <Alert variant='info'>
+          <div>Optionally fill out a profile.</div>
+          <small className='text-muted'>You can optionally share your profile with therapists. Fields which might be important (like gender, orientation) might be used in AI. I'm still experimenting with how AI would use this stuff.</small>
+        </Alert>
+        <Profile_ />
+      </div>
+      <hr />
+      <Card.Title><BsPeopleFill /> People</Card.Title>
+      <Alert variant='info'>
+        <div>Optionally add "who's who" in your life.</div>
+        <small className='text-muted'>When sharing profile with therapists, it would help them to have a "directory" to refresh their memory. It also feeds into the AI's summaries, question-answering, etc.</small>
+      </Alert>
+      <People />
+    </div>
+  }
+
   return <>
-    <Row lg={2} md={1} sm={1} xs={1}>
-      <Col>
-        <Card><Card.Body>
-          <Card.Title><BsPersonFill /> Profile</Card.Title>
-          <Alert variant='info'>
-            <div>Optionally fill out a profile.</div>
-            <small className='text-muted'>You can optionally share your profile with therapists. Fields which might be important (like gender, orientation) might be used in AI. I'm still experimenting with how AI would use this stuff.</small>
-          </Alert>
-          <Profile_ />
-        </Card.Body></Card>
-      </Col>
-      <Col>
-        <Card><Card.Body>
-          <Card.Title><BsPeopleFill /> People</Card.Title>
-          <Alert variant='info'>
-            <div>Optionally add "who's who" in your life.</div>
-            <small className='text-muted'>When sharing profile with therapists, it would help them to have a "directory" to refresh their memory. It also feeds into the AI's summaries, question-answering, etc.</small>
-          </Alert>
-          <Card.Body>
-            <People />
-          </Card.Body>
-        </Card.Body></Card>
-      </Col>
-    </Row>
+    <Modal size="xl" show={true} onHide={close}>
+      <Modal.Header closeButton>
+        <Modal.Title>Profile</Modal.Title>
+      </Modal.Header>
+
+      <Modal.Body>
+        {renderProfile()}
+      </Modal.Body>
+    </Modal>
   </>
 }

@@ -47,6 +47,9 @@ export const store = {
     emit(['users/user/everything', {}])
   }),
 
+  profile: null,
+  setProfile: action((s, p) => {s.profile = p}),
+
   onAny: thunk(async (actions, res, helpers) => {
     const {emit} = helpers.getStoreActions().ws
     if (res.action !== 'users/user/get') {return}
