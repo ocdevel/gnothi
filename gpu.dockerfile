@@ -1,8 +1,44 @@
-FROM huggingface/transformers-gpu:4.5.1
+# Huggingface
+# https://github.com/huggingface/transformers/blob/master/docker/transformers-pytorch-gpu/Dockerfile
+FROM nvidia/cuda:10.2-cudnn7-runtime-ubuntu18.04
 
-RUN \
-  pip install --no-cache-dir \
-  # misc
+# Python3.8 via Miniconda https://hub.docker.com/r/continuumio/miniconda3/dockerfile
+ENV LANG=C.UTF-8 LC_ALL=C.UTF-8
+ENV PATH /opt/conda/bin:$PATH
+
+RUN apt-get update -y && \
+    apt-get install -y \
+    # Huggingface / other
+    bash ca-certificates curl git build-essential \
+    # Gnothi
+    gcc unzip wget bzip2 default-libmysqlclient-dev && \
+    rm -rf /var/lib/apt/lists
+
+# Python 3.8
+RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh && \
+    /bin/bash ~/miniconda.sh -b -p /opt/conda && \
+    rm ~/miniconda.sh && \
+    /opt/conda/bin/conda clean -tipsy && \
+    ln -s /opt/conda/etc/profile.d/conda.sh /etc/profile.d/conda.sh && \
+    echo ". /opt/conda/etc/profile.d/conda.sh" >> ~/.bashrc && \
+    echo "conda activate base" >> ~/.bashrc
+#SHELL ["/bin/bash", "--login", "-c"]
+CMD ["/bin/bash"]
+
+#RUN pip install --no-cache-dir mkl torch
+RUN conda install pytorch torchvision torchaudio cudatoolkit=10.2 -c pytorch
+
+# APEX: Requires cuda-devel (not runtime), do I want this?
+#RUN git clone https://github.com/NVIDIA/apex
+#RUN cd apex && \
+#    python setup.py install && \
+#    pip install -v --no-cache-dir --global-option="--cpp_ext" --global-option="--cuda_ext" ./
+
+RUN pip install --no-cache-dir transformers==4.5.1 sentence-transformers==1.1.0
+# /Huggingface
+
+RUN pip install --no-cache-dir \
+  # Misc
   python-box \
   tqdm \
   pytest \
@@ -19,22 +55,14 @@ RUN \
   markdownify \
   html5lib \
   textacy \
-  # NLP
+  # NLPpy
   spacy \
   spacy-stanza \
   lemminflect \
-  gensim \
-  sentence-transformers
+  gensim
 
 # TODO move this to /storage setup
-ENV LANG=C.UTF-8 LC_ALL=C.UTF-8
 RUN python3 -m spacy download en_core_web_sm
-
-RUN apt-get update -y && apt-get install -y \
-    wget bzip2 ca-certificates curl git unzip build-essential gcc \
-    default-libmysqlclient-dev && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists
 
 RUN pip install --no-cache-dir \
   mysqlclient \
@@ -51,7 +79,7 @@ RUN pip install --no-cache-dir \
   bcrypt \
   boto3 \
   dynaconf \
-  git+git://github.com/lefnire/ml-tools.git@9316d42c \
+  git+git://github.com/lefnire/ml-tools.git@6d3dd3dc \
   petname \
   fastapi-utils \
   orjson \
@@ -65,6 +93,10 @@ ENV TORCH_HOME=/storage/transformers
 ENV TRANSFORMERS_CACHE=/storage/transformers
 ENV STANZA_RESOURCES_DIR=/storage/stanza_resources
 ENV PYTHONPATH=.
+
+# Torch issue
+# https://github.com/open-ce/pytorch-feedstock/issues/34
+#ENV OMP_NUM_THREADS=1
 
 WORKDIR /paperspace
 ENTRYPOINT python app/run.py

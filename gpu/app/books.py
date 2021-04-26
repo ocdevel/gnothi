@@ -5,7 +5,7 @@ from tqdm import tqdm
 from common.database import session
 import common.models as M
 from common.utils import vars, is_test
-from ml_tools import Similars, CleanText, CosineEstimator
+from ml_tools import Similars, CleanText#, CosineEstimator
 from common.fixtures import fixtures
 from box import Box
 import numpy as np
@@ -176,26 +176,13 @@ class Books(object):
             logger.info("Returning fixture predictions")
             return fixt
 
-        # adjust books' cosine similarity; not by too much, we want to stick to the 0-1 range still
-        # and do so for users-scores much more than global-scores. Global-scores are just an overall rating
-        # system, and not meant to have too much sway. These numbers found via hyperparameter optimization
-        # dh = Box(CosineEstimator.default_hypers)
-        adjustments = [
-            # user weight b/w 50-100. I think 50 good to not overfit thumbs over entries
-            dict(weight=50., amount=.3, values=df.user_score.values),
-            # other weight should be low. Possibly even removed (1.001, just to prevent the !=1 check)
-            dict(weight=1.15, amount=.1, values=df.global_score.values)
-        ]
-
-        dnn = CosineEstimator(vecs_user, vecs_books, adjustments)
-        dnn.fit()
-        preds = dnn.predict()
+        grad = np.mean(vecs_books * df.user_score.values[:, np.newaxis] * .1, axis=0)\
+            + np.mean(vecs_books * df.global_score.values[:, np.newaxis] * .01, axis=0)
+        preds = self.cosine_(vecs_user * grad, vecs_books)
         fixtures.save_books(user_id, preds)
         return preds
 
-    def cosine(self):
-        user, books = self.vecs_user, self.vecs_books
-
+    def cosine_(self, user, books):
         # TODO refactor, copied from ml-tools/cosine_estimator
         batch = 100
         def gen_dists():
@@ -203,6 +190,9 @@ class Books(object):
                 c = Similars(user, books[i:i + batch]).normalize()
                 yield c.cosine(abs=True).value().min(axis=0).squeeze()
         return np.hstack([d for d in gen_dists()])
+
+    def cosine(self):
+        return self.cosine_(self.vecs_user, self.vecs_books)
 
     def recommend(self, n_recs=30):
         logger.info("Recommend books")
