@@ -15,6 +15,7 @@ from common.database import with_db
 import common.models as M
 from common.cloud_updown import cloud_down_maybe
 from app.nlp import nlp_
+from app.books import run_books
 from app.entries_profiles import entries, profiles
 
 m = Box({
@@ -29,7 +30,7 @@ m = Box({
     'influencers': influencers,
 
     # Other
-    # 'books': run_books,
+    'books': run_books,
     'themes': themes,
 })
 
@@ -44,11 +45,6 @@ def run_job(job):
 
     if k in ('entries', 'profiles'):
         kwargs['job_id'] = jid_
-
-    if k == 'books':
-        nlp_.clear()
-        os.system(f"python app/books.py --jid={jid_} --uid={args[0]}")
-        return
 
     def fn(): return m[k](*args, **kwargs)
     M.Job.wrap_job(jid_, k, fn)

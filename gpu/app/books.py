@@ -78,10 +78,6 @@ class Books(object):
             # fixme empty vectors
             return None
         vecs = np.vstack(vecs).astype(np.float32)
-        # If very many entries, cluster so that user represented by a handful of centroids.
-        # More performant, and less noise
-        if vecs.shape[0] > 30:
-            vecs = Similars(vecs).cluster(algo='agglomorative').value()
         self.vecs_user = vecs
 
     def load_df(self):
@@ -169,6 +165,15 @@ class Books(object):
             df[k] = books[k]  # this assumes k->k map properly on index
             df[k] = df[k].fillna(fillna)
 
+    def grad(self, user, books, scores, step):
+        # TODO use cupy (installed with spacy anyway). cupy.asarray(cpu_arr); gpu_arr.get()
+        mask = scores != 0
+        books, scores = books[mask], scores.values[mask]
+        # return user + np.mean((books * scores[:, np.newaxis] * step), axis=0)
+        for (b, s) in zip(books, scores):
+            user = user + (b * s * step)
+        return user
+
     def predict(self):
         df, vecs_user, vecs_books, user_id = self.df, self.vecs_user, self.vecs_books, self.user_id
         fixt = fixtures.load_books(user_id)
@@ -176,13 +181,18 @@ class Books(object):
             logger.info("Returning fixture predictions")
             return fixt
 
-        grad = np.mean(vecs_books * df.user_score.values[:, np.newaxis] * .1, axis=0)\
-            + np.mean(vecs_books * df.global_score.values[:, np.newaxis] * .01, axis=0)
-        preds = self.cosine_(vecs_user * grad, vecs_books)
+        vecs_user = self.grad(vecs_user, vecs_books, df.user_score, .01)
+        vecs_user = self.grad(vecs_user, vecs_books, df.global_score, .001)
+        preds = self.cosine_(vecs_user, vecs_books)
         fixtures.save_books(user_id, preds)
         return preds
 
     def cosine_(self, user, books):
+        # If very many entries, cluster so that user represented by a handful of centroids.
+        # More performant, and less noise
+        if user.shape[0] > 30:
+            user = Similars(user).cluster(algo='agglomorative').value()
+
         # TODO refactor, copied from ml-tools/cosine_estimator
         batch = 100
         def gen_dists():
@@ -256,16 +266,3 @@ def run_books(user_id):
     with session() as sess:
         b = Books(sess, user_id)
         return b.run()
-
-
-if __name__ == '__main__':
-    import argparse
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--uid")
-    parser.add_argument("--jid")
-    args = parser.parse_args()
-
-    def fn():
-        run_books(args.uid)
-        return {}
-    M.Job.wrap_job(args.jid, 'books', fn)

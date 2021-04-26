@@ -5,12 +5,12 @@ from sqlalchemy import text
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument('target', help='super|all')
+parser.add_argument('target', help='tyler|all')
 args = parser.parse_args()
 
 with session() as sess:
-    if args.target == 'super':
-        users = sess.query(M.User).filter_by(is_superuser=True).all()
+    if args.target == 'tyler':
+        users = sess.query(M.User).filter_by(email='tylerrenelle@gmail.com').all()
     else:
         users = sess.execute(text("""
         with entries_ as (
@@ -30,7 +30,10 @@ with session() as sess:
         res = sess.execute(text("""
         select s.shelf, b.title
         from bookshelf s
-        inner join books b on b.id=s.book_id and s.user_id=:uid and s.shelf='ai'
+        inner join books b on b.id=s.book_id 
+            and s.user_id=:uid 
+            and s.shelf in ('ai', 'cosine')
+        order by s.shelf desc, s.score desc
         """), uid_).fetchall()
         print("\n\n")
         print(u.email)

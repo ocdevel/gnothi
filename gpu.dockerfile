@@ -25,14 +25,8 @@ RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86
 #SHELL ["/bin/bash", "--login", "-c"]
 CMD ["/bin/bash"]
 
-#RUN pip install --no-cache-dir mkl torch
-RUN conda install pytorch torchvision torchaudio cudatoolkit=10.2 -c pytorch
-
-# APEX: Requires cuda-devel (not runtime), do I want this?
-#RUN git clone https://github.com/NVIDIA/apex
-#RUN cd apex && \
-#    python setup.py install && \
-#    pip install -v --no-cache-dir --global-option="--cpp_ext" --global-option="--cuda_ext" ./
+RUN conda install pytorch cudatoolkit=10.2 -c pytorch
+# e958bc4b NVIDIA/apex
 
 RUN pip install --no-cache-dir transformers==4.5.1 sentence-transformers==1.1.0
 # /Huggingface
@@ -54,15 +48,13 @@ RUN pip install --no-cache-dir \
   markdown2 \
   markdownify \
   html5lib \
-  textacy \
-  # NLPpy
-  spacy \
-  spacy-stanza \
-  lemminflect \
   gensim
 
 # TODO move this to /storage setup
-RUN python3 -m spacy download en_core_web_sm
+RUN conda install -c conda-forge spacy && \
+  conda install -c conda-forge cupy && \
+  pip install lemminflect textacy && \
+  python -m spacy download en_core_web_sm
 
 RUN pip install --no-cache-dir \
   mysqlclient \
@@ -79,7 +71,7 @@ RUN pip install --no-cache-dir \
   bcrypt \
   boto3 \
   dynaconf \
-  git+git://github.com/lefnire/ml-tools.git@6d3dd3dc \
+  git+git://github.com/lefnire/ml-tools.git@1e7c00da \
   petname \
   fastapi-utils \
   orjson \
@@ -91,12 +83,7 @@ RUN pip install --no-cache-dir \
 ENV ENVIRONMENT=production
 ENV TORCH_HOME=/storage/transformers
 ENV TRANSFORMERS_CACHE=/storage/transformers
-ENV STANZA_RESOURCES_DIR=/storage/stanza_resources
 ENV PYTHONPATH=.
-
-# Torch issue
-# https://github.com/open-ce/pytorch-feedstock/issues/34
-#ENV OMP_NUM_THREADS=1
 
 WORKDIR /paperspace
 ENTRYPOINT python app/run.py
