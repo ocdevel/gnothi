@@ -78,9 +78,9 @@ const custom = {
   'set_tags/tags/get': action((state, data) => {
     state.data['tags/tags/get'] = data
     state.data.selectedTags = _.reduce(data, (m,v,k) => {
-        if (v.selected) {m[v.id] = true}
-        return m
-      }, {})
+      if (v.selected) {m[v.id] = true}
+      return m
+    }, {})
   }),
 
   'set_users/profile/put': action((state, data) => {

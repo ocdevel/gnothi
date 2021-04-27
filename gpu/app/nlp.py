@@ -4,7 +4,7 @@ import numpy as np
 from sentence_transformers import SentenceTransformer
 from transformers import AutoTokenizer, AutoModelForSequenceClassification, AutoModelForSeq2SeqLM,\
     AutoModelForQuestionAnswering, AutoModel
-from transformers import LongformerTokenizer, EncoderDecoderModel
+from transformers import BartForConditionalGeneration, BartTokenizer
 from scipy.stats import mode as stats_mode
 from typing import Union, List, Dict, Callable, Tuple
 from common.utils import is_test
@@ -59,20 +59,18 @@ class NLP():
             # https://github.com/huggingface/transformers/issues/4501
             # https://github.com/huggingface/transformers/issues/4224
 
-            # TODO try to get this working, it can handle *huge* documents
+            # Try to get this working, it can handle *huge* documents
             # https://huggingface.co/allenai/led-base-16384
             # max_tokens = 16384
             # model = "allenai/led-base-16384"
 
-            # max_tokens = 1024
+            max_tokens = 1024
+            # Scores comparison: https://huggingface.co/sshleifer/distilbart-cnn-12-6
             # model = 'facebook/bart-large-cnn'
-            # tokenizer = AutoTokenizer.from_pretrained(model)
-            # model = AutoModelForSeq2SeqLM.from_pretrained(model).to("cuda")
-
-            # https://huggingface.co/patrickvonplaten/longformer2roberta-cnn_dailymail-fp16
-            max_tokens = 4096
-            model = EncoderDecoderModel.from_pretrained("patrickvonplaten/longformer2roberta-cnn_dailymail-fp16").to("cuda")
-            tokenizer = LongformerTokenizer.from_pretrained("allenai/longformer-base-4096")
+            model = 'sshleifer/distilbart-cnn-12-3'
+            # model = 'sshleifer/distilbart-xsum-12-3'
+            tokenizer = BartTokenizer.from_pretrained(model)
+            model = BartForConditionalGeneration.from_pretrained(model).to("cuda")
 
             model.eval()
             m = (tokenizer, model, max_tokens)

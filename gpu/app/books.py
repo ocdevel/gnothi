@@ -213,7 +213,7 @@ class Books(object):
         # If very many entries, cluster so that user represented by a handful of centroids.
         # More performant, and less noise
         if user.shape[0] > 30:
-            user = Similars(user).cluster(algo='agglomorative').value()
+            user = Similars(user).cluster(algo='kmeans').value()
 
         # TODO refactor, copied from ml-tools/cosine_estimator
         batch = 100

@@ -5,7 +5,7 @@ import {trueKeys} from "../utils";
 export const initialInsights = {
   days: 30,
   question: "",
-  themes: "agglomorative",
+  themes: "kmeans",
   summarize: 300,
 }
 
@@ -34,7 +34,7 @@ export const store = {
     const {insights, ws} = helpers.getStoreState()
 
     const body = { days: insights.days }
-    const tags = trueKeys(ws.selectedTags)
+    const tags = trueKeys(ws.data.selectedTags)
     if (tags.length) { body.tags = tags }
 
     const formK = {question: "question", themes: "algo", summarize: "words"}[k]

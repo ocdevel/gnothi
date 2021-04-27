@@ -87,15 +87,15 @@ export default function Themes() {
       {advanced && <div>
         <hr />
         <Form.Label>Clustering Algorithm</Form.Label>
-        {algos.map(a => (
+        {algos.map(alg => (
           <Form.Check
             type='radio'
             label={<span>
-              {a.label} <a href={a.url} target='_blank'><BsQuestionCircle /></a>
+              {alg.label} <a href={alg.url} target='_blank'><BsQuestionCircle /></a>
             </span>}
-            id={`algo-${a.k}`}
-            checked={form === a.k}
-            onChange={() => a.setInsight(['themes', a.k])}
+            id={`algo-${alg.k}`}
+            checked={form === alg.k}
+            onChange={() => a.setInsight(['themes', alg.k])}
           />
         ))}
         <Form.Text>If the output seems off, try a different clustering algorithm. Don't worry about the tech (unless you're curious), just click the other one and submit.</Form.Text>
