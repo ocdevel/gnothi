@@ -5,6 +5,7 @@ from sentence_transformers import SentenceTransformer
 from transformers import AutoTokenizer, AutoModelForSequenceClassification, AutoModelForSeq2SeqLM,\
     AutoModelForQuestionAnswering, AutoModel
 from transformers import BartForConditionalGeneration, BartTokenizer
+from transformers import LEDTokenizer, LEDForConditionalGeneration
 from scipy.stats import mode as stats_mode
 from typing import Union, List, Dict, Callable, Tuple
 from common.utils import is_test
@@ -14,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 # temporary: how many tokens can the gpu handle at a time? determines how much
 # to batch per model. Eg, QA only one part at a time; others multiple parts
-max_gpu_tokens = 4096
+max_gpu_tokens = 16384
 # max_gpu_tokens = 4096//2
 tokenizer_args = dict(truncation=True, padding=True, return_tensors='pt')
 
@@ -61,16 +62,18 @@ class NLP():
 
             # Try to get this working, it can handle *huge* documents
             # https://huggingface.co/allenai/led-base-16384
-            # max_tokens = 16384
-            # model = "allenai/led-base-16384"
+            max_tokens = 16384
+            model = "HHousen/distil-led-large-cnn-16384"
+            tokenizer = LEDTokenizer.from_pretrained(model)
+            model = LEDForConditionalGeneration.from_pretrained(model).to("cuda")
 
-            max_tokens = 1024
-            # Scores comparison: https://huggingface.co/sshleifer/distilbart-cnn-12-6
-            # model = 'facebook/bart-large-cnn' # slow
-            model = 'sshleifer/distilbart-cnn-12-3'
-            # model = 'sshleifer/distilbart-xsum-12-3' # too many news-oriented fillers
-            tokenizer = BartTokenizer.from_pretrained(model)
-            model = BartForConditionalGeneration.from_pretrained(model).to("cuda")
+            # max_tokens = 1024
+            # # Scores comparison: https://huggingface.co/sshleifer/distilbart-cnn-12-6
+            # # model = 'facebook/bart-large-cnn' # slow
+            # model = 'sshleifer/distilbart-cnn-12-3'
+            # # model = 'sshleifer/distilbart-xsum-12-3' # too many news-oriented fillers
+            # tokenizer = BartTokenizer.from_pretrained(model)
+            # model = BartForConditionalGeneration.from_pretrained(model).to("cuda")
 
             model.eval()
             m = (tokenizer, model, max_tokens)
@@ -86,7 +89,7 @@ class NLP():
             # - distilbert-base-uncased-distilled-squad
             # - valhalla/longformer-base-4096-finetuned-squadv1
             # - mrm8488/longformer-base-4096-finetuned-squadv2
-            
+
             model = "allenai/longformer-large-4096-finetuned-triviaqa"
             tokenizer = AutoTokenizer.from_pretrained(model)
             model = AutoModelForQuestionAnswering.from_pretrained(model).to("cuda")
