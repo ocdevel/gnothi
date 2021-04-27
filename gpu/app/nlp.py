@@ -66,9 +66,9 @@ class NLP():
 
             max_tokens = 1024
             # Scores comparison: https://huggingface.co/sshleifer/distilbart-cnn-12-6
-            # model = 'facebook/bart-large-cnn'
+            # model = 'facebook/bart-large-cnn' # slow
             model = 'sshleifer/distilbart-cnn-12-3'
-            # model = 'sshleifer/distilbart-xsum-12-3'
+            # model = 'sshleifer/distilbart-xsum-12-3' # too many news-oriented fillers
             tokenizer = BartTokenizer.from_pretrained(model)
             model = BartForConditionalGeneration.from_pretrained(model).to("cuda")
 
@@ -76,9 +76,18 @@ class NLP():
             m = (tokenizer, model, max_tokens)
 
         elif k == 'question-answering':
-            # model = "allenai/longformer-large-4096-finetuned-triviaqa"
-            # model = "valhalla/longformer-base-4096-finetuned-squadv1"
-            model = "mrm8488/longformer-base-4096-finetuned-squadv2"
+            # Can't get working (gives [SEP], </s>, CLS, etc):
+            # - a-ware/distilbart-xsum-12-3-squadv2
+            # - twmkn9/distilroberta-base-squad2
+            # - distilbert-base-cased-distilled-squad
+            # - twmkn9/distilroberta-base-squad2
+            # - deepset/roberta-base-squad2
+            # Close! Fiddle more
+            # - distilbert-base-uncased-distilled-squad
+            # - valhalla/longformer-base-4096-finetuned-squadv1
+            # - mrm8488/longformer-base-4096-finetuned-squadv2
+            
+            model = "allenai/longformer-large-4096-finetuned-triviaqa"
             tokenizer = AutoTokenizer.from_pretrained(model)
             model = AutoModelForQuestionAnswering.from_pretrained(model).to("cuda")
             model.eval()
