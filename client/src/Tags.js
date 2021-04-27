@@ -87,14 +87,6 @@ function TagForm({tag}) {
       <Col xs='auto'>
         <IoReorderFourSharp />
       </Col>
-      <Col xs='auto'>
-        <Form.Switch
-          id={`tag-ai-${id}`}
-          label={<FaRobot />}
-          checked={ai}
-          onChange={changeAi}
-        />
-      </Col>
       <Form.Group as={Col} controlId={`tag-name-${id}`}>
         <Form.Control
           size='sm'
@@ -104,6 +96,14 @@ function TagForm({tag}) {
           onChange={changeName}
         />
       </Form.Group>
+      <Col xs='auto'>
+        <Form.Switch
+          id={`tag-ai-${id}`}
+          label={<FaRobot />}
+          checked={ai}
+          onChange={changeAi}
+        />
+      </Col>
       {tag.main ? <div /> : <Col xs='auto'>
         <Button
           size='sm'
@@ -122,6 +122,26 @@ function TagModal({close}) {
   const [showMore, setShowMore] = useState(false)
 
   function toggleMore() {setShowMore(!showMore)}
+  function renderHelp() {
+    return <div>
+      <h5>About Tags</h5>
+      <div className='text-muted small'>
+        <div>Tags organize your journal entries by topic (eg personal, work, dreams). Some apps do this via <em>multiple journals</em>, like folders on a computer. Gnothi uses tags instead, adding more flexibility for entry-sharing & AI.</div>
+        <Button size='sm' variant='link' onClick={toggleMore}>{showMore ? "Hide examples" : "Show examples / ideas"}</Button>
+        {showMore && <div>
+          Here's how Gnothi's creator uses tags:<ul>
+          <li><b>Main</b>: My default. Most things go here.</li>
+          <li><b>Dreams</b>: I record my dreams, as I'll be building some cool dream-analysis tooling into Gnothi. I disable <FaRobot /> on this tag, since I don't want Gnothi matching-making me to books / groups based on my dreams - that would be weird.</li>
+          <li><b>Therapy</b>: I share this tag (see sidebar > Sharing) with my therapist. Before each session she can either read my entries, or run some AI reports (summarization, question-answering) for a quick update. That way we hit the ground running in our session. This is an example of the value of multiple tags per entry; I'll tag most things Main, and I'll <em>also</em> tag an entry Therapy if it's something I'm comfortable with my therapist reading.</li>
+        </ul>
+        </div>}
+      </div>
+      <h5 className='d-flex'><span className='mr-2'>About</span><Form.Switch disabled/> <FaRobot /></h5>
+      <div className='text-muted small'>
+        By default, Gnothi will use all of your tags to decide which entries "represent you". Those entries are then used for match-making you with books, groups, therapists, etc. There will likely be tags you don't want used; the obvious example is Dreams. If you dream-journal, create a tag called "Dreams" and un-check its <FaRobot />. That way you won't get super weird book / group recommendations.
+      </div>
+    </div>
+  }
 
   function reorder(tags) {
     const data = _.map(tags, ({id}, order) => ({id, order}))
@@ -143,22 +163,7 @@ function TagModal({close}) {
             <NewTag />
           </Col>
           <Col sm={12} md={5}>
-            <h5>About Tags</h5>
-            <div className='text-muted small'>
-              <div>Tags organize your journal entries by topic (eg personal, work, dreams). Some apps do this via <em>multiple journals</em>, like folders on a computer. Gnothi uses tags instead, adding more flexibility for entry-sharing & AI.</div>
-              <Button size='sm' variant='link' onClick={toggleMore}>{showMore ? "Hide examples" : "Show examples / ideas"}</Button>
-              {showMore && <div>
-                Here's how Gnothi's creator uses tags:<ul>
-                <li><b>Main</b>: My default. Most things go here.</li>
-                <li><b>Dreams</b>: I record my dreams, as I'll be building some cool dream-analysis tooling into Gnothi. I disable <FaRobot /> on this tag, since I don't want Gnothi matching-making me to books / groups based on my dreams - that would be weird.</li>
-                <li><b>Therapy</b>: I share this tag (see sidebar > Sharing) with my therapist. Before each session she can either read my entries, or run some AI reports (summarization, question-answering) for a quick update. That way we hit the ground running in our session. This is an example of the value of multiple tags per entry; I'll tag most things Main, and I'll <em>also</em> tag an entry Therapy if it's something I'm comfortable with my therapist reading.</li>
-              </ul>
-              </div>}
-            </div>
-            <h5 className='d-flex'><span className='mr-2'>About</span><Form.Switch disabled/> <FaRobot /></h5>
-            <div className='text-muted small'>
-              By default, Gnothi will use all of your tags to decide which entries "represent you". Those entries are then used for match-making you with books, groups, therapists, etc. There will likely be tags you don't want used; the obvious example is Dreams. If you dream-journal, create a tag called "Dreams" and un-check its <FaRobot />. That way you won't get super weird book / group recommendations.
-            </div>
+            {renderHelp()}
           </Col>
         </Row>
       </Modal.Body>

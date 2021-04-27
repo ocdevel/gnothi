@@ -4,7 +4,7 @@ from common.errors import CantSnoop, GnothiException
 from common.pydantic.utils import BM, BM_ID
 import common.pydantic.tags as PyT
 import common.pydantic.ws as PyW
-
+import sqlalchemy as sa
 
 class Tags:
     @staticmethod
@@ -14,10 +14,11 @@ class Tags:
     @staticmethod
     async def on_tags_post(data: PyT.TagIn, d):
         if d.snooping: raise CantSnoop()
-        tag = M.Tag(name=data.name, user_id=d.vid)
-        d.db.add(tag)
-        d.db.commit()
-        # d.db.refresh(tag)
+        db = d.db
+        last = db.query(sa.func.max(M.Tag.order)).filter_by(user_id=d.vid).scalar()
+        tag = M.Tag(name=data.name, user_id=d.vid, order=last + 1)
+        db.add(tag)
+        db.commit()
         await d.mgr.exec(d, action='tags/tags/get')
 
     @staticmethod
