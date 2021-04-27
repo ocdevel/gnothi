@@ -14,6 +14,7 @@ from sqlalchemy import text
 from psycopg2.extras import Json as jsonb
 from sqlalchemy.dialects import postgresql as psql
 logger = logging.getLogger(__name__)
+from app.nlp import nlp_
 
 # Whether to load full Libgen DB, or just self-help books
 libgen_dir = "/storage/libgen"
@@ -156,7 +157,7 @@ class Books(object):
         df = self.df
         logger.info(f"Embedding {df.shape[0]} entries")
         texts = (df.title + '\n' + df.text).tolist()
-        vecs = Similars(texts).embed().value()
+        vecs = nlp_.sentence_encode(texts)
         np.save(paths.vecs, vecs)
         self.load_vecs_books()
 

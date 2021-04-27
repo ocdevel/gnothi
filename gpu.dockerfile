@@ -69,7 +69,7 @@ RUN pip install --no-cache-dir \
   bcrypt \
   boto3 \
   dynaconf \
-  git+git://github.com/lefnire/ml-tools.git@64caf747 \
+  git+git://github.com/lefnire/ml-tools.git@65b84bb5 \
   petname \
   fastapi-utils \
   orjson \

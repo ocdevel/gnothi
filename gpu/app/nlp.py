@@ -38,7 +38,11 @@ class NLP():
         m = None
         logger.info(f"Load {k}")
         if k == 'sentence-encode':
-            m = SentenceTransformer('roberta-base-nli-stsb-mean-tokens')
+            # https://www.sbert.net/docs/pretrained_models.html
+            # Good general: paraphrase-distilroberta-base-v1
+            # Good STS: stsb-roberta-base
+            # Fast STS: stsb-distilbert-base
+            m = SentenceTransformer('paraphrase-distilroberta-base-v1')
 
         elif k == 'sentiment-analysis':
             # TODO disabling sentiment-analysis for now, it's pretty useless
