@@ -1091,7 +1091,7 @@ class CacheUser(Base):
     user_id = FKCol('users.id', primary_key=True)
     paras = Encrypt(array=True)
     clean = Encrypt(array=True)
-    vector = sa.Column(psql.ARRAY(sa.Float, dimensions=1))
+    vectors = sa.Column(psql.ARRAY(sa.Float, dimensions=2))
 
     user = orm.relationship("User")
 

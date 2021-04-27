@@ -250,4 +250,6 @@ def entries(eid, job_id=None):
 
 
 def profiles(uid, job_id=None):
+    logger.warning("Skipping profile-matching (re-doing this)")
+    return {}
     return nlp_on_rows('profiles', str(uid), job_id)

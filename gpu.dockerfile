@@ -31,25 +31,6 @@ RUN conda install pytorch cudatoolkit=10.2 -c pytorch
 RUN pip install --no-cache-dir transformers==4.5.1 sentence-transformers==1.1.0
 # /Huggingface
 
-RUN pip install --no-cache-dir \
-  # Misc
-  python-box \
-  tqdm \
-  pytest \
-  # ML
-  pandas \
-  xgboost \
-  sklearn \
-  scipy \
-  optuna \
-  kneed \
-  # CleanText
-  beautifulsoup4 \
-  markdown2 \
-  markdownify \
-  html5lib \
-  gensim
-
 # TODO move this to /storage setup
 RUN conda install -c conda-forge spacy && \
   conda install -c conda-forge cupy && \
@@ -57,21 +38,38 @@ RUN conda install -c conda-forge spacy && \
   python -m spacy download en_core_web_sm
 
 RUN pip install --no-cache-dir \
+  # -- Misc --
+  python-box \
+  tqdm \
+  pytest \
+  # -- ML --
+  pandas \
+  xgboost \
+  sklearn \
+  scipy \
+  optuna \
+  kneed \
+  # -- CleanText --
+  beautifulsoup4 \
+  markdown2 \
+  markdownify \
+  html5lib \
+  gensim \
+  # -- Gnothi --
   mysqlclient \
   psycopg2-binary \
   #langdetect \
   #scikit-learn-extra \
   sqlalchemy==1.3.24 \
   feather-format \
-  # For common/models TODO can remove some yet?
-  #fastapi \
+  # For common/models
   sqlalchemy_utils \
   cryptography \
   asyncpg \
   bcrypt \
   boto3 \
   dynaconf \
-  git+git://github.com/lefnire/ml-tools.git@1e7c00da \
+  git+git://github.com/lefnire/ml-tools.git@64caf747 \
   petname \
   fastapi-utils \
   orjson \

@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 from sqlalchemy import text
 from psycopg2.extras import Json as jsonb
-from sqlalchemy.dialects import postgresql
+from sqlalchemy.dialects import postgresql as psql
 logger = logging.getLogger(__name__)
 
 # Whether to load full Libgen DB, or just self-help books
@@ -177,7 +177,20 @@ class Books(object):
         for (b, s) in zip(books, scores):
             user = user + (b * s * step)
         return user
-
+    
+    def save_user(self, vecs_user):
+        # Save vecs_user, the full user.mean for later use in groups/user matching
+        db, uid = self.sess, self.user_id
+        mean = vecs_user.mean(axis=0)
+        mean = [mean.tolist()]
+        stmt = psql.insert(M.CacheUser)\
+            .values(user_id=uid, vectors=mean)
+        db.execute(stmt.on_conflict_do_update(
+            index_elements=['user_id'],
+            set_=dict(vectors=stmt.excluded.vectors)
+        ))
+        db.commit()
+    
     def predict(self):
         df, vecs_user, vecs_books, user_id = self.df, self.vecs_user, self.vecs_books, self.user_id
         fixt = fixtures.load_books(user_id)
@@ -185,9 +198,13 @@ class Books(object):
             logger.info("Returning fixture predictions")
             return fixt
 
+        # TODO fiddle with these step-sizes, or make them adaptive to n_ratings
         vecs_user = self.grad(vecs_user, vecs_books, df.user_score, .01)
         vecs_user = self.grad(vecs_user, vecs_books, df.global_score, .001)
         preds = self.cosine_(vecs_user, vecs_books)
+        
+        self.save_user(vecs_user)
+        
         fixtures.save_books(user_id, preds)
         return preds
 
@@ -237,7 +254,7 @@ class Books(object):
             # upsert them again if they show up again.
             vals = df_[["id", "title", "text", "author", "topic"]]
             sess.execute(
-                postgresql.insert(M.Book.__table__)
+                psql.insert(M.Book)
                 .values(vals.to_dict('records'))
                 .on_conflict_do_nothing(index_elements=[M.Book.id])
             )
@@ -247,7 +264,7 @@ class Books(object):
             vals = df_[['id', 'user_id', 'score']].rename(columns={'id': 'book_id'})
             vals['shelf'] = shelf
             sess.execute(
-                postgresql.insert(M.Bookshelf.__table__)
+                psql.insert(M.Bookshelf)
                     .values(vals.to_dict('records'))
                     .on_conflict_do_nothing(index_elements=[M.Bookshelf.book_id, M.Bookshelf.user_id])
             )

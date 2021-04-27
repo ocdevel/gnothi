@@ -224,7 +224,7 @@ export default function Tags({
   }
 
   return <>
-    <TagModal close={closeEditTags} />
+    {editTags && <TagModal close={closeEditTags} />}
     {/*<Button
       size="sm"
       variant={_.some(tags, 'selected') ? 'outline-primary' : 'primary'}
