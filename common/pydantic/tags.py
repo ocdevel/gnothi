@@ -1,4 +1,4 @@
-from typing import Optional, Any, Dict
+from typing import Optional, Any, Dict, List
 from pydantic import UUID4
 from common.pydantic.utils import BM, BM_ORM
 
@@ -23,3 +23,11 @@ class TagOut(TagIn, BM_ORM):
     name: str
     selected: Optional[bool] = False
     main: Optional[bool] = False
+
+
+class TagOrder(BM):
+    id: UUID4
+    order: int
+
+
+TagsOrder = List[TagOrder]

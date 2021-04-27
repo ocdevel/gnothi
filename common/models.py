@@ -699,6 +699,8 @@ class Tag(Base):
     # Save user's selected tags between sessions
     selected = sa.Column(sa.Boolean, server_default="true")
     main = sa.Column(sa.Boolean, server_default="false")
+    order = sa.Column(sa.Integer, server_default="0", nullable=False)
+    ai = sa.Column(sa.Boolean, server_default="true")
 
     user = orm.relationship("User")
 
@@ -716,7 +718,7 @@ class Tag(Base):
                 .with_entities(Tag.id, Tag.user_id, Tag.name, Tag.created_at, Tag.main, ShareTag.selected))
         else:
             q = db.query(Tag).filter_by(user_id=vid)
-        return q.order_by(Tag.main.desc(), Tag.created_at.asc(), Tag.name.asc())
+        return q.order_by(Tag.order.asc())
 
 
 class EntryTag(Base):

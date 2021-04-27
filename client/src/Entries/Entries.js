@@ -40,15 +40,11 @@ export function EntryTeaser({eid, gotoForm}) {
   const isSummary = e.text_summary && e.text !== e.text_summary
   const summary = e.text_summary || e.text
   const sentiment = e.sentiment && sent2face(e.sentiment)
-  let klass = 'cursor-pointer mb-3 entries-entry'
-  if (hovered) {
-    klass += ' hovered shadow-sm'
-  }
   return (
     <Card.Body
       key={e.id}
       onClick={() => gotoForm(eid)}
-      className={klass}
+      className={`cursor-pointer ${hovered ? 'shadow-lg' : 'border-bottom'}`}
       onMouseEnter={onHover}
       onMouseLeave={onLeave}
     >
@@ -59,7 +55,7 @@ export function EntryTeaser({eid, gotoForm}) {
         {fmtDate(e.created_at)}
       </Card.Subtitle>
       {isSummary ? <>
-        <div className='blur-summary'>
+        <div>
           {sentiment}{summary}
         </div>
         {hovered && <div className='text-info'>You're viewing an AI-generated summary of this entry. Click to read the original.</div>}

@@ -1,49 +1,55 @@
 import {Button, Col, Form, Modal} from "react-bootstrap"
 import _ from "lodash"
 import React, {useEffect, useState} from "react"
-import { FaPen } from 'react-icons/fa'
+import {FaPen, FaSort} from 'react-icons/fa'
 
 import {SimplePopover, trueKeys} from "./utils"
 import {useStoreState, useStoreActions} from "easy-peasy";
 import {FaTags} from "react-icons/fa/index";
 
-function TagForm({tag=null}) {
-  const [name, setName] = useState(tag ? tag.name : '')
-  const emit = useStoreActions(actions => actions.ws.emit)
+import * as yup from "yup";
+import {yupResolver} from "@hookform/resolvers/yup";
+import {useForm} from "react-hook-form";
+import Sortable from "./Sortable";
+import {IoReorderFourSharp, IoReorderThreeSharp, MdReorder} from "react-icons/all";
+const tagSchema = yup.object().shape({
+  name: yup.string().required(),
+  ai: yup.boolean()
+})
 
-  const onSubmit = () => emit(['tags/tags/get', {}])
+function TagForm({tag=null}) {
+  const emit = useStoreActions(actions => actions.ws.emit)
+  const form = useForm({
+    resolver: yupResolver(tagSchema),
+    defaultValues: tag || {}
+  });
 
   const id = tag && tag.id
-
-  const changeName = e => setName(e.target.value)
 
   const destroyTag = async () => {
     if (!window.confirm("Are you sure? This will remove this tag from all entries (your entries will stay).")) {
       return
     }
     emit(['tags/tag/delete', {id}])
-    onSubmit()
   }
 
-  const submit = async e => {
-    e.preventDefault()
+  function submit(data) {
     if (id) {
-      emit(['tags/tag/put', {id, name}])
+      emit(['tags/tag/put', {...data, id}])
     } else {
-      emit(['tags/tags/post', {name}])
+      emit(['tags/tags/post', data])
     }
-    onSubmit()
   }
 
-  return <Form onSubmit={submit}>
+  return <Form onSubmit={form.handleSubmit(submit)}>
     <Form.Row>
-      <Form.Group as={Col} controlId="formFieldName">
+      {tag && <div><IoReorderFourSharp /></div>}
+      <Form.Group as={Col} controlId={`tag-name-${tag?.id}`}>
         <Form.Control
           size='sm'
           type="text"
           placeholder="Tag Name"
-          value={name}
-          onChange={changeName}
+          {...form.register('name')}
         />
       </Form.Group>
       <Form.Group controlId="buttons" as={Col}>
@@ -64,17 +70,24 @@ function TagForm({tag=null}) {
 }
 
 function TagModal({close}) {
+  const emit = useStoreActions(a => a.ws.emit)
   const tags = useStoreState(s => s.ws.data['tags/tags/get'])
+  function reorder(tags) {
+    const data = _.map(tags, ({id}, order) => ({id, order}))
+    emit(['tags/tags/reorder', data])
+
+  }
+  const renderTag = tag => <TagForm tag={tag} />
 
   return (
-    <Modal show={true} onHide={close}>
+    <Modal size='xl' show={true} onHide={close}>
       <Modal.Header closeButton>
         <Modal.Title>Tags</Modal.Title>
       </Modal.Header>
 
       <Modal.Body>
         <TagForm />
-        {tags && tags.map(t => <TagForm key={t.id} tag={t}/> )}
+        <Sortable items={tags} render={renderTag} onReorder={reorder} />
       </Modal.Body>
     </Modal>
   )

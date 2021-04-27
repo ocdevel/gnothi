@@ -8,7 +8,7 @@ class MessageIn(BM):
     action: str
     jwt: str
     as_user: Optional[UUID4] = None
-    data: Optional[Dict] = {}
+    data: Optional[Any] = {}
 
 
 class ResWrap(BM):
