@@ -21,12 +21,13 @@ class Tags:
         await d.mgr.exec(d, action='tags/tags/get')
 
     @staticmethod
-    async def on_tag_put(data: PyT.TagIn, d):
+    async def on_tag_put(data: PyT.TagPut, d):
         if d.snooping: raise CantSnoop()
         tag = d.db.query(M.Tag).filter_by(user_id=d.vid, id=data.id).first()
         data = data.dict()
-        for k in ['name', 'selected']:
-            if data.get(k): setattr(tag, k, data[k])
+        for k, v in data.items():
+            if k == 'id': continue
+            setattr(tag, k, data[k])
         d.db.commit()
         await d.mgr.exec(d, 'tags/tags/get')
 

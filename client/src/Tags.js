@@ -1,7 +1,7 @@
-import {Button, Col, Form, Modal} from "react-bootstrap"
+import {Button, Col, Form, Modal, Row} from "react-bootstrap"
 import _ from "lodash"
-import React, {useEffect, useState} from "react"
-import {FaPen, FaSort} from 'react-icons/fa'
+import React, {useCallback, useEffect, useState} from "react"
+import {FaPen, FaRobot, FaSort, FaTrash} from 'react-icons/fa'
 
 import {SimplePopover, trueKeys} from "./utils"
 import {useStoreState, useStoreActions} from "easy-peasy";
@@ -12,66 +12,117 @@ import {yupResolver} from "@hookform/resolvers/yup";
 import {useForm} from "react-hook-form";
 import Sortable from "./Sortable";
 import {IoReorderFourSharp, IoReorderThreeSharp, MdReorder} from "react-icons/all";
+import {Link} from "react-router-dom";
 const tagSchema = yup.object().shape({
   name: yup.string().required(),
   ai: yup.boolean()
 })
 
-function TagForm({tag=null}) {
+function NewTag() {
   const emit = useStoreActions(actions => actions.ws.emit)
   const form = useForm({
     resolver: yupResolver(tagSchema),
-    defaultValues: tag || {}
+    defaultValues: {ai: true}
   });
 
-  const id = tag && tag.id
-
-  const destroyTag = async () => {
-    if (!window.confirm("Are you sure? This will remove this tag from all entries (your entries will stay).")) {
-      return
-    }
-    emit(['tags/tag/delete', {id}])
-  }
-
   function submit(data) {
-    if (id) {
-      emit(['tags/tag/put', {...data, id}])
-    } else {
-      emit(['tags/tags/post', data])
-    }
+    emit(['tags/tags/post', data])
+    form.reset()
   }
 
   return <Form onSubmit={form.handleSubmit(submit)}>
+    <Form.Group controlId={`tag-name`}>
+      <Form.Row>
+        <Col>
+          <Form.Control
+            size='sm'
+            type="text"
+            placeholder="New tag name"
+            {...form.register('name')}
+          />
+        </Col>
+        <Col xs='auto'>
+          <Button
+            size='sm'
+            type='submit'
+            variant="primary"
+          >Add</Button>
+        </Col>
+      </Form.Row>
+    </Form.Group>
+  </Form>
+}
+
+function TagForm({tag}) {
+  const emit = useStoreActions(actions => actions.ws.emit)
+  // Can't use useForm() since need custom onChange (which tiggers submit)
+  const [name, setName] = useState(tag.name)
+  const [ai, setAi] = useState(tag.ai)
+  const id = tag.id
+
+  function submit(data) {
+    emit(['tags/tag/put', data])
+  }
+  const waitSubmit = useCallback(_.debounce(submit, 200), [])
+
+  const changeName = e => {
+    const name = e.target.value
+    waitSubmit({id, name, ai})
+    setName(e.target.value)
+  }
+  const changeAi = e => {
+    const ai = e.target.checked
+    submit({id, name, ai})
+    setAi(ai)
+  }
+
+  const destroyTag = async () => {
+    if (window.confirm("Are you sure? This will remove this tag from all entries (your entries will stay).")) {
+      emit(['tags/tag/delete', {id}])
+    }
+  }
+
+  return <div>
     <Form.Row>
-      {tag && <div><IoReorderFourSharp /></div>}
-      <Form.Group as={Col} controlId={`tag-name-${tag?.id}`}>
+      <Col xs='auto'>
+        <IoReorderFourSharp />
+      </Col>
+      <Col xs='auto'>
+        <Form.Switch
+          id={`tag-ai-${id}`}
+          label={<FaRobot />}
+          checked={ai}
+          onChange={changeAi}
+        />
+      </Col>
+      <Form.Group as={Col} controlId={`tag-name-${id}`}>
         <Form.Control
           size='sm'
           type="text"
           placeholder="Tag Name"
-          {...form.register('name')}
+          value={name}
+          onChange={changeName}
         />
       </Form.Group>
-      <Form.Group controlId="buttons" as={Col}>
+      {tag.main ? <div /> : <Col xs='auto'>
         <Button
-          size='sm'
-          variant={id ? "outline-primary" : "primary"}
-          onClick={submit}
-        >{id ? "Save" : "Add"}</Button>&nbsp;
-        {id && !tag.main && <Button
           size='sm'
           variant='link'
           className='text-secondary'
           onClick={destroyTag}
-        >Delete</Button>}
-      </Form.Group>
+        ><FaTrash /></Button>
+      </Col>}
     </Form.Row>
-  </Form>
+  </div>
 }
 
 function TagModal({close}) {
   const emit = useStoreActions(a => a.ws.emit)
   const tags = useStoreState(s => s.ws.data['tags/tags/get'])
+  const [showMore, setShowMore] = useState(false)
+
+  function toggleMore() {setShowMore(!showMore)}
+
   function reorder(tags) {
     const data = _.map(tags, ({id}, order) => ({id, order}))
     emit(['tags/tags/reorder', data])
@@ -86,8 +137,30 @@ function TagModal({close}) {
       </Modal.Header>
 
       <Modal.Body>
-        <TagForm />
-        <Sortable items={tags} render={renderTag} onReorder={reorder} />
+        <Row>
+          <Col sm={12} md={7}>
+            <Sortable items={tags} render={renderTag} onReorder={reorder} />
+            <NewTag />
+          </Col>
+          <Col sm={12} md={5}>
+            <h5>About Tags</h5>
+            <div className='text-muted small'>
+              <div>Tags organize your journal entries by topic (eg personal, work, dreams). Some apps do this via <em>multiple journals</em>, like folders on a computer. Gnothi uses tags instead, adding more flexibility for entry-sharing & AI.</div>
+              <Button size='sm' variant='link' onClick={toggleMore}>{showMore ? "Hide examples" : "Show examples / ideas"}</Button>
+              {showMore && <div>
+                Here's how Gnothi's creator uses tags:<ul>
+                <li><b>Main</b>: My default. Most things go here.</li>
+                <li><b>Dreams</b>: I record my dreams, as I'll be building some cool dream-analysis tooling into Gnothi. I disable <FaRobot /> on this tag, since I don't want Gnothi matching-making me to books / groups based on my dreams - that would be weird.</li>
+                <li><b>Therapy</b>: I share this tag (see sidebar > Sharing) with my therapist. Before each session she can either read my entries, or run some AI reports (summarization, question-answering) for a quick update. That way we hit the ground running in our session. This is an example of the value of multiple tags per entry; I'll tag most things Main, and I'll <em>also</em> tag an entry Therapy if it's something I'm comfortable with my therapist reading.</li>
+              </ul>
+              </div>}
+            </div>
+            <h5 className='d-flex'><span className='mr-2'>About</span><Form.Switch disabled/> <FaRobot /></h5>
+            <div className='text-muted small'>
+              By default, Gnothi will use all of your tags to decide which entries "represent you". Those entries are then used for match-making you with books, groups, therapists, etc. There will likely be tags you don't want used; the obvious example is Dreams. If you dream-journal, create a tag called "Dreams" and un-check its <FaRobot />. That way you won't get super weird book / group recommendations.
+            </div>
+          </Col>
+        </Row>
       </Modal.Body>
     </Modal>
   )
@@ -146,7 +219,7 @@ export default function Tags({
   }
 
   return <>
-    {editTags && <TagModal close={closeEditTags} />}
+    <TagModal close={closeEditTags} />
     {/*<Button
       size="sm"
       variant={_.some(tags, 'selected') ? 'outline-primary' : 'primary'}

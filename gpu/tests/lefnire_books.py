@@ -33,7 +33,7 @@ with session() as sess:
         inner join books b on b.id=s.book_id 
             and s.user_id=:uid 
             and s.shelf in ('ai', 'cosine')
-        order by s.shelf desc, s.score desc
+        order by s.shelf desc, s.score asc
         """), uid_).fetchall()
         print("\n\n")
         print(u.email)

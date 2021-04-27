@@ -20,7 +20,6 @@ import {
   FaSearch,
 } from 'react-icons/fa'
 import {EntryPage} from "./Entry"
-import './Entries.scss'
 import {useStoreState, useStoreActions} from "easy-peasy";
 import {NotesAll, NotesNotifs} from "./Notes";
 import {MainTags} from "../Tags";

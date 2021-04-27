@@ -57,10 +57,14 @@ class Books(object):
         sess.commit()
 
         entries = sess.execute(text("""
-        select c.vectors from cache_entries c
-        inner join entries e on e.id=c.entry_id
-            and e.user_id=:uid
-            and array_length(c.vectors, 1) > 0
+        select ce.vectors
+        from tags t
+        inner join entries_tags et on et.tag_id=t.id
+            and t.user_id=:uid
+            and t.ai=true
+        inner join entries e on e.id=et.entry_id
+        inner join cache_entries ce on ce.entry_id=e.id 
+            and array_length(ce.vectors, 1) > 0
         order by e.created_at desc;
         """), uid).fetchall()
         profile = sess.execute(text("""

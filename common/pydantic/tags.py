@@ -7,10 +7,13 @@ class TagIn(BM):
     id: Optional[UUID4] = None
     name: str
     selected: Optional[bool] = False
+    ai: bool
 
 
-class TagPut(TagIn):
+class TagPut(BM):
     id: UUID4
+    name: str
+    ai: bool
 
 
 class TagId(BM):
