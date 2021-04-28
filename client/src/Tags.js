@@ -13,10 +13,16 @@ import {useForm} from "react-hook-form";
 import Sortable from "./Sortable";
 import {IoReorderFourSharp, IoReorderThreeSharp, MdReorder} from "react-icons/all";
 import {Link} from "react-router-dom";
+
+import {Chip, Stack, Button as MButton} from '@material-ui/core'
+import {CheckCircle, Label, Create} from "@material-ui/icons";
+import {FullScreenDialog} from "./Helpers/Dialog";
+
 const tagSchema = yup.object().shape({
   name: yup.string().required(),
   ai: yup.boolean()
 })
+
 
 function NewTag() {
   const emit = useStoreActions(actions => actions.ws.emit)
@@ -151,23 +157,21 @@ function TagModal({close}) {
   const renderTag = tag => <TagForm tag={tag} />
 
   return (
-    <Modal size='xl' show={true} onHide={close}>
-      <Modal.Header closeButton>
-        <Modal.Title>Tags</Modal.Title>
-      </Modal.Header>
-
-      <Modal.Body>
-        <Row>
-          <Col sm={12} md={7}>
-            <Sortable items={tags} render={renderTag} onReorder={reorder} />
-            <NewTag />
-          </Col>
-          <Col sm={12} md={5}>
-            {renderHelp()}
-          </Col>
-        </Row>
-      </Modal.Body>
-    </Modal>
+    <FullScreenDialog
+      open={true}
+      handleClose={close}
+      title="Tags"
+    >
+      <Row>
+        <Col sm={12} md={7}>
+          <Sortable items={tags} render={renderTag} onReorder={reorder} />
+          <NewTag />
+        </Col>
+        <Col sm={12} md={5}>
+          {renderHelp()}
+        </Col>
+      </Row>
+    </FullScreenDialog>
   )
 }
 
@@ -214,37 +218,31 @@ export default function Tags({
 
   const renderTag = t => {
     const selected_ = selectedTags_[t.id]
-    return <Button
+    const opts = selected_ ? {icon: <CheckCircle />} : {variant: 'outlined'}
+    return <Chip
       key={t.id}
       disabled={noClick}
-      variant="link"
-      className={`mr-1 ${selected_ ? 'tag-selected' : 'tag-unselected'}`}
+      {...opts}
       onClick={() => selectTag(t.id, !selected_)}
-    >{t.name}</Button>
+      label={t.name}
+    />
   }
 
   return <>
     {editTags && <TagModal close={closeEditTags} />}
-    {/*<Button
-      size="sm"
-      variant={_.some(tags, 'selected') ? 'outline-primary' : 'primary'}
-      onClick={clear}
-    >Default</Button>&nbsp;*/}
-    {tags.map(renderTag)}
-    {!as && !noEdit && <Button
-      size="sm"
-      variant="light"
-      onClick={showEditTags}
-    ><FaPen /></Button>}
+    <Stack direction="row" spacing={1}>
+      {tags.map(renderTag)}
+      {!as && !noEdit && <Chip
+        variant="outlined"
+        color="primary"
+        onClick={showEditTags}
+        icon={<Create />}
+        label={"Tags"}
+      />}
+    </Stack>
   </>
 }
 
 export const MainTags = (
-  <div className='mb-3'>
-    <SimplePopover text="Tags">
-      <FaTags/>
-    </SimplePopover>
-    <span className='tools-divider'/>
-    <Tags />
-  </div>
+  <Tags />
 )

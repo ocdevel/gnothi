@@ -19,6 +19,7 @@ import People from './People'
 
 import {useStoreState, useStoreActions} from "easy-peasy";
 import {timezones} from "../redux/ws";
+import {FullScreenDialog} from "../Helpers/Dialog";
 
 function Profile_() {
   const emit = useStoreActions(a => a.ws.emit)
@@ -172,14 +173,8 @@ export default function Profile({close}) {
   }
 
   return <>
-    <Modal size="xl" show={true} onHide={close}>
-      <Modal.Header closeButton>
-        <Modal.Title>Profile</Modal.Title>
-      </Modal.Header>
-
-      <Modal.Body>
-        {renderProfile()}
-      </Modal.Body>
-    </Modal>
+    <FullScreenDialog open={true} handleClose={close} title="Profile">
+      {renderProfile()}
+    </FullScreenDialog>
   </>
 }

@@ -21,6 +21,7 @@ import 'react-markdown-editor-lite/lib/index.css'
 import {AddNotes, NotesNotifs, NotesList} from './Notes'
 import _ from 'lodash'
 import {EE} from '../redux/ws'
+import {FullScreenDialog} from "../Helpers/Dialog";
 
 import {useStoreActions, useStoreState} from "easy-peasy";
 import Error from "../Error";
@@ -330,31 +331,20 @@ export function Entry({entry=null, close=null}) {
   </>
 
   return <>
-    <Modal
-      show={true}
-      size='xl'
-      onHide={go}
-      scrollable={true}
-      keyboard={false}
-      backdrop='static'
+    <FullScreenDialog
+      open={true}
+      handleClose={() => go()}
+      title={fmtDate(eid ? form.created_at : Date.now())}
     >
-      <Modal.Header closeButton>
-        <Modal.Title>{fmtDate(eid ? form.created_at : Date.now())}</Modal.Title>
-      </Modal.Header>
-
-      <Modal.Body>
-        {renderForm()}
-        {!editing && eid && <NotesList eid={eid} />}
-      </Modal.Body>
-
-
+      {renderForm()}
+      {!editing && eid && <NotesList eid={eid} />}
       <Modal.Footer>
         {!editing && eid && <div className='mr-auto'>
           <AddNotes eid={eid} />
         </div>}
         {renderButtons()}
       </Modal.Footer>
-    </Modal>
+    </FullScreenDialog>
   </>
 }
 

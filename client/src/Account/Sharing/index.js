@@ -9,6 +9,8 @@ import {FaPlus, FaRegComments, FaUser} from "react-icons/fa";
 import {trueObj} from "../../utils";
 import {FaArrowLeft} from "react-icons/all";
 
+import {FullScreenDialog} from "../../Helpers/Dialog";
+
 function Share({s}) {
   let myGroups = useStoreState(s => s.ws.data['groups/mine/get']?.obj)
   const setSharePage = useStoreActions(a => a.user.setSharePage)
@@ -86,14 +88,8 @@ export function SharingModal() {
   }
 
   return <>
-    <Modal size="xl" show={sharePage} onHide={close}>
-      <Modal.Header closeButton>
-        <Modal.Title>Sharing</Modal.Title>
-      </Modal.Header>
-
-      <Modal.Body>
-        <Sharing />
-      </Modal.Body>
-    </Modal>
+    <FullScreenDialog open={sharePage} handleClose={close} title='Sharing'>
+      <Sharing />
+    </FullScreenDialog>
   </>
 }

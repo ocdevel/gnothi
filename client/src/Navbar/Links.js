@@ -12,6 +12,7 @@ import {
 } from "react-icons/all";
 import {Alert, Card, Modal} from "react-bootstrap";
 import React from "react";
+import {FullScreenDialog} from "../Helpers/Dialog";
 
 export default function Links({close}) {
   function renderLinks() {
@@ -86,13 +87,7 @@ export default function Links({close}) {
       </ul>
     </>
   }
-  return <Modal size="xl" show={true} onHide={close}>
-    <Modal.Header closeButton>
-      <Modal.Title>Useful Links</Modal.Title>
-    </Modal.Header>
-
-    <Modal.Body>
-      {renderLinks()}
-    </Modal.Body>
-  </Modal>
+  return <FullScreenDialog open={true} handleClose={close} title="Useful Links">
+    {renderLinks()}
+  </FullScreenDialog>
 }

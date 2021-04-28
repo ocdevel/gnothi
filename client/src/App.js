@@ -28,7 +28,7 @@ import {useSockets} from "./redux/ws";
 import Insights from "./Insights";
 import Tags, {MainTags} from "./Tags";
 import Resources from "./Resources";
-import {Entries} from "./Entries/Entries";
+import Entries from "./Entries/Entries";
 import Groups from "./Groups";
 import staticRoutes from "./Static";
 import _ from "lodash";
@@ -67,7 +67,7 @@ function LoggedIn() {
   return <div key={as}>
     <CssBaseline />
     <Drawer>
-      <Container>
+      <div>
         <Error message={error} />
         <Error codes={[422,401,500]} />
 
@@ -94,7 +94,7 @@ function LoggedIn() {
           {staticRoutes()}
           <Redirect from="/" to="/j" />
         </Switch>
-      </Container>
+      </div>
     </Drawer>
     <SharingModal />
   </div>

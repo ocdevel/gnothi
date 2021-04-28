@@ -1,10 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import _ from 'lodash'
 import {
-  Badge, Button, Form,
-} from 'react-bootstrap';
-import {LinkContainer} from 'react-router-bootstrap'
-import {
   NavLink as Link,
   useHistory, useParams
 } from "react-router-dom";
@@ -36,8 +32,11 @@ import SendIcon from '@material-ui/icons/Send';
 import ExpandLess from '@material-ui/icons/ExpandLess';
 import ExpandMore from '@material-ui/icons/ExpandMore';
 import StarBorder from '@material-ui/icons/StarBorder';
-import {Divider, ListSubheader, List, ListItem,
-  ListItemIcon, ListItemText, Collapse} from "@material-ui/core";
+import {Highlight, MenuBook, PostAdd, Group, GroupAdd, Chat} from "@material-ui/icons";
+import {
+  Divider, ListSubheader, List, ListItem,
+  ListItemIcon, ListItemText, Collapse, Typography, Badge
+} from "@material-ui/core";
 import Drawer from "@material-ui/core/Drawer";
 
 
@@ -52,100 +51,64 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-export function NestedList() {
-  const classes = useStyles();
-  const [open, setOpen] = React.useState(true);
-
-  const handleClick = () => {
-    setOpen(!open);
-  };
-
-  return (
-    <List
-
-    >
-      <ListItem button>
-        <ListItemIcon>
-          <SendIcon />
-        </ListItemIcon>
-        <ListItemText primary="Sent mail" />
-      </ListItem>
-      <ListItem button>
-        <ListItemIcon>
-          <DraftsIcon />
-        </ListItemIcon>
-        <ListItemText primary="Drafts" />
-      </ListItem>
-      <ListItem button onClick={handleClick}>
-        <ListItemIcon>
-          <InboxIcon />
-        </ListItemIcon>
-        <ListItemText primary="Inbox" />
-        {open ? <ExpandLess /> : <ExpandMore />}
-      </ListItem>
-      <Collapse in={open} timeout="auto" unmountOnExit>
-        <List component="div" disablePadding>
-          <ListItem button className={classes.nested}>
-            <ListItemIcon>
-              <StarBorder />
-            </ListItemIcon>
-            <ListItemText primary="Starred" />
-          </ListItem>
-        </List>
-      </Collapse>
-    </List>
-  );
-}
-
-
-
-export function IconItem({icon, text}) {
-  return <div className='d-flex align-items-center'>
-    {icon}
-    <span className='ml-2'>{text}</span>
-  </div>
-}
-
-export function ToggleSection({icon, text, children, open=true}) {
-  const [show, setShow] = useState(open)
-  function toggle() {
-    setShow(!show)
+function ListItem_({
+  text,
+  icon=null,
+  to=null,
+  onClick=null,
+  nested=false,
+  open=null
+}) {
+  const classes = useStyles()
+  const opts = {}
+  if (to) {
+    opts.component = Link
+    opts.to = to
   }
-
-  return <li className="nav-sb-bb">
-    <a
-      onClick={toggle}
-      data-toggle="collapse"
-      className="dropdown-toggle"
-    >
-      <IconItem icon={icon} text={text} />
-    </a>
-    <ul className={`collapse list-unstyled ${show && 'show'}`}>
-      {children}
-    </ul>
-  </li>
+  if (onClick) {
+    opts.onClick = onClick
+  }
+  if (nested) {
+    opts.className = classes.nested
+  }
+  return <ListItem button {...opts}>
+    {icon && <ListItemIcon>{icon}</ListItemIcon>}
+    <ListItemText primary={text} />
+    {open === true ? <ExpandLess /> : open === false ? <ExpandMore /> : null}
+  </ListItem>
 }
 
+export function NestedList({text, children, startOpen=true, icon=null}) {
+  const [open, setOpen] = React.useState(startOpen);
+  const toggle = () => {setOpen(!open)}
 
-export function UserSwitcher({s, isLast}) {
+  return <List>
+    <ListItem_ onClick={toggle} open={open} text={text} icon={icon} />
+    <Collapse in={open} timeout="auto" unmountOnExit>
+      <List component="div" disablePadding>
+        {children}
+      </List>
+    </Collapse>
+  </List>
+}
+
+export function UserSwitcher({s}) {
   const changeAs = useStoreActions(a => a.user.changeAs)
   const notifs = useStoreState(s => s.ws.data['notifs/notes/get'])
   const as = useStoreState(s => s.user.as)
 
   const {share, user} = s
   if (user.id === as) {return null}
-  const klass = isLast ? 'nav-sb-bb' : ''
   const notif = notifs?.[user.id]
       ? <Badge variant='success' size='sm' className='ml-1'>{notifs[user.id]}</Badge>
       : null
-  return <li className={klass} key={user.id}>
-    <a
-      onClick={() => changeAs(user.id)}
-      key={user.id}
-    >
-      <IconItem icon={<AiOutlineUserSwitch />} text={<>{user.email}{notif}</>} />
-    </a>
-  </li>
+  return <ListItem_
+    onClick={() => changeAs(user.id)}
+    key={user.id}
+    icon={<AiOutlineUserSwitch />}
+    text={<>{user.email}{notif}</>}
+    nested={true}
+  />
 }
 
 export function ProfileLink({as, asUser}) {
@@ -161,39 +124,20 @@ export function ProfileLink({as, asUser}) {
   const canProfile = !as || (asUser?.share?.profile)
   return <>
     {profile && <ProfileModal close={toggle} />}
-    {canProfile && <li>
-      <a onClick={toggle}>Profile</a>
-    </li>}
+    {canProfile && <ListItem_ onClick={toggle} text="Profile" nested={true}/>}
   </>
 }
 
 export function JournalSection() {
-  return <ListItem button component={Link} to='/j'>
-    <ListItemIcon><InboxIcon /></ListItemIcon>
-    <ListItemText primary='Journal' />
-    {/*<IconItem icon={<FaRegListAlt />} text="Journal" />*/}
-  </ListItem>
+  return <NestedList text='Journal'>
+    <ListItem_ to='/j' icon={<PostAdd />} text='Entries' nested={true} />
+    <ListItem_ to='/insights' icon={<Highlight />} text='Insights' nested={true} />
+    <ListItem_ to='/resources' icon={<MenuBook />} text='Books' nested={true} />
+  </NestedList>
 }
 
-export function InsightsSection() {
-  return <ToggleSection icon={<FaRobot />} text='AI'>
-    <li>
-      <Link to='/insights'>
-        {/*<IconItem icon={<FaQuestion />} text="Insights" />*/}
-        Insights
-      </Link>
-    </li>
-    <li>
-      <Link to='/resources'>
-        {/*<IconItem icon={<FaBook />} text="Book Recs" />*/}
-        Book Recs
-      </Link>
-    </li>
-  </ToggleSection>
-}
 
 export function AccountSection() {
-  return null
   const changeAs = useStoreActions(a => a.user.changeAs)
   const logout = useStoreActions(actions => actions.user.logout)
 
@@ -203,16 +147,19 @@ export function AccountSection() {
   const asUser = useStoreState(s => s.user.asUser)
   const setSharePage = useStoreActions(a => a.user.setSharePage)
 
-  const renderAsSelect = () => {
+  function renderAsSelect() {
     if (!shares?.length) {return null}
     const last = shares.length - 1
     return <>
-      {as && (
-        <li><a onClick={() => changeAs(null)}>
-          <IconItem icon={<AiOutlineUserSwitch />} text={user.email} />
-        </a></li>
-      )}
-      {shares.map((s, i) =><UserSwitcher key={s.user.id} s={s} isLast={i === last} />)}
+      {as && <ListItem_
+        icon={<AiOutlineUserSwitch />}
+        onClick={() => changeAs(null)}
+        text="Switch Back"
+      />}
+      {shares.map((s, i) => <React.Fragment key={s.user.id}>
+        <UserSwitcher s={s}/>
+        {i === last && <Divider />}
+      </React.Fragment>)}
     </>
   }
 
@@ -225,38 +172,43 @@ export function AccountSection() {
   }
 
   return <>
-    <ToggleSection icon={asUser ? <RiSpyLine /> : <FaUser />} text={email}>
+    <NestedList icon={asUser ? <RiSpyLine /> : <FaUser />} text={email}>
       {renderAsSelect()}
       <ProfileLink as={as} asUser={asUser}/>
-      {!as && <li>
-        <a onClick={() => setSharePage({list: true})}>Sharing</a>
-      </li>}
-      <li><a onClick={() => logout()}>Logout</a></li>
-    </ToggleSection>
+      {!as && <ListItem_
+        onClick={() => setSharePage({list: true})}
+        text='Sharing'
+        nested={true}
+       />}
+      <ListItem_
+        onClick={() => logout()}
+        text='Logout'
+        nested={true}
+      />
+    </NestedList>
   </>
 }
 
 export function GroupItem({g}) {
   const notifs = useStoreState(s => s.ws.data['notifs/groups/get'])
 
-  const notif = notifs?.[g.id]
-      ? <Badge variant='success' size='sm' className='ml-1'>{notifs[g.id]}</Badge>
-      : null
-  return <li><Link to={`/groups/${g.id}`}>{g.title}{notif}</Link></li>
+  let text = <Typography>{g.title}</Typography>
+  if (notifs?.[g.id]) {
+    text = <Badge badgeContent={notifs[g.id]} color="primary">
+      {text}
+    </Badge>
+  }
+  return <ListItem_ to={`/groups/${g.id}`} text={text} nested={true} icon={<Chat />}/>
 }
 
 export function GroupsSection() {
   const groups = useStoreState(s => s.ws.data['groups/mine/get'])
   const {arr, obj} = groups
 
-  return <>
-    <ToggleSection icon={<FaRegComments />} text="Community">
-      <li>
-        <Link exact to='/groups'>All Groups</Link>
-      </li>
-      {arr?.length > 0 && arr.map(gid => <GroupItem g={obj[gid]} key={gid}/>)}
-    </ToggleSection>
-  </>
+  return <NestedList text='Community'>
+    <ListItem_ to='/groups' nested={true} text='Groups' icon={<GroupAdd />}/>
+    {arr?.length > 0 && arr.map(gid => <GroupItem g={obj[gid]} key={gid}/>)}
+  </NestedList>
 }
 
 export function MiscSection() {
@@ -274,26 +226,18 @@ export function MiscSection() {
     {showTopBooks && <TopBooks close={toggleBooks} />}
     {showLinks && <Links close={toggleLinks} />}
 
-    <NestedList>
-      <ListItem button onClick={toggleBooks}>
-        <ListItemText primary='Top Books' />
-      </ListItem>
-      <ListItem button onClick={toggleLinks}>
-        <ListItemText primary='Links' />
-      </ListItem>
+    <NestedList text='Misc' startOpen={false}>
+      <ListItem_ onClick={toggleBooks} text='Top Books' nested={true} />
+      <ListItem_ onClick={toggleLinks} text='Links' nested={true} />
     </NestedList>
-    <Divider />
   </>
 }
 
 export default function Sections() {
   return <>
-    <List>
-      <AccountSection />
-      <JournalSection />
-      <InsightsSection />
-      <GroupsSection />
-      <MiscSection />
-    </List>
+    <AccountSection />
+    <JournalSection />
+    <GroupsSection />
+    <MiscSection />
   </>
 }

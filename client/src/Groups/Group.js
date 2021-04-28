@@ -4,7 +4,7 @@ import React, {useEffect, useLayoutEffect, useState, useRef} from "react";
 import _ from "lodash";
 import Sidebar from './Sidebar'
 import {Nav, Button, Card, Col, Form, Row} from "react-bootstrap";
-import {EntryTeaser} from "../Entries/Entries";
+import Teaser from "../Entries/Teaser";
 import {Entry} from "../Entries/Entry";
 import {LinkContainer} from 'react-router-bootstrap'
 import ReactMarkdown from "react-markdown";
@@ -30,7 +30,7 @@ function Entries() {
   return <>
     {eid && <Entry entry={obj[eid]} close={close} />}
     <Card className='group-entries'>
-      {arr.map(eid => <EntryTeaser eid={eid} gotoForm={onOpen} key={eid}/> )}
+      {arr.map(eid => <Teaser eid={eid} gotoForm={onOpen} key={eid}/> )}
     </Card>
   </>
 }

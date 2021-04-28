@@ -2,6 +2,7 @@ import React, {useEffect, useState} from "react"
 import {Button, Col, Form, Modal, Table} from "react-bootstrap"
 
 import {useStoreActions, useStoreState} from "easy-peasy";
+import {BasicDialog, FullScreenDialog} from "../Helpers/Dialog";
 
 function Person({close, person=null}) {
   const emit = useStoreActions(a => a.ws.emit)
@@ -51,11 +52,11 @@ function Person({close, person=null}) {
   const req = {attrs: {required: true}}
 
   return <>
-    <Modal size="lg" show={true} onHide={close}>
-      <Modal.Header>
-        <Modal.Title>{person ? "Edit Person" : "New Person"}</Modal.Title>
-      </Modal.Header>
-
+    <BasicDialog
+      open={true}
+      handleClose={close}
+      title={person ? "Edit Person" : "New Person"}
+    >
       <Modal.Body>
         <Form className='mb-3'>
           <Form.Row>
@@ -81,7 +82,7 @@ function Person({close, person=null}) {
           <Button size='sm' variant='danger' onClick={destroy}>Delete</Button>
         </>}
       </Modal.Footer>
-    </Modal>
+    </BasicDialog>
   </>
 }
 
