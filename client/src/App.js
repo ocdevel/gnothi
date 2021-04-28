@@ -1,14 +1,12 @@
 import React, {useState, useEffect, useRef} from 'react'
 import Amplify, {Auth} from 'aws-amplify';
+import CssBaseline from '@material-ui/core/CssBaseline';
+import StyledEngineProvider from '@material-ui/core/StyledEngineProvider';
+
 
 import '@aws-amplify/ui/dist/style.css'
 
 import './App.scss'
-import {
-  Col,
-  Container, Row,
-  Spinner
-} from 'react-bootstrap';
 import {
   BrowserRouter as Router,
   Switch,
@@ -21,7 +19,6 @@ import {
 import Splash from './Splash'
 import Account from './Account'
 import Error from './Error'
-import {Sidebar} from './Navbar'
 import Footer from './Footer'
 
 import { StoreProvider, useStoreActions, useStoreState } from 'easy-peasy'
@@ -37,6 +34,8 @@ import staticRoutes from "./Static";
 import _ from "lodash";
 import moment from "moment-timezone";
 import {SharingModal} from "./Account/Sharing";
+import Drawer from "./Navbar/Drawer";
+import {Container} from '@material-ui/core'
 
 function LoggedOut() {
   return <Switch>
@@ -66,8 +65,9 @@ function LoggedIn() {
 
   // key={as} triggers refresh on these components (triggering fetches)
   return <div key={as}>
-    <Sidebar>
-      <Container fluid style={{marginTop: 5}} className='app-content'>
+    <CssBaseline />
+    <Drawer>
+      <Container>
         <Error message={error} />
         <Error codes={[422,401,500]} />
 
@@ -95,7 +95,7 @@ function LoggedIn() {
           <Redirect from="/" to="/j" />
         </Switch>
       </Container>
-    </Sidebar>
+    </Drawer>
     <SharingModal />
   </div>
 }
@@ -119,10 +119,12 @@ function App() {
 }
 
 export default () => <>
-  <StoreProvider store={store}>
-    <Router>
-      <App />
-      <Footer />
-    </Router>
-  </StoreProvider>
+  <StyledEngineProvider injectFirst>
+    <StoreProvider store={store}>
+      <Router>
+        <App />
+        <Footer />
+      </Router>
+    </StoreProvider>
+  </StyledEngineProvider>
 </>;

@@ -29,14 +29,84 @@ import TopBooks from "./TopBooks";
 import Links from "./Links";
 import ProfileModal from "../Account/Profile";
 
-function IconItem({icon, text}) {
+import { makeStyles } from '@material-ui/core/styles';
+import InboxIcon from '@material-ui/icons/MoveToInbox';
+import DraftsIcon from '@material-ui/icons/Drafts';
+import SendIcon from '@material-ui/icons/Send';
+import ExpandLess from '@material-ui/icons/ExpandLess';
+import ExpandMore from '@material-ui/icons/ExpandMore';
+import StarBorder from '@material-ui/icons/StarBorder';
+import {Divider, ListSubheader, List, ListItem,
+  ListItemIcon, ListItemText, Collapse} from "@material-ui/core";
+import Drawer from "@material-ui/core/Drawer";
+
+
+const useStyles = makeStyles((theme) => ({
+  root: {
+    width: '100%',
+    maxWidth: 360,
+    backgroundColor: theme.palette.background.paper,
+  },
+  nested: {
+    paddingLeft: theme.spacing(4),
+  },
+}));
+
+export function NestedList() {
+  const classes = useStyles();
+  const [open, setOpen] = React.useState(true);
+
+  const handleClick = () => {
+    setOpen(!open);
+  };
+
+  return (
+    <List
+
+    >
+      <ListItem button>
+        <ListItemIcon>
+          <SendIcon />
+        </ListItemIcon>
+        <ListItemText primary="Sent mail" />
+      </ListItem>
+      <ListItem button>
+        <ListItemIcon>
+          <DraftsIcon />
+        </ListItemIcon>
+        <ListItemText primary="Drafts" />
+      </ListItem>
+      <ListItem button onClick={handleClick}>
+        <ListItemIcon>
+          <InboxIcon />
+        </ListItemIcon>
+        <ListItemText primary="Inbox" />
+        {open ? <ExpandLess /> : <ExpandMore />}
+      </ListItem>
+      <Collapse in={open} timeout="auto" unmountOnExit>
+        <List component="div" disablePadding>
+          <ListItem button className={classes.nested}>
+            <ListItemIcon>
+              <StarBorder />
+            </ListItemIcon>
+            <ListItemText primary="Starred" />
+          </ListItem>
+        </List>
+      </Collapse>
+    </List>
+  );
+}
+
+
+
+export function IconItem({icon, text}) {
   return <div className='d-flex align-items-center'>
     {icon}
     <span className='ml-2'>{text}</span>
   </div>
 }
 
-function ToggleSection({icon, text, children, open=true}) {
+export function ToggleSection({icon, text, children, open=true}) {
   const [show, setShow] = useState(open)
   function toggle() {
     setShow(!show)
@@ -57,7 +127,7 @@ function ToggleSection({icon, text, children, open=true}) {
 }
 
 
-function UserSwitcher({s, isLast}) {
+export function UserSwitcher({s, isLast}) {
   const changeAs = useStoreActions(a => a.user.changeAs)
   const notifs = useStoreState(s => s.ws.data['notifs/notes/get'])
   const as = useStoreState(s => s.user.as)
@@ -78,7 +148,7 @@ function UserSwitcher({s, isLast}) {
   </li>
 }
 
-function ProfileLink({as, asUser}) {
+export function ProfileLink({as, asUser}) {
   const profile = useStoreState(s => s.user.profile)
   const setProfile = useStoreActions(a => a.user.setProfile)
   function toggle() {
@@ -97,7 +167,33 @@ function ProfileLink({as, asUser}) {
   </>
 }
 
-function AccountSection() {
+export function JournalSection() {
+  return <ListItem button component={Link} to='/j'>
+    <ListItemIcon><InboxIcon /></ListItemIcon>
+    <ListItemText primary='Journal' />
+    {/*<IconItem icon={<FaRegListAlt />} text="Journal" />*/}
+  </ListItem>
+}
+
+export function InsightsSection() {
+  return <ToggleSection icon={<FaRobot />} text='AI'>
+    <li>
+      <Link to='/insights'>
+        {/*<IconItem icon={<FaQuestion />} text="Insights" />*/}
+        Insights
+      </Link>
+    </li>
+    <li>
+      <Link to='/resources'>
+        {/*<IconItem icon={<FaBook />} text="Book Recs" />*/}
+        Book Recs
+      </Link>
+    </li>
+  </ToggleSection>
+}
+
+export function AccountSection() {
+  return null
   const changeAs = useStoreActions(a => a.user.changeAs)
   const logout = useStoreActions(actions => actions.user.logout)
 
@@ -140,7 +236,7 @@ function AccountSection() {
   </>
 }
 
-function GroupItem({g}) {
+export function GroupItem({g}) {
   const notifs = useStoreState(s => s.ws.data['notifs/groups/get'])
 
   const notif = notifs?.[g.id]
@@ -149,7 +245,7 @@ function GroupItem({g}) {
   return <li><Link to={`/groups/${g.id}`}>{g.title}{notif}</Link></li>
 }
 
-function GroupsSection() {
+export function GroupsSection() {
   const groups = useStoreState(s => s.ws.data['groups/mine/get'])
   const {arr, obj} = groups
 
@@ -163,7 +259,8 @@ function GroupsSection() {
   </>
 }
 
-function MiscSection() {
+export function MiscSection() {
+  const classes = useStyles();
   const [showTopBooks, setShowTopBooks] = useState(false)
   const [showLinks, setShowLinks] = useState(false)
   function toggleBooks() {
@@ -176,99 +273,27 @@ function MiscSection() {
   return <>
     {showTopBooks && <TopBooks close={toggleBooks} />}
     {showLinks && <Links close={toggleLinks} />}
-    <ToggleSection icon={<IoEllipsisHorizontalSharp />} text="Misc" open={false}>
-      <li>
-        <a onClick={toggleBooks}>Top Books</a>
-      </li>
-      <li>
-        <a onClick={toggleLinks}>Links</a>
-      </li>
-    </ToggleSection>
+
+    <NestedList>
+      <ListItem button onClick={toggleBooks}>
+        <ListItemText primary='Top Books' />
+      </ListItem>
+      <ListItem button onClick={toggleLinks}>
+        <ListItemText primary='Links' />
+      </ListItem>
+    </NestedList>
+    <Divider />
   </>
 }
 
-export function Sidebar({children}) {
-  const aiStatus = useStoreState(s => s.ws.data['jobs/status'].status)
-  const isDesktop = useMediaQuery({ minWidth: 992 })
-  const [show, setShow] = useState(isDesktop)
-
-  let aiStatus_ = null
-  if (~['off', 'pending'].indexOf(aiStatus)) {
-    aiStatus_ = {
-      off: "AI server is offline",
-      pending: "AI server is coming online"
-    }[aiStatus]
-    aiStatus_ = <SimplePopover text={aiStatus_} overlayOpts={{placement: 'right'}}>
-      <span>{aiStatusEmoji(aiStatus)}</span>
-    </SimplePopover>
-  }
-  const brand = <>Gnothi {aiStatus_}</>
-
-  function toggle() {setShow(!show)}
-
-
-  function renderNavHeader() {
-    return <>
-      <nav className="navbar navbar-light navbar-collapsed">
-        <div className="navbar-brand">{brand}</div>
-        <button
-          type="button"
-          className="close"
-          onClick={toggle}
-        >
-          <MdClose />
-        </button>
-      </nav>
-    </>
-  }
-
-  function renderContentHeader() {
-    return <div style={show ? {display: 'none'} : {}}>
-      <nav className="navbar navbar-light navbar-collapsed">
-        <button
-          type="button"
-          className="navbar-toggler collapsed"
-          onClick={toggle}
-        >
-          <span className="navbar-toggler-icon" />
-        </button>
-        <div className="navbar-brand">{brand}</div>
-        <div>{/*empty 3rd to center brand*/}</div>
-      </nav>
-    </div>
-  }
-
-  function renderSidebar() {
-    const style = show ? {} : {display: 'none'}
-    return <>
-      <nav className='nav-sb' style={style}>
-        {renderNavHeader()}
-        <ul className="list-unstyled components">
-          <AccountSection />
-          <li className='nav-sb-bb'>
-            <Link to='/j'><IconItem icon={<FaRegListAlt />} text="Journal" /></Link>
-          </li>
-          <ToggleSection icon={<FaRobot />} text='AI'>
-            <li>
-              <Link to='/insights'><IconItem icon={<FaQuestion />} text="Insights" /></Link>
-            </li>
-            <li>
-              <Link to='/resources'><IconItem icon={<FaBook />} text="Book Recs" /></Link>
-            </li>
-          </ToggleSection>
-          <GroupsSection />
-          <MiscSection />
-        </ul>
-      </nav>
-    </>
-  }
-
+export default function Sections() {
   return <>
-    {renderContentHeader()}
-    <div className='app-wrapper'>
-      {renderSidebar()}
-      {children}
-    </div>
+    <List>
+      <AccountSection />
+      <JournalSection />
+      <InsightsSection />
+      <GroupsSection />
+      <MiscSection />
+    </List>
   </>
-
 }
