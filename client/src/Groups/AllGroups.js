@@ -5,7 +5,7 @@ import {Link, useHistory} from "react-router-dom";
 import {useStoreActions, useStoreState} from "easy-peasy";
 import {FaPlus, FaRegComments} from "react-icons/fa";
 import {EE} from "../redux/ws";
-import {spinner, timeAgo} from "../utils";
+import {spinner, timeAgo} from "../Helpers/utils";
 import Error from "../Error";
 import ReactMarkdown from "react-markdown";
 import Group from "./Group";

@@ -4,7 +4,7 @@ import {
   NavLink as Link,
   useHistory, useParams
 } from "react-router-dom";
-import {aiStatusEmoji, SimplePopover} from "../utils"
+import {aiStatusEmoji, SimplePopover} from "../Helpers/utils"
 import {
   FaRobot,
   FaRegListAlt,
@@ -51,64 +51,34 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-function ListItem_({
-  text,
-  icon=null,
-  to=null,
-  onClick=null,
-  nested=false,
-  open=null
-}) {
+function ListItem_(props) {
   const classes = useStyles()
-  const opts = {}
-  if (to) {
-    opts.component = Link
-    opts.to = to
-  }
-  if (onClick) {
-    opts.onClick = onClick
+  const {nested, open, icon, primary, secondary, ...rest} = props
+  if (rest.to) {
+    rest.component = Link
   }
   if (nested) {
-    opts.className = classes.nested
+    rest.className = classes.nested
   }
-  return <ListItem button {...opts}>
+  return <ListItem button {...rest}>
     {icon && <ListItemIcon>{icon}</ListItemIcon>}
-    <ListItemText primary={text} />
+    <ListItemText primary={primary} secondary={secondary} />
     {open === true ? <ExpandLess /> : open === false ? <ExpandMore /> : null}
   </ListItem>
 }
 
-export function NestedList({text, children, startOpen=true, icon=null}) {
+export function NestedList({primary, children, secondary=null, startOpen=true, icon=null}) {
   const [open, setOpen] = React.useState(startOpen);
   const toggle = () => {setOpen(!open)}
 
   return <List>
-    <ListItem_ onClick={toggle} open={open} text={text} icon={icon} />
+    <ListItem_ onClick={toggle} open={open} primary={primary} secondary={secondary} icon={icon} />
     <Collapse in={open} timeout="auto" unmountOnExit>
       <List component="div" disablePadding>
         {children}
       </List>
     </Collapse>
   </List>
-}
-
-export function UserSwitcher({s}) {
-  const changeAs = useStoreActions(a => a.user.changeAs)
-  const notifs = useStoreState(s => s.ws.data['notifs/notes/get'])
-  const as = useStoreState(s => s.user.as)
-
-  const {share, user} = s
-  if (user.id === as) {return null}
-  const notif = notifs?.[user.id]
-      ? <Badge variant='success' size='sm' className='ml-1'>{notifs[user.id]}</Badge>
-      : null
-  return <ListItem_
-    onClick={() => changeAs(user.id)}
-    key={user.id}
-    icon={<AiOutlineUserSwitch />}
-    text={<>{user.email}{notif}</>}
-    nested={true}
-  />
 }
 
 export function ProfileLink({as, asUser}) {
@@ -124,18 +94,31 @@ export function ProfileLink({as, asUser}) {
   const canProfile = !as || (asUser?.share?.profile)
   return <>
     {profile && <ProfileModal close={toggle} />}
-    {canProfile && <ListItem_ onClick={toggle} text="Profile" nested={true}/>}
+    {canProfile && <ListItem_ onClick={toggle} primary="Profile" nested={true}/>}
   </>
 }
 
-export function JournalSection() {
-  return <NestedList text='Journal'>
-    <ListItem_ to='/j' icon={<PostAdd />} text='Entries' nested={true} />
-    <ListItem_ to='/insights' icon={<Highlight />} text='Insights' nested={true} />
-    <ListItem_ to='/resources' icon={<MenuBook />} text='Books' nested={true} />
-  </NestedList>
-}
+export function UserSwitcher({user, nShares=0}) {
+  const me = useStoreState(s => s.ws.data['users/user/get'])
+  const changeAs = useStoreActions(a => a.user.changeAs)
+  const notifs = useStoreState(s => s.ws.data['notifs/notes/get'])
+  const as = useStoreState(s => s.user.as)
 
+  const isMe = user.id === me.id
+  const notif = notifs?.[user.id]
+      ? <Badge variant='success' size='sm' className='ml-1'>{notifs[user.id]}</Badge>
+      : null
+  const isCurrent = (as === user.id) || (!as && isMe)
+  const title = <>
+    {isCurrent && nShares > 0 ? "* " : ""}
+    {user.email}{notif}
+  </>
+
+  return <ListItem_
+    onClick={() => isMe ? changeAs(null) : changeAs(user.id)}
+    secondary={title}
+  />
+}
 
 export function AccountSection() {
   const changeAs = useStoreActions(a => a.user.changeAs)
@@ -147,22 +130,7 @@ export function AccountSection() {
   const asUser = useStoreState(s => s.user.asUser)
   const setSharePage = useStoreActions(a => a.user.setSharePage)
 
-  function renderAsSelect() {
-    if (!shares?.length) {return null}
-    const last = shares.length - 1
-    return <>
-      {as && <ListItem_
-        icon={<AiOutlineUserSwitch />}
-        onClick={() => changeAs(null)}
-        text="Switch Back"
-      />}
-      {shares.map((s, i) => <React.Fragment key={s.user.id}>
-        <UserSwitcher s={s}/>
-        {i === last && <Divider />}
-      </React.Fragment>)}
-    </>
-  }
-
+  // FIXME
   let email = user.email
   if (asUser) {
     email = asUser.user.display_name
@@ -171,18 +139,27 @@ export function AccountSection() {
     email = !ne ? email : <><Badge pill variant='danger'>{ne}</Badge> {email}</>
   }
 
+  const nShares = shares?.length || 0
+
   return <>
-    <NestedList icon={asUser ? <RiSpyLine /> : <FaUser />} text={email}>
-      {renderAsSelect()}
+    <NestedList
+      icon={asUser ? <RiSpyLine /> : <FaUser />}
+      primary='Account'
+    >
+      <UserSwitcher user={user} nShares={nShares} />
+
+      {shares.map(s => <UserSwitcher user={s.user} key={s.user.id} nShares={nShares}/>)}
+
       <ProfileLink as={as} asUser={asUser}/>
       {!as && <ListItem_
         onClick={() => setSharePage({list: true})}
-        text='Sharing'
+        primary='Sharing'
         nested={true}
        />}
+
       <ListItem_
         onClick={() => logout()}
-        text='Logout'
+        primary='Logout'
         nested={true}
       />
     </NestedList>
@@ -198,15 +175,15 @@ export function GroupItem({g}) {
       {text}
     </Badge>
   }
-  return <ListItem_ to={`/groups/${g.id}`} text={text} nested={true} icon={<Chat />}/>
+  return <ListItem_ to={`/groups/${g.id}`} primary={text} nested={true} icon={<Chat />}/>
 }
 
 export function GroupsSection() {
   const groups = useStoreState(s => s.ws.data['groups/mine/get'])
   const {arr, obj} = groups
 
-  return <NestedList text='Community'>
-    <ListItem_ to='/groups' nested={true} text='Groups' icon={<GroupAdd />}/>
+  return <NestedList primary='Community'>
+    <ListItem_ to='/groups' nested={true} primary='Groups' icon={<GroupAdd />}/>
     {arr?.length > 0 && arr.map(gid => <GroupItem g={obj[gid]} key={gid}/>)}
   </NestedList>
 }
@@ -226,18 +203,29 @@ export function MiscSection() {
     {showTopBooks && <TopBooks close={toggleBooks} />}
     {showLinks && <Links close={toggleLinks} />}
 
-    <NestedList text='Misc' startOpen={false}>
-      <ListItem_ onClick={toggleBooks} text='Top Books' nested={true} />
-      <ListItem_ onClick={toggleLinks} text='Links' nested={true} />
+    <NestedList primary='Misc' startOpen={false}>
+      <ListItem_ onClick={toggleBooks} primary='Top Books' nested={true} />
+      <ListItem_ onClick={toggleLinks} primary='Links' nested={true} />
     </NestedList>
   </>
+}
+
+export function JournalSection() {
+  return <NestedList primary='Journal'>
+    <ListItem_ to='/j' icon={<PostAdd />} primary='Entries' nested={true} />
+    <ListItem_ to='/insights' icon={<Highlight />} primary='Insights' nested={true} />
+    <ListItem_ to='/resources' icon={<MenuBook />} primary='Books' nested={true} />
+  </NestedList>
 }
 
 export default function Sections() {
   return <>
     <AccountSection />
+    <Divider />
     <JournalSection />
+    <Divider />
     <GroupsSection />
+    <Divider />
     <MiscSection />
   </>
 }

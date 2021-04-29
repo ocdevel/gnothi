@@ -3,14 +3,14 @@ import _ from "lodash"
 import React, {useCallback, useEffect, useState} from "react"
 import {FaPen, FaRobot, FaSort, FaTrash} from 'react-icons/fa'
 
-import {SimplePopover, trueKeys} from "./utils"
+import {SimplePopover, trueKeys} from "./Helpers/utils"
 import {useStoreState, useStoreActions} from "easy-peasy";
 import {FaTags} from "react-icons/fa/index";
 
 import * as yup from "yup";
 import {yupResolver} from "@hookform/resolvers/yup";
 import {useForm} from "react-hook-form";
-import Sortable from "./Sortable";
+import Sortable from "./Helpers/Sortable";
 import {IoReorderFourSharp, IoReorderThreeSharp, MdReorder} from "react-icons/all";
 import {Link} from "react-router-dom";
 

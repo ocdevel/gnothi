@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from "react";
 import _ from 'lodash'
-import {spinner, SimplePopover} from "../utils";
+import {spinner, SimplePopover} from "../Helpers/utils";
 import {
   Button,
   ButtonGroup,

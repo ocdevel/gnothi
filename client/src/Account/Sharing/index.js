@@ -6,7 +6,7 @@ import ShareForm from './Form'
 import {useStoreState, useStoreActions} from 'easy-peasy'
 import {EE} from '../../redux/ws'
 import {FaPlus, FaRegComments, FaUser} from "react-icons/fa";
-import {trueObj} from "../../utils";
+import {trueObj} from "../../Helpers/utils";
 import {FaArrowLeft} from "react-icons/all";
 
 import {FullScreenDialog} from "../../Helpers/Dialog";
@@ -88,7 +88,11 @@ export function SharingModal() {
   }
 
   return <>
-    <FullScreenDialog open={sharePage} handleClose={close} title='Sharing'>
+    <FullScreenDialog
+      open={sharePage}
+      handleClose={close}
+      title='Sharing'
+    >
       <Sharing />
     </FullScreenDialog>
   </>

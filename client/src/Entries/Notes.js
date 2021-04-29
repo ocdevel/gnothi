@@ -10,7 +10,7 @@ import {
 } from "react-bootstrap";
 import React, {useEffect, useState} from "react";
 import {FaQuestionCircle} from "react-icons/all";
-import {SimplePopover} from "../utils";
+import {SimplePopover} from "../Helpers/utils";
 
 import {useStoreActions, useStoreState} from "easy-peasy";
 import {FaRegComments} from "react-icons/fa";

@@ -18,7 +18,7 @@ import {
 } from "react-icons/fa/index"
 import React, {useState} from "react"
 import {useStoreState, useStoreActions} from "easy-peasy";
-import {aiStatusEmoji} from "../utils"
+import {aiStatusEmoji} from "../Helpers/utils"
 import _ from 'lodash'
 
 const tools = [

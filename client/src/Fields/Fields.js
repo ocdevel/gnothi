@@ -1,5 +1,5 @@
 import React, {useEffect, useState, useCallback} from "react";
-import {SimplePopover, spinner} from "../utils";
+import {SimplePopover, spinner} from "../Helpers/utils";
 import {API_URL} from '../redux/ws'
 import _ from "lodash";
 import {

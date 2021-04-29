@@ -13,7 +13,7 @@ import MenuIcon from '@material-ui/icons/Menu';
 import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
 import {useMediaQuery} from "react-responsive";
 import {useStoreState} from "easy-peasy";
-import {aiStatusEmoji, SimplePopover} from "../utils";
+import {aiStatusEmoji, SimplePopover} from "../Helpers/utils";
 
 import Sections from './Sections'
 import {useLocation} from "react-router-dom";

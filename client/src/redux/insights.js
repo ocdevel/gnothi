@@ -1,6 +1,6 @@
 import {createStore, action, thunk} from 'easy-peasy'
 import _ from "lodash";
-import {trueKeys} from "../utils";
+import {trueKeys} from "../Helpers/utils";
 
 export const initialInsights = {
   days: 30,

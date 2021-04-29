@@ -10,7 +10,7 @@ import Users from './Users'
 import Tags from "../../Tags";
 import Error from "../../Error";
 import {AiOutlineWarning} from "react-icons/all";
-import {trueObj} from "../../utils";
+import {trueObj} from "../../Helpers/utils";
 import {EE} from '../../redux/ws'
 
 const profile_fields = {

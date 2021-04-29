@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from "react"
-import {sent2face} from "../utils"
+import {sent2face} from "../Helpers/utils"
 import {Spinner} from "./utils"
 import {Button, Form} from "react-bootstrap"
 import _ from "lodash"

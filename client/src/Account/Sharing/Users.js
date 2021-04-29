@@ -6,7 +6,7 @@ import React, {useEffect, useState} from "react";
 import {Button, Col, Form, ListGroup, Row} from "react-bootstrap";
 import {FaTrash} from "react-icons/fa";
 import {EE} from '../../redux/ws'
-import {trueKeys} from "../../utils";
+import {trueKeys} from "../../Helpers/utils";
 import Error from "../../Error";
 
 const emailSchema = yup.object().shape({

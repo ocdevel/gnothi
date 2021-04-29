@@ -1,6 +1,6 @@
 import React, {useState, useEffect} from 'react'
 import {Form, InputGroup, Button, Col} from "react-bootstrap"
-import {sent2face} from "../utils"
+import {sent2face} from "../Helpers/utils"
 import {Spinner} from "./utils"
 
 import {useStoreState, useStoreActions} from "easy-peasy";

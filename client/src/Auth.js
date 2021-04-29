@@ -8,7 +8,7 @@ import {
 } from "react-bootstrap";
 import {useLocation, useHistory} from "react-router-dom"
 import Error from './Error'
-import {spinner} from './utils'
+import {spinner} from './Helpers/utils'
 import {useStoreState, useStoreActions} from "easy-peasy";
 import axios from 'axios'
 import {API_URL} from "./redux/ws";

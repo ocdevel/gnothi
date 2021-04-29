@@ -1,6 +1,6 @@
 import {useStoreActions, useStoreState} from "easy-peasy";
 import React, {useLayoutEffect, useRef, useState} from "react";
-import {timeAgo} from "../utils";
+import {timeAgo} from "../Helpers/utils";
 import {Alert, Badge, Button, Col, Form, Row} from "react-bootstrap";
 import {onlineIcon, getUname} from "../Groups/utils";
 import {useParams} from "react-router-dom";

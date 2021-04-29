@@ -1,6 +1,6 @@
 import {useHistory, useParams} from "react-router-dom"
 import React, {useEffect, useState, useContext, useCallback} from "react"
-import {spinner, SimplePopover, fmtDate} from "../utils"
+import {spinner, SimplePopover, fmtDate} from "../Helpers/utils"
 import {
   Badge,
   Button,

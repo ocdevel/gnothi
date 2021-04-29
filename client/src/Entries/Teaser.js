@@ -7,7 +7,7 @@ import {
   SimplePopover,
   fmtDate,
   bsSizes
-} from "../utils"
+} from "../Helpers/utils"
 
 export default function Teaser({eid, gotoForm}) {
   const e = useStoreState(s => s.ws.data['entries/entries/get'].obj?.[eid])
