@@ -71,29 +71,6 @@ body {
   }
 }
 
-.chat-wrapper {
-  height: 100vh;
-	display: grid;
-  grid-template-rows: 1fr 140px; // 100 for content, 40 for 2*20 padding
-  grid-row-gap: 20px;
-
-  .chat-messages {
-    overflow-y: scroll;
-    display: grid;
-    .message-theirs {
-      justify-self: start;
-    }
-    .message-mine {
-      justify-self: end;
-    }
-  }
-  .chat-input {
-    padding: 20px;
-    margin-left: -15px;
-    background-color: rgba(0,0,0,.03);
-  }
-}
-
 .custom-amplify-container {
   height: 460px;
   display: flex;

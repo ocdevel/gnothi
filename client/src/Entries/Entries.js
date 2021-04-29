@@ -91,11 +91,11 @@ export default function Entries({group_id=null}) {
     <Row>
       <Col>
         {MainTags}
-        <Grid container justifyContent="space-between" alignItems="center">
-          <Grid item>
+        <Grid container justifyContent="space-between" alignItems="center" spacing={3}>
+          <Grid item style={{flex: 1}}>
             <Search trigger={setSearch} />
           </Grid>
-          <Grid item xs='auto'>
+          <Grid item>
             {as ? null : <MButton
               color="primary"
               variant="contained"
