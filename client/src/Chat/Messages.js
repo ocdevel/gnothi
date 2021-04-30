@@ -3,20 +3,23 @@ import React, {useLayoutEffect, useRef, useState} from "react";
 import {timeAgo} from "../Helpers/utils";
 import {onlineIcon, getUname} from "../Groups/utils";
 import {useParams} from "react-router-dom";
+import {useFormik} from 'formik'
+import * as yup from 'yup';
 import {useForm, Controller} from "react-hook-form";
 import {Grid, TextField, Button, Alert} from '@material-ui/core'
 
-export function Messages({messages, members, group_id=null, entry_id=null}) {
-  const uid = useStoreState(s => s.ws.data['users/user/get']?.id)
-  const elMessages = useRef()
-  const emit = useStoreActions(actions => actions.ws.emit);
-  const {reset, handleSubmit, control} = useForm()
+const validationSchema = yup.object({
+  text: yup.string().required().min(1)
+});
 
-  useLayoutEffect(() => {
-    const {current} = elMessages
-    if (!current) {return}
-    current.scrollTop = current.scrollHeight
-  }, [messages])
+function ChatInput({group_id=null, entry_id=null}) {
+  const emit = useStoreActions(actions => actions.ws.emit);
+
+  const formik = useFormik({
+    initialValues: {text: '',},
+    validationSchema: validationSchema,
+    onSubmit: submit
+  });
 
   function submit(data) {
     if (group_id) {
@@ -24,32 +27,65 @@ export function Messages({messages, members, group_id=null, entry_id=null}) {
     } else if (entry_id) {
 
     }
-    reset({text: ""})
+    formik.resetForm()
   }
 
-  function renderMessage(m, i) {
-    const me = uid === m.user_id
-    const continued = i > 0 && messages[i - 1].user_id === m.user_id
-    return <Grid
-      item
-      alignSelf={me ? "flex-end" : "flex-start"}
-      key={m.id}
-    >
-      {!continued && <div>
-        <div className='text-muted'>
-          {members[m.user_id]?.user_group?.online && onlineIcon}
-          <Button variant='link'>{getUname(m.user_id, members)}</Button>
-          <span className='small text-muted'>{timeAgo(m.createdAt)}</span>
-        </div>
-      </div>}
-      <Alert
-        icon={false}
-        severity={me ? 'success' : 'info'}
-        sx={{my: 1}}
-      >
-        {m.text}
-      </Alert>
+  return <form onSubmit={formik.handleSubmit}>
+    <Grid container spacing={3} alignItems='center'>
+      <Grid item sx={{flex: 1}}>
+        <TextField
+          name='text'
+          fullWidth
+          placeholder="Enter message..."
+          value={formik.values.text}
+          onChange={formik.handleChange}
+        />
+      </Grid>
+      <Grid item>
+        <Button type="submit" color="primary" variant="contained">Send</Button>
+      </Grid>
     </Grid>
+  </form>
+}
+
+function Message({m, me, members, continued=false}) {
+  return <Grid
+    item
+    alignSelf={me ? "flex-end" : "flex-start"}
+    key={m.id}
+  >
+    {!continued && <div>
+      <div className='text-muted'>
+        {members[m.user_id]?.user_group?.online && onlineIcon}
+        <Button variant='link'>{getUname(m.user_id, members)}</Button>
+        <span className='small text-muted'>{timeAgo(m.createdAt)}</span>
+      </div>
+    </div>}
+    <Alert
+      icon={false}
+      severity={me ? 'success' : 'info'}
+      sx={{my: 1}}
+    >
+      {m.text}
+    </Alert>
+  </Grid>
+}
+
+
+export function Messages({messages, members, group_id=null, entry_id=null}) {
+  const uid = useStoreState(s => s.ws.data['users/user/get']?.id)
+  const elMessages = useRef()
+
+  useLayoutEffect(() => {
+    const {current} = elMessages
+    if (!current) {return}
+    current.scrollTop = current.scrollHeight
+  }, [messages])
+
+  function renderMessage(m, i) {
+    const continued = i > 0 && messages[i - 1].user_id === m.user_id
+    const me = uid === m.user_id
+    return <Message key={m.id} m={m} members={members} me={me} continued={continued} />
   }
 
   return <Grid
@@ -65,28 +101,7 @@ export function Messages({messages, members, group_id=null, entry_id=null}) {
     </Grid>
 
     <Grid item>
-      <form onSubmit={handleSubmit(submit)}>
-        <Grid container spacing={3} alignItems='center'>
-          <Grid item sx={{flex: 1}}>
-            <Controller
-              name="text"
-              control={control}
-              defaultValue=""
-              rules={{ required: true, minLength: 1 }}
-              render={({ field }) => (
-                <TextField
-                  fullWidth
-                  placeholder="Enter message..."
-                  {...field}
-                />
-              )}
-            />
-          </Grid>
-          <Grid item>
-            <Button type="submit" color="primary" variant="contained">Send</Button>
-          </Grid>
-        </Grid>
-      </form>
+      <ChatInput group_id={group_id} entry_id={entry_id} />
     </Grid>
 
   </Grid>
