@@ -26,9 +26,9 @@ import fileDownload from 'js-file-download';
 import {
   Card, Grid, CardContent, CardHeader, Accordion, AccordionSummary,
   AccordionDetails, Button, Typography, ButtonGroup, CardActions, Divider,
-  Tooltip, CircularProgress, Alert
+  Tooltip, CircularProgress, Alert, Badge, Box, IconButton, ButtonBase
 } from "@material-ui/core";
-import {ExpandMore} from "@material-ui/icons";
+import {Assessment, BarChart, ExpandMore} from "@material-ui/icons";
 
 const fmt = 'YYYY-MM-DD'
 const iso = (day=null) => {
@@ -307,7 +307,12 @@ export default function Fields() {
 
 
   const renderField = (f) => {
-    let rowStyle = {width: '100%', margin: 0}
+    // let rowStyle = {width: '100%', margin: 0}
+    let rowStyle = {
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      mb: 1
+    }
     if (f.excluded_at) {
       rowStyle = {
         ...rowStyle,
@@ -315,39 +320,38 @@ export default function Fields() {
         opacity: .5
       }
     }
-    const c1 = {xs: 5}
-    const c2 = {xs: 5}
-    const c3 = {xs: 2}
-    const colStyle = {style: {padding: 3}}
     const fe = fieldEntries[f.id]
     const n_dupes = _.get(fe, 'dupes.length', 0)
     return (
-      <Grid container
+      <Grid
+        container
+        sx={rowStyle}
         key={`${f.id}-${cacheBust}`}
-        style={rowStyle}
       >
-        <Grid item
-          {...c1}
-          {...colStyle}
-          onClick={() => setShowForm(f.id)}
-          className='cursor-pointer'
-        >
-          <FieldName name={f.name}/>
+        <Grid item xs={5} className='field-name'>
+          <ButtonBase
+            sx={{width:'100%', justifyContent: 'flex-start'}}
+            onClick={() => setShowForm(f.id)}
+          >
+            <FieldName name={f.name}/>
+          </ButtonBase>
         </Grid>
-        <Grid item {...c2} {...colStyle}>
+
+        <Grid item xs={5}>
           {n_dupes > 1
             ? renderDupes(f, fe)
             : renderFieldEntry(f, fe)
           }
         </Grid>
-        <Grid item {...c3} {...colStyle}>
-          <div
+
+        <Grid container item xs={2} justifyContent='flex-end'>
+          <Badge 
+            badgeContent={f.avg && f.avg.toFixed(1)}
             onClick={() => setShowChart(f.id)}
-            className='cursor-pointer'
+            sx={{cursor: 'pointer'}}
           >
-            <FaChartLine />{' '}
-            {f.avg && f.avg.toFixed(1)}
-          </div>
+            <BarChart />
+          </Badge>
         </Grid>
       </Grid>
     )

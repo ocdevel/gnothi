@@ -2,7 +2,6 @@ import {useHistory, useParams} from "react-router-dom"
 import React, {useEffect, useState, useContext, useCallback} from "react"
 import {fmtDate} from "../Helpers/utils"
 import {
-  Button,
   Form,
 } from "react-bootstrap"
 import ReactMarkdown from "react-markdown"
@@ -19,8 +18,10 @@ import {FullScreenDialog} from "../Helpers/Dialog";
 
 import {useStoreActions, useStoreState} from "easy-peasy";
 import Error from "../Error";
-import {CircularProgress, DialogActions, DialogContent, Alert,
-  Grid} from "@material-ui/core";
+import {
+  CircularProgress, DialogActions, DialogContent, Alert,
+  Grid, Button, Box
+} from "@material-ui/core";
 
 const mdParser = new MarkdownIt(/* Markdown-it options */);
 
@@ -205,23 +206,26 @@ export function Entry({entry=null, close=null}) {
     }
     if (!editing) return <>
       <Button
-        variant='outline-primary'
+        variant='outlined'
+        color='primary'
         onClick={changeEditing}
-      ><FaPen /> Edit
+        startIcon={<FaPen />}
+      >Edit
       </Button>
     </>
 
     return <>
       {eid && <>
-        <Button variant='link' className='text-danger mr-auto' size="sm" onClick={deleteEntry}>
+        <Button color='secondary' sx={{marginRight: 'auto'}} size="small" onClick={deleteEntry}>
           Delete
         </Button>
-        <Button variant='link' className='text-secondary' size="sm" onClick={changeEditing}>
+        <Button variant={false} size="small" onClick={changeEditing}>
           Cancel
         </Button>
       </>}
       <Button
-        variant="primary"
+        color="primary"
+        variant='contained'
         onClick={submit}
       >Submit
       </Button>
@@ -230,7 +234,7 @@ export function Entry({entry=null, close=null}) {
 
   const renderForm = () => <>
     <Grid container>
-      <Grid item>
+      <Grid item xs>
         <Form onSubmit={submit}>
           {editing ? <>
             <Form.Group controlId="formTitle">
@@ -289,7 +293,7 @@ export function Entry({entry=null, close=null}) {
         />
       </Grid>
 
-      {showCacheEntry && <Grid item>
+      {showCacheEntry && <Grid item xs>
         <Alert severity='info'>Paragraphs get split in the following way, and AI considers each paraph independently from the other (as if they're separate entries).</Alert>
         <div>{
           cacheEntry.paras ? cacheEntry.paras.map((p, i) => <div key={i}>
@@ -308,10 +312,7 @@ export function Entry({entry=null, close=null}) {
       </Grid>}
     </Grid>
 
-    <div>
-      {!editing && <div className='float-right'>
-        <Button size='sm' variant='link' onClick={showAiSees}>What AI sees</Button>
-      </div>}
+    <Box display='flex' justifyContent='space-between' direction='row' alignItems='center'>
       <Tags
         selected={tags}
         setSelected={setTags}
@@ -319,7 +320,14 @@ export function Entry({entry=null, close=null}) {
         noEdit={!editing}
         preSelectMain={true}
       />
-    </div>
+      {!editing && <Button
+        sx={{minWidth: 100}}
+        size='small'
+        color='primary'
+        onClick={showAiSees}
+      >What AI sees</Button>
+      }
+    </Box>
   </>
 
   return <>
@@ -333,9 +341,9 @@ export function Entry({entry=null, close=null}) {
         {!editing && eid && <NotesList eid={eid} />}
       </DialogContent>
       <DialogActions>
-        {!editing && eid && <div className='mr-auto'>
+        {!editing && eid && <Box sx={{marginRight: 'auto'}}>
           <AddNotes eid={eid} />
-        </div>}
+        </Box>}
         {renderButtons()}
       </DialogActions>
     </FullScreenDialog>

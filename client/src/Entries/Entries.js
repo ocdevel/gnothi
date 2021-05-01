@@ -2,9 +2,6 @@ import React, {useCallback, useEffect, useState} from "react"
 import {Route, Switch, useHistory, useRouteMatch} from "react-router-dom"
 import _ from 'lodash'
 
-import {
-  Button,
-} from "react-bootstrap"
 import Teaser from './Teaser'
 import {EntryPage} from "./Entry"
 import {useStoreState, useStoreActions} from "easy-peasy";
@@ -16,7 +13,7 @@ import Search from './Search'
 
 import {Add as AddIcon} from '@material-ui/icons'
 import {List, ListItem, ListItemIcon, ListItemText, Divider, Typography, Fab,
-  Pagination, Grid, Button as MButton, Alert, Card} from '@material-ui/core'
+  Pagination, Grid, Button, Alert, Card} from '@material-ui/core'
 
 export default function Entries({group_id=null}) {
   const as = useStoreState(s => s.user.as)
@@ -52,7 +49,7 @@ export default function Entries({group_id=null}) {
 
   const renderEntries = () => {
     if (!filtered.length) {
-      return <Alert severity='info'>No entries. If you're a new user, click <Button variant="primary" size='sm' disabled>New Entry</Button> above. If you're a therapist, click your email top-right and select a client; you'll then be in that client's shoes.</Alert>
+      return <Alert severity='info'>No entries. If you're a new user, click <Button color="primary" size='small' variant='contained' disabled>New Entry</Button> above. If you're a therapist, click your email top-right and select a client; you'll then be in that client's shoes.</Alert>
     }
 
     const pageSize = 10
@@ -88,12 +85,12 @@ export default function Entries({group_id=null}) {
             <Search trigger={setSearch} />
           </Grid>
           <Grid item>
-            {as ? null : <MButton
+            {as ? null : <Button
               color="primary"
               variant="contained"
               onClick={() => gotoForm()}
               label="New Entry"
-            >New Entry</MButton>}
+            >New Entry</Button>}
           </Grid>
         </Grid>
         {renderEntries()}

@@ -3,12 +3,12 @@ import {useStoreActions, useStoreState} from "easy-peasy";
 import {useForm} from "react-hook-form";
 import {yupResolver} from "@hookform/resolvers/yup";
 import React, {useEffect, useState} from "react";
-import {Button, Form, ListGroup} from "react-bootstrap";
+import {Form, ListGroup} from "react-bootstrap";
 import {FaTrash} from "react-icons/fa";
 import {EE} from '../../redux/ws'
 import {trueKeys} from "../../Helpers/utils";
 import Error from "../../Error";
-import {Grid} from '@material-ui/core'
+import {Grid, Button} from '@material-ui/core'
 
 const emailSchema = yup.object().shape({
   email: yup.string().email().required(),
@@ -61,7 +61,7 @@ export default function Users({users, setUsers}) {
           />
         </Grid>
         <Grid item sm={3}>
-          <Button type='submit' size='sm'>Add</Button>
+          <Button variant='contained' color='primary' type='submit' size='small'>Add</Button>
         </Grid>
       </Grid>
       <Form.Text className="text-muted">

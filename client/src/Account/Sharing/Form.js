@@ -3,7 +3,7 @@ import * as yup from "yup";
 import _ from "lodash";
 import React, {useEffect, useRef, useState} from "react";
 import {FaChevronDown, FaChevronRight, FaRegQuestionCircle} from "react-icons/fa";
-import {Button, Form} from "react-bootstrap";
+import {Form} from "react-bootstrap";
 import {useStoreActions, useStoreState} from "easy-peasy";
 import Groups from "./Groups";
 import Users from './Users'
@@ -12,7 +12,7 @@ import Error from "../../Error";
 import {AiOutlineWarning} from "react-icons/all";
 import {trueObj} from "../../Helpers/utils";
 import {EE} from '../../redux/ws'
-import {Card, CardHeader, CardContent, CardActions, Grid} from '@material-ui/core'
+import {Button, Card, CardHeader, CardContent, CardActions, Grid} from '@material-ui/core'
 
 const profile_fields = {
   username: {
@@ -216,31 +216,29 @@ export default function ShareForm({s={}}) {
   <Card>
     <CardHeader title="With"></CardHeader>
     <CardContent>
-      <Grid container>
-        <Grid item><Users users={users} setUsers={setUsers} /></Grid>
-        <Grid item><Groups groups={groups} setGroups={setGroups} /></Grid>
+      <Grid container spacing={3}>
+        <Grid item xs><Users users={users} setUsers={setUsers} /></Grid>
+        <Grid item xs><Groups groups={groups} setGroups={setGroups} /></Grid>
       </Grid>
     </CardContent>
 
     <CardActions>
       <Button
         onClick={submit}
-        variant="primary"
-        size='sm'
+        variant='contained'
+        color="primary"
+        size='small'
         disabled={postRes?.submitting}
       >
         {id ? 'Save' : 'Submit'}
       </Button>&nbsp;
       {id && <Button
-        variant="link"
-        className='text-danger'
-        size="sm"
+        color="secondary"
+        size="small"
         onClick={deleteShare}
       >Delete</Button>}
       <Button
-        variant='link'
-        className='text-secondary'
-        size='sm'
+        size='small'
         onClick={() => setSharePage({list: true})}
       >Cancel</Button>
     </CardActions>

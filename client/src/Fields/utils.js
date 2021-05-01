@@ -40,6 +40,7 @@ export function FieldName({name, maxWidth=null}) {
 
   return <div style={style}>
     <ReactMarkdown
+      className='react-markdown'
       plugins={[[strip, options], emoji]}
       source={name}
       escapeHtml={true}

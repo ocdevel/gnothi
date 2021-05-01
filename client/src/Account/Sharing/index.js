@@ -1,4 +1,3 @@
-import {Button} from "react-bootstrap"
 import React, {useEffect, useState} from "react"
 import _ from 'lodash'
 import ShareForm from './Form'
@@ -7,10 +6,11 @@ import {EE} from '../../redux/ws'
 import {FaPlus, FaRegComments, FaUser} from "react-icons/fa";
 import {trueObj} from "../../Helpers/utils";
 import {FaArrowLeft} from "react-icons/all";
-import {Card, CardContent} from "@material-ui/core";
+import {Card, CardContent, Button} from "@material-ui/core";
 
 import {FullScreenDialog} from "../../Helpers/Dialog";
 import {DialogContent} from "@material-ui/core";
+import {Add, ArrowBack} from "@material-ui/icons";
 
 function Share({s}) {
   let myGroups = useStoreState(s => s.ws.data['groups/mine/get']?.obj)
@@ -23,7 +23,7 @@ function Share({s}) {
   }
 
   return <Card
-    className='mb-2 cursor-pointer'
+    sx={{mb: 2, cursor: 'pointer'}}
     onClick={() => setSharePage({id: s.share.id})}
   >
     <CardContent>
@@ -56,23 +56,24 @@ export default function Sharing() {
   if (isList) {
     return <div>
       <Button
-        variant='primary'
+        sx={{mb: 2}}
+        variant='contained'
+        color='primary'
         onClick={() => setSharePage({create: true})}
-        className='mb-2'
-      >
-        <FaPlus /> New Share
-      </Button>
+        startIcon={<Add />}
+      >New Share</Button>
       {arr?.map(sid => <Share key={sid} s={obj[sid]}/>)}
     </div>
   }
 
   return <div>
     <Button
-      variant='link'
-      size='sm'
+      variant={false}
+      size='small'
       onClick={() => setSharePage({list: true})}
+      startIcon={<ArrowBack />}
     >
-      <FaArrowLeft /> List Shares
+      List Shares
     </Button>
     {sharePage.create ? <ShareForm />
       : sharePage.id ? <ShareForm s={obj[sharePage.id]} />

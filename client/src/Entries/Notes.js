@@ -1,6 +1,5 @@
 import {
   Badge,
-  Button,
   Form,
   Modal,
   Tabs,
@@ -12,7 +11,7 @@ import {FaQuestionCircle} from "react-icons/all";
 import {useStoreActions, useStoreState} from "easy-peasy";
 import {FaRegComments} from "react-icons/fa";
 import {BasicDialog} from "../Helpers/Dialog";
-import {DialogActions, DialogContent, Card, CardContent, Grid} from "@material-ui/core";
+import {DialogActions, DialogContent, Card, CardContent, Grid, Button} from "@material-ui/core";
 
 export function NotesAll() {
   return null
@@ -124,9 +123,10 @@ export function AddNotes({entry_id, onSubmit}) {
   const renderSection = (obj) => {
     return (
       <Button
-        className='mr-2'
-        variant='outline-primary'
-        size='sm'
+        sx={{mr: 1}}
+        variant='outlined'
+        color='primary'
+        size='small'
         onClick={() => setAdding(obj.key)}
       >+ {obj.name}</Button>
     )
@@ -193,11 +193,12 @@ export function AddNotes({entry_id, onSubmit}) {
           </Form>
         </DialogContent>
         <DialogActions>
-          <Button variant='link' size="sm" className='text-secondary' onClick={clear}>
+          <Button size="small" variant={false} onClick={clear}>
             Cancel
           </Button>
           <Button
-            variant="primary"
+            variant='contained'
+            color="primary"
             onClick={submit}
           >Submit</Button>
         </DialogActions>

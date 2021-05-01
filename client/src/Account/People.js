@@ -1,9 +1,9 @@
 import React, {useEffect, useState} from "react"
-import {Button, Col, Form, Modal, Table} from "react-bootstrap"
+import {Col, Form, Modal, Table} from "react-bootstrap"
 
 import {useStoreActions, useStoreState} from "easy-peasy";
 import {BasicDialog} from "../Helpers/Dialog";
-import {DialogActions, DialogContent} from "@material-ui/core";
+import {DialogActions, DialogContent, Button} from "@material-ui/core";
 
 function Person({close, person=null}) {
   const emit = useStoreActions(a => a.ws.emit)
@@ -73,14 +73,15 @@ function Person({close, person=null}) {
       <DialogActions>
         <Button
           onClick={submit}
-          variant={person ? "primary" : "success"}
+          variant='contained'
+          color='primary'
           type="submit"
         >
           {person ? "Save": "Add"}
         </Button>&nbsp;
         {person && <>
-          <Button size='sm' variant='secondary' onClick={close}>Cancel</Button>&nbsp;
-          <Button size='sm' variant='danger' onClick={destroy}>Delete</Button>
+          <Button size='small' variant={false} onClick={close}>Cancel</Button>&nbsp;
+          <Button size='small' color='secondary' onClick={destroy}>Delete</Button>
         </>}
       </DialogActions>
     </BasicDialog>
@@ -139,8 +140,9 @@ export default function People() {
       </tbody>
     </Table>
     <Button
-      variant="success"
-      className='mb-3'
+      color="primary"
+      variant='contained'
+      sx={{mb:2}}
       onClick={() => choosePerson(true)}
     >Add Person</Button>
   </>

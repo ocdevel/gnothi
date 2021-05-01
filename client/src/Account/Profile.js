@@ -1,9 +1,7 @@
 import React, {useEffect, useState} from "react"
 import {
-  Button,
   Form,
   Col,
-  Card,
 } from "react-bootstrap"
 import {
   BsPersonFill,
@@ -18,7 +16,7 @@ import People from './People'
 import {useStoreState, useStoreActions} from "easy-peasy";
 import {timezones} from "../redux/ws";
 import {FullScreenDialog} from "../Helpers/Dialog";
-import {DialogContent, Alert} from "@material-ui/core";
+import {DialogContent, Alert, Button} from "@material-ui/core";
 
 function Profile_() {
   const emit = useStoreActions(a => a.ws.emit)
@@ -143,7 +141,8 @@ function Profile_() {
       </Form.Row>
       <Button
         disabled={!dirty.dirty}
-        variant='primary'
+        color='primary'
+        variant='contained'
         type='submit'
       >Save</Button>&nbsp;
       {dirty.saved && "Saved"}
