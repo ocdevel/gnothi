@@ -1,6 +1,7 @@
 import React, {useEffect, useState} from "react";
-import {Form, Card, Button} from "react-bootstrap";
+import {Form, Button} from "react-bootstrap";
 import {Spinner} from './utils'
+import {Card, CardContent} from '@material-ui/core'
 
 import {useStoreActions, useStoreState} from "easy-peasy";
 
@@ -57,9 +58,9 @@ export default function Ask() {
       <hr/>
       {reply.map((a, i) => <>
         <Card className='mb-3'>
-          <Card.Body>
-            <Card.Text>{a.answer}</Card.Text>
-          </Card.Body>
+          <CardContent>
+            <Typography>{a.answer}</Typography>
+          </CardContent>
         </Card>
       </>)}
     </>}

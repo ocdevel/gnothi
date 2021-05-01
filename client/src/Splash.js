@@ -3,8 +3,6 @@ import {
   Jumbotron,
   Button,
   Container,
-  Row,
-  Col,
   Tab,
   Nav
 } from 'react-bootstrap'
@@ -30,6 +28,7 @@ import {
 } from "react-router-dom"
 import {LinkContainer} from 'react-router-bootstrap'
 import AmplifyAuth from './Account/AmplifyAuth'
+import {Grid} from '@material-ui/core'
 
 import {useStoreActions, useStoreState} from 'easy-peasy'
 
@@ -119,8 +118,8 @@ function Details() {
 
   return <>
     <Tab.Container activeKey={tab}>
-      <Row>
-        <Col sm={3}>
+      <Grid container>
+        <Grid item sm={3}>
           <Nav variant="pills" className="flex-column">
             {tabs.map(t => <Nav.Item key={t.k}>
               {t.label === 'FAQ' ?
@@ -131,15 +130,15 @@ function Details() {
               }
             </Nav.Item>)}
           </Nav>
-        </Col>
-        <Col sm={9}>
+        </Grid>
+        <Grid sm={9}>
           <Tab.Content className='feature-details'>
             {tabs.map(t => <Tab.Pane eventKey={t.k} key={t.k}>
               {t.render()}
             </Tab.Pane>)}
           </Tab.Content>
-        </Col>
-      </Row>
+        </Grid>
+      </Grid>
     </Tab.Container>
   </>
 }
@@ -178,8 +177,8 @@ function Overviews() {
   }], [])
 
   return <>
-    <Row lg={3} sm={2} xs={1}>
-      {features.map((f, i) => <Col key={i}>
+    <Grid container lg={3} sm={2} xs={1}>
+      {features.map((f, i) => <Grid item key={i}>
         <h3>{f.title}</h3>
         <p>{f.body}</p>
         {f.k && <>
@@ -187,8 +186,8 @@ function Overviews() {
             <Button variant='outline-primary'>Details</Button>
           </LinkContainer>
         </>}
-      </Col>)}
-    </Row>
+      </Grid>)}
+    </Grid>
   </>
 }
 

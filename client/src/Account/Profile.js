@@ -162,7 +162,7 @@ export default function Profile({close}) {
         <Profile_ />
       </div>
       <hr />
-      <Card.Title><BsPeopleFill /> People</Card.Title>
+      <h5><BsPeopleFill /> People</h5>
       <Alert severity='info'>
         <div>Optionally add "who's who" in your life.</div>
         <small className='text-muted'>When sharing profile with therapists, it would help them to have a "directory" to refresh their memory. It also feeds into the AI's summaries, question-answering, etc.</small>

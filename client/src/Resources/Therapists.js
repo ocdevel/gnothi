@@ -1,7 +1,6 @@
 import React, {useEffect, useState} from "react";
 import {useStoreState, useStoreActions} from "easy-peasy";
-import {Card} from "react-bootstrap";
-import {Alert} from '@material-ui/core'
+import {Alert, Card, CardContent, CardHeader, Typography} from '@material-ui/core'
 
 export default function Therapists({setShowTherapists}) {
   const emit = useStoreActions(a => a.ws.emit)
@@ -23,10 +22,10 @@ export default function Therapists({setShowTherapists}) {
     if (t.last_name) {name += t.last_name + ' '}
     name += t.email
     return <Card>
-      <Card.Body>
-        <Card.Title>{name}</Card.Title>
-        <Card.Text>{t.bio}</Card.Text>
-      </Card.Body>
+      <CardHeader title={name} />
+      <CardContent>
+        <Typography>{t.bio}</Typography>
+      </CardContent>
     </Card>
   }
 

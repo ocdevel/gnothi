@@ -2,12 +2,8 @@ import {useHistory, useParams} from "react-router-dom"
 import React, {useEffect, useState, useContext, useCallback} from "react"
 import {fmtDate} from "../Helpers/utils"
 import {
-  Badge,
   Button,
-  Card,
   Form,
-  Row,
-  Col,
 } from "react-bootstrap"
 import ReactMarkdown from "react-markdown"
 import './Entry.css'
@@ -23,7 +19,8 @@ import {FullScreenDialog} from "../Helpers/Dialog";
 
 import {useStoreActions, useStoreState} from "easy-peasy";
 import Error from "../Error";
-import {CircularProgress, DialogActions, DialogContent, Alert} from "@material-ui/core";
+import {CircularProgress, DialogActions, DialogContent, Alert,
+  Grid} from "@material-ui/core";
 
 const mdParser = new MarkdownIt(/* Markdown-it options */);
 
@@ -232,8 +229,8 @@ export function Entry({entry=null, close=null}) {
   }
 
   const renderForm = () => <>
-    <Row>
-      <Col>
+    <Grid container>
+      <Grid item>
         <Form onSubmit={submit}>
           {editing ? <>
             <Form.Group controlId="formTitle">
@@ -290,9 +287,9 @@ export function Entry({entry=null, close=null}) {
           action={/entries\/entr(ies|y).*/g}
           codeRange={[400,500]}
         />
-      </Col>
+      </Grid>
 
-      {showCacheEntry && <Col>
+      {showCacheEntry && <Grid item>
         <Alert severity='info'>Paragraphs get split in the following way, and AI considers each paraph independently from the other (as if they're separate entries).</Alert>
         <div>{
           cacheEntry.paras ? cacheEntry.paras.map((p, i) => <div key={i}>
@@ -308,8 +305,8 @@ export function Entry({entry=null, close=null}) {
           </div>)
             : <p>Nothing here yet.</p>
         }</div>
-      </Col>}
-    </Row>
+      </Grid>}
+    </Grid>
 
     <div>
       {!editing && <div className='float-right'>

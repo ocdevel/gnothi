@@ -4,9 +4,6 @@ import _ from 'lodash'
 
 import {
   Button,
-  Row,
-  Col,
-  InputGroup, Card,
 } from "react-bootstrap"
 import Teaser from './Teaser'
 import {EntryPage} from "./Entry"
@@ -85,8 +82,8 @@ export default function Entries({group_id=null}) {
       )}
     </Switch>
 
-    <Row>
-      <Col>
+    <Grid container spacing={2}>
+      <Grid item sm={12} md={7} lg={8}>
         {MainTags}
         <Grid container justifyContent="space-between" alignItems="center" spacing={3}>
           <Grid item style={{flex: 1}}>
@@ -102,11 +99,11 @@ export default function Entries({group_id=null}) {
           </Grid>
         </Grid>
         {renderEntries()}
-      </Col>
-      <Col lg={4} md={5}>
+      </Grid>
+      <Grid item sm={12} lg={4} md={5}>
         <Fields  />
         <NotesAll />
-      </Col>
-    </Row>
+      </Grid>
+    </Grid>
   </>
 }

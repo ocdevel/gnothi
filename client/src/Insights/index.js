@@ -1,9 +1,7 @@
 import {
-  Row,
-  Col,
   Form,
+  Row, Col,
   InputGroup,
-  Card,
 } from 'react-bootstrap'
 import Summarize from "./Summarize"
 import Ask from "./Ask"
@@ -19,7 +17,8 @@ import React, {useState} from "react"
 import {useStoreState, useStoreActions} from "easy-peasy";
 import {aiStatusEmoji} from "../Helpers/utils"
 import _ from 'lodash'
-import {Alert} from '@material-ui/core'
+import {Alert, CardContent, CardHeader, Typography} from '@material-ui/core'
+import {Card, Grid} from '@material-ui/core'
 
 const tools = [
   {
@@ -86,7 +85,7 @@ export default function Insights() {
 
   const renderStatus = () => {
     if (aiStatus === 'on') {return null}
-    return <Alert severity='warning'>
+    return <Alert severity='warning' sx={{my:2}}>
       <div>
         {aiStatusEmoji(aiStatus)} Can't use tools yet, AI waking up. Check back in 3.
       </div>
@@ -96,10 +95,9 @@ export default function Insights() {
     </Alert>
   }
 
-  const lg = Math.min(3, nTools) || 1
   return <>
     {renderDaysForm()}
-    <Alert severity='info'>
+    <Alert severity='info' sx={{my:2}}>
       <div>Tools use AI for insights on your entries.</div>
       <small className='text-muted'>
         <div>Limit which entries are processed by choosing <FaTags /> tags and <code>#Days</code> above.</div>
@@ -111,22 +109,24 @@ export default function Insights() {
 
     {renderStatus()}
 
-    {nTools === 0 && <Alert severity='warning'>
+    {nTools === 0 && <Alert severity='warning' sx={{my:2}}>
       <FaLock /> You don't have any entries to work with, come back later
     </Alert>}
-    <Row lg={lg} md={1} sm={1} xs={1}>
+    <Grid container spacing={2}>
       {tools.map(t => ne >= t.minEntries && (
-        <Col>
+        <Grid item xs lg={12 / nTools}>
           <Card className='mb-3'>
-            <Card.Body>
-              <Card.Title>{t.icon} {t.label}</Card.Title>
-              <Card.Subtitle className='mb-3'>{t.description}</Card.Subtitle>
-              <Card.Text>{t.component}</Card.Text>
-            </Card.Body>
+            <CardHeader
+              title={<>{t.icon} {t.label}</>}
+              subtitle={t.description}
+            />
+            <CardContent>
+              <Typography>{t.component}</Typography>
+            </CardContent>
           </Card>
-        </Col>
+        </Grid>
       ))}
-    </Row>
+    </Grid>
   </>
 
 }

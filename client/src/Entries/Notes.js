@@ -1,12 +1,10 @@
 import {
   Badge,
   Button,
-  Col,
   Form,
-  Row,
   Modal,
   Tabs,
-  Tab, Card
+  Tab
 } from "react-bootstrap";
 import React, {useEffect, useState} from "react";
 import {FaQuestionCircle} from "react-icons/all";
@@ -14,7 +12,7 @@ import {FaQuestionCircle} from "react-icons/all";
 import {useStoreActions, useStoreState} from "easy-peasy";
 import {FaRegComments} from "react-icons/fa";
 import {BasicDialog} from "../Helpers/Dialog";
-import {DialogActions, DialogContent} from "@material-ui/core";
+import {DialogActions, DialogContent, Card, CardContent, Grid} from "@material-ui/core";
 
 export function NotesAll() {
   return null
@@ -106,15 +104,15 @@ export function AddNotes({entry_id, onSubmit}) {
                 eventKey={k}
                 title={k === 'user' ? "As Journal Owner" : "As Therapist/Friend"}
               >
-                <Row lg={3} xs={1} style={{marginTop: '1rem'}}>
-                  {noteTypes.map(obj => <Col>
+                <Grid container lg={3} xs={1} style={{marginTop: '1rem'}}>
+                  {noteTypes.map(obj => <Grid item>
                     <h5>{obj.name}s</h5>
                     {obj[k].map((txt, i) => <div key={k + i}>
                       {txt}
                       {i === obj[k].length - 1 ? null : <hr/>}
                     </div>)}
-                  </Col>)}
-                </Row>
+                  </Grid>)}
+                </Grid>
               </Tab>
             ))}
           </Tabs>
@@ -238,11 +236,11 @@ export function NotesList({entry_id}) {
   return <div style={{marginTop: '1rem'}}>
     <NotesNotifs entry_id={entry_id} />
     {notes.map(n => <Card className='mb-3' key={n.id}>
-      <Card.Body>
+      <CardContent>
         <Badge variant="primary">{n.type}</Badge>{' '}
         {n.private ? "[private] " : null}
         {n.text}
-      </Card.Body>
+      </CardContent>
     </Card>)}
   </div>
 }

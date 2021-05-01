@@ -1,18 +1,16 @@
-import {Button, Col, Form, Modal, Row} from "react-bootstrap"
+import {Button, Form, Col} from "react-bootstrap"
 import _ from "lodash"
 import React, {useCallback, useEffect, useState} from "react"
 import {FaPen, FaRobot, FaSort, FaTrash} from 'react-icons/fa'
 import {useStoreState, useStoreActions} from "easy-peasy";
-import {FaTags} from "react-icons/fa/index";
 
 import * as yup from "yup";
 import {yupResolver} from "@hookform/resolvers/yup";
 import {useForm} from "react-hook-form";
 import Sortable from "./Helpers/Sortable";
-import {IoReorderFourSharp, IoReorderThreeSharp, MdReorder} from "react-icons/all";
-import {Link} from "react-router-dom";
+import {IoReorderFourSharp} from "react-icons/all";
 
-import {Chip, Stack, Button as MButton, DialogContent} from '@material-ui/core'
+import {Chip, Stack, Button as MButton, DialogContent, Grid} from '@material-ui/core'
 import {CheckCircle, Label, Create} from "@material-ui/icons";
 import {FullScreenDialog} from "./Helpers/Dialog";
 
@@ -37,21 +35,21 @@ function NewTag() {
   return <Form onSubmit={form.handleSubmit(submit)}>
     <Form.Group controlId={`tag-name`}>
       <Form.Row>
-        <Col>
+        <Grid item>
           <Form.Control
             size='sm'
             type="text"
             placeholder="New tag name"
             {...form.register('name')}
           />
-        </Col>
-        <Col xs='auto'>
+        </Grid>
+        <Grid item xs='auto'>
           <Button
             size='sm'
             type='submit'
             variant="primary"
           >Add</Button>
-        </Col>
+        </Grid>
       </Form.Row>
     </Form.Group>
   </Form>
@@ -161,15 +159,15 @@ function TagModal({close}) {
       title="Tags"
     >
       <DialogContent>
-        <Row>
-          <Col sm={12} md={7}>
+        <Grid container>
+          <Grid item sm={12} md={7}>
             <Sortable items={tags} render={renderTag} onReorder={reorder} />
             <NewTag />
-          </Col>
-          <Col sm={12} md={5}>
+          </Grid>
+          <Grid item sm={12} md={5}>
             {renderHelp()}
-          </Col>
-        </Row>
+          </Grid>
+        </Grid>
       </DialogContent>
     </FullScreenDialog>
   )
@@ -223,13 +221,14 @@ export default function Tags({
   const renderTag = t => {
     const selected_ = selectedTags_[t.id]
     const opts = selected_ ? {icon: <CheckCircle />} : {variant: 'outlined'}
-    return <Chip
-      key={t.id}
-      disabled={noClick}
-      {...opts}
-      onClick={() => selectTag(t.id, !selected_)}
-      label={t.name}
-    />
+    return <Grid item key={t.id}>
+      <Chip
+        disabled={noClick}
+        {...opts}
+        onClick={() => selectTag(t.id, !selected_)}
+        label={t.name}
+      />
+    </Grid>
   }
 
   const labelProps = noEdit ? {
@@ -242,17 +241,17 @@ export default function Tags({
   }
   return <>
     {editTags && <TagModal close={closeEditTags} />}
-    <Stack direction="row" spacing={1}>
-      <Chip
-        variant="outlined"
-        label={"Tags"}
-        {...labelProps}
-      />
+    <Grid container spacing={1}>
+      <Grid item>
+        <Chip
+          variant="outlined"
+          label={"Tags"}
+          {...labelProps}
+        />
+      </Grid>
       {tags.map(renderTag)}
-    </Stack>
+    </Grid>
   </>
 }
 
-export const MainTags = (
-  <Tags />
-)
+export const MainTags = <Tags />

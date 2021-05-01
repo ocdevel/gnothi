@@ -3,8 +3,7 @@ import {API_URL} from '../redux/ws'
 import _ from "lodash";
 import {
   Form,
-  Row,
-  Col,
+  Row, Col,
 } from "react-bootstrap";
 import ReactStars from "react-stars";
 import SetupHabitica from "./SetupHabitica";
@@ -323,25 +322,25 @@ export default function Fields() {
     const fe = fieldEntries[f.id]
     const n_dupes = _.get(fe, 'dupes.length', 0)
     return (
-      <Row
+      <Grid container
         key={`${f.id}-${cacheBust}`}
         style={rowStyle}
       >
-        <Col
+        <Grid item
           {...c1}
           {...colStyle}
           onClick={() => setShowForm(f.id)}
           className='cursor-pointer'
         >
           <FieldName name={f.name}/>
-        </Col>
-        <Col {...c2} {...colStyle}>
+        </Grid>
+        <Grid item {...c2} {...colStyle}>
           {n_dupes > 1
             ? renderDupes(f, fe)
             : renderFieldEntry(f, fe)
           }
-        </Col>
-        <Col {...c3} {...colStyle}>
+        </Grid>
+        <Grid item {...c3} {...colStyle}>
           <div
             onClick={() => setShowChart(f.id)}
             className='cursor-pointer'
@@ -349,8 +348,8 @@ export default function Fields() {
             <FaChartLine />{' '}
             {f.avg && f.avg.toFixed(1)}
           </div>
-        </Col>
-      </Row>
+        </Grid>
+      </Grid>
     )
   }
 

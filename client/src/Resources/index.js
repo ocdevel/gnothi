@@ -1,8 +1,5 @@
 import {
-  Nav,
-  Row,
-  Col,
-  Card, Button
+  Button
 } from "react-bootstrap";
 import {
   FaBook,
@@ -11,6 +8,7 @@ import {
 import React, {useState} from "react"
 import Books from './Books'
 import Therapists from './Therapists'
+import {Grid} from "@material-ui/core";
 
 export default function Resources() {
   const [books, setBooks] = useState(true)
@@ -32,15 +30,15 @@ export default function Resources() {
   const lg = books && therapists ? 2 : 1
   return <div>
     {tabs}
-    <Row lg={lg} md={lg} sm={1} xs={1}>
-      {books && <Col>
+    <Grid container lg={lg} md={lg} sm={1} xs={1}>
+      {books && <Grid item>
         <h5><FaBook /> Books</h5>
         <Books />
-      </Col>}
-      {therapists && <Col>
+      </Grid>}
+      {therapists && <Grid item>
         <h5><FaCouch /> Therapists</h5>
         <Therapists setShowTherapists={setTherapists} />
-      </Col>}
-    </Row>
+      </Grid>}
+    </Grid>
   </div>
 }

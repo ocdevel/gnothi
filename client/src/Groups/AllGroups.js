@@ -1,6 +1,6 @@
 import EditGroup from "./EditGroup";
 import React, {useEffect, useState} from "react";
-import {Button, Card, Form, Modal} from "react-bootstrap";
+import {Button} from "react-bootstrap";
 import {Link, useHistory} from "react-router-dom";
 import {useStoreActions, useStoreState} from "easy-peasy";
 import {FaPlus, FaRegComments} from "react-icons/fa";
@@ -13,7 +13,7 @@ import _ from 'lodash'
 import moment from 'moment'
 import {FaUsers} from "react-icons/all";
 import {BasicDialog} from "../Helpers/Dialog";
-import {DialogActions, DialogContent} from "@material-ui/core";
+import {DialogActions, DialogContent, Card, CardContent, CardHeader} from "@material-ui/core";
 
 export function GroupModal({show, close, gid}) {
   const history = useHistory()
@@ -41,12 +41,12 @@ export function GroupModal({show, close, gid}) {
         <hr />
 
         <div>
-          <Card.Title>Description</Card.Title>
+          <h5>Description</h5>
           <div className='ml-2'>{group.text_short}</div>
         </div>
         {group.text_long?.length ? <div>
           <hr />
-          <Card.Title>About</Card.Title>
+          <h5>About</h5>
           <div className='ml-2'>
             <ReactMarkdown source={group.text_long} linkTarget='_blank' />
           </div>
@@ -72,10 +72,8 @@ export default function AllGroups() {
     if (!g) {return null}
     return <div key={gid}>
       <Card className='mb-2 cursor-pointer' onClick={() => setShowGroup(gid)}>
-        <Card.Body>
-          <Card.Title className='mb-2'>
-            {g.title}
-          </Card.Title>
+        <CardContent>
+          <CardHeader title={g.title} />
           <div><FaUsers /> {g.n_members} members</div>
           <div>
             <span><FaRegComments /> {g.n_messages} messages</span>
@@ -83,7 +81,7 @@ export default function AllGroups() {
           </div>
           <hr />
           <div className='text-muted'>{g.text_short}</div>
-        </Card.Body>
+        </CardContent>
       </Card>
     </div>
   }

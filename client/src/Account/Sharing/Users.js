@@ -3,11 +3,12 @@ import {useStoreActions, useStoreState} from "easy-peasy";
 import {useForm} from "react-hook-form";
 import {yupResolver} from "@hookform/resolvers/yup";
 import React, {useEffect, useState} from "react";
-import {Button, Col, Form, ListGroup, Row} from "react-bootstrap";
+import {Button, Form, ListGroup} from "react-bootstrap";
 import {FaTrash} from "react-icons/fa";
 import {EE} from '../../redux/ws'
 import {trueKeys} from "../../Helpers/utils";
 import Error from "../../Error";
+import {Grid} from '@material-ui/core'
 
 const emailSchema = yup.object().shape({
   email: yup.string().email().required(),
@@ -49,8 +50,8 @@ export default function Users({users, setUsers}) {
   return <Form onSubmit={form.handleSubmit(submit)}>
     <Form.Group controlId={`share-email`}>
       <Form.Label>People</Form.Label>
-      <Row>
-        <Col sm={9}>
+      <Grid container>
+        <Grid item sm={9}>
           <Form.Control
             type="email"
             size='sm'
@@ -58,11 +59,11 @@ export default function Users({users, setUsers}) {
             placeholder="Email address"
             {...form.register('email')}
           />
-        </Col>
-        <Col sm={3}>
+        </Grid>
+        <Grid item sm={3}>
           <Button type='submit' size='sm'>Add</Button>
-        </Col>
-      </Row>
+        </Grid>
+      </Grid>
       <Form.Text className="text-muted">
         Email of person you'll share data with. If they're not on Gnothi, have them sign up first.
       </Form.Text>

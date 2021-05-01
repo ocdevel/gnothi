@@ -1,4 +1,4 @@
-import {Button, Card, Col, Form, Modal, Row} from "react-bootstrap";
+import {Button} from "react-bootstrap";
 import {Link, useHistory, useParams} from "react-router-dom";
 import React, {useState, useEffect} from "react";
 import {useStoreActions, useStoreState} from "easy-peasy";
@@ -9,6 +9,7 @@ import EditGroup from "./EditGroup";
 import InviteMembers from "./InviteMembers";
 import {FaTrash} from "react-icons/fa";
 import {onlineIcon, getUname} from "./utils";
+import {Card, CardContent, CardHeader} from '@material-ui/core'
 
 
 const disabled = ['show_avatar']
@@ -44,7 +45,7 @@ function Me() {
 
   function renderMembership() {
     if (!role || role === 'banned') {
-      return <Card.Body>Not a member
+      return <CardContent>Not a member
         <Button
           size='sm'
           className='float-right'
@@ -53,7 +54,7 @@ function Me() {
         >
           Join Group
         </Button>
-      </Card.Body>
+      </CardContent>
     }
     if (role === 'owner') {
       return <div>You are the owner</div>
@@ -98,11 +99,11 @@ function Me() {
   }
 
   return <Card className='mb-2'>
-    <Card.Header><Member row={me} /></Card.Header>
-    <Card.Body>
+    <CardHeader title={<Member row={me} />} />
+    <CardContent>
       {renderMembership()}
       {renderPrivacy()}
-    </Card.Body>
+    </CardContent>
   </Card>
 }
 
@@ -146,7 +147,8 @@ function Members({gid, isOwner}) {
     </li>
   }
 
-  return <><Card.Subtitle>Members</Card.Subtitle>
+  return <>
+    <CardHeader subtitle="Members" />
     <ul className="list-unstyled">
       {arr.map(renderMember)}
     </ul>
@@ -196,13 +198,13 @@ export default function Sidebar() {
     {showEdit && <EditGroup show={true} close={toggleEdit} group={group} />}
     {showInvite && <InviteMembers close={toggleInvite} gid={gid} />}
     <Card className='mb-2'>
-      <Card.Header>{group.title}</Card.Header>
-      <Card.Body>
+      <CardHeader title={group.title} />
+      <CardContent>
         <p>{group.text_short}</p>
         {ownerControls()}
         <hr />
         <Members gid={gid} isOwner={isOwner} />
-      </Card.Body>
+      </CardContent>
     </Card>
 
     <Me />

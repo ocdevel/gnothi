@@ -3,12 +3,13 @@ import {useParams, NavLink, useRouteMatch, Link, Switch, Route} from "react-rout
 import React, {useEffect, useLayoutEffect, useState, useRef} from "react";
 import _ from "lodash";
 import Sidebar from './Sidebar'
-import {Nav, Button, Card, Col, Form, Row} from "react-bootstrap";
+import {Nav} from "react-bootstrap";
 import Teaser from "../Entries/Teaser";
 import {Entry} from "../Entries/Entry";
 import {LinkContainer} from 'react-router-bootstrap'
 import ReactMarkdown from "react-markdown";
 import {GroupMessages} from "../Chat/Messages";
+import {Card, Grid} from '@material-ui/core'
 
 
 function Entries() {
@@ -64,8 +65,8 @@ export default function Group() {
   }
 
   return <div>
-    <Row>
-      <Col md={9}>
+    <Grid container>
+      <Grid item md={9}>
         {renderNav()}
         <Switch>
           <Route path={url} exact>
@@ -81,10 +82,10 @@ export default function Group() {
             About
           </Route>
         </Switch>
-      </Col>
-      <Col md={3}>
+      </Grid>
+      <Grid item md={3}>
         <Sidebar />
-      </Col>
-    </Row>
+      </Grid>
+    </Grid>
   </div>
 }

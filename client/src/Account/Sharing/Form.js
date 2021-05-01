@@ -3,7 +3,7 @@ import * as yup from "yup";
 import _ from "lodash";
 import React, {useEffect, useRef, useState} from "react";
 import {FaChevronDown, FaChevronRight, FaRegQuestionCircle} from "react-icons/fa";
-import {Button, Card, Col, Form, Row} from "react-bootstrap";
+import {Button, Form} from "react-bootstrap";
 import {useStoreActions, useStoreState} from "easy-peasy";
 import Groups from "./Groups";
 import Users from './Users'
@@ -12,6 +12,7 @@ import Error from "../../Error";
 import {AiOutlineWarning} from "react-icons/all";
 import {trueObj} from "../../Helpers/utils";
 import {EE} from '../../redux/ws'
+import {Card, CardHeader, CardContent, CardActions, Grid} from '@material-ui/core'
 
 const profile_fields = {
   username: {
@@ -189,9 +190,9 @@ export default function ShareForm({s={}}) {
     emit(['shares/share/delete', {id}])
   }
 
-  return <Card className='mb-3'>
-    <Card.Header>Share</Card.Header>
-    <Card.Body>
+  return <><Card sx={{mb:2}}>
+    <CardHeader title="Share" />
+    <CardContent>
       {_.map(feature_map, (v, k) => (
         <ShareCheck key={k} v={v} k={k} form={share} setForm={setShare} />
       ))}
@@ -210,16 +211,18 @@ export default function ShareForm({s={}}) {
         selected={tags}
         setSelected={setTags}
       />
-    </Card.Body>
-    <Card.Header className='border-top'>With</Card.Header>
-    <Card.Body>
-      <Row>
-        <Col><Users users={users} setUsers={setUsers} /></Col>
-        <Col><Groups groups={groups} setGroups={setGroups} /></Col>
-      </Row>
-    </Card.Body>
+    </CardContent>
+  </Card>
+  <Card>
+    <CardHeader title="With"></CardHeader>
+    <CardContent>
+      <Grid container>
+        <Grid item><Users users={users} setUsers={setUsers} /></Grid>
+        <Grid item><Groups groups={groups} setGroups={setGroups} /></Grid>
+      </Grid>
+    </CardContent>
 
-    <Card.Footer>
+    <CardActions>
       <Button
         onClick={submit}
         variant="primary"
@@ -240,6 +243,6 @@ export default function ShareForm({s={}}) {
         size='sm'
         onClick={() => setSharePage({list: true})}
       >Cancel</Button>
-    </Card.Footer>
-  </Card>
+    </CardActions>
+  </Card></>
 }

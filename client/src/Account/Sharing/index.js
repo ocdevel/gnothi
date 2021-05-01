@@ -1,6 +1,5 @@
-import {Card, Button, Form, Row, Col, ListGroup, ListGroupItem, Modal} from "react-bootstrap"
+import {Button} from "react-bootstrap"
 import React, {useEffect, useState} from "react"
-import {Link} from 'react-router-dom'
 import _ from 'lodash'
 import ShareForm from './Form'
 import {useStoreState, useStoreActions} from 'easy-peasy'
@@ -8,6 +7,7 @@ import {EE} from '../../redux/ws'
 import {FaPlus, FaRegComments, FaUser} from "react-icons/fa";
 import {trueObj} from "../../Helpers/utils";
 import {FaArrowLeft} from "react-icons/all";
+import {Card, CardContent} from "@material-ui/core";
 
 import {FullScreenDialog} from "../../Helpers/Dialog";
 import {DialogContent} from "@material-ui/core";
@@ -26,10 +26,10 @@ function Share({s}) {
     className='mb-2 cursor-pointer'
     onClick={() => setSharePage({id: s.share.id})}
   >
-    <Card.Body>
+    <CardContent>
       {renderList(<FaUser />, s?.users)}
       {renderList(<FaRegComments />, s?.groups, id => myGroups[id].title)}
-    </Card.Body>
+    </CardContent>
   </Card>
 }
 

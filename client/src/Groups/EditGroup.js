@@ -1,13 +1,8 @@
 import {useHistory, useParams} from "react-router-dom"
 import React, {useEffect, useState, useContext, useCallback} from "react"
 import {
-  Badge,
   Button,
-  Card,
   Form,
-  Modal,
-  Row,
-  Col,
   InputGroup, FormControl
 } from "react-bootstrap"
 import ReactMarkdown from "react-markdown"
@@ -21,7 +16,8 @@ import Error from "../Error";
 import * as yup from "yup";
 import {useForm} from "react-hook-form";
 import {yupResolver} from "@hookform/resolvers/yup";
-import {CircularProgress, DialogActions, DialogContent} from "@material-ui/core";
+import {CircularProgress, DialogActions, DialogContent, Card, CardHeader, CardContent,
+  Grid} from "@material-ui/core";
 import {BasicDialog} from "../Helpers/Dialog";
 
 const mdParser = new MarkdownIt(/* Markdown-it options */);
@@ -130,7 +126,7 @@ const defaultForm = {
 
 function Perk({form, perk}) {
   const {formState: {errors}, register} = form
-  return <Col xs={1} sm={4}>
+  return <Grid item xs={1} sm={4}>
     <Form.Group>
       <Form.Label>{perk.v}</Form.Label>
       <Form.Label htmlFor={`${perk.k}-price`} srOnly>Price</Form.Label>
@@ -155,7 +151,7 @@ function Perk({form, perk}) {
       />
       <Form.Text className='text-muted'>{perk.h}</Form.Text>
     </Form.Group>
-  </Col>
+  </Grid>
 }
 
 export default function EditGroup({show, close, group=null}) {
@@ -259,12 +255,12 @@ export default function EditGroup({show, close, group=null}) {
         </Form.Group>
 
         <Card className='mb-2'>
-          <Card.Header>Perks</Card.Header>
-          <Card.Body>
-            <Row>
+          <CardHeader title="perks" />
+          <CardContent>
+            <Grid container>
               {perks.map(p => <Perk key={p.k} perk={p} form={form} />)}
-            </Row>
-          </Card.Body>
+            </Grid>
+          </CardContent>
         </Card>
       </Form>
     </>
