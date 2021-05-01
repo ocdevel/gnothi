@@ -4,7 +4,6 @@ import {
   Form,
   InputGroup,
   Card,
-  Alert
 } from 'react-bootstrap'
 import Summarize from "./Summarize"
 import Ask from "./Ask"
@@ -20,6 +19,7 @@ import React, {useState} from "react"
 import {useStoreState, useStoreActions} from "easy-peasy";
 import {aiStatusEmoji} from "../Helpers/utils"
 import _ from 'lodash'
+import {Alert} from '@material-ui/core'
 
 const tools = [
   {
@@ -86,7 +86,7 @@ export default function Insights() {
 
   const renderStatus = () => {
     if (aiStatus === 'on') {return null}
-    return <Alert variant='warning'>
+    return <Alert severity='warning'>
       <div>
         {aiStatusEmoji(aiStatus)} Can't use tools yet, AI waking up. Check back in 3.
       </div>
@@ -99,7 +99,7 @@ export default function Insights() {
   const lg = Math.min(3, nTools) || 1
   return <>
     {renderDaysForm()}
-    <Alert variant='info'>
+    <Alert severity='info'>
       <div>Tools use AI for insights on your entries.</div>
       <small className='text-muted'>
         <div>Limit which entries are processed by choosing <FaTags /> tags and <code>#Days</code> above.</div>
@@ -111,7 +111,7 @@ export default function Insights() {
 
     {renderStatus()}
 
-    {nTools === 0 && <Alert variant='warning'>
+    {nTools === 0 && <Alert severity='warning'>
       <FaLock /> You don't have any entries to work with, come back later
     </Alert>}
     <Row lg={lg} md={1} sm={1} xs={1}>

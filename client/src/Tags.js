@@ -12,7 +12,7 @@ import Sortable from "./Helpers/Sortable";
 import {IoReorderFourSharp, IoReorderThreeSharp, MdReorder} from "react-icons/all";
 import {Link} from "react-router-dom";
 
-import {Chip, Stack, Button as MButton} from '@material-ui/core'
+import {Chip, Stack, Button as MButton, DialogContent} from '@material-ui/core'
 import {CheckCircle, Label, Create} from "@material-ui/icons";
 import {FullScreenDialog} from "./Helpers/Dialog";
 
@@ -157,18 +157,20 @@ function TagModal({close}) {
   return (
     <FullScreenDialog
       open={true}
-      handleClose={close}
+      onClose={close}
       title="Tags"
     >
-      <Row>
-        <Col sm={12} md={7}>
-          <Sortable items={tags} render={renderTag} onReorder={reorder} />
-          <NewTag />
-        </Col>
-        <Col sm={12} md={5}>
-          {renderHelp()}
-        </Col>
-      </Row>
+      <DialogContent>
+        <Row>
+          <Col sm={12} md={7}>
+            <Sortable items={tags} render={renderTag} onReorder={reorder} />
+            <NewTag />
+          </Col>
+          <Col sm={12} md={5}>
+            {renderHelp()}
+          </Col>
+        </Row>
+      </DialogContent>
     </FullScreenDialog>
   )
 }

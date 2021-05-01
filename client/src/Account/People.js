@@ -2,7 +2,7 @@ import React, {useEffect, useState} from "react"
 import {Button, Col, Form, Modal, Table} from "react-bootstrap"
 
 import {useStoreActions, useStoreState} from "easy-peasy";
-import {BasicDialog, FullScreenDialog} from "../Helpers/Dialog";
+import {BasicDialog} from "../Helpers/Dialog";
 import {DialogActions, DialogContent} from "@material-ui/core";
 
 function Person({close, person=null}) {

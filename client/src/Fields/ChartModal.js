@@ -143,7 +143,7 @@ export default function ChartModal({close, field=null, overall=false}) {
   return (
     <FullScreenDialog
       open={true}
-      handleClose={close}
+      onClose={close}
       title={field ? "Influencers" : "Top Influencers"}
     >
       {field && <DialogTitle><FieldName name={field.name} maxWidth={960} /></DialogTitle>}

@@ -1,6 +1,7 @@
 import React, {useEffect, useState} from "react";
 import {useStoreState, useStoreActions} from "easy-peasy";
-import {Alert, Card} from "react-bootstrap";
+import {Card} from "react-bootstrap";
+import {Alert} from '@material-ui/core'
 
 export default function Therapists({setShowTherapists}) {
   const emit = useStoreActions(a => a.ws.emit)
@@ -30,7 +31,7 @@ export default function Therapists({setShowTherapists}) {
   }
 
   return <div className='mt-3'>
-    <Alert variant='info'>
+    <Alert severity='info'>
       <div>AI-recommended therapists based on your entries.</div>
       <small className='text-muted'>
         <div>AI matches your entries to therapists from their bio & specialties. It's automatic & private, they won't see your data (unless you explicitly share with them under Account > Sharing).</div>
@@ -38,7 +39,7 @@ export default function Therapists({setShowTherapists}) {
       </small>
     </Alert>
     {therapists?.length ? therapists.map(renderTherapist) : (
-      <Alert variant='warning'>No therapist matches yet.</Alert>
+      <Alert severity='warning'>No therapist matches yet.</Alert>
     )}
   </div>
 }

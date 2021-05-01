@@ -5,13 +5,15 @@ import {Link, useHistory} from "react-router-dom";
 import {useStoreActions, useStoreState} from "easy-peasy";
 import {FaPlus, FaRegComments} from "react-icons/fa";
 import {EE} from "../redux/ws";
-import {spinner, timeAgo} from "../Helpers/utils";
+import {timeAgo} from "../Helpers/utils";
 import Error from "../Error";
 import ReactMarkdown from "react-markdown";
 import Group from "./Group";
 import _ from 'lodash'
 import moment from 'moment'
 import {FaUsers} from "react-icons/all";
+import {BasicDialog} from "../Helpers/Dialog";
+import {DialogActions, DialogContent} from "@material-ui/core";
 
 export function GroupModal({show, close, gid}) {
   const history = useHistory()
@@ -24,19 +26,13 @@ export function GroupModal({show, close, gid}) {
   }
 
   return <>
-    <Modal
-      show={show}
+    <BasicDialog
+      open={show}
       size='xl'
-      onHide={close}
-      scrollable={true}
-      keyboard={false}
-      backdrop='static'
+      onClose={close}
+      title={group.title}
     >
-      <Modal.Header closeButton>
-        <Modal.Title>{group.title}</Modal.Title>
-      </Modal.Header>
-
-      <Modal.Body>
+      <DialogContent>
         <div><FaUsers /> {group.n_members} members</div>
         <div>
           <span><FaRegComments /> {group.n_messages} messages</span>
@@ -56,8 +52,8 @@ export function GroupModal({show, close, gid}) {
           </div>
         </div> : null}
         <Button variant='primary' onClick={joinGroup}>Join Group</Button>
-      </Modal.Body>
-    </Modal>
+      </DialogContent>
+    </BasicDialog>
   </>
 }
 

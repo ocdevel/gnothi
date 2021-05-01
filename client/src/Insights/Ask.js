@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from "react";
-import {Col, Form, Card, Button, Alert} from "react-bootstrap";
+import {Form, Card, Button} from "react-bootstrap";
 import {Spinner} from './utils'
 
 import {useStoreActions, useStoreState} from "easy-peasy";

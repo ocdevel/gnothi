@@ -8,7 +8,7 @@ import IconButton from '@material-ui/core/IconButton';
 import Typography from '@material-ui/core/Typography';
 import CloseIcon from '@material-ui/icons/Close';
 import Slide from '@material-ui/core/Slide';
-import {DialogContent} from "@material-ui/core";
+import {DialogContent, Grid} from "@material-ui/core";
 
 import DialogActions from '@material-ui/core/DialogActions';
 import DialogTitle from '@material-ui/core/DialogTitle';
@@ -38,7 +38,19 @@ export function BasicDialog({
     onClose={onClose}
     aria-labelledby="dialog-title"
   >
-    <DialogTitle id="dialog-title">{title}</DialogTitle>
+    <Grid container direction='row' alignItems='center'>
+      <Grid item sx={{flex: 1}}>
+        <DialogTitle id="dialog-title">{title}</DialogTitle>
+      </Grid>
+      <Grid item>
+        <IconButton
+          onClick={onClose}
+          aria-label="close"
+        >
+          <CloseIcon />
+        </IconButton>
+      </Grid>
+    </Grid>
     {children}
   </Dialog>
 }
@@ -47,14 +59,14 @@ const Transition = React.forwardRef(function Transition(props, ref) {
   return <Slide direction="up" ref={ref} {...props} />;
 });
 
-export function FullScreenDialog({title, children, open, handleClose}) {
+export function FullScreenDialog({title, children, open, onClose}) {
   const classes = useStyles();
 
   return <>
     <Dialog
       fullScreen
       open={open}
-      onClose={handleClose}
+      onClose={onClose}
       TransitionComponent={Transition}
     >
       <AppBar className={classes.appBar}>
@@ -62,7 +74,7 @@ export function FullScreenDialog({title, children, open, handleClose}) {
           <IconButton
             edge="start"
             color="inherit"
-            onClick={handleClose}
+            onClick={onClose}
             aria-label="close"
           >
             <CloseIcon />
@@ -75,9 +87,7 @@ export function FullScreenDialog({title, children, open, handleClose}) {
           </Button>*/}
         </Toolbar>
       </AppBar>
-      <DialogContent>
-        {children}
-      </DialogContent>
+      {children}
     </Dialog>
   </>
 }

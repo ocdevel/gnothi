@@ -2,10 +2,8 @@ import React, {useEffect, useState} from "react"
 import {
   Button,
   Form,
-  Row,
   Col,
   Card,
-  Alert, Modal
 } from "react-bootstrap"
 import {
   BsPersonFill,
@@ -20,6 +18,7 @@ import People from './People'
 import {useStoreState, useStoreActions} from "easy-peasy";
 import {timezones} from "../redux/ws";
 import {FullScreenDialog} from "../Helpers/Dialog";
+import {DialogContent, Alert} from "@material-ui/core";
 
 function Profile_() {
   const emit = useStoreActions(a => a.ws.emit)
@@ -156,7 +155,7 @@ export default function Profile({close}) {
   function renderProfile() {
     return <div>
       <div className='mb-3'>
-        <Alert variant='info'>
+        <Alert severity='info'>
           <div>Optionally fill out a profile.</div>
           <small className='text-muted'>You can optionally share your profile with therapists. Fields which might be important (like gender, orientation) might be used in AI. I'm still experimenting with how AI would use this stuff.</small>
         </Alert>
@@ -164,7 +163,7 @@ export default function Profile({close}) {
       </div>
       <hr />
       <Card.Title><BsPeopleFill /> People</Card.Title>
-      <Alert variant='info'>
+      <Alert severity='info'>
         <div>Optionally add "who's who" in your life.</div>
         <small className='text-muted'>When sharing profile with therapists, it would help them to have a "directory" to refresh their memory. It also feeds into the AI's summaries, question-answering, etc.</small>
       </Alert>
@@ -173,8 +172,10 @@ export default function Profile({close}) {
   }
 
   return <>
-    <FullScreenDialog open={true} handleClose={close} title="Profile">
-      {renderProfile()}
+    <FullScreenDialog open={true} onClose={close} title="Profile">
+      <DialogContent>
+        {renderProfile()}
+      </DialogContent>
     </FullScreenDialog>
   </>
 }

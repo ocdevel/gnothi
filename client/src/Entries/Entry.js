@@ -1,15 +1,13 @@
 import {useHistory, useParams} from "react-router-dom"
 import React, {useEffect, useState, useContext, useCallback} from "react"
-import {spinner, fmtDate} from "../Helpers/utils"
+import {fmtDate} from "../Helpers/utils"
 import {
   Badge,
   Button,
   Card,
   Form,
-  Modal,
   Row,
   Col,
-  Alert
 } from "react-bootstrap"
 import ReactMarkdown from "react-markdown"
 import './Entry.css'
@@ -25,6 +23,7 @@ import {FullScreenDialog} from "../Helpers/Dialog";
 
 import {useStoreActions, useStoreState} from "easy-peasy";
 import Error from "../Error";
+import {CircularProgress, DialogActions, DialogContent, Alert} from "@material-ui/core";
 
 const mdParser = new MarkdownIt(/* Markdown-it options */);
 
@@ -205,7 +204,7 @@ export function Entry({entry=null, close=null}) {
   const renderButtons = () => {
     if (as) {return null}
     if (entryPost?.submitting || entryPut?.submitting) {
-      return spinner
+      return <CircularProgress />
     }
     if (!editing) return <>
       <Button
@@ -294,14 +293,14 @@ export function Entry({entry=null, close=null}) {
       </Col>
 
       {showCacheEntry && <Col>
-        <Alert variant='info'>Paragraphs get split in the following way, and AI considers each paraph independently from the other (as if they're separate entries).</Alert>
+        <Alert severity='info'>Paragraphs get split in the following way, and AI considers each paraph independently from the other (as if they're separate entries).</Alert>
         <div>{
           cacheEntry.paras ? cacheEntry.paras.map((p, i) => <div key={i}>
               <p>{p}</p><hr/>
             </div>)
             : <p>Nothing here yet.</p>
         }</div>
-        <Alert variant='info'>Keywords generated for use in Themes</Alert>
+        <Alert severity='info'>Keywords generated for use in Themes</Alert>
         <div>{
           cacheEntry.clean ? cacheEntry.clean.map((p, i) => <div key={i}>
             <p>{_.uniq(p.split(' ')).join(' ')}</p>
@@ -329,17 +328,19 @@ export function Entry({entry=null, close=null}) {
   return <>
     <FullScreenDialog
       open={true}
-      handleClose={() => go()}
+      onClose={() => go()}
       title={fmtDate(eid ? form.created_at : Date.now())}
     >
-      {renderForm()}
-      {!editing && eid && <NotesList eid={eid} />}
-      <Modal.Footer>
+      <DialogContent>
+        {renderForm()}
+        {!editing && eid && <NotesList eid={eid} />}
+      </DialogContent>
+      <DialogActions>
         {!editing && eid && <div className='mr-auto'>
           <AddNotes eid={eid} />
         </div>}
         {renderButtons()}
-      </Modal.Footer>
+      </DialogActions>
     </FullScreenDialog>
   </>
 }

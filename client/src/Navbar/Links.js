@@ -10,9 +10,9 @@ import {
   FaReddit,
   MdEmail
 } from "react-icons/all";
-import {Alert, Card, Modal} from "react-bootstrap";
 import React from "react";
 import {FullScreenDialog} from "../Helpers/Dialog";
+import {DialogContent} from "@material-ui/core";
 
 export default function Links({close}) {
   function renderLinks() {
@@ -87,7 +87,9 @@ export default function Links({close}) {
       </ul>
     </>
   }
-  return <FullScreenDialog open={true} handleClose={close} title="Useful Links">
-    {renderLinks()}
+  return <FullScreenDialog open={true} onClose={close} title="Useful Links">
+    <DialogContent>
+      {renderLinks()}
+    </DialogContent>
   </FullScreenDialog>
 }

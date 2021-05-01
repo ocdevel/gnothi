@@ -1,6 +1,5 @@
 import {useHistory, useParams} from "react-router-dom"
 import React, {useEffect, useState, useContext, useCallback} from "react"
-import {spinner, fmtDate} from "../Helpers/utils"
 import {
   Badge,
   Button,
@@ -9,7 +8,7 @@ import {
   Modal,
   Row,
   Col,
-  Alert, InputGroup, FormControl
+  InputGroup, FormControl
 } from "react-bootstrap"
 import ReactMarkdown from "react-markdown"
 import MarkdownIt from 'markdown-it'
@@ -22,6 +21,8 @@ import Error from "../Error";
 import * as yup from "yup";
 import {useForm} from "react-hook-form";
 import {yupResolver} from "@hookform/resolvers/yup";
+import {CircularProgress, DialogActions, DialogContent} from "@material-ui/core";
+import {BasicDialog} from "../Helpers/Dialog";
 
 const mdParser = new MarkdownIt(/* Markdown-it options */);
 
@@ -199,7 +200,7 @@ export default function EditGroup({show, close, group=null}) {
 
   const renderButtons = () => {
     if (as) return null
-    if (groupPost?.submitting) return spinner
+    if (groupPost?.submitting) return <CircularProgress />
 
     return <>
       <Button variant='link' className='text-secondary' size="sm" onClick={close}>
@@ -270,26 +271,20 @@ export default function EditGroup({show, close, group=null}) {
   }
 
   return <>
-    <Modal
-      show={show}
+    <BasicDialog
+      open={show}
       size='xl'
-      onHide={close}
-      scrollable={true}
-      keyboard={false}
-      backdrop='static'
+      onClose={close}
+      title={group ? "Edit Group" : "Create a Group"}
     >
-      <Modal.Header closeButton>
-        <Modal.Title>{group ? "Edit Group" : "Create a Group"}</Modal.Title>
-      </Modal.Header>
-
-      <Modal.Body>
+      <DialogContent>
         {renderForm()}
         <Error action={/groups\/groups\/post/g} codes={[400,401,403,422]}/>
-      </Modal.Body>
+      </DialogContent>
 
-      <Modal.Footer>
+      <DialogActions>
         {renderButtons()}
-      </Modal.Footer>
-    </Modal>
+      </DialogActions>
+    </BasicDialog>
   </>
 }

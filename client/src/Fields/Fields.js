@@ -1,12 +1,10 @@
 import React, {useEffect, useState, useCallback} from "react";
-import {spinner} from "../Helpers/utils";
 import {API_URL} from '../redux/ws'
 import _ from "lodash";
 import {
   Form,
   Row,
   Col,
-  Alert
 } from "react-bootstrap";
 import ReactStars from "react-stars";
 import SetupHabitica from "./SetupHabitica";
@@ -28,7 +26,8 @@ import axios from "axios";
 import fileDownload from 'js-file-download';
 import {
   Card, Grid, CardContent, CardHeader, Accordion, AccordionSummary,
-  AccordionDetails, Button, Typography, ButtonGroup, CardActions, Divider, Tooltip
+  AccordionDetails, Button, Typography, ButtonGroup, CardActions, Divider,
+  Tooltip, CircularProgress, Alert
 } from "@material-ui/core";
 import {ExpandMore} from "@material-ui/icons";
 
@@ -122,7 +121,7 @@ function FieldsAdvanced({fetchFieldEntries}) {
     >Download field_entries.csv</Button>
     <Form.Text>Export your field-entries to CSV</Form.Text>
     {hasDupes && <>
-      <Alert variant='warning'>
+      <Alert severity='warning'>
         <Form.Text>Your field entries were effected by the <a href='https://github.com/lefnire/gnothi/issues/20' target='_blank'>duplicates bug</a>. See that link for details and what to do.</Form.Text>
       <hr />
       <Button
@@ -227,7 +226,7 @@ export default function Fields() {
     if (!~['habitica'].indexOf(service)) {return null}
     if (as) {return null}
     if (!user.habitica_user_id) {return null}
-    if (syncRes?.sending) {return spinner}
+    if (syncRes?.sending) {return <CircularProgress />}
     return <>
       <Tooltip title='Gnothi auto-syncs every hour'>
         <Button sx={{mb:2}} size='small' variant='contained' onClick={() => fetchService(service)}>Sync</Button>
@@ -299,7 +298,7 @@ export default function Fields() {
   }
 
   const renderDupes = (f, fe) => {
-    return <Alert variant='warning' style={{margin: 0, padding: 0}}>
+    return <Alert severity='warning' style={{margin: 0, padding: 0}}>
       <div><FaExclamationTriangle /> Duplicates <a href="https://github.com/lefnire/gnothi/issues/20" target="_blank">bug</a>! Pick the one that's correct.</div>
       {renderDupe(fe)}
       {fe.dupes.map(renderDupe)}

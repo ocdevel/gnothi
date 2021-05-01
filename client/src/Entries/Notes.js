@@ -13,6 +13,8 @@ import {FaQuestionCircle} from "react-icons/all";
 
 import {useStoreActions, useStoreState} from "easy-peasy";
 import {FaRegComments} from "react-icons/fa";
+import {BasicDialog} from "../Helpers/Dialog";
+import {DialogActions, DialogContent} from "@material-ui/core";
 
 export function NotesAll() {
   return null
@@ -83,13 +85,17 @@ export function AddNotes({entry_id, onSubmit}) {
   const [showHelp, setShowHelp] = useState(false)
   const [qmarkHover, setQmarkHover] = useState(false)
 
+  function close() {setShowHelp(false)}
+
   const renderHelpModal = () => {
     return <>
-      <Modal show={true} size='lg' onHide={() => setShowHelp(false)} scrollable={true}>
-        <Modal.Header closeButton >
-          <Modal.Title>Why label entries?</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
+      <BasicDialog
+        open={true}
+        size='lg'
+        onClose={close}
+        title="Why label entries?"
+      >
+        <DialogContent>
           <Tabs
             variant="pills"
             defaultActiveKey={as ? "therapist" : "user"}
@@ -112,8 +118,8 @@ export function AddNotes({entry_id, onSubmit}) {
               </Tab>
             ))}
           </Tabs>
-        </Modal.Body>
-      </Modal>
+        </DialogContent>
+      </BasicDialog>
     </>
   }
 
@@ -166,11 +172,8 @@ export function AddNotes({entry_id, onSubmit}) {
       resource: "Enter URL to a resource (a web article, Amazon book link, etc)."
     }[adding]
     return <>
-      <Modal show={true} size='lg' onHide={clear} scrollable={true}>
-        <Modal.Header closeButton>
-          <Modal.Title>Add a {adding}</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
+      <BasicDialog open={true} size='lg' onHide={clear} title={`Add a ${adding}`}>
+        <DialogContent>
           <Form onSubmit={submit}>
             <Form.Group controlId="formText">
               <Form.Control
@@ -190,8 +193,8 @@ export function AddNotes({entry_id, onSubmit}) {
               <Form.Text>This {adding} will be visible only to you.</Form.Text>
             </Form.Group>
           </Form>
-        </Modal.Body>
-        <Modal.Footer>
+        </DialogContent>
+        <DialogActions>
           <Button variant='link' size="sm" className='text-secondary' onClick={clear}>
             Cancel
           </Button>
@@ -199,8 +202,8 @@ export function AddNotes({entry_id, onSubmit}) {
             variant="primary"
             onClick={submit}
           >Submit</Button>
-        </Modal.Footer>
-      </Modal>
+        </DialogActions>
+      </BasicDialog>
     </>
   }
 

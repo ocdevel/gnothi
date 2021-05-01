@@ -10,6 +10,7 @@ import {trueObj} from "../../Helpers/utils";
 import {FaArrowLeft} from "react-icons/all";
 
 import {FullScreenDialog} from "../../Helpers/Dialog";
+import {DialogContent} from "@material-ui/core";
 
 function Share({s}) {
   let myGroups = useStoreState(s => s.ws.data['groups/mine/get']?.obj)
@@ -90,10 +91,12 @@ export function SharingModal() {
   return <>
     <FullScreenDialog
       open={sharePage}
-      handleClose={close}
+      onClose={close}
       title='Sharing'
     >
-      <Sharing />
+      <DialogContent>
+        <Sharing />
+      </DialogContent>
     </FullScreenDialog>
   </>
 }

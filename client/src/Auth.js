@@ -2,13 +2,9 @@ import React, {useEffect, useState} from "react";
 import {
   Button,
   Form,
-  Tab,
-  Tabs,
-  Alert
 } from "react-bootstrap";
 import {useLocation, useHistory} from "react-router-dom"
 import Error from './Error'
-import {spinner} from './Helpers/utils'
 import {useStoreState, useStoreActions} from "easy-peasy";
 import axios from 'axios'
 import {API_URL} from "./redux/ws";
@@ -18,6 +14,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from "yup";
 
 import {Auth} from 'aws-amplify'
+import {CircularProgress, Alert} from "@material-ui/core";
 
 const loginSchema = yup.object().shape({
   email: yup.string().email().required(),
@@ -75,7 +72,7 @@ function Login({setError, submitting}) {
       />
       <FieldError err={errors.password} />
     </Form.Group>
-    {submitting ? spinner : (
+    {submitting ? <CircularProgress /> : (
       <Button variant="primary" type="submit">
         Login
       </Button>
@@ -118,7 +115,7 @@ export function Authenticate() {
 
   return <div>
     {error && <Error message={error} />}
-    {resetSuccess && <Alert variant='success'>Password successfully reset, now you can log in</Alert>}
+    {resetSuccess && <Alert severity='success'>Password successfully reset, now you can log in</Alert>}
     <Login
       submitting={submitting}
       submit={submit}

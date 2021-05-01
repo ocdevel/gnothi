@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import {CardElement, useStripe, useElements, Elements} from "@stripe/react-stripe-js";
-import {Form, Button, Alert} from 'react-bootstrap'
+import {Form, Button} from 'react-bootstrap'
 import {loadStripe} from "@stripe/stripe-js";
 import {useStoreState, useStoreActions} from "easy-peasy";
 import Error from "../Error";

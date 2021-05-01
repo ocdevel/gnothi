@@ -3,8 +3,10 @@ import {useForm} from "react-hook-form";
 import {yupResolver} from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import React, {useEffect} from "react";
-import {Alert, Button, Form, Modal} from "react-bootstrap";
+import {Button, Form} from "react-bootstrap";
 import Error from "../Error";
+import {BasicDialog} from "../Helpers/Dialog";
+import {DialogActions, DialogContent, Alert} from "@material-ui/core";
 
 export default function InviteMembers({gid, close}) {
   const emit = useStoreActions(a => a.ws.emit)
@@ -38,19 +40,13 @@ export default function InviteMembers({gid, close}) {
   const valid = invite?.valid ?? null
 
   return <>
-    <Modal
-      show={true}
+    <BasicDialog
+      open={true}
       size='xl'
-      onHide={close}
-      scrollable={true}
-      keyboard={false}
-      backdrop='static'
+      onClose={close}
+      title='Invite Members'
     >
-      <Modal.Header closeButton>
-        <Modal.Title>Invite Members</Modal.Title>
-      </Modal.Header>
-
-      <Modal.Body>
+      <DialogContent>
         <Form>
           <Form.Group controlId="form_email">
             <Form.Label>Email</Form.Label>
@@ -61,19 +57,19 @@ export default function InviteMembers({gid, close}) {
               placeholder="Email of user"
             />
             <Form.Text className='text-muted'>Invite-by-email required to ensure you know the member you're inviting. Make sure they're already registered, this won't send an email invite.</Form.Text>
-            {valid && <Alert variant='success'>Invite sent!</Alert>}
+            {valid && <Alert severity='success'>Invite sent!</Alert>}
             {(valid === false) && <Form.Control.Feedback type='invalid'>That user doesn't exist, have them sign up first.</Form.Control.Feedback>}
           </Form.Group>
         </Form>
         <Error action={/groups\/group\/invite/g} codes={[400,401,403,422]}/>
-      </Modal.Body>
+      </DialogContent>
 
-      <Modal.Footer>
+      <DialogActions>
         <Button size='sm' variant='link' className='text-secondary mr-2' onClick={close}>
           Cancel
         </Button>
         <Button variant='primary' onClick={form.handleSubmit(submit)}>Invite</Button>
-      </Modal.Footer>
-    </Modal>
+      </DialogActions>
+    </BasicDialog>
   </>
 }

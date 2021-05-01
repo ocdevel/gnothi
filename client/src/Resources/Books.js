@@ -1,12 +1,10 @@
 import React, {useEffect, useState} from "react";
 import _ from 'lodash'
-import {spinner, SimplePopover} from "../Helpers/utils";
 import {
   Button,
   ButtonGroup,
   Nav,
   NavDropdown,
-  Alert,
 } from "react-bootstrap";
 import {
   FaTags,
@@ -17,10 +15,9 @@ import {
   FaTimes,
   FaAmazon
 } from "react-icons/fa"
-import {Link} from 'react-router-dom'
 
 import {useStoreState, useStoreActions} from "easy-peasy";
-import {Tooltip} from "@material-ui/core";
+import {CircularProgress, Tooltip, Alert} from "@material-ui/core";
 
 export default function Books() {
   const emit = useStoreActions(a => a.ws.emit)
@@ -107,10 +104,10 @@ export default function Books() {
   return <>
     <div>
       {renderTabs()}
-      {booksGet?.sending && spinner}
+      {booksGet?.sending && <CircularProgress />}
     </div>
     <div>
-      <Alert variant='info'>
+      <Alert severity='info'>
         <div>AI-recommended self-help books based on your entries.</div>
         <small className="text-muted">
           <div>Use thumbs <FaThumbsUp /> to improve AI's recommendations. Wikipedia & other resources coming soon. If the recommendations are bad, <a href="https://github.com/lefnire/gnothi/issues/101" target="_blank">try this</a>.</div>
