@@ -1,6 +1,6 @@
 import {useStoreState} from "easy-peasy";
 import React, {useState} from "react";
-import {Divider, ListItem, ListItemText} from "@material-ui/core";
+import {Box, Card, CardContent, CardHeader, Divider, ListItem, ListItemText, Typography} from "@material-ui/core";
 import {NotesNotifs} from "./Notes";
 import {
   sent2face,
@@ -21,27 +21,29 @@ export default function Teaser({eid, gotoForm}) {
   const summary = e.text_summary || e.text
   const sentiment = e.sentiment && sent2face(e.sentiment)
 
-  return <>
-    <ListItem
+  return <Box
+    onMouseEnter={onHover}
+    onMouseLeave={onLeave}
+  >
+    <Card
+      square
       onClick={() => gotoForm(eid)}
-      button
+      variant='elevation'
+      elevation={hovered ? 10 : 0}
+      sx={{cursor:'pointer', borderColor: 'primary.main'}}
     >
-      <ListItemText
-        primary={`${fmtDate(e.createdAt)} - ${title}`}
-        secondary={summary}
-      />
-      {/*
-      {isSummary ? <>
-        <div>
-          {sentiment}{summary}
-        </div>
-        {hovered && <div className='text-info'>You're viewing an AI-generated summary of this entry. Click to read the original.</div>}
-      </> : <div>
-        {sentiment}{summary}
-      </div>}
-      */}
-      <NotesNotifs entry_id={e.id} />
-    </ListItem>
+      <CardContent>
+        <Typography variant='h6'>{title}</Typography>
+        <Typography color='text.secondary'>{fmtDate(e.createdAt)}</Typography>
+        <Typography variant='body1' sx={{pt:1}}>
+          <div>{sentiment}{summary}</div>
+          {isSummary && <Typography variant='caption' sx={{display: hovered ? 'block' : 'none'}}>
+            This is an AI-generated summary of this entry. Click to read the original.
+          </Typography>}
+        </Typography>
+        <NotesNotifs entry_id={e.id} />
+      </CardContent>
+    </Card>
     <Divider />
-  </>
+  </Box>
 }

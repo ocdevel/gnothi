@@ -62,7 +62,7 @@ export default function Sharing() {
       >
         <FaPlus /> New Share
       </Button>
-      {arr?.map(sid => <Share key={obj[sid]} s={obj[sid]}/>)}
+      {arr?.map(sid => <Share key={sid} s={obj[sid]}/>)}
     </div>
   }
 
@@ -90,7 +90,7 @@ export function SharingModal() {
 
   return <>
     <FullScreenDialog
-      open={sharePage}
+      open={sharePage || false}
       onClose={close}
       title='Sharing'
     >

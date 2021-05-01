@@ -16,7 +16,7 @@ import Search from './Search'
 
 import {Add as AddIcon} from '@material-ui/icons'
 import {List, ListItem, ListItemIcon, ListItemText, Divider, Typography, Fab,
-  Pagination, Grid, Button as MButton, Alert} from '@material-ui/core'
+  Pagination, Grid, Button as MButton, Alert, Card} from '@material-ui/core'
 
 export default function Entries({group_id=null}) {
   const as = useStoreState(s => s.user.as)
@@ -63,9 +63,7 @@ export default function Entries({group_id=null}) {
     const changePage = (e, p) => setPage(p)
 
     return <>
-      <List>
-        {filteredPage.map(eid => <Teaser eid={eid} gotoForm={gotoForm} key={eid}/> )}
-      </List>
+      {filteredPage.map(eid => <Teaser eid={eid} gotoForm={gotoForm} key={eid}/> )}
       {usePaging && <Pagination count={nPages} page={page} onChange={changePage} />}
     </>
   }

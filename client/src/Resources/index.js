@@ -27,15 +27,15 @@ export default function Resources() {
     >Therapists</Button>
   </div>
 
-  const lg = books && therapists ? 2 : 1
+  const md = books && therapists ? 6 : 12
   return <div>
     {tabs}
-    <Grid container lg={lg} md={lg} sm={1} xs={1}>
-      {books && <Grid item>
+    <Grid container spacing={2}>
+      {books && <Grid item md={md} sm={12} xs={12}>
         <h5><FaBook /> Books</h5>
         <Books />
       </Grid>}
-      {therapists && <Grid item>
+      {therapists && <Grid item md={md} sm={12} xs={12}>
         <h5><FaCouch /> Therapists</h5>
         <Therapists setShowTherapists={setTherapists} />
       </Grid>}

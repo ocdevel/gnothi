@@ -1,8 +1,6 @@
 import React, {useEffect, useState} from "react";
 import _ from 'lodash'
 import {
-  Button,
-  ButtonGroup,
   Nav,
   NavDropdown,
 } from "react-bootstrap";
@@ -17,7 +15,17 @@ import {
 } from "react-icons/fa"
 
 import {useStoreState, useStoreActions} from "easy-peasy";
-import {CircularProgress, Tooltip, Alert} from "@material-ui/core";
+import {
+  CircularProgress,
+  Tooltip,
+  Alert,
+  Typography,
+  Card,
+  CardHeader,
+  CardContent,
+  CardActions,
+  Button, IconButton, Divider
+} from "@material-ui/core";
 
 export default function Books() {
   const emit = useStoreActions(a => a.ws.emit)
@@ -48,9 +56,9 @@ export default function Books() {
 
   const ShelfButton = ({bid, shelf, icon, popover}) => (
     <Tooltip title={popover}>
-      <Button variant='outline-dark' onClick={() => putOnShelf(bid, shelf)}>
-        {icon()}
-      </Button>
+      <IconButton variant='outline' onClick={() => putOnShelf(bid, shelf)} >
+        {icon}
+      </IconButton>
     </Tooltip>
   )
 
@@ -69,30 +77,30 @@ export default function Books() {
   </>
 
   const renderBook = b => (
-    <div key={b.id}>
-      <h5>
-        {b.amazon ? <a href={b.amazon} target='_blank'>{b.title}</a> : b.title}
-      </h5>
-      <div className='text-muted mb-3'>
-        <div><FaUser /> {b.author}</div>
-        <div><FaTags /> {b.topic}</div>
-        {b.amazon && <div><FaAmazon /> Amazon Affiliate Link <a href='https://github.com/lefnire/gnothi/issues/47' target='_blank'>?</a></div>}
-      </div>
-      <p>{b.text}</p>
-      <div>
-        <ButtonGroup>
+    <Card key={b.id} elevation={0}>
+      <CardHeader
+        title={b.amazon ? <a href={b.amazon} target='_blank'>{b.title}</a> : b.title}
+      />
+      <CardContent>
+        <Typography variant='body2' color='text.secondary' sx={{mb:2}}>
+          <div><FaUser /> {b.author}</div>
+          <div><FaTags /> {b.topic}</div>
+          {b.amazon && <div><FaAmazon /> Amazon Affiliate Link <a href='https://github.com/lefnire/gnothi/issues/47' target='_blank'>?</a></div>}
+        </Typography>
+        <Typography variant='body1'>{b.text}</Typography>
+      </CardContent>
+      <CardActions sx={{justifyContent: 'space-around'}}>
           {as ? <>
-            <ShelfButton bid={b.id} shelf='recommend' icon={FaThumbsUp} popover="Recommend this book to the user (remove from results)" />
+            <ShelfButton bid={b.id} shelf='recommend' icon={<FaThumbsUp />} popover="Recommend this book to the user (remove from results)" />
           </> : <>
-            <ShelfButton bid={b.id} shelf='like' icon={FaThumbsUp} popover="Like and save for later (remove from results)" />
-            <ShelfButton bid={b.id} shelf='dislike' icon={FaThumbsDown} popover="Dislike (remove from results)" />
-            <ShelfButton bid={b.id} shelf='already_read' icon={FaCheck} popover="I've read this. Like but don't save (remove from results)" />
-            <ShelfButton bid={b.id} shelf='remove' icon={FaTimes} popover="Remove from results, but don't affect algorithm." />
+            <ShelfButton bid={b.id} shelf='like' icon={<FaThumbsUp />} popover="Like and save for later (remove from results)" />
+            <ShelfButton bid={b.id} shelf='dislike' icon={<FaThumbsDown />} popover="Dislike (remove from results)" />
+            <ShelfButton bid={b.id} shelf='already_read' icon={<FaCheck />} popover="I've read this. Like but don't save (remove from results)" />
+            <ShelfButton bid={b.id} shelf='remove' icon={<FaTimes />} popover="Remove from results, but don't affect algorithm." />
           </>}
-        </ButtonGroup>
-      </div>
-      <hr />
-    </div>
+      </CardActions>
+      <Divider />
+    </Card>
   )
 
   const books_ = books.length ?
