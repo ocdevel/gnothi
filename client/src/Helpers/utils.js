@@ -4,25 +4,12 @@ import _ from "lodash"
 import emoji from 'react-easy-emoji'
 import moment from "moment-timezone";
 import {FaThumbsUp, FaTags} from 'react-icons/fa'
+import {Tooltip} from "@material-ui/core";
 
 export const spinner = (
   <Spinner animation="border" role="status">
     <span className="sr-only">Loading...</span>
   </Spinner>
-)
-
-export const SimplePopover = ({children, text, overlayOpts={}}) => (
-  <OverlayTrigger
-    {...overlayOpts}
-    overlay={<Popover>
-      <Popover.Content>
-        {text}
-      </Popover.Content>
-    </Popover>}
-    trigger={['hover', 'focus']}
-  >
-    {children}
-  </OverlayTrigger>
 )
 
 export const sent2face = (sentiment) => {
@@ -41,9 +28,9 @@ export const sent2face = (sentiment) => {
     surprise: emoji("😯"),
   }[sentiment] || emoji("⚠")
   return (
-    <SimplePopover text="Sentiment is machine-generated from your entry's text">
+    <Tooltip title="Sentiment is machine-generated from your entry's text">
       <span style={style}>{emoji_}</span>
-    </SimplePopover>
+    </Tooltip>
   )
 }
 

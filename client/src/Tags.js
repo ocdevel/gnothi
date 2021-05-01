@@ -2,8 +2,6 @@ import {Button, Col, Form, Modal, Row} from "react-bootstrap"
 import _ from "lodash"
 import React, {useCallback, useEffect, useState} from "react"
 import {FaPen, FaRobot, FaSort, FaTrash} from 'react-icons/fa'
-
-import {SimplePopover, trueKeys} from "./Helpers/utils"
 import {useStoreState, useStoreActions} from "easy-peasy";
 import {FaTags} from "react-icons/fa/index";
 

@@ -3,6 +3,7 @@ import {Button, Col, Form, Modal, Table} from "react-bootstrap"
 
 import {useStoreActions, useStoreState} from "easy-peasy";
 import {BasicDialog, FullScreenDialog} from "../Helpers/Dialog";
+import {DialogActions, DialogContent} from "@material-ui/core";
 
 function Person({close, person=null}) {
   const emit = useStoreActions(a => a.ws.emit)
@@ -57,7 +58,7 @@ function Person({close, person=null}) {
       handleClose={close}
       title={person ? "Edit Person" : "New Person"}
     >
-      <Modal.Body>
+      <DialogContent>
         <Form className='mb-3'>
           <Form.Row>
             {textField({k: 'name', v: 'Name', ...req})}
@@ -68,8 +69,8 @@ function Person({close, person=null}) {
             {textField({k: 'bio', v: 'Bio', attrs: {as: 'textarea', rows: 6}})}
           </Form.Row>
         </Form>
-      </Modal.Body>
-      <Modal.Footer>
+      </DialogContent>
+      <DialogActions>
         <Button
           onClick={submit}
           variant={person ? "primary" : "success"}
@@ -81,7 +82,7 @@ function Person({close, person=null}) {
           <Button size='sm' variant='secondary' onClick={close}>Cancel</Button>&nbsp;
           <Button size='sm' variant='danger' onClick={destroy}>Delete</Button>
         </>}
-      </Modal.Footer>
+      </DialogActions>
     </BasicDialog>
   </>
 }

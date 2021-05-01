@@ -25,7 +25,7 @@ const useStyles = makeStyles((theme) => ({
 
 export function BasicDialog({
   open,
-  handleClose,
+  onClose,
   title,
   children,
   size="xl"
@@ -35,16 +35,11 @@ export function BasicDialog({
   return <Dialog
     maxWidth={size}
     open={open}
-    onClose={handleClose}
+    onClose={onClose}
     aria-labelledby="dialog-title"
   >
     <DialogTitle id="dialog-title">{title}</DialogTitle>
-    <DialogContent>
-      {children}
-    </DialogContent>
-    <DialogActions>
-      <Button onClick={handleClose}>Close</Button>
-    </DialogActions>
+    {children}
   </Dialog>
 }
 

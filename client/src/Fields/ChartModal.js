@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from "react";
-import {Modal, Table} from "react-bootstrap";
+import {Table} from "react-bootstrap";
 import _ from "lodash";
 import regression from 'regression';
 import {CartesianGrid, Line, LineChart, Tooltip, XAxis, YAxis, ResponsiveContainer,
@@ -8,6 +8,8 @@ import moment from 'moment'
 
 import {useStoreState, useStoreActions} from "easy-peasy";
 import {FieldName} from "./utils";
+import {BasicDialog, FullScreenDialog} from "../Helpers/Dialog";
+import {DialogContent, DialogTitle} from "@material-ui/core";
 
 const round_ = (v) => v ? v.toFixed(2) : null
 
@@ -139,13 +141,15 @@ export default function ChartModal({close, field=null, overall=false}) {
   }
 
   return (
-    <Modal size="xl" show={true} onHide={close} animation={false}>
-      <Modal.Header closeButton>
-        <Modal.Title>{field ? <FieldName name={field.name} maxWidth={960} /> : "Top Influencers"}</Modal.Title>
-      </Modal.Header>
-      <Modal.Body style={{overflowX: 'scroll'}}>
+    <FullScreenDialog
+      open={true}
+      handleClose={close}
+      title={field ? "Influencers" : "Top Influencers"}
+    >
+      {field && <DialogTitle><FieldName name={field.name} maxWidth={960} /></DialogTitle>}
+      <DialogContent>
         {renderBody()}
-      </Modal.Body>
-    </Modal>
+      </DialogContent>
+    </FullScreenDialog>
   );
 }

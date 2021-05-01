@@ -1,8 +1,10 @@
 import React, {useState} from "react";
 import _ from "lodash";
-import {Button, Form, Modal} from "react-bootstrap";
+import {Form} from "react-bootstrap";
+import {BasicDialog} from "../Helpers/Dialog";
 
 import {useStoreActions, useStoreState} from "easy-peasy";
+import {DialogActions, DialogContent, Button} from "@material-ui/core";
 
 export default function FieldModal({close, field= {}}) {
   const emit = useStoreActions(a => a.ws.emit)
@@ -62,12 +64,13 @@ export default function FieldModal({close, field= {}}) {
   defValHelp = defValHelp[form.default_value]
 
   return (
-    <Modal size="lg" show={true} onHide={close}>
-      <Modal.Header>
-        <Modal.Title>{fid ? "Edit Field" : "New Field"}</Modal.Title>
-      </Modal.Header>
-
-      <Modal.Body>
+    <BasicDialog
+      size="large"
+      open={true}
+      onClose={close}
+      title={fid ? "Edit Field" : "New Field"}
+    >
+      <DialogContent>
         <Form.Group controlId="formFieldName">
           <Form.Label>Field Name</Form.Label>
           <Form.Control
@@ -125,10 +128,10 @@ export default function FieldModal({close, field= {}}) {
             <hr/>
             <div className='mb-3'>
               <Button
+                color='secondary'
                 disabled={field.service}
-                variant='danger'
                 onClick={destroyField}
-                size='sm'
+                size='small'
               >Delete</Button>
               <br/>
               <small
@@ -147,9 +150,9 @@ export default function FieldModal({close, field= {}}) {
               {field.excluded_at ? (
                 <>
                 <Button
-                  variant='primary'
+                  color='secondary'
                   onClick={() => excludeField(false)}
-                  size='sm'
+                  size='small'
                 >Include</Button>
                 <br/>
                 <small className='text-muted'>Bring this field back</small>
@@ -157,9 +160,9 @@ export default function FieldModal({close, field= {}}) {
               ) : (
                 <>
                 <Button
-                  variant='danger'
+                  color='secondary'
                   onClick={() => excludeField(true)}
-                  size='sm'
+                  size='small'
                 >Remove</Button>
                 <br/>
                 <small className='text-muted'>Don't delete this field, but exclude it from showing up starting now. Fewer fields means easier machine learning. Consider "Remove"-ing irrelevant imported fields.</small>
@@ -168,12 +171,12 @@ export default function FieldModal({close, field= {}}) {
             </div>
           </>
         )}
-      </Modal.Body>
+      </DialogContent>
 
-      <Modal.Footer>
-        <Button variant="link" size="sm" className='text-secondary' onClick={close}>Cancel</Button>
-        <Button variant="primary" onClick={saveField}>Save</Button>
-      </Modal.Footer>
-    </Modal>
+      <DialogActions>
+        <Button size="small" onClick={close}>Cancel</Button>
+        <Button color="primary" variant="contained" onClick={saveField}>Save</Button>
+      </DialogActions>
+    </BasicDialog>
   )
 }

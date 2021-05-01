@@ -20,6 +20,7 @@ import {
 import {Link} from 'react-router-dom'
 
 import {useStoreState, useStoreActions} from "easy-peasy";
+import {Tooltip} from "@material-ui/core";
 
 export default function Books() {
   const emit = useStoreActions(a => a.ws.emit)
@@ -49,11 +50,11 @@ export default function Books() {
   }
 
   const ShelfButton = ({bid, shelf, icon, popover}) => (
-    <SimplePopover text={popover}>
+    <Tooltip title={popover}>
       <Button variant='outline-dark' onClick={() => putOnShelf(bid, shelf)}>
         {icon()}
       </Button>
-    </SimplePopover>
+    </Tooltip>
   )
 
   const renderTabs = () => <>

@@ -1,12 +1,12 @@
 import React, {useEffect, useState, useCallback} from "react";
-import {SimplePopover, spinner} from "../Helpers/utils";
+import {spinner} from "../Helpers/utils";
 import {API_URL} from '../redux/ws'
 import _ from "lodash";
 import {
   Form,
   Row,
   Col,
-  Alert, Modal
+  Alert
 } from "react-bootstrap";
 import ReactStars from "react-stars";
 import SetupHabitica from "./SetupHabitica";
@@ -16,7 +16,6 @@ import {FieldName} from "./utils";
 import moment from 'moment'
 
 import {useStoreState, useStoreActions} from "easy-peasy";
-import './Fields.scss'
 import {
   FaArrowLeft,
   FaArrowRight,
@@ -29,7 +28,7 @@ import axios from "axios";
 import fileDownload from 'js-file-download';
 import {
   Card, Grid, CardContent, CardHeader, Accordion, AccordionSummary,
-  AccordionDetails, Button, Typography, ButtonGroup, CardActions
+  AccordionDetails, Button, Typography, ButtonGroup, CardActions, Divider, Tooltip
 } from "@material-ui/core";
 import {ExpandMore} from "@material-ui/icons";
 
@@ -114,7 +113,7 @@ function FieldsAdvanced({fetchFieldEntries}) {
     setConfirmWipe(e.target.value)
   }
 
-  const btnOpts = {size: 'sm', variant: 'outline-primary', className: 'fields-adv-btn mt-3'}
+  const btnOpts = {size: 'small', variant: 'primary', fullWidth: true}
 
   return <div>
     <Button
@@ -122,11 +121,10 @@ function FieldsAdvanced({fetchFieldEntries}) {
       onClick={() => downloadCsv('new')}
     >Download field_entries.csv</Button>
     <Form.Text>Export your field-entries to CSV</Form.Text>
-    <hr/>
     {hasDupes && <>
       <Alert variant='warning'>
         <Form.Text>Your field entries were effected by the <a href='https://github.com/lefnire/gnothi/issues/20' target='_blank'>duplicates bug</a>. See that link for details and what to do.</Form.Text>
-
+      <hr />
       <Button
         {...btnOpts}
         onClick={() => downloadCsv('old')}
@@ -134,7 +132,8 @@ function FieldsAdvanced({fetchFieldEntries}) {
       <Form.Text>Export your original field-entries (before duplicates were fixed) to CSV</Form.Text>
       <Button
         {...btnOpts}
-        variant='outline-danger'
+        variant='outlined'
+        color='secondary'
         onClick={acceptDupes}
       >Accept Gnothi's fix</Button>
       <Form.Text>You can click through each day to find duplicates and select the correct entry, or click this to accept Gnothi's chose duplicate fixes for all days.</Form.Text>
@@ -143,8 +142,10 @@ function FieldsAdvanced({fetchFieldEntries}) {
     <Button
       {...btnOpts}
       disabled={confirmWipe !== 'wipe field entries'}
-      variant='outline-danger'
+      variant='outlined'
+      color='secondary'
       onClick={startOver}
+      sx={{mb: 2}}
     >Start Over</Button>
     <Form.Control
       type="text"
@@ -228,9 +229,9 @@ export default function Fields() {
     if (!user.habitica_user_id) {return null}
     if (syncRes?.sending) {return spinner}
     return <>
-      <SimplePopover text='Gnothi auto-syncs every hour'>
-        <Button size='sm' onClick={() => fetchService(service)}>Sync</Button>
-      </SimplePopover>
+      <Tooltip title='Gnothi auto-syncs every hour'>
+        <Button sx={{mb:2}} size='small' variant='contained' onClick={() => fetchService(service)}>Sync</Button>
+      </Tooltip>
     </>
   }
 

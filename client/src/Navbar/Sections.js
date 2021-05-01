@@ -4,7 +4,6 @@ import {
   NavLink as Link,
   useHistory, useParams
 } from "react-router-dom";
-import {aiStatusEmoji, SimplePopover} from "../Helpers/utils"
 import {
   FaRobot,
   FaRegListAlt,

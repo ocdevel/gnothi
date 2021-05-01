@@ -1,6 +1,6 @@
 import {useHistory, useParams} from "react-router-dom"
 import React, {useEffect, useState, useContext, useCallback} from "react"
-import {spinner, SimplePopover, fmtDate} from "../Helpers/utils"
+import {spinner, fmtDate} from "../Helpers/utils"
 import {
   Badge,
   Button,
@@ -316,10 +316,6 @@ export function Entry({entry=null, close=null}) {
       {!editing && <div className='float-right'>
         <Button size='sm' variant='link' onClick={showAiSees}>What AI sees</Button>
       </div>}
-      <SimplePopover text='Tags'>
-        <FaTags />
-      </SimplePopover>
-      <span className='tools-divider' />
       <Tags
         selected={tags}
         setSelected={setTags}

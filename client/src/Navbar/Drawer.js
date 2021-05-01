@@ -17,6 +17,7 @@ import {aiStatusEmoji, SimplePopover} from "../Helpers/utils";
 
 import Sections from './Sections'
 import {useLocation} from "react-router-dom";
+import {Tooltip} from "@material-ui/core";
 
 
 const drawerWidth = 240;
@@ -88,9 +89,9 @@ function SidebarBrand() {
       off: "AI server is offline",
       pending: "AI server is coming online"
     }[aiStatus]
-    aiStatus_ = <SimplePopover text={aiStatus_} overlayOpts={{placement: 'right'}}>
+    aiStatus_ = <Tooltip title={aiStatus_} placement='right'>
       <span>{aiStatusEmoji(aiStatus)}</span>
-    </SimplePopover>
+    </Tooltip>
   }
   return <Typography variant="h6" component="div">
     Gnothi {aiStatus_}

@@ -4,7 +4,6 @@ import {Divider, ListItem, ListItemText} from "@material-ui/core";
 import {NotesNotifs} from "./Notes";
 import {
   sent2face,
-  SimplePopover,
   fmtDate,
   bsSizes
 } from "../Helpers/utils"

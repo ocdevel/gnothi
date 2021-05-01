@@ -1,7 +1,9 @@
 import React, {useEffect, useState} from "react";
-import {Button, Form, Modal} from "react-bootstrap";
+import {Form} from "react-bootstrap";
 
 import {useStoreState, useStoreActions} from 'easy-peasy'
+import {BasicDialog} from "../Helpers/Dialog";
+import {DialogActions, DialogContent, Typography, Button} from "@material-ui/core";
 
 function DisconnectModal({show, close}) {
   const emit = useStoreActions(a => a.ws.emit)
@@ -11,23 +13,19 @@ function DisconnectModal({show, close}) {
     close()
   }
   return (
-    <Modal show={show} onHide={close}>
-      <Modal.Header>
-        <Modal.Title>Disconnect Habitica</Modal.Title>
-      </Modal.Header>
+    <BasicDialog open={show} onClose={close} title='Disconnect Habitica'>
+      <DialogContent>
+        <Typography>Are you sure you want to disconnect from Habitica? Your field history will be wiped from Gnothi, and you'd
+          need to start collecting from scratch again if you change your mind in the future.</Typography>
+        <Typography>Consider instead <strong>removing</strong> Habitica tasks which aren't relevant to AI (remove, not delete).
+          Click a field name, and click "Remove". Details in that modal.</Typography>
+      </DialogContent>
 
-      <Modal.Body>
-        <p>Are you sure you want to disconnect from Habitica? Your field history will be wiped from Gnothi, and you'd
-          need to start collecting from scratch again if you change your mind in the future.</p>
-        <p>Consider instead <strong>removing</strong> Habitica tasks which aren't relevant to AI (remove, not delete).
-          Click a field name, and click "Remove". Details in that modal.</p>
-      </Modal.Body>
-
-      <Modal.Footer>
-        <Button variant="secondary" size='sm' onClick={close}>Cancel</Button>
-        <Button variant="danger" size='sm' onClick={disconnect}>Disconnect</Button>
-      </Modal.Footer>
-    </Modal>
+      <DialogActions>
+        <Button size='small' onClick={close}>Cancel</Button>
+        <Button color="secondary" size='small' onClick={disconnect}>Disconnect</Button>
+      </DialogActions>
+    </BasicDialog>
   )
 }
 
@@ -72,8 +70,8 @@ export default function Habitica() {
         />
       </Form.Group>
 
-      <Button type='submit' variant='primary' size='sm'>Save</Button>{' '}
-      {habiticaUserId && <Button variant='danger' size='sm' onClick={() => setShowModal(true)}>Disconnect</Button>}
+      <Button type='submit' color='primary' variant="contained" size='small'>Save</Button>{' '}
+      {habiticaUserId && <Button size='small' color="secondary" onClick={() => setShowModal(true)}>Disconnect</Button>}
     </Form>
   </>
 }
