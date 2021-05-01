@@ -3,13 +3,9 @@ import {SimplePopover, spinner} from "../Helpers/utils";
 import {API_URL} from '../redux/ws'
 import _ from "lodash";
 import {
-  Accordion,
-  Button,
-  Card,
   Form,
   Row,
   Col,
-  ButtonGroup,
   Alert, Modal
 } from "react-bootstrap";
 import ReactStars from "react-stars";
@@ -31,11 +27,51 @@ import {
 } from "react-icons/all";
 import axios from "axios";
 import fileDownload from 'js-file-download';
+import {
+  Card, Grid, CardContent, CardHeader, Accordion, AccordionSummary,
+  AccordionDetails, Button, Typography, ButtonGroup, CardActions
+} from "@material-ui/core";
+import {ExpandMore} from "@material-ui/icons";
 
 const fmt = 'YYYY-MM-DD'
 const iso = (day=null) => {
   const m = day ? moment(day) : moment()
   return m.format(fmt)
+}
+
+function DayChanger({day, setDay, isToday}) {
+  const changeDay = dir => {
+    if (dir === -1 ) {
+      setDay(moment(day).subtract(1, 'day').format(fmt))
+    } else {
+      setDay(moment(day).add(1, 'day').format(fmt))
+    }
+  }
+
+  return <Grid
+    container
+    alignItems='center'
+    direction='column'
+    sx={{mt: 1, mr: 3 }}
+  >
+    <Grid item>
+      <ButtonGroup aria-label="Edit days">
+        <Button
+          className='border-right-0'
+          variant="outline-secondary"
+          onClick={() => changeDay(-1)}
+        ><FaArrowLeft /></Button>
+        <Button variant="outline-dark" disabled className='border-left-0 border-right-0'><FaRegCalendarAlt /></Button>
+        <Button
+          className='border-left-0'
+          variant="outline-secondary"
+          onClick={() => changeDay(1)}
+          disabled={isToday}
+        ><FaArrowRight /></Button>
+      </ButtonGroup>
+    </Grid>
+    <Grid item>{day}</Grid>
+  </Grid>
 }
 
 
@@ -184,14 +220,6 @@ export default function Fields() {
 
   const changeCheck = fid => e => {
     changeFieldVal(fid, true)(~~!fieldValues[fid])
-  }
-
-  const changeDay = dir => {
-    if (dir === -1 ) {
-      setDay(moment(day).subtract(1, 'day').format(fmt))
-    } else {
-      setDay(moment(day).add(1, 'day').format(fmt))
-    }
   }
 
   const renderSyncButton = (service) => {
@@ -375,20 +403,20 @@ export default function Fields() {
 
   const renderButtons = g => {
     if (g.service === 'custom') {
-      return <>
+      return <Grid container justifyContent='space-around'>
         {!as && <Button
-          variant="primary"
-          size="sm"
+          color="primary"
+          variant="contained"
+          size="small"
           onClick={() => setShowForm(true)}
-          className='mb-3'
         >New Field</Button>}
         {!!g.fields.length && <Button
-          variant="outline-primary"
-          style={{float:'right'}}
-          size="sm"
+          variant="outlined"
+          color="primary"
+          size="small"
           onClick={() => setShowChart(true)}
         >Top Influencers</Button>}
-      </>
+      </Grid>
     }
     if (g.service === 'habitica' && !as) {
       return <SetupHabitica />
@@ -397,56 +425,56 @@ export default function Fields() {
   }
 
   const renderGroup = g => (
-    <Card key={g.service}>
-      <Accordion.Toggle as={Card.Header} eventKey={g.service}>
-        {g.name}
-      </Accordion.Toggle>
-      <Accordion.Collapse eventKey={g.service}>
-        <Card.Body>
-          {g.fields.length ? g.fields.map(renderField) : g.emptyText()}
-          {renderSyncButton(g.service)}
-          {renderButtons(g)}
-        </Card.Body>
-      </Accordion.Collapse>
-    </Card>
+    <Accordion key={g.service} defaultExpanded={g.service === "custom"}>
+      <AccordionSummary
+        expandIcon={<ExpandMore />}
+        aria-controls="panel1a-content"
+        id="panel1a-header"
+      >
+        <Typography>{g.name}</Typography>
+      </AccordionSummary>
+      <AccordionDetails>
+        {g.fields.length ? g.fields.map(renderField) : g.emptyText()}
+        {renderSyncButton(g.service)}
+        {renderButtons(g)}
+      </AccordionDetails>
+    </Accordion>
   )
 
-  return <div className="sidebar-fields">
-    {showForm && (
-      <FieldModal
-        close={onFormClose}
-        field={showForm === true ? {} : fields[showForm]}
-      />
-    )}
 
-    {showChart && (
-      <ChartModal
-        field={showChart === true ? null : fields[showChart]}
-        overall={showChart === true}
-        close={onChartClose}
-      />
-    )}
+  function renderFields() {
+    return <div className="sidebar-fields">
+      {showForm && (
+        <FieldModal
+          close={onFormClose}
+          field={showForm === true ? {} : fields[showForm]}
+        />
+      )}
 
-    <Accordion defaultActiveKey="custom">
+      {showChart && (
+        <ChartModal
+          field={showChart === true ? null : fields[showChart]}
+          overall={showChart === true}
+          close={onChartClose}
+        />
+      )}
+
       {groups.map(renderGroup)}
-    </Accordion>
-
-    <div className='day-changer'>
-      <ButtonGroup aria-label="Edit days">
-        <Button
-          className='border-right-0'
-          variant="outline-secondary"
-          onClick={() => changeDay(-1)}
-        ><FaArrowLeft /></Button>
-        <Button variant="outline-dark" disabled className='border-left-0 border-right-0'><FaRegCalendarAlt /></Button>
-        <Button
-          className='border-left-0'
-          variant="outline-secondary"
-          onClick={() => changeDay(1)}
-          disabled={isToday}
-        ><FaArrowRight /></Button>
-      </ButtonGroup>
     </div>
-    <div className='selected-day'>{day}</div>
-  </div>
+
+  }
+
+  return <Card>
+    <Grid container justifyContent='space-between'>
+      <Grid item>
+        <CardHeader title="Fields" />
+      </Grid>
+      <Grid item>
+        <DayChanger day={day} isToday={isToday} setDay={setDay} />
+      </Grid>
+    </Grid>
+    <CardContent>
+      {renderFields()}
+    </CardContent>
+  </Card>
 }

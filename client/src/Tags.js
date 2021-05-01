@@ -188,6 +188,7 @@ export default function Tags({
   // tags sorted on server
   const tags = useStoreState(s => s.ws.data['tags/tags/get'])
   const selectedTags = useStoreState(s => s.ws.data.selectedTags)
+  noEdit = as || noEdit
 
   // no selected,setSelected props indicates using global tags
   const selectedTags_ = selected || selectedTags
@@ -213,7 +214,10 @@ export default function Tags({
   // const clear = async () => {
   //   _.each(tags, t => {selectTag(t.id,false)})
   // }
-  const showEditTags = () => setEditTags(true)
+  const showEditTags = () => {
+    if (noEdit) {return}
+    setEditTags(true)
+  }
   const closeEditTags = () => setEditTags(false)
 
   const renderTag = t => {
@@ -228,17 +232,23 @@ export default function Tags({
     />
   }
 
+  const labelProps = noEdit ? {
+    sx: {border: 'none'},
+    icon: <Label />
+  } : {
+    onClick: showEditTags,
+    icon: <Create />,
+    color: "primary"
+  }
   return <>
     {editTags && <TagModal close={closeEditTags} />}
     <Stack direction="row" spacing={1}>
-      {tags.map(renderTag)}
-      {!as && !noEdit && <Chip
+      <Chip
         variant="outlined"
-        color="primary"
-        onClick={showEditTags}
-        icon={<Create />}
         label={"Tags"}
-      />}
+        {...labelProps}
+      />
+      {tags.map(renderTag)}
     </Stack>
   </>
 }

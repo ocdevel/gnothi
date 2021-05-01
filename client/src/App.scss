@@ -19,11 +19,6 @@ body {
   background-color: #f5f5f5;
 }
 
-.navbar {
-  margin-bottom: 10px;
-  background-color: #fafbfc !important;
-}
-
 .cursor-pointer {
   cursor: pointer;
 }
@@ -32,28 +27,6 @@ body {
   cursor: pointer;
   color: #007bff;
   text-decoration: underline;
-}
-
-.tag-selected {
-  color: #0069d9;
-  font-weight: 700;
-  border: none;
-  border-radius: 0 !important;
-  border-bottom: 1px solid #0069d9;
-  box-shadow: 0 -3px 0 #0069d9 inset;
-}
-.tag-selected, .tag-unselected {
-  text-decoration: none !important;
-}
-.tag-unselected {
-  font-weight: 500;
-  color: #050F19;
-}
-
-.tools-divider {
-  margin-left: 6px;
-  margin-right: 6px;
-  border-left: #eee 1px solid;
 }
 
 .full-width-modal {

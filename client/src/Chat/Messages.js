@@ -5,7 +5,6 @@ import {onlineIcon, getUname} from "../Groups/utils";
 import {useParams} from "react-router-dom";
 import {useFormik} from 'formik'
 import * as yup from 'yup';
-import {useForm, Controller} from "react-hook-form";
 import {Grid, TextField, Button, Alert} from '@material-ui/core'
 
 const validationSchema = yup.object({

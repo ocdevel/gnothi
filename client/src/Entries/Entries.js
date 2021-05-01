@@ -17,7 +17,7 @@ import {useStoreState, useStoreActions} from "easy-peasy";
 import {NotesAll, NotesNotifs} from "./Notes";
 import {MainTags} from "../Tags";
 import MediaQuery from 'react-responsive'
-import Sidebar from "../Sidebar";
+import Fields from "../Fields/Fields";
 import Search from './Search'
 
 import {Add as AddIcon} from '@material-ui/icons'
@@ -107,7 +107,7 @@ export default function Entries({group_id=null}) {
         {renderEntries()}
       </Col>
       <Col lg={4} md={5}>
-        <Sidebar  />
+        <Fields  />
         <NotesAll />
       </Col>
     </Row>
