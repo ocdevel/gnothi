@@ -13,7 +13,7 @@ import MenuIcon from '@material-ui/icons/Menu';
 import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
 import {useMediaQuery} from "react-responsive";
 import {useStoreState} from "easy-peasy";
-import {aiStatusEmoji, SimplePopover} from "../Helpers/utils";
+import {aiStatusEmoji} from "../Helpers/utils";
 
 import Sections from './Sections'
 import {useLocation} from "react-router-dom";
@@ -101,8 +101,7 @@ function SidebarBrand() {
 export default function PersistentDrawerLeft({children}) {
   const location = useLocation()
   const classes = useStyles();
-  const theme = useTheme();
-  const isDesktop = useMediaQuery({ minWidth: 992 })
+  const isDesktop = useMediaQuery({ minWidth: 960 })
   const [open, setOpen] = React.useState(isDesktop);
 
   const title = {

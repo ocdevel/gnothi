@@ -10,14 +10,9 @@ import {
   FaBook, FaRegComments, FaUser,
 } from 'react-icons/fa'
 import './style.scss'
-import { useMediaQuery } from 'react-responsive'
 
 import {useStoreState, useStoreActions} from "easy-peasy";
-import {FaQuestion} from "react-icons/fa/index";
 import {
-  AiOutlineUserSwitch,
-  IoEllipsisHorizontalSharp,
-  MdClose,
   RiSpyLine
 } from "react-icons/all";
 import TopBooks from "./TopBooks";
@@ -25,12 +20,8 @@ import Links from "./Links";
 import ProfileModal from "../Account/Profile";
 
 import { makeStyles } from '@material-ui/core/styles';
-import InboxIcon from '@material-ui/icons/MoveToInbox';
-import DraftsIcon from '@material-ui/icons/Drafts';
-import SendIcon from '@material-ui/icons/Send';
 import ExpandLess from '@material-ui/icons/ExpandLess';
 import ExpandMore from '@material-ui/icons/ExpandMore';
-import StarBorder from '@material-ui/icons/StarBorder';
 import {Highlight, MenuBook, PostAdd, Group, GroupAdd, Chat} from "@material-ui/icons";
 import {
   Divider, ListSubheader, List, ListItem,
