@@ -1,4 +1,4 @@
-import {Button, Form, Col} from "react-bootstrap"
+import {Form, Col} from "react-bootstrap"
 import _ from "lodash"
 import React, {useCallback, useEffect, useState} from "react"
 import {FaPen, FaRobot, FaSort, FaTrash} from 'react-icons/fa'
@@ -10,49 +10,69 @@ import {useForm} from "react-hook-form";
 import Sortable from "./Helpers/Sortable";
 import {IoReorderFourSharp} from "react-icons/all";
 
-import {Chip, Stack, Button as MButton, DialogContent, Grid} from '@material-ui/core'
-import {CheckCircle, Label, Create} from "@material-ui/icons";
+import {
+  Chip,
+  Stack,
+  Button,
+  DialogContent,
+  Grid,
+  TextField,
+  Divider,
+  Card,
+  CardContent, IconButton, InputBase, Paper, FormControlLabel, Switch, CardHeader, Typography, Box
+} from '@material-ui/core'
+import {CheckCircle, Label, Create, Reorder, Delete} from "@material-ui/icons";
 import {FullScreenDialog} from "./Helpers/Dialog";
+import {useFormik} from "formik";
+import {makeStyles} from "@material-ui/core/styles";
 
 const tagSchema = yup.object().shape({
   name: yup.string().required(),
   ai: yup.boolean()
 })
 
+const styles = {
+  paper: {
+    my: 1,
+    display: 'flex',
+    py: 1,
+    px: 2,
+    alignItems: 'center',
+    width: '100%'
+  },
+  inputBase: {ml: 1, flex: 1}
+}
 
 function NewTag() {
   const emit = useStoreActions(actions => actions.ws.emit)
-  const form = useForm({
-    resolver: yupResolver(tagSchema),
-    defaultValues: {ai: true}
-  });
+  const formik = useFormik({
+    initialValues: {name: '', ai: true},
+    validationSchema: tagSchema,
+    onSubmit: submit
+  })
 
   function submit(data) {
     emit(['tags/tags/post', data])
-    form.reset()
+    formik.resetForm()
   }
 
-  return <Form onSubmit={form.handleSubmit(submit)}>
-    <Form.Group controlId={`tag-name`}>
-      <Form.Row>
-        <Grid item>
-          <Form.Control
-            size='sm'
-            type="text"
-            placeholder="New tag name"
-            {...form.register('name')}
-          />
-        </Grid>
-        <Grid item xs='auto'>
-          <Button
-            size='sm'
-            type='submit'
-            variant="primary"
-          >Add</Button>
-        </Grid>
-      </Form.Row>
-    </Form.Group>
-  </Form>
+  return <form onSubmit={formik.handleSubmit}>
+    <Paper sx={styles.paper}>
+      <InputBase
+        sx={styles.inputBase}
+        placeholder="New tag name"
+        value={formik.values.name}
+        name='name'
+        onChange={formik.handleChange}
+      />
+      <Button
+        size='small'
+        type='submit'
+        color="primary"
+        variant='contained'
+      >Add</Button>
+    </Paper>
+  </form>
 }
 
 function TagForm({tag}) {
@@ -85,36 +105,23 @@ function TagForm({tag}) {
   }
 
   return <div>
-    <Form.Row>
-      <Col xs='auto'>
-        <IoReorderFourSharp />
-      </Col>
-      <Form.Group as={Col} controlId={`tag-name-${id}`}>
-        <Form.Control
-          size='sm'
-          type="text"
-          placeholder="Tag Name"
-          value={name}
-          onChange={changeName}
-        />
-      </Form.Group>
-      <Col xs='auto'>
-        <Form.Switch
-          id={`tag-ai-${id}`}
-          label={<FaRobot />}
-          checked={ai}
-          onChange={changeAi}
-        />
-      </Col>
-      {tag.main ? <div /> : <Col xs='auto'>
-        <Button
-          size='sm'
-          variant='link'
-          className='text-secondary'
-          onClick={destroyTag}
-        ><FaTrash /></Button>
-      </Col>}
-    </Form.Row>
+    <Paper sx={styles.paper}>
+      <Reorder />
+      <InputBase
+        sx={styles.inputBase}
+        placeholder="Tag Name"
+        value={name}
+        onChange={changeName}
+      />
+      <Divider orientation="vertical" />
+      <FormControlLabel
+        control={<Switch checked={ai} onChange={changeAi} name="ai" color='primary'/>}
+        label={<FaRobot />}
+      />
+      {tag.main ? <div /> : <IconButton onClick={destroyTag}>
+        <Delete />
+      </IconButton>}
+    </Paper>
   </div>
 }
 
@@ -124,25 +131,39 @@ function TagModal({close}) {
   const [showMore, setShowMore] = useState(false)
 
   function toggleMore() {setShowMore(!showMore)}
+  function renderToggle() {
+    return <Box sx={{display:'flex', alignItems: 'center'}}>
+      <Box sx={{pr: 2}}>About</Box>
+      <FormControlLabel
+        control={<Switch checked={true} name="ai" color='primary'/>}
+        label={<FaRobot />}
+      />
+    </Box>
+  }
+
   function renderHelp() {
-    return <div>
-      <h5>About Tags</h5>
-      <div className='text-muted small'>
-        <div>Tags organize your journal entries by topic (eg personal, work, dreams). Some apps do this via <em>multiple journals</em>, like folders on a computer. Gnothi uses tags instead, adding more flexibility for entry-sharing & AI.</div>
-        <Button size='sm' variant='link' onClick={toggleMore}>{showMore ? "Hide examples" : "Show examples / ideas"}</Button>
-        {showMore && <div>
-          Here's how Gnothi's creator uses tags:<ul>
-          <li><b>Main</b>: My default. Most things go here.</li>
-          <li><b>Dreams</b>: I record my dreams, as I'll be building some cool dream-analysis tooling into Gnothi. I disable <FaRobot /> on this tag, since I don't want Gnothi matching-making me to books / groups based on my dreams - that would be weird.</li>
-          <li><b>Therapy</b>: I share this tag (see sidebar > Sharing) with my therapist. Before each session she can either read my entries, or run some AI reports (summarization, question-answering) for a quick update. That way we hit the ground running in our session. This is an example of the value of multiple tags per entry; I'll tag most things Main, and I'll <em>also</em> tag an entry Therapy if it's something I'm comfortable with my therapist reading.</li>
-        </ul>
-        </div>}
-      </div>
-      <h5 className='d-flex'><span className='mr-2'>About</span><Form.Switch disabled/> <FaRobot /></h5>
-      <div className='text-muted small'>
-        By default, Gnothi will use all of your tags to decide which entries "represent you". Those entries are then used for match-making you with books, groups, therapists, etc. There will likely be tags you don't want used; the obvious example is Dreams. If you dream-journal, create a tag called "Dreams" and un-check its <FaRobot />. That way you won't get super weird book / group recommendations.
-      </div>
-    </div>
+    return <Card>
+      <CardHeader title='About Tags' />
+      <CardContent>
+        <Typography variant='body1'>
+          <div>Tags organize your journal entries by topic (eg personal, work, dreams). Some apps do this via <em>multiple journals</em>, like folders on a computer. Gnothi uses tags instead, adding more flexibility for entry-sharing & AI.</div>
+          <Button size='small' onClick={toggleMore}>{showMore ? "Hide examples" : "Show examples / ideas"}</Button>
+          {showMore && <div>
+            Here's how Gnothi's creator uses tags:<ul>
+            <li><b>Main</b>: My default. Most things go here.</li>
+            <li><b>Dreams</b>: I record my dreams, as I'll be building some cool dream-analysis tooling into Gnothi. I disable <FaRobot /> on this tag, since I don't want Gnothi matching-making me to books / groups based on my dreams - that would be weird.</li>
+            <li><b>Therapy</b>: I share this tag (see sidebar > Sharing) with my therapist. Before each session she can either read my entries, or run some AI reports (summarization, question-answering) for a quick update. That way we hit the ground running in our session. This is an example of the value of multiple tags per entry; I'll tag most things Main, and I'll <em>also</em> tag an entry Therapy if it's something I'm comfortable with my therapist reading.</li>
+          </ul>
+          </div>}
+        </Typography>
+      </CardContent>
+      <CardHeader title={renderToggle()} />
+      <CardContent>
+        <Typography variant='body1'>
+          By default, Gnothi will use all of your tags to decide which entries "represent you". Those entries are then used for match-making you with books, groups, therapists, etc. There will likely be tags you don't want used; the obvious example is Dreams. If you dream-journal, create a tag called "Dreams" and un-check its <FaRobot />. That way you won't get super weird book / group recommendations.
+        </Typography>
+      </CardContent>
+    </Card>
   }
 
   function reorder(tags) {
@@ -159,7 +180,7 @@ function TagModal({close}) {
       title="Tags"
     >
       <DialogContent>
-        <Grid container>
+        <Grid justifyContent='space-between' container spacing={3}>
           <Grid item sm={12} md={7}>
             <Sortable items={tags} render={renderTag} onReorder={reorder} />
             <NewTag />
