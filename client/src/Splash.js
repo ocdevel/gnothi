@@ -1,10 +1,5 @@
 import React from 'react'
 import {
-  Jumbotron,
-  Button,
-  Container,
-} from 'react-bootstrap'
-import {
   FaTextHeight,
   FaRobot,
   FaShare,
@@ -26,7 +21,19 @@ import {
 } from "react-router-dom"
 import {LinkContainer} from 'react-router-bootstrap'
 import AmplifyAuth from './Account/AmplifyAuth'
-import {Grid, Tab, Tabs, Typography, Box} from '@material-ui/core'
+import {
+  Grid,
+  Tab,
+  Tabs,
+  Typography,
+  Box,
+  Paper,
+  Button,
+  Divider,
+  Card,
+  CardHeader,
+  CardContent, CardActions
+} from '@material-ui/core'
 import PropTypes from 'prop-types';
 import { makeStyles } from '@material-ui/core/styles';
 import {useStoreActions, useStoreState} from 'easy-peasy'
@@ -201,56 +208,74 @@ function Details() {
   </Grid>
 }
 
-function Overviews() {
-  const features = React.useMemo(() => [{
-    k: 'summaries',
-    title: <><FaTextHeight /> Summaries</>,
-    body: "AI summarizes your entries over days, weeks, months."
-  }, {
-    k: 'themes',
-    title: <><FaCubes /> Themes</>,
-    body: "AI shows your recurring themes & issues. Also valuable for dream themes."
-  }, {
-    k: 'ask',
-    title: <><FaQuestion /> Questions</>,
-    body: "Ask AI anything about yourself. The answers and insights may surprise you.",
-  }, {
-    k: 'resources',
-    title: <><FaBook /> Resources</>,
-    body: "AI recommends self-help books and therapists based on your entries."
-  }, {
-    k: 'fields',
-    title: <><FaSmile /> Field Tracking</>,
-    body: "Track fields (mood, sleep, substance intake, etc). AI shows you how they interact and which ones to focus on."
-  }, {
-    k: 'sharing',
-    title: <><FaShare /> Share</>,
-    body: "Share journals with therapists, who can use all these tools to catch up since your last session."
-  }, {
-    title: <><FaLock /> Security</>,
-    body: "All text is industry-standard encrypted."
-  }, {
-    title: <><FaRobot /> Future</>,
-    body: <>The sky's the limit with <a target='_blank' href='https://huggingface.co/transformers/'>BERT</a> language models! Astrology? Dream analysis? </>
-  }], [])
+const features = [{
+  k: 'summaries',
+  icon: <FaTextHeight />,
+  title: "Summaries",
+  body: "AI summarizes your entries over days, weeks, months."
+}, {
+  k: 'themes',
+  icon: <FaCubes />,
+  title: "Themes",
+  body: "AI shows your recurring themes & issues. Also valuable for dream themes."
+}, {
+  k: 'ask',
+  icon: <FaQuestion />,
+  title: "Questions",
+  body: "Ask AI anything about yourself. The answers and insights may surprise you.",
+}, {
+  k: 'resources',
+  icon: <FaBook />,
+  title: "Resources",
+  body: "AI recommends self-help books and therapists based on your entries."
+}, {
+  k: 'fields',
+  icon: <FaSmile />,
+  title: "Field Tracking",
+  body: "Track fields (mood, sleep, substance intake, etc). AI shows you how they interact and which ones to focus on."
+}, {
+  k: 'sharing',
+  icon: <FaShare />,
+  title: "Share",
+  body: "Share journals with therapists, who can use all these tools to catch up since your last session."
+}, {
+  icon: <FaLock />,
+  title: "Security",
+  body: "All text is industry-standard encrypted."
+}, {
+  icon: <FaRobot />,
+  title: "Future",
+  body: <>The sky's the limit with <a target='_blank' href='https://huggingface.co/transformers/'>BERT</a> language models! Astrology? Dream analysis? </>
+}]
 
-  return <>
-    <Grid container spacing={5}>
-      {features.map((f, i) => <Grid
-        item
-        key={i}
-        xs={12} sm={6} lg={4}
-      >
-        <h3>{f.title}</h3>
-        <p>{f.body}</p>
-        {f.k && <>
-          <LinkContainer to={`/about/${f.k}`}>
-            <Button variant='outline-primary'>Details</Button>
-          </LinkContainer>
-        </>}
-      </Grid>)}
-    </Grid>
-  </>
+function Overviews() {
+  return features.map((f, i) => <Grid
+    item
+    key={i}
+    xs={12} sm={6} lg={4}
+
+  >
+    <Card>
+      <CardHeader title={
+        <Grid container alignItems='center' spacing={2}>
+          <Grid item>{f.icon}</Grid>
+          <Grid item>{f.title}</Grid>
+        </Grid>
+      } />
+      <CardContent sx={{minHeight: 100}}>
+        <Typography>{f.body}</Typography>
+      </CardContent>
+      <CardActions>
+        {f.k && <Button
+          to={`/about/${f.k}`}
+          component={Link}
+          sx={{ml: 'auto'}}
+          variant='outlined'
+          color='primary'
+        >Details</Button>}
+      </CardActions>
+    </Card>
+  </Grid>)
 }
 
 
@@ -262,7 +287,9 @@ export default function Splash() {
   const showSignin = !jwt && !~['/auth', '/reset-password'].indexOf(location.pathname)
   return <>
     <Error message={error} />
-    <Box
+    <Paper
+      elevation={0}
+      square
       sx={{
         display: 'flex',
         alignItems: 'center',
@@ -271,17 +298,16 @@ export default function Splash() {
         py: 5,
         mb: 4,
         backgroundColor: '#e9ecef',
-        borderRadius: 2
       }}
     >
       <LinkContainer to='/'>
-        <header className='jumbo-text cursor-pointer'>
+        <header className='cursor-pointer'>
           <img src="/logo192.png" style={{marginLeft: '1rem'}}/>
         </header>
       </LinkContainer>
-      <h1>Gnothi</h1>
-      <h4>Gnōthi Seauton: Know Thyself</h4>
-      <p>A journal that uses AI to help you introspect and find resources</p>
+      <Typography variant='h3' component='h1'>Gnothi</Typography>
+      <Typography variant='h5'>Gnōthi Seauton: Know Thyself</Typography>
+      <Typography>A journal that uses AI to help you introspect and find resources</Typography>
       {showSignin && <>
         <Link to='/auth'>
           <Button>Sign In</Button>
@@ -304,31 +330,35 @@ export default function Splash() {
           </div>
         </Route>
       </Switch>
-    </Box>
-    <Container className='splash-features' fluid>
-      <Switch>
-        <Route path='/about/:tab'>
-          <Details />
-        </Route>
-        <Route>
+    </Paper>
+    <Switch>
+      <Route path='/about/:tab'>
+        <Details />
+      </Route>
+      <Route>
+        <Grid container spacing={4}>
           <Overviews />
-          <hr/>
-          <Box
-            display="flex"
-            flexDirection='column'
+          <Grid item xs={12}><Divider /></Grid>
+          <Grid
+            item container
+            direction='column'
             alignItems='center'
             justifyContent='center'
           >
-            <Typography variant="body2">
-              Croesus inquired of the oracle what to do to live a happy life. The answer was:<br/>
-              "Know yourself, O Croesus - thus you will live and be happy."
-            </Typography>
-            <Typography variant="caption">
-              <em>- (Xenophon, Cyropaedia)</em>
-            </Typography>
-          </Box>
-        </Route>
-      </Switch>
-    </Container>
+            <Grid item>
+              <Typography variant="body2">
+                Croesus inquired of the oracle what to do to live a happy life. The answer was:<br/>
+                "Know yourself, O Croesus - thus you will live and be happy."
+              </Typography>
+            </Grid>
+            <Grid item>
+              <Typography variant="caption">
+                <em>- (Xenophon, Cyropaedia)</em>
+              </Typography>
+            </Grid>
+          </Grid>
+        </Grid>
+      </Route>
+    </Switch>
   </>
 }
