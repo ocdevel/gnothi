@@ -3,10 +3,10 @@ import {useForm} from "react-hook-form";
 import {yupResolver} from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import React, {useEffect} from "react";
-import {Button, Form} from "react-bootstrap";
+import {Form} from "react-bootstrap";
 import Error from "../Error";
 import {BasicDialog} from "../Helpers/Dialog";
-import {DialogActions, DialogContent, Alert} from "@material-ui/core";
+import {Button, DialogActions, DialogContent, Alert} from "@material-ui/core";
 
 export default function InviteMembers({gid, close}) {
   const emit = useStoreActions(a => a.ws.emit)
@@ -65,10 +65,10 @@ export default function InviteMembers({gid, close}) {
       </DialogContent>
 
       <DialogActions>
-        <Button size='sm' variant='link' className='text-secondary mr-2' onClick={close}>
+        <Button size='small' onClick={close}>
           Cancel
         </Button>
-        <Button variant='primary' onClick={form.handleSubmit(submit)}>Invite</Button>
+        <Button color="primary" variant='outlined' onClick={form.handleSubmit(submit)}>Invite</Button>
       </DialogActions>
     </BasicDialog>
   </>

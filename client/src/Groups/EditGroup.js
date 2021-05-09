@@ -1,7 +1,6 @@
 import {useHistory, useParams} from "react-router-dom"
 import React, {useEffect, useState, useContext, useCallback} from "react"
 import {
-  Button,
   Form,
   InputGroup, FormControl
 } from "react-bootstrap"
@@ -17,7 +16,7 @@ import * as yup from "yup";
 import {useForm} from "react-hook-form";
 import {yupResolver} from "@hookform/resolvers/yup";
 import {CircularProgress, DialogActions, DialogContent, Card, CardHeader, CardContent,
-  Grid} from "@material-ui/core";
+  Grid, Button} from "@material-ui/core";
 import {BasicDialog} from "../Helpers/Dialog";
 
 const mdParser = new MarkdownIt(/* Markdown-it options */);
@@ -199,11 +198,12 @@ export default function EditGroup({show, close, group=null}) {
     if (groupPost?.submitting) return <CircularProgress />
 
     return <>
-      <Button variant='link' className='text-secondary' size="sm" onClick={close}>
+      <Button size="small" onClick={close}>
         Cancel
       </Button>
       <Button
-        variant="primary"
+        color="primary"
+        variant="outlined"
         onClick={form.handleSubmit(submit)}
       >Submit
       </Button>

@@ -1,9 +1,18 @@
 import React, {useEffect, useState} from "react"
-import {Col, Form, Modal, Table} from "react-bootstrap"
+import {Col, Form} from "react-bootstrap"
 
 import {useStoreActions, useStoreState} from "easy-peasy";
 import {BasicDialog} from "../Helpers/Dialog";
-import {DialogActions, DialogContent, Button} from "@material-ui/core";
+import {
+  DialogActions,
+  DialogContent,
+  Button,
+  Table,
+  TableHead,
+  TableRow,
+  TableBody,
+  TableCell, TextField, Box
+} from "@material-ui/core";
 
 function Person({close, person=null}) {
   const emit = useStoreActions(a => a.ws.emit)
@@ -36,18 +45,18 @@ function Person({close, person=null}) {
   }
 
   const textField = ({k, v, attrs, children}) => (
-    <Form.Group as={Col} controlId={k}>
-      <Form.Label>{v}</Form.Label>
-      <Form.Control
+    <div>
+      <TextField
+        sx={{my: 2}}
+        fullWidth
+        label={v}
         readOnly={!!as}
-        size='sm'
-        type="text"
+        size='small'
         value={form[k]}
         onChange={changeForm(k)}
         {...attrs}
       />
-      {children}
-    </Form.Group>
+    </div>
   )
 
   const req = {attrs: {required: true}}
@@ -55,22 +64,24 @@ function Person({close, person=null}) {
   return <>
     <BasicDialog
       open={true}
-      handleClose={close}
+      onClose={close}
       title={person ? "Edit Person" : "New Person"}
     >
       <DialogContent>
-        <Form className='mb-3'>
-          <Form.Row>
-            {textField({k: 'name', v: 'Name', ...req})}
-            {textField({k: 'relation', v: 'Relation', ...req})}
-            {/*textField({k: 'issues', v: 'Issues'})*/}
-          </Form.Row>
-          <Form.Row>
-            {textField({k: 'bio', v: 'Bio', attrs: {as: 'textarea', rows: 6}})}
-          </Form.Row>
-        </Form>
+        <Box sx={{minWidth: 300}}>
+          {textField({k: 'name', v: 'Name', ...req})}
+          {textField({k: 'relation', v: 'Relation', ...req})}
+          {/*textField({k: 'issues', v: 'Issues'})*/}
+          {textField({k: 'bio', v: 'Bio', attrs: {multiline: true, minRows: 6}})}
+        </Box>
       </DialogContent>
       <DialogActions>
+        {person && <Button
+          sx={{marginRight: 'auto'}}
+          size='small'
+          color='secondary'
+          onClick={destroy}
+        >Delete</Button>}
         <Button
           onClick={submit}
           variant='contained'
@@ -78,11 +89,7 @@ function Person({close, person=null}) {
           type="submit"
         >
           {person ? "Save": "Add"}
-        </Button>&nbsp;
-        {person && <>
-          <Button size='small' variant={false} onClick={close}>Cancel</Button>&nbsp;
-          <Button size='small' color='secondary' onClick={destroy}>Delete</Button>
-        </>}
+        </Button>
       </DialogActions>
     </BasicDialog>
   </>
@@ -116,28 +123,28 @@ export default function People() {
       person={person === true ? null : person}
     />}
     <Table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Relation</th>
+      <TableHead>
+        <TableRow>
+          <TableCell>Name</TableCell>
+          <TableCell>Relation</TableCell>
           {/*<th>Issues</th>*/}
-          <th>Bio</th>
-        </tr>
-      </thead>
-      <tbody>
+          <TableCell>Bio</TableCell>
+        </TableRow>
+      </TableHead>
+      <TableBody>
       {people?.map(p => (
-        <tr
+        <TableRow
           className='cursor-pointer'
           onClick={() => choosePerson(p)}
           key={p.id}
         >
-          <td>{p.name}</td>
-          <td>{p.relation}</td>
+          <TableCell>{p.name}</TableCell>
+          <TableCell>{p.relation}</TableCell>
           {/*<td>{p.issues}</td>*/}
-          <td>{p.bio}</td>
-        </tr>
+          <TableCell>{p.bio}</TableCell>
+        </TableRow>
       ))}
-      </tbody>
+      </TableBody>
     </Table>
     <Button
       color="primary"

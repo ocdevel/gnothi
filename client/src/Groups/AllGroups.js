@@ -1,6 +1,5 @@
 import EditGroup from "./EditGroup";
 import React, {useEffect, useState} from "react";
-import {Button} from "react-bootstrap";
 import {Link, useHistory} from "react-router-dom";
 import {useStoreActions, useStoreState} from "easy-peasy";
 import {FaPlus, FaRegComments} from "react-icons/fa";
@@ -13,7 +12,7 @@ import _ from 'lodash'
 import moment from 'moment'
 import {FaUsers} from "react-icons/all";
 import {BasicDialog} from "../Helpers/Dialog";
-import {DialogActions, DialogContent, Card, CardContent, CardHeader} from "@material-ui/core";
+import {Button, DialogActions, DialogContent, Card, CardContent, CardHeader} from "@material-ui/core";
 
 export function GroupModal({show, close, gid}) {
   const history = useHistory()
@@ -51,7 +50,7 @@ export function GroupModal({show, close, gid}) {
             <ReactMarkdown source={group.text_long} linkTarget='_blank' />
           </div>
         </div> : null}
-        <Button variant='primary' onClick={joinGroup}>Join Group</Button>
+        <Button color='primary' variant='outlined' onClick={joinGroup}>Join Group</Button>
       </DialogContent>
     </BasicDialog>
   </>
@@ -93,8 +92,9 @@ export default function AllGroups() {
       show={showCreate}
     />
     <Button
-      variant='primary'
-      className='mb-2'
+      color='primary'
+      variant='outlined'
+      gutterBottom
       onClick={() => setShowCreate(true)}
     >
       <FaPlus /> Create Group

@@ -1,4 +1,3 @@
-import {Button} from "react-bootstrap";
 import {Link, useHistory, useParams} from "react-router-dom";
 import React, {useState, useEffect} from "react";
 import {useStoreActions, useStoreState} from "easy-peasy";
@@ -9,7 +8,7 @@ import EditGroup from "./EditGroup";
 import InviteMembers from "./InviteMembers";
 import {FaTrash} from "react-icons/fa";
 import {onlineIcon, getUname} from "./utils";
-import {Card, CardContent, CardHeader} from '@material-ui/core'
+import {Card, CardContent, CardHeader, Button} from '@material-ui/core'
 
 
 const disabled = ['show_avatar']
@@ -47,9 +46,10 @@ function Me() {
     if (!role || role === 'banned') {
       return <CardContent>Not a member
         <Button
-          size='sm'
-          className='float-right'
-          variant='primary'
+          size='small'
+          sx={{marginRight: 'auto'}}
+          variant='outlined'
+          color='primary'
           onClick={joinGroup}
         >
           Join Group
@@ -62,9 +62,9 @@ function Me() {
     if (role === 'member') {
       return <div>You are a member
       <Button
-        size='sm'
+        size='small'
         className='float-right text-danger p-0'
-        variant='link'
+        color='secondary'
         onClick={leaveGroup}
       >
         Leave Group

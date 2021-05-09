@@ -5,7 +5,7 @@ import EventEmitter from 'eventemitter3'
 import moment from "moment-timezone";
 import {Auth} from 'aws-amplify'
 import {getJwt} from './user'
-export const timezones = moment.tz.names().map(n => ({value: n, label: n}))
+export const timezones = moment.tz.names()
 
 // e52c6629: dynamic host/port
 let api_url = window.location.host
