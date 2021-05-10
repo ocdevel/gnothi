@@ -1,41 +1,44 @@
 import React, {useState} from "react";
 import _ from "lodash";
-import {Form} from "react-bootstrap";
 import {BasicDialog} from "../Helpers/Dialog";
 
 import {useStoreActions, useStoreState} from "easy-peasy";
-import {DialogActions, DialogContent, Button} from "@material-ui/core";
+import {DialogActions, DialogContent, Button, Grid} from "@material-ui/core";
+import * as yup from 'yup'
+import {yupResolver} from "@hookform/resolvers/yup";
+import {useForm} from "react-hook-form";
+import {TextField2, Checkbox2, Autocomplete2, Select2} from "../Helpers/Form";
+
+const schema = yup.object().shape({
+  name: yup.string().min(1),
+  type: yup.string(),
+  default_value: yup.string(),
+  default_value_value: yup.string().nullable(),
+})
+const defaults = {name: '', type: 'number', default_value: 'value', default_value_value: ''}
 
 export default function FieldModal({close, field= {}}) {
   const emit = useStoreActions(a => a.ws.emit)
-
-  const form_ =
-    field.id ? _.pick(field, ['name', 'type', 'default_value', 'default_value_value'])
-    : {name: '', type: 'number', default_value: 'value', default_value_value: ''}
-
-  const [form, setForm] = useState(form_)
+  const form = useForm({
+    defaultValues: field.id ? field : defaults,
+    resolver: yupResolver(schema)
+  })
 
   const fid = field && field.id
+  const [type, default_value] = form.watch(['type', 'default_value'])
 
-  const saveField = async e => {
-    // e.preventDefault()
-    const body = {
-      name: form.name,
-      type: form.type,
-      default_value: form.default_value,
-      default_value_value: _.isEmpty(form.default_value_value) ? null : form.default_value_value,
+  function submit(data) {
+    if (_.isEmpty(data.default_value_value)) {
+      data.default_value_value = null
     }
     if (fid) {
-       emit(['fields/field/put', {id: fid, ...body}])
+       emit(['fields/field/put', {id: fid, ...data}])
     } else {
-       emit(['fields/fields/post', body])
+       emit(['fields/fields/post', data])
     }
 
     close()
   }
-
-  const changeText = k => e => setForm({...form, [k]: e.target.value})
-  const changeCheck = k => e => setForm({...form, [k]: e.target.checked})
 
   const destroyField = async () => {
     if (!window.confirm("Are you sure? This will delete all data for this field.")) {
@@ -61,7 +64,7 @@ export default function FieldModal({close, field= {}}) {
     defValHelp.ffill += ` (currently ${lastEntry.value})`
     defValHelp.average += ` (currently ${field.avg})`
   }
-  defValHelp = defValHelp[form.default_value]
+  defValHelp = defValHelp[default_value]
 
   return (
     <BasicDialog
@@ -71,57 +74,48 @@ export default function FieldModal({close, field= {}}) {
       title={fid ? "Edit Field" : "New Field"}
     >
       <DialogContent>
-        <Form.Group controlId="formFieldName">
-          <Form.Label>Field Name</Form.Label>
-          <Form.Control
-            type="text"
-            placeholder="Name"
-            value={form.name}
-            onChange={changeText('name')}
-          />
-        </Form.Group>
-
-        <Form.Group controlId="formFieldType">
-          <Form.Label>Field Type</Form.Label>
-          <Form.Control
-            as="select"
-            value={form.type}
-            onChange={changeText('type')}
-          >
-            <option>number</option>
-            <option>fivestar</option>
-            <option>check</option>
-          </Form.Control>
-        </Form.Group>
-
-        <Form.Group controlId="formFieldDefault">
-          <Form.Label>Field Default</Form.Label>
-          <Form.Control
-            as="select"
-            value={form.default_value}
-            onChange={changeText('default_value')}
-          >
-            <option value="value">Specific value (including empty)</option>
-            <option value="ffill">Pull entry from yesterday</option>
-            <option value="average">Average of your entries</option>
-          </Form.Control>
-          <Form.Text className="text-muted">
-            {defValHelp}
-          </Form.Text>
-        </Form.Group>
-
-        {form.default_value === 'value' && (
-          <Form.Group controlId="formFieldDefaultValue">
-            <Form.Label>Default Value</Form.Label>
-            <Form.Control
-              type="number"
-              min={form.type === 'check' ? 0 : null}
-              max={form.type === 'check' ? 1 : null}
-              value={form.default_value_value}
-              onChange={changeText('default_value_value')}
+        <Grid container spacing={2} direction='column' sx={{minWidth:400}}>
+          <Grid item>
+            <TextField2 name='name' label="Name" form={form} />
+          </Grid>
+          <Grid item>
+            <Select2
+              name='type'
+              label="Field Type"
+              form={form}
+              options={[
+                {value: 'number', label: "Number"},
+                {value: 'fivestar', label: "Fivestar"},
+                {value: 'check', label: "Check"},
+              ]}
             />
-          </Form.Group>
-        )}
+          </Grid>
+          <Grid item>
+            <Select2
+              name='default_value'
+              label="Field Default"
+              form={form}
+              options={[
+                {value: 'value', label: "Specific value (including empty)"},
+                {value: 'ffill', label: "Pull entry from yesterday"},
+                {value: 'average', label: "Average of your entries"},
+              ]}
+              helperText={defValHelp}
+            />
+          </Grid>
+          {default_value === 'value' && (
+            <Grid item>
+              <TextField2
+                name='default_value_value'
+                label="Default Value"
+                type="number"
+                form={form}
+                min={type === 'check' ? 0 : null}
+                max={type === 'check' ? 1 : null}
+              />
+            </Grid>
+          )}
+        </Grid>
 
         {fid && (
           <>
@@ -175,7 +169,7 @@ export default function FieldModal({close, field= {}}) {
 
       <DialogActions>
         <Button size="small" onClick={close}>Cancel</Button>
-        <Button color="primary" variant="contained" onClick={saveField}>Save</Button>
+        <Button color="primary" variant="contained" onClick={form.handleSubmit(submit)}>Save</Button>
       </DialogActions>
     </BasicDialog>
   )

@@ -1,4 +1,7 @@
-import {Autocomplete, Checkbox, FormControl, FormControlLabel, FormHelperText, TextField} from "@material-ui/core";
+import {
+  Autocomplete, Checkbox, FormControl, FormControlLabel,
+  FormHelperText, TextField, InputLabel, Select, MenuItem, FormGroup
+} from "@material-ui/core";
 import {Controller} from "react-hook-form";
 import React from "react";
 
@@ -72,4 +75,29 @@ export function Autocomplete2(props) {
       />
     }
   />
+}
+
+export function Select2(props) {
+  const {name, label, form, options, helperText, ...rest} = props
+
+  function renderField({field}) {
+    return <>
+      <FormControl fullWidth>
+        <InputLabel id={`${name}-select-label`}>{label}</InputLabel>
+        <Select
+          labelId={`${name}-select-label`}
+          id={`${name}-select`}
+          value={field.value}
+          label={label}
+          onChange={field.onChange}
+        >
+          {options.map(o => <MenuItem value={o.value}>{o.label}</MenuItem>)}
+        </Select>
+        {helperText && <FormHelperText>{helperText}</FormHelperText>}
+      </FormControl>
+    </>
+  }
+
+  return <Controller render={renderField} name={name} control={form.control}/>
+
 }
