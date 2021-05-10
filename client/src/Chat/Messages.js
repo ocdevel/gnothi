@@ -2,22 +2,22 @@ import {useStoreActions, useStoreState} from "easy-peasy";
 import React, {useLayoutEffect, useRef, useState} from "react";
 import {timeAgo} from "../Helpers/utils";
 import {onlineIcon, getUname} from "../Groups/utils";
-import {useParams} from "react-router-dom";
-import {useFormik} from 'formik'
+import {useForm} from "react-hook-form";
 import * as yup from 'yup';
-import {Grid, TextField, Button, Alert} from '@material-ui/core'
+import {yupResolver} from "@hookform/resolvers/yup";
+import {Grid, Button, Alert} from '@material-ui/core'
+import {TextField2} from '../Helpers/Form'
 
-const validationSchema = yup.object({
+const schema = yup.object({
   text: yup.string().required().min(1)
 });
 
 function ChatInput({group_id=null, entry_id=null}) {
   const emit = useStoreActions(actions => actions.ws.emit);
 
-  const formik = useFormik({
-    initialValues: {text: '',},
-    validationSchema: validationSchema,
-    onSubmit: submit
+  const form = useForm({
+    defaultValues: {text: ''},
+    resolver: yupResolver(schema),
   });
 
   function submit(data) {
@@ -26,18 +26,16 @@ function ChatInput({group_id=null, entry_id=null}) {
     } else if (entry_id) {
 
     }
-    formik.resetForm()
+    form.reset()
   }
 
-  return <form onSubmit={formik.handleSubmit}>
+  return <form onSubmit={form.handleSubmit(submit)}>
     <Grid container spacing={3} alignItems='center'>
       <Grid item sx={{flex: 1}}>
-        <TextField
-          name='text'
-          fullWidth
+        <TextField2
+          name="text"
+          form={form}
           placeholder="Enter message..."
-          value={formik.values.text}
-          onChange={formik.handleChange}
         />
       </Grid>
       <Grid item>

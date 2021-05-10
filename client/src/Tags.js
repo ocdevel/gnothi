@@ -6,7 +6,7 @@ import {useStoreState, useStoreActions} from "easy-peasy";
 
 import * as yup from "yup";
 import {yupResolver} from "@hookform/resolvers/yup";
-import {useForm} from "react-hook-form";
+import {useForm, Controller} from "react-hook-form";
 import Sortable from "./Helpers/Sortable";
 import {IoReorderFourSharp} from "react-icons/all";
 
@@ -23,7 +23,6 @@ import {
 } from '@material-ui/core'
 import {CheckCircle, Label, Create, Reorder, Delete} from "@material-ui/icons";
 import {FullScreenDialog} from "./Helpers/Dialog";
-import {useFormik} from "formik";
 import {makeStyles} from "@material-ui/core/styles";
 
 const tagSchema = yup.object().shape({
@@ -45,26 +44,29 @@ const styles = {
 
 function NewTag() {
   const emit = useStoreActions(actions => actions.ws.emit)
-  const formik = useFormik({
-    initialValues: {name: '', ai: true},
-    validationSchema: tagSchema,
-    onSubmit: submit
+  const form = useForm({
+    defaultValues: {name: '', ai: true},
+    resolver: yupResolver(tagSchema),
   })
 
   function submit(data) {
     emit(['tags/tags/post', data])
-    formik.resetForm()
+    form.reset()
   }
 
-  return <form onSubmit={formik.handleSubmit}>
+  return <form onSubmit={form.handleSubmit(submit)}>
     <Paper sx={styles.paper}>
-      <InputBase
-        sx={styles.inputBase}
-        placeholder="New tag name"
-        value={formik.values.name}
+      <Controller
         name='name'
-        onChange={formik.handleChange}
+        control={form.control}
+        render={({field}) => <InputBase
+          sx={styles.inputBase}
+          placeholder="New tag name"
+          value={field.value}
+          onChange={field.onChange}
+        />}
       />
+
       <Button
         size='small'
         type='submit'

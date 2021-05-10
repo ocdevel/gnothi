@@ -1,4 +1,5 @@
 import React, {useEffect, useState} from "react"
+import _ from 'lodash'
 import {
   BsPeopleFill
 } from "react-icons/bs"
@@ -16,11 +17,12 @@ import {
   Grid,
   Box,
   Typography,
-  FormControlLabel,
-  Checkbox, FormHelperText, FormControl, FormGroup, Autocomplete, Divider
+  Divider, FormHelperText, FormGroup
 } from "@material-ui/core";
-import {useFormik} from "formik"
 import * as yup from "yup";
+import {yupResolver} from "@hookform/resolvers/yup";
+import {useForm, useFormState} from "react-hook-form";
+import {TextField2, Checkbox2, Autocomplete2} from "../Helpers/Form";
 
 const schema = yup.object().shape({
   username: yup.string().min(1).nullable(),
@@ -37,83 +39,64 @@ function Profile_() {
   const emit = useStoreActions(a => a.ws.emit)
   const as = useStoreState(state => state.user.as)
   const uname = useStoreState(s => s.ws.data['users/check_username'])
-  const profile_ = useStoreState(s => s.ws.data['users/profile/get'])
-  const [usernameValid, setUsernameValid] = useState({checked: false, valid: null})
-  const [dirty, setDirty] = useState({dirty: false, saved: false})
-  const formik = useFormik({
-    initialValues: profile_,
-    validationSchema: schema,
-    onSubmit: submit
+  const profile = useStoreState(s => s.ws.data['users/profile/get'])
+  const [unameValid, setUnameValid] = useState({checked: false, valid: null})
+  const form = useForm({
+    defaultValues: profile,
+    resolver: yupResolver(schema),
   })
-  const {values: profile, errors} = formik
+  const {isDirty, isSubmitSuccessful} = useFormState({control: form.control})
+  const [birthday, username] = form.watch(['birthday', 'username'])
 
   useEffect(() => {
     // set the form to copy from server
-    formik.setValues(profile_)
-  }, [profile_])
+    form.reset(profile)
+  }, [profile])
 
   useEffect(() => {
     if (!uname) {return}
-    setUsernameValid({...uname, checked: true})
+    setUnameValid({valid: uname.valid, checked: true})
   }, [uname])
 
   let zodiac = null
-  if (profile?.birthday?.match(/\d{4}-\d{2}-\d{2}/)) {
-    const res = profile.birthday.match(/\d{4}-(\d{2})-(\d{2})/)
+  if (birthday?.match(/\d{4}-\d{2}-\d{2}/)) {
+    const res = birthday.match(/\d{4}-(\d{2})-(\d{2})/)
     zodiac = getZodiacSign(~~res[2], ~~res[1])
   }
 
   function submit(data) {
-    emit(['users/profile/put', profile])
-    setDirty({dirty: false, saved: true})
+    emit(['users/profile/put', data])
   }
 
   function changeUsername(e) {
-    setUsernameValid({checked: false, valid: null})
-    handleChange(e)
+    setUnameValid({checked: false, valid: null})
   }
 
   function checkUsername(e) {
-    const {username} = profile
-    // debugger
     if (!username?.length) {return}
     emit(["users/check_username", {username}])
-  }
-
-  function handleChange(e) {
-    setDirty({dirty: true, saved: false})
-    formik.handleChange(e)
-  }
-
-  function handleChangeTz(e, val) {
-    setDirty({dirty: true, saved: false})
-    formik.setFieldValue('timezone', val)
   }
 
   function textField(name, label, props={}) {
     const {xs, sm, md, ...rest} = props
 
     return <Grid item xs={xs || 12} sm={sm || 6} md={md || 4}>
-      <TextField
-        error={errors?.[name]}
-        helperText={errors?.[name]}
+      <TextField2
         name={name}
         label={label}
-        value={profile[name]}
+        form={form}
         fullWidth
         readOnly={!!as}
-        onChange={handleChange}
         {...rest}
       />
     </Grid>
   }
 
   function usernameField() {
-    const {checked, valid} = usernameValid
-
+    const {checked, valid} = unameValid
     return textField('username', 'Username', {
       error: checked && !valid,
-      helperText: !(profile.username && checked) ? null
+      helperText: !(username?.length && checked) ? null
         : valid ? 'Valid username'
           : 'Username taken',
       onBlur: checkUsername,
@@ -121,7 +104,7 @@ function Profile_() {
     })
   }
 
-  return <form onSubmit={formik.handleSubmit}>
+  return <form onSubmit={form.handleSubmit(submit)}>
     <Grid container spacing={2}>
       {usernameField()}
       {textField('first_name', 'First Name')}
@@ -132,18 +115,7 @@ function Profile_() {
         helperText: 'YYYY-MM-DD like 1984-02-19'
       })}
       <Grid item xs>
-        <Autocomplete
-          disablePortal
-          name='timezone'
-          value={profile.timezone}
-          onChange={handleChangeTz}
-          fullWidth
-          options={timezones}
-          renderInput={(params) => <TextField
-            {...params}
-            label="Timezone"
-          />}
-        />
+        <Autocomplete2 name='timezone' label='Timezone' options={timezones} form={form} />
       </Grid>
 
       {textField('bio', 'About You', {
@@ -156,25 +128,20 @@ function Profile_() {
     </Grid>
 
     <Box>
-      <FormControl>
-        <FormControlLabel
-          label="I'm a therapist"
-          control={<Checkbox
-            checked={profile.therapist}
-            name='therapist'
-            onChange={handleChange}
-          />}
-        />
-        <FormHelperText>Check this if you want your profile listed in the therapist directory. AI will match users based on their entries to your profile based on your "About You" (bio), so be as detailed there as possible. Your name and email address will be visible to users.</FormHelperText>
-      </FormControl>
+      <Checkbox2
+        label="I'm a therapist"
+        name='therapist'
+        form={form}
+        helperText={`Check this if you want your profile listed in the therapist directory. AI will match users based on their entries to your profile based on your "About You" (bio), so be as detailed there as possible. Your name and email address will be visible to users.`}
+      />
     </Box>
 
     <Button
-      disabled={!dirty.dirty}
       color='primary'
       variant='contained'
       type='submit'
-    >{dirty.saved ? "Saved" : "Save"}</Button>
+    >Save</Button>
+    {isSubmitSuccessful && !isDirty && <FormHelperText>Saved</FormHelperText>}
   </form>
 }
 
