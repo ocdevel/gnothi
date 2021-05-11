@@ -1,13 +1,11 @@
 import React, {useEffect, useState} from "react";
-import {
-  Button,
-  Form,
-} from "react-bootstrap";
+
 import {useLocation, useHistory} from "react-router-dom"
 import Error from './Error'
 import {useStoreState, useStoreActions} from "easy-peasy";
 import axios from 'axios'
 import {API_URL} from "./redux/ws";
+import {Box, Button} from '@material-ui/core'
 
 import { useForm } from "react-hook-form";
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -15,6 +13,7 @@ import * as yup from "yup";
 
 import {Auth} from 'aws-amplify'
 import {CircularProgress, Alert} from "@material-ui/core";
+import {TextField2} from "./Helpers/Form";
 
 const loginSchema = yup.object().shape({
   email: yup.string().email().required(),
@@ -27,10 +26,11 @@ function FieldError({err}) {
 }
 
 function Login({setError, submitting}) {
-  const { register, handleSubmit, errors } = useForm({
+  const form = useForm({
     resolver: yupResolver(loginSchema),
     mode: "onBlur"
   });
+  const { register, handleSubmit, errors } = form
 
   async function onSubmit(form) {
     // Check old auth first
@@ -50,34 +50,28 @@ function Login({setError, submitting}) {
     }
   }
 
-  return <Form onSubmit={handleSubmit(onSubmit)}>
-    <Form.Group controlId="loginEmail">
-      <Form.Label>Email address</Form.Label>
-      <Form.Control
-        type="email"
-        placeholder="Enter email"
-        required
-        {...register('email')}
+  return <form onSubmit={handleSubmit(onSubmit)}>
+    <Box display='flex' flexDirection='column' gap={2}>
+      <TextField2
+        label='Email Address'
+        type='email'
+        name='email'
+        form={form}
       />
-      <FieldError err={errors.email} />
-    </Form.Group>
+      <TextField2
+        label='Password'
+        type='password'
+        name='password'
+        form={form}
+      />
+    </Box>
 
-    <Form.Group controlId="loginPassword">
-      <Form.Label>Password</Form.Label>
-      <Form.Control
-        type="password"
-        placeholder="Password"
-        required
-        {...register('password')}
-      />
-      <FieldError err={errors.password} />
-    </Form.Group>
     {submitting ? <CircularProgress /> : (
-      <Button variant="primary" type="submit">
+      <Button variant="contained" color='primary' type="submit">
         Login
       </Button>
     )}
-  </Form>
+  </form>
 }
 
 export function Authenticate() {

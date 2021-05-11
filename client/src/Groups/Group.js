@@ -3,10 +3,8 @@ import {useParams, useRouteMatch, Link, Switch, Route} from "react-router-dom";
 import React, {useEffect, useLayoutEffect, useState, useRef} from "react";
 import _ from "lodash";
 import Sidebar from './Sidebar'
-import {Nav} from "react-bootstrap";
 import Teaser from "../Entries/Teaser";
 import {Entry} from "../Entries/Entry";
-import {LinkContainer} from 'react-router-bootstrap'
 import ReactMarkdown from "react-markdown";
 import {GroupMessages} from "../Chat/Messages";
 import {Card, Grid, Box, Tabs, Tab, Typography} from '@material-ui/core'

@@ -1,14 +1,11 @@
 import {
-  Button
-} from "react-bootstrap";
-import {
   FaBook,
   FaCouch
 } from 'react-icons/fa'
 import React, {useState} from "react"
 import Books from './Books'
 import Therapists from './Therapists'
-import {Grid} from "@material-ui/core";
+import {Grid, Button} from "@material-ui/core";
 
 export default function Resources() {
   const [books, setBooks] = useState(true)
@@ -16,13 +13,11 @@ export default function Resources() {
 
   const tabs = <div className='mb-3'>
     <Button
-      size="sm"
-      variant={books ? 'dark' : 'outline-dark'}
+      variant={books ? 'outlined' : 'link'}
       onClick={() => setBooks(!books)}
     >Books</Button>{' '}
     <Button
-      size="sm"
-      variant={therapists ? 'dark' : 'outline-dark'}
+      variant={therapists ? 'outlined' : 'link'}
       onClick={() => setTherapists(!therapists)}
     >Therapists</Button>
   </div>

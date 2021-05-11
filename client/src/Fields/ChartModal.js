@@ -1,5 +1,4 @@
 import React, {useEffect, useState} from "react";
-import {Table} from "react-bootstrap";
 import _ from "lodash";
 import regression from 'regression';
 import {CartesianGrid, Line, LineChart, Tooltip, XAxis, YAxis, ResponsiveContainer,
@@ -9,7 +8,8 @@ import moment from 'moment'
 import {useStoreState, useStoreActions} from "easy-peasy";
 import {FieldName} from "./utils";
 import {BasicDialog, FullScreenDialog} from "../Helpers/Dialog";
-import {DialogContent, DialogTitle} from "@material-ui/core";
+import {DialogContent, DialogTitle, TableContainer, Table, TableRow, TableCell, TableHead,
+  TableBody, Paper} from "@material-ui/core";
 
 const round_ = (v) => v ? v.toFixed(2) : null
 
@@ -41,29 +41,31 @@ export default function ChartModal({close, field=null, overall=false}) {
       </p>
     }
     return <>
-      <Table striped size="sm">
-        <thead>
-        <tr>
-          <th>Field</th>
-          <th>Importance</th>
-          <th>Avg</th>
-          <th>Predicted Next</th>
-        </tr>
-        </thead>
-        <tbody>
-        {_(influencers_)
-          .toPairs()
-          .filter(x => x[1] > 0)
-          .orderBy(x => -x[1])
-          .value()
-          .map(x => <tr key={x[0]}>
-            <td><FieldName name={fields[x[0]].name} maxWidth={250} /></td>
-            <td>{ round_(x[1]) }</td>
-            <td>{ round_(fields[x[0]].avg) }</td>
-            <td>{ round_(fields[x[0]].next_pred) }</td>
-          </tr>)}
-        </tbody>
-      </Table>
+      <TableContainer component={Paper}>
+        <Table striped size="small">
+          <TableHead>
+            <TableRow>
+              <TableCell>Field</TableCell>
+              <TableCell>Importance</TableCell>
+              <TableCell>Avg</TableCell>
+              <TableCell>Predicted Next</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {_(influencers_)
+              .toPairs()
+              .filter(x => x[1] > 0)
+              .orderBy(x => -x[1])
+              .value()
+              .map(x => <TableRow key={x[0]}>
+                <TableCell><FieldName name={fields[x[0]].name} maxWidth={250} /></TableCell>
+                <TableCell>{ round_(x[1]) }</TableCell>
+                <TableCell>{ round_(fields[x[0]].avg) }</TableCell>
+                <TableCell>{ round_(fields[x[0]].next_pred) }</TableCell>
+              </TableRow>)}
+          </TableBody>
+        </Table>
+      </TableContainer>
     </>
   }
 

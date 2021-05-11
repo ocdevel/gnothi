@@ -1,4 +1,3 @@
-import {Form, Col} from "react-bootstrap"
 import _ from "lodash"
 import React, {useCallback, useEffect, useState} from "react"
 import {FaPen, FaRobot, FaSort, FaTrash} from 'react-icons/fa'

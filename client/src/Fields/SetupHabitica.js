@@ -1,9 +1,8 @@
 import React, {useEffect, useState} from "react";
-import {Form} from "react-bootstrap";
 
 import {useStoreState, useStoreActions} from 'easy-peasy'
 import {BasicDialog} from "../Helpers/Dialog";
-import {DialogActions, DialogContent, Typography, Button} from "@material-ui/core";
+import {DialogActions, DialogContent, Typography, Button, TextField, Grid, Box} from "@material-ui/core";
 
 function DisconnectModal({show, close}) {
   const emit = useStoreActions(a => a.ws.emit)
@@ -51,27 +50,22 @@ export default function Habitica() {
 
   return <>
     <DisconnectModal show={showModal} close={() => setShowModal(false)} />
-    <Form onSubmit={saveHabitica}>
-      <Form.Group controlId="formHabiticaUserId">
-        <Form.Label>User ID</Form.Label>
-        <Form.Control
-          type="text"
+    <form onSubmit={saveHabitica}>
+      <Box display='flex' gap={2} flexDirection='column'>
+        <TextField
+          label='User ID'
           value={habiticaUserId}
           onChange={changeHabiticaUserId}
         />
-      </Form.Group>
-
-      <Form.Group controlId="formHabiticaApiToken">
-        <Form.Label>API Key</Form.Label>
-        <Form.Control
-          type="text"
+        <TextField
+          label='API Key'
           value={habiticaApiToken}
           onChange={changeHabiticaApiToken}
         />
-      </Form.Group>
 
-      <Button type='submit' color='primary' variant="contained" size='small'>Save</Button>{' '}
-      {habiticaUserId && <Button size='small' color="secondary" onClick={() => setShowModal(true)}>Disconnect</Button>}
-    </Form>
+        <Button type='submit' color='primary' variant="contained" size='small'>Save</Button>{' '}
+        {habiticaUserId && <Button size='small' color="secondary" onClick={() => setShowModal(true)}>Disconnect</Button>}
+      </Box>
+    </form>
   </>
 }

@@ -3,10 +3,10 @@ import {useForm} from "react-hook-form";
 import {yupResolver} from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import React, {useEffect} from "react";
-import {Form} from "react-bootstrap";
 import Error from "../Error";
 import {BasicDialog} from "../Helpers/Dialog";
-import {Button, DialogActions, DialogContent, Alert} from "@material-ui/core";
+import {Button, DialogActions, DialogContent, Alert, FormGroup} from "@material-ui/core";
+import {TextField2} from "../Helpers/Form";
 
 export default function InviteMembers({gid, close}) {
   const emit = useStoreActions(a => a.ws.emit)
@@ -28,6 +28,12 @@ export default function InviteMembers({gid, close}) {
   useEffect(() => {
     if (invite?.valid) {
       form.setValue('email', null)
+    } else if (invite?.valid === false) {
+      const err = {
+        type: 'manual',
+        message: "That user doesn't exist, have them sign up first."
+      }
+      form.setError('email', err)
     }
   }, [invite])
 
@@ -47,20 +53,18 @@ export default function InviteMembers({gid, close}) {
       title='Invite Members'
     >
       <DialogContent>
-        <Form>
-          <Form.Group controlId="form_email">
-            <Form.Label>Email</Form.Label>
-            <Form.Control
-              type="text"
-              {...form.register("email")}
-              isInvalid={valid === false}
+        <form onSubmit={form.handleSubmit(submit)}>
+          <FormGroup>
+            <TextField2
+              label='Email'
+              name='email'
+              form={form}
               placeholder="Email of user"
+              helperText="Invite-by-email required to ensure you know the member you're inviting. Make sure they're already registered, this won't send an email invite."
             />
-            <Form.Text className='text-muted'>Invite-by-email required to ensure you know the member you're inviting. Make sure they're already registered, this won't send an email invite.</Form.Text>
             {valid && <Alert severity='success'>Invite sent!</Alert>}
-            {(valid === false) && <Form.Control.Feedback type='invalid'>That user doesn't exist, have them sign up first.</Form.Control.Feedback>}
-          </Form.Group>
-        </Form>
+          </FormGroup>
+        </form>
         <Error action={/groups\/group\/invite/g} codes={[400,401,403,422]}/>
       </DialogContent>
 

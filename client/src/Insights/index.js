@@ -1,8 +1,4 @@
-import {
-  Form,
-  Row, Col,
-  InputGroup,
-} from 'react-bootstrap'
+
 import Summarize from "./Summarize"
 import Ask from "./Ask"
 import Themes from "./Themes"

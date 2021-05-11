@@ -1,10 +1,6 @@
 import React, {useEffect, useState, useCallback} from "react";
 import {API_URL} from '../redux/ws'
 import _ from "lodash";
-import {
-  Form,
-  Row, Col,
-} from "react-bootstrap";
 import ReactStars from "react-stars";
 import SetupHabitica from "./SetupHabitica";
 import FieldModal from "./FieldModal";
@@ -24,11 +20,33 @@ import {
 import axios from "axios";
 import fileDownload from 'js-file-download';
 import {
-  Card, Grid, CardContent, CardHeader, Accordion, AccordionSummary,
-  AccordionDetails, Button, Typography, ButtonGroup, CardActions, Divider,
-  Tooltip, CircularProgress, Alert, Badge, Box, IconButton, ButtonBase
+  Card,
+  Grid,
+  CardContent,
+  CardHeader,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  Button,
+  Typography,
+  ButtonGroup,
+  CardActions,
+  Divider,
+  Tooltip,
+  CircularProgress,
+  Alert,
+  Badge,
+  Box,
+  IconButton,
+  ButtonBase,
+  TextField,
+  FormControl,
+  FormLabel,
+  RadioGroup,
+  FormControlLabel, Radio
 } from "@material-ui/core";
 import {Assessment, BarChart, ExpandMore} from "@material-ui/icons";
+import {Checkbox2} from "../Helpers/Form";
 
 const fmt = 'YYYY-MM-DD'
 const iso = (day=null) => {
@@ -118,23 +136,23 @@ function FieldsAdvanced({fetchFieldEntries}) {
       {...btnOpts}
       onClick={() => downloadCsv('new')}
     >Download field_entries.csv</Button>
-    <Form.Text>Export your field-entries to CSV</Form.Text>
+    <Typography variant='caption'>Export your field-entries to CSV</Typography>
     {hasDupes && <>
       <Alert severity='warning'>
-        <Form.Text>Your field entries were effected by the <a href='https://github.com/lefnire/gnothi/issues/20' target='_blank'>duplicates bug</a>. See that link for details and what to do.</Form.Text>
+        <Typography variant='caption'>Your field entries were effected by the <a href='https://github.com/lefnire/gnothi/issues/20' target='_blank'>duplicates bug</a>. See that link for details and what to do.</Typography>
       <hr />
       <Button
         {...btnOpts}
         onClick={() => downloadCsv('old')}
       >Download field_entries_old.csv</Button>
-      <Form.Text>Export your original field-entries (before duplicates were fixed) to CSV</Form.Text>
+        <Typography variant='caption'>Export your original field-entries (before duplicates were fixed) to CSV</Typography>
       <Button
         {...btnOpts}
         variant='outlined'
         color='secondary'
         onClick={acceptDupes}
       >Accept Gnothi's fix</Button>
-      <Form.Text>You can click through each day to find duplicates and select the correct entry, or click this to accept Gnothi's chose duplicate fixes for all days.</Form.Text>
+        <Typography variant='caption'>You can click through each day to find duplicates and select the correct entry, or click this to accept Gnothi's chose duplicate fixes for all days.</Typography>
       </Alert>
     </>}
     <Button
@@ -145,14 +163,13 @@ function FieldsAdvanced({fetchFieldEntries}) {
       onClick={startOver}
       sx={{mb: 2}}
     >Start Over</Button>
-    <Form.Control
-      type="text"
-      size='sm'
+    <TextField
+      size='small'
       placeholder="wipe field entries"
       value={confirmWipe}
       onChange={changeConfirmWipe}
+      helperText={<>Wipe field entries for all days and start from scratch (keeping the fields, just clearing their entries). Enable the button by typing in the text-field "wipe field entries". <a href="https://github.com/lefnire/gnothi/issues/114" target="_blank">Why do this?</a></>}
     />
-    <Form.Text>Wipe field entries for all days and start from scratch (keeping the fields, just clearing their entries). Enable the button by typing in the text-field "wipe field entries". <a href="https://github.com/lefnire/gnothi/issues/114" target="_blank">Why do this?</a></Form.Text>
   </div>
 }
 
@@ -252,28 +269,28 @@ export default function Fields() {
       />
     </>
     if (f.type === 'check') return <div>
-      <Form.Check
-        type='radio'
-        label='Yes'
-        id={f.id + '-yes'}
-        inline
-        checked={v > 0}
-        onChange={changeCheck(f.id)}
+      <FormControlLabel
+        label={<Typography variant='body2'>Yes</Typography>}
+        control={<Radio
+          size='small'
+          checked={v > 0}
+          onChange={changeCheck(f.id)}
+        />}
       />
-      <Form.Check
-        type='radio'
-        label='No'
-        id={f.id + '-no'}
-        inline
-        checked={v < 1}
-        onChange={changeCheck(f.id)}
+      <FormControlLabel
+        label={<Typography variant='body2'>No</Typography>}
+        control={<Radio
+          checked={v < 1}
+          size='small'
+          onChange={changeCheck(f.id)}
+        />}
       />
     </div>
     return <>
-      <Form.Control
+      <TextField
         disabled={!!f.service && isToday}
         type='number'
-        size="sm"
+        size="small"
         value={v || 0}
         onChange={changeFieldVal(f.id)}
       />

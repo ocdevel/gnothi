@@ -19,8 +19,8 @@ export function TextField2(props) {
       value={field.value}
       onChange={change}
       error={!!error}
-      helperText={error?.message}
       {...rest}
+      helperText={error?.message || rest.helperText}
     />
   }
 
@@ -32,7 +32,7 @@ export function TextField2(props) {
 }
 
 export function Checkbox2(props) {
-  const {name, label, helperText, form, ...rest} = props
+  const {name, label, helperText, form, value, onChange, ...rest} = props
 
   function renderField({field}) {
     return <Checkbox
@@ -42,14 +42,21 @@ export function Checkbox2(props) {
     />
   }
 
+  function renderControl() {
+    if (!form) {
+      return renderField({field: {value, onChange}})
+    }
+    return <Controller
+      name={name}
+      control={form.control}
+      render={renderField}
+    />
+  }
+
   return <FormControl>
     <FormControlLabel
       label={label}
-      control={<Controller
-        name={name}
-        control={form.control}
-        render={renderField}
-      />}
+      control={renderControl()}
     />
     {helperText && <FormHelperText>{helperText}</FormHelperText>}
   </FormControl>
