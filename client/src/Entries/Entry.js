@@ -26,6 +26,7 @@ import {TextField2, Checkbox2} from "../Helpers/Form";
 import * as yup from 'yup'
 import {yupResolver} from "@hookform/resolvers/yup";
 import {useForm, Controller} from "react-hook-form";
+import Editor from "../Helpers/Editor";
 
 const schema = yup.object().shape({
   title: yup.string().nullable(),
@@ -35,60 +36,12 @@ const schema = yup.object().shape({
 })
 const defaults = {title: '', text: '', no_ai: false, created_at: null}
 
-const mdParser = new MarkdownIt(/* Markdown-it options */);
-
-// https://github.com/HarryChen0506/react-markdown-editor-lite/blob/master/docs/plugin.md
-const plugins = [
-  'header',
-  'font-bold',
-  'font-italic',
-  'font-underline',
-  'font-strikethrough',
-  'list-unordered',
-  'list-ordered',
-  'block-quote',
-  'image',
-  'link',
-  'mode-toggle',
-  'full-screen',
-  // f3b13052: auto-resize
-]
-
 const placeholder = `Write a journal entry, whatever's on your mind. Hard times you're going through, politics, philosophy, the weather. Be verbose, AI works best with long-form content - a paragraph or more is ideal, less might result in poor insights or resource-recommendations. Try to use proper grammar and full words, rather than abbreviations or slang ("therapist" rather than "shrink"). AI is decent at inferring, but the more help you give it the better.
  
 Separate multiple concepts by hitting ENTER twice (two new lines). So if you're chatting weather, then want to chat relationships - two ENTERs. See the toolbar at the top for formatting help, this editor uses Markdown. The square icon (right-side toolbar) lets you go into full-screen mode, easier for typing long entries. 
 
 After you have one or two entries, head to the Insights and Resources links at the website top to play with the AI.     
 `
-
-function Editor({text, changeText}) {
-  const fetch = useStoreActions(actions => actions.server.fetch)
-  const onImageUpload = async (file) => {
-    const formData = new FormData();
-    // formData.append('file', file, file.filename);
-    formData.append('file', file);
-    const headers = {'Content-Type': 'multipart/form-data'}
-    const {data, code} = await fetch({route: 'upload-image', method: 'POST', body: formData, headers})
-    return data.filename
-  }
-
-  function onChange({html, text}) {
-    changeText(text)
-  }
-
-  return (
-    <MdEditor
-      plugins={plugins}
-      value={text}
-      style={{ height: 300, width: '100%' }}
-      config={{view: { menu: true, md: true, html: false }}}
-      renderHTML={(text) => mdParser.render(text)}
-      onChange={onChange}
-      onImageUpload={onImageUpload}
-      placeholder={placeholder}
-    />
-  )
-}
 
 export function Entry({entry=null, close=null}) {
   const history = useHistory()
@@ -155,8 +108,8 @@ export function Entry({entry=null, close=null}) {
     if (draft) { form.reset(JSON.parse(draft)) }
   }
   const saveDraft = useCallback(
-    _.debounce(form_ => {
-      localStorage.setItem(draftId, JSON.stringify(form_))
+    _.debounce(() => {
+      localStorage.setItem(draftId, JSON.stringify(form.getValues()))
     }, 500),
     []
   )
@@ -194,10 +147,10 @@ export function Entry({entry=null, close=null}) {
     emit(['entries/entry/cache/get', {id: eid}])
   }
 
-  const changeText = (field, e) => {
-    saveDraft(form.getValues())
-    field.onChange(e)
+  function changeText(text) {
+    saveDraft()
   }
+
   const changeEditing = e => {
     e.stopPropagation()
     e.preventDefault()
@@ -257,18 +210,15 @@ export function Entry({entry=null, close=null}) {
             <Typography variant='h2'>{entry.title}</Typography>
           </>}
 
-          {editing ? (
-            <Controller
-              name='text'
-              control={form.control}
-              render={({field}) => <Editor
-                text={field.value}
-                changeText={e => changeText(field, e)}
-              />}
-            />
-          ) : (
-            <ReactMarkdown source={entry.text} linkTarget='_blank' />
-          )}
+          {editing ? <Editor
+            name='text'
+            placeholder={placeholder}
+            form={form}
+            onChange={changeText}
+          /> : <ReactMarkdown
+            source={entry.text}
+            linkTarget='_blank'
+          />}
 
           {editing && <>
             {advanced ? <div>

@@ -4,60 +4,20 @@ import {
   Form,
   InputGroup, FormControl
 } from "react-bootstrap"
-import ReactMarkdown from "react-markdown"
-import MarkdownIt from 'markdown-it'
-import MdEditor from 'react-markdown-editor-lite'
 import _ from 'lodash'
-import {EE} from '../redux/ws'
 
 import {useStoreActions, useStoreState} from "easy-peasy";
 import Error from "../Error";
 import * as yup from "yup";
 import {useForm} from "react-hook-form";
 import {yupResolver} from "@hookform/resolvers/yup";
-import {CircularProgress, DialogActions, DialogContent, Card, CardHeader, CardContent,
-  Grid, Button} from "@material-ui/core";
+import {
+  CircularProgress, DialogActions, DialogContent, Card, CardHeader, CardContent,
+  Grid, Button, FormGroup, InputAdornment, FormHelperText
+} from "@material-ui/core";
 import {BasicDialog} from "../Helpers/Dialog";
-
-const mdParser = new MarkdownIt(/* Markdown-it options */);
-
-// https://github.com/HarryChen0506/react-markdown-editor-lite/blob/master/docs/plugin.md
-const plugins = [
-  'header',
-  'font-bold',
-  'font-italic',
-  'font-underline',
-  'font-strikethrough',
-  'list-unordered',
-  'list-ordered',
-  'block-quote',
-  // 'image',
-  'link',
-  'mode-toggle',
-  'full-screen',
-  // f3b13052: auto-resize
-]
-
-function Editor({form}) {
-  const [text, setText] = useState("")
-
-  function onChange({html, text}) {
-    setText(text)
-    form.setValue('text_long', text)
-  }
-
-  return (
-    <MdEditor
-      plugins={plugins}
-      value={text}
-      style={{ height: 300, width: '100%' }}
-      config={{view: { menu: true, md: true, html: false }}}
-      renderHTML={(text) => mdParser.render(text)}
-      onChange={onChange}
-      placeholder="Write a description about your group, including any links to relevant material."
-    />
-  )
-}
+import Editor from "../Helpers/Editor";
+import {Checkbox2, Select2, TextField2} from "../Helpers/Form";
 
 const notYet = <b>This feature isn't yet built, but you can enable it now and I'll notify you when it's available.</b>
 
@@ -124,32 +84,23 @@ const defaultForm = {
 }
 
 function Perk({form, perk}) {
-  const {formState: {errors}, register} = form
-  return <Grid item xs={1} sm={4}>
-    <Form.Group>
-      <Form.Label>{perk.v}</Form.Label>
-      <Form.Label htmlFor={`${perk.k}-price`} srOnly>Price</Form.Label>
-      <InputGroup className="mb-2">
-        <InputGroup.Prepend>
-          <InputGroup.Text>$</InputGroup.Text>
-        </InputGroup.Prepend>
-        <FormControl
-          id={`${perk.k}-price`}
-          placeholder="Free"
-          type="number"
-          isInvalid={errors?.[perk.k]}
-          {...register(perk.k)}
-        />
-        {errors?.[perk.k] && <Form.Control.Feedback type="invalid">{errors[perk.k].message}</Form.Control.Feedback>}
-      </InputGroup>
-      <Form.Check
-        type="checkbox"
-        className="mb-2"
-        label="Suggested Donation"
-        {...register(`${perk.k}_donation`)}
-      />
-      <Form.Text className='text-muted'>{perk.h}</Form.Text>
-    </Form.Group>
+  return <Grid item xs={12} sm={4}>
+    <TextField2
+      name={perk.k}
+      label={perk.v}
+      placeholder="Free"
+      type="number"
+      form={form}
+      InputProps={{
+        startAdornment: <InputAdornment position="start">$</InputAdornment>
+      }}
+    />
+    <Checkbox2
+      name={`${perk.k}_donation`}
+      label="Suggested Donation"
+      form={form}
+    />
+    <FormHelperText>{perk.h}</FormHelperText>
   </Grid>
 }
 
@@ -166,7 +117,6 @@ export default function EditGroup({show, close, group=null}) {
     resolver: yupResolver(groupSchema),
   })
   const privacy = form.watch('privacy')
-  const {register, formState: {errors}} = form
 
   useEffect(() => {
     return function() {
@@ -217,52 +167,53 @@ export default function EditGroup({show, close, group=null}) {
     }
 
     return <>
-      <Form>
-        <Form.Group controlId="form_title">
-          <Form.Label>Title</Form.Label>
-          <Form.Control
-            type="text"
-            placeholder="Title"
-            isInvalid={errors?.title}
-            {...register("title")}
-          />
-          {errors?.title && <Form.Control.Feedback type="invalid">{errors.title.message}</Form.Control.Feedback>}
-        </Form.Group>
+      <form onSubmit={form.handleSubmit(submit)}>
+        <Grid container spacing={2} direction='column'>
 
-        <Form.Group className='mb-2' controlId="form_text_short">
-          <Form.Label>Short Description</Form.Label>
-          <Form.Control
-            as="textarea"
-            rows={3}
-            isInvalid={errors?.text_short}
-            placeholder={short_placeholder}
-            {...register("text_short")}
-          />
-        </Form.Group>
-        {errors?.text_short && <Form.Control.Feedback type="invalid">{errors.text_short.message}</Form.Control.Feedback>}
+          <Grid item>
+            <TextField2 name='title' label='Title' form={form}/>
+          </Grid>
 
-        {group && <Editor form={form} />}
+          <Grid item>
+            <TextField2
+              name='text_short'
+              placeholder={short_placeholder}
+              label="Short Description"
+              minRows={3}
+              multiline
+              form={form}
+            />
+          </Grid>
 
-        <Form.Group controlId='form_privacy'>
-          <Form.Label>Privacy</Form.Label>
-          <Form.Control
-            as="select"
-            {...register("privacy")}
-          >
-            {privacies.map(p => <option key={p.k} value={p.k}>{p.v}</option>)}
-          </Form.Control>
-          <Form.Text>{privaciesObj[privacy].h}</Form.Text>
-        </Form.Group>
+          {group && <Grid item>
+            <Editor
+              placeholder="Write a description about your group, including any links to relevant material."
+              name='text_long'
+              form={form}
+            />
+          </Grid>}
 
-        <Card className='mb-2'>
-          <CardHeader title="perks" />
-          <CardContent>
-            <Grid container>
-              {perks.map(p => <Perk key={p.k} perk={p} form={form} />)}
-            </Grid>
-          </CardContent>
-        </Card>
-      </Form>
+          <Grid item>
+            <Select2
+              name='privacy'
+              label='Privacy'
+              options={privacies.map(p => ({value: p.k, label: p.v}))}
+              helperText={privaciesObj[privacy].h}
+              form={form}
+            />
+
+            <Card>
+              <CardHeader title="Perks" />
+              <CardContent>
+                <Grid container spacing={3}>
+                  {perks.map(p => <Perk key={p.k} perk={p} form={form} />)}
+                </Grid>
+              </CardContent>
+            </Card>
+          </Grid>
+
+        </Grid>
+      </form>
     </>
   }
 
