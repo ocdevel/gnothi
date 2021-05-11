@@ -1,15 +1,22 @@
 import React, {useEffect, useState} from "react";
 import _ from "lodash";
 import regression from 'regression';
-import {CartesianGrid, Line, LineChart, Tooltip, XAxis, YAxis, ResponsiveContainer,
-  Area, AreaChart, ComposedChart, Scatter, BarChart, Bar, Legend, Brush, ReferenceLine} from "recharts";
+import {CartesianGrid, Line, Tooltip, XAxis, YAxis, ResponsiveContainer,
+  ComposedChart, Bar, Legend, Brush, ReferenceLine} from "recharts";
 import moment from 'moment'
 
 import {useStoreState, useStoreActions} from "easy-peasy";
 import {FieldName} from "./utils";
-import {BasicDialog, FullScreenDialog} from "../Helpers/Dialog";
-import {DialogContent, DialogTitle, TableContainer, Table, TableRow, TableCell, TableHead,
-  TableBody, Paper} from "@material-ui/core";
+import {FullScreenDialog} from "../Helpers/Dialog";
+import DialogContent from "@material-ui/core/DialogContent";
+import DialogTitle from "@material-ui/core/DialogTitle";
+import TableContainer from "@material-ui/core/TableContainer";
+import Table from "@material-ui/core/Table";
+import TableRow from "@material-ui/core/TableRow";
+import TableCell from "@material-ui/core/TableCell";
+import TableHead from "@material-ui/core/TableHead";
+import TableBody from "@material-ui/core/TableBody";
+import Paper from "@material-ui/core/Paper";
 
 const round_ = (v) => v ? v.toFixed(2) : null
 

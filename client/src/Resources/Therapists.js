@@ -1,6 +1,10 @@
 import React, {useEffect, useState} from "react";
 import {useStoreState, useStoreActions} from "easy-peasy";
-import {Alert, Card, CardContent, CardHeader, Typography} from '@material-ui/core'
+import Card from '@material-ui/core/Card'
+import CardContent from '@material-ui/core/CardContent'
+import CardHeader from '@material-ui/core/CardHeader'
+import Typography from '@material-ui/core/Typography'
+import {Alert2} from "../Helpers/Misc";
 
 export default function Therapists({setShowTherapists}) {
   const emit = useStoreActions(a => a.ws.emit)
@@ -30,15 +34,15 @@ export default function Therapists({setShowTherapists}) {
   }
 
   return <div className='mt-3'>
-    <Alert severity='info'>
-      <div>AI-recommended therapists based on your entries.</div>
-      <small className='text-muted'>
-        <div>AI matches your entries to therapists from their bio & specialties. It's automatic & private, they won't see your data (unless you explicitly share with them under Account > Sharing).</div>
-        <div>If you're a therapist wanting listed, check "therapist" under Account > Profile.</div>
-      </small>
-    </Alert>
+    <Alert2
+      severity='info'
+      title="AI-recommended therapists based on your entries."
+    >
+      <div>AI matches your entries to therapists from their bio & specialties. It's automatic & private, they won't see your data (unless you explicitly share with them under Account > Sharing).</div>
+      <div>If you're a therapist wanting listed, check "therapist" under Account > Profile.</div>
+    </Alert2>
     {therapists?.length ? therapists.map(renderTherapist) : (
-      <Alert severity='warning'>No therapist matches yet.</Alert>
+      <Alert2 severity='warning'>No therapist matches yet.</Alert2>
     )}
   </div>
 }

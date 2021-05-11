@@ -5,16 +5,16 @@ import _ from "lodash"
 import {BsGear, BsQuestionCircle} from "react-icons/bs"
 
 import {useStoreState, useStoreActions} from 'easy-peasy'
-import {
-  Grid,
-  Button,
-  Typography,
-  FormHelperText,
-  FormControl,
-  FormLabel,
-  RadioGroup,
-  FormControlLabel, Radio, Card, CardContent
-} from "@material-ui/core";
+import Grid from "@material-ui/core/Grid";
+import Button from "@material-ui/core/Button";
+import FormHelperText from "@material-ui/core/FormHelperText";
+import FormControl from "@material-ui/core/FormControl";
+import FormLabel from "@material-ui/core/FormLabel";
+import RadioGroup from "@material-ui/core/RadioGroup";
+import FormControlLabel from "@material-ui/core/FormControlLabel";
+import Radio from "@material-ui/core/Radio";
+import Card from "@material-ui/core/Card";
+import CardContent from "@material-ui/core/CardContent";
 
 export default function Themes() {
   const [advanced, setAdvanced] = useState(false)

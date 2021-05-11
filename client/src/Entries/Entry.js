@@ -3,21 +3,25 @@ import React, {useEffect, useState, useContext, useCallback} from "react"
 import {fmtDate} from "../Helpers/utils"
 import ReactMarkdown from "react-markdown"
 import './Entry.css'
-import {FaTags, FaPen, FaRegComments} from "react-icons/fa"
+import {FaPen} from "react-icons/fa"
 import Tags from "../Tags"
 import 'react-markdown-editor-lite/lib/index.css'
-import {AddNotes, NotesNotifs, NotesList} from './Notes'
+import {AddNotes, NotesList} from './Notes'
 import _ from 'lodash'
 import {FullScreenDialog} from "../Helpers/Dialog";
 
 import {useStoreActions, useStoreState} from "easy-peasy";
 import Error from "../Error";
-import {
-  CircularProgress, DialogActions, DialogContent, Alert,
-  Grid, Button, Box, Typography
-} from "@material-ui/core";
+import CircularProgress from "@material-ui/core/CircularProgress"
+import DialogActions from "@material-ui/core/DialogActions"
+import DialogContent from "@material-ui/core/DialogContent"
+import Grid from "@material-ui/core/Grid"
+import Button from "@material-ui/core/Button"
+import Box from "@material-ui/core/Box"
+import Typography from "@material-ui/core/Typography"
 import {yup, makeForm, TextField2, Checkbox2} from "../Helpers/Form";
 import Editor from "../Helpers/Editor";
+import {Alert2} from "../Helpers/Misc";
 
 const schema = yup.object().shape({
   title: yup.string().nullable(),
@@ -237,14 +241,16 @@ export function Entry({entry=null, close=null}) {
       </Grid>
 
       {showCacheEntry && <Grid item xs>
-        <Alert severity='info'>Paragraphs get split in the following way, and AI considers each paraph independently from the other (as if they're separate entries).</Alert>
+        <Alert2 severity='info'>
+          Paragraphs get split in the following way, and AI considers each paraph independently from the other (as if they're separate entries).
+        </Alert2>
         <div>{
           cacheEntry.paras ? cacheEntry.paras.map((p, i) => <div key={i}>
               <p>{p}</p><hr/>
             </div>)
             : <p>Nothing here yet.</p>
         }</div>
-        <Alert severity='info'>Keywords generated for use in Themes</Alert>
+        <Alert2 severity='info'>Keywords generated for use in Themes</Alert2>
         <div>{
           cacheEntry.clean ? cacheEntry.clean.map((p, i) => <div key={i}>
             <p>{_.uniq(p.split(' ')).join(' ')}</p>

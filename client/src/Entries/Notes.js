@@ -1,12 +1,20 @@
 import React, {useEffect, useState} from "react";
-import {FaQuestionCircle} from "react-icons/all";
+import {FaQuestionCircle} from "react-icons/fa";
 
 import {useStoreActions, useStoreState} from "easy-peasy";
 import {BasicDialog} from "../Helpers/Dialog";
-import {
-  DialogActions, DialogContent, Card, CardContent, Grid, Button, Box, Chip,
-  Badge, Typography, List, ListItem, ListItemText, Divider
-} from "@material-ui/core";
+import DialogActions from "@material-ui/core/DialogActions";
+import DialogContent from "@material-ui/core/DialogContent";
+import Card from "@material-ui/core/Card";
+import CardContent from "@material-ui/core/CardContent";
+import Grid from "@material-ui/core/Grid";
+import Button from "@material-ui/core/Button";
+import Chip from "@material-ui/core/Chip";
+import Badge from "@material-ui/core/Badge";
+import Typography from "@material-ui/core/Typography";
+import List from "@material-ui/core/List";
+import ListItem from "@material-ui/core/ListItem";
+import ListItemText from "@material-ui/core/ListItemText";
 import CommentIcon from '@material-ui/icons/Comment';
 import Tabs from '../Helpers/Tabs'
 import {makeForm, yup, Checkbox2, TextField2} from "../Helpers/Form";
@@ -233,12 +241,16 @@ export function NotesNotifs({entry_id}) {
   const nNotifs = notifs?.length || 0
   if (!(nNotes || nNotifs)) {return null}
 
-  return <div>
-    <Badge badgeContent={nNotifs} color="primary">
+  return <>
+    <Button
+      color={nNotifs ? "primary" : "inherit"}
+      startIcon={<Badge badgeContent={nNotifs} color="primary">
+        <CommentIcon />
+      </Badge>}
+    >
       {nNotes}
-      <CommentIcon />
-    </Badge>
-  </div>
+    </Button>
+  </>
 }
 
 export function NotesList({entry_id}) {

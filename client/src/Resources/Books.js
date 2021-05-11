@@ -1,10 +1,6 @@
 import React, {useEffect, useState} from "react";
 import _ from 'lodash'
 import {
-  Nav,
-  NavDropdown,
-} from "react-bootstrap";
-import {
   FaTags,
   FaUser,
   FaThumbsUp,
@@ -15,17 +11,17 @@ import {
 } from "react-icons/fa"
 
 import {useStoreState, useStoreActions} from "easy-peasy";
-import {
-  CircularProgress,
-  Tooltip,
-  Alert,
-  Typography,
-  Card,
-  CardHeader,
-  CardContent,
-  CardActions,
-  Button, IconButton, Divider
-} from "@material-ui/core";
+import CircularProgress from "@material-ui/core/CircularProgress";
+import Tooltip from "@material-ui/core/Tooltip";
+import Typography from "@material-ui/core/Typography";
+import Card from "@material-ui/core/Card";
+import CardHeader from "@material-ui/core/CardHeader";
+import CardContent from "@material-ui/core/CardContent";
+import CardActions from "@material-ui/core/CardActions";
+import IconButton from "@material-ui/core/IconButton";
+import Divider from "@material-ui/core/Divider";
+import {Menu2} from '../Helpers/Form'
+import {Alert2} from '../Helpers/Misc'
 
 export default function Books() {
   const emit = useStoreActions(a => a.ws.emit)
@@ -34,6 +30,17 @@ export default function Books() {
   const books = useStoreState(s => s.ws.data['insights/books/get'])
   const [shelf, setShelf] = useState('ai')  // like|dislike|already_read|remove|recommend
   const [removed, setRemoved] = useState([])
+
+  const shelves = [
+    {value: "ai", label: "AI Recommends"},
+    {value: "cosine", label: "Direct (Cosine) Matches"},
+    {value: "like", label: "Liked"},
+    {value: "recommend", label: "Therapist Recommends"},
+    {value: "already_read", label: "Already Read"},
+    {value: "dislike", label: "Disliked"},
+    {value: "remove", label: "Removed"},
+  ]
+  const shelvesObj = _.keyBy(shelves, 'value')
 
   useEffect(() => {
     emit(["insights/books/get", {shelf}])
@@ -61,20 +68,6 @@ export default function Books() {
       </IconButton>
     </Tooltip>
   )
-
-  const renderTabs = () => <>
-    <Nav activeKey={shelf} onSelect={changeShelf}>
-      <NavDropdown title="Shelves">
-        <NavDropdown.Item eventKey="ai">AI Recommends</NavDropdown.Item>
-        <NavDropdown.Item eventKey="cosine">Direct (Cosine) Matches</NavDropdown.Item>
-        <NavDropdown.Item eventKey="like">Liked</NavDropdown.Item>
-        <NavDropdown.Item eventKey="recommend">Therapist Recommends</NavDropdown.Item>
-        <NavDropdown.Item eventKey="already_read">Already Read</NavDropdown.Item>
-        <NavDropdown.Item eventKey="dislike">Disliked</NavDropdown.Item>
-        <NavDropdown.Item eventKey="remove">Removed</NavDropdown.Item>
-      </NavDropdown>
-    </Nav>
-  </>
 
   const renderBook = b => (
     <Card key={b.id} elevation={0}>
@@ -111,17 +104,20 @@ export default function Books() {
 
   return <>
     <div>
-      {renderTabs()}
+      <Menu2
+        label={`Shelf: ${shelvesObj[shelf].label}`}
+        options={shelves}
+        onChange={changeShelf}
+      />
       {booksGet?.sending && <CircularProgress />}
     </div>
-    <div>
-      <Alert severity='info'>
-        <div>AI-recommended self-help books based on your entries.</div>
-        <small className="text-muted">
-          <div>Use thumbs <FaThumbsUp /> to improve AI's recommendations. Wikipedia & other resources coming soon. If the recommendations are bad, <a href="https://github.com/lefnire/gnothi/issues/101" target="_blank">try this</a>.</div>
-        </small>
-      </Alert>
-      {books_}
-    </div>
+    <Alert2
+      noTop
+      severity='info'
+      title="AI-recommended self-help books based on your entries."
+    >
+      Use thumbs <FaThumbsUp /> to improve AI's recommendations. Wikipedia & other resources coming soon. If the recommendations are bad, <a href="https://github.com/lefnire/gnothi/issues/101" target="_blank">try this</a>.
+    </Alert2>
+    {books_}
   </>
 }

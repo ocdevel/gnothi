@@ -12,41 +12,33 @@ import {useStoreState, useStoreActions} from "easy-peasy";
 import {
   FaArrowLeft,
   FaArrowRight,
-  FaCalendar,
-  FaChartLine,
   FaExclamationTriangle,
   FaRegCalendarAlt
-} from "react-icons/all";
+} from "react-icons/fa";
 import axios from "axios";
 import fileDownload from 'js-file-download';
-import {
-  Card,
-  Grid,
-  CardContent,
-  CardHeader,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  Button,
-  Typography,
-  ButtonGroup,
-  CardActions,
-  Divider,
-  Tooltip,
-  CircularProgress,
-  Alert,
-  Badge,
-  Box,
-  IconButton,
-  ButtonBase,
-  TextField,
-  FormControl,
-  FormLabel,
-  RadioGroup,
-  FormControlLabel, Radio
-} from "@material-ui/core";
-import {Assessment, BarChart, ExpandMore} from "@material-ui/icons";
+import Card from "@material-ui/core/Card";
+import Grid from "@material-ui/core/Grid";
+import CardContent from "@material-ui/core/CardContent";
+import CardHeader from "@material-ui/core/CardHeader";
+import Accordion from "@material-ui/core/Accordion";
+import AccordionSummary from "@material-ui/core/AccordionSummary";
+import AccordionDetails from "@material-ui/core/AccordionDetails";
+import Button from "@material-ui/core/Button";
+import Typography from "@material-ui/core/Typography";
+import ButtonGroup from "@material-ui/core/ButtonGroup";
+import Tooltip from "@material-ui/core/Tooltip";
+import CircularProgress from "@material-ui/core/CircularProgress";
+import Alert from "@material-ui/core/Alert";
+import Badge from "@material-ui/core/Badge";
+import ButtonBase from "@material-ui/core/ButtonBase";
+import TextField from "@material-ui/core/TextField";
+import FormControlLabel from "@material-ui/core/FormControlLabel";
+import Radio from "@material-ui/core/Radio";
+import BarChart from "@material-ui/icons/BarChart";
+import ExpandMore from "@material-ui/icons/ExpandMore";
 import {Checkbox2} from "../Helpers/Form";
+import {Alert2} from "../Helpers/Misc";
 
 const fmt = 'YYYY-MM-DD'
 const iso = (day=null) => {
@@ -138,22 +130,22 @@ function FieldsAdvanced({fetchFieldEntries}) {
     >Download field_entries.csv</Button>
     <Typography variant='caption'>Export your field-entries to CSV</Typography>
     {hasDupes && <>
-      <Alert severity='warning'>
+      <Alert2 severity='warning'>
         <Typography variant='caption'>Your field entries were effected by the <a href='https://github.com/lefnire/gnothi/issues/20' target='_blank'>duplicates bug</a>. See that link for details and what to do.</Typography>
-      <hr />
-      <Button
-        {...btnOpts}
-        onClick={() => downloadCsv('old')}
-      >Download field_entries_old.csv</Button>
-        <Typography variant='caption'>Export your original field-entries (before duplicates were fixed) to CSV</Typography>
-      <Button
-        {...btnOpts}
-        variant='outlined'
-        color='secondary'
-        onClick={acceptDupes}
-      >Accept Gnothi's fix</Button>
+        <hr />
+        <Button
+          {...btnOpts}
+          onClick={() => downloadCsv('old')}
+        >Download field_entries_old.csv</Button>
+          <Typography variant='caption'>Export your original field-entries (before duplicates were fixed) to CSV</Typography>
+        <Button
+          {...btnOpts}
+          variant='outlined'
+          color='secondary'
+          onClick={acceptDupes}
+        >Accept Gnothi's fix</Button>
         <Typography variant='caption'>You can click through each day to find duplicates and select the correct entry, or click this to accept Gnothi's chose duplicate fixes for all days.</Typography>
-      </Alert>
+      </Alert2>
     </>}
     <Button
       {...btnOpts}
@@ -314,7 +306,7 @@ export default function Fields() {
   }
 
   const renderDupes = (f, fe) => {
-    return <Alert severity='warning' style={{margin: 0, padding: 0}}>
+    return <Alert severity='warning'>
       <div><FaExclamationTriangle /> Duplicates <a href="https://github.com/lefnire/gnothi/issues/20" target="_blank">bug</a>! Pick the one that's correct.</div>
       {renderDupe(fe)}
       {fe.dupes.map(renderDupe)}

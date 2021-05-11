@@ -2,7 +2,12 @@ import React, {useEffect, useState} from "react";
 
 import {useStoreState, useStoreActions} from 'easy-peasy'
 import {BasicDialog} from "../Helpers/Dialog";
-import {DialogActions, DialogContent, Typography, Button, TextField, Grid, Box} from "@material-ui/core";
+import DialogActions from "@material-ui/core/DialogActions";
+import DialogContent from "@material-ui/core/DialogContent";
+import Typography from "@material-ui/core/Typography";
+import Button from "@material-ui/core/Button";
+import TextField from "@material-ui/core/TextField";
+import Box from "@material-ui/core/Box";
 
 function DisconnectModal({show, close}) {
   const emit = useStoreActions(a => a.ws.emit)

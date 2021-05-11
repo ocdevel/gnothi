@@ -1,5 +1,4 @@
 import React, {useState, useEffect, useRef} from 'react'
-import Amplify, {Auth} from 'aws-amplify';
 import CssBaseline from '@material-ui/core/CssBaseline';
 import StyledEngineProvider from '@material-ui/core/StyledEngineProvider';
 
@@ -31,11 +30,8 @@ import Resources from "./Resources";
 import Entries from "./Entries/Entries";
 import Groups from "./Groups";
 import staticRoutes from "./Static";
-import _ from "lodash";
-import moment from "moment-timezone";
 import {SharingModal} from "./Account/Sharing";
 import Drawer from "./Navbar/Drawer";
-import {Container} from '@material-ui/core'
 
 function LoggedOut() {
   return <Switch>

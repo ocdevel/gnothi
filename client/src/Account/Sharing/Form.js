@@ -7,21 +7,21 @@ import {useStoreActions, useStoreState} from "easy-peasy";
 import Groups from "./Groups";
 import Users from './Users'
 import Tags from "../../Tags";
-import Error from "../../Error";
-import {AiOutlineWarning} from "react-icons/all";
+import {AiOutlineWarning} from "react-icons/ai";
 import {trueObj} from "../../Helpers/utils";
 import {EE} from '../../redux/ws'
-import {
-  Button,
-  Card,
-  CardHeader,
-  CardContent,
-  CardActions,
-  Grid,
-  Checkbox,
-  FormHelperText,
-  FormControl, FormControlLabel, Box, Divider, Typography
-} from '@material-ui/core'
+import Button from '@material-ui/core/Button'
+import Card from '@material-ui/core/Card'
+import CardContent from '@material-ui/core/CardContent'
+import CardActions from '@material-ui/core/CardActions'
+import Grid from '@material-ui/core/Grid'
+import Checkbox from '@material-ui/core/Checkbox'
+import FormHelperText from '@material-ui/core/FormHelperText'
+import FormControl from '@material-ui/core/FormControl'
+import FormControlLabel from '@material-ui/core/FormControlLabel'
+import Box from '@material-ui/core/Box'
+import Divider from '@material-ui/core/Divider'
+import Typography from '@material-ui/core/Typography'
 
 const profile_fields = {
   username: {

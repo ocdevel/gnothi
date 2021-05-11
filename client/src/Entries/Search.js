@@ -1,7 +1,8 @@
 import React, {useCallback, useState} from "react";
 import _ from "lodash";
-import {Search as SearchIcon} from "@material-ui/icons";
-import {TextField, InputAdornment, Box} from "@material-ui/core"
+import SearchIcon from "@material-ui/icons/Search";
+import TextField from "@material-ui/core/TextField"
+import InputAdornment from "@material-ui/core/InputAdornment"
 
 /**
  * Entries() is expensive, so isolate <Search /> and only update the Entries.search

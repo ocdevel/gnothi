@@ -1,18 +1,17 @@
 import EditGroup from "./EditGroup";
 import React, {useEffect, useState} from "react";
-import {Link, useHistory} from "react-router-dom";
+import {useHistory} from "react-router-dom";
 import {useStoreActions, useStoreState} from "easy-peasy";
 import {FaPlus, FaRegComments} from "react-icons/fa";
-import {EE} from "../redux/ws";
 import {timeAgo} from "../Helpers/utils";
-import Error from "../Error";
 import ReactMarkdown from "react-markdown";
-import Group from "./Group";
-import _ from 'lodash'
-import moment from 'moment'
-import {FaUsers} from "react-icons/all";
+import {FaUsers} from "react-icons/fa";
 import {BasicDialog} from "../Helpers/Dialog";
-import {Button, DialogActions, DialogContent, Card, CardContent, CardHeader} from "@material-ui/core";
+import Button from "@material-ui/core/Button";
+import DialogContent from "@material-ui/core/DialogContent";
+import Card from "@material-ui/core/Card";
+import CardContent from "@material-ui/core/CardContent";
+import CardHeader from "@material-ui/core/CardHeader";
 
 export function GroupModal({show, close, gid}) {
   const history = useHistory()

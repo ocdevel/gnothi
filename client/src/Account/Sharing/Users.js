@@ -1,10 +1,12 @@
 import {useStoreActions, useStoreState} from "easy-peasy";
-import React, {useEffect, useState} from "react";
-import {FaTrash} from "react-icons/fa";
-import {EE} from '../../redux/ws'
+import React, {useEffect} from "react";
 import {trueKeys} from "../../Helpers/utils";
 import Error from "../../Error";
-import {Grid, Button, FormHelperText, Typography, Chip} from '@material-ui/core'
+import Grid from '@material-ui/core/Grid'
+import Button from '@material-ui/core/Button'
+import FormHelperText from '@material-ui/core/FormHelperText'
+import Typography from '@material-ui/core/Typography'
+import Chip from '@material-ui/core/Chip'
 import {TextField2, makeForm, yup} from "../../Helpers/Form";
 
 const emailSchema = yup.object().shape({

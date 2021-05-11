@@ -2,13 +2,20 @@ import {Link, useHistory, useParams} from "react-router-dom";
 import React, {useState, useEffect} from "react";
 import {useStoreActions, useStoreState} from "easy-peasy";
 import _ from 'lodash'
-import emoji from 'react-easy-emoji'
-import {FaBan, FaCrown, FaPencilAlt, FaUsers} from "react-icons/all";
+import {FaBan, FaCrown} from "react-icons/fa";
 import EditGroup from "./EditGroup";
 import InviteMembers from "./InviteMembers";
 import {FaTrash} from "react-icons/fa";
-import {onlineIcon, getUname} from "./utils";
-import {Card, CardContent, CardHeader, Button} from '@material-ui/core'
+import {onlineIcon} from "./utils";
+import Card from '@material-ui/core/Card'
+import CardContent from '@material-ui/core/CardContent'
+import CardHeader from '@material-ui/core/CardHeader'
+import Button from '@material-ui/core/Button'
+import Typography from '@material-ui/core/Typography'
+import {Stack2} from "../Helpers/Misc";
+
+import GroupIcon from '@material-ui/icons/Group';
+import CreateIcon from '@material-ui/icons/Create';
 
 
 const disabled = ['show_avatar']
@@ -44,67 +51,73 @@ function Me() {
 
   function renderMembership() {
     if (!role || role === 'banned') {
-      return <CardContent>Not a member
+      return <>
+        <Typography>Not a member</Typography>
         <Button
           size='small'
-          sx={{marginRight: 'auto'}}
           variant='outlined'
           color='primary'
           onClick={joinGroup}
         >
           Join Group
         </Button>
-      </CardContent>
+      </>
     }
     if (role === 'owner') {
-      return <div>You are the owner</div>
+      return <Typography>You are the owner</Typography>
     }
     if (role === 'member') {
-      return <div>You are a member
+      return <>
+      <Typography>You are a member</Typography>
       <Button
         size='small'
-        className='float-right text-danger p-0'
+        variant='outlined'
         color='secondary'
         onClick={leaveGroup}
       >
         Leave Group
       </Button>
-    </div>
+    </>
     }
   }
 
   function renderPrivacy() {
     if (!shareId) {
-      return <div>
-        <p className='small'>Your username is auto-generated (unique in each group). You can change this by sharing your info with this group. You can also share your entries (limited by specific tags) with the group, if you'd like input!</p>
+      return <>
+        <Typography variant='body2'>Your username is auto-generated (unique in each group). You can change this by sharing your info with this group. You can also share your entries (limited by specific tags) with the group, if you'd like input!</Typography>
         <Button
-          variant='primary'
-          size='sm'
+          color='primary'
+          variant='contained'
+          size='small'
           onClick={gotoShare}
         >Share with group</Button>
-      </div>
+      </>
     }
     const sharing = _.intersection(_.keys(me.user), _.keys(me.share))
-    return <div className='small'>
-      You are sharing:
-      <ul>
-        <li>Attributes: {sharing.join(', ')}</li>
-      </ul>
+    return <>
+      <div>
+        <Typography>You are sharing:</Typography>
+        <Typography variant='body2'>Attributes: {sharing.join(', ')}</Typography>
+      </div>
       <Button
-        variant='secondary'
-        size='sm'
+        variant='outlined'
+        color='primary'
+        size='small'
         onClick={gotoShare}
       >Modify Sharing</Button>
-    </div>
+    </>
   }
 
-  return <Card className='mb-2'>
-    <CardHeader title={<Member row={me} />} />
-    <CardContent>
-      {renderMembership()}
-      {renderPrivacy()}
+  return <>
+    <CardHeader title="Membership" />
+    <CardContent sx={{pt:0}}>
+      <Stack2>
+        <Typography><Member row={me} /></Typography>
+        {renderMembership()}
+        {renderPrivacy()}
+      </Stack2>
     </CardContent>
-  </Card>
+  </>
 }
 
 function Member({row, isOwner, gid}) {
@@ -123,12 +136,24 @@ function Member({row, isOwner, gid}) {
     {user_group?.online && <span className='mr-2'>{onlineIcon}</span>}
     {user_group?.role === 'owner' && <FaCrown />}
     {user.display_name}
-    {isOwner && <span className='member-controls ml-2'>
-      <Button variant='link' className='text-danger' size='sm' onClick={remove}>
-        <FaTrash /> Remove
+    {isOwner && <span className='member-controls'>
+      <Button
+        variant='link'
+        color='secondary'
+        size='small'
+        onClick={remove}
+        startIcon={<FaTrash />}
+      >
+        Remove
       </Button>
-      <Button variant='link' className='text-danger' size='sm' onClick={ban}>
-        <FaBan /> Ban
+      <Button
+        variant='link'
+        color='secondary'
+        size='small'
+        onClick={ban}
+        startIcon={<FaBan />}
+      >
+        Ban
       </Button>
     </span>}
   </div>
@@ -142,16 +167,18 @@ function Members({gid, isOwner}) {
   function renderMember(m) {
     const member = obj?.[m]
     if (!member?.user?.id) {return null}
-    return <li key={member.user.id}>
+    return <div key={member.user.id}>
       <Member row={member} isOwner={isOwner} gid={gid} />
-    </li>
+    </div>
   }
 
   return <>
-    <CardHeader subtitle="Members" />
-    <ul className="list-unstyled">
-      {arr.map(renderMember)}
-    </ul>
+    <CardHeader title="Members"/>
+    <CardContent sx={{pt:0}}>
+      <div>
+        {arr.map(renderMember)}
+      </div>
+    </CardContent>
   </>
 }
 
@@ -170,43 +197,40 @@ export default function Sidebar() {
 
   function ownerControls() {
     if (!isOwner) {return null}
-    return <div>
-      <div>
-        <Button
-          variant='outline-secondary'
-          className='w-100 mb-2'
-          size='sm'
-          onClick={toggleEdit}
-        >
-          <FaPencilAlt /> Edit Group
-        </Button>
-      </div>
-      <div>
-        <Button
-          variant='outline-secondary'
-          className='w-100'
-          size='sm'
-          onClick={toggleInvite}
-        >
-          <FaUsers /> Invite Members
-        </Button>
-      </div>
-    </div>
+    return <>
+      <Button
+        variant='outlined'
+        onClick={toggleEdit}
+        startIcon={<CreateIcon />}
+      >
+        Edit Group
+      </Button>
+      <Button
+        variant='outlined'
+        onClick={toggleInvite}
+        startIcon={<GroupIcon />}
+      >
+        Invite Members
+      </Button>
+    </>
   }
 
   return <div>
     {showEdit && <EditGroup show={true} close={toggleEdit} group={group} />}
     {showInvite && <InviteMembers close={toggleInvite} gid={gid} />}
-    <Card className='mb-2'>
-      <CardHeader title={group.title} />
+    <Card>
+      <CardHeader
+        title={group.title}
+        subheader={group.text_short}
+        sx={{pb:0}}
+      />
       <CardContent>
-        <p>{group.text_short}</p>
-        {ownerControls()}
-        <hr />
-        <Members gid={gid} isOwner={isOwner} />
+        <Stack2>
+          {ownerControls()}
+        </Stack2>
       </CardContent>
+      <Members gid={gid} isOwner={isOwner} />
+      <Me />
     </Card>
-
-    <Me />
   </div>
 }

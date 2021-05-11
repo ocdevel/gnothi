@@ -1,6 +1,9 @@
 import {useStoreActions, useStoreState} from "easy-peasy";
 import React from "react";
-import {Checkbox, FormControl, FormControlLabel, FormGroup, Typography} from "@material-ui/core";
+import Checkbox from "@material-ui/core/Checkbox";
+import FormControl from "@material-ui/core/FormControl";
+import FormControlLabel from "@material-ui/core/FormControlLabel";
+import Typography from "@material-ui/core/Typography";
 
 export default function Groups({groups, setGroups}) {
   const emit = useStoreActions(a => a.ws.emit)

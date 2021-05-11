@@ -8,14 +8,20 @@ import {
   FaTags,
   FaTextHeight,
   FaLock
-} from "react-icons/fa/index"
+} from "react-icons/fa"
 import React, {useState} from "react"
 import {useStoreState, useStoreActions} from "easy-peasy";
 import {aiStatusEmoji} from "../Helpers/utils"
 import _ from 'lodash'
-import {Alert, Box, CardContent, CardHeader, InputAdornment, Paper, TextField, Typography} from '@material-ui/core'
-import {Card, Grid} from '@material-ui/core'
-import {CalendarToday} from "@material-ui/icons";
+import Alert from '@material-ui/core/Alert'
+import CardContent from '@material-ui/core/CardContent'
+import CardHeader from '@material-ui/core/CardHeader'
+import InputAdornment from '@material-ui/core/InputAdornment'
+import TextField from '@material-ui/core/TextField'
+import Card from '@material-ui/core/Card'
+import Grid from '@material-ui/core/Grid'
+import CalendarToday from "@material-ui/icons/CalendarToday";
+import {Alert2} from "../Helpers/Misc";
 
 const tools = [
   {
@@ -74,27 +80,25 @@ export default function Insights() {
 
   const renderStatus = () => {
     if (aiStatus === 'on') {return null}
-    return <Alert severity='warning' sx={{my:2}}>
-      <Typography>
-        {aiStatusEmoji(aiStatus)} Can't use tools yet, AI waking up. Check back in 3.
-      </Typography>
-      <Typography variant='caption'>
-        The AI-based features require expensive servers. I have them turned off when nobody's using the site, and on when someone's back. It takes about 3 minutes to wake. The status {aiStatusEmoji(aiStatus)} icon is always visible top-left of website.
-      </Typography>
-    </Alert>
+    return <Alert2
+      severity='warning'
+      title={<>{aiStatusEmoji(aiStatus)} Can't use tools yet, AI waking up. Check back in 3.</>}
+    >
+      The AI-based features require expensive servers. I have them turned off when nobody's using the site, and on when someone's back. It takes about 3 minutes to wake. The status {aiStatusEmoji(aiStatus)} icon is always visible top-left of website.
+    </Alert2>
   }
 
   return <>
     {renderDaysForm()}
-    <Alert severity='info' sx={{my:2}}>
-      <Typography>Tools use AI for insights on your entries.</Typography>
-      <Typography variant='caption'>
-        <div>Limit which entries are processed by choosing <FaTags /> tags and <code>#Days</code> above.</div>
-        {nTools < 3 && nTools > 0 && <div>
-          <FaLock /> More AI tools unlock as you add entries
-        </div>}
-      </Typography>
-    </Alert>
+    <Alert2
+      severity='info'
+      title='Tools use AI for insights on your entries.'
+    >
+      <div>Limit which entries are processed by choosing <FaTags /> tags and <code>#Days</code> above.</div>
+      {nTools < 3 && nTools > 0 && <div>
+        <FaLock /> More AI tools unlock as you add entries
+      </div>}
+    </Alert2>
 
     {renderStatus()}
 

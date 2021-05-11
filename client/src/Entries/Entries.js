@@ -7,13 +7,13 @@ import {EntryPage} from "./Entry"
 import {useStoreState, useStoreActions} from "easy-peasy";
 import {NotesAll, NotesNotifs} from "./Notes";
 import {MainTags} from "../Tags";
-import MediaQuery from 'react-responsive'
 import Fields from "../Fields/Fields";
 import Search from './Search'
 
-import {Add as AddIcon} from '@material-ui/icons'
-import {List, ListItem, ListItemIcon, ListItemText, Divider, Typography, Fab,
-  Pagination, Grid, Button, Alert, Card} from '@material-ui/core'
+import Pagination from '@material-ui/core/Pagination'
+import Grid from '@material-ui/core/Grid'
+import Button from '@material-ui/core/Button'
+import {Alert2} from "../Helpers/Misc";
 
 export default function Entries({group_id=null}) {
   const as = useStoreState(s => s.user.as)
@@ -49,7 +49,7 @@ export default function Entries({group_id=null}) {
 
   const renderEntries = () => {
     if (!filtered.length) {
-      return <Alert severity='info'>No entries. If you're a new user, click <Button color="primary" size='small' variant='contained' disabled>New Entry</Button> above. If you're a therapist, click your email top-right and select a client; you'll then be in that client's shoes.</Alert>
+      return <Alert2 severity='info'>No entries. If you're a new user, click <Button color="primary" size='small' variant='contained' disabled>New Entry</Button> above. If you're a therapist, click your email top-right and select a client; you'll then be in that client's shoes.</Alert2>
     }
 
     const pageSize = 10

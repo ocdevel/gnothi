@@ -3,8 +3,11 @@ import _ from "lodash";
 import {BasicDialog} from "../Helpers/Dialog";
 
 import {useStoreActions, useStoreState} from "easy-peasy";
-import {DialogActions, DialogContent, Button, Grid} from "@material-ui/core";
-import {yup, makeForm, TextField2, Checkbox2, Autocomplete2, Select2} from "../Helpers/Form";
+import DialogActions from "@material-ui/core/DialogActions";
+import DialogContent from "@material-ui/core/DialogContent";
+import Button from "@material-ui/core/Button";
+import Grid from "@material-ui/core/Grid";
+import {yup, makeForm, TextField2, Select2} from "../Helpers/Form";
 
 const schema = yup.object().shape({
   name: yup.string().min(1),

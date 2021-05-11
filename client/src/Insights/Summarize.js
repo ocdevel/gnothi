@@ -3,7 +3,13 @@ import {sent2face} from "../Helpers/utils"
 import {Spinner} from "./utils"
 
 import {useStoreState, useStoreActions} from "easy-peasy";
-import {Button, Card, CardContent, Divider, Grid, TextField, Typography} from "@material-ui/core";
+import Button from "@material-ui/core/Button";
+import Card from "@material-ui/core/Card";
+import CardContent from "@material-ui/core/CardContent";
+import Divider from "@material-ui/core/Divider";
+import Grid from "@material-ui/core/Grid";
+import TextField from "@material-ui/core/TextField";
+import Typography from "@material-ui/core/Typography";
 
 export default function Summarize() {
   const aiStatus = useStoreState(s => s.ws.data['jobs/status'].status)

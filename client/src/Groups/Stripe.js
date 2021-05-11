@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
 import {CardElement, useStripe, useElements, Elements} from "@stripe/react-stripe-js";
-import {Form, Button} from 'react-bootstrap'
 import {loadStripe} from "@stripe/stripe-js";
 import {useStoreState, useStoreActions} from "easy-peasy";
 import Error from "../Error";
-import {makeForm, yup} from '../Helpers/Form'
+import {makeForm, TextField2, yup} from '../Helpers/Form'
+import Button from '@material-ui/core/Button'
 
 
 const stripeSchema = yup.object().shape({
@@ -84,47 +84,44 @@ function CheckoutForm({submit, product}) {
     })
 
   return <>
-    <Form onSubmit={form.handleSubmit(handleSubmit)}>
-      <Form.Group controlId="formName">
-        <Form.Control
-          type="text"
-          {...form.register("name")}
-          autoComplete="cardholder"
-          placeholder="Name on card"
-        />
-      </Form.Group>
-      <Form.Group controlId="formCard">
-        <CardElement
-          className="sr-input sr-card-element form-control pt-2"
-          options={{style: {
-            base: {
-              color: "#32325d",
-              fontFamily: '"Helvetica Neue", Helvetica, sans-serif',
-              fontSmoothing: "antialiased",
-              fontSize: "16px",
-              "::placeholder": {
-                color: "#aab7c4",
-              },
+    <form onSubmit={form.handleSubmit(handleSubmit)}>
+      <TextField2
+        name='name'
+        label='Name on card'
+        autoComplete='cardholder'
+        form={form}
+      />
+      <CardElement
+        className="sr-input sr-card-element form-control pt-2"
+        options={{style: {
+          base: {
+            color: "#32325d",
+            fontFamily: '"Helvetica Neue", Helvetica, sans-serif',
+            fontSmoothing: "antialiased",
+            fontSize: "16px",
+            "::placeholder": {
+              color: "#aab7c4",
             },
-            invalid: {
-              color: "#fa755a",
-              iconColor: "#fa755a",
-            },
-          }}}
-        />
-      </Form.Group>
+          },
+          invalid: {
+            color: "#fa755a",
+            iconColor: "#fa755a",
+          },
+        }}}
+      />
 
       <Error action={/payments.*/g} codes={[400, 401, 403, 500]} />
       <Error message={status.error} />
 
       <Button
-        variant='primary'
+        color='primary'
+        variant='outlined'
         type='submit'
-        className='float-right'
+        sx={{ml: 'auto'}}
         disabled={status.processing || !clientSecret || !stripe}
       >
         {status.processing ? 'Processing' : <>Pay {amt}</>}
       </Button>
-    </Form>
+    </form>
   </>
 }

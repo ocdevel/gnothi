@@ -1,7 +1,6 @@
 import Amplify from 'aws-amplify';
 import {AmplifyAuthenticator, AmplifySignOut, AmplifySignUp, AmplifySignIn} from "@aws-amplify/ui-react";
 import { AuthState, onAuthUIStateChange } from '@aws-amplify/ui-components';
-import axios from "axios";
 import {useStoreActions} from "easy-peasy";
 import React, {useState, useEffect} from "react";
 import _ from "lodash";

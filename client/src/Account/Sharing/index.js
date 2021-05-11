@@ -2,15 +2,15 @@ import React, {useEffect, useState} from "react"
 import _ from 'lodash'
 import ShareForm from './Form'
 import {useStoreState, useStoreActions} from 'easy-peasy'
-import {EE} from '../../redux/ws'
-import {FaPlus, FaRegComments, FaUser} from "react-icons/fa";
-import {trueObj} from "../../Helpers/utils";
-import {FaArrowLeft} from "react-icons/all";
-import {Card, CardContent, Button} from "@material-ui/core";
+import {FaRegComments, FaUser} from "react-icons/fa";
+import Card from "@material-ui/core/Card";
+import CardContent from "@material-ui/core/CardContent";
+import Button from "@material-ui/core/Button";
+import DialogContent from "@material-ui/core/DialogContent";
 
 import {FullScreenDialog} from "../../Helpers/Dialog";
-import {DialogContent} from "@material-ui/core";
-import {Add, ArrowBack} from "@material-ui/icons";
+import Add from "@material-ui/icons/Add";
+import ArrowBack from "@material-ui/icons/ArrowBack";
 
 function Share({s}) {
   let myGroups = useStoreState(s => s.ws.data['groups/mine/get']?.obj)

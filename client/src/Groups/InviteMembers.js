@@ -2,7 +2,11 @@ import {useStoreActions, useStoreState} from "easy-peasy";
 import React, {useEffect} from "react";
 import Error from "../Error";
 import {BasicDialog} from "../Helpers/Dialog";
-import {Button, DialogActions, DialogContent, Alert, FormGroup} from "@material-ui/core";
+import Button from "@material-ui/core/Button";
+import DialogActions from "@material-ui/core/DialogActions";
+import DialogContent from "@material-ui/core/DialogContent";
+import Alert from "@material-ui/core/Alert";
+import FormGroup from "@material-ui/core/FormGroup";
 import {yup, makeForm, TextField2} from "../Helpers/Form";
 
 const schema = yup.object().shape({

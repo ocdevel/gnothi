@@ -1,5 +1,5 @@
 import {
-  FaBalanceScale, FaBook,
+  FaBalanceScale,
   FaBug,
   FaCouch,
   FaDragon,
@@ -8,11 +8,11 @@ import {
   FaMicrophone,
   FaQuestionCircle,
   FaReddit,
-  MdEmail
-} from "react-icons/all";
+} from "react-icons/fa";
+import {MdEmail} from 'react-icons/md'
 import React from "react";
 import {FullScreenDialog} from "../Helpers/Dialog";
-import {DialogContent} from "@material-ui/core";
+import DialogContent from "@material-ui/core/DialogContent";
 
 export default function Links({close}) {
   function renderLinks() {

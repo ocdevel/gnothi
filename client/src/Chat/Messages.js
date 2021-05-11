@@ -2,7 +2,9 @@ import {useStoreActions, useStoreState} from "easy-peasy";
 import React, {useLayoutEffect, useRef, useState} from "react";
 import {timeAgo} from "../Helpers/utils";
 import {onlineIcon, getUname} from "../Groups/utils";
-import {Grid, Button, Alert} from '@material-ui/core'
+import Grid from '@material-ui/core/Grid'
+import Button from '@material-ui/core/Button'
+import Alert from '@material-ui/core/Alert'
 import {yup, makeForm, TextField2} from '../Helpers/Form'
 
 const schema = yup.object({

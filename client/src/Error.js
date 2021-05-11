@@ -1,7 +1,7 @@
 import React, {useState, useEffect} from 'react'
 import {useStoreState} from "easy-peasy";
 import {EE} from './redux/ws'
-import {Alert} from '@material-ui/core'
+import Alert from '@material-ui/core/Alert'
 
 export default function Error({
   message=null,  // manual
@@ -40,7 +40,7 @@ export default function Error({
   if (!details.length) {return null}
 
   return (
-    <Alert severity="danger" onClose={clearDetails} dismissible>
+    <Alert sx={{mb: 2}} severity="danger" onClose={clearDetails} dismissible>
       {/*<Alert.Heading>Oh snap! You got an error!</Alert.Heading>*/}
       {details.map(d => <div key={d}>{d}</div>)}
     </Alert>

@@ -2,9 +2,10 @@ import {useStoreActions, useStoreState} from "easy-peasy";
 import {FaAmazon} from "react-icons/fa";
 import {Link} from "react-router-dom";
 import React, {useEffect} from "react";
-import {FaBook} from "react-icons/all";
+import {FaBook} from "react-icons/fa";
 import {FullScreenDialog} from "../Helpers/Dialog";
-import {DialogContent, Alert} from "@material-ui/core";
+import DialogContent from "@material-ui/core/DialogContent";
+import {Alert2} from "../Helpers/Misc";
 
 
 export default function TopBooks({close}) {
@@ -18,7 +19,9 @@ export default function TopBooks({close}) {
   return <>
     <FullScreenDialog open={true} onClose={close} title="Gnothi members' top-rated books">
       <DialogContent>
-        <Alert severity='info'>To see books recommended to you based on your journal entries, go to <Link to='/resources'><FaBook /> Resources</Link>. Below are some (non-personalized) popular books in the community.</Alert>
+        <Alert2 severity='info' noTop>
+          To see books recommended to you based on your journal entries, go to <Link to='/resources'><FaBook /> Resources</Link>. Below are some (non-personalized) popular books in the community.
+        </Alert2>
         {books?.map((b, i) => <div key={i}>
           <a href={b.amazon} target='_blank'>{b.title}</a> -{' '}
           <small className='text-muted'>

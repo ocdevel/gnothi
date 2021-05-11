@@ -5,16 +5,14 @@ import {
   useHistory, useParams
 } from "react-router-dom";
 import {
-  FaRobot,
-  FaRegListAlt,
-  FaBook, FaRegComments, FaUser,
+  FaUser,
 } from 'react-icons/fa'
 import './style.scss'
 
 import {useStoreState, useStoreActions} from "easy-peasy";
 import {
   RiSpyLine
-} from "react-icons/all";
+} from "react-icons/ri";
 import TopBooks from "./TopBooks";
 import Links from "./Links";
 import ProfileModal from "../Account/Profile";
@@ -22,12 +20,19 @@ import ProfileModal from "../Account/Profile";
 import { makeStyles } from '@material-ui/core/styles';
 import ExpandLess from '@material-ui/icons/ExpandLess';
 import ExpandMore from '@material-ui/icons/ExpandMore';
-import {Highlight, MenuBook, PostAdd, Group, GroupAdd, Chat} from "@material-ui/icons";
-import {
-  Divider, ListSubheader, List, ListItem,
-  ListItemIcon, ListItemText, Collapse, Typography, Badge
-} from "@material-ui/core";
-import Drawer from "@material-ui/core/Drawer";
+import Highlight from "@material-ui/icons/Highlight";
+import MenuBook from "@material-ui/icons/MenuBook";
+import PostAdd from "@material-ui/icons/PostAdd";
+import GroupAdd from "@material-ui/icons/GroupAdd";
+import Chat from "@material-ui/icons/Chat";
+import Divider from "@material-ui/core/Divider";
+import List from "@material-ui/core/List";
+import ListItem from "@material-ui/core/ListItem";
+import ListItemIcon from "@material-ui/core/ListItemIcon";
+import ListItemText from "@material-ui/core/ListItemText";
+import Collapse from "@material-ui/core/Collapse";
+import Typography from "@material-ui/core/Typography";
+import Badge from "@material-ui/core/Badge";
 
 
 const useStyles = makeStyles((theme) => ({

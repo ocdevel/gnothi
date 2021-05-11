@@ -1,6 +1,9 @@
 import React from "react";
-import {Box, Tab} from "@material-ui/core";
-import {TabList, TabPanel, TabContext} from '@material-ui/lab';
+import Box from "@material-ui/core/Box";
+import Tab from "@material-ui/core/Tab";
+import TabList from '@material-ui/lab/TabList';
+import TabPanel from '@material-ui/lab/TabPanel';
+import TabContext from '@material-ui/lab/TabContext';
 
 // {value, label, render}
 export default function Tabs({tabs, defaultTab=null}) {

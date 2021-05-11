@@ -1,6 +1,11 @@
 import {useStoreState} from "easy-peasy";
 import React, {useState} from "react";
-import {Box, Card, CardContent, CardHeader, Divider, ListItem, ListItemText, Typography} from "@material-ui/core";
+
+import Box from '@material-ui/core/Box'
+import Card from '@material-ui/core/Card'
+import CardActions from '@material-ui/core/CardActions'
+import CardContent from '@material-ui/core/CardContent'
+import Typography from '@material-ui/core/Typography'
 import {NotesNotifs} from "./Notes";
 import {
   sent2face,
@@ -29,8 +34,8 @@ export default function Teaser({eid, gotoForm}) {
       square
       onClick={() => gotoForm(eid)}
       variant='elevation'
-      elevation={hovered ? 10 : 0}
-      sx={{cursor:'pointer', borderColor: 'primary.main'}}
+      raised={hovered}
+      sx={{cursor:'pointer', borderColor: 'primary.main', my: 2}}
     >
       <CardContent>
         <Typography variant='h6'>{title}</Typography>
@@ -41,9 +46,10 @@ export default function Teaser({eid, gotoForm}) {
             This is an AI-generated summary of this entry. Click to read the original.
           </Typography>}
         </Typography>
-        <NotesNotifs entry_id={e.id} />
       </CardContent>
+      <CardActions>
+        <NotesNotifs entry_id={e.id} />
+      </CardActions>
     </Card>
-    <Divider />
   </Box>
 }

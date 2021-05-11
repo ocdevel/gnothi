@@ -1,13 +1,14 @@
 import {useStoreActions, useStoreState} from "easy-peasy";
 import {useParams, useRouteMatch, Link, Switch, Route} from "react-router-dom";
 import React, {useEffect, useLayoutEffect, useState, useRef} from "react";
-import _ from "lodash";
 import Sidebar from './Sidebar'
 import Teaser from "../Entries/Teaser";
 import {Entry} from "../Entries/Entry";
 import ReactMarkdown from "react-markdown";
 import {GroupMessages} from "../Chat/Messages";
-import {Card, Grid, Box, Tabs, Tab, Typography} from '@material-ui/core'
+import Grid from '@material-ui/core/Grid'
+import Tabs from '@material-ui/core/Tabs'
+import Tab from '@material-ui/core/Tab'
 
 function Entries() {
   const entries = useStoreState(s => s.ws.data['groups/entries/get'])
@@ -27,9 +28,7 @@ function Entries() {
   // return <Card className='group-entries'>
   return <>
     {eid && <Entry entry={obj[eid]} close={close} />}
-    <Card className='group-entries'>
-      {arr.map(eid => <Teaser eid={eid} gotoForm={onOpen} key={eid}/> )}
-    </Card>
+    {arr.map(eid => <Teaser eid={eid} gotoForm={onOpen} key={eid}/> )}
   </>
 }
 

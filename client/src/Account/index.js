@@ -1,7 +1,6 @@
 import {Route, Switch, useRouteMatch, Redirect} from "react-router-dom"
 import React from "react"
 import Profile from "./Profile"
-import Sharing from "./Sharing/index"
 
 export default function Account() {
   let match = useRouteMatch()

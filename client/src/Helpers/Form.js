@@ -1,9 +1,16 @@
-import {
-  Autocomplete, Checkbox, FormControl, FormControlLabel,
-  FormHelperText, TextField, InputLabel, Select, MenuItem, FormGroup
-} from "@material-ui/core";
+import Autocomplete from "@material-ui/core/Autocomplete";
+import Checkbox from "@material-ui/core/Checkbox";
+import FormControl from "@material-ui/core/FormControl";
+import FormControlLabel from "@material-ui/core/FormControlLabel";
+import Menu from "@material-ui/core/Menu";
+import FormHelperText from "@material-ui/core/FormHelperText";
+import TextField from "@material-ui/core/TextField";
+import InputLabel from "@material-ui/core/InputLabel";
+import Select from "@material-ui/core/Select";
+import MenuItem from "@material-ui/core/MenuItem";
+import Button from "@material-ui/core/Button";
 import {Controller} from "react-hook-form";
-import React from "react";
+import React, {useState} from "react";
 import {useForm} from "react-hook-form";
 import {yupResolver} from "@hookform/resolvers/yup";
 export * as yup from 'yup';
@@ -14,6 +21,52 @@ export function makeForm(schema, defaults=null, opts={}) {
     defaultValues: overrides || defaults || {},
     ...opts
   })
+}
+
+export function Menu2(props) {
+  const [anchorEl, setAnchorEl] = useState(null);
+  const {label, options, onChange} = props
+  const open = Boolean(anchorEl);
+
+  const handleClick = (e) => {
+    setAnchorEl(e.currentTarget);
+  };
+  const handleClose = (value=null) => {
+    setAnchorEl(null);
+    if (value) {
+      onChange(value)
+    }
+  };
+
+  return (
+    <div>
+      <Button
+        id="basic-button"
+        aria-controls="basic-menu"
+        aria-haspopup="true"
+        aria-expanded={open ? 'true' : undefined}
+        onClick={handleClick}
+      >
+        {label}
+      </Button>
+      <Menu
+        id="basic-menu"
+        anchorEl={anchorEl}
+        open={open}
+        onClose={handleClose}
+        MenuListProps={{
+          'aria-labelledby': 'basic-button',
+        }}
+      >
+        {options.map(o => <MenuItem
+          key={o.value}
+          onClick={() => handleClose(o.value)}
+        >
+          {o.label}
+        </MenuItem>)}
+      </Menu>
+    </div>
+  );
 }
 
 export function TextField2(props) {
@@ -134,5 +187,3 @@ export function Select2(props) {
 
   return <Controller render={renderField} name={name} control={form.control}/>
 }
-
-

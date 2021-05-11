@@ -1,5 +1,4 @@
 import React, {useEffect, useState} from "react"
-import _ from 'lodash'
 import {
   BsPeopleFill
 } from "react-icons/bs"
@@ -9,18 +8,16 @@ import People from './People'
 import {useStoreState, useStoreActions} from "easy-peasy";
 import {timezones} from "../redux/ws";
 import {FullScreenDialog} from "../Helpers/Dialog";
-import {
-  DialogContent,
-  Alert,
-  Button,
-  TextField,
-  Grid,
-  Box,
-  Typography,
-  Divider, FormHelperText, FormGroup
-} from "@material-ui/core";
+ import DialogContent from "@material-ui/core/DialogContent"
+ import Button from "@material-ui/core/Button"
+ import Grid from "@material-ui/core/Grid"
+ import Box from "@material-ui/core/Box"
+ import Typography from "@material-ui/core/Typography"
+ import Divider from "@material-ui/core/Divider"
+ import FormHelperText from "@material-ui/core/FormHelperText"
 import {useFormState} from "react-hook-form";
 import {makeForm, yup, TextField2, Checkbox2, Autocomplete2} from "../Helpers/Form";
+import {Alert2} from '../Helpers/Misc'
 
 const schema = yup.object().shape({
   username: yup.string().min(1).nullable(),
@@ -144,17 +141,19 @@ function Profile_() {
 export default function Profile({close}) {
   function renderProfile() {
     return <div>
-      <Alert severity='info' sx={{mb:2}}>
-        <Typography>Optionally fill out a profile.</Typography>
-        <Typography variant='caption'>You can optionally share your profile with therapists. Fields which might be important (like gender, orientation) might be used in AI. I'm still experimenting with how AI would use this stuff.</Typography>
-      </Alert>
+      <Alert2
+        severity='info'
+        title='Optionally fill out a profile.'
+        noTop
+      >
+        You can optionally share your profile with therapists. Fields which might be important (like gender, orientation) might be used in AI. I'm still experimenting with how AI would use this stuff.
+      </Alert2>
       <Profile_ />
       <Divider sx={{my: 2}}/>
       <Typography variant='h5'><BsPeopleFill /> People</Typography>
-      <Alert severity='info'>
-        <Typography>Optionally add "who's who" in your life.</Typography>
-        <Typography variant='caption'>When sharing profile with therapists, it would help them to have a "directory" to refresh their memory. It also feeds into the AI's summaries, question-answering, etc.</Typography>
-      </Alert>
+      <Alert2 severity='info' title={`Optionally add "who's who" in your life.`}>
+        When sharing profile with therapists, it would help them to have a "directory" to refresh their memory. It also feeds into the AI's summaries, question-answering, etc.
+      </Alert2>
       <People />
     </div>
   }

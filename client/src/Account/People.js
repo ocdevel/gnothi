@@ -2,16 +2,16 @@ import React, {useEffect, useState} from "react"
 
 import {useStoreActions, useStoreState} from "easy-peasy";
 import {BasicDialog} from "../Helpers/Dialog";
-import {
-  DialogActions,
-  DialogContent,
-  Button,
-  Table,
-  TableHead,
-  TableRow,
-  TableBody,
-  TableCell, TextField, Box
-} from "@material-ui/core";
+ import DialogActions from "@material-ui/core/DialogActions"
+ import DialogContent from "@material-ui/core/DialogContent"
+ import Button from "@material-ui/core/Button"
+ import Table from "@material-ui/core/Table"
+ import TableHead from "@material-ui/core/TableHead"
+ import TableRow from "@material-ui/core/TableRow"
+ import TableBody from "@material-ui/core/TableBody"
+ import TableCell from "@material-ui/core/TableCell"
+ import TextField from "@material-ui/core/TextField"
+ import Box from "@material-ui/core/Box"
 
 function Person({close, person=null}) {
   const emit = useStoreActions(a => a.ws.emit)

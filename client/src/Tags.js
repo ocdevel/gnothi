@@ -1,26 +1,32 @@
 import _ from "lodash"
 import React, {useCallback, useEffect, useState} from "react"
-import {FaPen, FaRobot, FaSort, FaTrash} from 'react-icons/fa'
+import {FaRobot} from 'react-icons/fa'
 import {useStoreState, useStoreActions} from "easy-peasy";
 
 
 import Sortable from "./Helpers/Sortable";
-import {IoReorderFourSharp} from "react-icons/all";
 
-import {
-  Chip,
-  Stack,
-  Button,
-  DialogContent,
-  Grid,
-  TextField,
-  Divider,
-  Card,
-  CardContent, IconButton, InputBase, Paper, FormControlLabel, Switch, CardHeader, Typography, Box
-} from '@material-ui/core'
-import {CheckCircle, Label, Create, Reorder, Delete} from "@material-ui/icons";
+import Chip from '@material-ui/core/Chip'
+import Button from '@material-ui/core/Button'
+import DialogContent from '@material-ui/core/DialogContent'
+import Grid from '@material-ui/core/Grid'
+import Divider from '@material-ui/core/Divider'
+import Card from '@material-ui/core/Card'
+import CardContent from '@material-ui/core/CardContent'
+import IconButton from '@material-ui/core/IconButton'
+import InputBase from '@material-ui/core/InputBase'
+import Paper from '@material-ui/core/Paper'
+import FormControlLabel from '@material-ui/core/FormControlLabel'
+import Switch from '@material-ui/core/Switch'
+import CardHeader from '@material-ui/core/CardHeader'
+import Typography from '@material-ui/core/Typography'
+import Box from '@material-ui/core/Box'
+import CheckCircle from "@material-ui/icons/CheckCircle";
+import Label from "@material-ui/icons/Label";
+import Create from "@material-ui/icons/Create";
+import Reorder from "@material-ui/icons/Reorder";
+import Delete from "@material-ui/icons/Delete";
 import {FullScreenDialog} from "./Helpers/Dialog";
-import {makeStyles} from "@material-ui/core/styles";
 import {Controller} from "react-hook-form";
 import {makeForm, yup} from "./Helpers/Form";
 

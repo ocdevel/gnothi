@@ -4,10 +4,16 @@ import _ from 'lodash'
 
 import {useStoreActions, useStoreState} from "easy-peasy";
 import Error from "../Error";
-import {
-  CircularProgress, DialogActions, DialogContent, Card, CardHeader, CardContent,
-  Grid, Button, FormGroup, InputAdornment, FormHelperText
-} from "@material-ui/core";
+import CircularProgress from "@material-ui/core/CircularProgress";
+import DialogActions from "@material-ui/core/DialogActions";
+import DialogContent from "@material-ui/core/DialogContent";
+import Card from "@material-ui/core/Card";
+import CardHeader from "@material-ui/core/CardHeader";
+import CardContent from "@material-ui/core/CardContent";
+import Grid from "@material-ui/core/Grid";
+import Button from "@material-ui/core/Button";
+import InputAdornment from "@material-ui/core/InputAdornment";
+import FormHelperText from "@material-ui/core/FormHelperText";
 import {BasicDialog} from "../Helpers/Dialog";
 import Editor from "../Helpers/Editor";
 import {yup, makeForm, Checkbox2, Select2, TextField2} from "../Helpers/Form";

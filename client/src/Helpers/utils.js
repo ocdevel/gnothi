@@ -2,8 +2,7 @@ import React, {useEffect, useState} from "react"
 import _ from "lodash"
 import emoji from 'react-easy-emoji'
 import moment from "moment-timezone";
-import {FaThumbsUp, FaTags} from 'react-icons/fa'
-import {Tooltip} from "@material-ui/core";
+import Tooltip from "@material-ui/core/Tooltip";
 
 export const sent2face = (sentiment) => {
   if (!sentiment) {return null}

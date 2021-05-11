@@ -5,10 +5,12 @@ import Error from './Error'
 import {useStoreState, useStoreActions} from "easy-peasy";
 import axios from 'axios'
 import {API_URL} from "./redux/ws";
-import {Box, Button} from '@material-ui/core'
+import Box from '@material-ui/core/Box'
+import Button from '@material-ui/core/Button'
 
 import {Auth} from 'aws-amplify'
-import {CircularProgress, Alert} from "@material-ui/core";
+import CircularProgress from "@material-ui/core/CircularProgress";
+import Alert from "@material-ui/core/Alert";
 import {yup, makeForm, TextField2} from "./Helpers/Form";
 
 const loginSchema = yup.object().shape({
