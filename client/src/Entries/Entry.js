@@ -20,8 +20,20 @@ import {useStoreActions, useStoreState} from "easy-peasy";
 import Error from "../Error";
 import {
   CircularProgress, DialogActions, DialogContent, Alert,
-  Grid, Button, Box
+  Grid, Button, Box, Typography
 } from "@material-ui/core";
+import {TextField2, Checkbox2} from "../Helpers/Form";
+import * as yup from 'yup'
+import {yupResolver} from "@hookform/resolvers/yup";
+import {useForm, Controller} from "react-hook-form";
+
+const schema = yup.object().shape({
+  title: yup.string().nullable(),
+  text: yup.string().min(1),
+  no_ai: yup.boolean(),
+  created_at: yup.string().nullable(),
+})
+const defaults = {title: '', text: '', no_ai: false, created_at: null}
 
 const mdParser = new MarkdownIt(/* Markdown-it options */);
 
@@ -83,7 +95,10 @@ export function Entry({entry=null, close=null}) {
   const as = useStoreState(state => state.user.as)
   const emit = useStoreActions(a => a.ws.emit)
   const [editing, setEditing] = useState(!entry)
-  const [form, setForm] = useState({title: '', text: '', no_ai: false, created_at: null})
+  const form = useForm({
+    defaultValues: defaults,
+    resolver: yupResolver(schema)
+  })
   const [formOrig, setFormOrig] = useState()
   const [tags, setTags] = useState({})
   const [advanced, setAdvanced] = useState(false)
@@ -104,9 +119,9 @@ export function Entry({entry=null, close=null}) {
 
   useEffect(() => {
     if (!entry) {return}
-    const form = _.pick(entry, 'title text no_ai created_at'.split(' '))
-    setForm(form)
-    setFormOrig(form)
+    const form_ = _.pick(entry, 'title text no_ai created_at'.split(' '))
+    form.reset(form)
+    setFormOrig(form_)
     setTags(entry.entry_tags)
   }, [entry])
 
@@ -137,18 +152,18 @@ export function Entry({entry=null, close=null}) {
 
   const loadDraft = () => {
     const draft = localStorage.getItem(draftId)
-    if (draft) { setForm(JSON.parse(draft)) }
+    if (draft) { form.reset(JSON.parse(draft)) }
   }
   const saveDraft = useCallback(
-    _.debounce((form) => {
-      localStorage.setItem(draftId, JSON.stringify(form))
+    _.debounce(form_ => {
+      localStorage.setItem(draftId, JSON.stringify(form_))
     }, 500),
     []
   )
   const clearDraft = () => {
     console.log('clearDraft')
     localStorage.removeItem(draftId)
-    if (formOrig) {setForm(formOrig)}
+    if (formOrig) {form.reset(formOrig)}
   }
 
   const go = (to='/j') => {
@@ -158,10 +173,8 @@ export function Entry({entry=null, close=null}) {
     history.push(to)
   }
 
-  const submit = async e => {
-    e.preventDefault()
-    let {title, text, no_ai, created_at} = form
-    const body = {title, text, no_ai, created_at, tags}
+  function submit(data) {
+    const body = {...data, tags}
     if (eid) {
       emit(['entries/entry/put', {...body, id: eid}])
     } else {
@@ -181,13 +194,10 @@ export function Entry({entry=null, close=null}) {
     emit(['entries/entry/cache/get', {id: eid}])
   }
 
-  const changeTitle = e => setForm({...form, title: e.target.value})
-  const changeDate = e => setForm({...form, created_at: e.target.value})
-  const changeText = (text) => {
-    setForm({...form, text})
-    saveDraft(form)
+  const changeText = (field, e) => {
+    saveDraft(form.getValues())
+    field.onChange(e)
   }
-  const changeNoAI = e => setForm({...form, no_ai: e.target.checked})
   const changeEditing = e => {
     e.stopPropagation()
     e.preventDefault()
@@ -235,58 +245,52 @@ export function Entry({entry=null, close=null}) {
   const renderForm = () => <>
     <Grid container>
       <Grid item xs>
-        <Form onSubmit={submit}>
+        <form onSubmit={submit}>
           {editing ? <>
-            <Form.Group controlId="formTitle">
-              <Form.Label>Title</Form.Label>
-              <Form.Control
-                type="text"
-                placeholder="Title"
-                value={form.title}
-                onChange={changeTitle}
-              />
-              <Form.Text>
-                Leave blank to use a machine-generated title based on your entry.
-              </Form.Text>
-            </Form.Group>
+            <TextField2
+              name='title'
+              label='Title'
+              helperText='Leave blank to use a machine-generated title based on your entry.'
+              form={form}
+            />
           </> : <>
-            <h2>{form.title}</h2>
+            <Typography variant='h2'>{entry.title}</Typography>
           </>}
 
           {editing ? (
-            <Editor text={form.text} changeText={changeText} />
+            <Controller
+              name='text'
+              control={form.control}
+              render={({field}) => <Editor
+                text={field.value}
+                changeText={e => changeText(field, e)}
+              />}
+            />
           ) : (
-            <ReactMarkdown source={form.text} linkTarget='_blank' />
+            <ReactMarkdown source={entry.text} linkTarget='_blank' />
           )}
 
           {editing && <>
             {advanced ? <div>
-              <Form.Group controlId="formNoAI">
-                <Form.Check
-                  type="checkbox"
-                  label="Exclude from AI"
-                  checked={form.no_ai}
-                  onChange={changeNoAI}
-                />
-                <Form.Text>Use rarely, AI can't help with what it doesn't know. Example uses: technical note to a therapist, song lyrics, etc.</Form.Text>
-              </Form.Group>
-              <Form.Group controlId="formDate">
-                <Form.Label>Date</Form.Label>
-                <Form.Control
-                  size='sm'
-                  type="text"
-                  placeholder="YYYY-MM-DD"
-                  value={form.created_at}
-                  onChange={changeDate}
-                />
-                <Form.Text>Manually enter this entry's date (otherwise it's set to time of submission).</Form.Text>
-              </Form.Group>
+              <Checkbox2
+                name='no_ai'
+                label="Exclude from AI"
+                helperText="Use rarely, AI can't help with what it doesn't know. Example uses: technical note to a therapist, song lyrics, etc."
+                form={form}
+              />
+              <TextField2
+                name='created_at'
+                label='Date'
+                form={form}
+                placeholder="YYYY-MM-DD"
+                helperText="Manually enter this entry's date (otherwise it's set to time of submission)."
+              />
             </div> : <div>
               <span className='anchor' onClick={() => setAdvanced(true)}>Advanced</span>
             </div>}
           </>}
           <br/>
-        </Form>
+        </form>
         <Error
           action={/entries\/entr(ies|y).*/g}
           codeRange={[400,500]}
@@ -334,7 +338,7 @@ export function Entry({entry=null, close=null}) {
     <FullScreenDialog
       open={true}
       onClose={() => go()}
-      title={fmtDate(eid ? form.created_at : Date.now())}
+      title={fmtDate(eid ? entry.created_at : Date.now())}
     >
       <DialogContent>
         {renderForm()}
