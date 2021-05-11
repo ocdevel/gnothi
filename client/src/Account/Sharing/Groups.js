@@ -1,6 +1,4 @@
 import {useStoreActions, useStoreState} from "easy-peasy";
-import {Form} from "react-bootstrap";
-import _ from "lodash";
 import React from "react";
 import {Checkbox, FormControl, FormControlLabel, FormGroup, Typography} from "@material-ui/core";
 

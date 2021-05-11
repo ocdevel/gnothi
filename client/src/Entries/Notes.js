@@ -1,17 +1,29 @@
-import {
-  Badge,
-  Form,
-  Modal,
-  Tabs,
-  Tab
-} from "react-bootstrap";
 import React, {useEffect, useState} from "react";
 import {FaQuestionCircle} from "react-icons/all";
 
 import {useStoreActions, useStoreState} from "easy-peasy";
-import {FaRegComments} from "react-icons/fa";
 import {BasicDialog} from "../Helpers/Dialog";
-import {DialogActions, DialogContent, Card, CardContent, Grid, Button} from "@material-ui/core";
+import {
+  DialogActions, DialogContent, Card, CardContent, Grid, Button, Box, Chip,
+  Badge, Typography, List, ListItem, ListItemText, Divider
+} from "@material-ui/core";
+import CommentIcon from '@material-ui/icons/Comment';
+import Tabs from '../Helpers/Tabs'
+import * as yup from "yup";
+import {useForm} from "react-hook-form";
+import {yupResolver} from "@hookform/resolvers/yup";
+import {Checkbox2, TextField2} from "../Helpers/Form";
+
+const schema = yup.object({
+  // type: yup.string().required(),  // TODO this comes from `adding`, which is weird
+  text: yup.string().min(1),
+  private: yup.boolean()
+});
+const defaults = {
+  // type: 'note',
+  text: '',
+  private: false
+}
 
 export function NotesAll() {
   return null
@@ -27,7 +39,7 @@ export function NotesAll() {
   return <>
     <h5>Notes</h5>
     {notes.map(n => <>
-      <Badge variant="primary">{n.type}</Badge>{' '}
+      <Chip variant="primary" label={n.type} />
       {n.private ? "[private] " : null}
       {n.text}
       <hr/>
@@ -77,12 +89,40 @@ export function AddNotes({entry_id, onSubmit}) {
   const emit = useStoreActions(a => a.ws.emit)
 
   const [adding, setAdding] = useState(null)
-  const [text, setText] = useState('')
-  const [private_, setPrivate] = useState(false)
   const [showHelp, setShowHelp] = useState(false)
   const [qmarkHover, setQmarkHover] = useState(false)
 
+  const form = useForm({
+    defaultValues: defaults,
+    resolver: yupResolver(schema)
+  })
+
+  const tabs = [
+    {value: 'user', label: 'As Journal Owner', render: () => renderTab('user')},
+    {value: 'therapist', label: 'As Therapist/Friend', render: () => renderTab('therapist')},
+  ]
+
   function close() {setShowHelp(false)}
+
+  function renderTab(k) {
+    return <Grid container spacing={2}>
+      {noteTypes.map(obj => <React.Fragment key={k}>
+        <Grid item xs>
+          <Typography variant='button'>{obj.name}s</Typography>
+          <List fullWidth>
+            {obj[k].map((txt, i) => <React.Fragment key={k + i}>
+              <ListItem>
+                <ListItemText
+                  primary={txt}
+                />
+              </ListItem>
+              {/*{i < obj[k].length - 1 && <Divider component="li" />}*/}
+            </React.Fragment>)}
+          </List>
+        </Grid>
+      </React.Fragment>)}
+    </Grid>
+  }
 
   const renderHelpModal = () => {
     return <>
@@ -94,27 +134,9 @@ export function AddNotes({entry_id, onSubmit}) {
       >
         <DialogContent>
           <Tabs
-            variant="pills"
-            defaultActiveKey={as ? "therapist" : "user"}
-          >
-            {['user', 'therapist'].map(k => (
-              <Tab
-                key={k}
-                eventKey={k}
-                title={k === 'user' ? "As Journal Owner" : "As Therapist/Friend"}
-              >
-                <Grid container lg={3} xs={1} style={{marginTop: '1rem'}}>
-                  {noteTypes.map(obj => <Grid item>
-                    <h5>{obj.name}s</h5>
-                    {obj[k].map((txt, i) => <div key={k + i}>
-                      {txt}
-                      {i === obj[k].length - 1 ? null : <hr/>}
-                    </div>)}
-                  </Grid>)}
-                </Grid>
-              </Tab>
-            ))}
-          </Tabs>
+            tabs={tabs}
+            defaultTab={as ? "therapist" : "user"}
+          />
         </DialogContent>
       </BasicDialog>
     </>
@@ -146,51 +168,47 @@ export function AddNotes({entry_id, onSubmit}) {
   </>
 
   const clear = () => {
-    setText('')
-    setPrivate(false)
+    form.reset()
     setAdding(null)
   }
 
-  const submit = async (e) => {
-    e.preventDefault()
-    const body = {entry_id, type: adding, text, private: private_}
+  function submit(data) {
+    const body = {...data, entry_id, type: adding}
     emit(['entries/notes/post', body])
     clear()
   }
 
   const renderForm = () => {
-    const textOpts = {
-      label: {type: 'text'},
-      note: {as: 'textarea', cols: 5},
-      resource: {type: 'text'}
-    }[adding]
-    const help = {
-      label: "A word or three to describe what's going on here (codependence, rejection sensitivity dysphoria, trauma, etc).",
-      note: "Can be a note-to-self, a communication with the user, or a description of what's going on in this entry.",
-      resource: "Enter URL to a resource (a web article, Amazon book link, etc)."
+    const opts = {
+      label: {
+        helperText: "A word or three to describe what's going on here (codependence, rejection sensitivity dysphoria, trauma, etc)."
+      },
+      note: {
+        multiline: true,
+        minRows: 5,
+        helperText: "Can be a note-to-self, a communication with the user, or a description of what's going on in this entry."
+      },
+      resource: {
+        helperText: "Enter URL to a resource (a web article, Amazon book link, etc)."
+      }
     }[adding]
     return <>
-      <BasicDialog open={true} size='lg' onHide={clear} title={`Add a ${adding}`}>
+      <BasicDialog open={true} size='lg' onClose={clear} title={`Add a ${adding}`}>
         <DialogContent>
-          <Form onSubmit={submit}>
-            <Form.Group controlId="formText">
-              <Form.Control
-                {...textOpts}
-                value={text}
-                onChange={e => setText(e.target.value)}
-              />
-              <Form.Text>{help}</Form.Text>
-            </Form.Group>
-            <Form.Group controlId="formPrivate">
-              <Form.Check
-                type="checkbox"
-                label="Private"
-                checked={private_}
-                onChange={(e) => setPrivate(e.target.checked)}
-              />
-              <Form.Text>This {adding} will be visible only to you.</Form.Text>
-            </Form.Group>
-          </Form>
+          <form onSubmit={form.handleSubmit(submit)}>
+            <TextField2
+              name='text'
+              label="Entry"
+              form={form}
+              {...opts}
+            />
+            <Checkbox2
+              name='private'
+              label='Private'
+              form={form}
+              helperText={`This ${adding} will be visible only to you.`}
+            />
+          </form>
         </DialogContent>
         <DialogActions>
           <Button size="small" variant={false} onClick={clear}>
@@ -216,11 +234,15 @@ export function NotesNotifs({entry_id}) {
   const notes = useStoreState(s => s.ws.data['entries/notes/get']?.[entry_id])
   const notifs = useStoreState(s => s.ws.data['notifs/notes/get']?.[entry_id])
 
-  if (!(notes?.length || notifs?.length)) {return null}
+  const nNotes = notes?.length || 0
+  const nNotifs = notifs?.length || 0
+  if (!(nNotes || nNotifs)) {return null}
 
   return <div>
-    <FaRegComments /> {notes?.length || 0}
-    {notifs && <Badge className='ml-2' variant='success'>{notifs} new</Badge>}
+    <Badge badgeContent={nNotifs} color="primary">
+      {nNotes}
+      <CommentIcon />
+    </Badge>
   </div>
 }
 
@@ -238,7 +260,7 @@ export function NotesList({entry_id}) {
     <NotesNotifs entry_id={entry_id} />
     {notes.map(n => <Card className='mb-3' key={n.id}>
       <CardContent>
-        <Badge variant="primary">{n.type}</Badge>{' '}
+        <Chip variant="outlined" label={n.type} />{' '}
         {n.private ? "[private] " : null}
         {n.text}
       </CardContent>

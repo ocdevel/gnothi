@@ -3,12 +3,11 @@ import {useStoreActions, useStoreState} from "easy-peasy";
 import {useForm} from "react-hook-form";
 import {yupResolver} from "@hookform/resolvers/yup";
 import React, {useEffect, useState} from "react";
-import {Form, ListGroup} from "react-bootstrap";
 import {FaTrash} from "react-icons/fa";
 import {EE} from '../../redux/ws'
 import {trueKeys} from "../../Helpers/utils";
 import Error from "../../Error";
-import {Grid, Button, FormHelperText, Typography} from '@material-ui/core'
+import {Grid, Button, FormHelperText, Typography, Chip} from '@material-ui/core'
 import {TextField2} from "../../Helpers/Form";
 
 const emailSchema = yup.object().shape({
@@ -41,11 +40,14 @@ export default function Users({users, setUsers}) {
   function renderUsers() {
     const arr = trueKeys(users)
     if (!arr.length) {return null}
-    return <ListGroup variant='flush'>
-      {arr.map(a => <ListGroup.Item key={a}>
-        <FaTrash className='cursor-pointer' onClick={removeUser(a)}/> {a}
-      </ListGroup.Item>)}
-    </ListGroup>
+    return <>
+      {arr.map(a => <Chip
+        key={a}
+        label={a}
+        variant="outlined"
+        onDelete={removeUser(a)}
+      />)}
+    </>
   }
 
   return <form onSubmit={form.handleSubmit(submit)}>

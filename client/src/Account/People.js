@@ -1,5 +1,4 @@
 import React, {useEffect, useState} from "react"
-import {Col, Form} from "react-bootstrap"
 
 import {useStoreActions, useStoreState} from "easy-peasy";
 import {BasicDialog} from "../Helpers/Dialog";
