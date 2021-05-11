@@ -9,10 +9,7 @@ import {
 } from "@material-ui/core";
 import CommentIcon from '@material-ui/icons/Comment';
 import Tabs from '../Helpers/Tabs'
-import * as yup from "yup";
-import {useForm} from "react-hook-form";
-import {yupResolver} from "@hookform/resolvers/yup";
-import {Checkbox2, TextField2} from "../Helpers/Form";
+import {makeForm, yup, Checkbox2, TextField2} from "../Helpers/Form";
 
 const schema = yup.object({
   // type: yup.string().required(),  // TODO this comes from `adding`, which is weird
@@ -24,6 +21,7 @@ const defaults = {
   text: '',
   private: false
 }
+const useForm = makeForm(schema, defaults)
 
 export function NotesAll() {
   return null
@@ -92,10 +90,7 @@ export function AddNotes({entry_id, onSubmit}) {
   const [showHelp, setShowHelp] = useState(false)
   const [qmarkHover, setQmarkHover] = useState(false)
 
-  const form = useForm({
-    defaultValues: defaults,
-    resolver: yupResolver(schema)
-  })
+  const form = useForm()
 
   const tabs = [
     {value: 'user', label: 'As Journal Owner', render: () => renderTab('user')},

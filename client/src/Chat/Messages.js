@@ -2,23 +2,17 @@ import {useStoreActions, useStoreState} from "easy-peasy";
 import React, {useLayoutEffect, useRef, useState} from "react";
 import {timeAgo} from "../Helpers/utils";
 import {onlineIcon, getUname} from "../Groups/utils";
-import {useForm} from "react-hook-form";
-import * as yup from 'yup';
-import {yupResolver} from "@hookform/resolvers/yup";
 import {Grid, Button, Alert} from '@material-ui/core'
-import {TextField2} from '../Helpers/Form'
+import {yup, makeForm, TextField2} from '../Helpers/Form'
 
 const schema = yup.object({
   text: yup.string().required().min(1)
-});
+})
+const useForm = makeForm(schema, {text: ''})
 
 function ChatInput({group_id=null, entry_id=null}) {
   const emit = useStoreActions(actions => actions.ws.emit);
-
-  const form = useForm({
-    defaultValues: {text: ''},
-    resolver: yupResolver(schema),
-  });
+  const form = useForm();
 
   function submit(data) {
     if (group_id) {

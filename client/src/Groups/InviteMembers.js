@@ -1,23 +1,21 @@
 import {useStoreActions, useStoreState} from "easy-peasy";
-import {useForm} from "react-hook-form";
-import {yupResolver} from "@hookform/resolvers/yup";
-import * as yup from "yup";
 import React, {useEffect} from "react";
 import Error from "../Error";
 import {BasicDialog} from "../Helpers/Dialog";
 import {Button, DialogActions, DialogContent, Alert, FormGroup} from "@material-ui/core";
-import {TextField2} from "../Helpers/Form";
+import {yup, makeForm, TextField2} from "../Helpers/Form";
+
+const schema = yup.object().shape({
+  email: yup.string().email().required()
+})
+const useForm = makeForm(schema)
 
 export default function InviteMembers({gid, close}) {
   const emit = useStoreActions(a => a.ws.emit)
   const clear = useStoreActions(a => a.ws.clear)
   const invite = useStoreState(s => s.ws.data['groups/member/invite'])
 
-  const form = useForm({
-    resolver: yupResolver(yup.object().shape({
-      email: yup.string().email().required()
-    })),
-  })
+  const form = useForm()
 
   useEffect(() => {
     return function() {

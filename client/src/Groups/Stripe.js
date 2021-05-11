@@ -4,14 +4,13 @@ import {Form, Button} from 'react-bootstrap'
 import {loadStripe} from "@stripe/stripe-js";
 import {useStoreState, useStoreActions} from "easy-peasy";
 import Error from "../Error";
-import * as yup from "yup";
-import {useForm} from "react-hook-form";
-import {yupResolver} from "@hookform/resolvers/yup";
+import {makeForm, yup} from '../Helpers/Form'
+
 
 const stripeSchema = yup.object().shape({
   name: yup.string().required(),
 })
-
+const useForm = makeForm(stripeSchema)
 
 let stripe_
 
@@ -47,9 +46,7 @@ function CheckoutForm({submit, product}) {
   const groupProduct = useStoreState(s => s.ws.data['payments/product/get'])
   const paymentIntent = useStoreState(s => s.ws.data['payments/payment_intent/post'])
 
-  const form = useForm({
-    resolver: yupResolver(stripeSchema),
-  })
+  const form = useForm()
 
   useEffect(() => {
     emit(['payments/payment_intent/post', {product}])

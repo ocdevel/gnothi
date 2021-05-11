@@ -1,25 +1,21 @@
-import * as yup from "yup";
 import {useStoreActions, useStoreState} from "easy-peasy";
-import {useForm} from "react-hook-form";
-import {yupResolver} from "@hookform/resolvers/yup";
 import React, {useEffect, useState} from "react";
 import {FaTrash} from "react-icons/fa";
 import {EE} from '../../redux/ws'
 import {trueKeys} from "../../Helpers/utils";
 import Error from "../../Error";
 import {Grid, Button, FormHelperText, Typography, Chip} from '@material-ui/core'
-import {TextField2} from "../../Helpers/Form";
+import {TextField2, makeForm, yup} from "../../Helpers/Form";
 
 const emailSchema = yup.object().shape({
   email: yup.string().email().required(),
 })
+const useForm = makeForm(emailSchema, {email: ''})
 
 export default function Users({users, setUsers}) {
   const emit = useStoreActions(a => a.ws.emit)
   const checked = useStoreState(s => s.ws.data['shares/email/check']?.email)
-  const form = useForm({
-    resolver: yupResolver(emailSchema),
-  });
+  const form = useForm()
 
   useEffect(() => {
     const email = form.getValues('email')

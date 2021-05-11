@@ -16,10 +16,7 @@ import {
   CircularProgress, DialogActions, DialogContent, Alert,
   Grid, Button, Box, Typography
 } from "@material-ui/core";
-import {TextField2, Checkbox2} from "../Helpers/Form";
-import * as yup from 'yup'
-import {yupResolver} from "@hookform/resolvers/yup";
-import {useForm, Controller} from "react-hook-form";
+import {yup, makeForm, TextField2, Checkbox2} from "../Helpers/Form";
 import Editor from "../Helpers/Editor";
 
 const schema = yup.object().shape({
@@ -29,6 +26,7 @@ const schema = yup.object().shape({
   created_at: yup.string().nullable(),
 })
 const defaults = {title: '', text: '', no_ai: false, created_at: null}
+const useForm = makeForm(schema, defaults)
 
 const placeholder = `Write a journal entry, whatever's on your mind. Hard times you're going through, politics, philosophy, the weather. Be verbose, AI works best with long-form content - a paragraph or more is ideal, less might result in poor insights or resource-recommendations. Try to use proper grammar and full words, rather than abbreviations or slang ("therapist" rather than "shrink"). AI is decent at inferring, but the more help you give it the better.
  
@@ -42,10 +40,7 @@ export function Entry({entry=null, close=null}) {
   const as = useStoreState(state => state.user.as)
   const emit = useStoreActions(a => a.ws.emit)
   const [editing, setEditing] = useState(!entry)
-  const form = useForm({
-    defaultValues: defaults,
-    resolver: yupResolver(schema)
-  })
+  const form = useForm()
   const [formOrig, setFormOrig] = useState()
   const [tags, setTags] = useState({})
   const [advanced, setAdvanced] = useState(false)

@@ -4,16 +4,13 @@ import _ from 'lodash'
 
 import {useStoreActions, useStoreState} from "easy-peasy";
 import Error from "../Error";
-import * as yup from "yup";
-import {useForm} from "react-hook-form";
-import {yupResolver} from "@hookform/resolvers/yup";
 import {
   CircularProgress, DialogActions, DialogContent, Card, CardHeader, CardContent,
   Grid, Button, FormGroup, InputAdornment, FormHelperText
 } from "@material-ui/core";
 import {BasicDialog} from "../Helpers/Dialog";
 import Editor from "../Helpers/Editor";
-import {Checkbox2, Select2, TextField2} from "../Helpers/Form";
+import {yup, makeForm, Checkbox2, Select2, TextField2} from "../Helpers/Form";
 
 const notYet = <b>This feature isn't yet built, but you can enable it now and I'll notify you when it's available.</b>
 
@@ -52,7 +49,7 @@ const perk_field = yup
   .min(1)
   .transform((value, originalValue) => (String(originalValue).trim() === '' ? null : value))
 
-const groupSchema = yup.object().shape({
+const schema = yup.object().shape({
   title: yup.string().required(),
   text_short: yup.string().required(),
   text_long: yup.string(),
@@ -65,8 +62,7 @@ const groupSchema = yup.object().shape({
   perk_video_donation: yup.boolean(),
 })
 
-
-const defaultForm = {
+const defaults = {
   title: "",
   text_short: "",
   text_long: "",
@@ -78,6 +74,7 @@ const defaultForm = {
   perk_video: null,
   perk_video_donation: false,
 }
+const useForm = makeForm(schema, defaults)
 
 function Perk({form, perk}) {
   return <Grid item xs={12} sm={4}>
@@ -108,10 +105,7 @@ export default function EditGroup({show, close, group=null}) {
   const groupPut = useStoreState(s => s.ws.res['groups/group/put'])
   const clear = useStoreActions(a => a.ws.clear)
 
-  const form = useForm({
-    defaultValues: group || defaultForm,
-    resolver: yupResolver(groupSchema),
-  })
+  const form = useForm(group)
   const privacy = form.watch('privacy')
 
   useEffect(() => {

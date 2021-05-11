@@ -3,9 +3,7 @@ import React, {useCallback, useEffect, useState} from "react"
 import {FaPen, FaRobot, FaSort, FaTrash} from 'react-icons/fa'
 import {useStoreState, useStoreActions} from "easy-peasy";
 
-import * as yup from "yup";
-import {yupResolver} from "@hookform/resolvers/yup";
-import {useForm, Controller} from "react-hook-form";
+
 import Sortable from "./Helpers/Sortable";
 import {IoReorderFourSharp} from "react-icons/all";
 
@@ -23,11 +21,14 @@ import {
 import {CheckCircle, Label, Create, Reorder, Delete} from "@material-ui/icons";
 import {FullScreenDialog} from "./Helpers/Dialog";
 import {makeStyles} from "@material-ui/core/styles";
+import {Controller} from "react-hook-form";
+import {makeForm, yup} from "./Helpers/Form";
 
 const tagSchema = yup.object().shape({
   name: yup.string().required(),
   ai: yup.boolean()
 })
+const useForm = makeForm(tagSchema, {name: '', ai: true})
 
 const styles = {
   paper: {
@@ -43,10 +44,7 @@ const styles = {
 
 function NewTag() {
   const emit = useStoreActions(actions => actions.ws.emit)
-  const form = useForm({
-    defaultValues: {name: '', ai: true},
-    resolver: yupResolver(tagSchema),
-  })
+  const form = useForm()
 
   function submit(data) {
     emit(['tags/tags/post', data])

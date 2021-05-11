@@ -19,10 +19,8 @@ import {
   Typography,
   Divider, FormHelperText, FormGroup
 } from "@material-ui/core";
-import * as yup from "yup";
-import {yupResolver} from "@hookform/resolvers/yup";
-import {useForm, useFormState} from "react-hook-form";
-import {TextField2, Checkbox2, Autocomplete2} from "../Helpers/Form";
+import {useFormState} from "react-hook-form";
+import {makeForm, yup, TextField2, Checkbox2, Autocomplete2} from "../Helpers/Form";
 
 const schema = yup.object().shape({
   username: yup.string().min(1).nullable(),
@@ -34,6 +32,7 @@ const schema = yup.object().shape({
   bio: yup.string().nullable(),
   therapist: yup.bool().nullable()
 })
+const useForm = makeForm(schema)
 
 function Profile_() {
   const emit = useStoreActions(a => a.ws.emit)
@@ -41,10 +40,7 @@ function Profile_() {
   const uname = useStoreState(s => s.ws.data['users/check_username'])
   const profile = useStoreState(s => s.ws.data['users/profile/get'])
   const [unameValid, setUnameValid] = useState({checked: false, valid: null})
-  const form = useForm({
-    defaultValues: profile,
-    resolver: yupResolver(schema),
-  })
+  const form = useForm()
   const {isDirty, isSubmitSuccessful} = useFormState({control: form.control})
   const [birthday, username] = form.watch(['birthday', 'username'])
 

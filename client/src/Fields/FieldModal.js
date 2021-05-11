@@ -4,10 +4,7 @@ import {BasicDialog} from "../Helpers/Dialog";
 
 import {useStoreActions, useStoreState} from "easy-peasy";
 import {DialogActions, DialogContent, Button, Grid} from "@material-ui/core";
-import * as yup from 'yup'
-import {yupResolver} from "@hookform/resolvers/yup";
-import {useForm} from "react-hook-form";
-import {TextField2, Checkbox2, Autocomplete2, Select2} from "../Helpers/Form";
+import {yup, makeForm, TextField2, Checkbox2, Autocomplete2, Select2} from "../Helpers/Form";
 
 const schema = yup.object().shape({
   name: yup.string().min(1),
@@ -16,13 +13,11 @@ const schema = yup.object().shape({
   default_value_value: yup.string().nullable(),
 })
 const defaults = {name: '', type: 'number', default_value: 'value', default_value_value: ''}
+const useForm = makeForm(schema, defaults)
 
 export default function FieldModal({close, field= {}}) {
   const emit = useStoreActions(a => a.ws.emit)
-  const form = useForm({
-    defaultValues: field.id ? field : defaults,
-    resolver: yupResolver(schema)
-  })
+  const form = useForm(field.id ? field : null)
 
   const fid = field && field.id
   const [type, default_value] = form.watch(['type', 'default_value'])

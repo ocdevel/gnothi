@@ -7,18 +7,15 @@ import axios from 'axios'
 import {API_URL} from "./redux/ws";
 import {Box, Button} from '@material-ui/core'
 
-import { useForm } from "react-hook-form";
-import { yupResolver } from '@hookform/resolvers/yup';
-import * as yup from "yup";
-
 import {Auth} from 'aws-amplify'
 import {CircularProgress, Alert} from "@material-ui/core";
-import {TextField2} from "./Helpers/Form";
+import {yup, makeForm, TextField2} from "./Helpers/Form";
 
 const loginSchema = yup.object().shape({
   email: yup.string().email().required(),
   password: yup.string().required()
 })
+const useForm = makeForm(loginSchema, null, {mode: "onBlur"})
 
 function FieldError({err}) {
   if (!err) {return null}
@@ -26,10 +23,7 @@ function FieldError({err}) {
 }
 
 function Login({setError, submitting}) {
-  const form = useForm({
-    resolver: yupResolver(loginSchema),
-    mode: "onBlur"
-  });
+  const form = useForm();
   const { register, handleSubmit, errors } = form
 
   async function onSubmit(form) {

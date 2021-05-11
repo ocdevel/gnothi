@@ -4,10 +4,23 @@ import {
 } from "@material-ui/core";
 import {Controller} from "react-hook-form";
 import React from "react";
+import {useForm} from "react-hook-form";
+import {yupResolver} from "@hookform/resolvers/yup";
+export * as yup from 'yup';
 
+export function makeForm(schema, defaults=null, opts={}) {
+  return (overrides=null) => useForm({
+    resolver: yupResolver(schema),
+    defaultValues: overrides || defaults || {},
+    ...opts
+  })
+}
 
 export function TextField2(props) {
   const {name, form, onChange, ...rest} = props
+  if (!(form || onChange)) {
+    throw `{form} or {onChange} required for TextField.${name}`
+  }
 
   function renderField({ field, fieldState: {error} }) {
     function change(e) {
@@ -24,6 +37,13 @@ export function TextField2(props) {
     />
   }
 
+  if (!form) {
+    return <TextField
+      fullWidth
+      value={rest.value}
+      onChange={onChange}
+      {...rest} />
+  }
   return <Controller
     name={name}
     control={form.control}
@@ -33,6 +53,9 @@ export function TextField2(props) {
 
 export function Checkbox2(props) {
   const {name, label, helperText, form, value, onChange, ...rest} = props
+  if (!(form || onChange)) {
+    throw `{form} or {onChange} required for Checkbox.${name}`
+  }
 
   function renderField({field}) {
     return <Checkbox
@@ -65,22 +88,26 @@ export function Checkbox2(props) {
 export function Autocomplete2(props) {
   const {name, label, form, options, ...rest} = props
 
+  function renderInput(params) {
+    return <TextField {...params} label={label} />
+  }
+
+  function renderField({field}) {
+    return <Autocomplete
+      disablePortal
+      value={field.value}
+      onChange={(e, data) => field.onChange(data)}
+      fullWidth
+      options={options}
+      renderInput={renderInput}
+      {...rest}
+    />
+  }
+
   return <Controller
     name={name}
     control={form.control}
-    render={({field}) => <Autocomplete
-        disablePortal
-        value={field.value}
-        onChange={(e, data) => field.onChange(data)}
-        fullWidth
-        options={options}
-        renderInput={(params) => <TextField
-          {...params}
-          label={label}
-        />}
-        {...rest}
-      />
-    }
+    render={renderField}
   />
 }
 
