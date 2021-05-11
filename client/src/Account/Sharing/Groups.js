@@ -2,6 +2,7 @@ import {useStoreActions, useStoreState} from "easy-peasy";
 import {Form} from "react-bootstrap";
 import _ from "lodash";
 import React from "react";
+import {Checkbox, FormControl, FormControlLabel, FormGroup, Typography} from "@material-ui/core";
 
 export default function Groups({groups, setGroups}) {
   const emit = useStoreActions(a => a.ws.emit)
@@ -13,17 +14,21 @@ export default function Groups({groups, setGroups}) {
     setGroups({...groups, [k]: e.target.checked})
   }
 
-  return <Form.Group>
-    <Form.Label>Groups</Form.Label>
-    {arr.map(gid => (
-        <Form.Check
-          key={gid}
-          id={`groups-${gid}`}
-          type="checkbox"
-          label={obj[gid].title}
-          checked={groups[gid]}
-          onChange={check(gid)}
-        />
-    ))}
-  </Form.Group>
+  return <div>
+    <Typography variant='button'>Groups</Typography>
+    <div>
+      <FormControl>
+      {arr.map(gid => <FormControlLabel
+        key={gid}
+        label={obj[gid].title}
+        control={
+          <Checkbox
+            checked={groups[gid]}
+            onChange={check(gid)}
+          />
+        }
+      />)}
+      </FormControl>
+    </div>
+  </div>
 }

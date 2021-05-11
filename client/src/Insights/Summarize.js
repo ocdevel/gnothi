@@ -1,9 +1,9 @@
 import React, {useState, useEffect} from 'react'
-import {Form, InputGroup, Button, Col} from "react-bootstrap"
 import {sent2face} from "../Helpers/utils"
 import {Spinner} from "./utils"
 
 import {useStoreState, useStoreActions} from "easy-peasy";
+import {Button, Card, CardContent, Divider, Grid, TextField, Typography} from "@material-ui/core";
 
 export default function Summarize() {
   const aiStatus = useStoreState(s => s.ws.data['jobs/status'].status)
@@ -23,7 +23,7 @@ export default function Summarize() {
 
   if (res?.code === 403) { return <h5>{res.detail}</h5> }
 
-  const changeWords = e => {
+  function changeWords(e) {
     a.setInsight(['summarize', e.target.value])
   }
 
@@ -32,52 +32,56 @@ export default function Summarize() {
     a.postInsight('summarize')
   }
 
-
   const renderForm = () => (
-    <Form.Group as={Col}>
-      <Form.Label for={`xWords`} srOnly>Summarize in how many words</Form.Label>
-      <InputGroup>
-        <InputGroup.Prepend>
-          <InputGroup.Text>#Words</InputGroup.Text>
-        </InputGroup.Prepend>
-        <Form.Control
-          id={`xWords`}
-          type="number"
-          min={5}
-          value={form}
-          onChange={changeWords}
-        />
-      </InputGroup>
-      <Form.Text muted>
-        How many words to summarize this time-range into. Try 100 if you're in a hurry; 300 is a sweet-spot.
-      </Form.Text>
-    </Form.Group>
+    <TextField
+      label="# Words"
+      placeholder="Summarize in how many words"
+      type="number"
+      min={5}
+      value={form}
+      onChange={changeWords}
+      helperText="How many words to summarize this time-range into. Try 100 if you're in a hurry; 300 is a sweet-spot."
+    />
   )
 
   function renderReply() {
-    const reply_ = reply?.[0]
+    let reply_ = reply?.[0]
     if (!reply_) {return null}
     if (!reply_.summary) {
-      return <p>Nothing to summarize (try adjusting date range)</p>
+      reply_ = <>Nothing to summarize (try adjusting date range)</>
+    } else {
+      reply_ = <>{sent2face(reply_.sentiment)} {reply_.summary}</>
     }
     return <>
-      <hr/>
-      <p>{sent2face(reply_.sentiment)} {reply_.summary}</p>
+      <Divider />
+      <Card>
+        <CardContent>
+          <Typography>{reply_}</Typography>
+        </CardContent>
+      </Card>
     </>
   }
 
   return <>
-    {renderForm()}
-    <Form onSubmit={submit}>
-      {waiting ? <Spinner job={job} /> : <>
-        <Button
-          disabled={aiStatus !== 'on'}
-          type="submit"
-          variant="primary"
-          className='mb-3'
-        >Submit</Button>
-      </>}
-      {renderReply()}
-    </Form>
+    <form onSubmit={submit}>
+      <Grid container direction='column' spacing={2}>
+        <Grid item>
+          {renderForm()}
+        </Grid>
+        <Grid item>
+          {waiting ? <Spinner job={job} /> : <>
+            <Button
+              disabled={aiStatus !== 'on'}
+              type="submit"
+              color="primary"
+              variant='contained'
+            >Submit</Button>
+          </>}
+        </Grid>
+        <Grid item>
+          {renderReply()}
+        </Grid>
+      </Grid>
+    </form>
   </>
 }

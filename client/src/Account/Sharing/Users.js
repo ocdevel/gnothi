@@ -8,7 +8,8 @@ import {FaTrash} from "react-icons/fa";
 import {EE} from '../../redux/ws'
 import {trueKeys} from "../../Helpers/utils";
 import Error from "../../Error";
-import {Grid, Button} from '@material-ui/core'
+import {Grid, Button, FormHelperText, Typography} from '@material-ui/core'
+import {TextField2} from "../../Helpers/Form";
 
 const emailSchema = yup.object().shape({
   email: yup.string().email().required(),
@@ -47,28 +48,26 @@ export default function Users({users, setUsers}) {
     </ListGroup>
   }
 
-  return <Form onSubmit={form.handleSubmit(submit)}>
-    <Form.Group controlId={`share-email`}>
-      <Form.Label>People</Form.Label>
-      <Grid container>
-        <Grid item sm={9}>
-          <Form.Control
-            type="email"
-            size='sm'
-            required
-            placeholder="Email address"
-            {...form.register('email')}
-          />
-        </Grid>
-        <Grid item sm={3}>
-          <Button variant='contained' color='primary' type='submit' size='small'>Add</Button>
-        </Grid>
+  return <form onSubmit={form.handleSubmit(submit)}>
+    <Typography variant='button'>People</Typography>
+    <Grid container spacing={2} justifyContent='center'>
+      <Grid item flex={1}>
+        <TextField2
+          name='email'
+          type='email'
+          label='Email address'
+          size='small'
+          form={form}
+        />
       </Grid>
-      <Form.Text className="text-muted">
-        Email of person you'll share data with. If they're not on Gnothi, have them sign up first.
-      </Form.Text>
-      <Error action={/shares\/email\/check/g} codes={[400, 404]} />
-      {renderUsers()}
-    </Form.Group>
-  </Form>
+      <Grid item>
+        <Button variant='contained' color='primary' type='submit'>Add</Button>
+      </Grid>
+    </Grid>
+    <FormHelperText>
+      Email of person you'll share data with. If they're not on Gnothi, have them sign up first.
+    </FormHelperText>
+    <Error action={/shares\/email\/check/g} codes={[400, 404]} />
+    {renderUsers()}
+  </form>
 }

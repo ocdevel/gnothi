@@ -3,7 +3,6 @@ import * as yup from "yup";
 import _ from "lodash";
 import React, {useEffect, useRef, useState} from "react";
 import {FaChevronDown, FaChevronRight, FaRegQuestionCircle} from "react-icons/fa";
-import {Form} from "react-bootstrap";
 import {useStoreActions, useStoreState} from "easy-peasy";
 import Groups from "./Groups";
 import Users from './Users'
@@ -12,7 +11,17 @@ import Error from "../../Error";
 import {AiOutlineWarning} from "react-icons/all";
 import {trueObj} from "../../Helpers/utils";
 import {EE} from '../../redux/ws'
-import {Button, Card, CardHeader, CardContent, CardActions, Grid} from '@material-ui/core'
+import {
+  Button,
+  Card,
+  CardHeader,
+  CardContent,
+  CardActions,
+  Grid,
+  Checkbox,
+  FormHelperText,
+  FormControl, FormControlLabel, Box, Divider, Typography
+} from '@material-ui/core'
 
 const profile_fields = {
   username: {
@@ -112,38 +121,40 @@ function ShareCheck({k, form, setForm, profile=false}) {
     })
   }
 
-  return <>
-    <Form.Group>
-      <Form.Check
-        id={`form-${k}`}
-        onClick={check}
-        checked={form[k]}
-        type="checkbox"
-        disabled={profile && !form.profile}
+  return <div>
+    <FormControl>
+      <FormControlLabel
+        control={
+          <Checkbox
+            onChange={check}
+            checked={form[k]}
+            disabled={profile && !form.profile}
+          />
+        }
         label={label}
       />
-      {help && <Form.Text className='text-muted'>{v.help}</Form.Text>}
-      {profile && !myProfile[k] && <Form.Text className='text-muted'>
+      {help && <FormHelperText>{v.help}</FormHelperText>}
+      {profile && !myProfile[k] && <FormHelperText>
         <AiOutlineWarning /> You haven't set this field on your profile page.
-      </Form.Text>}
-      {k === 'profile' && <div>
-        <div
-          className='text-muted small cursor-pointer'
-          onClick={() => setShowMore(!showMore)}
-        >
-          {showMore
-            ? <><FaChevronDown /> Hide fine-grained options</>
-            : <><FaChevronRight /> Show fine-grained options</>}
-        </div>
-      </div>}
-    </Form.Group>
-    {k === 'profile' && showMore && <div className='ml-2'>
+      </FormHelperText>}
+    </FormControl>
+    {k === 'profile' && <div>
+      <div
+        className='text-muted small cursor-pointer'
+        onClick={() => setShowMore(!showMore)}
+      >
+        {showMore
+          ? <><FaChevronDown /> Hide fine-grained options</>
+          : <><FaChevronRight /> Show fine-grained options</>}
+      </div>
+    </div>}
+    {k === 'profile' && showMore && <Box sx={{ml:2}}>
       {_.map(profile_fields, (v, k) => (
         <ShareCheck key={k} k={k} form={form} setForm={setForm} profile={true} />
       ))}
-      <hr />
-    </div>}
-  </>
+      <Divider />
+    </Box>}
+  </div>
 }
 
 export default function ShareForm({s={}}) {
@@ -190,44 +201,44 @@ export default function ShareForm({s={}}) {
     emit(['shares/share/delete', {id}])
   }
 
-  return <><Card sx={{mb:2}}>
-    <CardHeader title="Share" />
+  return <Card>
     <CardContent>
-      {_.map(feature_map, (v, k) => (
-        <ShareCheck key={k} v={v} k={k} form={share} setForm={setShare} />
-      ))}
+      <Grid container spacing={2}>
+        <Grid item xs={12} md={6}>
+          <Typography color='text.secondary' textAlign='center'>Share</Typography>
+          {_.map(feature_map, (v, k) => (
+            <ShareCheck key={k} v={v} k={k} form={share} setForm={setShare} />
+          ))}
 
-      <div>Entries <FaRegQuestionCircle onClick={() => setEntriesHelp(!entriesHelp)}/></div>
-      {entriesHelp && <div className='small text-muted'>
-        User can view entries with these tags, and can use features involving these entries:
-        <ul>
-          <li>Summaries</li>
-          <li>Question-answering</li>
-          <li>Themes</li>
-        </ul>
-        Example use: sharing darker entries with a therapist, and lighter entries (eg travel, dreams) with friends.
-      </div>}
-      <Tags
-        selected={tags}
-        setSelected={setTags}
-      />
-    </CardContent>
-  </Card>
-  <Card>
-    <CardHeader title="With"></CardHeader>
-    <CardContent>
-      <Grid container spacing={3}>
-        <Grid item xs><Users users={users} setUsers={setUsers} /></Grid>
-        <Grid item xs><Groups groups={groups} setGroups={setGroups} /></Grid>
+          <div>Entries <FaRegQuestionCircle onClick={() => setEntriesHelp(!entriesHelp)}/></div>
+          {entriesHelp && <div className='small text-muted'>
+            User can view entries with these tags, and can use features involving these entries:
+            <ul>
+              <li>Summaries</li>
+              <li>Question-answering</li>
+              <li>Themes</li>
+            </ul>
+            Example use: sharing darker entries with a therapist, and lighter entries (eg travel, dreams) with friends.
+          </div>}
+          <Tags
+            selected={tags}
+            setSelected={setTags}
+          />
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <Typography color='text.secondary' textAlign='center'>With</Typography>
+          <Grid container spacing={2} direction='column'>
+            <Grid item><Users users={users} setUsers={setUsers} /></Grid>
+            <Grid item><Groups groups={groups} setGroups={setGroups} /></Grid>
+          </Grid>
+        </Grid>
       </Grid>
     </CardContent>
-
     <CardActions>
       <Button
         onClick={submit}
         variant='contained'
         color="primary"
-        size='small'
         disabled={postRes?.submitting}
       >
         {id ? 'Save' : 'Submit'}
@@ -242,5 +253,5 @@ export default function ShareForm({s={}}) {
         onClick={() => setSharePage({list: true})}
       >Cancel</Button>
     </CardActions>
-  </Card></>
+  </Card>
 }

@@ -1,7 +1,6 @@
 import React, {useEffect, useState} from "react";
-import {Form, Button} from "react-bootstrap";
 import {Spinner} from './utils'
-import {Card, CardContent} from '@material-ui/core'
+import {Button, Card, CardContent, Divider, Grid, TextField, Typography} from '@material-ui/core'
 
 import {useStoreActions, useStoreState} from "easy-peasy";
 
@@ -32,32 +31,35 @@ export default function Ask() {
   const changeQuestion = e => a.setInsight(['question', e.target.value])
 
   return <>
-    <Form onSubmit={submit}>
-      <Form.Group controlId="question-form">
-        {/*<Form.Label for='question-answering'>Question</Form.Label>*/}
-        <Form.Control
-          placeholder="How do I feel about x?"
-          as="textarea"
-          rows={3}
-          value={form}
-          onChange={changeQuestion}
-        />
-        <Form.Text muted>
-           Use proper English & grammar. Use personal pronouns.
-        </Form.Text>
-      </Form.Group>
-      {waiting ? <Spinner job={job} /> : <>
-        <Button
-          disabled={aiStatus !== 'on'}
-          variant="primary"
-          type="submit"
-        >Ask</Button>
-      </>}
-    </Form>
+    <form onSubmit={submit}>
+      <Grid container direction='column' spacing={3}>
+        <Grid item>
+          <TextField
+            label="Question"
+            placeholder="How do I feel about x?"
+            multiline
+            minRows={3}
+            value={form}
+            onChange={changeQuestion}
+            helperText="Use proper English & grammar. Use personal pronouns."
+          />
+        </Grid>
+        <Grid item>
+          {waiting ? <Spinner job={job} /> : <>
+            <Button
+              disabled={aiStatus !== 'on'}
+              color="primary"
+              variant="contained"
+              type="submit"
+            >Ask</Button>
+          </>}
+        </Grid>
+      </Grid>
+    </form>
     {reply?.length && <>
-      <hr/>
+      <Divider sx={{my: 2}}/>
       {reply.map((a, i) => <>
-        <Card className='mb-3'>
+        <Card sx={{my: 2}}>
           <CardContent>
             <Typography>{a.answer}</Typography>
           </CardContent>

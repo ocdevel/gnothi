@@ -1,19 +1,13 @@
 import {useHistory, useParams} from "react-router-dom"
 import React, {useEffect, useState, useContext, useCallback} from "react"
 import {fmtDate} from "../Helpers/utils"
-import {
-  Form,
-} from "react-bootstrap"
 import ReactMarkdown from "react-markdown"
 import './Entry.css'
 import {FaTags, FaPen, FaRegComments} from "react-icons/fa"
 import Tags from "../Tags"
-import MarkdownIt from 'markdown-it'
-import MdEditor from 'react-markdown-editor-lite'
 import 'react-markdown-editor-lite/lib/index.css'
 import {AddNotes, NotesNotifs, NotesList} from './Notes'
 import _ from 'lodash'
-import {EE} from '../redux/ws'
 import {FullScreenDialog} from "../Helpers/Dialog";
 
 import {useStoreActions, useStoreState} from "easy-peasy";
