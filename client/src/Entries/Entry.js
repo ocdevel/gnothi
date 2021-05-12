@@ -2,7 +2,6 @@ import {useHistory, useParams} from "react-router-dom"
 import React, {useEffect, useState, useContext, useCallback} from "react"
 import {fmtDate} from "../Helpers/utils"
 import ReactMarkdown from "react-markdown"
-import './Entry.css'
 import {FaPen} from "react-icons/fa"
 import Tags from "../Tags"
 import 'react-markdown-editor-lite/lib/index.css'
@@ -22,6 +21,11 @@ import Typography from "@material-ui/core/Typography"
 import {yup, makeForm, TextField2, Checkbox2} from "../Helpers/Form";
 import Editor from "../Helpers/Editor";
 import {Alert2} from "../Helpers/Misc";
+import Divider from "@material-ui/core/Divider";
+import Card from "@material-ui/core/Card";
+import CardContent from "@material-ui/core/CardContent";
+import CardHeader from "@material-ui/core/CardHeader";
+import Stack from "@material-ui/core/Stack";
 
 const schema = yup.object().shape({
   title: yup.string().nullable(),
@@ -39,6 +43,30 @@ Separate multiple concepts by hitting ENTER twice (two new lines). So if you're 
 After you have one or two entries, head to the Insights and Resources links at the website top to play with the AI.     
 `
 
+function CacheEntry() {
+  const cache = useStoreState(s => s.ws.data['entries/entry/cache/get'])
+  if (!cache) {return null}
+  return <>
+    <Alert2 severity='info'>
+      Paragraphs get split in the following way, and AI considers each paraph independently from the other (as if they're separate entries).
+    </Alert2>
+    <div>{cache.paras
+      ? cache.paras.map((p, i) => <div key={i}>
+        <p>{p}</p><hr/>
+      </div>)
+      : <p>Nothing here yet.</p>
+    }</div>
+    <Alert2 severity='info'>Keywords generated for use in Themes</Alert2>
+    <div>{cache.clean
+      ? cache.clean.map((p, i) => <div key={i}>
+        <p>{_.uniq(p.split(' ')).join(' ')}</p>
+        <hr/>
+      </div>)
+      : <p>Nothing here yet.</p>
+    }</div>
+  </>
+}
+
 export function Entry({entry=null, close=null}) {
   const history = useHistory()
   const as = useStoreState(state => state.user.as)
@@ -48,15 +76,14 @@ export function Entry({entry=null, close=null}) {
   const [formOrig, setFormOrig] = useState()
   const [tags, setTags] = useState({})
   const [advanced, setAdvanced] = useState(false)
-  const [cacheEntry, setCacheEntry] = useState()
+  const [aiSees, setAiSees] = useState(false)
   const entryPost = useStoreState(s => s.ws.res['entries/entries/post'])
   const entryPut = useStoreState(s => s.ws.res['entries/entry/put'])
   const entryDel = useStoreState(s => s.ws.res['entries/entry/delete'])
-  const cache = useStoreState(s => s.ws.data['entries/entry/cache/get'])
   const clear = useStoreActions(a => a.ws.clear)
 
   const eid = entry?.id
-  const showCacheEntry = !editing && eid && cacheEntry
+  const viewing = !editing && eid
   const draftId = `draft-${eid || "new"}`
 
   useEffect(() => {
@@ -70,10 +97,6 @@ export function Entry({entry=null, close=null}) {
     setFormOrig(form_)
     setTags(entry.entry_tags)
   }, [entry])
-
-  useEffect(() => {
-    setCacheEntry(cache)
-  }, [cache])
 
   useEffect(() => {
     return () => {
@@ -136,7 +159,7 @@ export function Entry({entry=null, close=null}) {
 
   const showAiSees = async () => {
     if (!eid) { return }
-    if (cacheEntry) {return setCacheEntry(null)}
+    setAiSees(!aiSees)
     emit(['entries/entry/cache/get', {id: eid}])
   }
 
@@ -160,7 +183,12 @@ export function Entry({entry=null, close=null}) {
     if (entryPost?.submitting || entryPut?.submitting) {
       return <CircularProgress />
     }
-    if (!editing) return <>
+    if (!editing) return <Stack spacing={2} direction='row'>
+      <Button
+        size='small'
+        color='primary'
+        onClick={showAiSees}
+      >What AI sees</Button>
       <Button
         variant='outlined'
         color='primary'
@@ -168,7 +196,7 @@ export function Entry({entry=null, close=null}) {
         startIcon={<FaPen />}
       >Edit
       </Button>
-    </>
+    </Stack>
 
     return <>
       {eid && <>
@@ -189,77 +217,56 @@ export function Entry({entry=null, close=null}) {
   }
 
   const renderForm = () => <>
-    <Grid container>
-      <Grid item xs>
-        <form onSubmit={submit}>
-          {editing ? <>
-            <TextField2
-              name='title'
-              label='Title'
-              helperText='Leave blank to use a machine-generated title based on your entry.'
-              form={form}
-            />
-          </> : <>
-            <Typography variant='h2'>{entry.title}</Typography>
-          </>}
-
-          {editing ? <Editor
-            name='text'
-            placeholder={placeholder}
-            form={form}
-            onChange={changeText}
-          /> : <ReactMarkdown
-            source={entry.text}
-            linkTarget='_blank'
-          />}
-
-          {editing && <>
-            {advanced ? <div>
-              <Checkbox2
-                name='no_ai'
-                label="Exclude from AI"
-                helperText="Use rarely, AI can't help with what it doesn't know. Example uses: technical note to a therapist, song lyrics, etc."
-                form={form}
-              />
-              <TextField2
-                name='created_at'
-                label='Date'
-                form={form}
-                placeholder="YYYY-MM-DD"
-                helperText="Manually enter this entry's date (otherwise it's set to time of submission)."
-              />
-            </div> : <div>
-              <span className='anchor' onClick={() => setAdvanced(true)}>Advanced</span>
-            </div>}
-          </>}
-          <br/>
-        </form>
-        <Error
-          action={/entries\/entr(ies|y).*/g}
-          codeRange={[400,500]}
+    <form onSubmit={submit}>
+      {editing ? <>
+        <TextField2
+          name='title'
+          label='Title'
+          helperText='Leave blank to use a machine-generated title based on your entry.'
+          form={form}
         />
-      </Grid>
+      </> : <>
+        <Typography variant='h2'>{entry.title}</Typography>
+      </>}
 
-      {showCacheEntry && <Grid item xs>
-        <Alert2 severity='info'>
-          Paragraphs get split in the following way, and AI considers each paraph independently from the other (as if they're separate entries).
-        </Alert2>
-        <div>{
-          cacheEntry.paras ? cacheEntry.paras.map((p, i) => <div key={i}>
-              <p>{p}</p><hr/>
-            </div>)
-            : <p>Nothing here yet.</p>
-        }</div>
-        <Alert2 severity='info'>Keywords generated for use in Themes</Alert2>
-        <div>{
-          cacheEntry.clean ? cacheEntry.clean.map((p, i) => <div key={i}>
-            <p>{_.uniq(p.split(' ')).join(' ')}</p>
-            <hr/>
-          </div>)
-            : <p>Nothing here yet.</p>
-        }</div>
-      </Grid>}
-    </Grid>
+      {editing ? <Editor
+        name='text'
+        placeholder={placeholder}
+        form={form}
+        onChange={changeText}
+      /> : <ReactMarkdown
+        source={entry.text}
+        linkTarget='_blank'
+      />}
+
+      {editing && <>
+        {advanced ? <div>
+          <Checkbox2
+            name='no_ai'
+            label="Exclude from AI"
+            helperText="Use rarely, AI can't help with what it doesn't know. Example uses: technical note to a therapist, song lyrics, etc."
+            form={form}
+          />
+          <TextField2
+            name='created_at'
+            label='Date'
+            form={form}
+            placeholder="YYYY-MM-DD"
+            helperText="Manually enter this entry's date (otherwise it's set to time of submission)."
+          />
+        </div> : <div>
+          <span className='anchor' onClick={() => setAdvanced(true)}>Advanced</span>
+        </div>}
+      </>}
+      <br/>
+    </form>
+    <Error
+      action={/entries\/entr(ies|y).*/g}
+      codeRange={[400,500]}
+    />
+    {viewing && aiSees && <div>
+      <CacheEntry />
+    </div>}
 
     <Box display='flex' justifyContent='space-between' direction='row' alignItems='center'>
       <Tags
@@ -269,15 +276,41 @@ export function Entry({entry=null, close=null}) {
         noEdit={!editing}
         preSelectMain={true}
       />
-      {!editing && <Button
-        sx={{minWidth: 100}}
-        size='small'
-        color='primary'
-        onClick={showAiSees}
-      >What AI sees</Button>
-      }
     </Box>
   </>
+
+  function renderEditing() {
+    return <>
+      <DialogContent>{renderForm()}</DialogContent>
+      <DialogActions>{renderButtons()}</DialogActions>
+    </>
+  }
+
+  function renderViewing() {
+    return <Grid container>
+      <Grid item xs={12} sm={8}>
+        <DialogContent>
+            {renderForm()}
+        </DialogContent>
+        <DialogActions>
+          {/*viewing && <Box sx={{marginRight: 'auto'}}>
+            <AddNotes eid={eid} />
+          </Box>*/}
+          {renderButtons()}
+        </DialogActions>
+      </Grid>
+      <Grid item xs={12} sm={4}>
+        <DialogContent>
+          <Card>
+            <CardHeader title='Notes' />
+            <CardContent>
+              <NotesList entry_id={eid} />
+            </CardContent>
+          </Card>
+        </DialogContent>
+      </Grid>
+    </Grid>
+  }
 
   return <>
     <FullScreenDialog
@@ -285,16 +318,7 @@ export function Entry({entry=null, close=null}) {
       onClose={() => go()}
       title={fmtDate(eid ? entry.created_at : Date.now())}
     >
-      <DialogContent>
-        {renderForm()}
-        {!editing && eid && <NotesList eid={eid} />}
-      </DialogContent>
-      <DialogActions>
-        {!editing && eid && <Box sx={{marginRight: 'auto'}}>
-          <AddNotes eid={eid} />
-        </Box>}
-        {renderButtons()}
-      </DialogActions>
+      {editing ? renderEditing() : renderViewing()}
     </FullScreenDialog>
   </>
 }

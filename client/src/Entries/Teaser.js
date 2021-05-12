@@ -10,7 +10,6 @@ import {NotesNotifs} from "./Notes";
 import {
   sent2face,
   fmtDate,
-  bsSizes
 } from "../Helpers/utils"
 
 export default function Teaser({eid, gotoForm}) {

@@ -360,7 +360,7 @@ class Note(Base):
         cte = mine.union(can_view).subquery()
 
         res = db.query(Note).join(cte, Note.user_id.in_(cte))\
-            .order_by(Note.created_at.desc())\
+            .order_by(Note.created_at.asc())\
             .all()
 
         obj = {}

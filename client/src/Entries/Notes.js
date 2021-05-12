@@ -18,6 +18,8 @@ import ListItemText from "@material-ui/core/ListItemText";
 import CommentIcon from '@material-ui/icons/Comment';
 import Tabs from '../Helpers/Tabs'
 import {makeForm, yup, Checkbox2, TextField2} from "../Helpers/Form";
+import {EntriesMessages} from "../Chat/Messages";
+import {Entry} from "./Entry";
 
 const schema = yup.object({
   // type: yup.string().required(),  // TODO this comes from `adding`, which is weird
@@ -253,7 +255,9 @@ export function NotesNotifs({entry_id}) {
   </>
 }
 
-export function NotesList({entry_id}) {
+export const NotesList = EntriesMessages
+
+export function NotesListOld({entry_id}) {
   const emit = useStoreActions(a => a.ws.emit)
   const notes = useStoreState(s => s.ws.data['entries/notes/get']?.[entry_id])
 

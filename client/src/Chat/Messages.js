@@ -6,6 +6,7 @@ import Grid from '@material-ui/core/Grid'
 import Button from '@material-ui/core/Button'
 import Alert from '@material-ui/core/Alert'
 import {yup, makeForm, TextField2} from '../Helpers/Form'
+import Typography from "@material-ui/core/Typography";
 
 const schema = yup.object({
   text: yup.string().required().min(1)
@@ -20,7 +21,8 @@ function ChatInput({group_id=null, entry_id=null}) {
     if (group_id) {
       emit([`groups/messages/post`, {id: group_id, ...data}])
     } else if (entry_id) {
-
+      const body = {...data, entry_id, type: 'note'}
+      emit(['entries/notes/post', body])
     }
     form.reset()
   }
@@ -48,11 +50,9 @@ function Message({m, me, members, continued=false}) {
     key={m.id}
   >
     {!continued && <div>
-      <div className='text-muted'>
-        {members[m.user_id]?.user_group?.online && onlineIcon}
-        <Button variant='link'>{getUname(m.user_id, members)}</Button>
-        <span className='small text-muted'>{timeAgo(m.createdAt)}</span>
-      </div>
+      {members?.[m.user_id]?.user_group?.online && onlineIcon}
+      <Button variant='link'>{getUname(m.user_id, members)}</Button>
+      <Typography variant='caption'>{timeAgo(m.createdAt)}</Typography>
     </div>}
     <Alert
       icon={false}
@@ -81,15 +81,16 @@ export function Messages({messages, members, group_id=null, entry_id=null}) {
     return <Message key={m.id} m={m} members={members} me={me} continued={continued} />
   }
 
+  const takenHeight = entry_id ? '220px' : '150px'
   return <Grid
     container
     flexDirection='column'
-    sx={{height: "calc(100vh - 150px)"}}
+    sx={{height: `calc(100vh - ${takenHeight})`}}
   >
 
     <Grid item sx={{flex: 1, overflowY: 'scroll'}} ref={elMessages}>
       <Grid container flexDirection='column'>
-        {messages?.length && messages.map(renderMessage)}
+        {messages?.length > 0 && messages.map(renderMessage)}
       </Grid>
     </Grid>
 
@@ -107,9 +108,9 @@ export function GroupMessages({group_id}) {
   return <Messages messages={messages} members={members} group_id={group_id} />
 }
 
-export function EntriesMessages() {
-  let messages = useStoreState(s => s.ws.data['entries/notes/get'])
+export function EntriesMessages({entry_id}) {
+  let messages = useStoreState(s => s.ws.data['entries/notes/get']?.[entry_id])
   let members = useStoreState(s => s.ws.data['shares/ingress/get']?.obj)
 
-  return <Messages messages={messages} members={members} />
+  return <Messages messages={messages} members={members} entry_id={entry_id} />
 }

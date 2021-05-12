@@ -11,7 +11,6 @@ import {
 } from 'react-icons/fa'
 import Error from "./Error";
 import {Authenticate, ResetPassword} from "./Auth"
-import './Splash.css'
 import {
   Switch,
   Route,

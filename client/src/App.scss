@@ -31,3 +31,21 @@ body {
 }
 
 .field-name p {margin: 0}
+
+.markdown-render {
+  background-color: #eee;
+}
+
+.auth-block {
+  /*width: 900px;*/
+  /*display: flex;*/
+  /*align-items: center;*/
+  /*justify-content: center;*/
+}
+
+.feature-details img {
+  width: 100%;
+  max-width: 800px;
+  box-shadow: 0 10px 16px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19) !important;
+  margin: 10px;
+}
