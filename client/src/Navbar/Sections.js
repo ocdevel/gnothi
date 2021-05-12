@@ -7,7 +7,6 @@ import {
 import {
   FaUser,
 } from 'react-icons/fa'
-import './style.scss'
 
 import {useStoreState, useStoreActions} from "easy-peasy";
 import {
@@ -33,6 +32,9 @@ import ListItemText from "@material-ui/core/ListItemText";
 import Collapse from "@material-ui/core/Collapse";
 import Typography from "@material-ui/core/Typography";
 import Badge from "@material-ui/core/Badge";
+import Footer from "../Footer";
+import Box from "@material-ui/core/Box";
+import Stack from "@material-ui/core/Stack";
 
 
 const useStyles = makeStyles((theme) => ({
@@ -214,13 +216,16 @@ export function JournalSection() {
 }
 
 export default function Sections() {
-  return <>
-    <AccountSection />
-    <Divider />
-    <JournalSection />
-    <Divider />
-    <GroupsSection />
-    <Divider />
-    <MiscSection />
-  </>
+  return <Stack direction='column' justify='space-between' sx={{height: '100%'}}>
+    <Box flex={1}>
+      <AccountSection />
+      <Divider />
+      <JournalSection />
+      <Divider />
+      <GroupsSection />
+      <Divider />
+      <MiscSection />
+    </Box>
+    <Footer />
+  </Stack>
 }

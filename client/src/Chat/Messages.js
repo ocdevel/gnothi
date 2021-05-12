@@ -84,7 +84,7 @@ export function Messages({messages, members, group_id=null, entry_id=null}) {
   return <Grid
     container
     flexDirection='column'
-    sx={{height: "calc(100vh - 170px)"}}
+    sx={{height: "calc(100vh - 150px)"}}
   >
 
     <Grid item sx={{flex: 1, overflowY: 'scroll'}} ref={elMessages}>

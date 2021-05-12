@@ -1,8 +1,6 @@
 import React, {useState, useEffect, useRef} from 'react'
 import CssBaseline from '@material-ui/core/CssBaseline';
 import StyledEngineProvider from '@material-ui/core/StyledEngineProvider';
-
-
 import '@aws-amplify/ui/dist/style.css'
 
 import './App.scss'
@@ -18,7 +16,6 @@ import {
 import Splash from './Splash'
 import Account from './Account'
 import Error from './Error'
-import Footer from './Footer'
 
 import { StoreProvider, useStoreActions, useStoreState } from 'easy-peasy'
 import store from './redux/store'
@@ -61,9 +58,8 @@ function LoggedIn() {
 
   // key={as} triggers refresh on these components (triggering fetches)
   return <div key={as}>
-    <CssBaseline />
     <Drawer>
-      <div>
+      <>
         <Error message={error} />
         <Error codes={[422,401,500]} />
 
@@ -90,7 +86,7 @@ function LoggedIn() {
           {staticRoutes()}
           <Redirect from="/" to="/j" />
         </Switch>
-      </div>
+      </>
     </Drawer>
     <SharingModal />
   </div>
@@ -116,10 +112,10 @@ function App() {
 
 export default () => <>
   <StyledEngineProvider injectFirst>
+    <CssBaseline />
     <StoreProvider store={store}>
       <Router>
         <App />
-        <Footer />
       </Router>
     </StoreProvider>
   </StyledEngineProvider>
