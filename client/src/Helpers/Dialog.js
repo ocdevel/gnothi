@@ -9,6 +9,7 @@ import CloseIcon from '@material-ui/icons/Close';
 import Slide from '@material-ui/core/Slide';
 import Grid from "@material-ui/core/Grid";
 import DialogTitle from '@material-ui/core/DialogTitle';
+import {ToolbarHeader} from "./Misc";
 
 const useStyles = makeStyles((theme) => ({
   appBar: {
@@ -56,7 +57,13 @@ const Transition = React.forwardRef(function Transition(props, ref) {
   return <Slide direction="up" ref={ref} {...props} />;
 });
 
-export function FullScreenDialog({title, children, open, onClose}) {
+export function FullScreenDialog({
+  title,
+  children,
+  open,
+  onClose,
+  buttons=null
+}) {
   const classes = useStyles();
 
   return <>
@@ -76,9 +83,7 @@ export function FullScreenDialog({title, children, open, onClose}) {
           >
             <CloseIcon />
           </IconButton>
-          <Typography variant="h6" className={classes.title} component="div">
-            {title}
-          </Typography>
+          <ToolbarHeader title={title} buttons={buttons} className={classes.title}/>
           {/*<Button autoFocus color="inherit" onClick={handleClose}>
             save
           </Button>*/}

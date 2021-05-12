@@ -9,6 +9,12 @@ import {GroupMessages} from "../Chat/Messages";
 import Grid from '@material-ui/core/Grid'
 import Tabs from '@material-ui/core/Tabs'
 import Tab from '@material-ui/core/Tab'
+import {ToolbarHeader} from "../Helpers/Misc";
+
+export function GroupToolbar() {
+  const group = useStoreState(s => s.ws.data['groups/group/get'])
+  return <ToolbarHeader title={group?.title || "Group"}/>
+}
 
 function Entries() {
   const entries = useStoreState(s => s.ws.data['groups/entries/get'])

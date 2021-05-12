@@ -33,7 +33,7 @@ function Share({s}) {
   </Card>
 }
 
-export default function Sharing() {
+export function SharingModal() {
   const emit = useStoreActions(a => a.ws.emit)
   const shares = useStoreState(s => s.ws.data['shares/egress/get'])
   const sharePage = useStoreState(s => s.user.sharePage)
@@ -53,37 +53,39 @@ export default function Sharing() {
   // so just list all.
   const isList = sharePage.list || (sharePage.id && !obj?.[sharePage.id])
 
-  if (isList) {
+  function renderContent() {
+    if (isList) {
+      return <div>
+        {arr?.map(sid => <Share key={sid} s={obj[sid]}/>)}
+      </div>
+    }
     return <div>
       <Button
-        sx={{mb: 2}}
-        variant='contained'
-        color='primary'
-        onClick={() => setSharePage({create: true})}
-        startIcon={<Add />}
-      >New Share</Button>
-      {arr?.map(sid => <Share key={sid} s={obj[sid]}/>)}
+        variant={false}
+        size='small'
+        onClick={() => setSharePage({list: true})}
+        startIcon={<ArrowBack />}
+      >
+        List Shares
+      </Button>
+      {sharePage.create ? <ShareForm />
+        : sharePage.id ? <ShareForm s={obj[sharePage.id]} />
+        : null}
     </div>
   }
 
-  return <div>
-    <Button
-      variant={false}
-      size='small'
-      onClick={() => setSharePage({list: true})}
-      startIcon={<ArrowBack />}
-    >
-      List Shares
-    </Button>
-    {sharePage.create ? <ShareForm />
-      : sharePage.id ? <ShareForm s={obj[sharePage.id]} />
-      : null}
-  </div>
-}
-
-export function SharingModal() {
-  const sharePage = useStoreState(s => s.user.sharePage)
-  const setSharePage = useStoreActions(a => a.user.setSharePage)
+  function renderButtons() {
+    if (sharePage.list) {
+      return <>
+        <Button
+          variant='contained'
+          color='info'
+          onClick={() => setSharePage({create: true})}
+        >New Share</Button>
+      </>
+    }
+    return null
+  }
 
   function close() {
     setSharePage(null)
@@ -94,9 +96,10 @@ export function SharingModal() {
       open={sharePage || false}
       onClose={close}
       title='Sharing'
+      buttons={renderButtons()}
     >
       <DialogContent>
-        <Sharing />
+        {renderContent()}
       </DialogContent>
     </FullScreenDialog>
   </>

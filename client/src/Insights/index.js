@@ -21,7 +21,9 @@ import TextField from '@material-ui/core/TextField'
 import Card from '@material-ui/core/Card'
 import Grid from '@material-ui/core/Grid'
 import CalendarToday from "@material-ui/icons/CalendarToday";
-import {Alert2} from "../Helpers/Misc";
+import {Alert2, ToolbarHeader} from "../Helpers/Misc";
+import {Link} from "react-router-dom";
+import Button from "@material-ui/core/Button";
 
 const tools = [
   {
@@ -47,6 +49,10 @@ const tools = [
   },
   // 62da7182: books attrs, popovers
 ]
+
+export function InsightsToolbar() {
+  return <ToolbarHeader title='Insights'/>
+}
 
 export default function Insights() {
   const days = useStoreState(s => s.insights.days)

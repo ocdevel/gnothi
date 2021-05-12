@@ -14,8 +14,13 @@ import {useStoreState} from "easy-peasy";
 import {aiStatusEmoji} from "../Helpers/utils";
 
 import Sections from './Sections'
-import {useLocation} from "react-router-dom";
+import {Route, Switch, useLocation} from "react-router-dom";
 import Tooltip from "@material-ui/core/Tooltip";
+import {EntriesToolbar} from "../Entries/Entries";
+import {GroupsToolbar} from "../Groups/AllGroups";
+import {InsightsToolbar} from "../Insights";
+import {ResourcesToolbar} from "../Resources";
+import {GroupToolbar} from "../Groups/Group";
 
 
 const drawerWidth = 240;
@@ -104,12 +109,6 @@ export default function PersistentDrawerLeft({children}) {
   const isDesktop = useMediaQuery({ minWidth: 960 })
   const [open, setOpen] = React.useState(isDesktop);
 
-  const title = {
-    '/j': 'Journal',
-    '/insights': 'Insights',
-    '/groups': 'Groups'
-  }[location.pathname] || 'Gnothi'
-
   const toggleDrawer = () => setOpen(!open)
 
   return (
@@ -130,9 +129,13 @@ export default function PersistentDrawerLeft({children}) {
           >
             <MenuIcon />
           </IconButton>
-          <Typography variant="h6" noWrap component="div">
-            {title}
-          </Typography>
+          <Switch>
+            <Route path='/j'><EntriesToolbar /></Route>
+            <Route exact path='/groups'><GroupsToolbar /></Route>
+            <Route exact path='/insights'><InsightsToolbar /></Route>
+            <Route exact path='/resources'><ResourcesToolbar /></Route>
+            <Route path='/groups/:gid'><GroupToolbar /></Route>
+          </Switch>
         </Toolbar>
       </AppBar>
       <Drawer

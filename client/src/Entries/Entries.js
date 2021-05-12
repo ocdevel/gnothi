@@ -1,5 +1,5 @@
 import React, {useCallback, useEffect, useState} from "react"
-import {Route, Switch, useHistory, useRouteMatch} from "react-router-dom"
+import {Link, Route, Switch, useHistory, useRouteMatch} from "react-router-dom"
 import _ from 'lodash'
 
 import Teaser from './Teaser'
@@ -13,7 +13,18 @@ import Search from './Search'
 import Pagination from '@material-ui/core/Pagination'
 import Grid from '@material-ui/core/Grid'
 import Button from '@material-ui/core/Button'
-import {Alert2} from "../Helpers/Misc";
+import {Alert2, ToolbarHeader} from "../Helpers/Misc";
+import Fab from "@material-ui/core/Fab";
+
+export function EntriesToolbar() {
+  const as = useStoreState(s => s.user.as)
+  const props = {component: Link, to: '/j/entry'}
+  const buttons = as ? null : <>
+    {/*<Fab variant="extended" size='medium' {...props}>New Entry</Fab>*/}
+    <Button variant='contained' color='info' {...props}>New Entry</Button>
+  </>
+  return <ToolbarHeader title='Journal' buttons={buttons}/>
+}
 
 export default function Entries({group_id=null}) {
   const as = useStoreState(s => s.user.as)
@@ -80,19 +91,7 @@ export default function Entries({group_id=null}) {
     <Grid container spacing={2}>
       <Grid item sm={12} md={7} lg={8}>
         {MainTags}
-        <Grid container justifyContent="space-between" alignItems="center" spacing={3}>
-          <Grid item style={{flex: 1}}>
-            <Search trigger={setSearch} />
-          </Grid>
-          <Grid item>
-            {as ? null : <Button
-              color="primary"
-              variant="contained"
-              onClick={() => gotoForm()}
-              label="New Entry"
-            >New Entry</Button>}
-          </Grid>
-        </Grid>
+        <Search trigger={setSearch} />
         {renderEntries()}
       </Grid>
       <Grid item sm={12} lg={4} md={5}>

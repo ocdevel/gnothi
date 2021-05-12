@@ -7,6 +7,11 @@ import Books from './Books'
 import Therapists from './Therapists'
 import Grid from "@material-ui/core/Grid";
 import Button from "@material-ui/core/Button";
+import {ToolbarHeader} from "../Helpers/Misc";
+
+export function ResourcesToolbar() {
+  return <ToolbarHeader title='Resources' />
+}
 
 export default function Resources() {
   const [books, setBooks] = useState(true)

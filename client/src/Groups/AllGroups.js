@@ -1,6 +1,6 @@
 import EditGroup from "./EditGroup";
 import React, {useEffect, useState} from "react";
-import {useHistory} from "react-router-dom";
+import {Link, useHistory} from "react-router-dom";
 import {useStoreActions, useStoreState} from "easy-peasy";
 import {FaPlus, FaRegComments} from "react-icons/fa";
 import {timeAgo} from "../Helpers/utils";
@@ -12,6 +12,18 @@ import DialogContent from "@material-ui/core/DialogContent";
 import Card from "@material-ui/core/Card";
 import CardContent from "@material-ui/core/CardContent";
 import CardHeader from "@material-ui/core/CardHeader";
+import {ToolbarHeader} from "../Helpers/Misc";
+import {EE} from '../redux/ws'
+
+export function GroupsToolbar() {
+  function onClick() {
+    EE.emit('toolbar/groups/create', null)
+  }
+  const buttons = <>
+    <Button variant='contained' color='info' onClick={onClick}>Create Group</Button>
+  </>
+  return <ToolbarHeader title='Groups' buttons={buttons}/>
+}
 
 export function GroupModal({show, close, gid}) {
   const history = useHistory()
@@ -60,6 +72,11 @@ export default function AllGroups() {
   const [showCreate, setShowCreate] = useState(false)
   const [showGroup, setShowGroup] = useState(null)
 
+  useEffect(() => {
+    EE.on("toolbar/groups/create", () => setShowCreate(true))
+    return () => EE.off("toolbar/groups/create")
+  }, [])
+
   const {arr, obj} = groups
   if (!arr?.length) {return null}
 
@@ -90,14 +107,6 @@ export default function AllGroups() {
       close={() => setShowCreate(false)}
       show={showCreate}
     />
-    <Button
-      color='primary'
-      variant='outlined'
-      gutterBottom
-      onClick={() => setShowCreate(true)}
-    >
-      <FaPlus /> Create Group
-    </Button>
     {arr.map(renderGroup)}
   </div>
 }
