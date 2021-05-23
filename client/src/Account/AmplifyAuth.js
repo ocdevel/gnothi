@@ -82,7 +82,7 @@ export default function AmplifyAuth() {
           </AmplifyAuthenticator>
         </AmplifyAuthContainer>
       </Box>
-      <Alert2 severity='warning'>Returning users, do a one-time password reset. <a href="https://github.com/lefnire/gnothi/issues/107" target="_blank">Details here</a>.</Alert2>
+      <Alert2 severity='warning'>Returning users, do a one-time password reset. <a href="https://github.com/lefnire/gnothi/issues/107#issuecomment-846515846" target="_blank">Details here</a>.</Alert2>
     </>
   }
 
