@@ -13,7 +13,7 @@ import {
   useLocation,
   Link
 } from "react-router-dom";
-import Splash from './Splash'
+import Splash from './Static/Splash'
 import Account from './Account'
 import Error from './Error'
 

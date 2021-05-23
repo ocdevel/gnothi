@@ -288,7 +288,7 @@ export function Entry({entry=null, close=null}) {
 
   function renderViewing() {
     return <Grid container>
-      <Grid item xs={12} sm={8}>
+      <Grid item xs={12} lg={8}>
         <DialogContent>
             {renderForm()}
         </DialogContent>
@@ -299,7 +299,7 @@ export function Entry({entry=null, close=null}) {
           {renderButtons()}
         </DialogActions>
       </Grid>
-      <Grid item xs={12} sm={4}>
+      <Grid item xs={12} lg={4}>
         <DialogContent>
           <Card>
             <CardHeader title='Notes' />

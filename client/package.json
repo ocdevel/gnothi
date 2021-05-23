@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@aws-amplify/ui-react": "^1.0.3",
+    "@aws-amplify/ui-react": "^0.2.16-ui-preview.34",
     "@emotion/react": "^11.4.0",
     "@emotion/styled": "^11.3.0",
     "@hookform/resolvers": "^2.0.0",
@@ -15,7 +15,7 @@
     "@testing-library/jest-dom": "^5.11.4",
     "@testing-library/react": "^11.1.0",
     "@testing-library/user-event": "^12.1.10",
-    "aws-amplify": "^3.3.22",
+    "aws-amplify": "^3.0.25-ui-preview.34",
     "axios": "^0.21.1",
     "clsx": "^1.1.1",
     "easy-peasy": "^4.0.1",

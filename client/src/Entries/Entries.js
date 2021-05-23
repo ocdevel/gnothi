@@ -60,7 +60,7 @@ export default function Entries({group_id=null}) {
 
   const renderEntries = () => {
     if (!filtered.length) {
-      return <Alert2 severity='info'>No entries. If you're a new user, click <Button color="primary" size='small' variant='contained' disabled>New Entry</Button> above. If you're a therapist, click your email top-right and select a client; you'll then be in that client's shoes.</Alert2>
+      return <Alert2 severity='info'>No entries. If you're a new user, click <Button color="primary" size='small' variant='contained' disabled>New Entry</Button> above. If you're a therapist, select a client in left-sidebar > Account > [email]. You'll then be in that client's shoes.</Alert2>
     }
 
     const pageSize = 10

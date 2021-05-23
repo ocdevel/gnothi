@@ -9,8 +9,8 @@ import {
   FaBook,
   FaSmile
 } from 'react-icons/fa'
-import Error from "./Error";
-import {Authenticate, ResetPassword} from "./Auth"
+import Error from "../Error";
+import {Authenticate, ResetPassword} from "../Auth"
 import {
   Switch,
   Route,
@@ -19,7 +19,7 @@ import {
   useParams, useHistory
 } from "react-router-dom"
 import {LinkContainer} from 'react-router-bootstrap'
-import AmplifyAuth from './Account/AmplifyAuth'
+import AmplifyAuth from '../Account/AmplifyAuth'
 import Grid from '@material-ui/core/Grid'
 import Tab from '@material-ui/core/Tab'
 import Tabs from '@material-ui/core/Tabs'
@@ -305,11 +305,14 @@ export default function Splash() {
       </LinkContainer>
       <Typography variant='h3' component='h1'>Gnothi</Typography>
       <Typography variant='h5'>Gnōthi Seauton: Know Thyself</Typography>
-      <Typography>A journal that uses AI to help you introspect and find resources</Typography>
+      <Typography sx={{mb:2}}>A journal that uses AI to help you introspect and find resources</Typography>
       {showSignin && <>
-        <Link to='/auth'>
-          <Button>Sign In</Button>
-        </Link>
+        <Button
+          variant='contained'
+          component={Link}
+          to='/auth'
+          size='large'
+        >Sign In</Button>
       </>}
       <Switch>
         {/*<Route path='/reset-password'>
@@ -318,9 +321,7 @@ export default function Splash() {
           </div>
         </Route>*/}
         <Route path='/auth' exact>
-          <div className='custom-amplify-container'>
-            <AmplifyAuth />
-          </div>
+          <AmplifyAuth />
         </Route>
         <Route path='/auth/old'>
           <div className='auth-block'>
@@ -334,7 +335,7 @@ export default function Splash() {
         <Details />
       </Route>
       <Route>
-        <Grid container spacing={4}>
+        <Grid container spacing={4} sx={{px: {xs:1, md:2, lg:3}}}>
           <Overviews />
           <Grid item xs={12}><Divider /></Grid>
           <Grid
