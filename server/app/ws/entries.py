@@ -62,6 +62,7 @@ class Entries:
 
     @staticmethod
     async def on_entries_get(data: BM, d) -> List[PyE.EntryGet]:
+        print(d.vid, d.uid)
         e = M.Entry.snoop(d.db, d.vid, d.uid).all()
         return ResWrap(keyby='id', data=e)
 

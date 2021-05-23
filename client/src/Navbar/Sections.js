@@ -218,11 +218,11 @@ export function JournalSection() {
 export default function Sections() {
   return <Stack direction='column' justify='space-between' sx={{height: '100%'}}>
     <Box flex={1}>
-      <AccountSection />
-      <Divider />
       <JournalSection />
       <Divider />
       <GroupsSection />
+      <Divider />
+      <AccountSection />
       <Divider />
       <MiscSection />
     </Box>

@@ -77,8 +77,17 @@ def migrate_shares(bind, sess):
 
 
 def migrate_tags(bind, sess):
-    op.add_column('tags', sa.Column('order', sa.Integer(), server_default='0', nullable=False))
-    op.add_column('tags', sa.Column('ai', sa.Boolean(), server_default='false'))
+    op.add_column('tags', sa.Column('sort', sa.Integer(), server_default='0', nullable=False))
+    op.add_column('tags', sa.Column('ai', sa.Boolean(), server_default='true'))
+    bind.execute(f"""
+    with tags_ as (
+        select id,
+            row_number() over (partition by user_id order by created_at asc) rank
+        from tags
+    )
+    update tags set ai=true, sort=tags_.rank from tags_ where tags.id=tags_.id
+    """)
+    bind.execute("update tags set ai=true")
 
 
 def migrate_entries(bind, sess):

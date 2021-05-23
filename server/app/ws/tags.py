@@ -15,8 +15,8 @@ class Tags:
     async def on_tags_post(data: PyT.TagIn, d):
         if d.snooping: raise CantSnoop()
         db = d.db
-        last = db.query(sa.func.max(M.Tag.order)).filter_by(user_id=d.vid).scalar()
-        tag = M.Tag(name=data.name, user_id=d.vid, order=last + 1)
+        last = db.query(sa.func.max(M.Tag.sort)).filter_by(user_id=d.vid).scalar()
+        tag = M.Tag(name=data.name, user_id=d.vid, sort=last + 1)
         db.add(tag)
         db.commit()
         await d.mgr.exec(d, action='tags/tags/get')

@@ -7,7 +7,7 @@ class TagIn(BM):
     id: Optional[UUID4] = None
     name: str
     selected: Optional[bool] = False
-    ai: bool
+    ai: Optional[bool] = True
 
 
 class TagPut(BM):
@@ -30,7 +30,7 @@ class TagOut(TagIn, BM_ORM):
 
 class TagOrder(BM):
     id: UUID4
-    order: int
+    sort: int
 
 
 TagsOrder = List[TagOrder]

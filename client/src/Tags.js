@@ -172,7 +172,7 @@ function TagModal({close}) {
   }
 
   function reorder(tags) {
-    const data = _.map(tags, ({id}, order) => ({id, order}))
+    const data = _.map(tags, ({id}, sort) => ({id, sort}))
     emit(['tags/tags/reorder', data])
 
   }
