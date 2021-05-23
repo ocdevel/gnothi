@@ -46,7 +46,7 @@ class Auth:
         # ga(user.id, 'user', 'register')
         user = M.User(cognito_id=cog_id, email=email)
         t = M.Tag(user=user, main=True, selected=True, name='Main')
-        ug = M.UserGroup(user=user, obj_id=GROUP_ID)
+        ug = M.UserGroup(user=user, group_id=GROUP_ID)
         db.add_all([t, ug])
         db.commit()
         return db.query(M.User.id).filter_by(email=email).scalar()

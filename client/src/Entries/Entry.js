@@ -210,14 +210,14 @@ export function Entry({entry=null, close=null}) {
       <Button
         color="primary"
         variant='contained'
-        onClick={submit}
+        onClick={form.handleSubmit(submit)}
       >Submit
       </Button>
     </>
   }
 
   const renderForm = () => <>
-    <form onSubmit={submit}>
+    <form onSubmit={form.handleSubmit(submit)}>
       {editing ? <>
         <TextField2
           name='title'
