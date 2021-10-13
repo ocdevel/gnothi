@@ -1,3 +1,8 @@
+# Docs: https://registry.terraform.io/modules/terraform-aws-modules/apigateway-v2/aws/latest
+# http: https://github.com/terraform-aws-modules/terraform-aws-apigateway-v2/blob/master/examples/complete-http/main.tf
+# vpc-link: https://github.com/terraform-aws-modules/terraform-aws-apigateway-v2/blob/master/examples/vpc-link-http/main.tf
+# websocket: https://github.com/lllama/terraform-aws-apigateway-v2/tree/complete-websocket/examples/complete-websocket
+
 module "api_gateway" {
   source = "terraform-aws-modules/apigateway-v2/aws"
 
@@ -24,31 +29,9 @@ module "api_gateway" {
 
   }
 
-  vpc_links = {
-    my-vpc = {
-      name               = "${local.name}-apig-vcp-link"
-      security_group_ids = [module.api_gateway_security_group.security_group_id]
-      subnet_ids         = module.vpc.public_subnets
-    }
-  }
-
   tags = local.tags
 }
 
 output "execute_uri" {
   value = module.api_gateway.default_apigatewayv2_stage_invoke_url
-}
-
-module "api_gateway_security_group" {
-  source  = "terraform-aws-modules/security-group/aws"
-  version = "~> 4.0"
-
-  name        = "${local.name}-apig-sg"
-  description = "API Gateway group for example usage"
-  vpc_id      = module.vpc.vpc_id
-
-  ingress_cidr_blocks = ["0.0.0.0/0"]
-  ingress_rules       = ["https-443-tcp","http-80-tcp"]
-
-  egress_rules = ["all-all"]
 }

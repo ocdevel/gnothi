@@ -1,3 +1,8 @@
+# Docs: https://registry.terraform.io/modules/terraform-aws-modules/lambda/aws/latest
+# VPC config:
+# - https://www.serverless.com/framework/docs/providers/aws/guide/functions#vpc-configuration
+# - https://docs.aws.amazon.com/lambda/latest/dg/services-rds-tutorial.html
+
 module "lambda_function" {
   source = "terraform-aws-modules/lambda/aws"
 
@@ -12,7 +17,7 @@ module "lambda_function" {
 
   attach_network_policy  = true
   vpc_subnet_ids         = module.vpc.private_subnets
-  vpc_security_group_ids = [module.lambda_security_group.security_group_id]
+  vpc_security_group_ids = [module.vpc.default_security_group_id]
 
   allowed_triggers = {
     AllowExecutionFromAPIGateway = {
@@ -36,23 +41,4 @@ module "lambda_function" {
 
   }
 
-}
-
-module "lambda_security_group" {
-  source  = "terraform-aws-modules/security-group/aws"
-  version = "~> 4.0"
-
-  name        = "${local.name}-lambda-sg"
-  description = "Lambda security group for example usage"
-  vpc_id      = module.vpc.vpc_id
-
-  computed_ingress_with_source_security_group_id = [
-    {
-      rule                     = "https-443-tcp"
-      source_security_group_id = module.api_gateway_security_group.security_group_id
-    }
-  ]
-  number_of_computed_ingress_with_source_security_group_id = 1
-
-  egress_rules = ["all-all"]
 }
