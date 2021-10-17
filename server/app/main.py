@@ -1,3 +1,19 @@
+# Modified from AWS example code: https://docs.aws.amazon.com/code-samples/latest/catalog/python-cross_service-apigateway_websocket_chat-lambda_chat.py.html
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+"""
+Purpose
+
+Shows how to implement an AWS Lambda function as part of a websocket chat application.
+The function handles messages from an Amazon API Gateway websocket API and uses an
+Amazon DynamoDB table to track active connections. When a message is sent by any
+participant, it is posted to all other active connections by using the Amazon
+API Gateway Management API.
+
+Logs written by this handler can be found in Amazon CloudWatch.
+"""
+
 import json
 import logging
 import os
@@ -21,7 +37,7 @@ def handle_connect(table, connection_id):
     """
     status_code = 200
     try:
-        # table.put_item(Item={"connection_id": connection_id})
+        table.put_item(Item={"connection_id": connection_id})
         logger.info("Added connection %s", connection_id)
     except ClientError:
         logger.exception("Couldn't add connection %s", connection_id)
@@ -160,8 +176,10 @@ def lambda_handler(event, context):
             )
             response["statusCode"] = 400
         else:
+            endpoint_url = f"https://{domain}/{stage}"
+            logger.info(f"endpoint_url={endpoint_url}")
             apig_management_client = boto3.client(
-                "apigatewaymanagementapi", endpoint_url=f"https://{domain}/{stage}"
+                "apigatewaymanagementapi", endpoint_url=endpoint_url
             )
             apig_management_client.post_to_connection(
                 Data=body + "right back at yah",

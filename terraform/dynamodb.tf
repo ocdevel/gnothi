@@ -4,8 +4,6 @@ module "dynamodb_table" {
   name     = "${local.name}-ws-connections"
   hash_key = "connection_id"
 
-
-
   attributes = [
     {
       name = "connection_id"

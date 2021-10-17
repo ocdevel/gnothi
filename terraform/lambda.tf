@@ -8,12 +8,12 @@ module "lambda_function" {
 
   function_name = "${local.name}-lambda"
   description   = "${local.name} main lambda function"
-  handler       = "handler.lambda_handler"
+  handler       = "app.main.lambda_handler"
   runtime       = "python3.8"
 
   publish = true
 
-  source_path = "./handler"
+  source_path = "../server"
 
   attach_network_policy  = true
   vpc_subnet_ids         = module.vpc.private_subnets
@@ -38,7 +38,16 @@ module "lambda_function" {
       actions   = ["dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:DeleteItem"],
       resources = [module.dynamodb_table.dynamodb_table_arn]
     }
-
+    secrets = {
+      effect = "Allow",
+      actions = ["secretsmanager:GetSecretValue"],
+      resources = [aws_secretsmanager_secret.rds_secret.arn]
+    }
+    rds_proxy = {
+      effect = "Allow",
+      actions = ["rds-db:connect"],
+      resources = [aws_db_proxy.db_proxy.arn]
+    }
   }
 
 }

@@ -4,7 +4,6 @@ psycopg2-binary
 sqlalchemy_utils
 pandas
 requests
-apscheduler
 markdown
 python-box
 tqdm
@@ -25,7 +24,3 @@ petname
 fastapi-utils
 orjson
 python-jose
-broadcaster[postgres]
-alembic
-aioify
-slowapi
