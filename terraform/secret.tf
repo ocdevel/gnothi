@@ -1,17 +1,19 @@
-resource "aws_secretsmanager_secret" "rds_secret" {
-  name_prefix = "${local.name}-proxy-secret"
-  recovery_window_in_days = 7
-  description = "Secret for RDS Proxy"
+data "aws_kms_alias" "secretsmanager" {
+  name = "alias/aws/secretsmanager"
 }
 
-resource "aws_secretsmanager_secret_version" "rds_secret_version" {
-  secret_id     = aws_secretsmanager_secret.rds_secret.id
+resource "aws_secretsmanager_secret" "rds" {
+  name        = "${local.name}-rds"
+  description = "Database superuser, ${local.db_username}, databse connection values"
+  kms_key_id  = data.aws_kms_alias.secretsmanager.id
+
+  tags = local.tags
+}
+
+resource "aws_secretsmanager_secret_version" "rds" {
+  secret_id = aws_secretsmanager_secret.rds.id
   secret_string = jsonencode({
-    "username"             = "my_username"
-    "password"             = "my_password"
-#    "engine"               = "postgres"
-#    "host"                 = module.aurora.
-#    "port"                 = 3306
-#    "dbInstanceIdentifier" = module.aurora.rds_cluster_id
+    username = local.db_username
+    password = local.db_password
   })
 }

@@ -1,75 +1,77 @@
-# https://github.com/terraform-aws-modules/terraform-aws-rds-aurora/blob/master/examples/postgresql/main.tf
-
-resource "random_password" "master" {
-  length = 10
+locals {
+  db_name               = "${local.name}-db"
+  db_username           = random_pet.users.id # using random here due to secrets taking at least 7 days before fully deleting from account
+  db_password           = random_password.password.result
+  db_proxy_resource_id  = element(split(":", module.rds_proxy.proxy_arn), 6)
+  db_iam_connect_prefix = "arn:aws:rds-db:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:dbuser:${local.db_proxy_resource_id}"
 }
 
-module "aurora" {
+data "aws_region" "current" {}
+
+data "aws_caller_identity" "current" {}
+
+################################################################################
+# Supporting Resources
+################################################################################
+
+resource "random_pet" "users" {
+  length    = 2
+  separator = "_"
+}
+
+resource "random_password" "password" {
+  length  = 16
+  special = false
+}
+
+module "rds" {
   source  = "terraform-aws-modules/rds-aurora/aws"
-  version = "~> 5.0"
+  version = "~> 5"
 
-  name                  = "${local.name}-psql"
-  engine                = "aurora-postgresql"
-  engine_version        = "11.9"
-  instance_type         = "db.t3.medium"
+  name          = local.name
+  database_name = local.db_name
+  username      = local.db_username
+  password      = local.db_password
 
-  vpc_id                = module.vpc.vpc_id
-  db_subnet_group_name  = module.vpc.database_subnet_group_name
-  create_security_group = true
-  allowed_cidr_blocks   = module.vpc.private_subnets_cidr_blocks
+  # When using RDS Proxy w/ IAM auth - Database must be username/password auth, not IAM
+  iam_database_authentication_enabled = false
 
-  replica_count                       = 1
-  #iam_database_authentication_enabled = true
-  password                            = random_password.master.result
-  create_random_password              = false
-
+  engine              = "aurora-postgresql"
+  engine_version      = "11.9"
+  replica_count       = 1
+  instance_type       = "db.t3.medium"
   storage_encrypted   = true
   apply_immediately   = true
   skip_final_snapshot = true
 
-#  db_parameter_group_name         = "default"
-#  db_cluster_parameter_group_name = "default"
-
   enabled_cloudwatch_logs_exports = ["postgresql"]
+  monitoring_interval             = 60
+  create_monitoring_role          = true
+
+  vpc_id                 = module.vpc.vpc_id
+  subnets                = module.vpc.database_subnets
+  create_security_group  = false
+  vpc_security_group_ids = [module.rds_proxy_sg.security_group_id]
+
+  db_subnet_group_name            = local.name # Created by VPC module
+  db_parameter_group_name         = aws_db_parameter_group.aurora_db_postgres11_parameter_group.id
+  db_cluster_parameter_group_name = aws_rds_cluster_parameter_group.aurora_cluster_postgres11_parameter_group.id
 
   tags = local.tags
 }
 
-# https://aws.amazon.com/blogs/compute/using-amazon-rds-proxy-with-aws-lambda/
-# https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/secretsmanager_secret_version
-# https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/db_proxy
+resource "aws_db_parameter_group" "aurora_db_postgres11_parameter_group" {
+  name        = "${local.name}-aurora-db-postgres11-parameter-group"
+  family      = "aurora-postgresql11"
+  description = "test-aurora-db-postgres11-parameter-group"
 
-# https://aws.plainenglish.io/have-your-lambda-functions-connect-to-rds-through-rds-proxy-c94072560eee
-# https://github.com/clowdhaus/terraform-aws-rds-proxy
-
-resource "aws_db_proxy_default_target_group" "rds_proxy_target_group" {
-  db_proxy_name = aws_db_proxy.db_proxy.name
-
-  connection_pool_config {
-    connection_borrow_timeout = 120
-    max_connections_percent = 100
-  }
+  tags = local.tags
 }
 
-resource "aws_db_proxy_target" "rds_proxy_target" {
-#  db_instance_identifier = aws_db_instance.database.id # FIXME
-  db_cluster_identifier = module.aurora.rds_cluster_id
-  db_proxy_name          = aws_db_proxy.db_proxy.name
-  target_group_name      = aws_db_proxy_default_target_group.rds_proxy_target_group.name
-}
+resource "aws_rds_cluster_parameter_group" "aurora_cluster_postgres11_parameter_group" {
+  name        = "${local.name}-aurora-postgres11-cluster-parameter-group"
+  family      = "aurora-postgresql11"
+  description = "${local.name}-aurora-postgres11-cluster-parameter-group"
 
-resource "aws_db_proxy" "db_proxy" {
-  debug_logging          = false
-  engine_family          = "POSTGRES"
-  idle_client_timeout    = 1800
-  require_tls            = true
-  role_arn               = aws_iam_role.rds_proxy_iam_role.arn
-  vpc_security_group_ids = [aws_security_group.sg_rds_proxy.id]
-  vpc_subnet_ids         = module.vpc.database_subnets
-
-  auth {
-    auth_scheme = "SECRETS"
-    iam_auth    = "REQUIRED"
-    secret_arn  = aws_secretsmanager_secret.rds_secret.arn
-  }
+  tags = local.tags
 }

@@ -17,7 +17,7 @@ module "lambda_function" {
 
   attach_network_policy  = true
   vpc_subnet_ids         = module.vpc.private_subnets
-  vpc_security_group_ids = [module.vpc.default_security_group_id]
+  vpc_security_group_ids = [module.lambda_sg.security_group_id]
 
   allowed_triggers = {
     AllowExecutionFromAPIGateway = {
@@ -41,12 +41,12 @@ module "lambda_function" {
     secrets = {
       effect = "Allow",
       actions = ["secretsmanager:GetSecretValue"],
-      resources = [aws_secretsmanager_secret.rds_secret.arn]
+      resources = [aws_secretsmanager_secret.rds.arn]
     }
     rds_proxy = {
       effect = "Allow",
       actions = ["rds-db:connect"],
-      resources = [aws_db_proxy.db_proxy.arn]
+      resources = [module.rds_proxy.proxy_arn]
     }
   }
 
