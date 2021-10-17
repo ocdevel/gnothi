@@ -8,12 +8,12 @@ module "lambda_function" {
 
   function_name = "${local.name}-lambda"
   description   = "${local.name} main lambda function"
-  handler       = "app.main.lambda_handler"
+  handler       = "index.lambda_handler"
   runtime       = "python3.8"
 
   publish = true
 
-  source_path = "../server"
+  source_path = "./handler"
 
   attach_network_policy  = true
   vpc_subnet_ids         = module.vpc.private_subnets
@@ -33,21 +33,27 @@ module "lambda_function" {
       actions   = ["execute-api:ManageConnections"],
       resources = ["${module.api_gateway.default_apigatewayv2_stage_execution_arn}/*"]
     }
-    dynamodb = {
-      effect    = "Allow",
-      actions   = ["dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:DeleteItem"],
-      resources = [module.dynamodb_table.dynamodb_table_arn]
-    }
+#    dynamodb = {
+#      effect    = "Allow",
+#      actions   = ["dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:DeleteItem"],
+#      resources = [module.dynamodb_table.dynamodb_table_arn]
+#    }
     secrets = {
       effect = "Allow",
       actions = ["secretsmanager:GetSecretValue"],
       resources = [aws_secretsmanager_secret.rds.arn]
     }
-    rds_proxy = {
-      effect = "Allow",
-      actions = ["rds-db:connect"],
-      resources = [module.rds_proxy.proxy_arn]
-    }
+#    rds_proxy = {
+#      effect = "Allow",
+#      actions = ["rds-db:connect"],
+#      resources = [module.rds_proxy.proxy_arn]
+#    }
+  }
+
+  environment_variables = {
+    secrets_arn = aws_secretsmanager_secret.rds.arn
+    db_name = module.rds.rds_cluster_database_name
+    db_cluster_arn = module.rds.rds_cluster_arn
   }
 
 }

@@ -1,11 +1,11 @@
-data "aws_kms_alias" "secretsmanager" {
-  name = "alias/aws/secretsmanager"
-}
+#data "aws_kms_alias" "secretsmanager" {
+#  name = "alias/aws/secretsmanager"
+#}
 
 resource "aws_secretsmanager_secret" "rds" {
-  name        = "${local.name}-rds"
+  name        = "${local.name}-${local.db_username}"  # must be unique
   description = "Database superuser, ${local.db_username}, databse connection values"
-  kms_key_id  = data.aws_kms_alias.secretsmanager.id
+#  kms_key_id  = data.aws_kms_alias.secretsmanager.id
 
   tags = local.tags
 }
