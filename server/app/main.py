@@ -1,30 +1,20 @@
-# Modified from AWS example code: https://docs.aws.amazon.com/code-samples/latest/catalog/python-cross_service-apigateway_websocket_chat-lambda_chat.py.html
-# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
-# SPDX-License-Identifier: Apache-2.0
-
-"""
-Purpose
-
-Shows how to implement an AWS Lambda function as part of a websocket chat application.
-The function handles messages from an Amazon API Gateway websocket API and uses an
-Amazon DynamoDB table to track active connections. When a message is sent by any
-participant, it is posted to all other active connections by using the Amazon
-API Gateway Management API.
-
-Logs written by this handler can be found in Amazon CloudWatch.
-"""
-
 import json
 import logging
 import os
 import boto3
+from app.database import engine
 from botocore.exceptions import ClientError
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 
+# from sqlalchemy import create_engine
+# from sqlalchemy.ext.declarative import declarative_base
+# from sqlalchemy.orm import scoped_session, sessionmaker, Session
+
 def handle_connect(table, connection_id):
+    return 200
     """
     Handles new connections by adding the connection ID and user name to the
     DynamoDB table.
@@ -46,6 +36,7 @@ def handle_connect(table, connection_id):
 
 
 def handle_disconnect(table, connection_id):
+    return 200
     """
     Handles disconnections by removing the connection record from the DynamoDB table.
 
@@ -127,6 +118,26 @@ def handle_message(table, connection_id, event_body, apig_management_client):
 
 
 def lambda_handler(event, context):
+    connection_id = event.get("requestContext", {}).get("connectionId")
+    domain = event.get("requestContext", {}).get("domainName")
+    stage = event.get("requestContext", {}).get("stage")
+    endpoint_url = f"https://{domain}/{stage}"
+
+    logger.info(json.dumps({
+        'id': os.environ['secret_id'],
+        'name': os.environ['secret_name']
+    }))
+
+
+    apig_client = boto3.client("apigatewaymanagementapi", endpoint_url=endpoint_url)
+    apig_client.post_to_connection(
+        Data="HI",
+        ConnectionId=connection_id
+    )
+    return 200
+
+
+def lambda_handler_(event, context):
     """
     An AWS Lambda handler that receives events from an API Gateway websocket API
     and dispatches them to various handler functions.
@@ -147,7 +158,6 @@ def lambda_handler(event, context):
     :return: A response dict that contains an HTTP status code that indicates the
              result of handling the event.
     """
-
     table_name = "gnothi-ws-connections"
     route_key = event.get("requestContext", {}).get("routeKey")
     logger.info(route_key)

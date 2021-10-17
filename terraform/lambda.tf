@@ -8,12 +8,15 @@ module "lambda_function" {
 
   function_name = "${local.name}-lambda"
   description   = "${local.name} main lambda function"
-  handler       = "index.lambda_handler"
+  handler       = "app.main.lambda_handler"
   runtime       = "python3.8"
 
   publish = true
 
-  source_path = "./handler"
+  source_path = "../server"
+
+  # https://stackoverflow.com/a/68704087
+  layers = ["arn:aws:lambda:us-east-1:898466741470:layer:psycopg2-py38:2"]
 
   attach_network_policy  = true
   vpc_subnet_ids         = module.vpc.private_subnets
@@ -33,27 +36,44 @@ module "lambda_function" {
       actions   = ["execute-api:ManageConnections"],
       resources = ["${module.api_gateway.default_apigatewayv2_stage_execution_arn}/*"]
     }
-#    dynamodb = {
-#      effect    = "Allow",
-#      actions   = ["dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:DeleteItem"],
-#      resources = [module.dynamodb_table.dynamodb_table_arn]
-#    }
     secrets = {
       effect = "Allow",
       actions = ["secretsmanager:GetSecretValue"],
       resources = [aws_secretsmanager_secret.rds.arn]
     }
-#    rds_proxy = {
-#      effect = "Allow",
-#      actions = ["rds-db:connect"],
-#      resources = [module.rds_proxy.proxy_arn]
-#    }
+    #rds_proxy = {
+    #  #effect = "Allow",
+    #  actions   = ["rds-db:connect"]
+    #  resources = ["${local.db_iam_connect_prefix}/${local.db_username}"]
+    #}
   }
 
   environment_variables = {
-    secrets_arn = aws_secretsmanager_secret.rds.arn
-    db_name = module.rds.rds_cluster_database_name
-    db_cluster_arn = module.rds.rds_cluster_arn
+    secret_id = aws_secretsmanager_secret.rds.id
+    secret_name = aws_secretsmanager_secret.rds.name
+#    endpoint = module.rds_proxy.proxy_endpoint
+    endpoint = module.rds.rds_cluster_endpoint
+    database = module.rds.rds_cluster_database_name
   }
 
+  tags = local.tags
 }
+
+module "lambda_sg" {
+  source  = "terraform-aws-modules/security-group/aws"
+  version = "~> 4.0"
+
+  name        = "${local.name}-lambda-sg"
+  description = "Lambda security group for example usage"
+  vpc_id      = module.vpc.vpc_id
+
+  egress_rules = ["all-all"]
+  egress_cidr_blocks = ["0.0.0.0/0"]
+
+  tags = local.tags
+}
+
+output "rds_endpoints" {
+  value = module.rds.rds_cluster_instance_endpoints
+}
+
