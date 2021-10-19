@@ -3,6 +3,81 @@
 # - https://www.serverless.com/framework/docs/providers/aws/guide/functions#vpc-configuration
 # - https://docs.aws.amazon.com/lambda/latest/dg/services-rds-tutorial.html
 
+module "lambda_layer_utils" {
+  source = "terraform-aws-modules/lambda/aws"
+
+  create_function = false
+  create_layer    = true
+
+  layer_name          = "${local.name}-utils"
+  description         = "Layer for utils"
+
+  compatible_runtimes = ["python3.8"]
+  runtime             = "python3.8" # required to force layers to do pip install
+
+  source_path = [
+    {
+      path             = "../server/layers/utils"
+      pip_requirements = true
+      prefix_in_zip    = "python" # required to get the path correct
+    }
+  ]
+
+#  store_on_s3 = true
+#  s3_bucket   = module.s3_private.s3_bucket_id
+}
+
+module "lambda_layer_auth" {
+  source = "terraform-aws-modules/lambda/aws"
+  create_function = false
+  create_layer    = true
+  layer_name          = "${local.name}-auth"
+  description         = "Layer for auth"
+  compatible_runtimes = ["python3.8"]
+  runtime             = "python3.8"
+  source_path = [
+    {
+      path             = "../server/layers/auth"
+      pip_requirements = true
+      prefix_in_zip    = "python"
+    }
+  ]
+}
+
+module "lambda_layer_data" {
+  source = "terraform-aws-modules/lambda/aws"
+  create_function = false
+  create_layer    = true
+  layer_name          = "${local.name}-data"
+  description         = "Layer for data"
+  compatible_runtimes = ["python3.8"]
+  runtime             = "python3.8"
+  source_path = [
+    {
+      path             = "../server/layers/data"
+      pip_requirements = true
+      prefix_in_zip    = "python"
+    }
+  ]
+}
+
+module "lambda_layer_server" {
+  source = "terraform-aws-modules/lambda/aws"
+  create_function = false
+  create_layer    = true
+  layer_name          = "${local.name}-server"
+  description         = "Layer for server"
+  compatible_runtimes = ["python3.8"]
+  runtime             = "python3.8"
+  source_path = [
+    {
+      path             = "../server/layers/server"
+      pip_requirements = true
+      prefix_in_zip    = "python"
+    }
+  ]
+}
+
 module "lambda_function" {
   source = "terraform-aws-modules/lambda/aws"
 
@@ -15,8 +90,15 @@ module "lambda_function" {
 
   source_path = "../server"
 
-  # https://stackoverflow.com/a/68704087
-  layers = ["arn:aws:lambda:us-east-1:898466741470:layer:psycopg2-py38:2"]
+  layers = [
+    # https://stackoverflow.com/a/68704087 - TODO clone this, in case it goes away
+    "arn:aws:lambda:us-east-1:898466741470:layer:psycopg2-py38:2",
+
+    module.lambda_layer_utils.lambda_layer_arn,
+    module.lambda_layer_data.lambda_layer_arn,
+    module.lambda_layer_auth.lambda_layer_arn,
+    module.lambda_layer_server.lambda_layer_arn,
+  ]
 
   attach_network_policy  = true
   vpc_subnet_ids         = module.vpc.private_subnets
@@ -51,9 +133,10 @@ module "lambda_function" {
   environment_variables = {
     secret_id = aws_secretsmanager_secret.rds.id
     secret_name = aws_secretsmanager_secret.rds.name
-#    endpoint = module.rds_proxy.proxy_endpoint
-    endpoint = module.rds.rds_cluster_endpoint
-    database = module.rds.rds_cluster_database_name
+    #db_endpoint = module.rds_proxy.proxy_endpoint
+    db_endpoint = module.rds.rds_cluster_endpoint
+    db_name = module.rds.rds_cluster_database_name
+    apig_endpoint = module.api_gateway.default_apigatewayv2_stage_domain_name
   }
 
   tags = local.tags

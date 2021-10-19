@@ -1,20 +1,14 @@
 import json
 import logging
 import os
+import sqlalchemy as sa
 import boto3
-from app.database import engine
+from utils.settings import settings, logger
+import data.models as M
+from data.db import engine, with_session
 from botocore.exceptions import ClientError
 
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
-
-
-# from sqlalchemy import create_engine
-# from sqlalchemy.ext.declarative import declarative_base
-# from sqlalchemy.orm import scoped_session, sessionmaker, Session
-
-def handle_connect(table, connection_id):
-    return 200
+def handle_connect(connection_id):
     """
     Handles new connections by adding the connection ID and user name to the
     DynamoDB table.
@@ -27,7 +21,11 @@ def handle_connect(table, connection_id):
     """
     status_code = 200
     try:
-        table.put_item(Item={"connection_id": connection_id})
+        with with_session() as sess:
+            sess.execute(sa.text("""
+            insert into ws_connections (connection_id, user_id) values (:cid, :uid)
+            on conflict do nothing;
+            """), {'cid': connection_id, 'uid': 'x'})
         logger.info("Added connection %s", connection_id)
     except ClientError:
         logger.exception("Couldn't add connection %s", connection_id)
@@ -47,7 +45,10 @@ def handle_disconnect(table, connection_id):
     """
     status_code = 200
     try:
-        table.delete_item(Key={"connection_id": connection_id})
+        with with_session() as sess:
+            sess.execute(sa.text("""
+            delete from ws_connections where connection_id=:cid
+            """), {'cid': connection_id})
         logger.info("Disconnected connection %s.", connection_id)
     except ClientError:
         logger.exception("Couldn't disconnect connection %s.", connection_id)
@@ -118,26 +119,6 @@ def handle_message(table, connection_id, event_body, apig_management_client):
 
 
 def lambda_handler(event, context):
-    connection_id = event.get("requestContext", {}).get("connectionId")
-    domain = event.get("requestContext", {}).get("domainName")
-    stage = event.get("requestContext", {}).get("stage")
-    endpoint_url = f"https://{domain}/{stage}"
-
-    logger.info(json.dumps({
-        'id': os.environ['secret_id'],
-        'name': os.environ['secret_name']
-    }))
-
-
-    apig_client = boto3.client("apigatewaymanagementapi", endpoint_url=endpoint_url)
-    apig_client.post_to_connection(
-        Data="HI",
-        ConnectionId=connection_id
-    )
-    return 200
-
-
-def lambda_handler_(event, context):
     """
     An AWS Lambda handler that receives events from an API Gateway websocket API
     and dispatches them to various handler functions.
@@ -158,21 +139,16 @@ def lambda_handler_(event, context):
     :return: A response dict that contains an HTTP status code that indicates the
              result of handling the event.
     """
-    table_name = "gnothi-ws-connections"
     route_key = event.get("requestContext", {}).get("routeKey")
-    logger.info(route_key)
     connection_id = event.get("requestContext", {}).get("connectionId")
-    if table_name is None or route_key is None or connection_id is None:
+    if route_key is None or connection_id is None:
         return {"statusCode": 400}
-
-    table = boto3.resource("dynamodb").Table(table_name)
-    logger.info("Request: %s, use table %s.", route_key, table.name)
 
     response = {"statusCode": 200}
     if route_key == "$connect":
-        response["statusCode"] = handle_connect(table, connection_id)
+        response["statusCode"] = handle_connect(connection_id)
     elif route_key == "$disconnect":
-        response["statusCode"] = handle_disconnect(table, connection_id)
+        response["statusCode"] = handle_disconnect(connection_id)
     elif route_key == "$default":
         body = event.get("body", "NO MESSAGE")
         domain = event.get("requestContext", {}).get("domainName")
@@ -186,10 +162,8 @@ def lambda_handler_(event, context):
             )
             response["statusCode"] = 400
         else:
-            endpoint_url = f"https://{domain}/{stage}"
-            logger.info(f"endpoint_url={endpoint_url}")
             apig_management_client = boto3.client(
-                "apigatewaymanagementapi", endpoint_url=endpoint_url
+                "apigatewaymanagementapi", endpoint_url=settings.apig_endpoint
             )
             apig_management_client.post_to_connection(
                 Data=body + "right back at yah",

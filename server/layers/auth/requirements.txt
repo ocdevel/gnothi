@@ -1,0 +1,6 @@
+cryptography
+passlib
+fastapi-jwt-auth
+PyJWT==1.7.1
+bcrypt
+python-jose

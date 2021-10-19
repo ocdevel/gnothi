@@ -1,8 +1,8 @@
 import pdb, pickle, random, os, shutil, datetime
 from box import Box
-from common.database import session
-from common.utils import vars, is_test
-import common.models as M
+from data.database import session
+from settings import settings, is_test
+import data.models as M
 from sqlalchemy import text
 import logging
 logger = logging.getLogger(__name__)

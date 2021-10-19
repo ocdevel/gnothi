@@ -24,10 +24,12 @@ provider "aws" {
 
 locals {
   name = "gnothi-dev"
+  name_ = replace(local.name, "-", "_")
   domain_name = "gnothi.com" # trimsuffix(data.aws_route53_zone.this.name, ".")
   subdomain   = "api.dev"
   region = "us-east-1"
   tags = {
-    app = "gnothi-dev"
+    app = local.name
+    Name = local.name
   }
 }

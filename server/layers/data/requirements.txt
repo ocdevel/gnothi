@@ -1,0 +1,6 @@
+sqlalchemy==1.3.23
+sqlalchemy_utils
+asyncpg
+shortuuid
+petname
+alembic

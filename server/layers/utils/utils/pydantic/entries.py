@@ -1,8 +1,8 @@
 from typing import Optional, Any, Dict
 from pydantic import UUID4
 import datetime
-from common.pydantic.utils import BM, BM_ORM
-from common.models import NoteTypes
+from utils.pydantic.utils import BM, BM_ORM
+from data.models import NoteTypes
 
 
 class Entry(BM):

@@ -1,8 +1,8 @@
 from typing import Optional, Any, Dict
 from pydantic import UUID4
 import datetime
-from common.pydantic.utils import BM, BM_ORM
-from common.models import DefaultValueTypes, FieldType
+from utils.pydantic.utils import BM, BM_ORM
+from data.models import DefaultValueTypes, FieldType
 
 
 class FieldExcludeIn(BM):

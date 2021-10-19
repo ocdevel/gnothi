@@ -2,13 +2,10 @@ import enum, pdb, re, threading, time, datetime, traceback, shortuuid
 from typing import Optional, List, Any, Dict, Union
 from pydantic import UUID4
 import pandas as pd
-import logging
-logger = logging.getLogger(__name__)
 
-from common.database import Base, with_db
-from common.utils import vars
-from common.errors import AccessDenied, GroupDenied, GnothiException
-from common.seed import ADMIN_ID, GROUP_ID as MAIN_GROUP
+from data.db import Base, with_session
+from utils.errors import AccessDenied, GroupDenied, GnothiException
+from data.seed import ADMIN_ID, GROUP_ID as MAIN_GROUP
 
 import sqlalchemy as sa
 from sqlalchemy import func
@@ -21,6 +18,8 @@ from sqlalchemy.orm import Session
 import sqlalchemy.sql.expression as expr
 import petname
 
+from settings import settings, logger
+
 
 # https://dev.to/zchtodd/sqlalchemy-cascading-deletes-8hk
 parent_cascade = dict(cascade="all, delete", passive_deletes=True)
@@ -30,7 +29,7 @@ child_cascade = dict(ondelete="cascade")
 # text fields unlimited (no varchar(max_length)) as Postgres doesn't incur penalty, unlike MySQL, and we don't know
 # how long str will be after encryption.
 def Encrypt(Col=sa.Unicode, array=False, **args):
-    enc = StringEncryptedType(Col, vars.FLASK_KEY, FernetEngine)
+    enc = StringEncryptedType(Col, settings.flask_key, FernetEngine)
     if array: enc = psql.ARRAY(enc)
     return sa.Column(enc, **args)
 
@@ -60,6 +59,13 @@ class AuthOld(Base):
     email = sa.Column(sa.String(length=320), unique=True, index=True, nullable=False)
     hashed_password = sa.Column(sa.String(length=72), nullable=False)
     updated_at = DateCol()
+
+
+class WSConnections(Base):
+    __tablename__ = "ws_connections"
+
+    connection_id = sa.Column(sa.Unicode, primary_key=True)
+    user_id = FKCol('users.id', index=True, nullable=False)
 
 
 class User(Base):
@@ -967,7 +973,7 @@ class Job(Base):
             res = dict(error=err)
             sql = "update jobs set state='error', data_out=:data where id=:jid"
             logger.error(f"Job {method} error {time.time() - start} {err}")
-        with with_db() as db:
+        with with_session() as db:
             db.execute(sa.text(sql), dict(data=to_jsonb(res), jid=str(jid)))
             db.execute(sa.text("select pg_notify('jobs', :jid)"), dict(jid=str(jid)))
             db.commit()
@@ -984,7 +990,7 @@ class Job(Base):
             limit 1
         )
         returning id, method
-        """), dict(machine=vars.MACHINE)).fetchone()
+        """), dict(machine=settings.machine)).fetchone()
         db.commit()
         return job
 
