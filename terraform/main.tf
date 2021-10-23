@@ -26,7 +26,8 @@ locals {
   name = "gnothi-dev"
   name_ = replace(local.name, "-", "_")
   domain_name = "gnothi.com" # trimsuffix(data.aws_route53_zone.this.name, ".")
-  subdomain   = "api.dev"
+  subdomain   = "dev"
+  full_domain = "dev.gnothi.com"
   region = "us-east-1"
   tags = {
     app = local.name
