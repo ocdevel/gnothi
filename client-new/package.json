@@ -3,6 +3,7 @@
     "test": "jest"
   },
   "devDependencies": {
+    "cypress": "^8.7.0",
     "jest": "^27.2.5"
   },
   "dependencies": {

@@ -21,7 +21,7 @@ resource "random_password" "password" {
 
 module "rds" {
   source  = "terraform-aws-modules/rds-aurora/aws"
-  version = "~> 5"
+  version = "5.3.0"
 
   name          = local.name
   database_name = replace(local.name, "-", "_")
@@ -51,7 +51,6 @@ module "rds" {
 
   create_security_group  = false
   vpc_security_group_ids = [module.rds_proxy_sg.security_group_id]
-
 
   db_parameter_group_name         = aws_db_parameter_group.aurora_db_postgres11_parameter_group.id
   db_cluster_parameter_group_name = aws_rds_cluster_parameter_group.aurora_cluster_postgres11_parameter_group.id

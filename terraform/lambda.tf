@@ -133,10 +133,14 @@ module "lambda_function" {
   environment_variables = {
     secret_id = aws_secretsmanager_secret.rds.id
     secret_name = aws_secretsmanager_secret.rds.name
+
     #db_endpoint = module.rds_proxy.proxy_endpoint
     db_endpoint = module.rds.rds_cluster_endpoint
+    db_port = module.rds.rds_cluster_port
     db_name = module.rds.rds_cluster_database_name
-    apig_endpoint = module.api_gateway.default_apigatewayv2_stage_domain_name
+
+    #apig_endpoint = module.api_gateway.default_apigatewayv2_stage_domain_name
+    apig_endpoint = "ws://localhost:4510"
   }
 
   tags = local.tags

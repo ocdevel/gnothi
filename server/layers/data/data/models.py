@@ -1,7 +1,7 @@
 import enum, pdb, re, threading, time, datetime, traceback, shortuuid
 from typing import Optional, List, Any, Dict, Union
 from pydantic import UUID4
-import pandas as pd
+# import pandas as pd
 
 from data.db import Base, with_session
 from utils.errors import AccessDenied, GroupDenied, GnothiException
@@ -873,8 +873,8 @@ class Bookshelf(Base):
         -- sort id asc since that's how we mapped to numpy vectors in first place (order_values)
         order by b.id asc
         """
-        return pd.read_sql(sql, db.bind, params={'uid': uid})\
-            .set_index('id', drop=False)
+        # return pd.read_sql(sql, db.bind, params={'uid': uid})\
+        #     .set_index('id', drop=False)
 
     @staticmethod
     def top_books(db):

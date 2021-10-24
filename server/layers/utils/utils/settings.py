@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     db_pass: str = ""
     db_endpoint: str = ""
     db_name: str = ""
+    db_port: str = "5432"
     environment: str = "development"
 
     # # ?charset part is super important here
@@ -49,6 +50,7 @@ settings.db_user = secrets['username']
 settings.db_pass = secrets['password']
 settings.db_endpoint = os.environ['db_endpoint']
 settings.db_name = os.environ['db_name']
+settings.db_port = os.environ['db_port']
 
 is_prod = settings.environment == "production"
 is_dev = settings.environment == "development"

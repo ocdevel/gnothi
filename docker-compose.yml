@@ -54,9 +54,9 @@ services:
       - ./common:/paperspace/common
       - ./storage-dev:/storage
       - ./ml-tools:/ml-tools
-    device_requests:
-      - capabilities:
-          - "gpu"
+#    device_requests:
+#      - capabilities:
+#          - "gpu"
 
   postgres:
     container_name: gnothi-postgres
