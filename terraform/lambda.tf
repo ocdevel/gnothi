@@ -123,24 +123,12 @@ module "lambda_function" {
       actions = ["secretsmanager:GetSecretValue"],
       resources = [aws_secretsmanager_secret.rds.arn]
     }
-    #rds_proxy = {
-    #  #effect = "Allow",
-    #  actions   = ["rds-db:connect"]
-    #  resources = ["${local.db_iam_connect_prefix}/${local.db_username}"]
-    #}
   }
 
   environment_variables = {
-    secret_id = aws_secretsmanager_secret.rds.id
-    secret_name = aws_secretsmanager_secret.rds.name
-
-    #db_endpoint = module.rds_proxy.proxy_endpoint
-    db_endpoint = module.rds.rds_cluster_endpoint
-    db_port = module.rds.rds_cluster_port
-    db_name = module.rds.rds_cluster_database_name
-
-    #apig_endpoint = module.api_gateway.default_apigatewayv2_stage_domain_name
-    apig_endpoint = "ws://localhost:4510"
+    secret_arn = aws_secretsmanager_secret.rds.arn
+    cluster_arn = module.aurora_postgresql.cluster_arn
+    apig_endpoint = module.api_gateway.default_apigatewayv2_stage_domain_name
   }
 
   tags = local.tags
@@ -159,8 +147,3 @@ module "lambda_sg" {
 
   tags = local.tags
 }
-
-output "rds_endpoints" {
-  value = module.rds.rds_cluster_instance_endpoints
-}
-

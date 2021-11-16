@@ -6,14 +6,14 @@ module "vpc" {
   version = "~> 3"
 
   name = local.name
-  cidr = "20.10.0.0/16"
+  cidr = "10.99.0.0/18"
 
   azs              = ["${local.region}a", "${local.region}b", "${local.region}c"]
-  public_subnets   = ["20.10.1.0/24", "20.10.2.0/24", "20.10.3.0/24"]
-  private_subnets  = ["20.10.11.0/24", "20.10.12.0/24", "20.10.13.0/24"]
-  database_subnets = ["20.10.21.0/24", "20.10.22.0/24", "20.10.23.0/24"]
+  public_subnets   = ["10.99.0.0/24", "10.99.1.0/24", "10.99.2.0/24"]
+  private_subnets  = ["10.99.3.0/24", "10.99.4.0/24", "10.99.5.0/24"]
+  database_subnets = ["10.99.7.0/24", "10.99.8.0/24", "10.99.9.0/24"]
 
-  create_database_subnet_group = true
+#  create_database_subnet_group = true
 
   enable_nat_gateway           = true
   single_nat_gateway           = true
