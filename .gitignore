@@ -9,6 +9,7 @@ storage-dev
 **/__pycache__
 **/tmp
 **/.ipynb_checkpoints
+**/.DS_Store
 
 # sensitive
 **/config.yml
