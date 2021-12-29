@@ -10,9 +10,7 @@ locals {
   full_domain = "dev.gnothi.com"
   region = "us-east-1"
   main_az = "us-east-1a"
-  mount_path = "/home/ec2-user/efs"
-  #myip = ["${chomp(data.http.myip.body)}/32"]
-  myip = ["65.132.165.41/32"]
+  myip = ["${chomp(data.http.myip.body)}/32"]
   
   tags = {
     app = local.name

@@ -11,6 +11,7 @@ resource "aws_security_group" "ec2" {
     protocol    = "tcp"
     cidr_blocks = local.myip
   }
+
   egress {
     from_port   = 0
     to_port     = 0
@@ -40,31 +41,20 @@ resource "aws_security_group" "efs" {
   }
 }
 
-data "aws_efs_file_system" "ocdevel" {
-  creation_token = "ocdevel-general-efs"
-}
-
-resource "aws_efs_file_system" "gnothi" {
+resource "aws_efs_file_system" "efs" {
   creation_token = "${local.name}-efs"
   encrypted = true
   tags = local.tags
 }
 
-resource "aws_efs_mount_target" "ocdevel" {
-  file_system_id = data.aws_efs_file_system.ocdevel.id
-  subnet_id      = element(module.vpc.private_subnets, 0)  
-  security_groups = [aws_security_group.efs.id]
-}
-
-resource "aws_efs_mount_target" "gnothi" {
-  file_system_id = aws_efs_file_system.gnothi.id
+resource "aws_efs_mount_target" "efs" {
+  file_system_id = aws_efs_file_system.efs.id
   subnet_id      = element(module.vpc.private_subnets, 0)  
   security_groups = [aws_security_group.efs.id]
 }
 
 locals {
-  ocdevel_mnt = "/home/ec2-user/code"
-  gnothi_mnt = "/home/ec2-user/storage"
+  mnt = "/home/ec2-user/efs"
   # As local so I can print the commands as output, to debug via SSH.
   # Using Amazon Linux 2 AMI (yum) since it was easier to get working with amazon-efs-utils / nfs-utils than Ubuntu
   user_data = <<EOF
@@ -75,15 +65,10 @@ curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.rpm.s
 yum install git-lfs -y
 git lfs install
 
-mkdir -p ${local.ocdevel_mnt}
-mount -t nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,noresvport ${data.aws_efs_file_system.ocdevel.dns_name}:/ ${local.ocdevel_mnt}
-echo ${data.aws_efs_file_system.ocdevel.dns_name}:/ ${local.ocdevel_mnt} nfs4 defaults,_netdev 0 0  | cat >> /etc/fstab
-chmod go+rw ${local.ocdevel_mnt}
-
-mkdir -p ${local.gnothi_mnt}
-mount -t nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,noresvport ${aws_efs_file_system.gnothi.dns_name}:/ ${local.gnothi_mnt}
-echo ${aws_efs_file_system.gnothi.dns_name}:/ ${local.gnothi_mnt} nfs4 defaults,_netdev 0 0  | cat >> /etc/fstab
-chmod go+rw ${local.gnothi_mnt}
+mkdir -p ${local.mnt}
+mount -t nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,noresvport ${aws_efs_file_system.efs.dns_name}:/ ${local.mnt}
+echo ${aws_efs_file_system.efs.dns_name}:/ ${local.mnt} nfs4 defaults,_netdev 0 0  | cat >> /etc/fstab
+chmod go+rw ${local.mnt}
 
 yum update -y && yum upgrade -y && reboot now
 EOF
