@@ -1,3 +1,4 @@
+
 resource "aws_security_group" "ec2" {
   name        = "${local.name}-ec2"
   description = "${local.name} dev - ssh"
@@ -8,6 +9,13 @@ resource "aws_security_group" "ec2" {
     description = "SSH from VPC"
     from_port   = 22
     to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = local.myip
+  }
+  ingress {
+    description = "Web from VPC"
+    from_port   = 8888
+    to_port     = 8888
     protocol    = "tcp"
     cidr_blocks = local.myip
   }
@@ -59,18 +67,26 @@ locals {
   # Using Amazon Linux 2 AMI (yum) since it was easier to get working with amazon-efs-utils / nfs-utils than Ubuntu
   user_data = <<EOF
 #!/bin/bash
+yum update -y
+
+# mount efs
 yum install amazon-efs-utils -y
-
-curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.rpm.sh | bash
-yum install git-lfs -y
-git lfs install
-
 mkdir -p ${local.mnt}
 mount -t nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,noresvport ${aws_efs_file_system.efs.dns_name}:/ ${local.mnt}
 echo ${aws_efs_file_system.efs.dns_name}:/ ${local.mnt} nfs4 defaults,_netdev 0 0  | cat >> /etc/fstab
 chmod go+rw ${local.mnt}
 
-yum update -y && yum upgrade -y && reboot now
+# install docker, data-dir at ~/efs/docker
+#rm -rf ${local.mnt}/docker/*
+amazon-linux-extras install docker
+yum install docker -y
+echo "{\"data-root\":\"${local.mnt}/docker\"}" > /etc/docker/daemon.json
+usermod -a -G docker ec2-user
+pip3 install docker-compose
+
+# update & restart
+yum install emacs -y
+yum upgrade -y && reboot now
 EOF
 }
 
