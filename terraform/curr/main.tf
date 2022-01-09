@@ -41,3 +41,9 @@ provider "aws" {
   # skip_requesting_account_id should be disabled to generate valid ARN in apigatewayv2_api_execution_arn
   skip_requesting_account_id = false
 }
+
+resource "aws_efs_file_system" "efs" {
+  creation_token = "${local.name}-efs"
+  encrypted = true
+  tags = local.tags
+}
