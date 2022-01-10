@@ -23,14 +23,14 @@ terraform {
     bucket = "lefnire-private"
     key    = "gnothi-dev/terraform.tfstate"
     region = "us-east-1"
-    profile = "terraform"
+    #profile = "terraform"
   }
 }
 
 provider "aws" {
   region  = local.region
-  shared_credentials_file = "/home/ec2-user/.aws/credentials"
-  profile                 = "terraform"
+  #shared_credentials_file = "/home/ec2-user/.aws/credentials"
+  #profile                 = "terraform"
 
   # Make it faster by skipping some things
   skip_get_ec2_platforms      = true

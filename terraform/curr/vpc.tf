@@ -15,8 +15,8 @@ module "vpc" {
   # create_database_subnet_group = false
 
   # TODO enable these when working with lambda
-  # enable_nat_gateway           = true
-  # single_nat_gateway           = true
+  enable_nat_gateway           = true
+  single_nat_gateway           = true
 
   # These 3 required for dns-resolution of EFS mount URL. https://bit.ly/33v239F , https://github.com/aws/efs-utils/issues/21
   enable_dns_hostnames = true
