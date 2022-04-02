@@ -3,33 +3,41 @@ import * as sst from "@serverless-stack/resources";
 export default class MyStack extends sst.Stack {
   constructor(scope: sst.App, id: string, props?: sst.StackProps) {
     super(scope, id, props);
-    const api = this.addApi()
-    const ws = this.addWebsockets()
-    const frontend = this.addFrontend(api, ws)
+    const DATABASE = `${scope.name}${scope.stage}`
+    const rds = this.addRds(scope, DATABASE)
+    const rest = this.addRest(scope, rds, DATABASE)
+    const ws = this.addWebsockets(scope, rds, DATABASE)
+    const frontend = this.addFrontend(scope, rest, ws)
   }
 
-  addApi(): sst.Api {
+  addRest(app: sst.App, rds: sst.RDS, DATABASE: string): sst.Api {
      // Create a HTTP API
-    const api = new sst.Api(this, "Api", {
+    const api = new sst.Api(this, "REST", {
       routes: {
-        "GET /": "src/lambda.handler",
+        "GET /": "src/rest/index.handler",
       },
     });
-
     // Show the endpoint in the output
     this.addOutputs({
-      "ApiEndpoint": api.url,
+      "RESTEndpoint": api.url,
     });
-
     return api
   }
 
-  addWebsockets(): sst.WebSocketApi {
+  addWebsockets(app: sst.App, rds: sst.RDS, DATABASE: string): sst.WebSocketApi {
     const ws = new sst.WebSocketApi(this, "WS", {
+      defaultFunctionProps: {
+        environment: {
+          DATABASE,
+          CLUSTER_ARN: rds.clusterArn,
+          SECRET_ARN: rds.secretArn,
+        },
+        permissions: [rds],
+      },
       routes: {
-        $connect: "src/ws.handler",
-        $default: "src/ws.handler",
-        $disconnect: "src/ws.handler"
+        $connect: "src/ws/connect.handler",
+        $disconnect: "src/ws/disconnect.handler",
+        $default: "src/ws/default.handler",
       },
     });
     this.addOutputs({
@@ -38,13 +46,13 @@ export default class MyStack extends sst.Stack {
     return ws
   }
 
-  addFrontend(api: sst.Api, ws: sst.WebSocketApi): sst.ReactStaticSite {
+  addFrontend(app: sst.App, rest: sst.Api, ws: sst.WebSocketApi): sst.ReactStaticSite {
       // Deploy our React app
     const site = new sst.ReactStaticSite(this, "ReactSite", {
       path: "frontend",
       environment: {
         // Pass in the API endpoint to our app
-        REACT_APP_API_URL: api.url,
+        REACT_APP_REST_URL: rest.url,
         REACT_APP_WS_URL: ws.url,
       },
       // customDomain: "www.my-react-app.com",
@@ -57,6 +65,19 @@ export default class MyStack extends sst.Stack {
     });
 
     return site
+  }
+
+  addRds(app: sst.App, DATABASE: string): sst.RDS {
+    // Create the Aurora DB cluster
+    const cluster = new sst.RDS(this, "Cluster", {
+      engine: "postgresql10.14",
+      defaultDatabaseName: DATABASE,
+      migrations: "src/data/migrations"
+    });
+    this.addOutputs({
+      ClusterIdentifier: cluster.clusterIdentifier,
+    });
+    return cluster
   }
 }
 
