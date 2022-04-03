@@ -1,4 +1,5 @@
 import * as sst from "@serverless-stack/resources";
+import { envKeys } from '../src/util/env'
 
 export default class MyStack extends sst.Stack {
   constructor(scope: sst.App, id: string, props?: sst.StackProps) {
@@ -14,12 +15,13 @@ export default class MyStack extends sst.Stack {
      // Create a HTTP API
     const api = new sst.Api(this, "REST", {
       routes: {
-        "GET /": "src/rest/index.handler",
+        // "GET /": "src/routes/index.handler",
+        "$default": "src/routes/index.handler",
       },
     });
     // Show the endpoint in the output
     this.addOutputs({
-      "RESTEndpoint": api.url,
+      [envKeys.endpoints.rest]: api.url,
     });
     return api
   }
@@ -28,20 +30,18 @@ export default class MyStack extends sst.Stack {
     const ws = new sst.WebSocketApi(this, "WS", {
       defaultFunctionProps: {
         environment: {
-          DATABASE,
-          CLUSTER_ARN: rds.clusterArn,
-          SECRET_ARN: rds.secretArn,
+          [envKeys.db.database]: DATABASE,
+          [envKeys.db.cluster]: rds.clusterArn,
+          [envKeys.db.secret]: rds.secretArn,
         },
         permissions: [rds],
       },
       routes: {
-        $connect: "src/ws/connect.handler",
-        $disconnect: "src/ws/disconnect.handler",
-        $default: "src/ws/default.handler",
+        $default: "src/routes/index.handler",
       },
     });
     this.addOutputs({
-      WSEndpoint: ws.url,
+      [envKeys.endpoints.ws]: ws.url,
     })
     return ws
   }
@@ -52,8 +52,8 @@ export default class MyStack extends sst.Stack {
       path: "frontend",
       environment: {
         // Pass in the API endpoint to our app
-        REACT_APP_REST_URL: rest.url,
-        REACT_APP_WS_URL: ws.url,
+        ['REACT_APP_' + envKeys.endpoints.rest]: rest.url,
+        ['REACT_APP_' + envKeys.endpoints.ws]: ws.url,
       },
       // customDomain: "www.my-react-app.com",
 
@@ -61,21 +61,36 @@ export default class MyStack extends sst.Stack {
 
     // Show the URLs in the output
     this.addOutputs({
-      SiteUrl: site.url
+      [envKeys.endpoints.web]: site.url
     });
 
     return site
   }
 
   addRds(app: sst.App, DATABASE: string): sst.RDS {
+    const prodConfig: sst.RDSScalingProps = {
+      autoPause: false,
+      minCapacity: "ACU_8",
+      maxCapacity: "ACU_64",
+    };
+    const devConfig: sst.RDSScalingProps = {
+      autoPause: false,
+      minCapacity: "ACU_2",
+      maxCapacity: "ACU_8",
+    };
+
+
     // Create the Aurora DB cluster
     const cluster = new sst.RDS(this, "Cluster", {
       engine: "postgresql10.14",
       defaultDatabaseName: DATABASE,
-      migrations: "src/data/migrations"
+      migrations: "src/data/migrations",
+      scaling: app.stage === "prod" ? prodConfig : devConfig,
     });
     this.addOutputs({
-      ClusterIdentifier: cluster.clusterIdentifier,
+      [envKeys.db.database]: DATABASE,
+      [envKeys.db.cluster]: cluster.clusterArn,
+      [envKeys.db.secret]: cluster.secretArn,
     });
     return cluster
   }
