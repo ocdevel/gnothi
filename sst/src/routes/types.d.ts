@@ -1,28 +1,8 @@
-interface Route<Input,Output,Body> {
-  input: Input
-  output: Output
-  body: Body
+import {User} from "../data/schemas";
+
+export type Context = {
+  user?: User
+  db?: any
 }
 
-interface Request {
-  route: string
-  method: "POST" | "PUT" | "GET" | "DELETE" | "PATCH"
-  body: {
-    userId: string
-    snoopId: string
-    data: any
-  }
-}
-
-interface ResponseData {
-  userIds: string[]
-  data?: {
-    data: any
-  }
-  triggers?: string[] // pathKeys
-}
-
-interface Response {
-  data?: ResponseData[]
-  triggers?: () => void
-}
+export type Route<T, U> = (input: T, context: Context) => Promise<U>

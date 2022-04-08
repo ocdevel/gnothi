@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "test": "node test/convertEnv.js && sst test --watch --silent=false",
+    "test": "sst test",
+    "test-watch": "node test/convertEnv.js && sst test --watch --silent=false",
     "start": "sst start --outputs-file \".env.js\"",
     "build": "sst build",
     "deploy": "sst deploy",

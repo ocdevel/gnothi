@@ -1,9 +1,17 @@
 import {APIGatewayProxyHandlerV2} from "./aws";
-import {connect, disconnect} from './ws'
-import { DB } from '../data/index'
+import { DB } from '../data/db'
+import * as m from '../data/models'
+import {APIGatewayProxyEventV2} from "aws-lambda/trigger/api-gateway-proxy";
+import router from './router'
+import { z } from 'zod'
+import {RouteBody} from '../data/schemas'
+import {Context} from './types'
 
-const main = async () => {
-  return ''
+const routeWs: APIGatewayProxyHandlerV2 = async (event, context, callback) => {
+  if (!event.body) {return ''}
+  const body: RouteBody = JSON.parse(event.body)
+  const db = new DB() // TODO use from calling fn
+  return await router(body, {db})
 }
 
 export const handler: APIGatewayProxyHandlerV2 = async (event, context, callback) => {
@@ -12,11 +20,13 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context, callback
   let res
   // TODO is connectionId present with all WS requests?
   if (routeKey === '$connect' && connectionId) {
-    res = await connect(db, connectionId, 'abc')
+    await m.WsConnection.connect(db, connectionId, 'abc')
+    res = `${connectionId} connected`
   } else if (routeKey === '$disconnect' && connectionId) {
-    res = await disconnect(db, connectionId)
+    await m.WsConnection.disconnect(db, connectionId)
+    res = `${connectionId} disconnected`
   } else if (routeKey === '$default') {
-      res = await main()
+      res = await routeWs(event, context, callback)
   } else {
     throw "REST routes not yet supported"
   }

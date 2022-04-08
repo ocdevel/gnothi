@@ -1,23 +1,14 @@
 import z from 'zod'
+import {Route} from "../types"
+import {User} from '../../data/schemas'
 
-export const Input = z.object({})
-
-export const Output = z.object({
-  userId: z.string(),
-  email: z.string().email()
-})
-
+export const Input = User
+export const Output = User
 type Input = z.infer<typeof Input>
 type Output = z.infer<typeof Output>
 
-export default class Route {
-  public readonly input = Input
-  public readonly output = Output
-  static async route(input: Input): Promise<Output> {
-    return {
-      data: [
-        {userId: 'x', email: 'x@y.com'}
-      ]
-  }
-  }
+export const route: Route<Input, Output> = async (input, context) => {
+  return await context.db.execute("select * from users where id=:id", {
+    id: input.id
+  })
 }

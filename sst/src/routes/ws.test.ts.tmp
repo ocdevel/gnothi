@@ -1,0 +1,25 @@
+import { connect, disconnect } from './index'
+import { DB } from '../data/db'
+import {randomUUID} from "crypto";
+import * as schemas from '../data/schemas'
+
+jest.setTimeout(10000)
+test.skip("ws connect", async () => {
+  const db = new DB({database: 'wsconnect'})
+  await db.init()
+  const id = randomUUID().toString()
+  await db.execute({
+    sql: "insert into users (id, email) values(:id, :email)",
+    values: {id, email: 'x@y.com'}
+  }, {input: schemas.User})
+  await connect(db, 'abc', id)
+  let results = await db.execute({
+    sql: "select count(*) as ct from ws_connections",
+  })
+  const ct = results[0].ct
+  await disconnect(db, 'abc')
+  results = await db.execute({
+    sql: "select count(*) as ct from ws_connections",
+  })
+  expect(ct - results[0].ct).toBe(1)
+});
