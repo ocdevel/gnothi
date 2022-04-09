@@ -4,31 +4,17 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 create type notetypes as enum ('label', 'note', 'resource', 'comment');
 
-alter type notetypes owner to postgres;
-
 create type fieldtype as enum ('number', 'fivestar', 'check', 'option');
-
-alter type fieldtype owner to postgres;
 
 create type defaultvaluetypes as enum ('value', 'average', 'ffill');
 
-alter type defaultvaluetypes owner to postgres;
-
 create type shelves as enum ('ai', 'cosine', 'like', 'already_read', 'dislike', 'remove', 'recommend');
-
-alter type shelves owner to postgres;
 
 create type machinetypes as enum ('gpu', 'server');
 
-alter type machinetypes owner to postgres;
-
 create type groupprivacy as enum ('public', 'matchable', 'private');
 
-alter type groupprivacy owner to postgres;
-
 create type grouproles as enum ('member', 'owner', 'admin', 'banned');
-
-alter type grouproles owner to postgres;
 
 create table users
 (
@@ -57,9 +43,6 @@ create table users
     habitica_user_id   varchar,
     habitica_api_token varchar
 );
-
-alter table users
-    owner to postgres;
 
 create index ix_users_last_books
     on users (last_books);
@@ -94,9 +77,6 @@ create table books
     amazon varchar
 );
 
-alter table books
-    owner to postgres;
-
 create table machines
 (
     id         varchar not null
@@ -105,9 +85,6 @@ create table machines
     created_at timestamp with time zone default now(),
     updated_at timestamp with time zone default now()
 );
-
-alter table machines
-    owner to postgres;
 
 create index ix_machines_created_at
     on machines (created_at);
@@ -122,9 +99,6 @@ create table misc
     val varchar
 );
 
-alter table misc
-    owner to postgres;
-
 create table codes
 (
     owner_id uuid
@@ -134,9 +108,6 @@ create table codes
         primary key,
     amount   double precision default '0'::double precision
 );
-
-alter table codes
-    owner to postgres;
 
 alter table users
     add foreign key (affiliate) references codes;
@@ -154,9 +125,6 @@ create table auth_old
     hashed_password varchar(72)  not null,
     updated_at      timestamp with time zone default now()
 );
-
-alter table auth_old
-    owner to postgres;
 
 create unique index ix_auth_old_email
     on auth_old (email);
@@ -185,9 +153,6 @@ create table entries
         references users
             on delete cascade
 );
-
-alter table entries
-    owner to postgres;
 
 create index ix_entries_user_id
     on entries (user_id);
@@ -219,9 +184,6 @@ create table fields
     avg                 double precision         default '0'::double precision
 );
 
-alter table fields
-    owner to postgres;
-
 create index ix_fields_excluded_at
     on fields (excluded_at);
 
@@ -243,9 +205,6 @@ create table people
         references users
             on delete cascade
 );
-
-alter table people
-    owner to postgres;
 
 create index ix_people_user_id
     on people (user_id);
@@ -272,9 +231,6 @@ create table shares
     books       boolean                  default false
 );
 
-alter table shares
-    owner to postgres;
-
 create index ix_shares_user_id
     on shares (user_id);
 
@@ -296,9 +252,6 @@ create table tags
     ai         boolean                  default true
 );
 
-alter table tags
-    owner to postgres;
-
 create index ix_tags_user_id
     on tags (user_id);
 
@@ -317,9 +270,6 @@ create table bookshelf
     score      double precision,
     primary key (book_id, user_id)
 );
-
-alter table bookshelf
-    owner to postgres;
 
 create index ix_bookshelf_created_at
     on bookshelf (created_at);
@@ -343,9 +293,6 @@ create table jobs
     data_in    jsonb,
     data_out   jsonb
 );
-
-alter table jobs
-    owner to postgres;
 
 create index ix_jobs_run_on
     on jobs (run_on);
@@ -376,9 +323,6 @@ create table cache_users
     vectors double precision[]
 );
 
-alter table cache_users
-    owner to postgres;
-
 create table model_hypers
 (
     id            uuid                     default uuid_generate_v4() not null
@@ -393,9 +337,6 @@ create table model_hypers
     hypers        jsonb                                               not null,
     meta          jsonb
 );
-
-alter table model_hypers
-    owner to postgres;
 
 create index ix_model_hypers_model_version
     on model_hypers (model_version);
@@ -432,9 +373,6 @@ create table groups
     perk_video_donation  boolean                  default false
 );
 
-alter table groups
-    owner to postgres;
-
 create index ix_groups_owner_id
     on groups (owner_id);
 
@@ -455,9 +393,6 @@ create table payments
     event_type varchar                                             not null,
     data       jsonb                                               not null
 );
-
-alter table payments
-    owner to postgres;
 
 create index ix_payments_created_at
     on payments (created_at);
@@ -480,9 +415,6 @@ create table notes
     text       varchar                                             not null,
     private    boolean                  default false
 );
-
-alter table notes
-    owner to postgres;
 
 create index ix_notes_created_at
     on notes (created_at);
@@ -507,9 +439,6 @@ create table field_entries
             on delete cascade
 );
 
-alter table field_entries
-    owner to postgres;
-
 create index ix_field_entries_created_at
     on field_entries (created_at);
 
@@ -531,9 +460,6 @@ create table field_entries2
     dupe       integer                  default 0,
     primary key (field_id, day)
 );
-
-alter table field_entries2
-    owner to postgres;
 
 create index ix_field_entries2_user_id
     on field_entries2 (user_id);
@@ -558,9 +484,6 @@ create table entries_tags
     primary key (entry_id, tag_id)
 );
 
-alter table entries_tags
-    owner to postgres;
-
 create table shares_tags
 (
     share_id uuid not null
@@ -573,9 +496,6 @@ create table shares_tags
     primary key (share_id, tag_id)
 );
 
-alter table shares_tags
-    owner to postgres;
-
 create table shares_users
 (
     share_id uuid not null
@@ -586,9 +506,6 @@ create table shares_users
             on delete cascade,
     primary key (share_id, obj_id)
 );
-
-alter table shares_users
-    owner to postgres;
 
 create table shares_groups
 (
@@ -601,9 +518,6 @@ create table shares_groups
     primary key (share_id, obj_id)
 );
 
-alter table shares_groups
-    owner to postgres;
-
 create table cache_entries
 (
     entry_id uuid not null
@@ -614,9 +528,6 @@ create table cache_entries
     clean    character varying[],
     vectors  double precision[]
 );
-
-alter table cache_entries
-    owner to postgres;
 
 create table influencers
 (
@@ -629,9 +540,6 @@ create table influencers
     score         double precision not null,
     primary key (field_id, influencer_id)
 );
-
-alter table influencers
-    owner to postgres;
 
 create table users_groups
 (
@@ -646,9 +554,6 @@ create table users_groups
     role      grouproles               default 'member'::grouproles not null,
     primary key (user_id, group_id)
 );
-
-alter table users_groups
-    owner to postgres;
 
 create index ix_users_groups_joined_at
     on users_groups (joined_at);
@@ -667,9 +572,6 @@ create table groups_messages
     updated_at timestamp with time zone default now(),
     text       varchar                                             not null
 );
-
-alter table groups_messages
-    owner to postgres;
 
 create index ix_groups_messages_updated_at
     on groups_messages (updated_at);
@@ -696,9 +598,6 @@ create table groups_notifs
     primary key (user_id, obj_id)
 );
 
-alter table groups_notifs
-    owner to postgres;
-
 create index ix_groups_notifs_last_seen
     on groups_notifs (last_seen);
 
@@ -714,9 +613,6 @@ create table notes_notifs
     last_seen timestamp with time zone default now(),
     primary key (user_id, obj_id)
 );
-
-alter table notes_notifs
-    owner to postgres;
 
 create index ix_notes_notifs_last_seen
     on notes_notifs (last_seen);
@@ -734,146 +630,5 @@ create table shares_notifs
     primary key (user_id, obj_id)
 );
 
-alter table shares_notifs
-    owner to postgres;
-
 create index ix_shares_notifs_last_seen
     on shares_notifs (last_seen);
-
-create function uuid_nil() returns uuid
-    immutable
-    strict
-    parallel safe
-    language c
-as
-$$
-begin
--- missing source code
-end;
-$$;
-
-alter function uuid_nil() owner to postgres;
-
-create function uuid_ns_dns() returns uuid
-    immutable
-    strict
-    parallel safe
-    language c
-as
-$$
-begin
--- missing source code
-end;
-$$;
-
-alter function uuid_ns_dns() owner to postgres;
-
-create function uuid_ns_url() returns uuid
-    immutable
-    strict
-    parallel safe
-    language c
-as
-$$
-begin
--- missing source code
-end;
-$$;
-
-alter function uuid_ns_url() owner to postgres;
-
-create function uuid_ns_oid() returns uuid
-    immutable
-    strict
-    parallel safe
-    language c
-as
-$$
-begin
--- missing source code
-end;
-$$;
-
-alter function uuid_ns_oid() owner to postgres;
-
-create function uuid_ns_x500() returns uuid
-    immutable
-    strict
-    parallel safe
-    language c
-as
-$$
-begin
--- missing source code
-end;
-$$;
-
-alter function uuid_ns_x500() owner to postgres;
-
-create function uuid_generate_v1() returns uuid
-    strict
-    parallel safe
-    language c
-as
-$$
-begin
--- missing source code
-end;
-$$;
-
-alter function uuid_generate_v1() owner to postgres;
-
-create function uuid_generate_v1mc() returns uuid
-    strict
-    parallel safe
-    language c
-as
-$$
-begin
--- missing source code
-end;
-$$;
-
-alter function uuid_generate_v1mc() owner to postgres;
-
-create function uuid_generate_v3(namespace uuid, name text) returns uuid
-    immutable
-    strict
-    parallel safe
-    language c
-as
-$$
-begin
--- missing source code
-end;
-$$;
-
-alter function uuid_generate_v3(uuid, text) owner to postgres;
-
-create function uuid_generate_v4() returns uuid
-    strict
-    parallel safe
-    language c
-as
-$$
-begin
--- missing source code
-end;
-$$;
-
-alter function uuid_generate_v4() owner to postgres;
-
-create function uuid_generate_v5(namespace uuid, name text) returns uuid
-    immutable
-    strict
-    parallel safe
-    language c
-as
-$$
-begin
--- missing source code
-end;
-$$;
-
-alter function uuid_generate_v5(uuid, text) owner to postgres;
-
