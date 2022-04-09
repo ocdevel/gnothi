@@ -6,6 +6,8 @@ import {
 } from "@aws-sdk/client-rds-data";
 import {envKeys} from "../util/env";
 import {readFileSync} from "fs";
+import _map from 'lodash/map'
+import _reduce from 'lodash/reduce'
 import z from 'zod'
 
 export const rds: RDSData = new RDSData({ region: process.env.AWS_REGION });
@@ -15,6 +17,8 @@ interface ExecuteRequest {
   sql: string
   values?: {[k: string]: any}
 }
+
+type ExecuteResponse = any[]
 
 export interface Overrides {
   resourceArn?: string
@@ -42,18 +46,35 @@ export class DB {
     this.#overrides = overrides
   }
 
+  async insert(table: string, values: Record<string, any>): Promise<ExecuteResponse> {
+    const keys = Object.keys(values)
+    const cols = keys.join(', ')
+    const placeholders = keys.map(k => ":" + k).join(', ')
+    const sql = `insert into ${table} (${cols}) values (${placeholders}) returning *`
+    return await this.execute({sql, values})
+  }
+
   async execute(
     params: ExecuteRequest,
     schemas?: {input?: any, output?: any}
-  ): Promise<any[]> {
+  ): Promise<ExecuteResponse> {
     const {values, ...rest} = params
-    const response = await rds.executeStatement({
-      ...this.#defaults,
-      ...this.#overrides,
-      ...rest,
-      parameters: this.#transformRequest(values, schemas?.input)
-    })
-    return this.#transformResponse(response)
+    const parameters = this.#transformRequest(values, schemas?.input)
+    try {
+      const response = await rds.executeStatement({
+        ...this.#defaults,
+        ...this.#overrides,
+        ...rest,
+        parameters
+      })
+      return this.#transformResponse(response)
+    } catch (err: any) {
+      // drop & create not working sometimes, need to figure this out
+      if (~err?.message?.indexOf("is being accessed by other users")) {
+        return []
+      }
+      throw err
+    }
   }
 
   #transformRequest(values: ExecuteRequest["values"], schema: any): SqlParameter[] {
@@ -87,24 +108,39 @@ export class DB {
   #transformResponse(response: ExecuteStatementCommandOutput): any[] {
     if (!response.records) {return []}
     if (!response.columnMetadata) {return []}
-    console.log(response.columnMetadata)
-    return response.records.map((fields) => {
-      return Object.fromEntries(fields.map((field, i) => [
-        response.columnMetadata[i].name,
-        Object.values(field)[0]
-      ]))
-    })
+    return response.records.map((fields) =>
+      Object.fromEntries(fields.map((field, i) => {
+        const key: string = response.columnMetadata![i].name
+        const [hint, val] = Object.entries(field)[0]
+        const value = hint === 'isNull' ? undefined
+          : val // any other edge-cases?
+        return [key, value]
+      }))
+    )
   }
 
   async init(): Promise<void> {
     const db = this.#overrides?.database
     if (!db) {return}
-    const sql = readFileSync('src/data/init.sql', {encoding: 'utf-8'})
     await this.execute({
-      sql: `DROP DATABASE IF EXISTS ${db};CREATE DATABASE ${db}`,
+      sql: `DROP DATABASE IF EXISTS ${db}`,
+      database: undefined
+    })
+    await this.execute({
+      sql: `CREATE DATABASE ${db}`,
       database: undefined,
     })
+    const sql = readFileSync('src/data/init.sql', {encoding: 'utf-8'})
     await this.execute({sql})
+  }
+
+  async drop(): Promise<void> {
+    const db = this.#overrides?.database
+    if (!db) {return}
+    await this.execute({
+      sql: `DROP DATABASE IF EXISTS ${db}`,
+      database: undefined
+    })
   }
 }
 

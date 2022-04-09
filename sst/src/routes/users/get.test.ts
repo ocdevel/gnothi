@@ -1,12 +1,20 @@
 import router from '../router'
-import {withDb} from "../../util/tests";
+import * as f from '../../util/fixtures'
+import {withDB} from "../../util/tests";
 
-it("users.get", withDb('usersGet', async (db) => {
-  const res = await router({
+const test = "users.get"
+it(test, withDB(test, async (context) => {
+  const post = await router({
     route: "/users",
     method: "POST",
-    body: {id: 'xxx', email: "x@y.com"}
-  })
-  const res = await router("/users", "GET", {})
-  expect(res.email).toBe("x@y.com")
+    body: f.users.me
+  }, context)
+  const uid = post[0].id
+  expect(uid).toBeDefined()
+  const get = await router({
+    route: "/users",
+    method: "GET",
+    body: {id: uid}
+  }, context)
+  expect(get[0].id).toEqual(uid)
 }))

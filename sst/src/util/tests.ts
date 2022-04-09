@@ -1,5 +1,6 @@
 import {MyProxyEvent} from "../routes/aws"
 import {DB} from '../data/db'
+import {Context} from "../routes/types";
 
 export const request = (requestContext: any): [MyProxyEvent, any, any] => {
   const [str, num] = ['abc', 123]
@@ -28,18 +29,16 @@ export const request = (requestContext: any): [MyProxyEvent, any, any] => {
   }, undefined, undefined]
 }
 
-// export mockUsers = {
-//   me: {id: 'xxx', email: 'me@x.com'},
-//   friend: {id: 'xxx', email: 'friend@x.com'},
-//   stranger: {id: 'xxx', email: 'stranger@x.com'}
-// }
-// export const createUsers = async (users: any[]) {
-//   await
-// }
 
-;
-export const withDb = async (name: string, fn: (db: any) => Promise<any>) => {
-  const db = new DB({database: name})
-  await db.init()
-  return async () => fn(db)
+type InnerFn = (context: Context) => Promise<unknown>
+type ProvidesCallback = () => Promise<unknown>
+export const withDB = (name: string, fn: InnerFn): ProvidesCallback  => {
+  return async () => {
+    const database = (name + (+new Date).toString()).replace(/[\W]/g, '')
+    const db = new DB({database})
+    await db.init()
+    const context = {db}
+    await fn(context)
+    await db.drop()
+  }
 }

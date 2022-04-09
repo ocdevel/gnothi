@@ -6,17 +6,19 @@ import router from './router'
 import { z } from 'zod'
 import {RouteBody} from '../data/schemas'
 import {Context} from './types'
+import _set from 'lodash/set'
 
 const routeWs: APIGatewayProxyHandlerV2 = async (event, context, callback) => {
   if (!event.body) {return ''}
   const body: RouteBody = JSON.parse(event.body)
-  const db = new DB() // TODO use from calling fn
+  const db = context.clientContext!.Custom!.db
   return await router(body, {db})
 }
 
 export const handler: APIGatewayProxyHandlerV2 = async (event, context, callback) => {
   const {routeKey, connectionId} = event.requestContext
   const db = new DB()
+
   let res
   // TODO is connectionId present with all WS requests?
   if (routeKey === '$connect' && connectionId) {
@@ -26,7 +28,8 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context, callback
     await m.WsConnection.disconnect(db, connectionId)
     res = `${connectionId} disconnected`
   } else if (routeKey === '$default') {
-      res = await routeWs(event, context, callback)
+    _set(context, 'clientContext.Custom.db', db)
+    res = await routeWs(event, context, callback)
   } else {
     throw "REST routes not yet supported"
   }

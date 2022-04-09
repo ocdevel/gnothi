@@ -12,7 +12,7 @@ const routes = {
 interface RouteDef {
   Input: z.AnyZodObject,
   Output: z.AnyZodObject,
-  route: (data: any) => Promise<any>
+  route: (data: any, context: Context) => Promise<any>
 }
 
 function findRoute(parts: string[], method: string, curr: any): any {
@@ -27,10 +27,10 @@ function findRoute(parts: string[], method: string, curr: any): any {
 
 export default async function router(body: RouteBody, context: Context) {
   const validated = RouteBody.parse(body)
-  const {route, method} = body
+  const {route, method} = validated
   const parts = route.split('/').filter(k => k !== "").map(k => k.toLowerCase())
   const routeDef: RouteDef = findRoute(parts, method.toLowerCase(), routes)
-  const input = routeDef.Input.parse(body.body)
-  const result = await routeDef.route(input)
-  return routeDef.Output.parse(result)
+  const input = routeDef.Input.parse(body.body || {})
+  const result = await routeDef.route(input, context)
+  return result.map(r => routeDef.Output.parse(r))
 }
