@@ -2,7 +2,8 @@ import {User} from "../data/schemas";
 import {DB} from '../data/db'
 
 export type Context = {
-  user?: User
+  user: User | null,
+  snoop?: string,
   db: DB
 }
 

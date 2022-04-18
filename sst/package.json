@@ -3,12 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "test": "sst test",
-    "test-watch": "node test/convertEnv.js && sst test --watch --silent=false",
-    "start": "sst start --outputs-file \".env.js\"",
-    "build": "sst build",
-    "deploy": "sst deploy",
-    "remove": "sst remove"
+    "test": "AWS_PROFILE=gnothiadmin sst test",
+    "test-watch": "AWS_PROFILE=gnothiadmin node test/convertEnv.js && sst test --watch --silent=false",
+    "start": "AWS_PROFILE=gnothiadmin sst start --outputs-file \".env.js\"",
+    "build": "AWS_PROFILE=gnothiadmin sst build",
+    "deploy": "AWS_PROFILE=gnothiadmin sst deploy",
+    "remove": "AWS_PROFILE=gnothiadmin sst remove"
   },
   "exports": {
     "src": "./src"

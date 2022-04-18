@@ -74,7 +74,8 @@ export default class MyStack extends sst.Stack {
       maxCapacity: "ACU_64",
     };
     const devConfig: sst.RDSScalingProps = {
-      autoPause: true,
+      autoPause: false, // use this during active development/testing
+      // autoPause: true, // use this otherwise (save money)
       minCapacity: "ACU_2",
       maxCapacity: "ACU_8",
     };

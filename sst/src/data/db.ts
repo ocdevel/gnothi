@@ -122,10 +122,7 @@ export class DB {
   async init(): Promise<void> {
     const db = this.#overrides?.database
     if (!db) {return}
-    await this.execute({
-      sql: `DROP DATABASE IF EXISTS ${db}`,
-      database: undefined
-    })
+    // await this.drop()
     await this.execute({
       sql: `CREATE DATABASE ${db}`,
       database: undefined,

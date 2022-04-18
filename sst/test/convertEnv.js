@@ -8,5 +8,5 @@ const content = Object.keys(vars)
   .join('\n')
 console.log(content)
 
-fs.writeFileSync('.env.test', content)
+fs.writeFileSync('.env.test.local', content)
 
