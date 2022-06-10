@@ -1,16 +1,13 @@
-import MyStack from "./MyStack";
-import * as sst from "@serverless-stack/resources";
-import * as cdk from "aws-cdk-lib";
+import { Gnothi } from "./MyStack";
+import { App } from "@serverless-stack/resources";
 
-export default function main(app: sst.App): void {
-  cdk.Tags.of(app).add("Name", `${app.name}-${app.stage}`);
-
-  // Set default runtime for all functions
+export default function (app: App) {
   app.setDefaultFunctionProps({
-    runtime: "nodejs14.x"
+    runtime: "nodejs16.x",
+    srcPath: "backend",
+    bundle: {
+      format: "esm",
+    },
   });
-
-  new MyStack(app, "my-stack");
-
-  // Add more stacks
+  app.stack(Gnothi);
 }

@@ -20,37 +20,72 @@ interface ExecuteRequest {
 
 type ExecuteResponse = any[]
 
-export interface Overrides {
-  resourceArn?: string
-  secretArn?: string
-  sql?: string
-  database?: string
+interface DBArgs {
+  resourceArn: string
+  database: string
   schema?: string
-  parameters?: SqlParameter[]
-  transactionId?: string
-  includeResultMetadata?: boolean
-  continueAfterTimeout?: boolean
-  resultSetOptions?: ResultSetOptions
+  secretArn: string
 }
 
+interface DBOverrides {
+  resourceArn?: string
+  database?: string
+  schema?: string
+  secretArn?: string
+}
+
+interface Statement {
+  sql: string
+  parameters: SqlParameter[]
+}
+type Statements = Statement[]
+
 export class DB {
-  #defaults = {
-    secretArn: process.env[envKeys.db.secret],
-    resourceArn: process.env[envKeys.db.cluster],
-    database: process.env[envKeys.db.database], // 'information_schema'
-    // sql: 'SHOW TABLES',
-    includeResultMetadata: true,
+  #dbArgs: DBArgs = {
+    resourceArn: process.env[envKeys.db.cluster]!,
+    secretArn: process.env[envKeys.db.secret]!,
+    database: process.env[envKeys.db.database]! // 'information_schema'process.env[envKeys.db.database]; // 'information_schema'
   }
-  #overrides: Overrides = {};
-  constructor(overrides: Overrides = {}) {
-    this.#overrides = overrides
+
+  #statements: Statements = []
+  #transactionId: string | undefined = undefined
+  #i: number = 0
+
+  constructor(overrides: DBOverrides) {
+    this.#dbArgs = {...this.#dbArgs, ...overrides}
+  }
+
+  async beginTransaction() {
+    const {transactionId} = await rds.beginTransaction(this.#dbArgs)
+    this.#transactionId = transactionId
+  }
+
+  async commitTransaction() {
+    const {transactionStatus} = await rds.commitTransaction({
+      ...this.#dbArgs,
+      transactionId: this.#transactionId,
+    })
+    this.#transactionId = undefined
+    this.#statements = []
+  }
+
+  async rollbackTransaction() {
+    await rds.rollbackTransaction({
+      resourceArn: this.#dbArgs.resourceArn,
+      secretArn: this.#dbArgs.secretArn,
+      transactionId: this.#transactionId
+    })
+    this.#transactionId = undefined
+    this.#statements = []
   }
 
   async insert(table: string, values: Record<string, any>): Promise<ExecuteResponse> {
     const keys = Object.keys(values)
     const cols = keys.join(', ')
-    const placeholders = keys.map(k => ":" + k).join(', ')
-    const sql = `insert into ${table} (${cols}) values (${placeholders}) returning *`
+    const placeholders = keys.map(k => {
+      return `:${k}${this.#transactionId ? this.#i : ""}` // :name or :name1
+    }).join(', ')
+    const sql = `insert into ${table} (${cols}) values (${placeholders}) returning *;`
     return await this.execute({sql, values})
   }
 
@@ -62,7 +97,9 @@ export class DB {
     const parameters = this.#transformRequest(values, schemas?.input)
     try {
       const response = await rds.executeStatement({
+        includeResultMetadata: true,
         ...this.#defaults,
+
         ...this.#overrides,
         ...rest,
         parameters
@@ -124,7 +161,7 @@ export class DB {
     if (!db) {return}
     // await this.drop()
     await this.execute({
-      sql: `CREATE DATABASE ${db}`,
+      sql: `CREATE DATABASE ${db};`,
       database: undefined,
     })
     const sql = readFileSync('src/data/init.sql', {encoding: 'utf-8'})
@@ -135,7 +172,7 @@ export class DB {
     const db = this.#overrides?.database
     if (!db) {return}
     await this.execute({
-      sql: `DROP DATABASE IF EXISTS ${db}`,
+      sql: `DROP DATABASE IF EXISTS ${db};`,
       database: undefined
     })
   }

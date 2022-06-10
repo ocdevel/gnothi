@@ -49,6 +49,11 @@ const schemas = {
 
 export const initFixtures = async (db: DB, paths: string[]): Promise<Record<string, any>> => {
   const hydrated = {}
+  const sqlOps = paths.map(path => ({
+    table: path.split(".")[0],
+    values: _get(fixtures, path)
+  }))
+  await db.insert()
   await Promise.all(paths.map(async path => {
     const table = path.split(".")[0]
     const result = await db.insert(

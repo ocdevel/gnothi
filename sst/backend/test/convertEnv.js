@@ -1,5 +1,4 @@
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const fs = require('fs')
+import fs from 'fs'
 const input = fs.readFileSync('.env.json', 'utf8')
 const json = JSON.parse(input)
 const vars = json[Object.keys(json)[0]]

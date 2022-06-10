@@ -1,4 +1,4 @@
-import {APIGatewayProxyHandlerV2} from "./aws";
+ import {APIGatewayProxyHandlerV2} from "./aws";
 import { DB } from '../data/db'
 import * as m from '../data/models'
 import {APIGatewayProxyEventV2} from "aws-lambda/trigger/api-gateway-proxy";
