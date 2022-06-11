@@ -1,12 +1,5 @@
 import {z} from 'zod'
 
-export const RouteBody = z.object({
-  route: z.string().regex(/[a-z\-/]+/),
-  method: z.enum(["GET", "PUT", "POST", "PATCH", "DELETE"]),
-  body: z.any().default({})
-})
-export type RouteBody = z.infer<typeof RouteBody>
-
 const dateSchema = z.preprocess((arg) => {
   if (typeof arg == "string" || arg instanceof Date) return new Date(arg);
 }, z.date());

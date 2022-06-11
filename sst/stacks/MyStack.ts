@@ -7,7 +7,7 @@ import {
   ReactStaticSite
 } from "@serverless-stack/resources";
 // import * as sst from "@serverless-stack/resources";
-import { envKeys } from '../backend/functions/util/env'
+import { envKeys } from '../backend/util/env'
 
 
 export function Gnothi(context: StackContext) {
@@ -25,7 +25,7 @@ function addRest({app, stack}: StackContext, rds: RDS, DATABASE: string): Api {
   const api = new Api(stack, "REST", {
     routes: {
       // "GET /": "src/routes/index.handler",
-      "$default": "functions/routes/index.handler",
+      "$default": "routes/index.handler",
     },
   });
   // Show the endpoint in the output
@@ -48,7 +48,7 @@ function addWebsockets({app, stack}: StackContext, rds: RDS, DATABASE: string): 
       }
     },
     routes: {
-      $default: "functions/routes/index.handler",
+      $default: "routes/index.handler",
     },
   });
   stack.addOutputs({
@@ -96,7 +96,7 @@ function addRds({app, stack}: StackContext, DATABASE: string): RDS {
   const cluster = new RDS(stack, "Cluster", {
     engine: "postgresql10.14",
     defaultDatabaseName: DATABASE,
-    migrations: "backend/functions/data/migrations",
+    migrations: "backend/data/migrations",
     scaling: app.stage === "prod" ? prodConfig : devConfig,
   });
   stack.addOutputs({

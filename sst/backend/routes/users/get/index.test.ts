@@ -1,5 +1,5 @@
-import router from '../../router'
-import {withDB} from "../../../util/tests";
+import router from 'routes/router'
+import {withDB} from "util/tests";
 
 const test = "users.get"
 it(test, withDB(

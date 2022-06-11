@@ -89,22 +89,26 @@ export class DB {
     return await this.execute({sql, values})
   }
 
-  async execute(
-    params: ExecuteRequest,
-    schemas?: {input?: any, output?: any}
-  ): Promise<ExecuteResponse> {
-    const {values, ...rest} = params
-    const parameters = this.#transformRequest(values, schemas?.input)
+  async execute<
+    I extends z.ZodTypeAny,
+    O extends z.ZodTypeAny
+  >(
+    params: ExecuteRequest & {
+      zIn?: z.TypeOf<I>
+      zOut?: z.TypeOf<O>
+    }
+  ): Promise<z.TypeOf<O>> {
+    const {values, zIn, zOut, ...rest} = params
+    const parameters = this.#transformRequest(values, zIn)
     try {
       const response = await rds.executeStatement({
         includeResultMetadata: true,
-        ...this.#defaults,
-
-        ...this.#overrides,
+        ...this.#dbArgs,
         ...rest,
         parameters
       })
-      return this.#transformResponse(response)
+      const rows = this.#transformResponse(response, zOut)
+      return rows
     } catch (err: any) {
       // drop & create not working sometimes, need to figure this out
       if (~err?.message?.indexOf("is being accessed by other users")) {
@@ -114,7 +118,7 @@ export class DB {
     }
   }
 
-  #transformRequest(values: ExecuteRequest["values"], schema: any): SqlParameter[] {
+  #transformRequest<T extends z.AnyZodObject>(values: ExecuteRequest["values"], schema?: T): SqlParameter[] {
     if (!values) { return [] }
     return Object.keys(values).map((key: string) => {
       let value = values[key]
@@ -142,10 +146,13 @@ export class DB {
     })
   }
 
-  #transformResponse(response: ExecuteStatementCommandOutput): any[] {
+  #transformResponse<T extends z.AnyZodObject>(
+    response: ExecuteStatementCommandOutput,
+    schema?: T
+  ): T[] | any[] {
     if (!response.records) {return []}
     if (!response.columnMetadata) {return []}
-    return response.records.map((fields) =>
+    const rows = response.records.map((fields) =>
       Object.fromEntries(fields.map((field, i) => {
         const key: string = response.columnMetadata![i].name
         const [hint, val] = Object.entries(field)[0]
@@ -154,10 +161,12 @@ export class DB {
         return [key, value]
       }))
     )
+    if (!schema) {return rows}
+    return rows.map(row => schema.parse(row))
   }
 
   async init(): Promise<void> {
-    const db = this.#overrides?.database
+    const db = this.#dbArgs?.database
     if (!db) {return}
     // await this.drop()
     await this.execute({
@@ -169,7 +178,7 @@ export class DB {
   }
 
   async drop(): Promise<void> {
-    const db = this.#overrides?.database
+    const db = this.#dbArgs?.database
     if (!db) {return}
     await this.execute({
       sql: `DROP DATABASE IF EXISTS ${db};`,

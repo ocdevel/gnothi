@@ -1,7 +1,7 @@
-import {MyProxyEvent} from "../routes/aws"
-import {DB} from '../data/db'
-import {Context} from "../routes/types"
-import * as s from "../data/schemas";
+import {MyProxyEvent} from "routes/aws"
+import {DB} from 'data/db'
+import {Context} from "routes/types"
+import * as s from "data/schemas";
 import _get from "lodash/get";
 import _set from "lodash/set";
 import {z} from 'zod'
