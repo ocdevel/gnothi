@@ -27,14 +27,3 @@ export default route(async (body, {user, db}) => {
   zOut: Output,
   cantSnoop: true
 })
-
-const Schema = z.object({a: z.number()})
-function parse<I extends z.ZodTypeAny>(schema: I, data: any): z.TypeOf<I> {
-  return schema.parse(data)
-}
-const parsed = parse(Schema, {a: 1})
-
-function onParsed<I extends z.ZodTypeAny>(schema: z.AnyZodObject, data: z.TypeOf<I>) {
-  return [schema.shape, parsed.a]
-}
-const [shape, a] = onParsed(Schema, parsed)

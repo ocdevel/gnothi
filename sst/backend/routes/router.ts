@@ -1,6 +1,6 @@
 import {z} from 'zod'
 import * as users from 'routes/users'
-import {AuthContext, RouteDef} from 'routes/route'
+import route, {AuthContext} from 'routes/route'
 import {CantSnoop} from './errors'
 
 export const RouteData = z.object({
@@ -16,7 +16,7 @@ const routes = {
   }
 }
 
-function findRoute(parts: string[], method: string, curr: any): any {
+function findRoute(parts: string[], method: string, curr: any): typeof route {
   const childRouter = curr.router?.[parts[0]]
   if (childRouter) {
     return findRoute(parts.slice(1), method, childRouter)
@@ -29,6 +29,6 @@ function findRoute(parts: string[], method: string, curr: any): any {
 export default async function router(data: RouteData, context: AuthContext) {
   const {route, method, body} = RouteData.parse(data)
   const parts = route.split('/').filter(k => k !== "").map(k => k.toLowerCase())
-  const routeDef: RouteDef = findRoute(parts, method.toLowerCase(), routes)
+  const routeDef = findRoute(parts, method.toLowerCase(), routes)
   return await routeDef.route(body, context)
 }
