@@ -1,0 +1,9 @@
+{
+  "name": "@gnothi/schemas",
+  "version": "0.0.0",
+  "type": "module",
+  "dependencies": {
+    "zod": "^3.19.1",
+    "dayjs": "^1.11.6"
+  }
+}

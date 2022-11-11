@@ -1,0 +1,13 @@
+{
+  "extends": "../tsconfig.json",
+  "include": ["functions", "core", "test"],
+  "compilerOptions": {
+    "module": "esnext",
+    "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true,
+    "baseUrl": ".",
+    "paths": {
+      "@gnothi/core/*": ["./core/*"]
+    }
+  }
+}

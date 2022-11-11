@@ -1,13 +1,16 @@
-import { Gnothi } from "./MyStack";
 import { App } from "@serverless-stack/resources";
+import { Api } from "./Api";
+import { Web } from "./Web";
+import { Database } from "./Database";
+import { Auth } from "./Auth";
 
-export default function (app: App) {
+export default function main(app: App) {
   app.setDefaultFunctionProps({
     runtime: "nodejs16.x",
-    srcPath: "backend",
+    srcPath: "services",
     bundle: {
       format: "esm",
     },
   });
-  app.stack(Gnothi);
+  app.stack(Database).stack(Auth).stack(Api).stack(Web);
 }

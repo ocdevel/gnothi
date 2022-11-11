@@ -3,28 +3,31 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "AWS_PROFILE=gnothiadmin sst start --outputs-file \".env.json\"",
+    "start": "AWS_PROFILE=gnothiadmin sst start",
     "build": "AWS_PROFILE=gnothiadmin sst build",
-    "deploy": "AWS_PROFILE=gnothiadmin sst deploy --stage=production",
+    "deploy": "AWS_PROFILE=gnothiadmin sst deploy",
     "remove": "AWS_PROFILE=gnothiadmin sst remove",
     "console": "AWS_PROFILE=gnothiadmin sst console",
-    "typecheck": "AWS_PROFILE=gnothiadmin tsc --noEmit",
-    "test": "AWS_PROFILE=gnothiadmin node backend/test/convertEnv.js && vitest run"
+    "typecheck": "tsc --noEmit",
+    "test": "AWS_PROFILE=gnothiadmin node backend/test/convertEnv.js sst bind -- vitest run",
+    "gen": "hygen"
   },
   "devDependencies": {
-    "@serverless-stack/cli": "^1.2.19",
-    "@serverless-stack/resources": "^1.2.19",
-    "@tsconfig/node16": "^1.0.2",
-    "@types/lodash": "^4.14.182",
-    "aws-cdk-lib": "2.24.0",
-    "typescript": "^4.7.3",
-    "vitest": "^0.14.2"
+    "@serverless-stack/cli": "^1.17.1",
+    "@serverless-stack/resources": "^1.17.1",
+    "@tsconfig/node16": "^1.0.3",
+    "@types/lodash": "^4.14.188",
+    "aws-cdk-lib": "2.50.0",
+    "hygen": "^6.2.11",
+    "typescript": "^4.8.4",
+    "vitest": "^0.25.1"
+  },
+  "dependencies": {
+    "@serverless-stack/node": "^1.17.1"
   },
   "workspaces": [
-    "backend"
-  ],
-  "dependencies": {
-    "@aws-sdk/client-rds-data": "^3.105.0",
-    "zod": "^3.17.3"
-  }
+    "services",
+    "schemas",
+    "web"
+  ]
 }
