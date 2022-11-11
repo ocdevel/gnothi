@@ -64,19 +64,28 @@ export const themeOptions: ThemeOptions = {
     },
     fontFamily: 'Antic Didone',
   },
-  overrides: {
+  components: {
     MuiAppBar: {
-      colorInherit: {
-        backgroundColor: '#738fa7',
-        color: '#fff',
+      styleOverrides: {
+        // colorInherit: {
+        //   backgroundColor: '#738fa7',
+        //   color: '#fff',
+        // },
+      },
+    },
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          textTransform: 'initial',
+        },
       },
     },
   },
-  props: {
-    MuiAppBar: {
-      color: 'inherit',
-    },
-  },
+  // props: {
+  //   MuiAppBar: {
+  //     color: 'inherit',
+  //   },
+  // },
 };
 
 const theme = createTheme(themeOptions)

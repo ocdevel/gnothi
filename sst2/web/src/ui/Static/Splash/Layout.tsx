@@ -44,12 +44,12 @@ export default function Layout() {
     >
       <Link.Anchor to='/'>
         <header className='cursor-pointer'>
-          <img src="/logo192.png" style={{marginLeft: '1rem'}}/>
+          <img src="/TransparentLogo.png" height="500" style={{marginLeft: '1rem'}}/>
         </header>
       </Link.Anchor>
-      <Typography variant='h3' component='h1'>Gnothi</Typography>
+      {/*<Typography variant='h3' component='h1'>Gnothi</Typography>
       <Typography variant='h5'>Gnōthi Seauton: Know Thyself</Typography>
-      <Typography sx={{mb:2}}>A journal that uses AI to help you introspect and find resources</Typography>
+      <Typography sx={{mb:2}}>A journal that uses AI to help you introspect and find resources</Typography>*/}
       {showSignin ? <>
         <Link.Button
           variant='contained'
