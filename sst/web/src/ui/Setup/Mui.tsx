@@ -88,7 +88,7 @@ export const themeOptions: ThemeOptions = {
   // },
 };
 
-const theme = createTheme(themeOptions)
+export const theme = createTheme(themeOptions)
 
 export default function Mui({children}: React.PropsWithChildren<{}>) {
   // return <StyledEngineProvider injectFirst>

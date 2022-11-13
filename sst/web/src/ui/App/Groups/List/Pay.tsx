@@ -6,8 +6,12 @@ import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import CardHeader from "@mui/material/CardHeader";
 import Typography from "@mui/material/Typography";
+import { Box } from "@mui/material";
+import {theme} from '../../../Setup/Mui'
 
-const EA = <Chip>Early Access</Chip>
+const SPACING = 5
+
+const EA = null // <Chip label="Early Access"></Chip>
 
 const premium = {
   done: [
@@ -78,19 +82,59 @@ const premium = {
   ]
 }
 
+type Timeframe = "soon" | "done" | "later"
+function Feature({title, body, timeframe}: {title: string, body: React.ReactNode, timeframe: Timeframe}) {
+  const styles = {
+    opacity: timeframe === 'done' ? 1 : timeframe === 'soon' ? .6 : .3
+  }
+  return <Grid item xs={12} sm={6} md={4}>
+    <Card raised sx={{height: "100%", ...styles}}>
+      <CardContent>
+        <Typography variant="h5">{title}</Typography>
+        <Typography>{body}</Typography>
+      </CardContent>
+    </Card>
+  </Grid>
+}
+
+type Section = {title: string, children: React.ReactNode, timeframe: Timeframe}
+function Section({title, children, timeframe}: Section) {
+  return <Box>
+    <Box sx={{my: SPACING}}>
+      <Typography variant="h4">{title}</Typography>
+      <Typography>{children}</Typography>
+    </Box>
+    <Grid spacing={2} container>
+      {premium[timeframe].map((feature, i) => <Feature {...feature} key={i} timeframe={timeframe} />)}
+    </Grid>
+  </Box>
+}
+
 export default function Pay() {
   const [show, setShow] = useState(true)
   const toggle = () => setShow(!show)
-    return <FullScreenDialog open={show} title="Premium" onClose={toggle}>
-    <Grid spacing={2} container>
-      {premium.done.map((feature) => <Grid item>
-        <Card>
-          <CardContent>
-            <Typography variant="h4">{feature.title}</Typography>
-            <Typography>{feature.body}</Typography>
-          </CardContent>
-        </Card>
-      </Grid>)}
-    </Grid>
+
+  
+  return <FullScreenDialog open={show} title="Premium" onClose={toggle}>
+    <Box sx={{m: SPACING}}>
+      <Grid container sx={{mb:SPACING}}>
+        <Grid item xs={3}></Grid>
+        <Grid container item direction="column" xs={6} alignItems="center">
+          <Grid item><Typography variant="h2">Premium</Typography></Grid>
+          <Grid item><Typography>About premium. These features are {EA}. Some or most will come to the main service eventually. You're getting beta access to try sooner than most. We'll be fine-tuning these features before public availability.</Typography></Grid>
+        </Grid>
+        <Grid item xs={3}></Grid>
+      </Grid>
+      
+      <Section title="v1" timeframe="done">
+        About v1
+      </Section>
+      <Section title="Soon" timeframe="soon">
+        About what's coming soon
+      </Section><Section title="Later" timeframe="later">
+        These are someday maybe
+      </Section>
+        
+    </Box>
   </FullScreenDialog>
 }
