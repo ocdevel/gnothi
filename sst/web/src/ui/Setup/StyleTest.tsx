@@ -1,26 +1,18 @@
-import { Card, CardContent, CardHeader, Box } from "@mui/material";
-import Typography from "@mui/material/Typography";
 import * as React from 'react';
-import Button from '@mui/material/Button';
-import Alert from '@mui/material/Alert';
-import Stack from '@mui/material/Stack';
-
+import { 
+    Card, 
+    CardContent, 
+    CardHeader, 
+    Box ,
+    Typography,
+    Button,
+    Alert,
+    Stack
+} from "@mui/material";
 import {theme} from './Mui'
 
 export default function StyleTest() {
     return <>
-        <div>
-            <h1>Standard HTML (no MUI applied)</h1>
-            <h1>H1</h1>
-            <h2>H2</h2>
-            <p>Body text</p>
-            <ul>
-                <li>list item</li>
-            </ul>
-        </div>
-
-        <hr />
-
         <Stack 
             spacing={2} 
             margin={5}
