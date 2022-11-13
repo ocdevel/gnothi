@@ -15,6 +15,9 @@ import * as StaticRoutes from '../Static/Routes'
 const SplashLayout = React.lazy( () => import("../Static/Splash/Layout"))
 const AppLayout = React.lazy(() => import("../App/Layout/Layout"))
 import appRoutes from '../App/Routes'
+import StyleTest from './StyleTest'
+
+const styleTestRoute = {path: "/styles", element: <StyleTest />}
 
 const routerAuthed = createBrowserRouter([
   {
@@ -28,6 +31,7 @@ const routerAuthed = createBrowserRouter([
       {
         errorElement: <Error />,
         children: [
+          styleTestRoute,
           {path: "about", errorElement: <Error />, children: [
             ...StaticRoutes.staticRoutes
           ]},
@@ -49,6 +53,7 @@ const routerAnon = createBrowserRouter([
     children: [{
       errorElement: <Error />,
       children: [
+        styleTestRoute,
         ...StaticRoutes.staticRoutes,
         ...StaticRoutes.splashRoutes,
       ]
