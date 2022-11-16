@@ -77,6 +77,7 @@ export const themeOptions: ThemeOptions = {
       styleOverrides: {
         root: {
           textTransform: 'initial',
+          borderRadius: 10
         },
       },
     },
