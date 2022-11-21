@@ -41,10 +41,10 @@ export const themeOptions: ThemeOptions = {
       fontFamily: 'Poppins',
     },
     h3: {
-      fontWeight: 700,
+      //fontWeight: 700,
     },
     h5: {
-      fontWeight: 900,
+      //fontWeight: 900,
     },
     body2: {
       fontFamily: 'Poppins',
@@ -56,11 +56,11 @@ export const themeOptions: ThemeOptions = {
       fontFamily: 'Poppins',
     },
     h1: {
-      fontWeight: 800,
+      //fontWeight: 800,
       fontFamily: 'Antic Didone',
     },
     h2: {
-      fontWeight: 1000,
+      //fontWeight: 1000,
     },
     fontFamily: 'Antic Didone',
   },
@@ -77,7 +77,8 @@ export const themeOptions: ThemeOptions = {
       styleOverrides: {
         root: {
           textTransform: 'initial',
-          borderRadius: 10
+          borderRadius: 50,
+          elevation: 12
         },
       },
     },
