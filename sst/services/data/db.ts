@@ -12,6 +12,7 @@ interface Database {
   ws_connections: S.Ws.WsConnection
   tags: S.Tags.Tag
   entries: S.Entries.Entry
+  entries_tags: S.Tags.EntryTag
   fields: S.Fields.Field
   field_entries: S.Fields.FieldEntry
   groups: S.Groups.Group
@@ -36,7 +37,7 @@ export const DB = new Kysely<Database>({
   }),
 })
 
-export async function raw(sql: string, parameters: SqlParameter[]) {
+export async function raw(sql: string, parameters: SqlParameter[], batch=false) {
   const res = await client.executeStatement({
     sql,
     parameters,

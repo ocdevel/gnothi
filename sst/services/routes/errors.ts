@@ -1,18 +1,16 @@
-type GnothiErrorProps {
-  key: string
-}
+
 export class GnothiError extends Error {
   code: number;
   key: string;
-  constructor(message: string, {code, key}: ) {
+  constructor(message: string, key:string="ERROR", code:number=400) {
     super(message);
-    this.code = code;
     this.key = key;
+    this.code = code;
   }
 }
 
 export class CantSnoop extends GnothiError {
   constructor(message = "Can't snoop this resource") {
-    super(message, 401)
+    super(message, "CANT_SNOOP", 401)
   }
 }

@@ -14,54 +14,51 @@ r.entries_list_request.fn = r.entries_list_request.fnDef.implement(async (req, c
 
 
 async function entryUpsert(
-  req: S.Entries.entries_post_request,
+  req: S.Entries.entries_post_request | S.Entries.entries_put_request,
   context: S.Api.FnContext,
 ) {
-  const {uid} = context.user
-  if (!Object.values(tags).some()) {
-    throw GnothiError("Each entry must belong to at least one journal")
+  const user_id = context.user.id
+  const {tags, entry} = req
+  if (!Object.values(tags).some(v => v)) {
+    throw new GnothiError("Each entry must belong to at least one journal", "MISSING_TAG")
   }
-  if not any(v for k, v in data['tags'].items()):
-      raise GnothiException(
-          code=400,
-          error="MISSING_TAG",
-          detail="Each entry must belong to at least one journal"
-      )
+  
+  let entry_id: string = entry.id
+  if (!entry_id) {
+    const dbEntry = await DB.insertInto("entries")
+      .values({...entry, user_id})
+      .returning("id")
+      .executeTakeFirst()
+    entry_id = dbEntry!.id
+  } else {
+    await raw("delete from entry_tags where entry_id=:0",
+      [{name: "0", value: {stringValue: entry_id}}]
+    )
+  }
+  
+  // manual created-at override
+  // iso_fmt = r"^\d{4}-([0]\d|1[0-2])-([0-2]\d|3[01])$"
+  // created_at = data.get('created_at', None)
+  // if created_at and re.match(iso_fmt, created_at):
+  //     tz = M.User.tz(db, vid)
+  //     db.execute(text("""
+  //     update entries set created_at=(:day ::timestamp at time zone :tz)
+  //     where id=:id
+  //     """), dict(day=created_at, tz=tz, id=entry.id))
+  //     db.commit()
 
-  new_entry = entry is None
-  if new_entry:
-      entry = M.Entry(user_id=vid)
-      db.add(entry)
-  else:
-      db.query(M.EntryTag).filter_by(entry_id=entry.id).delete()
-  entry.title = data['title']
-  entry.text = data['text']
-  entry.no_ai = data['no_ai'] or False
-  db.commit()
-  db.refresh(entry)
-
-  # manual created-at override
-  iso_fmt = r"^\d{4}-([0]\d|1[0-2])-([0-2]\d|3[01])$"
-  created_at = data.get('created_at', None)
-  if created_at and re.match(iso_fmt, created_at):
-      tz = M.User.tz(db, vid)
-      db.execute(text("""
-      update entries set created_at=(:day ::timestamp at time zone :tz)
-      where id=:id
-      """), dict(day=created_at, tz=tz, id=entry.id))
-      db.commit()
-
-  for tag, v in data['tags'].items():
-      if not v: continue
-      db.add(M.EntryTag(entry_id=entry.id, tag_id=tag))
-  db.commit()
-  db.refresh(entry)
-
-  # FIXME
-  # entry.update_snoopers(d.db)
-  M.Entry.run_models(db, entry)
-  db.commit()
-
+  // TODO use batchExecuteStatement
+  for (const [tag_id, v] of Object.entries(tags)) {
+      if (!v) {continue}
+      await DB.insertInto("entries_tags")
+        .values({tag_id, entry_id})
+        .execute()
+  }
+      
+  // FIXME
+  // entry.update_snoopers(d.db)
+  //M.Entry.run_models(db, entry)
+  
   return entry
 }
 
