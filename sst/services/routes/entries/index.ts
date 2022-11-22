@@ -1,41 +1,52 @@
 import * as S from '@gnothi/schemas'
-import {DB, raw} from '../../data/db'
+import {db} from '../../data/db'
 import {GnothiError} from "../errors";
+import {z} from 'zod'
 
 const r = S.Routes.routes
 
 r.entries_list_request.fn = r.entries_list_request.fnDef.implement(async (req, context) => {
-  const entries = await DB.selectFrom("entries")
-    .where("user_id", "=", context.user.id)
-    .selectAll()
-    .execute()
+
+  const entries = await db.exec({
+    sql: `
+      select e.*,
+             json_agg(et.*) as entries_tags
+      from entries e
+             inner join entries_tags et on e.id = et.entry_id
+      where e.user_id = :user_id
+      group by e.id;
+    `,
+    values: {user_id: context.user.id},
+    zIn: S.Tags.EntryTag.extend(S.Entries.Entry)
+  })
+  const a = 1
   return entries
 })
 
 
-async function entryUpsert(
-  req: S.Entries.entries_post_request | S.Entries.entries_put_request,
-  context: S.Api.FnContext,
-) {
+r.entries_upsert_request.fn = r.entries_upsert_request.fnDef.implement(async (req, context) => {
   const user_id = context.user.id
   const {tags, entry} = req
   if (!Object.values(tags).some(v => v)) {
     throw new GnothiError("Each entry must belong to at least one journal", "MISSING_TAG")
   }
-  
+
   let entry_id: string = entry.id
+  let dbEntry: S.Entries.Entry
   if (!entry_id) {
-    const dbEntry = await DB.insertInto("entries")
-      .values({...entry, user_id})
-      .returning("id")
-      .executeTakeFirst()
-    entry_id = dbEntry!.id
+    dbEntry = (await db.insert("entries", {...entry, user_id}))[0]
+    entry_id = dbEntry.id
   } else {
-    await raw("delete from entry_tags where entry_id=:0",
-      [{name: "0", value: {stringValue: entry_id}}]
-    )
+    dbEntry = (await db.exec({
+      sql: `select * from entries where id=:entry_id`,
+      values: {id: entry_id}
+    }))[0]
+    await db.exec({
+        sql: "delete from entry_tags where entry_id=:entry_id",
+      values: {entry_id}
+    })
   }
-  
+
   // manual created-at override
   // iso_fmt = r"^\d{4}-([0]\d|1[0-2])-([0-2]\d|3[01])$"
   // created_at = data.get('created_at', None)
@@ -50,27 +61,18 @@ async function entryUpsert(
   // TODO use batchExecuteStatement
   for (const [tag_id, v] of Object.entries(tags)) {
       if (!v) {continue}
-      await DB.insertInto("entries_tags")
-        .values({tag_id, entry_id})
-        .execute()
+      await db.insert("entries_tags", {tag_id, entry_id})
   }
-      
+
+  // TODO undefineds
+  dbEntry.title = "Title"
+  dbEntry.text_summary = "Text Summary"
+  dbEntry.title_summary = "Title Summary"
+  dbEntry.sentiment = "Sentiment"
+
   // FIXME
   // entry.update_snoopers(d.db)
   //M.Entry.run_models(db, entry)
-  
-  return entry
-}
 
-r.entries_post_request.fn = r.entries_post_request.fnDef.implement(async (req, context) => {
-  const entry = await entryUpsert(req, context)
-  await context.handleRes({ws: true}, {
-    event: "entries_list_response",
-    error: false,
-    code: 200,
-    op: "prepend",
-    data: [entry],
-    keyby: "id"
-  }, context)
-  return []
+  return [{entry: dbEntry, tags}]
 })

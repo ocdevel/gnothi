@@ -1,4 +1,4 @@
-import {DB} from '../data/db'
+import {db} from '../data/db'
 const testing = process.env.IS_LOCAL
 
 export const handler = async (event, context, callback) => {
@@ -8,19 +8,15 @@ export const handler = async (event, context, callback) => {
   event.response.autoVerifyEmail = true
 
   // create user in database. maybe add its uid to cognito
-  const dbUser = await DB.insertInto("users")
-    .values({
+  const dbUser = (await db.insert("users", {
       email: event.request.userAttributes.email,
       cognito_id: event.userName,
-    })
-    .returning("id")
-    .executeTakeFirst()
+    }))[0]
   event.request.userAttributes['gnothiId'] = dbUser.id
 
   // All users need one immutable main tag
-  const mainTag = await DB.insertInto("tags")
-    .values({user_id: dbUser.id, name: "Main", main: true})
-    .execute()
+  const mainTag = await db.insert("tags",
+    {user_id: dbUser.id, name: "Main", main: true})
 
   // // Split the email address so we can compare domains
   // var address = event.request.userAttributes.email.split("@")

@@ -48,7 +48,14 @@ async function handleReq(
   if (fnContext.snooping && !route.snoopable) {
     throw new CantSnoop()
   }
-  const output = await route.fn(req.data, fnContext)
+
+  let output
+  try {
+    output = await route.fn(req.data, fnContext)
+  } catch (e) {
+    debugger
+    throw e
+  }
 
   const res: Api.Res = {
     error: false,

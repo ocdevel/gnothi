@@ -37,14 +37,14 @@ After you have one or two entries, head to the Insights and Resources links at t
 `
 
 interface Entry {
-  entry?: Entries.entries_post_request
+  entry?: Entries.entries_upsert_request
   onClose?: any
 }
 export default function EditUpsert({entry, onClose}: Entry) {
-  const formExtra = entry ? {defaultValues: entry} : {}
+  const defaults = entry ? {defaultValues: entry} : {}
   const form = useForm({
-    resolver: zodResolver(Entries.entries_post_request.shape.entry),
-    ...formExtra
+    resolver: zodResolver(Entries.entries_upsert_request.shape.entry),
+    ...defaults
   })
   const navigate = useNavigate()
   const as = useStore(s => s.user.as)
@@ -52,8 +52,7 @@ export default function EditUpsert({entry, onClose}: Entry) {
   const [formOrig, setFormOrig] = useState()
   const [tags, setTags] = useState({})
   const [advanced, setAdvanced] = useState(false)
-  const entryPost = useStore(s => s.res.entries_post_response?.res)
-  const entryPut = useStore(s => s.res.entries_put_response?.res)
+  const entriesUpsert = useStore(s => s.res.entries_upsert_response?.res)
   const entryDel = useStore(s => s.res.entries_delete_response?.res)
   const clear = useStore(a => a.clearEvents)
 
@@ -85,15 +84,10 @@ export default function EditUpsert({entry, onClose}: Entry) {
   }, [])
 
   useEffect(() => {
-    if (entryPost?.code === 200 && entryPost?.id) {
-      setEditing(false)
-      go(`/j/entry/${entryPost.id}`)
+    if (entriesUpsert?.code === 200 && entriesUpsert?.id) {
+      go(`/j/entry/${entriesUpsert.id}`)
     }
-  }, [entryPost])
-
-  useEffect(() => {
-    if (entryPut?.code === 200) {setEditing(false)}
-  }, [entryPut])
+  }, [entriesUpsert])
 
   useEffect(() => {
     if (entryDel?.code === 200) {go()}
@@ -122,13 +116,9 @@ export default function EditUpsert({entry, onClose}: Entry) {
     navigate(to)
   }
 
-  function submit(entry: Entries.entries_post_request) {
+  function submit(entry: Entries.entries_upsert_request) {
     const data = {entry, tags}
-    if (id) {
-      send('entries_put_request', {...data, id: id})
-    } else {
-      send('entries_post_request', data)
-    }
+    send('entries_upsert_request', data)
   }
 
   const deleteEntry = async () => {
@@ -154,7 +144,7 @@ export default function EditUpsert({entry, onClose}: Entry) {
 
   function renderButtons() {
     if (as) {return null}
-    if (entryPost?.submitting || entryPut?.submitting) {
+    if (entriesUpsert?.submitting) {
       return <CircularProgress />
     }
 

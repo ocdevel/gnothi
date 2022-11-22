@@ -4,8 +4,8 @@ import dayjs from 'dayjs'
 
 export const DateCol = z.preprocess(
     (v: string | number | Date | undefined) => {
+      if (!v) {return undefined}
       if (v instanceof Date) {return v}
-      if (!v) {return new Date()}
       return dayjs(v).toDate()
     },
     z.date().optional()

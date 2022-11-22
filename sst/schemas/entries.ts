@@ -29,22 +29,24 @@ export const entries_list_request = Passthrough
 export type entries_list_request = z.infer<typeof entries_list_request>
 export const entries_list_response = Entry
 export type entries_list_response = z.infer<typeof entries_list_response>
-export const entries_put_request = z.object({
-  entry: Entry.pick({
-    id: true,
-    title: true,
-    text: true,
-    no_ai: true,
-    created_at: true
-  }),
+export const entries_upsert_request = z.object({
+  entry: Entry
+    .partial({id: true})
+    .pick({
+      id: true,
+      title: true,
+      text: true,
+      no_ai: true,
+      created_at: true
+    }),
   tags: BoolMap
 })
-export type entries_put_request = z.infer<typeof entries_put_request>
-export const entries_post_request = z.object({
-  entry: entries_put_request.shape.entry.omit({id: true}),
-  tags: entries_put_request.shape.tags
+export type entries_upsert_request = z.infer<typeof entries_upsert_request>
+export const entries_upsert_response = z.object({
+  entry: Entry,
+  tags: BoolMap
 })
-export type entries_post_request = z.infer<typeof entries_post_request>
+export type entries_upsert_response = z.infer<typeof entries_upsert_response>
 
 export const routes = {
   entries_list_request: new Route({
@@ -55,16 +57,18 @@ export const routes = {
     o: {
       e: 'entries_list_response',
       s: entries_list_response,
-    }
+    },
   }),
-  entries_post_request: new Route({
+  entries_upsert_request: new Route({
     i: {
-      e: 'entries_post_request',
-      s: entries_post_request,
+      e: 'entries_upsert_request',
+      s: entries_upsert_request,
     },
     o: {
-      e: 'void',
-      s: Passthrough
-    }
+      e: 'entries_upsert_response',
+      s: entries_upsert_response,
+      event_as: "entries_list_response",
+      keyby: 'entry.id'
+    },
   })
 }

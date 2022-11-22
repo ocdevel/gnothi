@@ -22,6 +22,7 @@ export type DefI<T extends z.ZodTypeAny> = Def<T> & {
 }
 export type DefO<T extends z.ZodTypeAny> = Def<T> & {
   keyby?: string
+  event_as?: Events
 }
 
 export type FnContext = {
@@ -103,6 +104,7 @@ export type ResSuccess<T = unknown> = {
   code: number
   data: T[]
 
+  event_as?: Events
   keyby?: string
   op?: "update" | "prepend" | "append" | "delete"
 
