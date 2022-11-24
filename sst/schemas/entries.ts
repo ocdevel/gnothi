@@ -27,7 +27,10 @@ export type Entry = z.infer<typeof Entry>
 
 export const entries_list_request = Passthrough
 export type entries_list_request = z.infer<typeof entries_list_request>
-export const entries_list_response = Entry
+export const entries_list_response = z.object({
+  entry: Entry,
+  tags: BoolMap
+})
 export type entries_list_response = z.infer<typeof entries_list_response>
 export const entries_upsert_request = z.object({
   entry: Entry
@@ -42,10 +45,7 @@ export const entries_upsert_request = z.object({
   tags: BoolMap
 })
 export type entries_upsert_request = z.infer<typeof entries_upsert_request>
-export const entries_upsert_response = z.object({
-  entry: Entry,
-  tags: BoolMap
-})
+export const entries_upsert_response = entries_list_response
 export type entries_upsert_response = z.infer<typeof entries_upsert_response>
 
 export const routes = {
@@ -57,6 +57,7 @@ export const routes = {
     o: {
       e: 'entries_list_response',
       s: entries_list_response,
+      keyby: "entry.id"
     },
   }),
   entries_upsert_request: new Route({
@@ -68,7 +69,8 @@ export const routes = {
       e: 'entries_upsert_response',
       s: entries_upsert_response,
       event_as: "entries_list_response",
-      keyby: 'entry.id'
+      keyby: 'entry.id',
+      op: "prepend"
     },
   })
 }

@@ -1,5 +1,5 @@
 import {useStore} from "@gnothi/web/src/data/store"
-import React, {useState} from "react";
+import React, {useState, useEffect, useCallback} from "react";
 
 import Box from '@mui/material/Box'
 import Card from '@mui/material/Card'
@@ -17,12 +17,14 @@ interface Teaser {
   gotoForm: (eid: string | undefined) => void
 }
 export default function Teaser({eid, gotoForm}: Teaser) {
-  const e = useStore(s => s.res.entries_list_response?.hash?.[eid])
+  const entry = useStore(useCallback(s => s.res.entries_list_response?.hash?.[eid], [eid]))
   const [hovered, setHovered] = useState(false)
   const onHover = () => setHovered(true)
   const onLeave = () => setHovered(false)
 
+  const e = entry?.entry
   if (!e) {return null}
+  const {tags} = entry
 
   let title = e.title || e.title_summary
   const isSummary = e.text_summary && e.text !== e.text_summary

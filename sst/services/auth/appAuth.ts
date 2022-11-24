@@ -53,6 +53,7 @@ export async function getUser(event: APIGatewayProxyWebsocketEventV2WithRequestC
       await db.exec({
         sql: "delete from ws_connections where connection_id=:connection_id",
         values: {connection_id},
+        zIn: WsConnection
       })
       return handled
     }

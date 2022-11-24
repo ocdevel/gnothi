@@ -29,23 +29,24 @@ import Stack from "@mui/material/Stack";
 import CacheEntry from './Cache'
 import {useForm} from "react-hook-form";
 import {zodResolver} from "@hookform/resolvers/zod";
-import {Entries} from '@gnothi/schemas'
+import * as S from '@gnothi/schemas'
 import * as Link from '../../../Components/Link'
 
 
 interface Entry {
-  entry?: Entries.Entry
+  entry: S.Entries.entries_list_response
   onClose?: any
 }
 export default function View({entry, onClose}: Entry) {
   const navigate = useNavigate()
   const as = useStore(s => s.user.as)
   const send = useStore(s => s.send)
-  const [tags, setTags] = useState({})
+  const [tags, setTags] = useState(entry.tags)
   const [aiSees, setAiSees] = useState(false)
   const clear = useStore(a => a.clearEvents)
 
-  const {id} = entry
+  const e = entry.entry
+  const {id} = e
 
   const showAiSees = async () => {
     if (!id) { return }
@@ -66,7 +67,7 @@ export default function View({entry, onClose}: Entry) {
       <Link.Button
         variant='outlined'
         color='primary'
-        to={`j/entries/${id}/edit`}
+        to={`j/${id}/edit`}
         startIcon={<FaPen />}
       >
         Edit
@@ -76,11 +77,12 @@ export default function View({entry, onClose}: Entry) {
 
   function renderEntry() {
     return <Box>
-      <Typography variant='h2'>{entry.title}</Typography>
+      <Typography variant='h2'>{e.title}</Typography>
       <ReactMarkdown
-        source={entry.text}
         linkTarget='_blank'
-      />
+      >
+        {e.text}
+      </ReactMarkdown>
 
       <Error
         event={/entries\/entr(ies|y).*/g}

@@ -19,7 +19,7 @@ import Fab from "@mui/material/Fab";
 
 
 export default function List({group_id=null}) {
-  const as = useStore(s => s.as)
+  const as = useStore(s => s.user.as)
   const entries = useStore(s => s.res.entries_list_response)
   const selected = useStore(s => s.selectedTags)
 
@@ -39,14 +39,13 @@ export default function List({group_id=null}) {
     return <h5>{entries.res.data}</h5>
   }
 
-  let filtered = _(ids)
+  let filtered = ids
       // FIXME entry_tags
-      // .filter(eid => _.reduce(selected, (m, v, k) => hash[eid].entry_tags[k] || m, false))
-      .filter(eid => !search.length || ~(hash[eid].title + hash[eid].text).toLowerCase().indexOf(search))
-      .value()
+      // .filter(eid => _.reduce(selected, (m, v, k) => hash[eid].tags[k] || m, false))
+      .filter(eid => !search.length || ~(hash[eid].entry.title + hash[eid].entry.text).toLowerCase().indexOf(search))
 
   const gotoForm = (entry_id?: string) => {
-    const p = (entry_id ? `/j/entry/${entry_id}/view` : 'entry')
+    const p = (entry_id ? `/j/${entry_id}/view` : 'entry')
     navigate(p)
   }
 

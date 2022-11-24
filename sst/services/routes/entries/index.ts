@@ -2,6 +2,7 @@ import * as S from '@gnothi/schemas'
 import {db} from '../../data/db'
 import {GnothiError} from "../errors";
 import {z} from 'zod'
+import {reduce as _reduce} from "lodash"
 
 const r = S.Routes.routes
 
@@ -17,10 +18,14 @@ r.entries_list_request.fn = r.entries_list_request.fnDef.implement(async (req, c
       group by e.id;
     `,
     values: {user_id: context.user.id},
-    zIn: S.Tags.EntryTag.extend(S.Entries.Entry)
+    zIn: S.Tags.EntryTag.merge(S.Entries.Entry)
   })
-  const a = 1
-  return entries
+  // TODO update SQL to do this conversion, we'll use it elsewhere
+  const withBoolMap = entries.map(entry => ({
+    entry,
+    tags: _reduce(entry.tags, (m, v) => ({...m, [v.tag_id]: true}), {})
+  }))
+  return withBoolMap
 })
 
 
@@ -39,11 +44,13 @@ r.entries_upsert_request.fn = r.entries_upsert_request.fnDef.implement(async (re
   } else {
     dbEntry = (await db.exec({
       sql: `select * from entries where id=:entry_id`,
-      values: {id: entry_id}
+      values: {id: entry_id},
+      zIn: S.Entries.Entry
     }))[0]
     await db.exec({
-        sql: "delete from entry_tags where entry_id=:entry_id",
-      values: {entry_id}
+      sql: "delete from entry_tags where entry_id=:entry_id",
+      values: {entry_id},
+      zIn: S.Tags.EntryTag
     })
   }
 

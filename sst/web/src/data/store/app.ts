@@ -33,7 +33,7 @@ interface SharePage {
 
 type EntryModal = null | {
   mode: "view" | "edit"
-  entry: Entries.Entry
+  entry: Entries.entries_list_response
 }
 
 export interface AppSlice {

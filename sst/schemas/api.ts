@@ -20,10 +20,15 @@ export type Def<T extends z.ZodTypeAny> = {
 export type DefI<T extends z.ZodTypeAny> = Def<T> & {
   snoopable?: boolean
 }
-export type DefO<T extends z.ZodTypeAny> = Def<T> & {
+type ResOverrides = {
   keyby?: string
   event_as?: Events
+  op?: "update" | "prepend" | "append" | "delete"
+  // id?: string ???
+  // uids?: string[] ???
 }
+
+export type DefO<T extends z.ZodTypeAny> = Def<T> & ResOverrides
 
 export type FnContext = {
   user: User
@@ -98,18 +103,11 @@ export type ResError = {
   code: number
   data: string
 }
-export type ResSuccess<T = unknown> = {
+export type ResSuccess<T = unknown> = ResOverrides & {
   event: Events
   error: false
   code: number
   data: T[]
-
-  event_as?: Events
-  keyby?: string
-  op?: "update" | "prepend" | "append" | "delete"
-
-  // id?: string ???
-  // uids?: string[] ???
 }
 export type Res<T = unknown> = ResSuccess<T> | ResError
 

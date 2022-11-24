@@ -14,19 +14,19 @@ import { RDS } from "@serverless-stack/node/rds";
 import * as S from '@gnothi/schemas'
 import dayjs from 'dayjs'
 
-interface Database {
-  users: S.Users.User
-  ws_connections: S.Ws.WsConnection
-  tags: S.Tags.Tag
-  entries: S.Entries.Entry
-  entries_tags: S.Tags.EntryTag
-  fields: S.Fields.Field
-  field_entries: S.Fields.FieldEntry
-  groups: S.Groups.Group
-  shares: S.Shares.Share
-  shares_tags: S.Shares.ShareTag
-  shares_users: S.Shares.ShareUser
-  notifs: S.Notifs.Notif
+const dbSchema = {
+  users: S.Users.User,
+  ws_connections: S.Ws.WsConnection,
+  tags: S.Tags.Tag,
+  entries: S.Entries.Entry,
+  entries_tags: S.Tags.EntryTag,
+  fields: S.Fields.Field,
+  field_entries: S.Fields.FieldEntry,
+  groups: S.Groups.Group,
+  shares: S.Shares.Share,
+  shares_tags: S.Shares.ShareTag,
+  shares_users: S.Shares.ShareUser,
+  notifs: S.Notifs.Notif,
 }
 
 export const driver = {
@@ -73,7 +73,7 @@ export class DB {
     this.driver = {...this.driver, ...overrides}
   }
 
-  async insert(table: string, values: Record<string, any>): Promise<ExecRes> {
+  async insert(table: keyof typeof dbSchema, values: Record<string, any>): Promise<ExecRes> {
     const keys = Object.keys(values)
     const cols = keys.join(', ')
     // const placeholders = keys.map(k => {
@@ -81,7 +81,12 @@ export class DB {
     // }).join(', ')
     const placeholders = keys.map(k => `:${k}`).join(', ')
     const sql = `insert into ${table} (${cols}) values (${placeholders}) returning *;`
-    return await this.exec({sql, values})
+    return await this.exec({
+      sql,
+      values,
+      zIn: dbSchema[table],
+      zOut: dbSchema[table]
+    })
   }
 
   async exec<
