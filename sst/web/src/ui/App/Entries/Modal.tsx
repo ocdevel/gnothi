@@ -5,7 +5,7 @@ import {fmtDate} from "../../../utils/utils";
 import {useParams} from "react-router-dom";
 import {Loading} from "../../Components/Routing";
 const View = React.lazy(() => import("./View"))
-const Edit = React.lazy(() => import("./Upsert"))
+const Upsert = React.lazy(() => import("./Upsert"))
 
 export function EntriesRouter() {
   const {entry_id, mode} = useParams()
@@ -43,7 +43,7 @@ export default function Modal() {
 
   function renderContent() {
     if (entry && mode === 'edit') {
-      return <Edit entry={entry} onClose={onClose} />
+      return <Upsert entry={entry} onClose={onClose} />
     }
     if (entry && mode === "view") {
       return <View entry={entry} onClose={onClose} />

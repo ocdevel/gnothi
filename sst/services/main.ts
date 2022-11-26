@@ -62,8 +62,9 @@ async function handleReq(
     code: 200,
     data: output,
     event: route.o.e,
-    keyby: route.o.keyby
-    // TODO op, event_as
+    keyby: route.o.keyby,
+    event_as: route.o.event_as,
+    op: route.o.op
   }
 
   return await handleRes(route.o, res, fnContext)

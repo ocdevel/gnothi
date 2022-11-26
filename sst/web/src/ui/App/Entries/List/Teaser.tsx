@@ -46,8 +46,8 @@ export default function Teaser({eid, gotoForm}: Teaser) {
       <CardContent>
         <Typography variant='h6'>{title}</Typography>
         <Typography color='text.secondary'>{fmtDate(e.created_at)}</Typography>
-        <Typography variant='body1' sx={{pt:1}}>
-          <div>{sentiment}{summary}</div>
+        <Typography variant='body1' component="div" sx={{pt:1}}>
+          <Box>{sentiment}{summary}</Box>
           {isSummary && <Typography variant='caption' sx={{display: hovered ? 'block' : 'none'}}>
             This is an AI-generated summary of this entry. Click to read the original.
           </Typography>}

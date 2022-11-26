@@ -40,8 +40,7 @@ export interface EventsSlice {
     entries_list_response?: Api.ResUnwrap<Entries.entries_list_response>
     fields_list_response?: Api.ResUnwrap<z.infer<typeof r.fields_list_request.o.s>>
     fields_entries_list_response?: Api.ResUnwrap<z.infer<typeof r.fields_entries_list_request.o.s>>
-    // entries_post_response?: Api.ResUnwrap<Entries.Entry>
-    // entries_put_response?: Api.ResUnwrap<Entries.Entry>
+    entries_upsert_response?: Api.ResUnwrap<Entries.entries_upsert_response>
     // entries_delete_response?: Api.ResUnwrap<Entries.Entry>
 
     insights_books_list_response?: Api.ResUnwrap<Insights.Book>
@@ -110,68 +109,68 @@ export const eventsSlice: StateCreator<
 
   handleEvent: (res: Api.Res) => {
     console.log({res})
-    const {event, code} = res
+    const {error, code, event} = res
 
     // Set the response in its location and lastResponse, even
     // in case of error we will want to look it up
-    set(produce((state) => {
-      state.res[event] = res
+    set(produce(state => {
       state.lastRes = res
+      if (!state.res[event]) {
+        state.res[event] = {}
+      }
+      state.res[event].res = res
     }))
 
     // The rest only applies to successful responses
-    if (res.error) {
+    if (error) {
       return;
       // if (error == "INVALID_JWT") {
       //   return Auth.signOut()
       // }
     }
 
-    const {keyby, op, event_as, data} = res as Api.ResSuccess
-    const result: ResUnwrap<any> = {res}
-    // TODO use immerjs https://docs.pmnd.rs/zustand/integrations/updating-draft-states
+    const event_ = res.event_as || res.event
+    const {data, keyby, op} = res
 
-    // Handle special responses (redirects, key-by for arr/obj, and opts
-    result.rows = data
-    result.first = Array.isArray(data) ? data[0] : data
-    if (keyby) {
-      result.ids = _.map(data, d => _.get(d, keyby))
-      result.hash = _.reduce(data, (m, v) => ({...m, [_.get(v, keyby)]: v}), {})
+    // @ts-ignore
+    const current = get().res[event_] || {}
+    let updates = {
+      res,
+      rows: data,
+      first: Array.isArray(data) ? data[0] : data,
+      hash: !keyby ? {}
+        : _.reduce(data, (m, v) => ({...m, [_.get(v, keyby)]: v}), {}),
+      ids: !keyby ? []
+        : _.map(data, d => _.get(d, keyby))
+    }
+    if (!keyby) {
+      console.warn(`No keyby for ${event_}, ids[] and hash{} will be empty`)
+    }
+
+    if (!op) {
+      // no-op. updates go through as-is
     } else {
-      result.ids = []
-      result.hash = result.first
+      if (~['update', 'prepend', 'append'].indexOf(op)) {
+        updates.hash = {...current.hash, ...updates.hash}
+      }
+      if (~['prepend', 'append'].indexOf(op)) {
+        updates.ids = op === 'prepend' ? [...updates.ids, ...current.ids] : [...current.ids, ...updates.arr]
+      }
     }
     set(produce(state => {
-      state.res[event] = result
+      state.res[event_] = updates
     }))
 
-    get().hooks[event]?.(result)
-
-    // const event_ = event_as || event
-    // if (!op) {
-    //   set(produce(state => {
-    //     state[event].data = data
-    //   }))
-    //   return
-    // }
-    //
-    // const curr = get().api[event_].data || {obj: {}, arr: []}
-    // if (~['update', 'prepend', 'append'].indexOf(op)) {
-    //   curr.obj = {...curr.obj, ...data.obj}
-    // }
-    // if (~['prepend', 'append'].indexOf(op)) {
-    //   curr.arr = op === 'prepend' ? [...data.arr, ...curr.arr] : [...curr.arr, ...data.arr]
-    // }
-    // set(produce(state => {
-    //   state.api[event_].data = curr
-    // }))
+    get().hooks[event_]?.(updates)
   },
 
   clearEvents: (events) => {
-  //   actions.forEach(a => {
-  //     s.res[a] = null
-  //     s.data[a] = null
-  //   })
+    set(produce(state => {
+      events.forEach(e => {
+        state.res[e] = null
+      })
+
+    }))
   },
 
   // Tracks actual response data

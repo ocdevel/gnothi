@@ -12,6 +12,7 @@
 
 import {NavLink as Link} from "react-router-dom";
 import ListItem_, {ListItemProps} from "@mui/material/ListItem";
+import ListItemButton, {ListItemButtonProps} from "@mui/material/ListItemButton"
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText, {ListItemTextProps} from "@mui/material/ListItemText";
 import ExpandLess from "@mui/icons-material/ExpandLess";
@@ -27,20 +28,20 @@ type ListItem = ListItemProps & ListItemTextProps & {
   icon?: React.ReactNode
 }
 export function ListItem(props: ListItem) {
-  // const classes = useStyles()
-  const classes = {nested: {}}
   const {nested, open, icon, primary, secondary, ...rest} = props
   if (rest.to) {
     rest.component = Link
   }
   if (nested) {
-    rest.className = classes.nested
+    rest.sx = {pl: 4}
   }
-  return <ListItem_ button {...rest}>
+  return <ListItemButton
+    {...rest}
+  >
     {icon && <ListItemIcon>{icon}</ListItemIcon>}
     <ListItemText primary={primary} secondary={secondary} />
     {open === true ? <ExpandLess /> : open === false ? <ExpandMore /> : null}
-  </ListItem_>
+  </ListItemButton>
 }
 
 type NestedList = ListItemProps & ListItemTextProps & {

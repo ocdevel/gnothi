@@ -39,6 +39,7 @@ import BarChart from "@mui/icons-material/BarChart";
 import ExpandMore from "@mui/icons-material/ExpandMore";
 import {Checkbox2} from "@gnothi/web/src/ui/Components/Form";
 import {Alert2} from "@gnothi/web/src/ui/Components/Misc";
+import Box from "@mui/material/Box";
 
 const fmt = 'YYYY-MM-DD'
 const iso = (day=null) => {
@@ -381,14 +382,14 @@ export default function Fields() {
       .filter(v => !v.service && !v.excluded_at)
       .sortBy('id').value(),
     emptyText: () => <small className='text-muted'>
-      <p>Fields are activity & quality trackers. Mood, sleep, substance, habits, etc. They can be numbers, checkboxes, or fivestar-ratings.<ul>
+      <Box>Fields are activity & quality trackers. Mood, sleep, substance, habits, etc. They can be numbers, checkboxes, or fivestar-ratings.<ul>
         <li>Track your mood, sleep patterns, substance intake, etc</li>
         <li>See stats (average, graphs, predictions)</li>
         <li>See how fields interact: correlation. Eg, "sleep most influenced by alcohol".</li>
         <li>Help long-term decisions by tracking options (fivestar-rate different jobs or moving destinations).</li>
         <li>Share fields, eg with a therapist who's interested in your mood or substances.</li>
         <li>For habits specifically, I recommend Habitica (below).</li>
-      </ul></p>
+      </ul></Box>
     </small>
   }, {
     service: 'habitica',

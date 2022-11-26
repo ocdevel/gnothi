@@ -29,7 +29,7 @@ import {useForm} from "react-hook-form";
 import {zodResolver} from "@hookform/resolvers/zod";
 import {Entries} from '@gnothi/schemas'
 
-const placeholder = `Write a journal entry, whatever's on your mind. Hard times you're going through, politics, philosophy, the weather. Be verbose, AI works best with long-form content - a paragraph or more is ideal, less might result in poor insights or resource-recommendations. Try to use proper grammar and full words, rather than abbreviations or slang ("therapist" rather than "shrink"). AI is decent at inferring, but the more help you give it the better.
+const placeholder = `Write a journal entry, whatever's on your mind. Hard times you're going through, politics, philosophy, the weather. Be verbose, AI works best with long-form content - a paragraph or more is ideal, less might result in poor insights or resource-recommendations.
  
 Separate multiple concepts by hitting ENTER twice (two new lines). So if you're chatting weather, then want to chat relationships - two ENTERs. See the toolbar at the top for formatting help, this editor uses Markdown. The square icon (right-side toolbar) lets you go into full-screen mode, easier for typing long entries. 
 
@@ -37,10 +37,14 @@ After you have one or two entries, head to the Insights and Resources links at t
 `
 
 interface Entry {
-  entry?: Entries.entries_upsert_request
+  entry?: Entries.entries_list_response
   onClose?: any
 }
-export default function EditUpsert({entry, onClose}: Entry) {
+export default function Upsert(props: Entry) {
+  const entry = props.entry?.entry
+  const tags_ = props.entry?.tags || {}
+  const isNew = !entry?.id
+
   const defaults = entry ? {defaultValues: entry} : {}
   const form = useForm({
     resolver: zodResolver(Entries.entries_upsert_request.shape.entry),
@@ -50,10 +54,10 @@ export default function EditUpsert({entry, onClose}: Entry) {
   const as = useStore(s => s.user.as)
   const send = useStore(s => s.send)
   const [formOrig, setFormOrig] = useState()
-  const [tags, setTags] = useState({})
+  const [tags, setTags] = useState(tags_ || {})
   const [advanced, setAdvanced] = useState(false)
   const entriesUpsert = useStore(s => s.res.entries_upsert_response?.res)
-  const entryDel = useStore(s => s.res.entries_delete_response?.res)
+  const entriesDel = useStore(s => s.res.entries_delete_response?.res)
   const clear = useStore(a => a.clearEvents)
 
   const id = entry?.id
@@ -65,8 +69,8 @@ export default function EditUpsert({entry, onClose}: Entry) {
   }
 
   useEffect(() => {
-    if (!id) { return loadDraft() }
-  }, [id])
+    if (isNew) { return loadDraft() }
+  }, [isNew])
 
   useEffect(() => {
     return // FIXME!! maximum callstack exceeded
@@ -84,14 +88,15 @@ export default function EditUpsert({entry, onClose}: Entry) {
   }, [])
 
   useEffect(() => {
-    if (entriesUpsert?.code === 200 && entriesUpsert?.id) {
-      go(`/j/entry/${entriesUpsert.id}`)
-    }
+    if (entriesUpsert?.code !== 200) { return }
+    clear(["entries_upsert_response"])
+    if (isNew) { return go() }
+    props.onClose?.()
   }, [entriesUpsert])
 
   useEffect(() => {
-    if (entryDel?.code === 200) {go()}
-  }, [entryDel])
+    if (entriesDel?.code === 200) {go()}
+  }, [entriesDel])
 
   const loadDraft = () => {
     const draft = localStorage.getItem(draftId)
@@ -109,10 +114,10 @@ export default function EditUpsert({entry, onClose}: Entry) {
     if (formOrig) {form.reset(formOrig)}
   }
 
-  const go = (to='/j') => {
-    if (onClose) {return onClose()}
+  const go = (to='/j/list') => {
+    props.onClose?.()
     clearDraft()
-    send('entries_get_response', {})
+    // send('entries_list_request', {})
     navigate(to)
   }
 
@@ -122,12 +127,13 @@ export default function EditUpsert({entry, onClose}: Entry) {
   }
 
   const deleteEntry = async () => {
+    if (isNew) {return}
     if (window.confirm(`Delete "${entry.title}"`)) {
       send('entries_delete_request', {id: id})
     }
   }
 
-  function changeText(text) {
+  function changeText(text: string) {
     saveDraft()
   }
 
