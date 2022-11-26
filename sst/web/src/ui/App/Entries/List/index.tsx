@@ -16,6 +16,7 @@ import Grid from '@mui/material/Grid'
 import Button from '@mui/material/Button'
 import {Alert2, ToolbarHeader} from "../../../Components/Misc";
 import Fab from "@mui/material/Fab";
+const Insights = React.lazy(() => import('../../Insights'))
 
 
 export default function List({group_id=null}) {
@@ -78,7 +79,7 @@ export default function List({group_id=null}) {
         {renderEntries()}
       </Grid>
       <Grid item sm={12} lg={4} md={5}>
-        <Fields  />
+        <Insights />
         <NotesAll />
       </Grid>
     </Grid>

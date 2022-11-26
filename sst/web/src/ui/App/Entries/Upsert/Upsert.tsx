@@ -90,7 +90,6 @@ export default function Upsert(props: Entry) {
   useEffect(() => {
     if (entriesUpsert?.code !== 200) { return }
     clear(["entries_upsert_response"])
-    if (isNew) { return go() }
     props.onClose?.()
   }, [entriesUpsert])
 

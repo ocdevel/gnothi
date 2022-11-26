@@ -5,7 +5,7 @@ import {fmtDate} from "../../../utils/utils";
 import {useParams} from "react-router-dom";
 import {Loading} from "../../Components/Routing";
 const View = React.lazy(() => import("./View"))
-const Upsert = React.lazy(() => import("./Upsert"))
+const Upsert = React.lazy(() => import("./Upsert/Upsert"))
 
 export function EntriesRouter() {
   const {entry_id, mode} = useParams()
