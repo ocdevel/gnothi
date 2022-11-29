@@ -1,6 +1,6 @@
 import {z} from "zod";
 import {TextDecoder} from "util";
-import {InvokeCommand, InvokeCommandOutput, LambdaClient} from "@aws-sdk/client-lambda";
+import {InvokeCommand, InvokeCommandInput, InvokeCommandOutput, LambdaClient} from "@aws-sdk/client-lambda";
 import {Readable} from "stream";
 import {GetObjectCommand, PutObjectCommand, S3Client} from "@aws-sdk/client-s3";
 import {
@@ -94,6 +94,23 @@ interface InvokeOutput {
   body: object
 }
 
+export async function lambdaSend(
+  data: object,
+  FunctionName: string,
+  InvocationType: InvokeCommandInput["InvocationType"] = "RequestResponse"
+): Promise<InvokeCommandOutput> {
+  const Payload = Buff.fromObj(data)
+  const params = {
+    InvocationType,
+    Payload,
+    FunctionName,
+  }
+  const response = await clients.lambda.send(new InvokeCommand(params))
+  const whatsThis = Buff.toObj(response.Payload)
+  debugger
+  return response
+}
+
 export const lambda: Handler<any> = {
   match: (event) => true,
 
@@ -104,15 +121,9 @@ export const lambda: Handler<any> = {
 
   respond: async (res) => {
     const {data, event} = res
-    const Payload = Buff.fromObj(data)
-    const params = {
-      InvocationType: 'RequestResponse',
-      Payload,
-      FunctionName: Config[key],
-    }
-    const response = await clients.lambda.send(new InvokeCommand(params))
+    const response = await lambdaSend(data as object, Config.fnFixMe)
     let responseBody: object = {}
-    console.log(key, "response")
+    console.log(event, "response")
     if (response.Payload) {
       // Revisit how to decode the Payload. Buffer vs Uint8Array?
       responseBody = Buff.toObj(response.Payload)

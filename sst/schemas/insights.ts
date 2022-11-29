@@ -47,7 +47,7 @@ export const routes = {
     o: {
       e: "insights_get_response",
       s: insights_get_response,
-      t: {ws: true, fn_insights: true}
+      t: {ws: true}
     }
   }),
 }

@@ -29,7 +29,8 @@ export function Api({ app, stack }: sst.StackContext) {
 
   const fnInsights = new sst.Function(stack, 'fn_insights', {
     runtime: "python3.9",
-    handler: "ml.main",
+    handler: "ml/insights.main",
+    timeout: "10 minutes",
     bind: [API_WS],
     environment: {
       API_WS: API_WS.value,
@@ -43,7 +44,7 @@ export function Api({ app, stack }: sst.StackContext) {
       API_WS,
       auth,
       rds,
-      fnMl
+      fnInsights
     ],
   })
 
