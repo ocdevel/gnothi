@@ -1,8 +1,6 @@
-from .fixtures import reinit_weaviate, docs
-from .insights import main, client
+from fixtures import docs
+from insights import main
 
 #pytest -rP
-def test_weaviate():
-    # reinit_weaviate(client)
-    print(len(docs))
-    res = main({}, {})
+print(len(docs))
+res = main({}, {})
