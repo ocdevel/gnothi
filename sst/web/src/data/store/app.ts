@@ -1,23 +1,14 @@
 import create, {StateCreator} from 'zustand'
 import {ApiSlice} from './api'
 import {EventsSlice} from './events'
-import {Users, Entries} from '@gnothi/schemas'
+import {Users, Entries, Insights} from "@gnothi/schemas"
 import moment from "moment-timezone";
 import _ from "lodash";
+import dayjs from "dayjs"
 
-interface Insights {
-  days: number,
-  question: string,
-  themes: "kmeans" | "agglomorative",
-  summarize: number,
-}
 
-export const initialInsights: Insights = {
-  days: 30,
-  question: "",
-  themes: "kmeans",
-  summarize: 300,
-}
+// TODO use mainTag as default tag
+export const initialFilters = Insights.insights_get_request.parse({})
 
 interface User {
   as: string | null,
@@ -39,9 +30,9 @@ type EntryModal = null | {
 export interface AppSlice {
   // ----- Insights
 
-  insights: Insights
-  setDays: (days: number) => void
-  clearInsights: (k: keyof Insights | 'all') => void
+  filters: Insights.insights_get_request
+  setFilters: (filters: Partial<Insights.insights_get_request>) => void
+  clearFilters: () => void
   setInsight: (payload: [string, string]) => void
   // postInsight: (x: any) => Promise<void>
 
@@ -79,17 +70,16 @@ export const appSlice: StateCreator<
 > = (set, get) => ({
 
   // ----- Insights
-  insights: initialInsights,
-  setDays: (days) => set({days}),
-
-  clearInsights: (k) => {
-    if (k === 'all') {
-      _.each(initialInsights, (v, k) => {
-        set({[k]: v})
-      })
-    } else {
-      set({[k]: initialInsights[k]})
+  filters: initialFilters,
+  setFilters: (filters) => set(state => ({
+    filters: {
+      ...state.filters,
+      ...filters
     }
+  })),
+
+  clearFilters: () => {
+    get().setFilters(initialFilters)
   },
 
   setInsight: ([k, v]) => set({[k]: v}),

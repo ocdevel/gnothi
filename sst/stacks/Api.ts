@@ -27,26 +27,36 @@ export function Api({ app, stack }: sst.StackContext) {
   })
   const API_WS = new sst.Config.Parameter(stack, "API_WS", {value: ws.cdk.webSocketStage.callbackUrl})
 
-  const fn = new sst.Function(stack, "fn_main", {
+  const fnInsights = new sst.Function(stack, 'fn_insights', {
+    runtime: "python3.9",
+    handler: "ml.main",
+    bind: [API_WS],
+    environment: {
+      API_WS: API_WS.value,
+    }
+  })
+
+  const fnMain = new sst.Function(stack, "fn_main", {
     handler: "main.main",
     bind: [
       APP_REGION,
       API_WS,
       auth,
-      rds
+      rds,
+      fnMl
     ],
   })
 
   http.addRoutes(stack, {
     "POST /": {
-      function: fn,
+      function: fnMain,
       authorizer: "jwt"
     },
   })
   ws.addRoutes(stack, {
-    "$default": fn,
-    "$connect": fn, // this is handled separately since SST applies authorizer to this routeKey only
-    "$disconnect": fn, // and hell, might as well be consistent
+    "$default": fnMain,
+    "$connect": fnMain, // this is handled separately since SST applies authorizer to this routeKey only
+    "$disconnect": fnMain, // and hell, might as well be consistent
   })
 
   stack.addOutputs({

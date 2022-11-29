@@ -23,8 +23,6 @@ import {S, Loading} from '@gnothi/web/src/ui/Components/Routing'
 
 const EntriesToolbar = React.lazy(() => import("../Entries/Toolbar"))
 const GroupsToolbar = React.lazy(() => import ("../Groups/List/Toolbar"))
-const InsightsToolbar = React.lazy(() => import ("../Insights/Toolbar"))
-const ResourcesToolbar = React.lazy(() => import ("../Resources/Toolbar"))
 const GroupToolbar = React.lazy(() => import ("../Groups/View/Toolbar"))
 const SharingModal = React.lazy(() => import("../Account/Sharing"))
 const EntryModal = React.lazy(() => import("../Entries/Modal"))
@@ -148,8 +146,6 @@ function Toolbars() {
       <Route path='/j/*' element={<S><EntriesToolbar /></S>} />
       <Route path='/groups/*' element={<S><GroupsToolbar /></S>} />
       <Route path='/groups/:gid' element={<S><GroupToolbar /></S>} />
-      <Route path='/insights/*' element={<S><InsightsToolbar /></S>} />
-      <Route path='/resources/*' element={<S><ResourcesToolbar /></S>} />
     </Routes>
   </>
 }

@@ -4,7 +4,7 @@ import {
   ResultSetOptions,
   SqlParameter,
   Field,
-  TypeHint,
+  TypeHint, ExecuteStatementCommandInput,
 } from "@aws-sdk/client-rds-data";
 // import {readFileSync} from "fs";
 // import _map from 'lodash/'
@@ -89,6 +89,22 @@ export class DB {
     })
   }
 
+  async executeStatement({sql, parameters}: Pick<ExecuteStatementCommandInput, 'sql' | 'parameters'>): Promise<object[]> {
+    try {
+      const response = await rdsClient.executeStatement({
+          includeResultMetadata: true,
+          ...this.driver,
+          sql,
+          parameters
+        })
+        const rows = this.transformRes(response)
+        return rows
+    } catch (err: any) {
+      debugger
+      throw err
+    }
+  }
+
   async exec<
     I extends z.ZodTypeAny,
     O extends z.ZodTypeAny
@@ -110,7 +126,6 @@ export class DB {
       const rows = this.transformRes(response, zOut)
       return rows
     } catch (err: any) {
-      debugger
       // drop & create not working sometimes, need to figure this out
       if (~err?.message?.indexOf("is being accessed by other users")) {
         return []
@@ -166,6 +181,19 @@ export class DB {
     )
     if (!schema) {return rows}
     return rows.map(row => schema.partial().parse(row))
+  }
+
+  // arrayValue doesn't work in rds-data-client, even though it's part of the documentation. Just says "not supported"
+  // https://github.com/aws/aws-sdk/issues/9#issuecomment-1104182976
+  // TODO support multiple datatypes (currently only supports UUID)
+  arrayValueFix(ids: string[]): [string, SqlParameter[]] {
+    const parameters = ids.map((id, index) => ({
+      name: `id${index}`,
+      value: {stringValue: id},
+      typeHint: "UUID"
+    }))
+    const placeholder = [...Array(ids.length).keys()].map(x => `:id${x}`).join(',')
+    return [placeholder, parameters]
   }
 
   // async init(): Promise<void> {

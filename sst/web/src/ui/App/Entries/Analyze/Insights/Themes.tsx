@@ -18,7 +18,7 @@ import CardContent from "@mui/material/CardContent";
 
 export default function Themes() {
   const [advanced, setAdvanced] = useState(false)
-const send = useStore(s => s.send)
+  const send = useStore(s => s.send)
   const days = useStore(s => s.insights.days)
   const res = useStore(s => s.res['insights_themes_response']?.res)
   const job = useStore(s => s.res['insights_themes_response'])
@@ -72,51 +72,6 @@ const send = useStore(s => s.send)
       ))}
       <p>Does the output seem off? Try <BsGear /> Advanced.</p>
     </>
-  }
-
-  const renderAdvanced = () => {
-    const algos = [{
-      k: 'kmeans',
-      label: 'KMeans',
-      url: "https://scikit-learn.org/stable/modules/generated/sklearn.cluster.KMeans.html"
-    }, {
-      k: 'agglomorative',
-      label: 'Agglomorative',
-      url: "https://scikit-learn.org/stable/modules/generated/sklearn.cluster.AgglomerativeClustering.html",
-    }]
-
-    return <div>
-      <div>
-        <span
-          className='cursor-pointer'
-          onClick={() => setAdvanced(!advanced)}
-        ><BsGear /> Advanced</span>
-      </div>
-      {advanced && <Card>
-        <CardContent>
-          <FormControl component="fieldset">
-            <FormLabel component="legend">Clustering Algorithm</FormLabel>
-            <RadioGroup
-              aria-label="algo"
-              value={form}
-              onChange={(e, k) => a.setInsight(['themes', k])}
-              name="radio-buttons-group"
-            >
-              {algos.map(alg => (
-                <FormControlLabel
-                  value={alg.k}
-                  control={<Radio />}
-                  label={<>
-                    {alg.label} <a href={alg.url} target='_blank'><BsQuestionCircle /></a>
-                  </>}
-                />
-              ))}
-            </RadioGroup>
-            <FormHelperText>If the output seems off, try a different clustering algorithm. Don't worry about the tech (unless you're curious), just click the other one and submit.</FormHelperText>
-          </FormControl>
-        </CardContent>
-      </Card>}
-    </div>
   }
 
   return <Grid container spacing={2} direction='column'>

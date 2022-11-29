@@ -24,7 +24,7 @@ async function handleRes(
       if (!enabled) {return null}
       const handler = Handlers.handlers[trigger]
       const responded = await handler.respond(res, fnContext)
-      if (trigger === "http" || trigger === "lambda") {
+      if (~["http", "lambda"].indexOf(trigger)) {
         final = responded
       }
   }))

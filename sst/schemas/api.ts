@@ -8,8 +8,7 @@ export type Trigger = {
   ws?: boolean
   http?: boolean
   s3?: boolean
-  rds?: boolean
-  steps?: Events[]
+  lambda?: boolean
 }
 
 export type Def<T extends z.ZodTypeAny> = {

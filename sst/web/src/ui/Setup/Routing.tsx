@@ -20,13 +20,15 @@ const StyleTest = React.lazy(() => import("./Test/Test"))
 const Sandbox = React.lazy(() => import('./Test/Sandbox'))
 
 const testRoutes = {
-  path: "test", 
+  path: "test",
   element: <Outlet />,
   children: [
     {index: true, element: <S><StyleTest /></S>},
     {path: "sandbox", element: <S><Sandbox /></S>}
   ]
 }
+
+const common = {errorElement: <Error />}
 
 const routerAuthed = createBrowserRouter([
   testRoutes,
@@ -36,12 +38,12 @@ const routerAuthed = createBrowserRouter([
       <Init />
       <AppLayout />
     </S>,
-    errorElement: <Error />,
+    ...common,
     children: [
       {
-        errorElement: <Error />,
+        ...common,
         children: [
-          {path: "about", errorElement: <Error />, children: [
+          {path: "about", ...common, children: [
             ...StaticRoutes.staticRoutes
           ]},
           ...appRoutes
@@ -59,9 +61,9 @@ const routerAnon = createBrowserRouter([
       <Init />
       <SplashLayout />
     </S>,
-    errorElement: <Error />,
+    ...common,
     children: [{
-      errorElement: <Error />,
+      ...common,
       children: [
         ...StaticRoutes.staticRoutes,
         ...StaticRoutes.splashRoutes,
