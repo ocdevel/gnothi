@@ -12,6 +12,8 @@ import * as auth from './auth/appAuth'
 import './routes'
 import {CantSnoop} from "./routes/errors";
 
+import {initDb} from './ml/vectorDb'
+
 async function handleRes(
   def: Api.DefO<any>,
   res: Api.Res,
