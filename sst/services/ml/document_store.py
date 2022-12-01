@@ -3,21 +3,14 @@ import weaviate
 
 connection_string = "http://localhost:8080"
 document_store_ = None
-client_ = None
-
-def get_client() -> weaviate.Client:
-    global client_
-    if client_:
-        return client_
-    client_ = weaviate.Client(connection_string)
-    return client_
 
 def get_document_store(recreate_index=False):
     global document_store_
     if document_store_:
         return document_store_
     if recreate_index:
-        get_client().schema.delete_all()
+        client = weaviate.Client(connection_string)
+        client.schema.delete_all()
     document_store_ = WeaviateDocumentStore(
         recreate_index=recreate_index,
         content_field="content",
