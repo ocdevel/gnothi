@@ -1,4 +1,9 @@
 from insights import main
 
 #pytest -rP
-res = main({}, {})
+
+
+event = {
+    'search': "Who is Arya Stark's father?"
+}
+res = main(event, {})

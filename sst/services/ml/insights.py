@@ -1,4 +1,3 @@
-RECREATE = False
 USE_GPU = False
 
 import json
@@ -21,57 +20,79 @@ from haystack.nodes import (
 from haystack.pipelines import ExtractiveQAPipeline, Pipeline, BaseStandardPipeline
 from haystack.utils import print_answers
 
-from document_store import get_document_store, init_data
+from document_store import CustomDocumentStore
 from summarize import CustomSummarizer
 
-document_store = get_document_store(RECREATE)
+# farm_reader = FARMReader(
+#     use_gpu=False,
+#     model_name_or_path="deepset/roberta-base-squad2"
+# )
+# summarizer = CustomSummarizer(use_gpu=False)
 
-bm25_retriever = BM25Retriever(document_store=document_store)
-query_classifier = TransformersQueryClassifier()
-embedding_retriever = EmbeddingRetriever(
-    document_store=document_store,
-    use_gpu=False,
-    embedding_model="sentence-transformers/multi-qa-mpnet-base-dot-v1",
-    model_format="sentence_transformers",
-)
-dpr_retriever = DensePassageRetriever(document_store=document_store, use_gpu=False)
-farm_reader = FARMReader(
-    use_gpu=False,
-    model_name_or_path="deepset/roberta-base-squad2"
-)
-summarizer = CustomSummarizer(use_gpu=False)
+"""
+1) Keywords vs. Questions/Statements (Default)
+   model_name_or_path="shahrukhx01/bert-mini-finetune-question-detection"
+   output_1 => question/statement
+   output_2 => keyword query
+   [Readme](https://ext-models-haystack.s3.eu-central-1.amazonaws.com/gradboost_query_classifier/readme.txt)
+2) Questions vs. Statements
+`model_name_or_path`="shahrukhx01/question-vs-statement-classifier"
+ output_1 => question
+ output_2 => statement
+ [Readme](https://ext-models-haystack.s3.eu-central-1.amazonaws.com/gradboost_query_classifier_statements/readme.txt)
+"""
 
-class CustomPipeline(BaseStandardPipeline):
-    def __init__(self):
-        pipe = Pipeline()
-        pipe.add_node(component=query_classifier, name="QueryClassifier", inputs=["Query"])
-        pipe.add_node(component=dpr_retriever, name="DPRRetriever", inputs=["QueryClassifier.output_1"])
-        pipe.add_node(component=bm25_retriever, name="BM25Retriever", inputs=["QueryClassifier.output_2"])
-        pipe.add_node(component=JoinDocuments(join_mode="concatenate"), name="JoinResults",
-                      inputs=["BM25Retriever", "DPRRetriever"])
-        pipe.add_node(component=farm_reader, name="QAReader", inputs=["JoinResults"])
-        self.pipeline = pipe
-        self.metrics_filter = {"DPRRetriever": ["recall_single_hit"]}
-
-    def run(self, query: str, params: Optional[dict] = None, debug: Optional[bool] = None):
-        output = self.pipeline.run(query=query, params=params, debug=debug)
-        return output
-
-
-if RECREATE:
-    init_data(document_store, embedding_retriever)
+# TODO do all 3: keywords (BM25), statement (dense), question (dense->FarmReader).
+# For now I'm punting on BM25, so I'll use keyword vs question/statement, dense for everything,
+# and disambiguate question via "?"
+query_classifier = TransformersQueryClassifier(use_gpu=False)
+def get_query_type(query: str, run_response: str):
+    if query.endswith('?'):
+        return 'question'
+    if run_response == 'output_2':
+        return 'keyword'
+    return 'statement'
 
 
 def main(event, context):
-    pipe = CustomPipeline()
-    prediction = pipe.run(
-        query="arya stark father",
-        params={
-            "DPRRetriever": {"top_k": 10},
-            "BM25Retriever": {"top_k": 10},
-            "QAReader": {"top_k": 5}
-        }
-    )
-    # Change `minimum` to `medium` or `all` to raise the level of detail
-    print_answers(prediction, details="all")
+    doc_store = CustomDocumentStore(recreate_index=False, raw_weaviate=True)
+
+    query = event.get('search', None)
+    query_type = None
+    if query:
+        res = query_classifier.run("arya stark father") # => ({}, 'output_2')
+        query_type = get_query_type(query, res[1])
+    build = (doc_store.client.query
+         .get(class_name="Object", properties=["content", "obj_id"])
+        .with_additional(['vector', 'certainty']))
+    if not query:
+        pass
+    elif query_type in ['keyword', 'statement', 'question']:
+        build = build.with_near_text({
+            'concepts': [query],
+            'certainty': .2
+        })
+    # elif query_type == 'question':
+    #     build = (build.with_ask({
+    #             'question': query,
+    #         })
+    #         .with_limit(1)
+    #         .with_additional({'answer': ['result', 'hasAnswer']})
+    #      )
+    docs = build.do()
+    print(docs)
+
+
+    FARMReader().run()
+
+    # prediction = pipe.run(
+    #     query="arya stark father",
+    #     params={
+    #         "DPRRetriever": {"top_k": 10},
+    #         "BM25Retriever": {"top_k": 10},
+    #         "QAReader": {"top_k": 5}
+    #     }
+    # )
+    # # Change `minimum` to `medium` or `all` to raise the level of detail
+    # print_answers(prediction, details="all")
     return None
