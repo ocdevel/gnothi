@@ -13,8 +13,8 @@
     "gen": "hygen"
   },
   "devDependencies": {
-    "@serverless-stack/cli": "^1.17.1",
-    "@serverless-stack/resources": "^1.17.1",
+    "@serverless-stack/cli": "^1.18.4",
+    "@serverless-stack/resources": "^1.18.4",
     "@tsconfig/node16": "^1.0.3",
     "@types/lodash": "^4.14.188",
     "aws-cdk-lib": "2.50.0",
@@ -23,7 +23,7 @@
     "vitest": "^0.25.1"
   },
   "dependencies": {
-    "@serverless-stack/node": "^1.17.1"
+    "@serverless-stack/node": "^1.18.4"
   },
   "workspaces": [
     "services",

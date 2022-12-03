@@ -22,6 +22,38 @@ from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, pipeline
 
 logger = logging.getLogger(__name__)
 
+model_name = "ccdv/lsg-bart-base-4096-wcep"
+tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
+model = AutoModelForSeq2SeqLM.from_pretrained(model_name, trust_remote_code=True)
+pipe = pipeline("summarization", model=model, tokenizer=tokenizer)
+
+def main(docs, params):
+    params = {
+        'min_length': 100,
+        'max_length': 200,
+
+        'no_repeat_ngram_size': 2,
+
+        # ensure quality
+        'num_beams': 6,
+        'num_beam_groups': 3,
+        'diversity_penalty': 2.0,
+        # 'temperature': 1.5,
+
+        # required in case content is still too long for model
+        'truncation': True,
+
+        # The repetition penalty is meant to avoid sentences that repeat themselves without anything really interesting.
+        'repetition_penalty': 1.0,
+
+        # I think just used to speed things up (across beam-search)
+        'early_stopping': True,
+
+        **params
+    }
+    doc = ' '.join(docs)
+    return pipe(doc, **params)[0]['summary_text']
+
 
 class CustomSummarizer(BaseComponent):
     outgoing_edges = 1

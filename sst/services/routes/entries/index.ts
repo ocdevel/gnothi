@@ -4,6 +4,7 @@ import {GnothiError} from "../errors";
 import {z} from 'zod'
 import {reduce as _reduce} from "lodash"
 import {Function} from "@serverless-stack/node/function"
+import {lambdaSend} from '../../aws/handlers'
 
 const r = S.Routes.routes
 
@@ -31,7 +32,7 @@ r.entries_list_request.fn = r.entries_list_request.fnDef.implement(async (req, c
 })
 
 
-r.entries_upsert_request.fn = r.entries_upsert_request.fnDef.implement(async (req, context) => {
+r.entries_upsert_request.fn = r.entries_upsert_request.fnDef.implement(async (req, context: S.Api.FnContext) => {
   const user_id = context.user.id
   const {tags, entry} = req
   if (!Object.values(tags).some(v => v)) {
@@ -78,6 +79,42 @@ r.entries_upsert_request.fn = r.entries_upsert_request.fnDef.implement(async (re
   dbEntry.text_summary = "Text Summary"
   dbEntry.title_summary = "Title Summary"
   dbEntry.sentiment = "Sentiment"
+
+  // TODO clean this up
+  context.handleRes(
+    {ws: true},
+    {event: "entries_upsert_response", data: [{entry: dbEntry, tags}], error: false, code: 200, keyby: 'entry.id'},
+    context
+  )
+
+  const lambdaData = {docs: [dbEntry]}
+
+  const upsert = await lambdaSend(
+    {event: "upsert", data: {...lambdaData, params: {}}},
+    Function.fn_analyze.functionName,
+    "RequestResponse"
+  )
+
+  const title = await lambdaSend(
+    {event: "summarize", data: {...lambdaData, params: {min_length: 20, max_length: 80}}},
+    Function.fn_analyze.functionName,
+    "RequestResponse"
+  )
+
+  const summary = await lambdaSend(
+    {event: "summarize", data: {...lambdaData, params: {min_length: 100, max_length: 300}}},
+    Function.fn_analyze.functionName,
+    "RequestResponse"
+  )
+
+  const keywords = await lambdaSend(
+    {event: "keywords", data: {...lambdaData, params: {top_n: 5}}},
+    Function.fn_analyze.functionName,
+    "RequestResponse"
+  )
+
+  // const final = await Promise.all([upsert, title, summary, keywords])
+  // const a = 1
 
   // FIXME
   // entry.update_snoopers(d.db)

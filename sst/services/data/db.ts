@@ -195,27 +195,6 @@ export class DB {
     const placeholder = [...Array(ids.length).keys()].map(x => `:id${x}`).join(',')
     return [placeholder, parameters]
   }
-
-  // async init(): Promise<void> {
-  //   const db = this.#dbArgs?.database
-  //   if (!db) {return}
-  //   // await this.drop()
-  //   await this.execute({
-  //     sql: `CREATE DATABASE ${db};`,
-  //     database: undefined,
-  //   })
-  //   const sql = readFileSync('src/data/init.sql', {encoding: 'utf-8'})
-  //   await this.execute({sql})
-  // }
-  //
-  // async drop(): Promise<void> {
-  //   const db = this.#dbArgs?.database
-  //   if (!db) {return}
-  //   await this.execute({
-  //     sql: `DROP DATABASE IF EXISTS ${db};`,
-  //     database: undefined
-  //   })
-  // }
 }
 
 export const db = new DB({})

@@ -51,9 +51,8 @@ export const entries_upsert_response = z.object({
 })
 export type entries_upsert_response = z.infer<typeof entries_upsert_response>
 
-export const entries_upsert_final = z.object({
-  done: z.literal(true)
-})
+// _response will have a version without the AI inserts. _final will have all the inserts
+export const entries_upsert_final = entries_upsert_response
 export type entries_upsert_final = z.infer<typeof entries_upsert_final>
 
 export const routes = {
@@ -74,32 +73,17 @@ export const routes = {
       s: entries_upsert_request,
     },
     o: {
-      e: 'entries_upsert_response',
-      s: entries_upsert_response,
-      // return response to user, then kick off a job that glue-codes a few ML tasks (summary, themes, etc)
+      // Intermediate steps (_response, _etc) will be sent manually via
+      // websockets, the final result will be pushed via _final
+      e: 'entries_upsert_final',
+      s: entries_upsert_final,
       t: {
         ws: true,
-        lambda: {key: "fnBackground", invocationType: "Event"}
+        // lambda: {key: "fnBackground", invocationType: "Event"}
       },
       event_as: "entries_list_response",
       keyby: 'entry.id',
       op: "prepend",
     },
   }),
-  // This task
-  entries_upsert_response: new Route({
-    i: {
-      // FIXME how to specify input on lambda?
-      t: {lambda: {key: "fnBackground", invocationType: "Event"}},
-      e: 'entries_upsert_response',
-      s: entries_upsert_response,
-    },
-    o: {
-      e: 'entries_upsert_final',
-      s: entries_upsert_final,
-      event_as: "entries_list_response",
-      keyby: 'entry.id',
-      op: "prepend"
-    },
-  })
 }

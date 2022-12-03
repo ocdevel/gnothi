@@ -100,6 +100,14 @@ class CustomDocumentStore(object):
             else:
                 self.init_data_haystack()
 
+    def upsert(self, docs: List[Dict], params: Dict):
+        for doc in docs:
+            self.client.data_object.create(
+                doc,
+                "Object",
+                uuid=doc['id']
+            )
+
     def _mock_data(self):
         import re
         import requests

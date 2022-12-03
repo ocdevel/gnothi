@@ -20,8 +20,9 @@ from haystack.nodes import (
 from haystack.pipelines import ExtractiveQAPipeline, Pipeline, BaseStandardPipeline
 from haystack.utils import print_answers
 
-from document_store import CustomDocumentStore
-from summarize import CustomSummarizer
+from ml.document_store import CustomDocumentStore
+from ml.keywords import main as keywords
+from ml.summarize import main as summarize
 
 # farm_reader = FARMReader(
 #     use_gpu=False,
@@ -53,9 +54,22 @@ def get_query_type(query: str, run_response: str):
         return 'keyword'
     return 'statement'
 
+doc_store = CustomDocumentStore(recreate_index=True, raw_weaviate=True)
+
 
 def main(event, context):
-    doc_store = CustomDocumentStore(recreate_index=True, raw_weaviate=True)
+    print("------------ IN PYTHON ------------------")
+    print(event)
+    task = event['event']
+    docs = event['docs']
+    params = event['params']
+    if task == 'upsert':
+        return doc_store.upsert(docs, params)
+    elif task == 'keywords':
+        return keywords(docs, params)
+    elif task == 'summarize':
+        return summarize(docs, params)
+
 
     query = event.get('search', None)
     query_type = None

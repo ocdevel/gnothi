@@ -19,6 +19,7 @@ import {Function} from '@serverless-stack/node/function'
 import {clients} from './clients'
 import {SNSEvent} from "aws-lambda";
 import {APIGatewayProxyWebsocketEventV2} from "aws-lambda/trigger/api-gateway-proxy";
+import {fromUtf8, toUtf8} from "@aws-sdk/util-utf8-node";
 
 export * as Handlers from './handlers'
 
@@ -83,13 +84,13 @@ export const sns: Handler<SNSEvent> = {
 }
 
 class Buff {
-  static fromObj(obj: object): Buffer {
-    return Buffer.from(JSON.stringify(obj))
+  static fromObj(obj: object): Uint8Array {
+    return fromUtf8(JSON.stringify(obj))
   }
 
   // public static objFromBuff(buff: Buffer): object {
   static toObj(buff: Uint8Array): object {
-    return JSON.parse(new TextDecoder().decode(buff))
+    return JSON.parse(toUtf8(buff))
   }
 }
 
@@ -168,7 +169,7 @@ export const ws: Handler<APIGatewayProxyWebsocketEventV2> = {
         Data: Buff.fromObj(res),
       }))
     } catch (e) {
-      console.error(e)
+      console.error("WebSocketError: trying to send to disconnected client.")
     }
     return {statusCode: 200}
   }

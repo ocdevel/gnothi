@@ -85,6 +85,7 @@ export const main = async (awsEvent: APIGatewayProxyWebsocketEventV2WithRequestC
   if (handled) { return final }
 
   if (!user) {
+    debugger
     throw new Error("User not found in appAuth.ts")
   }
 

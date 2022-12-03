@@ -9,7 +9,7 @@ export default function New() {
   const [searchParams, setSearchParams] = useSearchParams()
   const navigate = useNavigate()
   function onCreate() {
-    if (searchParams.get('redirect') !== 'false') {
+    if (searchParams.get('redirect')) {
       navigate('/j/list')
     }
   }

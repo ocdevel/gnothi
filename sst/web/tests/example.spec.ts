@@ -46,7 +46,7 @@ test('Create entry', async ({page}) => {
   // const page = await browser.newPage()
 
   const auth = await register(page)
-  await page.goto(`${URL}/?redirect=false`)
+  // await page.goto(`${URL}/?redirect=false`)
 
   // await expect(page.locator(".entry-teaser")).toHaveCount(0)
   // await page.locator(".toolbar-button").click()
@@ -55,7 +55,7 @@ test('Create entry', async ({page}) => {
   await page.locator(".rc-md-editor textarea").fill(mockEntries[0].text)
   await page.getByRole("button", {name: "Submit"}).click()
 
-  await page.pause()
+  await page.waitForTimeout(20000)
 
   // create a locator
 

@@ -45,24 +45,10 @@ async function facetFilter(req: insights_get_request, user_id: string): Promise<
   return entries
 }
 
-async function vectorDbFilter(search: string, entries: Entry[]): Promise<{
-  summary: string
-  answers: string[]
-  themes: string[]
-}> {
-  const payload = {search, entries}
-  const lambdaRes = await lambdaSend(
-    payload,
-    Function.fn_insights.functionName,
-    "RequestResponse"
-  )
-  return lambdaRes as any
-}
-
 r.insights_get_request.fn = r.insights_get_request.fnDef.implement(async (req, context) => {
   const hardFiltered = await facetFilter(req, context.user.id)
   console.log({hardFiltered})
-  const vectorDbResults = await vectorDbFilter(req.search, hardFiltered)
+  // const vectorDbResults = await vectorDbFilter(req.search, hardFiltered)
   debugger
   return [req]
 })

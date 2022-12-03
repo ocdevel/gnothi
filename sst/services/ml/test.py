@@ -1,4 +1,4 @@
-from insights import main
+from analyze import main
 
 #pytest -rP
 

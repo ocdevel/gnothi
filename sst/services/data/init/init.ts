@@ -1,7 +1,5 @@
-import {driver} from "../db";
+import {driver, rdsClient} from "../db";
 import {readFileSync} from "fs";
-
-const {client, resourceArn, secretArn, database} = driver
 
 const showTables = `
 SELECT *
@@ -15,10 +13,11 @@ export async function initDb() {
 
 export async function initDb() {
   const sql = readFileSync('services/data/init/init.sql', {encoding: 'utf-8'})
-  const opts = {secretArn, resourceArn}
+  const opts = {secretArn: driver.secretArn, resourceArn: driver.resourceArn}
+  const {database} = driver
 
   // disconnect other clients from gnothidev so we can drop/re-create it
-  await client
+  await rdsClient
     .executeStatement({
       ...opts,
       database: "postgres",
@@ -27,25 +26,28 @@ export async function initDb() {
       FROM pg_stat_activity
       WHERE pid <> pg_backend_pid() AND datname = '${database}'`,
     })
-    .promise();
+    // .promise();
 
-  await client.executeStatement({
+  await rdsClient.executeStatement({
     ...opts,
     database: "postgres",
 
     sql: `drop database if exists ${database};
     create database ${database};`,
-  }).promise()
+  })
+    // .promise()
 
   // import the sql file
-  await client.executeStatement({
+  await rdsClient.executeStatement({
     ...opts, database, sql
-  }).promise()
+  })
+    // .promise()
 
-  const res = await client.executeStatement({
+  const res = await rdsClient.executeStatement({
     ...opts,
     database,
     sql: `insert into users (email) values ('tylerrenelle@gmail.com');`,
-  }).promise()
+  })
+    // .promise()
   console.log(res)
 }
