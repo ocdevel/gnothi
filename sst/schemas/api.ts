@@ -4,11 +4,18 @@ import type {Context} from 'aws-lambda'
 import {Passthrough} from './utils'
 import type {User} from './users'
 
+export type LambdaTrigger = {
+  key: 'fnBackground' | 'fnAnalyze'
+  invocationType: "RequestResponse" | "Event"
+}
+
 export type Trigger = {
-  ws?: boolean
-  http?: boolean
-  s3?: boolean
-  lambda?: boolean
+  ws?: boolean // send the result to the websocket
+  http?: boolean // send the result back as a standard http response
+  s3?: boolean // put the result into s3
+  // call a function next. The function is this same wrapper framework, but is needed if we need to return
+  // a value first ot the client (ws, http) and then kick off a background.
+  lambda?: LambdaTrigger
 }
 
 export type Def<T extends z.ZodTypeAny> = {

@@ -45,8 +45,16 @@ export const entries_upsert_request = z.object({
   tags: BoolMap
 })
 export type entries_upsert_request = z.infer<typeof entries_upsert_request>
-export const entries_upsert_response = entries_list_response
+export const entries_upsert_response = z.object({
+  entry: Entry,
+  tags: BoolMap
+})
 export type entries_upsert_response = z.infer<typeof entries_upsert_response>
+
+export const entries_upsert_final = z.object({
+  done: z.literal(true)
+})
+export type entries_upsert_final = z.infer<typeof entries_upsert_final>
 
 export const routes = {
   entries_list_request: new Route({
@@ -68,6 +76,27 @@ export const routes = {
     o: {
       e: 'entries_upsert_response',
       s: entries_upsert_response,
+      // return response to user, then kick off a job that glue-codes a few ML tasks (summary, themes, etc)
+      t: {
+        ws: true,
+        lambda: {key: "fnBackground", invocationType: "Event"}
+      },
+      event_as: "entries_list_response",
+      keyby: 'entry.id',
+      op: "prepend",
+    },
+  }),
+  // This task
+  entries_upsert_response: new Route({
+    i: {
+      // FIXME how to specify input on lambda?
+      t: {lambda: {key: "fnBackground", invocationType: "Event"}},
+      e: 'entries_upsert_response',
+      s: entries_upsert_response,
+    },
+    o: {
+      e: 'entries_upsert_final',
+      s: entries_upsert_final,
       event_as: "entries_list_response",
       keyby: 'entry.id',
       op: "prepend"

@@ -8,11 +8,10 @@ import {
 import {Routes, Api, Events, Users} from '@gnothi/schemas'
 import {Handlers} from './aws/handlers'
 import * as auth from './auth/appAuth'
-
 import './routes'
 import {CantSnoop} from "./routes/errors";
 
-import {initDb} from './ml/vectorDb'
+type LT = Api.LambdaTrigger
 
 async function handleRes(
   def: Api.DefO<any>,
@@ -22,11 +21,18 @@ async function handleRes(
   let final: APIGatewayProxyResultV2 = {statusCode: 200}
   console.log("handleRes", res)
   await Promise.all(
-    Object.entries(def.t).map(async ([trigger, enabled]) => {
-      if (!enabled) {return null}
+    Object.entries(def.t).map(async ([trigger, triggerValue]) => {
+      if (!triggerValue) {return null}
+      let extraContext: Handlers.ExtraContext = fnContext
+      if (trigger === "lambda") {
+        extraContext.lambda = triggerValue as LT
+      }
       const handler = Handlers.handlers[trigger]
-      const responded = await handler.respond(res, fnContext)
-      if (~["http", "lambda"].indexOf(trigger)) {
+      const responded = await handler.respond(res, extraContext)
+      if (
+        trigger === "http" ||
+        (trigger === "lambda" && (triggerValue as LT).invocationType === "RequestResponse")
+      ) {
         final = responded
       }
   }))

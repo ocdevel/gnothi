@@ -1,4 +1,5 @@
 from haystack.document_stores import WeaviateDocumentStore
+from haystack import Document
 import weaviate
 from typing import Optional, List, Union, Dict
 
@@ -100,32 +101,43 @@ class CustomDocumentStore(object):
                 self.init_data_haystack()
 
     def _mock_data(self):
-        from haystack.utils import clean_wiki_text, convert_files_to_docs, fetch_archive_from_http
+        import re
+        import requests
+        import urllib.request
+        import time
+        from bs4 import BeautifulSoup
+        from urllib.request import urlopen
 
-        # Let's first fetch some documents that we want to query
-        # Here: 517 Wikipedia articles for Game of Thrones
-        doc_dir = "data/tutorial1"
-        s3_url = "https://s3.eu-central-1.amazonaws.com/deepset.ai-farm-qa/datasets/documents/wiki_gameofthrones_txt1.zip"
-        fetch_archive_from_http(url=s3_url, output_dir=doc_dir)
+        objects = []
+        articles = [
+            ['cbt', "https://en.wikipedia.org/wiki/Cognitive_behavioral_therapy"],
+            ['vr', "https://en.wikipedia.org/wiki/Virtual_reality"],
+            ['ai', "https://en.wikipedia.org/wiki/Artificial_intelligence"]
+        ]
+        for [topic, url] in articles:
+            html = urlopen(url)
+            soup = BeautifulSoup(html, 'html.parser')
+            paras = []
+            for para in soup.find(id="mw-content-text").find_all('p'):
+                para = para.get_text()
+                para = para.replace('\n', ' ')
+                if len(para) < 10:
+                    continue
+                # para = re.sub(r"\[[0-9]*\]", "", para)
+                if len(paras) == 0:
+                    paras.append(para)
+                elif len(para) < 100:
+                    paras[len(paras) - 1] += para
+                else:
+                    paras.append(para)
+            for i, para in enumerate(paras):
+                doc = Document(
+                    content=para,
+                    meta={'name': f"{topic} {i}"})
+                objects.append(doc)
 
-        # Convert files to dicts
-        # You can optionally supply a cleaning function that is applied to each doc (e.g. to remove footers)
-        # It must take a str as input, and return a str.
-        docs = convert_files_to_docs(dir_path=doc_dir, clean_func=clean_wiki_text, split_paragraphs=True)
+        return objects
 
-        # We now have a list of dictionaries that we can write to our document store.
-        # If your texts come from a different source (e.g. a DB), you can of course skip convert_files_to_dicts() and create the dictionaries yourself.
-        # The default format here is:
-        # {
-        #    'content': "<DOCUMENT_TEXT_HERE>",
-        #    'meta': {'name': "<DOCUMENT_NAME_HERE>", ...}
-        # }
-        # (Optionally: you can also add more key-value-pairs here, that will be indexed as fields in Elasticsearch and
-        # can be accessed later for filtering or shown in the responses of the Pipeline)
-
-        # Let's have a look at the first 3 entries:
-        print(docs[:3])
-        return docs[:50]
 
     def init_data_weaviate(self):
         docs = self._mock_data()

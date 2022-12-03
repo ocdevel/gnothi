@@ -33,6 +33,7 @@ export const Events = z.enum([
   'entries_get_response',
   'entries_upsert_request',
   'entries_upsert_response',
+  'entries_upsert_final',
   'entries_delete_request',
   'entries_delete_response',
   'entries_notes_list_request',

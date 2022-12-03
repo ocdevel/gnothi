@@ -55,7 +55,7 @@ def get_query_type(query: str, run_response: str):
 
 
 def main(event, context):
-    doc_store = CustomDocumentStore(recreate_index=False, raw_weaviate=True)
+    doc_store = CustomDocumentStore(recreate_index=True, raw_weaviate=True)
 
     query = event.get('search', None)
     query_type = None

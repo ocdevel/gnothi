@@ -15,7 +15,7 @@ import {
   APIGatewayEvent,
 } from "aws-lambda";
 import {Api, Events} from '@gnothi/schemas';
-import {Config} from '@serverless-stack/node/config'
+import {Function} from '@serverless-stack/node/function'
 import {clients} from './clients'
 import {SNSEvent} from "aws-lambda";
 import {APIGatewayProxyWebsocketEventV2} from "aws-lambda/trigger/api-gateway-proxy";
@@ -32,10 +32,14 @@ export function whichHandler(event: any, context: Context): HandlerKey {
   return "lambda"
 }
 
+export type ExtraContext = Api.FnContext & {
+  lambda?: Api.LambdaTrigger
+  // connectionId?: string
+}
 interface Handler<E = any> {
   match: (req: E) => boolean
   parse: (event: E) => Promise<Array<null | Api.Req>>
-  respond: (res: Api.Res, opts: Api.FnContext) => Promise<APIGatewayProxyResultV2>
+  respond: (res: Api.Res, opts: ExtraContext) => Promise<APIGatewayProxyResultV2>
 }
 
 // TODO revisit, I can't figure this out
@@ -89,16 +93,14 @@ class Buff {
   }
 }
 
-interface InvokeOutput {
-  response: InvokeCommandOutput
-  body: object
+type InvokeCommandOutput_ = Omit<InvokeCommandOutput, 'Payload'> & {
+  Payload: object | null
 }
-
 export async function lambdaSend(
   data: object,
   FunctionName: string,
-  InvocationType: InvokeCommandInput["InvocationType"] = "RequestResponse"
-): Promise<InvokeCommandOutput> {
+  InvocationType: Api.Trigger['lambda']['invocationType'] = "RequestResponse"
+): Promise<InvokeCommandOutput_> {
   const Payload = Buff.fromObj(data)
   const params = {
     InvocationType,
@@ -106,9 +108,11 @@ export async function lambdaSend(
     FunctionName,
   }
   const response = await clients.lambda.send(new InvokeCommand(params))
-  const whatsThis = Buff.toObj(response.Payload)
-  debugger
-  return response
+  return {
+    ...response,
+    // Revisit how to decode the Payload. Buffer vs Uint8Array?
+    Payload: InvocationType === "Event" ? null : Buff.toObj(response.Payload)
+  }
 }
 
 export const lambda: Handler<any> = {
@@ -119,20 +123,21 @@ export const lambda: Handler<any> = {
     return [event]
   },
 
-  respond: async (res) => {
+  // If this is a response handler, it should kick off as a background job (InvocationType:Event).
+  // If you want RequestResponse, call directly via above helper function
+  respond: async (res, context) => {
     const {data, event} = res
-    const response = await lambdaSend(data as object, Config.fnFixMe)
-    let responseBody: object = {}
-    console.log(event, "response")
-    if (response.Payload) {
-      // Revisit how to decode the Payload. Buffer vs Uint8Array?
-      responseBody = Buff.toObj(response.Payload)
-      console.log(responseBody)
-    } else {
-      console.log(response)
+    const functionName = Function[context.lambda?.key]?.functionName
+    if (!functionName) {
+      throw `Couldn't find function for ${context.lambda?.key}`
     }
+    const response = await lambdaSend(
+      data as object,
+      functionName,
+      context.lambda.invocationType
+    )
     // return {response, body: responseBody}
-    return {statusCode: 200, data: response}
+    return {statusCode: response.StatusCode, data: response.Payload}
   }
 }
 

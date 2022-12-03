@@ -27,14 +27,23 @@ export function Api({ app, stack }: sst.StackContext) {
   })
   const API_WS = new sst.Config.Parameter(stack, "API_WS", {value: ws.cdk.webSocketStage.callbackUrl})
 
-  const fnInsights = new sst.Function(stack, 'fn_insights', {
+  const fnAnalyze = new sst.Function(stack, 'fn_analyze', {
     runtime: "python3.9",
-    handler: "ml/insights.main",
+    handler: "ml/analyze.main",
+    timeout: "10 minutes", // definitely needed for ML functions
+  })
+
+  // Use same unifier framework as the main function (http, ws) but is called with background tasks.
+  // Needed so the fnMain can return a response first
+  const fnBackground = new sst.Function(stack, "fn_background", {
+    handler: "main.main",
     timeout: "10 minutes",
-    bind: [API_WS],
-    environment: {
-      API_WS: API_WS.value,
-    }
+    bind: [
+      APP_REGION,
+      API_WS,
+      rds,
+      fnAnalyze,
+    ]
   })
 
   const fnMain = new sst.Function(stack, "fn_main", {
@@ -44,8 +53,8 @@ export function Api({ app, stack }: sst.StackContext) {
       API_WS,
       auth,
       rds,
-      fnInsights
-    ],
+      fnBackground,
+    ]
   })
 
   http.addRoutes(stack, {

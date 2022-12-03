@@ -3,6 +3,7 @@ import {db} from '../../data/db'
 import {GnothiError} from "../errors";
 import {z} from 'zod'
 import {reduce as _reduce} from "lodash"
+import {Function} from "@serverless-stack/node/function"
 
 const r = S.Routes.routes
 
@@ -34,7 +35,7 @@ r.entries_upsert_request.fn = r.entries_upsert_request.fnDef.implement(async (re
   const user_id = context.user.id
   const {tags, entry} = req
   if (!Object.values(tags).some(v => v)) {
-    throw new GnothiError("Each entry must belong to at least one journal", "MISSING_TAG")
+    throw new GnothiError({message: "Each entry must belong to at least one journal", key: "NO_TAGS"})
   }
 
   let entry_id: string = entry.id
@@ -84,3 +85,6 @@ r.entries_upsert_request.fn = r.entries_upsert_request.fnDef.implement(async (re
 
   return [{entry: dbEntry, tags}]
 })
+
+
+// r.entries_upsert_response.fn = r.entries_upsert_response.fnDef.implement(async (req, context) => {
