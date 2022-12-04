@@ -24,7 +24,7 @@ export type instances_get_response = z.infer<typeof analyze_get_response>
 
 export const analyze_themes_response = z.object({
   id: z.string(), // anything, just need for keyby
-  keywords: z.tuple([z.string(), z.number()]),
+  keywords: z.tuple([z.string(), z.number()]).array(),
   summary: z.string()
 })
 export type analyze_themes_response = z.infer<typeof analyze_themes_response>

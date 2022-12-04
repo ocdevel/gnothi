@@ -78,7 +78,7 @@ export default function Analyze() {
       icon={<ThemesIcon />}
       description="Show common recurring themes across your entries."
     >
-      {/*<Themes />*/}
+      <Themes />
     </Insight>
     <Insight
       label="Books"

@@ -4,6 +4,7 @@
 from sentence_transformers import SentenceTransformer
 from keybert import KeyBERT
 from typing import List, Optional, Dict, Tuple
+from pprint import pprint
 
 sentence_model = SentenceTransformer("all-MiniLM-L6-v2", device="cpu")
 model = KeyBERT(model=sentence_model)

@@ -1,72 +1,40 @@
-import {lambdaSend} from "../../aws/handlers"
-import {Function} from "@serverless-stack/node/function";
-import {TextsParamsMatch} from "./errors";
+import {weaviateClient, weaviateDo} from "../../data/weaviate";
+import {Entry} from '@gnothi/schemas/entries'
+import {summarize} from "./summarize";
+import {keywords} from './keywords'
 
-interface ClusterResponse {
-  titles: string
-  blob: string
-}
-async function getClusters(ids: string[]): Promise<ClusterResponse[]> {
-  // TODO call weaviate directly
-  return []
-}
-type ThemeResult = {
+type FnIn = Entry[]
+type LambdaIn = string[]
+type LambdaOut = Array<{
+  name: string
+  content: string
+}>
+type FnOut = Array<{
   keywords: [string, number][]
   summary: string
-}
-async function getThemes(entries: Entry[]): Promise<ThemeResult[]> {
-  const clusters = await getClusters(entries.map(e => e.id))
-  return Promise.all<ThemeResult[]>(clusters.map(async (c) => ({
-    keywords: await getKeywords(c.blob),
-    summary: await getSummary(c.blob, {min_length: 50, max_length: 150})
-  })))
-}
+}>
 
-
-
-
-
-
-
-
-
-
-
-
-
-interface Params {
-  top_n: number
-}
-interface FnIn {
-  texts: [string, ...string[]]
-  params: [Params, ...Params[]]
-}
-type LambdaIn = {text: string, params: Params}[]
-type LambdaOut = string[]
-type FnOut = string[]
-export async function themes({texts, params}: FnIn): Promise<FnOut> {
-  // Get functionNames in here so we don't throw error when this file is imported
-  // from proxy.ts
-  const functionName = Function.fn_keywords.functionName
-
-  async function call(data: LambdaIn): Promise<LambdaOut> {
-    const res = await lambdaSend<LambdaOut>(data, functionName, "RequestResponse")
-    return res.Payload
+// TODO move this to Python for consistency / better control (their node module is rough)
+async function getClusters(ids: LambdaIn): Promise<LambdaOut> {
+  const res = await weaviateDo(weaviateClient.graphql.raw().withQuery(`{
+  Get { 
+    Object (group: {type: merge, force: 0.25}) {
+      name
+      content
+    }
   }
-
-  if (params.length === 1) {
-    return call([{
-      text: texts.join('\n\n'),
-      params: params[0]
-    }])
-  }
-
-  if (texts.length === params.length) {
-    return call(texts.map((text, i) => ({
-      text,
-      params: params[i]
-    })))
-  }
-
-  throw new TextsParamsMatch()
+  }`)) as any
+  return res.data.Get.Object
+}
+export async function themes(entries: FnIn): Promise<FnOut> {
+  const groups = await getClusters(entries.map(e => e.id))
+  debugger
+  const texts = groups.map(g => g.content) as [string, ...string[]]
+  const pKeywords = keywords({texts, params: [{top_n: 5}]})
+  const pSummaries = summarize({texts, params: [{min_length: 50, max_length: 100}]})
+  const combo = await Promise.all([pKeywords, pSummaries])
+  return groups.map((_, i) => ({
+    keywords: combo[0][i],
+    summary: combo[1][i]
+  }))
 }

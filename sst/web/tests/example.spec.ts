@@ -60,7 +60,7 @@ test('Create entry', async ({page}) => {
     await page.waitForTimeout(6000)
   }
 
-  await page.getByText("Analyze").click()
+  await page.getByText("Dashboard").click()
   await expect(page.locator('.entry-teaser')).toHaveCount(nEntries)
 
   await page.waitForTimeout(10000)

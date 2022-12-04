@@ -10,8 +10,8 @@ interface FnIn {
   params: [Params, ...Params[]]
 }
 type LambdaIn = {text: string, params: Params}[]
-type LambdaOut = string[]
-type FnOut = string[]
+type LambdaOut = [string, number][][]
+type FnOut = [string, number][][]
 export async function keywords({texts, params}: FnIn): Promise<FnOut> {
   // Get functionNames in here so we don't throw error when this file is imported
   // from proxy.ts

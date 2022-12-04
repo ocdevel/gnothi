@@ -1,6 +1,7 @@
 import * as S from '@gnothi/schemas'
 import {db} from '../../data/db'
 import {GnothiError} from "../errors";
+import {v4 as uuid} from 'uuid'
 import {z} from 'zod'
 // @ts-ignore
 import dayjs from 'dayjs'
@@ -54,37 +55,50 @@ r.analyze_get_request.fn = r.analyze_get_request.fnDef.implement(async (req, con
 r.analyze_get_response.fn = r.analyze_get_response.fnDef.implement(async (req, context) => {
   const {handleRes} = context
   const hardFiltered = await facetFilter(req, context.user.id)
-  const {answer, entries} = await search(req.search, hardFiltered)
+  const {answer, entries} = await search(hardFiltered, req.search)
 
   // TODO send filtered results. Maybe analyze_filtered_response with just eids; and the client uses to apply filter
 
-  const pAsk = !answer?.length ? new Promise(resolve => resolve(undefined))
-    : handleRes(
+  const pAsk = (async function() {
+    if (!answer?.length) {return null}
+    return handleRes(
       r.analyze_ask_response,
-      {data: [{id: 'x', answer}]},
+      {data: [{
+        id: uuid(), // neede for React `key`
+        answer
+      }]},
       context
     )
+  })()
 
   const blob = entries.map(e => e.text).join('\n\n')
 
-  // Promise
   const pSummarize = summarize({
     texts: [blob],
     params: [{min_length: 150, max_length: 300}]
   }).then((summary) => {
       handleRes(
         r.analyze_summarize_response,
-        {data: [{id: 'x', summary}]},
+        {data: [{
+          id: uuid(), // neede for React `key`,
+          summary
+        }]},
         context
       )
     })
 
   // Promise
-  const pThemes = themes(entries).then(themes => {
-    console.log({themes})
+  const pThemes = themes(entries).then(res => {
+    handleRes(
+      r.analyze_themes_response,
+      {data: res.map((r, i) => ({
+        id: uuid(), // neede for React `key`
+        ...r
+      }))},
+      context
+    )
   })
 
-  const res = await Promise.all([pAsk, pSummarize, pThemes])
-  debugger
+  const final = await Promise.all([pAsk, pSummarize, pThemes])
   return [{done: true}]
 })
