@@ -6,8 +6,8 @@ import Typography from "@mui/material/Typography";
 import CircularProgress from "@mui/material/CircularProgress";
 
 export default function Summarize() {
-  const submitted = useStore(s => !!s.res.insights_get_response?.first)
-  const summary = useStore(s => s.res.insights_summarize_response)
+  const submitted = useStore(s => !!s.res.analyze_get_response?.first)
+  const summary = useStore(s => s.res.analyze_summarize_response)
   const filters = useStore(s => s.filters)
 
   const waiting = !summary?.first && submitted

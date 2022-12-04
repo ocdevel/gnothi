@@ -1,14 +1,14 @@
 import create, {StateCreator} from 'zustand'
 import {ApiSlice} from './api'
 import {EventsSlice} from './events'
-import {Users, Entries, Insights} from "@gnothi/schemas"
+import {Users, Entries, Analyze} from "@gnothi/schemas"
 import moment from "moment-timezone";
 import _ from "lodash";
 import dayjs from "dayjs"
 
 
 // TODO use mainTag as default tag
-export const initialFilters = Insights.insights_get_request.parse({})
+export const initialFilters = Analyze.analyze_get_request.parse({})
 
 interface User {
   as: string | null,
@@ -28,10 +28,10 @@ type EntryModal = null | {
 }
 
 export interface AppSlice {
-  // ----- Insights
+  // ----- Analyze
 
-  filters: Insights.insights_get_request
-  setFilters: (filters: Partial<Insights.insights_get_request>) => void
+  filters: Analyze.analyze_get_request
+  setFilters: (filters: Partial<Analyze.analyze_get_request>) => void
   clearFilters: () => void
   setInsight: (payload: [string, string]) => void
   // postInsight: (x: any) => Promise<void>
@@ -69,7 +69,7 @@ export const appSlice: StateCreator<
   AppSlice
 > = (set, get) => ({
 
-  // ----- Insights
+  // ----- Analyze
   filters: initialFilters,
   setFilters: (filters) => set(state => ({
     filters: {
@@ -86,16 +86,16 @@ export const appSlice: StateCreator<
 
   // postInsight: async (actions, k, helpers) => {
   //   const {emit} = helpers.getStoreActions().ws
-  //   const {insights, ws} = helpers.getStoreState()
+  //   const {analyze, ws} = helpers.getStoreState()
   //
-  //   const body = { days: insights.days }
+  //   const body = { days: analyze.days }
   //   const tags = trueKeys(data.selectedTags)
   //   if (tags.length) { body.tags = tags }
   //
   //   const formK = {question: "question", themes: "algo", summarize: "words"}[k]
-  //   body[formK] = insights[k]
+  //   body[formK] = analyze[k]
   //
-  //   emit([`insights/${k}/post`, body])
+  //   emit([`analyze/${k}/post`, body])
   // },
 
   // ----- User
@@ -116,7 +116,7 @@ export const appSlice: StateCreator<
   // changeAs: async (actions, id, helpers) => {
   //   const {emit} = helpers.getStoreActions().ws
   //   const {data} = helpers.getStoreState().ws
-  //   helpers.getStoreActions().insights.clearInsights('all')
+  //   helpers.getStoreActions().analyze.clearAnalyze('all')
   //
   //   actions.setAs(id)
   //   if (id) {

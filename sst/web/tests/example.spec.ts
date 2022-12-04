@@ -56,6 +56,7 @@ test('Create entry', async ({page}) => {
   await page.getByRole("button", {name: "Submit"}).click()
 
   await page.waitForTimeout(20000)
+  console.log({auth})
 
   // create a locator
 

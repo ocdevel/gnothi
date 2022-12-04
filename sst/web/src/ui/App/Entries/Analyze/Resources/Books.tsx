@@ -26,8 +26,8 @@ import {Alert2} from "@gnothi/web/src/ui/Components/Misc"
 export default function Books() {
 const send = useStore(s => s.send)
   const as = useStore(state => state.as)
-  const booksGet = useStore(s => s.res.insights_books_list_response?.res)
-  const books = useStore(s => s.res.insights_books_list_response?.rows)
+  const booksGet = useStore(s => s.res.analyze_books_list_response?.res)
+  const books = useStore(s => s.res.analyze_books_list_response?.rows)
   const [shelf, setShelf] = useState('ai')  // like|dislike|already_read|remove|recommend
   const [removed, setRemoved] = useState([])
 
@@ -43,7 +43,7 @@ const send = useStore(s => s.send)
   const shelvesObj = _.keyBy(shelves, 'value')
 
   useEffect(() => {
-    send("insights_books_get_request", {shelf})
+    send("analyze_books_get_request", {shelf})
     setRemoved([])
   }, [shelf])
 
@@ -57,7 +57,7 @@ const send = useStore(s => s.send)
   }
 
   const putOnShelf = async (id, shelf_) => {
-    send('insights_books_post_request', {id, shelf: shelf_})
+    send('analyze_books_post_request', {id, shelf: shelf_})
     setRemoved([...removed, id])
   }
 

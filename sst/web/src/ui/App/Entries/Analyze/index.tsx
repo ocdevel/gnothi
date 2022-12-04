@@ -17,7 +17,7 @@ import Button from '@mui/material/Button'
 import {Alert2, ToolbarHeader} from "../../../Components/Misc";
 import Fab from "@mui/material/Fab";
 import Filters from './Filters'
-import Insights from './Insights'
+import Analyze from './Analyze'
 import Entries from "./Entries"
 
 
@@ -32,7 +32,7 @@ export default function List({group_id=null}) {
         <Entries />
       </Grid>
       <Grid item sm={12} lg={4} md={5}>
-        <Insights />
+        <Analyze />
         <NotesAll />
       </Grid>
     </Grid>

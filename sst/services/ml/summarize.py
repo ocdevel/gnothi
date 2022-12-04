@@ -27,11 +27,11 @@ tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
 model = AutoModelForSeq2SeqLM.from_pretrained(model_name, trust_remote_code=True)
 pipe = pipeline("summarization", model=model, tokenizer=tokenizer)
 
-def main(docs, params):
-    params = {
-        'min_length': 100,
-        'max_length': 200,
 
+def main(event, context) -> str:
+    text = event['text']
+    params = event['params']
+    params = {
         'no_repeat_ngram_size': 2,
 
         # ensure quality
@@ -51,10 +51,7 @@ def main(docs, params):
 
         **params
     }
-    doc = ' '.join([d['content'] for d in docs])
-    res = pipe(doc, **params)
-    print("summary response", res)
-    return res[0]['summary_text']
+    return pipe(text, **params)[0]['summary_text']
 
 
 class CustomSummarizer(BaseComponent):

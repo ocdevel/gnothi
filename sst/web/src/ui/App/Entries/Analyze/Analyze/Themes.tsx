@@ -19,12 +19,12 @@ import CardContent from "@mui/material/CardContent";
 export default function Themes() {
   const [advanced, setAdvanced] = useState(false)
   const send = useStore(s => s.send)
-  const days = useStore(s => s.insights.days)
-  const res = useStore(s => s.res['insights_themes_response']?.res)
-  const job = useStore(s => s.res['insights_themes_response'])
-  const form = useStore(s => s.insights.themes)
-  const reply = useStore(s => s.res['insights_themes_final'])
-  const a = useStore(a => a.insights)
+  const days = useStore(s => s.analyze.days)
+  const res = useStore(s => s.res['analyze_themes_response']?.res)
+  const job = useStore(s => s.res['analyze_themes_response'])
+  const form = useStore(s => s.analyze.themes)
+  const reply = useStore(s => s.res['analyze_themes_final'])
+  const a = useStore(a => a.analyze)
   const [waiting, setWaiting] = useState(false)
 
   useEffect(() => {

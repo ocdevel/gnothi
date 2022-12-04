@@ -25,7 +25,7 @@ export function Api({ app, stack }: sst.StackContext) {
       function: authFn
     },
   })
-  const API_WS = new sst.Config.Parameter(stack, "API_WS", {value: ws.cdk.webSocketStage.callbackUrl})0
+  const API_WS = new sst.Config.Parameter(stack, "API_WS", {value: ws.cdk.webSocketStage.callbackUrl})
 
   const fnInit = new sst.Function(stack, "fn_init", {
     handler: "init.main",
@@ -38,14 +38,27 @@ export function Api({ app, stack }: sst.StackContext) {
     fnInitArn: fnInit.functionArn
   })
 
-  const fnAnalyze = new sst.Function(stack, 'fn_analyze', {
+  const mlFunctionProps: sst.FunctionProps = {
     srcPath: "services",
     runtime: "python3.9",
-    handler: "ml/analyze.main",
     timeout: "10 minutes", // definitely needed for ML functions
+  }
+  const fnSearch = new sst.Function(stack, "fn_search", {
+    ...mlFunctionProps,
+    handler: "ml/search.main"
+  })
+  const fnSummarize = new sst.Function(stack, 'fn_summarize', {
+    ...mlFunctionProps,
+    handler: "ml/summarize.main"
+  })
+  const fnKeywords = new sst.Function(stack, 'fn_keywords', {
+    ...mlFunctionProps,
+    handler: "ml/keywords.main"
   })
   stack.addOutputs({
-    fnAnalyzeArn: fnAnalyze.functionArn
+    fnSearch: fnSearch.functionArn,
+    fnSummarize: fnSummarize.functionArn,
+    fnKeywords: fnKeywords.functionArn,
   })
 
   const fnMain = new sst.Function(stack, "fn_main", {
@@ -57,7 +70,9 @@ export function Api({ app, stack }: sst.StackContext) {
       API_WS,
       auth,
       rds,
-      fnAnalyze,
+      fnKeywords,
+      fnSearch,
+      fnSummarize
     ]
   })
 

@@ -12,7 +12,7 @@ import {
   Users,
   Fields,
   Entries,
-  Insights,
+  Analyze,
   Groups,
   Shares,
   Auth
@@ -43,14 +43,14 @@ export interface EventsSlice {
     entries_upsert_response?: Api.ResUnwrap<Entries.entries_upsert_response>
     // entries_delete_response?: Api.ResUnwrap<Entries.Entry>
 
-    insights_get_response?: Api.ResUnwrap<Insights.insights_get_response>
-    insights_summarize_response?: Api.ResUnwrap<Insights.insights_summarize_response>
-    insights_question_response?: Api.ResUnwrap<Insights.insights_question_response>
-    insights_themes_response?: Api.ResUnwrap<Insights.insights_themes_response>
-    insights_books_response?: Api.ResUnwrap<Insights.insights_books_response>
+    analyze_get_response?: Api.ResUnwrap<Analyze.analyze_get_response>
+    analyze_summarize_response?: Api.ResUnwrap<Analyze.analyze_summarize_response>
+    analyze_question_response?: Api.ResUnwrap<Analyze.analyze_question_response>
+    analyze_themes_response?: Api.ResUnwrap<Analyze.analyze_themes_response>
+    analyze_books_response?: Api.ResUnwrap<Analyze.analyze_books_response>
 
 
-    insights_books_list_response?: Api.ResUnwrap<Insights.Book>
+    analyze_books_list_response?: Api.ResUnwrap<Analyze.Book>
     groups_list_response?: Api.ResUnwrap<z.infer<typeof r.groups_list_request.o.s>>
     groups_get_response?: Api.ResUnwrap<z.infer<typeof r.groups_get_request.o.s>>
     groups_mine_list_response?: Api.ResUnwrap<z.infer<typeof r.groups_mine_list_request.o.s>>

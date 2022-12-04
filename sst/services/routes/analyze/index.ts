@@ -6,13 +6,13 @@ import {z} from 'zod'
 import dayjs from 'dayjs'
 import {reduce as _reduce} from "lodash"
 import type {Entry} from '@gnothi/schemas/entries'
-import type {insights_get_request} from '@gnothi/schemas/insights'
+import type {analyze_get_request} from '@gnothi/schemas/analyze'
 import {Function} from "@serverless-stack/node/function"
 import {lambdaSend} from "../../aws/handlers"
 
 const r = S.Routes.routes
 
-async function facetFilter(req: insights_get_request, user_id: string): Promise<Entry[]> {
+async function facetFilter(req: analyze_get_request, user_id: string): Promise<Entry[]> {
   const {tags, startDate, endDate, search} = req
   const tids = _reduce(tags, (m,v,k) => {
     if (!v) {return m}
@@ -45,7 +45,7 @@ async function facetFilter(req: insights_get_request, user_id: string): Promise<
   return entries
 }
 
-r.insights_get_request.fn = r.insights_get_request.fnDef.implement(async (req, context) => {
+r.analyze_get_request.fn = r.analyze_get_request.fnDef.implement(async (req, context) => {
   const hardFiltered = await facetFilter(req, context.user.id)
   console.log({hardFiltered})
   // const vectorDbResults = await vectorDbFilter(req.search, hardFiltered)

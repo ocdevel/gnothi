@@ -1,21 +1,4 @@
-import weaviate from 'weaviate-client'
-
-const client = weaviate.client({
-  scheme: 'http',
-  host: 'localhost:8080'
-})
-
-async function promiseDo(whatever) {
-  return new Promise((resolve, reject) => {
-  whatever.do()
-    .then((res) => resolve(res))
-    .catch(err => {
-      console.error(err)
-      resolve({})
-      // reject(err)
-    })
-  })
-}
+import {weaviateClient, weaviateDo} from '../weaviate'
 
 const classes = [{
   "class": "Object",  // <= note the capital "O".
@@ -77,12 +60,10 @@ const classes = [{
   //}]
 }]
 export async function initWeaviate() {
-  await promiseDo(client.schema
+  await weaviateDo(weaviateClient.schema
     .classDeleter()
-    .withClassName("Object")
-  )
-  await promiseDo(client.schema
+    .withClassName("Object"))
+  await weaviateDo(weaviateClient.schema
     .classCreator()
-    .withClass(classes[0])
-  )
+    .withClass(classes[0]))
 }

@@ -11,10 +11,10 @@ import Typography from '@mui/material/Typography'
 import {useStore} from "@gnothi/web/src/data/store"
 
 export default function Ask() {
-  const res = useStore(s => s.res.insights_question_response?.res)
-  const job = useStore(s => s.res.insights_question_response?.row)
-  const form = useStore(s => s.insights.question)
-  const reply = useStore(s => s.res.insights_question_final?.row)
+  const res = useStore(s => s.res.analyze_question_response?.res)
+  const job = useStore(s => s.res.analyze_question_response?.row)
+  const form = useStore(s => s.analyze.question)
+  const reply = useStore(s => s.res.analyze_question_final?.row)
   const setInsight = useStore(a => a.setInsight)
   const postInsight = useStore(a => a.postInsight)
   const [waiting, setWaiting] = useState(false)
