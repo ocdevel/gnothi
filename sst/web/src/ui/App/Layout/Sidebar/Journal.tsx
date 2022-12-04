@@ -4,8 +4,8 @@ import React from "react";
 import {ListItem, NestedList} from './Utils'
 
 export function Journal() {
-  return <NestedList primary='Journal'>
+  return <>
     <ListItem to='/j' icon={<NewIcon />} primary='New Entry' nested={true} />
-    <ListItem to='/j/analyze' icon={<ListIcon />} primary='Analyze' nested={true} />
-  </NestedList>
+    <ListItem to='/j/analyze' icon={<ListIcon />} primary='Dashboard' nested={true} />
+  </>
 }

@@ -9,7 +9,7 @@ import Footer from "../../../Footer";
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import {Journal} from './Journal'
-import {Groups} from './Groups'
+import Community from './Community'
 import {Account} from './Account'
 import {Misc} from './Misc'
 
@@ -18,7 +18,7 @@ export default function Sidebar() {
     <Box flex={1}>
       <Journal />
       <Divider />
-      <Groups />
+      <Community />
       <Divider />
       <Account />
       <Divider />

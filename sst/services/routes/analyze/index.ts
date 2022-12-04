@@ -6,11 +6,15 @@ import {z} from 'zod'
 import dayjs from 'dayjs'
 import {reduce as _reduce} from "lodash"
 import type {Entry} from '@gnothi/schemas/entries'
-import type {analyze_get_request} from '@gnothi/schemas/analyze'
+import type {analyze_get_request, analyze_ask_response, analyze_themes_response, analyze_summarize_response} from '@gnothi/schemas/analyze'
 import {Function} from "@serverless-stack/node/function"
 import {lambdaSend} from "../../aws/handlers"
 
 const r = S.Routes.routes
+
+const fnSearch = Function.fn_search.functionName
+const fnSummarize = Function.fn_summarize.functionName
+const fnKeywords = Function.fn_keywords.functionName
 
 async function facetFilter(req: analyze_get_request, user_id: string): Promise<Entry[]> {
   const {tags, startDate, endDate, search} = req
@@ -45,10 +49,96 @@ async function facetFilter(req: analyze_get_request, user_id: string): Promise<E
   return entries
 }
 
+interface SearchResponse {
+  answer?: string
+  ids: string[]
+}
+interface SearchResults {
+  answer?: string
+  entries: Entry[]
+}
+async function getSearch(req: analyze_get_request, entries: Entry[]): Promise<SearchResults> {
+  if (!req.search?.length) {
+    return {entries}
+  }
+  const res = (await lambdaSend<SearchResponse>(
+    {ids: entries.map(e => e.id), query: req.search},
+    fnSearch,
+    "RequestResponse"
+  )).Payload
+  const filteredEntries = entries.filter(e => ~res.ids.indexOf(e.id))
+  return {answer: res.answer, entries: filteredEntries}
+}
+
+async function getSummary(text: string, params: object): Promise<string> {
+  const res = await lambdaSend(
+    {text, params},
+    fnSummarize,
+    "RequestResponse"
+  )
+  return res.Payload
+}
+
+interface ClusterResponse {
+  titles: string
+  blob: string
+}
+async function getClusters(ids: string[]): Promise<ClusterResponse[]> {
+  // TODO call weaviate directly
+  return []
+}
+
+async function getKeywords(text: string) {
+  return (await lambdaSend<[string, number][]>(
+    {text, params: {top_n: 5}},
+    fnKeywords,
+    "RequestResponse"
+  )).Payload
+}
+
+type ThemeResult = {
+  keywords: [string, number][]
+  summary: string
+}
+async function getThemes(entries: Entry[]): Promise<ThemeResult[]> {
+  const clusters = await getClusters(entries.map(e => e.id))
+  return Promise.all<ThemeResult[]>(clusters.map(async (c) => ({
+    keywords: await getKeywords(c.blob),
+    summary: await getSummary(c.blob, {min_length: 50, max_length: 150})
+  })))
+}
+
 r.analyze_get_request.fn = r.analyze_get_request.fnDef.implement(async (req, context) => {
+  const {handleRes} = context
   const hardFiltered = await facetFilter(req, context.user.id)
-  console.log({hardFiltered})
-  // const vectorDbResults = await vectorDbFilter(req.search, hardFiltered)
+  const {answer, entries} = await getSearch(req, hardFiltered)
+
+  // TODO send filtered results. Maybe analyze_filtered_response with just eids; and the client uses to apply filter
+
+  const ask = !answer?.length ? new Promise(resolve => resolve(undefined))
+    : handleRes(
+      r.analyze_ask_response,
+      {event: 'analyze_ask_response', error: false, code: 200, data: [{id: 'x', answer}]},
+      context
+    )
+
+  const blob = entries.map(e => e.text).join('\n\n')
+
+  // Promise
+  const summary = getSummary(blob, {min_length: 150, max_length: 300}).then((summary) => {
+    handleRes(
+      r.analyze_summarize_response,
+      {event: 'analyze_summarize_response', error: false, code: 200, data: [{id: 'x', summary}]},
+      context
+    )
+  })
+
+  // Promise
+  const themes = getThemes(entries).then(themes => {
+    console.log({themes})
+  })
+
+  const res = await Promise.all([ask, summary, themes])
   debugger
-  return [req]
+  return [{done: true}]
 })

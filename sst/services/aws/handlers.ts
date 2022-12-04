@@ -84,24 +84,24 @@ export const sns: Handler<SNSEvent> = {
 }
 
 class Buff {
-  static fromObj(obj: object): Uint8Array {
+  static fromObj(obj: unknown): Uint8Array {
     return fromUtf8(JSON.stringify(obj))
   }
 
   // public static objFromBuff(buff: Buffer): object {
-  static toObj(buff: Uint8Array): object {
+  static toObj(buff: Uint8Array): unknown {
     return JSON.parse(toUtf8(buff))
   }
 }
 
-type InvokeCommandOutput_ = Omit<InvokeCommandOutput, 'Payload'> & {
-  Payload: object | null
+type InvokeCommandOutput_<O> = Omit<InvokeCommandOutput, 'Payload'> & {
+  Payload: O | null
 }
-export async function lambdaSend(
+export async function lambdaSend<O = any>(
   data: object,
   FunctionName: string,
   InvocationType: Api.Trigger['lambda']['invocationType'] = "RequestResponse"
-): Promise<InvokeCommandOutput_> {
+): Promise<InvokeCommandOutput_<O>> {
   const Payload = Buff.fromObj(data)
   const response = await clients.lambda.send(new InvokeCommand({
     InvocationType,
@@ -111,7 +111,8 @@ export async function lambdaSend(
   return {
     ...response,
     // Revisit how to decode the Payload. Buffer vs Uint8Array?
-    Payload: InvocationType === "Event" ? null : Buff.toObj(response.Payload)
+    Payload: InvocationType === "Event" ? null
+      : Buff.toObj(response.Payload) as O
   }
 }
 

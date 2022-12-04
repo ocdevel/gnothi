@@ -43,7 +43,7 @@ export type FnContext = {
   everyone?: false
 
   connectionId?: string
-  handleRes: (triggers: DefO<any>, res: Res, fnContext: FnContext) => void
+  handleRes: (def: DefO<any>, res: Res, fnContext: FnContext) => void
   handleReq: (req: Req, fnContext: FnContext) => void
 }
 type FnDef<

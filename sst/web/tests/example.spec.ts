@@ -7,7 +7,7 @@ const URL = 'http://localhost:3000'
 
 const mockEntriesFile = readFileSync("tests/mock_entries.json", {encoding: "utf-8"})
 const mockEntries = JSON.parse(mockEntriesFile)
-console.log(mockEntries)
+// console.log(mockEntries)
 
 type Auth = {email: string, pass: string}
 const genAuth = () => ({email: `${ulid()}@x.com`, pass: "MyPassword!1"})
@@ -51,12 +51,19 @@ test('Create entry', async ({page}) => {
   // await expect(page.locator(".entry-teaser")).toHaveCount(0)
   // await page.locator(".toolbar-button").click()
 
-  await page.getByLabel("Title").fill(mockEntries[1].title)
-  await page.locator(".rc-md-editor textarea").fill(mockEntries[0].text)
-  await page.getByRole("button", {name: "Submit"}).click()
-
-  await page.waitForTimeout(20000)
   console.log({auth})
+  const nEntries = 3
+  for (const entry of mockEntries.slice(0, nEntries)) {
+    await page.getByLabel("Title").fill(entry.title)
+    await page.locator(".rc-md-editor textarea").fill(entry.text)
+    await page.getByRole("button", {name: "Submit"}).click()
+    await page.waitForTimeout(6000)
+  }
+
+  await page.getByText("Analyze").click()
+  await expect(page.locator('.entry-teaser')).toHaveCount(nEntries)
+
+  await page.waitForTimeout(10000)
 
   // create a locator
 
