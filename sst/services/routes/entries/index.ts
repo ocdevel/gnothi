@@ -7,6 +7,7 @@ import {Function} from "@serverless-stack/node/function"
 import {lambdaSend} from '../../aws/handlers'
 
 const r = S.Routes.routes
+const fnAnalyze = Function.fn_analyze.functionName
 
 r.entries_list_request.fn = r.entries_list_request.fnDef.implement(async (req, context) => {
 
@@ -75,46 +76,50 @@ r.entries_upsert_request.fn = r.entries_upsert_request.fnDef.implement(async (re
   }
 
   // TODO undefineds
-  dbEntry.title = "Title"
   dbEntry.text_summary = "Text Summary"
   dbEntry.title_summary = "Title Summary"
   dbEntry.sentiment = "Sentiment"
 
+  const entryAsDoc = {
+    name: dbEntry.title || dbEntry.text.slice(0, 140),
+    content: dbEntry.text,
+    obj_id: dbEntry.id,
+    parent_id: dbEntry.user_id
+  }
+
   // TODO clean this up
   context.handleRes(
-    {ws: true},
+    r.entries_upsert_request.o,
     {event: "entries_upsert_response", data: [{entry: dbEntry, tags}], error: false, code: 200, keyby: 'entry.id'},
     context
   )
 
-  const lambdaData = {docs: [dbEntry]}
-
-  const upsert = await lambdaSend(
-    {event: "upsert", data: {...lambdaData, params: {}}},
-    Function.fn_analyze.functionName,
+  const upsert = lambdaSend(
+    {event: "upsert", data: {docs: [entryAsDoc], params: {}}},
+    fnAnalyze,
     "RequestResponse"
   )
 
-  const title = await lambdaSend(
-    {event: "summarize", data: {...lambdaData, params: {min_length: 20, max_length: 80}}},
-    Function.fn_analyze.functionName,
+  const title = lambdaSend(
+    {event: "summarize", data: {docs: [entryAsDoc], params: {min_length: 20, max_length: 80}}},
+    fnAnalyze,
     "RequestResponse"
   )
 
-  const summary = await lambdaSend(
-    {event: "summarize", data: {...lambdaData, params: {min_length: 100, max_length: 300}}},
-    Function.fn_analyze.functionName,
+  const summary = lambdaSend(
+    {event: "summarize", data: {docs: [entryAsDoc], params: {min_length: 100, max_length: 300}}},
+    fnAnalyze,
     "RequestResponse"
   )
 
-  const keywords = await lambdaSend(
-    {event: "keywords", data: {...lambdaData, params: {top_n: 5}}},
-    Function.fn_analyze.functionName,
+  const keywords = lambdaSend(
+    {event: "keywords", data: {docs: [entryAsDoc], params: {top_n: 5}}},
+    fnAnalyze,
     "RequestResponse"
   )
 
-  // const final = await Promise.all([upsert, title, summary, keywords])
-  // const a = 1
+  const final = await Promise.all([upsert, title, summary, keywords])
+  debugger
 
   // FIXME
   // entry.update_snoopers(d.db)

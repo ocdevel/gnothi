@@ -25,7 +25,7 @@ export function Api({ app, stack }: sst.StackContext) {
       function: authFn
     },
   })
-  const API_WS = new sst.Config.Parameter(stack, "API_WS", {value: ws.cdk.webSocketStage.callbackUrl})
+  const API_WS = new sst.Config.Parameter(stack, "API_WS", {value: ws.cdk.webSocketStage.callbackUrl})0
 
   const fnInit = new sst.Function(stack, "fn_init", {
     handler: "init.main",
@@ -40,7 +40,7 @@ export function Api({ app, stack }: sst.StackContext) {
 
   const fnAnalyze = new sst.Function(stack, 'fn_analyze', {
     srcPath: "services",
-    runtime: "python3.7",
+    runtime: "python3.9",
     handler: "ml/analyze.main",
     timeout: "10 minutes", // definitely needed for ML functions
   })

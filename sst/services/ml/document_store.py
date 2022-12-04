@@ -3,68 +3,6 @@ from haystack import Document
 import weaviate
 from typing import Optional, List, Union, Dict
 
-custom_schema = {
-    "classes": [{
-        "class": "Object",  # <= note the capital "A".
-        "description": "Individual entry embeddings",
-        "vectorIndexConfig": {
-            "distance": "dot"
-        },
-        "properties": [
-            {
-                "dataType": [
-                    "string"
-                ],
-                "description": "UUID the owner (user, group, etc)",
-                "name": "parent_id",
-            },
-            {
-                "dataType": [
-                    "string"
-                ],
-                "description": "UUID of the object",
-                "name": "obj_id",
-            },
-            {
-                "dataType": [
-                    "string"
-                ],
-                "description": "The object type. Eg, entry|user_centroid|user_center|group_centroid|group_center",
-                "name": "obj_type"
-            },
-            {
-                "dataType": [
-                    "text"
-                ],
-                "description": "The body content",
-                "name": "content"
-            }
-            # TODO consider adding user-manual title/summary
-        ]
-    }]
-    # , {
-    #     "class": "Book",
-    #     "description": "Book embeddings",
-    #     "properties": [
-    #         {
-    #             "dataType": [
-    #                 "string"
-    #             ],
-    #             "description": "Some universal id on book",
-    #             "name": "obj_id",
-    #         },
-    #         {
-    #             "dataType": [
-    #                 "text"
-    #             ],
-    #             "description": "The body content",
-    #             "name": "text"
-    #         }
-    #         # TODO consider adding user-manual title/summary
-    #     ]
-    # }]
-}
-
 class CustomDocumentStore(object):
     def __init__(
         self,
@@ -73,14 +11,9 @@ class CustomDocumentStore(object):
     ):
         client = weaviate.Client("http://localhost:8080")
 
-        if recreate_index:
-            client.schema.delete_all()
         if raw_weaviate:
             self.document_store = None
             self.client = client
-            if recreate_index:
-                for class_obj in custom_schema['classes']:
-                    client.schema.create_class(class_obj)
         else:
             self.document_store = WeaviateDocumentStore(
                 index="Object",
@@ -88,7 +21,6 @@ class CustomDocumentStore(object):
                 content_field="content",
                 name_field="obj_id",
                 similarity="cosine",
-                custom_schema=custom_schema,
                 return_embedding=True,
                 embedding_field="embedding",
                 recreate_index=recreate_index
@@ -105,7 +37,7 @@ class CustomDocumentStore(object):
             self.client.data_object.create(
                 doc,
                 "Object",
-                uuid=doc['id']
+                uuid=doc['obj_id']
             )
 
     def _mock_data(self):

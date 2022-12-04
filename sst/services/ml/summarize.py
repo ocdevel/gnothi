@@ -51,8 +51,10 @@ def main(docs, params):
 
         **params
     }
-    doc = ' '.join(docs)
-    return pipe(doc, **params)[0]['summary_text']
+    doc = ' '.join([d['content'] for d in docs])
+    res = pipe(doc, **params)
+    print("summary response", res)
+    return res[0]['summary_text']
 
 
 class CustomSummarizer(BaseComponent):

@@ -103,12 +103,11 @@ export async function lambdaSend(
   InvocationType: Api.Trigger['lambda']['invocationType'] = "RequestResponse"
 ): Promise<InvokeCommandOutput_> {
   const Payload = Buff.fromObj(data)
-  const params = {
+  const response = await clients.lambda.send(new InvokeCommand({
     InvocationType,
     Payload,
     FunctionName,
-  }
-  const response = await clients.lambda.send(new InvokeCommand(params))
+  }))
   return {
     ...response,
     // Revisit how to decode the Payload. Buffer vs Uint8Array?
