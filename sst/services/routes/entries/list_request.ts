@@ -8,9 +8,6 @@ import {lambdaSend} from '../../aws/handlers'
 import {weaviateClient, weaviateDo} from '../../data/weaviate'
 
 const r = S.Routes.routes
-const fnSummarize = Function.fn_summarize.functionName
-const fnKeywords = Function.fn_keywords.functionName
-const fnSearch = Function.fn_search.functionName
 
 r.entries_list_request.fn = r.entries_list_request.fnDef.implement(async (req, context) => {
   const entries = await db.exec({

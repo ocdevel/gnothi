@@ -61,18 +61,27 @@ export function Api({ app, stack }: sst.StackContext) {
     fnKeywords: fnKeywords.functionArn,
   })
 
-  const fnMain = new sst.Function(stack, "fn_main", {
+  const fnBackground = new sst.Function(stack, "fn_background", {
     handler: "main.main",
-    // 10 minutes needed to complete glue-code ML jobs, TODO revisit see 258f2b92
     timeout: "10 minutes",
+    bind: [
+      APP_REGION,
+      API_WS,
+      rds,
+      fnKeywords,
+      fnSearch,
+      fnSummarize
+    ]
+  })
+
+  const fnMain = new sst.Function(stack, "fn_main", {
+    handler: "main.proxy",
     bind: [
       APP_REGION,
       API_WS,
       auth,
       rds,
-      fnKeywords,
-      fnSearch,
-      fnSummarize
+      fnBackground,
     ]
   })
 

@@ -33,14 +33,10 @@ export function whichHandler(event: any, context: Context): HandlerKey {
   return "lambda"
 }
 
-export type ExtraContext = Api.FnContext & {
-  lambda?: Api.LambdaTrigger
-  // connectionId?: string
-}
 interface Handler<E = any> {
   match: (req: E) => boolean
   parse: (event: E) => Promise<Array<null | Api.Req>>
-  respond: (res: Api.Res, opts: ExtraContext) => Promise<APIGatewayProxyResultV2>
+  respond: (res: Api.Res, context: Api.FnContext) => Promise<APIGatewayProxyResultV2>
 }
 
 // TODO revisit, I can't figure this out
@@ -100,7 +96,7 @@ type InvokeCommandOutput_<O> = Omit<InvokeCommandOutput, 'Payload'> & {
 export async function lambdaSend<O = any>(
   data: object,
   FunctionName: string,
-  InvocationType: Api.Trigger['lambda']['invocationType'] = "RequestResponse"
+  InvocationType: InvokeCommandInput['InvocationType']
 ): Promise<InvokeCommandOutput_<O>> {
   const Payload = Buff.fromObj(data)
   const response = await clients.lambda.send(new InvokeCommand({
@@ -127,17 +123,24 @@ export const lambda: Handler<any> = {
   // If this is a response handler, it should kick off as a background job (InvocationType:Event).
   // If you want RequestResponse, call directly via above helper function
   respond: async (res, context) => {
-    const {data, event} = res
-    const functionName = Function[context.lambda?.key]?.functionName
-    if (!functionName) {
-      throw `Couldn't find function for ${context.lambda?.key}`
+    const req = {
+      ...res,
+      // responses are sent to http/ws as a list (always). If sending to Lambda,
+      // unpack it since we'll be sending just one object
+      data: res.data[0]
+    }
+    const backgroundReq = {
+      req,
+      context: {
+        user: context.user,
+        connectionId: context.connectionId,
+      }
     }
     const response = await lambdaSend(
-      data as object,
-      functionName,
-      context.lambda.invocationType
+      backgroundReq,
+      Function.fn_background.functionName,
+      "Event"
     )
-    // return {response, body: responseBody}
     return {statusCode: response.StatusCode, data: response.Payload}
   }
 }
@@ -208,6 +211,10 @@ export const http: Handler<APIGatewayProxyEventV2> = {
   }
 }
 
-export const handlers = {
-  ws, http, sns, lambda
+export const handlers: Record<keyof Api.Trigger, Handler> = {
+  ws,
+  http,
+  // sns,
+  // s3,
+  background: lambda
 }

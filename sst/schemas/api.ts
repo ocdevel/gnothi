@@ -2,20 +2,15 @@ import {z} from "zod";
 import {Events} from "./events";
 import type {Context} from 'aws-lambda'
 import {Passthrough} from './utils'
-import type {User} from './users'
-
-export type LambdaTrigger = {
-  key: 'fnBackground' | 'fnAnalyze'
-  invocationType: "RequestResponse" | "Event"
-}
+import {User} from './users'
 
 export type Trigger = {
   ws?: boolean // send the result to the websocket
   http?: boolean // send the result back as a standard http response
-  s3?: boolean // put the result into s3
-  // call a function next. The function is this same wrapper framework, but is needed if we need to return
+  // s3?: boolean // put the result into s3
+  // background function. The function is this same wrapper framework, but is needed if we need to return
   // a value first ot the client (ws, http) and then kick off a background.
-  lambda?: LambdaTrigger
+  background?: boolean
 }
 
 export type Def<T extends z.ZodTypeAny> = {
@@ -42,6 +37,7 @@ export type FnContext = {
   snooping?: false
   everyone?: false
 
+  finalRes?: unknown
   connectionId?: string
   handleRes: (def: DefO<any>, res: Res, fnContext: FnContext) => void
   handleReq: (req: Req, fnContext: FnContext) => void
@@ -79,9 +75,9 @@ export class Route<
     this.fnDef = z.function()
       .args(i.s, z.any())
       .returns(o.s.array().promise())
-    // this.fn = async (req, context) => {
-    //   throw Error(this.i.e + " function not implemented")
-    // }
+    this.fn = async (req, context) => {
+      throw Error(this.i.e + " function not implemented")
+    }
   }
 }
 

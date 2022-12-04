@@ -52,7 +52,7 @@ test('Create entry', async ({page}) => {
   // await page.locator(".toolbar-button").click()
 
   console.log({auth})
-  const nEntries = 3
+  const nEntries = 1
   for (const entry of mockEntries.slice(0, nEntries)) {
     await page.getByLabel("Title").fill(entry.title)
     await page.locator(".rc-md-editor textarea").fill(entry.text)

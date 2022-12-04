@@ -73,17 +73,27 @@ export const routes = {
       s: entries_upsert_request,
     },
     o: {
+      e: 'entries_upsert_response',
+      s: entries_upsert_response,
+      t: {ws: true, background: true},
+      event_as: "entries_list_response",
+      keyby: 'entry.id',
+      op: "prepend",
+    },
+  }),
+  entries_upsert_response: new Route({
+    i: {
+      e: 'entries_upsert_response',
+      s: entries_upsert_response
+    },
+    o: {
       // Intermediate steps (_response, _etc) will be sent manually via
       // websockets, the final result will be pushed via _final
       e: 'entries_upsert_final',
       s: entries_upsert_final,
-      t: {
-        ws: true,
-        // lambda: {key: "fnBackground", invocationType: "Event"}
-      },
+      t: {ws: true},
       event_as: "entries_list_response",
       keyby: 'entry.id',
-      op: "prepend",
     },
   }),
 }

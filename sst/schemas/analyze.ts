@@ -56,6 +56,18 @@ export const routes = {
       snoopable: true
     },
     o: {
+      e: "analyze_get_response",
+      s: analyze_get_response,
+      t: {ws: true, background: true}
+    }
+  }),
+  analyze_get_response: new Route({
+    i: {
+      e: 'analyze_get_response',
+      s: analyze_get_response,
+      t: {background: true},
+    },
+    o: {
       e: "analyze_get_final",
       s: analyze_get_final,
       t: {ws: true}

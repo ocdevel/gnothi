@@ -1,13 +1,11 @@
 import * as S from '@gnothi/schemas'
 import {db} from '../../data/db'
 import {GnothiError} from "../errors";
-import {Function} from "@serverless-stack/node/function"
-import {lambdaSend} from '../../aws/handlers'
-import {weaviateClient, weaviateDo} from '../../data/weaviate'
+import {summarize} from '../../ml/node/summarize'
+import {keywords} from '../../ml/node/keywords'
+import {upsert} from '../../ml/node/upsert'
 
 const r = S.Routes.routes
-const fnSummarize = Function.fn_summarize.functionName
-const fnKeywords = Function.fn_keywords.functionName
 
 r.entries_upsert_request.fn = r.entries_upsert_request.fnDef.implement(async (req, context: S.Api.FnContext) => {
   const user_id = context.user.id
@@ -56,54 +54,37 @@ r.entries_upsert_request.fn = r.entries_upsert_request.fnDef.implement(async (re
   dbEntry.title_summary = "Title: AI is generating"
   dbEntry.sentiment = "Sentiment: AI is generating"
 
-  const entryAsDoc = {
-    name: dbEntry.title || dbEntry.text.slice(0, 140),
-    content: dbEntry.text,
-    obj_id: dbEntry.id,
-    parent_id: dbEntry.user_id
-  }
+  return [{entry: dbEntry, tags}]
+})
 
-  const sendRes = context.handleRes(
-    r.entries_upsert_request.o,
-    {event: "entries_upsert_response", data: [{entry: dbEntry, tags}], error: false, code: 200, keyby: 'entry.id'},
-    context
-  )
-  const upsert = weaviateDo(weaviateClient.data
-    .creator()
-    .withClassName("Object")
-    .withProperties(entryAsDoc)
-  )
-  const title = lambdaSend(
-    {text: entryAsDoc.content, params: {min_length: 20, max_length: 80}},
-    fnSummarize,
-    "RequestResponse"
-  )
-  const summary = lambdaSend(
-    {text: entryAsDoc.content, params: {min_length: 100, max_length: 300}},
-    fnSummarize,
-    "RequestResponse"
-  )
-  const keywords = lambdaSend(
-    {text: entryAsDoc.content, params: {top_n: 5}},
-    fnKeywords,
-    "RequestResponse"
-  )
+r.entries_upsert_response.fn = r.entries_upsert_response.fnDef.implement(async (req, context) => {
+  const {entry, tags} = req
 
-  const final = await Promise.all([sendRes, upsert, title, summary, keywords])
+  const pUpsert = upsert(entry)
+  const pTitleAndSummary = summarize({
+    texts: [entry.text, entry.text],
+    params: [{min_length: 20, max_length: 80}, {min_length: 100, max_length: 300}]
+  })
+  const pKeywords = keywords({
+    texts: [entry.text],
+    params: [{top_n: 5}],
+  })
+
+  const final = await Promise.all([pUpsert, pTitleAndSummary, pKeywords])
 
   const updated = {
-    ...dbEntry,
-    title_summary: final[2].Payload as unknown as string,
-    text_summary: final[3].Payload as unknown as string
+    ...entry,
+    title_summary: final[1][0],
+    text_summary: final[1][1]
   }
 
   await db.executeStatement({
     sql: `update entries set title_summary=:title_summary, text_summary=:text_summary
-        where entry_id=:entry_id`,
+        where id=:id`,
     parameters: [
       {name: "title_summary", value: {stringValue: updated.title_summary}},
       {name: "text_summary", value: {stringValue: updated.text_summary}},
-      {name: "entry_id", value: {stringValue: dbEntry.id}, typeHint: "UUID"}
+      {name: "id", value: {stringValue: entry.id}, typeHint: "UUID"}
     ]
   })
 
