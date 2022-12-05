@@ -39,7 +39,9 @@ export function Ml({ app, stack }: sst.StackContext) {
   })
 
   const mlFunctionProps = {
-    memorySize: 10240,
+    // we need only about 4-6gb RAM; but we need the CPU power given by higher ram:
+    // https://stackoverflow.com/a/66523153
+    memorySize: 8846,
     timeout: cdk.Duration.minutes(10),
     vpc: vpc,
     filesystem: lambda.FileSystem.fromEfsAccessPoint(accessPoint, '/mnt/transformers_cache')
@@ -47,15 +49,7 @@ export function Ml({ app, stack }: sst.StackContext) {
 
   const fnSummarize = new lambda.DockerImageFunction(stack, "fn_summarize", {
     ...mlFunctionProps,
-    code: lambda.DockerImageCode.fromImageAsset("services/ml/summarize", {
-      file: "Dockerfile"
-    }),
-  })
-  const fnKeywords = new lambda.DockerImageFunction(stack, "fn_keywords", {
-    ...mlFunctionProps,
-    code: lambda.DockerImageCode.fromImageAsset("services/ml/keywords", {
-      file: "Dockerfile"
-    }),
+    code: lambda.DockerImageCode.fromImageAsset("services/ml/summarize"),
   })
 
   const fnSearch = new sst.Function(stack, "fn_search", {
@@ -67,11 +61,9 @@ export function Ml({ app, stack }: sst.StackContext) {
   stack.addOutputs({
     fnSearch_: fnSearch.functionArn,
     fnSummarize_: fnSummarize.functionArn,
-    fnKeywords_: fnKeywords.functionArn,
   })
   return {
     fnSearch,
-    fnSummarize,
-    fnKeywords
+    fnSummarize
   }
 }

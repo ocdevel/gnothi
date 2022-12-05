@@ -46,7 +46,6 @@ export function Api({ app, stack }: sst.StackContext) {
        actions: ["*"],
        effect: iam.Effect.ALLOW,
        resources: [
-         ml.fnKeywords.functionArn,
          ml.fnSummarize.functionArn,
        ],
      }),
@@ -57,8 +56,7 @@ export function Api({ app, stack }: sst.StackContext) {
     timeout: "10 minutes",
     // the ML functions based on Dockerfiles can't use .bind(). Use the old way: permissions + environment
     environment: {
-      fn_keywords: ml.fnKeywords.functionName,
-      fn_summarize: ml.fnSummarize.functionName
+      fn_summarize: ml.fnSummarize.functionName,
     },
     permissions: [
       ...mlFnPerms
