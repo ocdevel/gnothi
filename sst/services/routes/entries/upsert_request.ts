@@ -2,7 +2,6 @@ import * as S from '@gnothi/schemas'
 import {db} from '../../data/db'
 import {GnothiError} from "../errors";
 import {summarize} from '../../ml/node/summarize'
-import {keywords} from '../../ml/node/keywords'
 import {upsert} from '../../ml/node/upsert'
 
 const r = S.Routes.routes
@@ -32,6 +31,7 @@ r.entries_upsert_request.fn = r.entries_upsert_request.fnDef.implement(async (re
     })
   }
 
+  // FIXME
   // manual created-at override
   // iso_fmt = r"^\d{4}-([0]\d|1[0-2])-([0-2]\d|3[01])$"
   // created_at = data.get('created_at', None)
@@ -61,36 +61,36 @@ r.entries_upsert_response.fn = r.entries_upsert_response.fnDef.implement(async (
   const {entry, tags} = req
 
   const pUpsert = upsert(entry)
-  const pTitleAndSummary = summarize({
+  const pSummaries = summarize({
     texts: [entry.text, entry.text],
-    params: [{min_length: 20, max_length: 80}, {min_length: 100, max_length: 300}]
-  })
-  const pKeywords = keywords({
-    texts: [entry.text],
-    params: [{top_n: 5}],
+    params: [
+      {summarize: {min_length: 20, max_length: 80}},
+      {summarize: {min_length: 100, max_length: 300}, keywords: {top_n: 5}, emotion: true}
+    ]
   })
 
-  const final = await Promise.all([pUpsert, pTitleAndSummary, pKeywords])
+  const final = await Promise.all([pUpsert, pSummaries])
 
   const updated = {
     ...entry,
-    title_summary: final[1][0],
-    text_summary: final[1][1]
+    title_summary: final[1][0].summary,
+    text_summary: final[1][1].summary,
+    sentiment: final[1][1].emotion
   }
 
   await db.executeStatement({
-    sql: `update entries set title_summary=:title_summary, text_summary=:text_summary
+    sql: `update entries set title_summary=:title_summary, text_summary=:text_summary, sentiment=:sentiment
         where id=:id`,
     parameters: [
       {name: "title_summary", value: {stringValue: updated.title_summary}},
       {name: "text_summary", value: {stringValue: updated.text_summary}},
+      {name: "sentiment", value: {stringValue: updated.sentiment}},
       {name: "id", value: {stringValue: entry.id}, typeHint: "UUID"}
     ]
   })
 
   // FIXME
   // entry.update_snoopers(d.db)
-  //M.Entry.run_models(db, entry)
 
   return [{entry: updated, tags}]
 })

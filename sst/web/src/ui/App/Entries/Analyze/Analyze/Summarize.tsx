@@ -23,5 +23,6 @@ export default function Summarize() {
   }
 
   // sent2face(reply_.sentiment)} {reply_.summary}
+  debugger
   return <Typography>{summary.first.summary}</Typography>
 }

@@ -63,26 +63,32 @@ r.analyze_get_response.fn = r.analyze_get_response.fnDef.implement(async (req, c
     if (!answer?.length) {return null}
     return handleRes(
       r.analyze_ask_response,
-      {data: [{
-        id: uuid(), // neede for React `key`
-        answer
-      }]},
+      {
+        data: [{
+          id: uuid(), // neede for React `key`
+          answer
+        }]
+      },
       context
     )
   })()
 
-  const blob = entries.map(e => e.text).join('\n\n')
-
   const pSummarize = summarize({
-    texts: [blob],
-    params: [{min_length: 150, max_length: 300}]
+    texts: [entries.map(e => e.text).join('\n\n')],
+    params: [{
+      summarize: {min_length: 150, max_length: 300},
+      keywords: {top_n: 5},
+      emotion: true
+    }]
   }).then((summary) => {
       handleRes(
         r.analyze_summarize_response,
-        {data: [{
-          id: uuid(), // neede for React `key`,
-          summary
-        }]},
+        {
+          data: [{
+            id: uuid(), // neede for React `key`,
+            ...summary[0]
+          }]
+        },
         context
       )
     })
@@ -91,10 +97,12 @@ r.analyze_get_response.fn = r.analyze_get_response.fnDef.implement(async (req, c
   const pThemes = themes(entries).then(res => {
     handleRes(
       r.analyze_themes_response,
-      {data: res.map((r, i) => ({
-        id: uuid(), // neede for React `key`
-        ...r
-      }))},
+      {
+        data: res.map((r, i) => ({
+          id: uuid(), // neede for React `key`
+          ...r
+        }))
+      },
       context
     )
   })

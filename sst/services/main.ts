@@ -110,7 +110,7 @@ async function handleRes(
   fnContext: Api.FnContext
 ): Promise<RecordResult> {
   let final: RecordResult = null
-  console.log("handleRes", res)
+  console.log("handleRes", def.e, res)
   const resFull = {
     error: res.error || false,
     code: res.code || 200,

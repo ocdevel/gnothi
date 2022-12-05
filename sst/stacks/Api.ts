@@ -41,7 +41,7 @@ export function Api({ app, stack }: sst.StackContext) {
     fnInitArn: fnInit.functionArn
   })
 
-  const mlFnPerms = [
+  const backgroundCustomPerms = [
     new iam.PolicyStatement({
        actions: ["*"],
        effect: iam.Effect.ALLOW,
@@ -59,7 +59,8 @@ export function Api({ app, stack }: sst.StackContext) {
       fn_summarize: ml.fnSummarize.functionName,
     },
     permissions: [
-      ...mlFnPerms
+      ...backgroundCustomPerms,
+      ws
     ],
     bind: [
       APP_REGION,

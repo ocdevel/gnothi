@@ -172,6 +172,8 @@ export const ws: Handler<APIGatewayProxyWebsocketEventV2> = {
         Data: Buff.fromObj(res),
       }))
     } catch (e) {
+      throw e
+      // todo handle just disconnection error below, throw others
       console.error("WebSocketError: trying to send to disconnected client.")
     }
     return {statusCode: 200}

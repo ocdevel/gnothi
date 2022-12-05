@@ -10,6 +10,8 @@ import CircularProgress from "@mui/material/CircularProgress";
 import Typography from "@mui/material/Typography";
 import {analyze_themes_response} from '@gnothi/schemas/analyze'
 import Box from "@mui/material/Box";
+import Stack from "@mui/material/Stack";
+import Chip from "@mui/material/Chip";
 
 export default function Themes() {
   const submitted = useStore(s => !!s.res.analyze_get_response?.first)
@@ -29,26 +31,26 @@ export default function Themes() {
   }
 
   // sent2face(reply_.sentiment)} {reply_.summary}
-  const renderTerms = terms => {
-    if (!terms) {return null}
-    return terms.map((t, i) => <>
-      <code>{t}</code>
-      {i < terms.length - 1 ? ' · ' : ''}
-    </>)
+  // const renderTerms = terms => {
+  //   if (!terms) {return null}
+  //   return terms.map((t, i) => <>
+  //     <code>{t}</code>
+  //     {i < terms.length - 1 ? ' · ' : ''}
+  //   </>)
+  // }
+
+  function renderTheme(theme: analyze_themes_response, i: number) {
+    return <Box key={theme.id}>
+      <Typography>{theme.summary}</Typography>
+      <Stack direction="row" spacing={2}>
+        {theme.keywords.map(kw => <Chip key={kw} label={kw} />)}
+      </Stack>
+    </Box>
   }
 
-  function renderKeywords(keywords: any) {
-    console.log(keywords)
-  }
-
-  function renderSummary(summary: string) {
-    return <Typography>{summary}</Typography>
-  }
-
-  return themes.rows.map((t, i) => <Box key={t.id}>
-    {renderSummary(t.summary)}
-    {renderKeywords(t.keywords)}
-  </Box>)
+  return <>
+    {themes.rows.map(renderTheme)}
+  </>
 
   // const themes_ =_.sortBy(reply.themes, 'n_entries').slice().reverse()
   // if (!themes_.length) {
