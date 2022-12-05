@@ -15,7 +15,7 @@ type FnOut = [string, number][][]
 export async function keywords({texts, params}: FnIn): Promise<FnOut> {
   // Get functionNames in here so we don't throw error when this file is imported
   // from proxy.ts
-  const functionName = Function.fn_keywords.functionName
+  const functionName = process.env.fn_keywords
 
   async function call(data: LambdaIn): Promise<LambdaOut> {
     const res = await lambdaSend<LambdaOut>(data, functionName, "RequestResponse")

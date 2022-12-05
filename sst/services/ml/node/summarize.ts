@@ -16,7 +16,7 @@ type FnOut = string[]
 export async function summarize({texts, params}: FnIn): Promise<FnOut> {
   // Get functionNames in here so we don't throw error when this file is imported
   // from proxy.ts
-  const functionName = Function.fn_summarize.functionName
+  const functionName = process.env.fn_summarize
 
   async function call(data: LambdaIn): Promise<LambdaOut> {
     const res = await lambdaSend<LambdaOut>(data, functionName, "RequestResponse")

@@ -1,9 +1,12 @@
 import * as sst from "@serverless-stack/resources";
 import { Database } from "./Database";
+import { Ml } from "./Ml";
 import { Auth } from './Auth'
+import * as iam from "aws-cdk-lib/aws-iam"
 
 export function Api({ app, stack }: sst.StackContext) {
   const rds = sst.use(Database);
+  const ml = sst.use(Ml);
   const {auth, authFn} = sst.use(Auth);
   const APP_REGION = new sst.Config.Parameter(stack, "APP_REGION", {value: app.region})
 
@@ -38,39 +41,33 @@ export function Api({ app, stack }: sst.StackContext) {
     fnInitArn: fnInit.functionArn
   })
 
-  const mlFunctionProps: sst.FunctionProps = {
-    srcPath: "services",
-    runtime: "python3.9",
-    timeout: "10 minutes", // definitely needed for ML functions
-  }
-  const fnSearch = new sst.Function(stack, "fn_search", {
-    ...mlFunctionProps,
-    handler: "ml/search.main"
-  })
-  const fnSummarize = new sst.Function(stack, 'fn_summarize', {
-    ...mlFunctionProps,
-    handler: "ml/summarize.main"
-  })
-  const fnKeywords = new sst.Function(stack, 'fn_keywords', {
-    ...mlFunctionProps,
-    handler: "ml/keywords.main"
-  })
-  stack.addOutputs({
-    fnSearch: fnSearch.functionArn,
-    fnSummarize: fnSummarize.functionArn,
-    fnKeywords: fnKeywords.functionArn,
-  })
+  const mlFnPerms = [
+    new iam.PolicyStatement({
+       actions: ["*"],
+       effect: iam.Effect.ALLOW,
+       resources: [
+         ml.fnKeywords.functionArn,
+         ml.fnSummarize.functionArn,
+       ],
+     }),
+  ]
 
   const fnBackground = new sst.Function(stack, "fn_background", {
     handler: "main.main",
     timeout: "10 minutes",
+    // the ML functions based on Dockerfiles can't use .bind(). Use the old way: permissions + environment
+    environment: {
+      fn_keywords: ml.fnKeywords.functionName,
+      fn_summarize: ml.fnSummarize.functionName
+    },
+    permissions: [
+      ...mlFnPerms
+    ],
     bind: [
       APP_REGION,
       API_WS,
       rds,
-      fnKeywords,
-      fnSearch,
-      fnSummarize
+      ml.fnSearch,
     ]
   })
 

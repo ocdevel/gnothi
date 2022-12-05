@@ -6,7 +6,7 @@ from keybert import KeyBERT
 from typing import List, Optional, Dict, Tuple
 from pprint import pprint
 
-sentence_model = SentenceTransformer("all-MiniLM-L6-v2", device="cpu")
+sentence_model = SentenceTransformer("/var/task/model", device="cpu", cache_folder="/tmp/")
 model = KeyBERT(model=sentence_model)
 
 

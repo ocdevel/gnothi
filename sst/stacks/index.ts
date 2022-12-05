@@ -3,6 +3,7 @@ import { Api } from "./Api";
 import { Web } from "./Web";
 import { Database } from "./Database";
 import { Auth } from "./Auth";
+import { Ml } from "./Ml";
 
 export default function main(app: App) {
   app.setDefaultFunctionProps({
@@ -12,5 +13,10 @@ export default function main(app: App) {
       format: "esm",
     },
   });
-  app.stack(Database).stack(Auth).stack(Api).stack(Web);
+  app
+    .stack(Database)
+    .stack(Auth)
+    .stack(Ml)
+    .stack(Api)
+    .stack(Web);
 }
