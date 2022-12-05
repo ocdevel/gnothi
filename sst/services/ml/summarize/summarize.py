@@ -1,10 +1,14 @@
 from typing import List, Optional, Set, Union, Dict
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, pipeline
 
-# model_name = "ccdv/lsg-bart-base-4096-wcep"
-model_name = "/var/task/model"  # from dockerfile buildstage
-tokenizer = AutoTokenizer.from_pretrained(model_name, cache_dir='/tmp/', trust_remote_code=True)
-model = AutoModelForSeq2SeqLM.from_pretrained(model_name, cache_dir='/tmp/', trust_remote_code=True)
+model_name = "ccdv/lsg-bart-base-4096-wcep"
+# model_name = "/var/task/model"  # from dockerfile buildstage
+model_args = {
+    'cache_dir': '/mnt/transformers_cache',
+    'trust_remote_code': True
+}
+tokenizer = AutoTokenizer.from_pretrained(model_name, **model_args)
+model = AutoModelForSeq2SeqLM.from_pretrained(model_name, **model_args)
 pipe = pipeline("summarization", model=model, tokenizer=tokenizer)
 
 

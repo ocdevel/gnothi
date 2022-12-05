@@ -20,8 +20,6 @@ from haystack.pipelines import ExtractiveQAPipeline, Pipeline, BaseStandardPipel
 from haystack.utils import print_answers
 
 from ml.document_store import CustomDocumentStore
-from ml.keywords import main as keywords
-from ml.summarize import main as summarize
 
 # farm_reader = FARMReader(
 #     use_gpu=False,
@@ -57,54 +55,44 @@ doc_store = CustomDocumentStore(recreate_index=False, raw_weaviate=True)
 
 
 def main(event, context):
-    print("------------ IN PYTHON ------------------")
-    print(event)
-    task = event['event']
-    docs = event['data']['docs']
-    params = event['data']['params']
-    if task == 'upsert':
-        return doc_store.upsert(docs, params)
-    elif task == 'keywords':
-        return keywords(docs, params)
-    elif task == 'summarize':
-        return summarize(docs, params)
-    elif task == 'search':
-        query = event.get('search', None)
-        query_type = None
-        if query:
-            res = query_classifier.run("arya stark father") # => ({}, 'output_2')
-            query_type = get_query_type(query, res[1])
-        build = (doc_store.client.query
-             .get(class_name="Object", properties=["content", "obj_id"])
-            .with_additional(['vector', 'certainty']))
-        if not query:
-            pass
-        elif query_type in ['keyword', 'statement', 'question']:
-            build = build.with_near_text({
-                'concepts': [query],
-                'certainty': .2
-            })
-        # elif query_type == 'question':
-        #     build = (build.with_ask({
-        #             'question': query,
-        #         })
-        #         .with_limit(1)
-        #         .with_additional({'answer': ['result', 'hasAnswer']})
-        #      )
-        docs = build.do()
-        print(docs)
+    ids = event['ids']
+    query = event['query']
+    query = event.get('search', None)
+    query_type = None
+    if query:
+        res = query_classifier.run("arya stark father") # => ({}, 'output_2')
+        query_type = get_query_type(query, res[1])
+    build = (doc_store.client.query
+         .get(class_name="Object", properties=["content", "obj_id"])
+        .with_additional(['vector', 'certainty']))
+    if not query:
+        pass
+    elif query_type in ['keyword', 'statement', 'question']:
+        build = build.with_near_text({
+            'concepts': [query],
+            'certainty': .2
+        })
+    # elif query_type == 'question':
+    #     build = (build.with_ask({
+    #             'question': query,
+    #         })
+    #         .with_limit(1)
+    #         .with_additional({'answer': ['result', 'hasAnswer']})
+    #      )
+    docs = build.do()
+    print(docs)
 
 
-        FARMReader().run()
+    FARMReader().run()
 
-        # prediction = pipe.run(
-        #     query="arya stark father",
-        #     params={
-        #         "DPRRetriever": {"top_k": 10},
-        #         "BM25Retriever": {"top_k": 10},
-        #         "QAReader": {"top_k": 5}
-        #     }
-        # )
-        # # Change `minimum` to `medium` or `all` to raise the level of detail
-        # print_answers(prediction, details="all")
-        return None
+    # prediction = pipe.run(
+    #     query="arya stark father",
+    #     params={
+    #         "DPRRetriever": {"top_k": 10},
+    #         "BM25Retriever": {"top_k": 10},
+    #         "QAReader": {"top_k": 5}
+    #     }
+    # )
+    # # Change `minimum` to `medium` or `all` to raise the level of detail
+    # print_answers(prediction, details="all")
+    return None
