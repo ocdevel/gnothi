@@ -1,11 +1,14 @@
 USE_GPU = False
+import os
+os.environ["CUDA_VISIBLE_DEVICES"] = ""
 
 import json
 import logging
 logging.basicConfig(format="%(levelname)s - %(name)s -  %(message)s", level=logging.WARNING)
 logging.getLogger("haystack").setLevel(logging.INFO)
 
-from document_store import CustomDocumentStore
+from haystack.document_stores.faiss import FAISSDocumentStore
+from haystack.document_stores.weaviate import WeaviateDocumentStore
 
 """
 1) Keywords vs. Questions/Statements (Default)
@@ -32,15 +35,16 @@ def get_query_type(query: str, run_response: str):
         return 'keyword'
     return 'statement'
 
-
-document_store = CustomDocumentStore()
-
-from haystack.nodes import BM25Retriever
-bm25_retriever = BM25Retriever(document_store)
+from os import path
+if path.exists('./index.faiss'):
+    document_store = FAISSDocumentStore.load('./index.faiss', './index.config')
+else:
+    document_store = FAISSDocumentStore()
 
 from haystack.nodes import DensePassageRetriever
 dpr_retriever = DensePassageRetriever(
     document_store=document_store,
+    use_gpu=False
     # query_embedding_model="facebook/dpr-question_encoder-single-nq-base",
     # passage_embedding_model="facebook/dpr-ctx_encoder-single-nq-base"
 )
@@ -49,8 +53,8 @@ from haystack.nodes import RAGenerator
 rag_generator = RAGenerator(
     model_name_or_path="facebook/rag-sequence-nq",
     retriever=dpr_retriever,
-    top_k=1,
-    min_length=2
+    top_k=3,
+    min_length=3
 )
 
 def main(event, context):

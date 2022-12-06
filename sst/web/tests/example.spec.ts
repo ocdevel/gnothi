@@ -64,6 +64,9 @@ test('Create entry', async ({page}) => {
   await expect(page.locator('.entry-teaser')).toHaveCount(nEntries)
 
   await page.waitForTimeout(10000)
+  //const path = await page.video().path();
+
+
 
   // create a locator
 
