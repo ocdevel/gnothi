@@ -3,9 +3,9 @@ import {weaviateClient, weaviateDo} from '../weaviate'
 const classes = [{
   "class": "Object",  // <= note the capital "O".
   "description": "Individual entry embeddings",
-  "vectorIndexConfig": {
-    "distance": "dot"
-  },
+  // "vectorIndexConfig": {
+  //   "distance": "cosine"
+  // },
   "properties": [
     {
       "dataType": [
@@ -25,6 +25,13 @@ const classes = [{
       "dataType": [
         "string"
       ],
+      "description": "The original object id. Could retrofit Weaviate's id field, but dont' wanna f around",
+      "name": "obj_id"
+    },
+    {
+      "dataType": [
+        "string"
+      ],
       "description": "Name / title",
       "name": "name"
     },
@@ -37,27 +44,25 @@ const classes = [{
     }
     // TODO consider adding user-manual title/summary
   ]
-  //, {
-  //  "class": "Book",
-  //  "description": "Book embeddings",
-  //  "properties": [
-  //    {
-  //      "dataType": [
-  //        "string"
-  //      ],
-  //      "description": "Some universal id on book",
-  //      "name": "obj_id",
-  //    },
-  //    {
-  //      "dataType": [
-  //        "text"
-  //      ],
-  //      "description": "The body content",
-  //      "name": "text"
-  //    }
-  //    # TODO consider adding user-manual title/summary
-  //  ]
-  //}]
+}, {
+   "class": "Book",
+   "description": "Book embeddings",
+   "properties": [
+     {
+       "dataType": [
+         "string"
+       ],
+       "description": "Some universal id on book",
+       "name": "obj_id",
+     },
+     {
+       "dataType": [
+         "text"
+       ],
+       "description": "The body content",
+       "name": "content"
+     }
+   ]
 }]
 export async function initWeaviate() {
   await weaviateDo(weaviateClient.schema
