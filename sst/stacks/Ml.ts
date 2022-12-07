@@ -4,46 +4,171 @@ import * as ec2 from "aws-cdk-lib/aws-ec2";
 import * as efs from "aws-cdk-lib/aws-efs";
 import * as ecr from "aws-cdk-lib/aws-ecr-assets";
 import * as cdk from "aws-cdk-lib";
-import path from 'path'
+import * as ecs from "aws-cdk-lib/aws-ecs"
+import logs from 'aws-cdk-lib/aws-logs'
+import ecs_patterns from 'aws-cdk-lib/aws-ecs-patterns'
+import {ApplicationProtocol} from "aws-cdk-lib/aws-elasticloadbalancingv2";
+import {DockerImageAsset} from "aws-cdk-lib/aws-ecr-assets";
 
-export function Ml({ app, stack }: sst.StackContext) {
-  // Two options:
-  // 1. Save HF model into docker image (see commented out sections in Dockerfiles)
-  // 2. Save HF models in EFS mount, cache folder
-  // - https://aws.amazon.com/blogs/compute/hosting-hugging-face-models-on-aws-lambda/
-  // - https://github.com/cdk-patterns/serverless/blob/main/the-efs-lambda/typescript/lib/the-efs-lambda-stack.ts
-  // Going with option 2 to save on lambda-start & CDK deployment times
+export function Ml(context: sst.StackContext) {
+  const { app, stack } = context
+  // Getting a cyclical deps error when I have these all as different stacks, per
+  // sst recommended usage. Just calling them as functions for now
+  // https://gist.github.com/lefnire/4018a96ddee49d10b9a96c42b5698820
 
-  //EFS needs to be setup in a VPC
-  const vpc = new ec2.Vpc(stack, 'MlVpc', {
+
+  /**
+   * VPC & FS
+   */
+
+  // We try to get away with as much serverless as possible, but some resources
+  // need ot run more traditionally. For this, have a universal VPC the different resources
+  // can communicate behind
+  const vpc = new ec2.Vpc(stack, 'VpcMain', {
     maxAzs: 2, // Default is all AZs in the region
-  });
+  })
 
-  // creates a file system in EFS to store cache models
-  const fs = new efs.FileSystem(stack, 'FileSystem', {
+  // creates a file system in EFS to store cache models, weaviate data, etc
+  const fs = new efs.FileSystem(stack, 'EfsMain', {
     vpc,
     removalPolicy: cdk.RemovalPolicy.DESTROY
   });
 
-  const accessPoint = fs.addAccessPoint('AccessPoint',{
+  const accessPoint = fs.addAccessPoint('AccessPoint', {
     createAcl: {
       ownerGid: '1001',
       ownerUid: '1001',
       permissions: '750'
     },
-    path:'/export/models',
+    path: '/export/mldata',
     posixUser: {
       gid: '1001',
       uid: '1001'
     }
   })
 
+  /**
+   * Weaviate
+   * The weaviate docker-compose.yml file can be deployed direct to AWS, see
+   * https://docs.docker.com/cloud/ecs-integration/
+   * But I want it part of the CDK stack. Some resources on that:
+   * - https://www.gravitywell.co.uk/insights/deploying-applications-to-ecs-fargate-with-aws-cdk/
+   * - https://docs.amazonaws.cn/en_us/AmazonECS/latest/userguide/tutorial-ecs-web-server-cdk.html
+   * - https://raw.githubusercontent.com/aws-samples/aws-cdk-examples/master/typescript/ecs/ecs-service-with-advanced-alb-config/index.ts
+   * - https://docs.aws.amazon.com/cdk/v1/guide/ecs_example.html
+   *
+   * But this in particular was a great post, specifically about replicating docker-compose
+   * context into CDK (what we want):
+   * - https://blog.jeffbryner.com/2020/07/20/aws-cdk-docker-explorations.html
+   * - https://github.com/jeffbryner/aws-cdk-example-deployment/blob/master/infrastructure/infrastructure.py
+   */
+  // CPU/RAM mappings at https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-cpu-memory-error.html
+  // TODO distribute these more intelligently through the tasks/services, I don't want to think right now
+  const resources = {
+    cpu: 2048, // Default is 256
+    memoryLimitMiB: 4096 // Default is 512
+  } as const
+
+  const cluster = new ecs.Cluster(stack, "MlCluster", {vpc})
+  cluster.addDefaultCloudMapNamespace({name: "service.local"})
+
+  // ---
+  // t2v-transformers
+  // Might end up removing this, since using Haystack to embed
+  // ---
+  const t2vTransformersTask = new ecs.FargateTaskDefinition(stack, "t2v-transformers-task", {
+    ...resources
+  })
+  t2vTransformersTask.addContainer("t2v-transformers", {
+    image: ecs.ContainerImage.fromRegistry("semitechnologies/transformers-inference:sentence-transformers-all-mpnet-base-v2"),
+    essential: true,
+    environment: {
+      ENABLE_CUDA: "0"
+    },
+    logging: ecs.LogDrivers.awsLogs({
+      streamPrefix: "t2vTransformersContainer",
+      logRetention: logs.RetentionDays.ONE_WEEK,
+    }),
+    portMappings: [{containerPort: 8080, hostPort: 8080}]
+  })
+
+  // ---
+  // weaviate
+  // ---
+  const weaviateTask = new ecs.FargateTaskDefinition(stack, "weaviate-task", {
+    ...resources
+  })
+  weaviateTask.addContainer("weaviate", {
+    image: ecs.ContainerImage.fromRegistry("semitechnologies/weaviate:1.16.5"),
+    essential: true,
+    logging: ecs.LogDrivers.awsLogs({
+      streamPrefix: "weaviateContainer",
+      logRetention: logs.RetentionDays.ONE_WEEK,
+    }),
+    portMappings: [{containerPort:8080, hostPort: 8080}],
+    environment: {
+      TRANSFORMERS_INFERENCE_API: 'http://service.local:8080',
+      QUERY_DEFAULTS_LIMIT: "25",
+      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: 'true',
+      PERSISTENCE_DATA_PATH: '/var/lib/weaviate',
+      DEFAULT_VECTORIZER_MODULE: 'text2vec-transformers',
+      ENABLE_MODULES: 'text2vec-transformers,ref2vec-centroid',
+      CLUSTER_HOSTNAME: 'node1'
+    }
+  })
+
+  // ---
+  // Services: string them together
+  // ---
+  const weaviateService = new ecs_patterns.NetworkLoadBalancedFargateService(stack, "weaviate-service", {
+    serviceName: "weaviate",
+    cluster, // Required
+    cloudMapOptions: {name: "weaviate"},
+    ...resources,
+    desiredCount: 1,  // Default is 1
+    taskDefinition: weaviateTask,
+    listenerPort: 8080,
+    publicLoadBalancer: true,
+  })
+  weaviateService.service.connections.allowFromAnyIpv4(
+    ec2.Port.tcp(8080), "weaviate inbound"
+  )
+
+  const t2vTransformersService = new ecs_patterns.NetworkLoadBalancedFargateService(stack, "t2v-transformers-service", {
+    serviceName: "t2v-transformers",
+    cluster,
+    cloudMapOptions: {name: "t2v-transformers"},
+    ...resources,
+    desiredCount: 1,
+    taskDefinition: t2vTransformersTask,
+    listenerPort: 8080,
+    publicLoadBalancer: false
+  })
+  t2vTransformersService.service.connections.allowFrom(
+      weaviateService.service, ec2.Port.tcp(8080)
+  )
+
+  stack.addOutputs({
+    weaviateUrl: weaviateService.listener.loadBalancer.loadBalancerDnsName
+  })
+
+
+  /**
+   * Lambdas
+   */
+   // Our ML functions need HF models (large files) cached. Two options:
+  // 1. Save HF model into docker image (see git-lfs sample)
+  // 2. Save HF models in EFS mount, cache folder
+  // - https://aws.amazon.com/blogs/compute/hosting-hugging-face-models-on-aws-lambda/
+  // - https://github.com/cdk-patterns/serverless/blob/main/the-efs-lambda/typescript/lib/the-efs-lambda-stack.ts
+  // Going with option 2 to save on lambda-start & CDK deployment times
+
   const mlFunctionProps = {
     // we need only about 4-6gb RAM; but we need the CPU power given by higher ram:
     // https://stackoverflow.com/a/66523153
     memorySize: 8846,
     timeout: cdk.Duration.minutes(10),
-    vpc: vpc,
+    vpc,
     filesystem: lambda.FileSystem.fromEfsAccessPoint(accessPoint, '/mnt/transformers_cache')
   } as const
 
@@ -64,6 +189,7 @@ export function Ml({ app, stack }: sst.StackContext) {
   })
   return {
     fnSearch,
-    fnSummarize
+    fnSummarize,
+    weaviate: weaviateService
   }
 }
