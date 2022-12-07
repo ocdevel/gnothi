@@ -1,38 +1,121 @@
+import os
 from haystack.document_stores import WeaviateDocumentStore
 from haystack import Document
-import weaviate
-from typing import Optional, List, Union, Dict
+from common import nodes, embedding_dim, similarity, WILL_EMBED
+
+INIT_WEAVIATE = os.getenv('INIT_WEAVIATE', False)
 
 
-class CustomDocumentStore(WeaviateDocumentStore):
+old_props = [
+    {
+      "dataType": [
+        "string"
+      ],
+      "description": "UUID the owner (user, group, etc)",
+      "name": "parent_id",
+    },
+    {
+      "dataType": [
+        "string"
+      ],
+      "description": "The object type. Eg, entry|user_centroid|user_center|group_centroid|group_center",
+      "name": "obj_type"
+    },
+    # TODO consider adding user-manual title/summary
+]
+common_config = {
+    "invertedIndexConfig": {"cleanupIntervalSeconds": 60},
+    "vectorizer": "none",
+    "vectorIndexConfig": {"distance": similarity},
+}
+common_props = [
+    {
+      "dataType": [
+        "string"
+      ],
+      "description": "The original object id. Will == weaviate's id most of the time, but some ids might not be UUIDs (eg books)",
+      "name": "orig_id"
+    },
+    {
+      "dataType": [
+        "string"
+      ],
+      "description": "Name / title",
+      "name": "name"
+    },
+    {
+      "dataType": [
+        "text"
+      ],
+      "description": "The body content",
+      "name": "content"
+    }
+]
+classes = [
+    {
+        **common_config,
+        "class": "Entry",  # Capital first letter
+        "description": "User entries",
+        "properties": common_props
+    },
+    # {
+    #   "class": "Paragraph",  # Capital first letter
+    #   "description": "Paragraphs within Entry. Used for extending beyond 384 tokens, use refCentroid",
+    #   "properties": common_props
+    # },
+    {
+        **common_config,
+        "class": "Book",  # <= note the capital "O".
+        "description": "Book blurbs",
+        "properties": common_props
+    }
+]
+
+
+class Store(object):
     def __init__(self):
-        super().__init__(
-            index="Object",
-            embedding_dim=384,
+        self.document_store = WeaviateDocumentStore(
+            index="Entry",
+            recreate_index=INIT_WEAVIATE,
+            embedding_dim=embedding_dim,
             content_field="content",
             name_field="name",
-            similarity="cosine",
+            similarity="dot_product" if similarity == "dot" else similarity,
             return_embedding=False,
             embedding_field="embedding",
-            recreate_index=False
         )
 
-    def upsert(self, docs: List[Dict], index: str = "Object"):
-        for doc in docs:
-            self.weaviate_client.data_object.create(
-                doc,
-                index,
-                uuid=doc['obj_id']
-            )
+        self.weaviate_client = self.document_store.weaviate_client
 
-    def init_data_haystack(self, docs):
-        from haystack.nodes import EmbeddingRetriever
+    def initialize(self):
+        self.document_store._create_schema_and_index(recreate_index=True)
 
-        document_store = self.document_store
-        retriever = EmbeddingRetriever(
-            document_store=self.document_store,
-            embedding_model="sentence-transformers/multi-qa-mpnet-base-dot-v1",
-            model_format="sentence_transformers",
-        )
-        document_store.write_documents(docs)
-        document_store.update_embeddings(retriever)
+    def entries_to_haystack(self, entries):
+        return [
+            dict(
+                name=entry['title'] or entry['text'][:50],
+                content=entry['text'],
+                id=entry['id']
+            ) if entry.get('text', None) else entry
+            for entry in entries
+        ]
+
+    def upsert_entries(self, entries):
+        if not WILL_EMBED:
+            raise "Lambda not initialized with WILL_EMBED=true"
+        entries = self.entries_to_haystack(entries)
+        self.document_store.write_documents(entries, index="Entry")
+        self.document_store.update_embeddings(nodes.embedding_retriever)
+
+    def upsert_books(self, books):
+        if not WILL_EMBED:
+            raise "Lambda not initialized with WILL_EMBED=true"
+        books = self.entries_to_haystack(books)
+        self.document_store.write_documents(books, index="Book")
+        self.document_store.update_embeddings(nodes.embedding_retriever)
+        
+
+store = Store()
+
+
+

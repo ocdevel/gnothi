@@ -8,6 +8,7 @@ for env_key in [
     'SENTENCE_TRANSFORMERS_HOME'
 ]:
     os.environ[env_key] = '/mnt/transformers_cache'
+os.environ["CUDA_VISIBLE_DEVICES"] = ""
 
 from typing import List, Optional, Dict, Tuple
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, pipeline
