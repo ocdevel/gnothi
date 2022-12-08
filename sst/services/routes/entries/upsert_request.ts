@@ -1,8 +1,8 @@
 import * as S from '@gnothi/schemas'
 import {db} from '../../data/db'
 import {GnothiError} from "../errors";
-import {summarize} from '../../ml/node/summarize'
-import {upsert} from '../../ml/node/upsert'
+import {summarize} from '../../ml/summarize'
+import {upsert} from '../../ml/upsert'
 
 const r = S.Routes.routes
 

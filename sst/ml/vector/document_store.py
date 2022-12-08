@@ -5,6 +5,7 @@ from common import nodes, embedding_dim, similarity, WILL_EMBED
 
 INIT_WEAVIATE = os.getenv('INIT_WEAVIATE', False)
 
+weaviate_host = "http://legio-weavi-11TMR2G3K51SQ-0cfa2a12c9f80dbd.elb.us-east-1.amazonaws.com"
 
 old_props = [
     {
@@ -67,14 +68,30 @@ classes = [
         **common_config,
         "class": "Book",  # <= note the capital "O".
         "description": "Book blurbs",
-        "properties": common_props
+        "properties": [
+            *common_props,
+            {
+                "dataType": [
+                    "string"
+                ],
+                "name": "author"
+            },
+            {
+                "dataType": [
+                    "string"
+                ],
+                "name": "genre"
+            }
+        ]
     }
 ]
+classMap = {obj['class']: obj for obj in classes}
 
 
 class Store(object):
     def __init__(self):
         self.document_store = WeaviateDocumentStore(
+            host=weaviate_host,
             index="Entry",
             recreate_index=INIT_WEAVIATE,
             embedding_dim=embedding_dim,

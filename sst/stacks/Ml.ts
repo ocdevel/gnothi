@@ -70,31 +70,10 @@ export function Ml(context: sst.StackContext) {
   } as const
 
   const cluster = new ecs.Cluster(stack, "MlCluster", {vpc})
-  cluster.addDefaultCloudMapNamespace({name: "service.local"})
 
-  // ---
-  // t2v-transformers
-  // Might end up removing this, since using Haystack to embed
-  // ---
-  const t2vTransformersTask = new ecs.FargateTaskDefinition(stack, "t2v-transformers-task", {
-    ...resources
-  })
-  t2vTransformersTask.addContainer("t2v-transformers", {
-    image: ecs.ContainerImage.fromRegistry("semitechnologies/transformers-inference:sentence-transformers-all-mpnet-base-v2"),
-    essential: true,
-    environment: {
-      ENABLE_CUDA: "0"
-    },
-    logging: ecs.LogDrivers.awsLogs({
-      streamPrefix: "t2vTransformersContainer",
-      logRetention: logs.RetentionDays.ONE_WEEK,
-    }),
-    portMappings: [{containerPort: 8080, hostPort: 8080}]
-  })
+  // a4829616 - t2v-transformers module. Having trouble with CloudMapping connecting
+  // the services, but I don't need the module anyway (using Haystack).
 
-  // ---
-  // weaviate
-  // ---
   const weaviateTask = new ecs.FargateTaskDefinition(stack, "weaviate-task", {
     ...resources
   })
@@ -107,12 +86,11 @@ export function Ml(context: sst.StackContext) {
     }),
     portMappings: [{containerPort:8080, hostPort: 8080}],
     environment: {
-      TRANSFORMERS_INFERENCE_API: 'http://service.local:8080',
       QUERY_DEFAULTS_LIMIT: "25",
       AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: 'true',
       PERSISTENCE_DATA_PATH: '/var/lib/weaviate',
-      DEFAULT_VECTORIZER_MODULE: 'text2vec-transformers',
-      ENABLE_MODULES: 'text2vec-transformers,ref2vec-centroid',
+      DEFAULT_VECTORIZER_MODULE: 'none',
+      ENABLE_MODULES: 'ref2vec-centroid',
       CLUSTER_HOSTNAME: 'node1'
     }
   })
@@ -123,29 +101,15 @@ export function Ml(context: sst.StackContext) {
   const weaviateService = new ecs_patterns.NetworkLoadBalancedFargateService(stack, "weaviate-service", {
     serviceName: "weaviate",
     cluster, // Required
-    cloudMapOptions: {name: "weaviate"},
     ...resources,
     desiredCount: 1,  // Default is 1
     taskDefinition: weaviateTask,
     listenerPort: 8080,
+    // TODO make this false, and setup allowFromAnyIp below to only Lambda incoming
     publicLoadBalancer: true,
   })
   weaviateService.service.connections.allowFromAnyIpv4(
     ec2.Port.tcp(8080), "weaviate inbound"
-  )
-
-  const t2vTransformersService = new ecs_patterns.NetworkLoadBalancedFargateService(stack, "t2v-transformers-service", {
-    serviceName: "t2v-transformers",
-    cluster,
-    cloudMapOptions: {name: "t2v-transformers"},
-    ...resources,
-    desiredCount: 1,
-    taskDefinition: t2vTransformersTask,
-    listenerPort: 8080,
-    publicLoadBalancer: false
-  })
-  t2vTransformersService.service.connections.allowFrom(
-      weaviateService.service, ec2.Port.tcp(8080)
   )
 
   stack.addOutputs({

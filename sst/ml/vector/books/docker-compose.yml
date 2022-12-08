@@ -14,7 +14,7 @@ services:
       - '3306:3306'
     volumes:
       - db:/var/lib/mysql
-      - # That's slick, it just imports the database if it's in this location!
+      # That's slick, it just imports the database if it's in this location!
       - ./db/libgen.sql:/docker-entrypoint-initdb.d/init.sql
 volumes:
   db:

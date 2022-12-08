@@ -8,10 +8,9 @@ import dayjs from 'dayjs'
 import {reduce as _reduce} from "lodash"
 import type {Entry} from '@gnothi/schemas/entries'
 import type {analyze_get_request, analyze_ask_response, analyze_themes_response, analyze_summarize_response} from '@gnothi/schemas/analyze'
-import {summarize} from '../../ml/node/summarize'
-import {keywords} from '../../ml/node/keywords'
-import {search} from '../../ml/node/search'
-import {themes} from '../../ml/node/themes'
+import {summarize} from '../../ml/summarize'
+import {search} from '../../ml/search'
+import {themes} from '../../ml/themes'
 
 const r = S.Routes.routes
 
