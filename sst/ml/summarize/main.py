@@ -1,22 +1,10 @@
-import os
-# I tried setting the first two as ENV in Dockerfile but no cigar.
-# Now I'm just blasting all possibilities. Lambda is read-only outside /mnt and /tmp
-for env_key in [
-    'TRANSFORMERS_CACHE',
-    'HF_MODULES_CACHE',
-    'TORCH_HOME',
-    'SENTENCE_TRANSFORMERS_HOME'
-]:
-    os.environ[env_key] = '/mnt/transformers_cache'
-os.environ["CUDA_VISIBLE_DEVICES"] = ""
+from common.env import USE_GPU
 
 from typing import List, Optional, Dict, Tuple
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, pipeline
 from sentence_transformers import SentenceTransformer
 from keybert import KeyBERT
 from pprint import pprint
-# model_name = "/var/task/model"
-
 
 class Summarize(object):
     def __init__(self):

@@ -1,0 +1,3 @@
+transformers[torch]==4.25.1
+sentence-transformers==2.2.2
+keybert==0.7.0

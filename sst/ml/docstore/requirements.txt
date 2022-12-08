@@ -1,0 +1,2 @@
+farm-haystack[weaviate]==1.11.0
+weaviate-client==3.9.0

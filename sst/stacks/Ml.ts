@@ -92,7 +92,7 @@ export function Ml(context: sst.StackContext) {
       DEFAULT_VECTORIZER_MODULE: 'none',
       ENABLE_MODULES: 'ref2vec-centroid',
       CLUSTER_HOSTNAME: 'node1'
-    }
+    },
   })
 
   // ---
@@ -138,14 +138,16 @@ export function Ml(context: sst.StackContext) {
 
   const fnSummarize = new lambda.DockerImageFunction(stack, "fn_summarize", {
     ...mlFunctionProps,
-    code: lambda.DockerImageCode.fromImageAsset("services/ml/summarize"),
+    code: lambda.DockerImageCode.fromImageAsset("ml", {
+      file: "summarize.dockerfile"
+    }),
   })
 
   const fnSearch = new sst.Function(stack, "fn_search", {
-    srcPath: "services",
+    srcPath: "ml",
     runtime: "python3.9",
     timeout: "10 minutes", // definitely needed for ML functions
-    handler: "ml/search.main"
+    handler: "vector/main.main"
   })
   stack.addOutputs({
     fnSearch_: fnSearch.functionArn,

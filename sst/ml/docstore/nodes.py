@@ -1,22 +1,4 @@
-import os
-for env_key in [
-    'TRANSFORMERS_CACHE',
-    'HF_MODULES_CACHE',
-    'TORCH_HOME',
-    'SENTENCE_TRANSFORMERS_HOME'
-]:
-    os.environ[env_key] = '/mnt/transformers_cache'
-os.environ["CUDA_VISIBLE_DEVICES"] = ""
-
-import logging
-logging.basicConfig(format="%(levelname)s - %(name)s -  %(message)s", level=logging.WARNING)
-logging.getLogger("haystack").setLevel(logging.INFO)
-
-USE_GPU=False
-
-# Set env vars for the Lambda in stacks/Ml.ts. This tells the function which models to warm-start
-WILL_EMBED = os.getenv('WILL_EMBED', False)
-WILL_SEARCH = os.getenv('WILL_SEARCH', True)
+from common.env import USE_GPU
 
 # use for most things. Likely even QA
 # max_seq_len=384 dims=768 score=dot|cosine
@@ -51,7 +33,7 @@ class QueryClassifier(BaseComponent):
              [Readme](https://ext-models-haystack.s3.eu-central-1.amazonaws.com/gradboost_query_classifier_statements/readme.txt)
             """
             from haystack.nodes import TransformersQueryClassifier
-            self.query_classifier = TransformersQueryClassifier(use_gpu=False)
+            self.query_classifier = TransformersQueryClassifier(use_gpu=USE_GPU)
 
     def run(self, query: str):
         if SIMPLE_CLASSIFIER:
@@ -67,30 +49,47 @@ class QueryClassifier(BaseComponent):
         pass
 
 
+# Since we're running these in Lambdas, only load then cache what's required.
+# We have enough RAM for all of them, but want to reduce the cold-start. Most
+# operations will only upsert (embed). After the embedding op, might want to
+# warm-load the QA/Search module before they hit that page
 class Nodes(object):
     def __init__(self):
-        if WILL_EMBED:
+        self._embedding_retriever = None
+        self._farm_reader = None
+        self._query_classifier = None
+
+    def embedding_retriever(self, **kwargs):
+        if not self._embedding_retriever:
             from haystack.nodes import EmbeddingRetriever
-            self.embedding_retriever = EmbeddingRetriever(
+            self._embedding_retriever = EmbeddingRetriever(
                 embedding_model=embedding_model,
                 model_format="sentence_transformers",
                 max_seq_len=384,
-                use_gpu=USE_GPU
+                use_gpu=USE_GPU,
+                **kwargs
             )
-        if WILL_SEARCH:
+        return self._embedding_retriever
+    def farm_reader(self):
+        if not self._farm_reader:
             from haystack.nodes import FARMReader, BM25Retriever
-            self.farm_reader = FARMReader(
+            self._farm_reader = FARMReader(
                 model_name_or_path="deepset/roberta-base-squad2",
                 use_gpu=USE_GPU
             )
-            self.query_classifier = QueryClassifier()
+        return self._farm_reader
+
+    def query_classifier(self):
+        if not self._query_classifier:
+            self._query_classifier = QueryClassifier()
+        return self._query_classifier
 
 
 nodes = Nodes()
 
 
 ###
-# Scratch
+# Consider these modules later
 ###
 # from haystack.nodes import DensePassageRetriever
 # dpr_retriever = DensePassageRetriever(

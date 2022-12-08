@@ -1,4 +1,4 @@
-from summarize import main
+from summarize.main import main
 
 #pytest -rP
 

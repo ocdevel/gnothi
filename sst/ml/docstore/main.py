@@ -1,7 +1,6 @@
-from common import nodes
-from document_store import store
-from haystack.pipelines import Pipeline
-from search import search
+from docstore.docstore import store
+from docstore.search import search
+from docstore.upsert import upsert
 
 def main(event, context):
     data = event["data"]
