@@ -1,12 +1,16 @@
 import os
+from typing import List, Dict, Optional
 from haystack.document_stores import WeaviateDocumentStore
 from docstore.nodes import nodes, embedding_dim, similarity
 import weaviate
 
 INIT_WEAVIATE = os.getenv('INIT_WEAVIATE', False)
 
-weaviate_host = "http://legio-weavi-11TMR2G3K51SQ-0cfa2a12c9f80dbd.elb.us-east-1.amazonaws.com"
-summarize_fn = ""
+weaviate_host = os.getenv(
+    "weaviate_host",
+    "http://legio-weavi-11TMR2G3K51SQ-0cfa2a12c9f80dbd.elb.us-east-1.amazonaws.com"
+)
+
 
 common_config = {
     "invertedIndexConfig": {"cleanupIntervalSeconds": 60},
@@ -152,6 +156,7 @@ class Store(object):
         self.document_store = WeaviateDocumentStore(
             host=weaviate_host,
             index="Entry",
+            create_schema_and_index=False,
             recreate_index=False,
             embedding_dim=embedding_dim,
             content_field="content",
@@ -167,33 +172,12 @@ class Store(object):
     def init_schema(self):
         # ensure in right order for child-referencing
         for c in ["Paragraph", "Entry", "User", "Group"]:
-            class_ = schema['classes'][c]
+            class_ = classes[c]
             try:
                 self.weaviate_client.schema.delete_class(class_)
             except: pass
             self.weaviate_client.schema.create_class(class_)
-    def _entry_to_haystack(self, entry):
-        return dict(
-            name=entry['title'] or entry['text'][:128],
-            content=entry['text'],
-            id=entry['id'],
-            orig_id=entry['id'],
-            text_summary="",
-            title_summary=""
-        )
 
-    def add_entry(self, entry):
-        retriever = nodes.embedding_retriever()
-        embed = retriever.embedding_encoder.embed
-        # manually encode here because WeaviateDocumentStore will write document with np.rand,
-        # then you re-fetch the document and update_embeddings()
-        # TODO cleantext
-        # TODO split in paras
-        # TODO save paras, then entry
-        # TODO summarize, save summary, return summary+keywords+emotion
-        entry = self._entry_to_haystack(entry)
-        entry['embedding'] = embed(entry['content'])
-        self.document_store.write_documents([entry], index="Entry")
 
 
 store = Store()

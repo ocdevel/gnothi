@@ -1,5 +1,5 @@
 import pytest, pdb
-from common.cleantext import CleanText
+from common.preprocess import CleanText
 from common.fixtures import articles
 
 def test_md_split_1():

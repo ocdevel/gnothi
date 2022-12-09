@@ -1,11 +1,6 @@
-# TODO having some Pycharm issues with this being a pytest. Just running as-is for now
-
-REINIT_DATA = False
-
 import pytest
 import json
-from main import main
-from document_store import store
+from docstore.main import main
 from os.path import exists
 
 def _load_data():
@@ -54,34 +49,32 @@ def _download_data():
         f.write(json.dumps(objects))
     return objects
 
-# @pytest.fixture(scope="module")
-# def mock_data():
-data = _load_data()
-if not data:
-    data = _download_data()
-    REINIT_DATA = True
-mock_data = data
+@pytest.fixture(scope="module")
+def mock_data():
+    REINIT = True
+    data = _load_data()
+    if not data:
+        data = _download_data()
+        REINIT = True
 
-if REINIT_DATA:
-    main({
-        "event": "init",
-        "data": {}
-    }, {})
-    main({
-        "event": "upsert",
-        "data": [d for d in data]
-    }, {})
+    if REINIT:
+        for d in data:
+            main({
+                "event": "upsert",
+                "data": d
+            }, {})
+    return data
 
-# def test_no_query(mock_data):
-res = main({
-    "event": "search",
-    "data": {
-        "ids": [],
-        "query": None
-    }
-}, {})
-assert not res['ids']
-assert not res['answer']
+def test_no_query(mock_data):
+    res = main({
+        "event": "search",
+        "data": {
+            "ids": [],
+            "query": None
+        }
+    }, {})
+    assert not res['ids']
+    assert not res['answer']
 
 
 # # def test_filtered_query(mock_data):
@@ -97,13 +90,13 @@ assert not res['answer']
 # assert not res['answer']
 
 
-# def test_ask(mock_data):
-res = main({
-    "event": "search",
-    "data": {
-        "ids": [m['id'] for m in mock_data],
-        "query": "what is cognitive behavioral therapy?"
-    }
-}, {})
-assert res['answer']
-print(res['answer'])
+def test_ask(mock_data):
+    res = main({
+        "event": "search",
+        "data": {
+            "ids": [m['id'] for m in mock_data],
+            "query": "what is cognitive behavioral therapy?"
+        }
+    }, {})
+    assert res['answer']
+    print(res['answer'])

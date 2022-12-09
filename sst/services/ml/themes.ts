@@ -1,4 +1,4 @@
-import {weaviateClient, weaviateDo} from "../../data/weaviate";
+import {weaviateClient, weaviateDo} from "../data/weaviate";
 import {Entry} from '@gnothi/schemas/entries'
 import {summarize} from "./summarize";
 

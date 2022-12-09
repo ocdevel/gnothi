@@ -147,7 +147,7 @@ export function Ml(context: sst.StackContext) {
     srcPath: "ml",
     runtime: "python3.9",
     timeout: "10 minutes", // definitely needed for ML functions
-    handler: "vector/main.main"
+    handler: "docstore/main.main"
   })
   stack.addOutputs({
     fnSearch_: fnSearch.functionArn,

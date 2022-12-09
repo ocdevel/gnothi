@@ -1,4 +1,4 @@
-import {weaviateClient, weaviateDo} from "../../data/weaviate";
+import {weaviateClient, weaviateDo} from "../data/weaviate";
 import {Entry} from '@gnothi/schemas/entries'
 
 export async function upsert(entry: Entry) {
