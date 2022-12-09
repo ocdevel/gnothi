@@ -8,7 +8,8 @@ INIT_WEAVIATE = os.getenv('INIT_WEAVIATE', False)
 
 weaviate_host = os.getenv(
     "weaviate_host",
-    "http://legio-weavi-11TMR2G3K51SQ-0cfa2a12c9f80dbd.elb.us-east-1.amazonaws.com"
+    "http://localhost",
+    # "http://legio-weavi-11TMR2G3K51SQ-0cfa2a12c9f80dbd.elb.us-east-1.amazonaws.com"
 )
 
 
@@ -156,7 +157,7 @@ class Store(object):
         self.document_store = WeaviateDocumentStore(
             host=weaviate_host,
             index="Entry",
-            create_schema_and_index=False,
+            auto_create_schema=False,
             recreate_index=False,
             embedding_dim=embedding_dim,
             content_field="content",
@@ -172,11 +173,8 @@ class Store(object):
     def init_schema(self):
         # ensure in right order for child-referencing
         for c in ["Paragraph", "Entry", "User", "Group"]:
-            class_ = classes[c]
-            try:
-                self.weaviate_client.schema.delete_class(class_)
-            except: pass
-            self.weaviate_client.schema.create_class(class_)
+            self.weaviate_client.schema.delete_class(c)
+            self.weaviate_client.schema.create_class(classes[c])
 
 
 

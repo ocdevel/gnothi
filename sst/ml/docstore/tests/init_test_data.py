@@ -1,7 +1,7 @@
-import pytest
 import json
 from docstore.main import main
 from os.path import exists
+
 
 def _load_data():
     if exists('./mock_entries.json'):
@@ -49,15 +49,17 @@ def _download_data():
         f.write(json.dumps(objects))
     return objects
 
-@pytest.fixture(scope="module")
-def mock_data():
-    REINIT = True
+def init_test_data(reinit=False):
     data = _load_data()
     if not data:
         data = _download_data()
-        REINIT = True
+        reinit = True
 
-    if REINIT:
+    if reinit:
+        main({
+            "event": "init",
+            "data": {}
+        }, {})
         for d in data:
             main({
                 "event": "upsert",
@@ -65,38 +67,5 @@ def mock_data():
             }, {})
     return data
 
-def test_no_query(mock_data):
-    res = main({
-        "event": "search",
-        "data": {
-            "ids": [],
-            "query": None
-        }
-    }, {})
-    assert not res['ids']
-    assert not res['answer']
-
-
-# # def test_filtered_query(mock_data):
-# N = 10
-# res = main({
-#     "event": "search",
-#     "data": {
-#         "ids": [m['id'] for m in mock_data[:N]],
-#         "query": "cognitive behavioral"
-#     }
-# }, {})
-# assert len(res['ids']) < N
-# assert not res['answer']
-
-
-def test_ask(mock_data):
-    res = main({
-        "event": "search",
-        "data": {
-            "ids": [m['id'] for m in mock_data],
-            "query": "what is cognitive behavioral therapy?"
-        }
-    }, {})
-    assert res['answer']
-    print(res['answer'])
+if __name__ == "__main__":
+    init_test_data(True)
