@@ -13,12 +13,6 @@ def main(event, context):
         add_entry(data)
         return final
     if event == 'search':
-        """
-        data = {
-            query: str. If None, return
-            ids: [str, ..str] | None. If None, all entries go
-        }
-        """
         ids = data.get('ids', [])
         query = data.get('query', "")
         res = search(query, ids)

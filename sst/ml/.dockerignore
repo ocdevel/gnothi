@@ -6,3 +6,4 @@ books/db
 **/.ipynb_checkpoints
 **/.pytest_cache
 mock_entries.json
+**/test_*.py

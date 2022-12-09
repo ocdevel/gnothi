@@ -6,7 +6,7 @@ from docstore.docstore import store, classes, Store
 from docstore.nodes import nodes
 from haystack import Document
 
-retriever = nodes.embedding_retriever(batch_size=128)
+retriever = nodes.dense_retriever(batch_size=128)
 embed = retriever.embedding_encoder.embed
 # Smoke-test that GPU works first
 embed(["Embed me please"])
@@ -15,7 +15,7 @@ class_ = classes["Book"]
 
 store.weaviate_client.schema.delete_class("Book")
 store.weaviate_client.schema.create_class(class_)
-
+7
 df = pd.read_pickle('books/db/df.pkl')
 books = df.to_dict("records")
 books = [Document.from_dict(b) for b in books]

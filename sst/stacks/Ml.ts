@@ -65,8 +65,8 @@ export function Ml(context: sst.StackContext) {
   // CPU/RAM mappings at https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-cpu-memory-error.html
   // TODO distribute these more intelligently through the tasks/services, I don't want to think right now
   const resources = {
-    cpu: 2048, // Default is 256
-    memoryLimitMiB: 4096 // Default is 512
+    cpu: 512, // Default is 256
+    memoryLimitMiB: 2048 // Default is 512
   } as const
 
   const cluster = new ecs.Cluster(stack, "MlCluster", {vpc})

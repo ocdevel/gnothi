@@ -1,3 +1,5 @@
+## TODO: turn this into a Dockerfile
+
 Download a catalog from https://libgen.is/dbdumps/
 ```shell
 wget https://libgen.is/dbdumps/libgen.rar

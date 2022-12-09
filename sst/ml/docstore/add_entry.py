@@ -35,23 +35,14 @@ def summarize(text: str):
     )
     return json.loads(response['Payload'].read())
 
-def entry_to_haystack(entry):
-    return dict(
-        name=entry['title'] or entry['text'][:128],
-        content=entry['text'],
-        id=entry['id'],
-        orig_id=entry['id'],
-        text_summary="",
-        title_summary=""
-    )
 
 def add_entry(entry):
     # manually encode here because WeaviateDocumentStore will write document with np.rand,
     # then you re-fetch the document and update_embeddings()
-    retriever = nodes.embedding_retriever(batch_size=8)
+    retriever = nodes.dense_retriever(batch_size=8)
     embed = retriever.embedding_encoder.embed
 
-    eid, text = entry['id'], entry['text']
+    eid, text, uid = entry['id'], entry['text'], entry['user_id']
 
     # Convert text into paragraphs
     print("Cleaning entry, converting to paragraphs")
@@ -90,6 +81,7 @@ def add_entry(entry):
     )
 
     # Save entry with the paragraphs
+    # TODO if tokenize(text) < 300: summary = text
     print("Saving entry to weaviate")
     mean = np.mean(
         [p['embedding'] for p in paras],
@@ -100,11 +92,33 @@ def add_entry(entry):
         documents=[dict(
             id=eid, # haystack will upsert if exists
             orig_id=eid,
+            parent_id=uid,
             content=text,
             embedding=mean
         )]
         # TODO use ref2vec-centroid instead of manual mean
-        # https://github.com/semi-technologies/weaviate-examples/blob/main/getting-started-with-python-client-colab/Getting_Started_With_Weaviate_Python_Client.ipynb
+        # https://github.com/semi-technologies/weav    client.data_object.reference.add(iate-examples/blob/main/getting-started-with-python-client-colab/Getting_Started_With_Weaviate_Python_Client.ipynb
+    )
+
+    entries = (store.weaviate_client.query.get(class_name="Entry")
+        .with_additional(["vector"])
+        .with_where({
+            'path': ["parent_id"],
+            'operator': "Equal",
+            "valueString": uid
+        })
+        .do())
+    entries = entries['data']['Get']['Entry']
+    mean = np.mean([
+        e['_additional']['vector']
+        for e in entries
+    ], axis=0)
+    store.document_store.write_documents(
+        index="User",
+        documents=[dict(
+            id=entry['user_id'],
+            embedding = mean
+        )]
     )
 
     result = {

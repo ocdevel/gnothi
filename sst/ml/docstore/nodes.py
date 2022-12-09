@@ -1,11 +1,6 @@
 from common.env import USE_GPU
 
-# use for most things. Likely even QA
-# max_seq_len=384 dims=768 score=dot|cosine
-embedding_model = "sentence-transformers/all-mpnet-base-v2"
-# Better for QA, but might require saving another set of vectors? Might not use
-# max_seq_len=512 dims=768 score=dot|cosine
-qa_model = "sentence-transformers/multi-qa-mpnet-base-dot-v1"
+
 similarity = "dot"  # "dot_product"
 embedding_dim = 768
 
@@ -55,29 +50,43 @@ class QueryClassifier(BaseComponent):
 # warm-load the QA/Search module before they hit that page
 class Nodes(object):
     def __init__(self):
-        self._embedding_retriever = None
-        self._farm_reader = None
+        self._dense_retriever = None
+        self._qa_reader = None
         self._query_classifier = None
+        self._term_retriever = None
 
-    def embedding_retriever(self, **kwargs):
-        if not self._embedding_retriever:
+    def dense_retriever(self, **kwargs):
+        if not self._dense_retriever:
             from haystack.nodes import EmbeddingRetriever
-            self._embedding_retriever = EmbeddingRetriever(
-                embedding_model=embedding_model,
+            # use for most things. Likely even QA
+            if embedding_dim == 768:
+                model, max_len = "sentence-transformers/all-mpnet-base-v2", 384
+            elif embedding_dim == 384:
+                model, max_len = "sentence-transformers/all-MiniLM-L6-v2", 256
+            else: raise
+            self._dense_retriever = EmbeddingRetriever(
+                embedding_model=model,
                 model_format="sentence_transformers",
-                max_seq_len=384,
+                max_seq_len=max_len,
                 use_gpu=USE_GPU,
                 **kwargs
             )
-        return self._embedding_retriever
-    def farm_reader(self):
-        if not self._farm_reader:
-            from haystack.nodes import FARMReader, BM25Retriever
-            self._farm_reader = FARMReader(
+        return self._dense_retriever
+
+    def term_retriever(self):
+        if not self._term_retriever:
+            from haystack.nodes import BM25Retriever
+            self._term_retriever = BM25Retriever()
+        return self._term_retriever
+
+    def qa_reader(self):
+        if not self.qa_reader:
+            from haystack.nodes import FARMReader
+            self._qa_reader = FARMReader(
                 model_name_or_path="deepset/roberta-base-squad2",
                 use_gpu=USE_GPU
             )
-        return self._farm_reader
+        return self._qa_reader
 
     def query_classifier(self):
         if not self._query_classifier:

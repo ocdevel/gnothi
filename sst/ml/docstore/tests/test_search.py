@@ -21,17 +21,17 @@ def test_no_query(mock_data):
     assert not res['answer']
 
 
-# # def test_filtered_query(mock_data):
-# N = 10
-# res = main({
-#     "event": "search",
-#     "data": {
-#         "ids": [m['id'] for m in mock_data[:N]],
-#         "query": "cognitive behavioral"
-#     }
-# }, {})
-# assert len(res['ids']) < N
-# assert not res['answer']
+def test_filtered_query(mock_data):
+    N = 10
+    res = main({
+        "event": "search",
+        "data": {
+            "ids": [m['id'] for m in mock_data[:N]],
+            "query": "cognitive behavioral"
+        }
+    }, {})
+    assert len(res['ids']) < N
+    assert not res['answer']
 
 
 def test_ask(mock_data):
