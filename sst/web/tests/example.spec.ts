@@ -8,6 +8,10 @@ const URL = 'http://localhost:3000'
 const mockEntriesFile = readFileSync("tests/mock_entries.json", {encoding: "utf-8"})
 const mockEntries = JSON.parse(mockEntriesFile)
 // console.log(mockEntries)
+const nEntries = 5
+const someEntries = mockEntries.filter(e => (
+  ~["cbt_0", "cbt_1", "cbt_2", "vr_0", "vr_1"]
+))
 
 type Auth = {email: string, pass: string}
 const genAuth = () => ({email: `${ulid()}@x.com`, pass: "MyPassword!1"})
@@ -52,8 +56,7 @@ test('Create entry', async ({page}) => {
   // await page.locator(".toolbar-button").click()
 
   console.log({auth})
-  const nEntries = 1
-  for (const entry of mockEntries.slice(0, nEntries)) {
+  for (const entry of mockEntries) {
     await page.getByLabel("Title").fill(entry.title)
     await page.locator(".rc-md-editor textarea").fill(entry.text)
     await page.getByRole("button", {name: "Submit"}).click()

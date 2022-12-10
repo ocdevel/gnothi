@@ -3,11 +3,11 @@ import CssBaseline from "@mui/material/CssBaseline";
 import StyledEngineProvider from "@mui/material/StyledEngineProvider";
 import {createTheme, ThemeProvider, ThemeOptions} from "@mui/material/styles";
 
-export const themeOptions: ThemeOptions = {
+export const theme = createTheme({
   palette: {
     primary: {
-      main: '#1c3f60',
-      light: '#738fa7',
+      main: '#50577A',
+      light: '#A7ABBC',
       contrastText: '#ffffff',
     },
     secondary: {
@@ -31,6 +31,21 @@ export const themeOptions: ThemeOptions = {
     },
   },
   typography: {
+    fontFamily: 'Poppins',
+    h1: {
+      //fontWeight: 800,
+      fontFamily: 'Antic Didone',
+    },
+    h2: {
+      fontFamily: 'Antic Didone',
+      //fontWeight: 1000,
+    },
+    h3: {
+      //fontWeight: 700,
+    },
+    h5: {
+      //fontWeight: 900,
+    },
     subtitle1: {
       fontFamily: 'Poppins',
     },
@@ -39,12 +54,6 @@ export const themeOptions: ThemeOptions = {
     },
     body1: {
       fontFamily: 'Poppins',
-    },
-    h3: {
-      //fontWeight: 700,
-    },
-    h5: {
-      //fontWeight: 900,
     },
     body2: {
       fontFamily: 'Poppins',
@@ -55,14 +64,9 @@ export const themeOptions: ThemeOptions = {
     overline: {
       fontFamily: 'Poppins',
     },
-    h1: {
-      //fontWeight: 800,
-      fontFamily: 'Antic Didone',
+    button: {
+      fontFamily: "Poppins"
     },
-    h2: {
-      //fontWeight: 1000,
-    },
-    fontFamily: 'Antic Didone',
   },
   components: {
     MuiAppBar: {
@@ -77,8 +81,8 @@ export const themeOptions: ThemeOptions = {
       styleOverrides: {
         root: {
           textTransform: 'initial',
-          borderRadius: 50,
-          elevation: 12
+          borderRadius: 20,
+          elevation: 12,
         },
       },
     },
@@ -88,9 +92,7 @@ export const themeOptions: ThemeOptions = {
   //     color: 'inherit',
   //   },
   // },
-};
-
-export const theme = createTheme(themeOptions)
+})
 
 export default function Mui({children}: React.PropsWithChildren<{}>) {
   // return <StyledEngineProvider injectFirst>

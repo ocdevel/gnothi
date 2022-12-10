@@ -8,8 +8,8 @@ INIT_WEAVIATE = os.getenv('INIT_WEAVIATE', False)
 
 weaviate_host = os.getenv(
     "weaviate_host",
-    "http://localhost",
-    # "http://legio-weavi-11TMR2G3K51SQ-0cfa2a12c9f80dbd.elb.us-east-1.amazonaws.com"
+    # "http://localhost",
+    "http://legio-weavi-11TMR2G3K51SQ-0cfa2a12c9f80dbd.elb.us-east-1.amazonaws.com"
 )
 if not weaviate_host.startswith("http"):
     weaviate_host = f"http://{weaviate_host}"

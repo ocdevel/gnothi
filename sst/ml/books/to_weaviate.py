@@ -1,7 +1,7 @@
 import re, os
 # Use GPU for this
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
-os.environ["weaviate_host"] = "http://legio-weavi-11TMR2G3K51SQ-0cfa2a12c9f80dbd.elb.us-east-1.amazonaws.com"
+# os.environ["weaviate_host"] = "http://legio-weavi-11TMR2G3K51SQ-0cfa2a12c9f80dbd.elb.us-east-1.amazonaws.com"
 import pandas as pd
 from docstore.docstore import store, classes, Store
 

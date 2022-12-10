@@ -45,6 +45,12 @@ const colors = {
   black: "#000000",
   white: "#FFFFFF"
 }
+const sx = {
+  button1: {backgroundColor: "primary.main", color: colors.white, fontFamily: "Poppins"},
+  button2: {backgroundColor: "primary.light", color: colors.black, fontFamily: "Poppins"}
+}
+const button1 = {
+}
 
 type FeatureCard = {
   title: string
@@ -91,22 +97,39 @@ export default function Layout() {
   // Sign In button not in <Switch> because it uses the flex/center css from jumbotron, the auth routes use left-just
   const showLogin = !!searchParams.get("login")
   const showRegister = !!searchParams.get("register")
+  const showAuth = showLogin || showRegister
   // const showSignin = !jwt && !~['/auth', '/reset-password'].indexOf(location.pathname)
 
   return <Stack
-    spacing={spacing.lg}
     sx={{
       backgroundColor: colors.grey
     }}
   >
     <Error message={error} />
     <Stack
-      alignItems="center"
+      alignItems="space-between"
+      justifyContent="space-between"
+      direction="row"
       sx={{padding: spacing.md}}
     >
+      <Box>{' '}</Box>
       <Link.Anchor to='/'>
-        <img src="/logo-tmp.png" />
+        <img src="/Gnothi-LOGO-G10.png" height={50} />
       </Link.Anchor>
+      <Stack spacing={spacing.sm} direction="row">
+        <Link.Button
+          variant='contained'
+          sx={sx.button1}
+          to='?login=true'
+          id="button-show-login"
+        >Sign Up</Link.Button>
+        <Link.Button
+          variant='contained'
+          sx={sx.button2}
+          to='?register=true'
+          id="button-show-register"
+        >Log In</Link.Button>
+      </Stack>
         {/*<Route path='/reset-password'>
           <div className='auth-block'>
             <ResetPassword />
@@ -120,7 +143,11 @@ export default function Layout() {
     <Stack
       alignItems="center"
       justifyContent="center"
-      sx={{padding: spacing.md, backgroundColor: colors.primaryMain}}
+      sx={{
+
+        padding: spacing.lg,
+        backgroundColor: colors.primaryMain
+      }}
     >
       <Stack sx={{maxWidth: 590}} alignItems="center">
         <Typography
@@ -136,23 +163,7 @@ export default function Layout() {
           An AI-powered journal and toolkit for a healthy and happy life.
         </Typography>
         <Box mt={spacing.lg}>
-          {showLogin || showRegister ? <AuthComponent />
-            : <Stack direction="row" spacing={spacing.sm}>
-              <Link.Button
-                variant='contained'
-                sx={{backgroundColor: colors.white, color: colors.black}}
-                to='?login=true'
-                size='large'
-                id="button-show-login"
-              >Sign Up</Link.Button>
-              <Link.Button
-                variant='contained'
-                sx={{backgroundColor: colors.white, color: colors.black}}
-                to='?register=true'
-                size='large'
-                id="button-show-register"
-              >Log In</Link.Button>
-          </Stack>}
+          {(showLogin || showRegister) && <AuthComponent />}
         </Box>
       </Stack>
     </Stack>
@@ -254,7 +265,7 @@ export default function Layout() {
         </Box>
       </Stack>
       <Box>
-        <Skeleton animation="wave" variant="square" width={590} height={400} />
+        <Skeleton animation="wave" variant="rectangular" width={590} height={400} />
       </Box>
     </Stack>
 
@@ -282,8 +293,8 @@ export default function Layout() {
         sx={{textAlign: "center", maxWidth: 1004}}
       >Gnothi beta was launched in 2019 and, without any marketing, has supported about 5,000 people. There’s something here. It’s helping people, and we hope to do a lot more of that. Here’s a sneak peak at what we’re working on.</Typography>
       <Stack direction="row" spacing={spacing.sm} mt={spacing.lg}>
-        <Skeleton variant="square" width={590} height={400} />
-        <Skeleton variant="square" width={590} height={400} />
+        <Skeleton variant="rectangular" width={590} height={400} />
+        <Skeleton variant="rectangular" width={590} height={400} />
       </Stack>
     </Stack>
 
