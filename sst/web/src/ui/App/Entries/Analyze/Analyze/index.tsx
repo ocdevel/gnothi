@@ -2,6 +2,7 @@
 import Summarize from "./Summarize"
 // import Ask from "./Ask"
 import Themes from "./Themes"
+import Books from "./Books"
 import {
   FaCubes as ThemesIcon,
   FaQuestion,
@@ -85,7 +86,7 @@ export default function Analyze() {
       icon={<BooksIcon />}
       description="Book recommendations based on your entries."
     >
-      books
+      <Books />
     </Insight>
   </Stack2>
 }

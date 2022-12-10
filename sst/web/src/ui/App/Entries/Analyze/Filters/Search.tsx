@@ -18,7 +18,7 @@ export default function Search() {
 
   const trigger = useCallback(_.debounce((search) => {
     setFilters({search})
-  }, 200), [])
+  }, 500), [])
 
   const changeSearch: ChangeEventHandler<HTMLInputElement> = (e) => {
     // const search = e.target.value.toLowerCase()

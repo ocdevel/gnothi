@@ -1,3 +1,6 @@
+# Immediately set transformers cache path
+import common.env
+
 from docstore.docstore import store
 from docstore.search import search
 from docstore.add_entry import add_entry

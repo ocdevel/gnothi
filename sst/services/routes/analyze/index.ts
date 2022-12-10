@@ -61,28 +61,24 @@ r.analyze_get_response.fn = r.analyze_get_response.fnDef.implement(async (req, c
 
   // TODO send filtered results. Maybe analyze_filtered_response with just eids; and the client uses to apply filter
 
-  const pAsk = (async function() {
-    return handleRes(
-      r.analyze_ask_response,
-      {
-        data: [{
-          id: uuid(), // neede for React `key`
-          answer
-        }]
-      },
-      context
-    )
-  })()
+  const pAsk = handleRes(
+    r.analyze_ask_response,
+    {
+      data: [{
+        id: uuid(), // neede for React `key`
+        answer
+      }]
+    },
+    context
+  )
 
-  const pBooks = (async function() {
-    return handleRes(
-      r.analyze_books_response,
-      {
-        data: books
-      },
-      context
-    )
-  })
+  const pBooks = handleRes(
+    r.analyze_books_response,
+    {
+      data: books
+    },
+    context
+  )
 
   // TODO summarize summaries, NOT full originals (to reduce token max)
   const pSummarize = summarize({

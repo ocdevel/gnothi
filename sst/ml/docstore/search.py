@@ -1,6 +1,7 @@
 from docstore.nodes import nodes
 from docstore.docstore import store
 import numpy as np
+from uuid import uuid4
 
 def search(query, ids):
     """
@@ -84,6 +85,7 @@ def search(query, ids):
     )
     books = [
         dict(
+            id=str(uuid4()),  # TODO use ASIN or whatever
             name=d.meta['name'],
             content=d.content,
             genre=d.meta['genre'],
