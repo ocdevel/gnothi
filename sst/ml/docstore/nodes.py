@@ -1,6 +1,5 @@
 from common.env import USE_GPU
 
-
 similarity = "dot"  # "dot_product"
 embedding_dim = 768
 

@@ -11,5 +11,5 @@ except: pass
 store.weaviate_client.schema.create_class(classes["Book"])
 
 books = pd.read_pickle('books/db/embeddings.pkl')
-store = Store() # reconnect since we probably lost connection during embedding
-store.document_store.write_documents(books, index="Book", batch_size=1000)
+store = Store()
+store.document_store.write_documents(books, index="Book", batch_size=100)

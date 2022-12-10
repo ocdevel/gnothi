@@ -1,36 +1,44 @@
 import {lambdaSend} from "../aws/handlers"
-import {Function} from "@serverless-stack/node/function"
 import {Entry} from '@gnothi/schemas/entries'
+import {analyze_books_response} from '@gnothi/schemas/analyze'
 
-interface Params {
-  top_n: number
+type FnIn = {
+  query: string
+  entries: Entry[]
 }
-interface FnIn {
-  texts: [string, ...string[]]
-  params: [Params, ...Params[]]
+type LambdaIn = {
+  event: "search"
+  data: {
+    query: string
+    ids: string[]
+  }
 }
-type LambdaIn = {text: string, params: Params}[]
 type LambdaOut = {
   answer?: string
   ids: string[]
+  books: analyze_books_response[]
+  groups: any[]
 }
-type FnOut = {
-  answer?: string
+type FnOut = LambdaOut & {
   entries: Entry[]
 }
-interface SearchResults {
-  answer?: string
-  entries: Entry[]
-}
-export async function search(entries: Entry[], query: string = ""): Promise<SearchResults> {
-  if (!query?.length) {
-    return {entries}
+export async function search({entries, query}: FnIn): Promise<FnOut> {
+  const functionName = process.env.fn_search
+
+  async function call(data: LambdaIn): Promise<LambdaOut> {
+    const res = await lambdaSend<LambdaOut>(data, functionName, "RequestResponse")
+    return res.Payload
   }
-  const res = (await lambdaSend<LambdaOut>(
-    {ids: entries.map(e => e.id), query},
-    Function.fn_search.functionName,
-    "RequestResponse"
-  )).Payload
-  const filteredEntries = entries.filter(e => ~res.ids.indexOf(e.id))
-  return {answer: res.answer, entries: filteredEntries}
+
+  const res = await call({
+    event: "search",
+    data: {
+      query,
+      ids: entries.map(e => e.id)
+    }
+  })
+  return {
+    ...res,
+    entries: entries.filter(e => ~res.ids.indexOf(e.id))
+  }
 }

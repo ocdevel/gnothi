@@ -60,22 +60,12 @@ r.entries_upsert_request.fn = r.entries_upsert_request.fnDef.implement(async (re
 r.entries_upsert_response.fn = r.entries_upsert_response.fnDef.implement(async (req, context) => {
   const {entry, tags} = req
 
-  const pUpsert = upsert(entry)
-  const pSummaries = summarize({
-    texts: [entry.text, entry.text],
-    params: [
-      {summarize: {min_length: 20, max_length: 80}},
-      {summarize: {min_length: 100, max_length: 300}, keywords: {top_n: 5}, emotion: true}
-    ]
-  })
-
-  const final = await Promise.all([pUpsert, pSummaries])
-
+  const summary = await upsert(entry)
   const updated = {
     ...entry,
-    title_summary: final[1][0].summary,
-    text_summary: final[1][1].summary,
-    sentiment: final[1][1].emotion
+    title_summary: summary.title,
+    text_summary: summary.summary,
+    sentiment: summary.emotion
   }
 
   await db.executeStatement({

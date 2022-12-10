@@ -49,6 +49,15 @@ export const analyze_get_final = z.object({
   done: z.boolean()
 })
 
+export const analyze_books_response = z.object({
+  id: z.string(),
+  name: z.string(),
+  content: z.string(),
+  author: z.string(),
+  genre: z.string()
+})
+export type analyze_books_response = z.infer<typeof analyze_books_response>
+
 export const routes = {
   analyze_get_request: new Route({
     i: {
@@ -92,6 +101,12 @@ export const routes = {
   analyze_summarize_response: <DefO<any>>{
     e: "analyze_summarize_response",
     s: analyze_summarize_response,
+    t: {ws: true},
+    keyby: 'id'
+  },
+  analyze_books_response: <DefO<any>>{
+    e: "analyze_books_response",
+    s: analyze_books_response,
     t: {ws: true},
     keyby: 'id'
   }

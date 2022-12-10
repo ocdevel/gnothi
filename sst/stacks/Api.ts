@@ -58,6 +58,7 @@ export function Api({ app, stack }: sst.StackContext) {
     // the ML functions based on Dockerfiles can't use .bind(). Use the old way: permissions + environment
     environment: {
       fn_summarize: ml.fnSummarize.functionName,
+      fn_search: ml.fnSearch.functionName,
     },
     permissions: [
       ...backgroundCustomPerms,

@@ -54,12 +54,14 @@ r.analyze_get_request.fn = r.analyze_get_request.fnDef.implement(async (req, con
 r.analyze_get_response.fn = r.analyze_get_response.fnDef.implement(async (req, context) => {
   const {handleRes} = context
   const hardFiltered = await facetFilter(req, context.user.id)
-  const {answer, entries} = await search(hardFiltered, req.search)
+  const {answer, ids, books, groups, entries} = await search({
+    entries: hardFiltered,
+    query: req.search
+  })
 
   // TODO send filtered results. Maybe analyze_filtered_response with just eids; and the client uses to apply filter
 
   const pAsk = (async function() {
-    if (!answer?.length) {return null}
     return handleRes(
       r.analyze_ask_response,
       {
@@ -72,8 +74,19 @@ r.analyze_get_response.fn = r.analyze_get_response.fnDef.implement(async (req, c
     )
   })()
 
+  const pBooks = (async function() {
+    return handleRes(
+      r.analyze_books_response,
+      {
+        data: books
+      },
+      context
+    )
+  })
+
+  // TODO summarize summaries, NOT full originals (to reduce token max)
   const pSummarize = summarize({
-    texts: [entries.map(e => e.text).join('\n\n')],
+    texts: [entries.map(e => e.text_summary || e.text).join('\n\n')],
     params: [{
       summarize: {min_length: 150, max_length: 300},
       keywords: {top_n: 5},
@@ -106,6 +119,6 @@ r.analyze_get_response.fn = r.analyze_get_response.fnDef.implement(async (req, c
     )
   })
 
-  const final = await Promise.all([pAsk, pSummarize, pThemes])
+  const final = await Promise.all([pAsk, pSummarize, pBooks, pThemes])
   return [{done: true}]
 })
