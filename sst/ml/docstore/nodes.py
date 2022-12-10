@@ -80,7 +80,7 @@ class Nodes(object):
         return self._term_retriever
 
     def qa_reader(self):
-        if not self.qa_reader:
+        if not self._qa_reader:
             from haystack.nodes import FARMReader
             self._qa_reader = FARMReader(
                 model_name_or_path="deepset/roberta-base-squad2",

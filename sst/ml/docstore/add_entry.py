@@ -117,7 +117,8 @@ def add_entry(entry):
         index="User",
         documents=[dict(
             id=entry['user_id'],
-            embedding = mean
+            embedding=mean,
+            content=""
         )]
     )
 

@@ -56,14 +56,13 @@ def search(query, ids):
         return no_response
 
     if query_class[1] == 'output_1':
-        tup = qa_reader.run(
+        res = qa_reader.predict(
             query=query,
             documents=docs,
             top_k=2,
         )
-        print("answers", tup)
-        answer = tup[0]['answers'][0].answer  # .score
-        print(query, answer)
+        # answer = tup[0]['answers'][0].answer  # from .run()
+        answer = res['answers'][0]
     else:
         answer = ""
 
@@ -83,6 +82,16 @@ def search(query, ids):
         top_k=20,
         return_embedding=False
     )
+    books = [
+        dict(
+            name=d.meta['name'],
+            content=d.content,
+            genre=d.meta['genre'],
+            author=d.meta['genre'],
+            score=d.score
+        )
+        for d in books
+    ]
 
     result = dict(
         answer=answer,
@@ -90,6 +99,5 @@ def search(query, ids):
         books=books,
         groups=[]
     )
-    a = 1
 
     return result

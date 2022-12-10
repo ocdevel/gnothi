@@ -33,7 +33,6 @@ def test_filtered_query(mock_data):
     assert len(res['ids']) < N
     assert not res['answer']
 
-
 def test_ask(mock_data):
     res = main({
         "event": "search",

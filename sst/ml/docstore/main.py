@@ -10,8 +10,7 @@ def main(event, context):
         store.init_schema()
         return final
     if event == "upsert":
-        add_entry(data)
-        return final
+        return add_entry(data)
     if event == 'search':
         ids = data.get('ids', [])
         query = data.get('query', "")

@@ -11,6 +11,8 @@ weaviate_host = os.getenv(
     "http://localhost",
     # "http://legio-weavi-11TMR2G3K51SQ-0cfa2a12c9f80dbd.elb.us-east-1.amazonaws.com"
 )
+if not weaviate_host.startswith("http"):
+    weaviate_host = f"http://{weaviate_host}"
 
 
 common_config = {
@@ -152,7 +154,10 @@ class Store(object):
     def init_schema(self):
         # ensure in right order for child-referencing
         for c in ["Paragraph", "Entry", "User", "Group"]:
-            self.weaviate_client.schema.delete_class(c)
+            try:
+                self.weaviate_client.schema.delete_class(c)
+            except Exception as e:
+                print(e)
             self.weaviate_client.schema.create_class(classes[c])
 
 

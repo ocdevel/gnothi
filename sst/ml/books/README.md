@@ -24,7 +24,10 @@ Then convert to Weaviate:
 
 ```shell
 pip3 install -r requirements.txt
-cd .. # needed for __init__ access to vectors 
-python3 books/to_pandas.py # run separately to cache intermediate
-python books/to_weaviate.py
+cd .. # needed for __init__ access to vectors
+
+ # run steps to cache intermediate 
+python3 books/to_pandas.py  # ~1h
+python3 books/to_embeddings.py  # ~2h 
+python3 books/to_weaviate.py  # ~1h
 ```

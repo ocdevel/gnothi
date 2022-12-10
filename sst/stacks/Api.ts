@@ -47,6 +47,7 @@ export function Api({ app, stack }: sst.StackContext) {
        effect: iam.Effect.ALLOW,
        resources: [
          ml.fnSummarize.functionArn,
+         ml.fnSearch.functionArn
        ],
      }),
   ]
@@ -66,7 +67,6 @@ export function Api({ app, stack }: sst.StackContext) {
       APP_REGION,
       API_WS,
       rds,
-      ml.fnSearch,
     ]
   })
 

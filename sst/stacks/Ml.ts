@@ -111,9 +111,10 @@ export function Ml(context: sst.StackContext) {
   weaviateService.service.connections.allowFromAnyIpv4(
     ec2.Port.tcp(8080), "weaviate inbound"
   )
+  const weaviateUrl = weaviateService.listener.loadBalancer.loadBalancerDnsName
 
   stack.addOutputs({
-    weaviateUrl: weaviateService.listener.loadBalancer.loadBalancerDnsName
+    weaviateUrl_: weaviateUrl
   })
 
 
@@ -142,13 +143,17 @@ export function Ml(context: sst.StackContext) {
       file: "summarize.dockerfile"
     }),
   })
-
-  const fnSearch = new sst.Function(stack, "fn_search", {
-    srcPath: "ml",
-    runtime: "python3.9",
-    timeout: "10 minutes", // definitely needed for ML functions
-    handler: "docstore/main.main"
+  const fnSearch = new lambda.DockerImageFunction(stack, "fn_search", {
+    ...mlFunctionProps,
+    code: lambda.DockerImageCode.fromImageAsset("ml", {
+      file: "docstore.dockerfile"
+    }),
+    environment: {
+      weaviate_host: weaviateUrl
+    }
   })
+  fnSummarize.grantInvoke(fnSearch)
+
   stack.addOutputs({
     fnSearch_: fnSearch.functionArn,
     fnSummarize_: fnSummarize.functionArn,
