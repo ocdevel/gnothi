@@ -1,18 +1,8 @@
-import os
+from common.env import WEAVIATE_URL, INIT_WEAVIATE
 from typing import List, Dict, Optional
 from haystack.document_stores import WeaviateDocumentStore
 from docstore.nodes import nodes, embedding_dim, similarity
 import weaviate
-
-INIT_WEAVIATE = os.getenv('INIT_WEAVIATE', False)
-
-weaviate_host = os.getenv(
-    "weaviate_host",
-    # "http://localhost",
-    "http://legio-weavi-11TMR2G3K51SQ-0cfa2a12c9f80dbd.elb.us-east-1.amazonaws.com"
-)
-if not weaviate_host.startswith("http"):
-    weaviate_host = f"http://{weaviate_host}"
 
 
 common_config = {
@@ -133,10 +123,10 @@ class Store(object):
     def __init__(self):
         if INIT_WEAVIATE:
             # Haystack has a bug if schema changes, must delete first manually
-            client = weaviate.client.Client(url=f"{weaviate_host}:8080")
+            client = weaviate.client.Client(url=f"{WEAVIATE_URL}:8080")
             client.schema.delete_all()
         self.document_store = WeaviateDocumentStore(
-            host=weaviate_host,
+            host=WEAVIATE_URL,
             index="Entry",
             auto_create_schema=False,
             recreate_index=False,

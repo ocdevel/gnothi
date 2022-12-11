@@ -41,17 +41,6 @@ export function Api({ app, stack }: sst.StackContext) {
     fnInitArn: fnInit.functionArn
   })
 
-  const backgroundCustomPerms = [
-    new iam.PolicyStatement({
-       actions: ["*"],
-       effect: iam.Effect.ALLOW,
-       resources: [
-         ml.fnSummarize.functionArn,
-         ml.fnSearch.functionArn
-       ],
-     }),
-  ]
-
   const fnBackground = new sst.Function(stack, "fn_background", {
     handler: "main.main",
     timeout: "10 minutes",
@@ -61,7 +50,6 @@ export function Api({ app, stack }: sst.StackContext) {
       fn_search: ml.fnSearch.functionName,
     },
     permissions: [
-      ...backgroundCustomPerms,
       ws
     ],
     bind: [
@@ -70,6 +58,14 @@ export function Api({ app, stack }: sst.StackContext) {
       rds,
     ]
   })
+  fnBackground.addToRolePolicy(new iam.PolicyStatement({
+     actions: ["lambda:InvokeFunction"],
+     effect: iam.Effect.ALLOW,
+     resources: [
+       ml.fnSummarize.functionArn,
+       ml.fnSearch.functionArn
+     ],
+   }))
 
   const fnMain = new sst.Function(stack, "fn_main", {
     handler: "main.proxy",
