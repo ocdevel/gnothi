@@ -1,127 +1,36 @@
-import React from 'react'
-// import {Authenticate} from "../Auth"
+import React, {useState, useEffect} from 'react'
 import {
   Routes,
   Route,
   useLocation,
-  Outlet,
   useSearchParams,
-  useNavigate
+  useNavigate,
+  Outlet
 } from "react-router-dom"
-import {AuthComponent} from '../../Setup/Auth'
 import Grid from '@mui/material/Grid'
-import Typography from '@mui/material/Typography'
-import Paper from '@mui/material/Paper'
-import Divider from '@mui/material/Divider'
 import {useStore} from '@gnothi/web/src/data/store'
 import Error from '@gnothi/web/src/ui/Components/Error'
 import {Link} from '@gnothi/web/src/ui/Components/Link'
 import Stack from "@mui/material/Stack";
-import Box from "@mui/material/Box";
+import {BasicDialog, FullScreenDialog} from "../../Components/Dialog";
+import {
+  spacing,
+  colors,
+  sx
+} from "./Utils"
 import Button from "@mui/material/Button";
-import Card from "@mui/material/Card";
-import CardHeader from "@mui/material/CardHeader";
-import CardContent from "@mui/material/CardContent";
-import CardActions from "@mui/material/CardActions";
-import Skeleton from "@mui/material/Skeleton";
-
-import GroupsIcon from '@mui/icons-material/Groups';
-import BookIcon from '@mui/icons-material/AutoStories';
-import SecureIcon from "@mui/icons-material/Lock"
-import InsightsIcon from '@mui/icons-material/AutoFixHigh';
-import TherapyIcon from '@mui/icons-material/Chair';
-import ShareIcon from '@mui/icons-material/Share';
-
-const spacing = {
-  sm: 2,
-  md: 4,
-  lg: 6,
-  xl: 12
-}
-const colors = {
-  grey: "#FAFAFA",
-  primaryMain: "#50577A",
-  primaryLight: "#A7ABBC",
-  black: "#000000",
-  white: "#FFFFFF"
-}
-const sx = {
-  button1: {backgroundColor: "primary.main", color: colors.white, fontFamily: "Poppins"},
-  button2: {backgroundColor: "primary.light", color: colors.black, fontFamily: "Poppins"},
-  featureIcon: {fontSize: 40, color: "primary.main"}
-}
-const button1 = {
-}
-
-type FeatureCard = {
-  title?: string
-  icon: React.ReactNode
-  children: React.ReactNode
-}
-function FeatureCard({title, icon, children}: FeatureCard) {
-  return <Grid
-    item
-    xs={12}
-    md={4}
-  >
-    <Card
-      sx={{
-        py: spacing.md,
-        px: spacing.lg,
-        backgroundColor: colors.white,
-        borderRadius: 5,
-        elevation: 0
-      }}
-    >
-      <CardContent>
-        <Stack
-          alignItems="center"
-          justifyContent="center"
-          spacing={spacing.sm}
-        >
-          {icon}
-          {title && <Typography variant="h5">{title}</Typography>}
-          <Typography
-            variant="body1"
-            sx={{textAlign: "center"}}
-          >{children}</Typography>
-        </Stack>
-      </CardContent>
-    </Card>
-  </Grid>
-}
-
-interface Section {
-  color: 'dark' | 'light' | 'grey'
-}
-function Section({children, color='light'}: React.PropsWithChildren<Section>) {
-  const backgroundColor = {
-    dark: "primary.main",
-    light: "secondary.main",
-    grey: "#fafafa"
-  }[color]
-  return <Box
-    sx={{
-      py: spacing.xl,
-      px: spacing.lg,
-      backgroundColor
-  }}
-  >
-    {children}
-  </Box>
-}
+import {AuthComponent} from "../../Setup/Auth";
 
 export default function Layout() {
   const location = useLocation()
   let [searchParams, setSearchParams] = useSearchParams();
+  const [showAuth, setShowAuth] = useState<"login"|"signup"|false>(false)
   const error = useStore(state => state.apiError)
   const jwt = useStore(state => state.jwt)
 
   // Sign In button not in <Switch> because it uses the flex/center css from jumbotron, the auth routes use left-just
-  const showLogin = !!searchParams.get("login")
-  const showRegister = !!searchParams.get("register")
-  const showAuth = showLogin || showRegister
   // const showSignin = !jwt && !~['/auth', '/reset-password'].indexOf(location.pathname)
+
 
 
   function renderToolbar() {
@@ -131,29 +40,46 @@ export default function Layout() {
       direction="row"
       sx={{px: spacing.lg, py: spacing.sm}}
     >
-      <Grid item xs={2} />
-      <Grid item container xs justifyContent="center">
+      <Grid
+        item
+        xs={0}
+        sm={4}
+        lg={2}
+      />
+      <Grid
+        item container
+        xs={6}
+        sm={4}
+        lg={8}
+        justifyContent="center"
+      >
         <Grid item>
           <Link.Anchor to='/'>
             <img src="/Gnothi-LOGO-G10.png" height={50} />
           </Link.Anchor>
         </Grid>
       </Grid>
-      <Grid item xs={2} container justifyContent="flex-end">
+      <Grid
+        item container
+        xs={6}
+        sm={4}
+        lg={2}
+        justifyContent="flex-end"
+      >
         <Grid item>
           <Stack spacing={spacing.sm} direction="row">
-            <Link.Button
+            <Button
               variant='contained'
               sx={sx.button1}
-              to='?login=true'
+              onClick={() => setShowAuth("login")}
               id="button-show-login"
-            >Sign Up</Link.Button>
-            <Link.Button
+            >Sign Up</Button>
+            <Button
               variant='contained'
               sx={sx.button2}
-              to='?register=true'
-              id="button-show-register"
-            >Log In</Link.Button>
+              onClick={() => setShowAuth("signup")}
+              id="button-show-signup"
+            >Log In</Button>
           </Stack>
         </Grid>
       </Grid>
@@ -165,150 +91,14 @@ export default function Layout() {
         {/*<Route path='/auth/old' element={<Authenticate />} />*/}
     </Grid>
   }
-  function renderHero() {
-    return <Section color="dark">
-      <Stack
-        alignItems="center"
-        justifyContent="center"
-      >
-        <Stack sx={{maxWidth: 590}} alignItems="center">
-          <Typography
-            variant="h1"
-            sx={{textAlign: "center", color: colors.white}}
-          >
-            Know thyself with Gnothi
-          </Typography>
-          <Typography
-            variant="h4"
-            sx={{textAlign: "center", color: colors.white}}
-          >
-            An AI-powered journal and toolkit for a healthy and happy life.
-          </Typography>
-          <Box mt={spacing.lg}>
-            {(showLogin || showRegister) && <AuthComponent />}
-          </Box>
-        </Stack>
-      </Stack>
-    </Section>
-  }
-  function renderNewJournal() {
-    return <Section color="grey">
-      <Stack
-        alignItems="center"
-        justifyContent="center"
-        spacing={spacing.lg}
-        sx={{paddingBottom: spacing.lg}}
-      >
-        <Typography
-          variant="h3"
-        >
-          A new kind of journal...
-        </Typography>
-        <Typography
-          sx={{textAlign: "center"}}
-        >
-          Gnothi uses a variety of cutting-edge machine learning models that make connections between what you’re writing, how you’re feeling, and your daily habits. That’s where most of us get stuck and overwhelmed. Gnothi helps you narrow your focus so you can navigate your journey of self-discovery with more awareness and direction.      </Typography>
-        <Button
-          variant='contained'
-          sx={{backgroundColor: colors.primaryMain, color: colors.white, width: 360}}
-        >
-          Explore the features
-        </Button>
-      </Stack>
-      <Grid
-        container
-        spacing={4}
-        justifyContent="center"
-        alignItems="center"
-      >
-        <FeatureCard
-          icon={<SecureIcon sx={sx.featureIcon} />}
-        >
-         Rest easy knowing that your entries are secure
-        </FeatureCard>
-        <FeatureCard
-          icon={<InsightsIcon sx={sx.featureIcon} />}
-        >
-          Get AI-generated insights to help you grow
-        </FeatureCard>
-        <FeatureCard
-          icon={<TherapyIcon sx={sx.featureIcon} />}
-        >
-         Use it in therapy to get the most from sessions
-        </FeatureCard>
-        <FeatureCard
-          icon={<ShareIcon sx={sx.featureIcon} />}
-        >
-          Share entries with friends to stay connected
-        </FeatureCard>
-        <FeatureCard
-          icon={<BookIcon sx={sx.featureIcon} />}
-        >
-          Read books recommended by AI just for you
-        </FeatureCard>
-        <FeatureCard
-          icon={<GroupsIcon sx={sx.featureIcon} />}
-        >
-          Create and join groups for support (coming soon)
-        </FeatureCard>
-      </Grid>
-    </Section>
-  }
-  function renderDemo() {
-    return <Section color="light">
-      <Grid container
-        direction="row"
-        spacing={spacing.lg}
-        alignItems="center"
-        justifyContent="center"
-      >
-        <Grid item xs={12} md={4}>
-          <Stack
-            justifyContent="center"
-            spacing={spacing.sm}
-          >
-            <Typography variant="h3">See the AI in action...</Typography>
-            <Typography>
-              Most of the features are completely free. The goal is to provide a platform that prioritizes mental health. Whether you sign up for a free account or Gnothi Premium, there’s a lot to offer and much more to come.
-            </Typography>
-            <Box>
-              <Button
-                variant="contained"
-                sx={{
-                  backgroundColor: "primary.main",
-                  color: colors.white
-                }}
-              >
-                Watch a demo
-              </Button>
-            </Box>
-          </Stack>
-        </Grid>
-        <Grid item xs={12} md={8}>
-          <Skeleton animation="wave" variant="rectangular" width={590} height={400} />
-        </Grid>
-      </Grid>
-    </Section>
-  }
-  function renderWhatsNext() {
-    return <Section color='grey'>
-      <Stack
-        justifyContent="center"
-        alignItems="center"
-      >
-        <Typography
-          variant="h3"
-          sx={{textAlign: "center", maxWidth: 1004}}
-        >We’re a small company, but we’re doing big things</Typography>
-        <Typography
-          sx={{textAlign: "center", maxWidth: 1004}}
-        >Gnothi beta was launched in 2019 and, without any marketing, has supported about 5,000 people. There’s something here. It’s helping people, and we hope to do a lot more of that. Here’s a sneak peak at what we’re working on.</Typography>
-        <Stack direction="row" spacing={spacing.sm} mt={spacing.lg}>
-          <Skeleton variant="rectangular" width={590} height={400} />
-          <Skeleton variant="rectangular" width={590} height={400} />
-        </Stack>
-      </Stack>
-    </Section>
+  function renderAuthModal() {
+    return <BasicDialog
+      open={showAuth !== false}
+      onClose={() => setShowAuth(false)}
+      size="xl"
+    >
+      <AuthComponent />
+    </BasicDialog>
   }
 
   return <Stack
@@ -318,10 +108,8 @@ export default function Layout() {
   >
     <Error message={error} />
     {renderToolbar()}
-    {renderHero()}
-    {renderNewJournal()}
-    {renderDemo()}
-    {renderWhatsNext()}
+    {renderAuthModal()}
+    <Outlet />
 
   </Stack>
 }

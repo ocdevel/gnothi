@@ -1,15 +1,71 @@
 import React, {useEffect, useCallback, useState, FC} from 'react'
 import {Amplify, Auth} from 'aws-amplify'
-import {Authenticator, useAuthenticator} from "@aws-amplify/ui-react";
+import {Authenticator, useAuthenticator, Theme, useTheme, ThemeProvider} from "@aws-amplify/ui-react";
 import {awsConfig} from '../../utils/config'
 import {useStore} from '../../data/store'
 import "@aws-amplify/ui-react/styles.css";
+import {theme as muiTheme} from '../Setup/Mui'
+
 
 Amplify.configure(awsConfig);
-const loginMechanisms = ['email'] as const
 
 export function AuthComponent() {
-  return <Authenticator loginMechanisms={loginMechanisms} />
+  // https://ui.docs.amplify.aws/react/connected-components/authenticator/customization
+  // https://ui.docs.amplify.aws/react/theming#design-tokens
+  // TODO customize colors / fonts
+  const { tokens } = useTheme();
+  const theme: Theme = {
+    name: 'Auth Example Theme',
+    tokens: {
+      colors: {
+        background: {
+          primary: {
+            value: tokens.colors.neutral['90'].value,
+          },
+          secondary: {
+            value: tokens.colors.neutral['100'].value,
+          },
+        },
+        font: {
+          interactive: {
+            value: tokens.colors.white.value,
+          },
+        },
+        brand: {
+          primary: {
+            '10': tokens.colors.teal['100'],
+            '80': tokens.colors.teal['40'],
+            '90': tokens.colors.teal['20'],
+            '100': tokens.colors.teal['10'],
+          },
+        },
+      },
+      components: {
+        tabs: {
+          item: {
+            _focus: {
+              color: {
+                value: tokens.colors.white.value,
+              },
+            },
+            _hover: {
+              color: {
+                value: tokens.colors.yellow['80'].value,
+              },
+            },
+            _active: {
+              color: {
+                value: tokens.colors.white.value,
+              },
+            },
+          },
+        },
+      },
+    },
+  };
+  return <ThemeProvider theme={theme}>
+    <Authenticator loginMechanisms={["email"]} />
+  </ThemeProvider>
   // return <Authenticator loginMechanisms={loginMechanisms}>
   //     {({ signOut, user }) => {
   //       return <Typography>Welcome ${user.username}</Typography>

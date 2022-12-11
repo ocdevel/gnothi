@@ -2,8 +2,10 @@ import {Navigate} from "react-router-dom";
 import React from "react";
 import Privacy from "./Privacy"
 import Terms from "./Terms"
-const Overviews = React.lazy( () => import("./Splash/Overviews"))
-const Details = React.lazy(() => import("./Splash/Details"))
+// const Overviews = React.lazy( () => import("./Splash/Overviews"))
+// const Details = React.lazy(() => import("./Splash/Details"))
+import Features from "./Splash/Features"
+import Home from "./Splash/Home"
 import {S, Error} from '../Components/Routing'
 
 export * as Static from './Routes'
@@ -14,7 +16,8 @@ export const staticRoutes = [
 ]
 
 export const splashRoutes = [
-  {index: true, element: <S><Overviews /></S>},
-  {path: "about/:tab", element: <S><Details /></S>},
+  {index: true, element: <Home />},
+  {path: "features", element: <Features />},
+  // {path: "about/:tab", element: <S><Details /></S>},
   {path: "j", element: <Navigate to="/" replace={true} />},
 ]

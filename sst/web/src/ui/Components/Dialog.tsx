@@ -68,8 +68,9 @@ export function FullScreenDialog({
   );
 }
 
-type BasicDialog = Dialog & {
+type BasicDialog = Omit<Dialog, 'title'> & {
   size: DialogProps["maxWidth"]
+  title?: string
 }
 export function BasicDialog({
   open,
@@ -85,9 +86,9 @@ export function BasicDialog({
     onClose={onClose}
   >
     <Grid container direction='row' alignItems='center'>
-      <Grid item sx={{flex: 1}}>
+      {title && <Grid item sx={{flex: 1}}>
         <DialogTitle>{title}</DialogTitle>
-      </Grid>
+      </Grid>}
       <Grid item>
         <IconButton
           onClick={onClose as OnClick}
