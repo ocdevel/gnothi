@@ -106,37 +106,45 @@ export default function Layout() {
     }}
   >
     <Error message={error} />
-    <Stack
-      alignItems="space-between"
+    <Grid container
+      alignItems="center"
       justifyContent="space-between"
       direction="row"
-      sx={{padding: spacing.md}}
+      sx={{padding: spacing.sm}}
     >
-      <Box>{' '}</Box>
-      <Link.Anchor to='/'>
-        <img src="/Gnothi-LOGO-G10.png" height={50} />
-      </Link.Anchor>
-      <Stack spacing={spacing.sm} direction="row">
-        <Link.Button
-          variant='contained'
-          sx={sx.button1}
-          to='?login=true'
-          id="button-show-login"
-        >Sign Up</Link.Button>
-        <Link.Button
-          variant='contained'
-          sx={sx.button2}
-          to='?register=true'
-          id="button-show-register"
-        >Log In</Link.Button>
-      </Stack>
+      <Grid item xs={2} />
+      <Grid item container xs justifyContent="center">
+        <Grid item>
+          <Link.Anchor to='/'>
+            <img src="/Gnothi-LOGO-G10.png" height={50} />
+          </Link.Anchor>
+        </Grid>
+      </Grid>
+      <Grid item xs={2} container justifyContent="flex-end">
+        <Grid item>
+          <Stack spacing={spacing.sm} direction="row">
+            <Link.Button
+              variant='contained'
+              sx={sx.button1}
+              to='?login=true'
+              id="button-show-login"
+            >Sign Up</Link.Button>
+            <Link.Button
+              variant='contained'
+              sx={sx.button2}
+              to='?register=true'
+              id="button-show-register"
+            >Log In</Link.Button>
+          </Stack>
+        </Grid>
+      </Grid>
         {/*<Route path='/reset-password'>
           <div className='auth-block'>
             <ResetPassword />
           </div>
         </Route>*/}
         {/*<Route path='/auth/old' element={<Authenticate />} />*/}
-    </Stack>
+    </Grid>
 
     {/*<Outlet />*/}
 
@@ -182,8 +190,7 @@ export default function Layout() {
       <Typography
         sx={{textAlign: "center"}}
       >
-        Gnothi uses a variety of cutting-edge machine learning models that make connections between what you’re writing, how you’re feeling, and your daily habits. That’s where most of us get stuck and overwhelmed. Gnothi helps you narrow your focus so you can navigate your journey of self-discovery with more awareness and direction.
-      </Typography>
+        Gnothi uses a variety of cutting-edge machine learning models that make connections between what you’re writing, how you’re feeling, and your daily habits. That’s where most of us get stuck and overwhelmed. Gnothi helps you narrow your focus so you can navigate your journey of self-discovery with more awareness and direction.      </Typography>
       <Button
         variant='contained'
         sx={{backgroundColor: colors.primaryMain, color: colors.white, width: 360}}

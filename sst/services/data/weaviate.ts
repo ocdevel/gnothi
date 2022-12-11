@@ -1,7 +1,7 @@
 import weaviate from 'weaviate-client'
 export const weaviateClient = weaviate.client({
   scheme: 'http',
-  host: 'localhost:8080'
+  host: 'legio-weavi-11TMR2G3K51SQ-0cfa2a12c9f80dbd.elb.us-east-1.amazonaws.com:8080'
 })
 
 export async function weaviateDo(build: any) {

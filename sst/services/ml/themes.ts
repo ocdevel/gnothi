@@ -18,13 +18,13 @@ type FnOut = Array<{
 async function getClusters(ids: LambdaIn): Promise<LambdaOut> {
   const res = await weaviateDo(weaviateClient.graphql.raw().withQuery(`{
   Get { 
-    Object (group: {type: merge, force: 0.25}) {
-      name
+    Paragraph (group: {type: merge, force: 0.25}) {
       content
     }
   }
   }`)) as any
-  return res.data.Get.Object
+  console.log(res)
+  return res.data.Get.Paragraph
 }
 export async function themes(entries: FnIn): Promise<FnOut> {
   const groups = await getClusters(entries.map(e => e.id))

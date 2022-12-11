@@ -69,7 +69,7 @@ export const apiSlice: StateCreator<
     get().send("users_everything_request", {})
   },
   logout: async () => {
-    Auth.signOut()
+    await Auth.signOut()
     window.location.href = "/"
   },
 
