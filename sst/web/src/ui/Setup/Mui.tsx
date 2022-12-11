@@ -7,15 +7,15 @@ export const theme = createTheme({
   palette: {
     primary: {
       main: '#50577A',
-      light: '#A7ABBC',
+      light: '#737894', // '#A7ABBC',
       contrastText: '#ffffff',
     },
     secondary: {
-      main: '#738fa7',
-      light: '#6ba9bb',
+      main: '#A7ABBC', // '#738fa7',
+      light: '#b8bbc9', // '#6ba9bb',
     },
     background: {
-      paper: '#f0efec',
+      paper: '#f0efec', // #fff
     },
     text: {
       primary: '#071330',
@@ -42,9 +42,16 @@ export const theme = createTheme({
     },
     h3: {
       //fontWeight: 700,
+      fontFamily: 'Antic Didone',
+    },
+    h4: {
+      //fontWeight: 700,
+
+      fontFamily: 'Antic Didone',
     },
     h5: {
       //fontWeight: 900,
+      fontFamily: 'Antic Didone',
     },
     subtitle1: {
       fontFamily: 'Poppins',
