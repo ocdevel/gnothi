@@ -1,15 +1,6 @@
-from common.env import VECTORS_PATH
 from docstore.nodes import nodes
-import torch
-import numpy as np
-import os
-from uuid import uuid4
 import logging
-import pandas as pd
-import pyarrow as pa
-from pyarrow import parquet
 from sentence_transformers.util import semantic_search, community_detection
-from haystack import Document
 from docstore.docstore import EntryStore, BookStore, to_tensor
 
 book_store = BookStore()

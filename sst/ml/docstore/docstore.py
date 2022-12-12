@@ -20,16 +20,21 @@ def to_tensor(nparr):
     # revisit: when getting directly, ValueError: setting an array element with a sequence.
     return torch.tensor(nparr.tolist(), device="cpu")
 
+# TODO
+# currently loading bookstore & Q/A in master search lambda. These two tasks
+# should be separated to Lambdas, so it's (1) search/add-entry; (2) QA; (3) books
 class BookStore(object):
     def __init__(self):
-        """
-        Call this up-top in a lambda function so it's loaded & cached for future calls
-        """
+        self.df = None
+
+    def load(self):
         # TODO convert to feather
         # TODO have s3->efs pipeline so I can upload/update
         self.df = pd.read_pickle(f"{VECTORS_PATH}/books/embeddings.pkl")
 
     def search(self, search_emb):
+        if not self.df:
+            self.load()
         results = semantic_search(
             query_embeddings=search_emb,
             corpus_embeddings=to_tensor(self.df.embedding),

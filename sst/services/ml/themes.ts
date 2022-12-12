@@ -13,18 +13,6 @@ type FnOut = Array<{
   emotion: string
 }>
 
-// TODO move this to Python for consistency / better control (their node module is rough)
-async function getClusters(ids: LambdaIn): Promise<LambdaOut> {
-  const res = await weaviateDo(weaviateClient.graphql.raw().withQuery(`{
-  Get { 
-    Paragraph (group: {type: merge, force: 0.25}) {
-      content
-    }
-  }
-  }`)) as any
-  console.log(res)
-  return res.data.Get.Paragraph
-}
 export async function themes(entries: FnIn): Promise<FnOut> {
   return []  // FIXME
   const groups = await getClusters(entries.map(e => e.id))

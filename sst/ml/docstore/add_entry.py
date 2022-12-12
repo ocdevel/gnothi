@@ -1,4 +1,3 @@
-from common.env import VECTORS_PATH
 import os, json
 import boto3
 from common.preprocess import CleanText

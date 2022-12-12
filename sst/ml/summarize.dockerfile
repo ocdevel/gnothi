@@ -5,8 +5,8 @@ RUN pip3 install --no-cache-dir \
   torch==1.13.0 --extra-index-url https://download.pytorch.org/whl/cpu \
   sentence-transformers==2.2.2 \
   keybert==0.7.0 \
-  # transformers last to override version by others
-  transformers==4.25.1
+  # force-install preferred version
+  && pip3 install --no-cache-dir transformers==4.25.1
 
 COPY __init__.py ${LAMBDA_TASK_ROOT}/__init__.py
 COPY common ${LAMBDA_TASK_ROOT}/common

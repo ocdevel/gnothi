@@ -3,11 +3,12 @@ from common.env import VECTORS_PATH
 import pandas as pd
 from textacy import preprocessing
 from sqlalchemy import create_engine, text
+import pyarrow.feather as feather
 from bs4 import BeautifulSoup
 import html
 
 books_dir = f"{VECTORS_PATH}/books"
-books_file = f"{books_dir}/meta.pkl"
+books_file = f"{books_dir}/meta.feather"
 os.makedirs(books_dir, exist_ok=True)
 
 def html2txt(s):
@@ -72,4 +73,4 @@ def clean_df(df):
 
 df = mysql_to_df()
 df = clean_df(df)
-df.to_pickle(books_file)
+feather.write_feather(df, books_file)
