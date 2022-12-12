@@ -19,8 +19,7 @@
     "aws-sdk": "^2.1253.0",
     "kysely": "^0.22.0",
     "kysely-data-api": "^0.1.4",
-    "ulid": "^2.3.0",
-    "weaviate-client": "^2.13.0"
+    "ulid": "^2.3.0"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.108"

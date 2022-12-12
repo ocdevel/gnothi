@@ -1,9 +1,18 @@
+from common.env import VECTORS_PATH
 from docstore.nodes import nodes
-from docstore.docstore import store
+import torch
 import numpy as np
+import os
 from uuid import uuid4
+import logging
+import pandas as pd
+import pyarrow as pa
+from pyarrow import parquet
+from sentence_transformers.util import semantic_search, community_detection
+from haystack import Document
 
-def search(query, ids):
+
+def search(query, user_id, entry_ids):
     """
     :return {answer: str, ids: str[], books: Book[], groups: Group[]}
     """""
@@ -13,10 +22,23 @@ def search(query, ids):
         books=[],
         groups=[]
     )
-    if not ids and not query:
+    if not entry_ids and not query:
+        logging.warning("No entry_ids|query provided")
         return no_response
 
-    store_ = store.document_store
+    user_file = f"{VECTORS_PATH}/{user_id}/entries.parquet"
+    if not os.path.exists(user_file):
+        logging.warning(f"{user_file} doesn't exist")
+        return no_response
+    df_user = parquet.read_table(
+        user_file,
+        filters=[
+            ("obj_type", "=", "paragraph"),
+            ("obj_id", "in", entry_ids)
+        ]
+    ).to_pandas()
+    # TODO sort by created_at
+
     query_classifier = nodes.query_classifier()
     dense_retriever = nodes.dense_retriever()
     qa_reader = nodes.qa_reader()
@@ -24,37 +46,47 @@ def search(query, ids):
     # https://haystack.deepset.ai/tutorials/01_basic_qa_pipeline
     query_class = query_classifier.run(query)
 
-    id_filter = {"$or": [
-        {"orig_id": id}
-        for id in ids
-    ]}
-
     if not query:
-        docs = store_.query(
-            filters=id_filter,
-            index="Paragraph",
-            top_k=len(ids)
-        )
-    elif len(query.split()) < 3:
-        # BM25 retriever. Currently doesn't support filter+query in weaviate,
-        # see pull request
-        # docs = store.query(query=query, filters=id_filter)
-        docs = store_.query(
-            filters=id_filter,
-            index="Paragraph",
-            top_k=len(ids)
-        )
+        pass
+    elif len(query.split()) < 2:
+        # TODO: BM25 retriever
+        df_user = df_user[df_user.content.contains(query, case=False, regex=False)]
     else:
-        docs = dense_retriever.retrieve(
-            query=query,
-            document_store=store_,
-            index="Paragraph",
-            filters=id_filter,
-            top_k=50
+        # TODO add ANNLite, this is brute-force approach
+        query_emb = dense_retriever.embed_queries([query])
+        # revisit: when getting directly, ValueError: setting an array element with a sequence.
+        search_res = semantic_search(
+            query_embeddings=query_emb,
+            corpus_embeddings=torch.tensor(df_user.embedding.tolist(), device="cpu"),
+            top_k=50,
+            corpus_chunk_size=100
         )
+        idx_order = [r['corpus_id'] for r in search_res[0]]
+        df_user = df_user.iloc[idx_order]
 
-    if not docs:
+    if not df_user.shape[0]:
         return no_response
+
+    search_mean = df_user.embedding.mean(axis=0)
+    # now narrowed by search
+    corpus_filtered = torch.tensor(df_user.embedding.tolist(), device="cpu")
+    themes = community_detection(corpus_filtered, threshold=.75, min_community_size=2)
+    # TODO do something with themes
+
+    # Haystack stuff
+    docs = [
+        Document(
+            id=d['id'],
+            content=d['content'],
+            meta={
+                'obj_id': d['obj_id'],
+                'obj_type': d['obj_type'],
+                'created_at': d['created_at']
+            },
+            embedding=d['embedding']
+        )
+        for d in df_user.to_dict("Records")
+    ]
 
     if query_class[1] == 'output_1':
         res = qa_reader.predict(
@@ -67,33 +99,24 @@ def search(query, ids):
     else:
         answer = ""
 
+    # Books
+    # FIXME
+    books = pd.read_pickle(f"{VECTORS_PATH}/books/embeddings.pkl")
+
+    # revisit: when getting directly, ValueError: setting an array element with a sequence.
+    corpus_books = torch.tensor(books.embedding, device='cpu')
+    docs = semantic_search(
+        query_embeddings=search_mean,
+        corpus_embeddings=corpus_books,
+        top_k=50,
+        corpus_chunk_size=100
+    )
+    idx_order = [d['corpus_id'] for d in docs[0]]
+    books = books.iloc[idx_order]
+
     # Normalize orig_id since Paragraph.orig_id == entry_id, aka same for all
     # paragraphs in one entry
-    ids = list(set([doc.id for doc in docs]))
-
-    search_mean = np.mean([
-        doc.embedding
-        for doc in docs
-    ], axis=0)
-
-    # Books
-    books = store_.query_by_embedding(
-        query_emb=search_mean,
-        index="Book",
-        top_k=20,
-        return_embedding=False
-    )
-    books = [
-        dict(
-            id=str(uuid4()),  # TODO use ASIN or whatever
-            name=d.meta['name'],
-            content=d.content,
-            genre=d.meta['genre'],
-            author=d.meta['genre'],
-            score=d.score
-        )
-        for d in books
-    ]
+    ids = df_user.obj_id.unique().tolist()
 
     result = dict(
         answer=answer,

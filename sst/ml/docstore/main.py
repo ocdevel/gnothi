@@ -1,23 +1,19 @@
 # Immediately set transformers cache path
 import common.env
 
-from docstore.docstore import store
 from docstore.search import search
 from docstore.add_entry import add_entry
+
+VEC_VERSION = 1
 
 def main(event, context):
     data = event["data"]
     event = event["event"]
     final = {"statusCode": 200}
-    if event == 'init':
-        store.init_schema()
-        return final
     if event == "upsert":
         return add_entry(data)
     if event == 'search':
-        ids = data.get('ids', [])
-        query = data.get('query', "")
-        res = search(query, ids)
+        res = search(data.get('query', ''), data['user_id'], data['entry_ids'])
         return {
             "statusCode": 200,
             "answer": res["answer"],

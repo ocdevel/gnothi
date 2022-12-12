@@ -4,13 +4,15 @@ import {analyze_books_response} from '@gnothi/schemas/analyze'
 
 type FnIn = {
   query: string
+  user_id: string
   entries: Entry[]
 }
 type LambdaIn = {
   event: "search"
   data: {
     query: string
-    ids: string[]
+    entry_ids: string[]
+    user_id: string
   }
 }
 type LambdaOut = {
@@ -22,7 +24,7 @@ type LambdaOut = {
 type FnOut = LambdaOut & {
   entries: Entry[]
 }
-export async function search({entries, query}: FnIn): Promise<FnOut> {
+export async function search({user_id, entries, query}: FnIn): Promise<FnOut> {
   const functionName = process.env.fn_search
 
   async function call(data: LambdaIn): Promise<LambdaOut> {
@@ -34,7 +36,8 @@ export async function search({entries, query}: FnIn): Promise<FnOut> {
     event: "search",
     data: {
       query,
-      ids: entries.map(e => e.id)
+      user_id,
+      entry_ids: entries.map(e => e.id)
     }
   })
   return {

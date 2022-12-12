@@ -71,128 +71,7 @@ type MLService = {
   fs: efs.FileSystem,
 }
 
-type WeaviateProps = MLService
-function weaviate({context, vpc, fs}: WeaviateProps) {
-  const {app, stack} = context
-  /**
-   * Weaviate
-   * The weaviate docker-compose.yml file can be deployed direct to AWS, see
-   * https://docs.docker.com/cloud/ecs-integration/
-   * But I want it part of the CDK stack. Some resources on that:
-   * - https://www.gravitywell.co.uk/insights/deploying-applications-to-ecs-fargate-with-aws-cdk/
-   * - https://docs.amazonaws.cn/en_us/AmazonECS/latest/userguide/tutorial-ecs-web-server-cdk.html
-   * - https://raw.githubusercontent.com/aws-samples/aws-cdk-examples/master/typescript/ecs/ecs-service-with-advanced-alb-config/index.ts
-   * - https://docs.aws.amazon.com/cdk/v1/guide/ecs_example.html
-   *
-   * But this in particular was a great post, specifically about replicating docker-compose
-   * context into CDK (what we want):
-   * - https://blog.jeffbryner.com/2020/07/20/aws-cdk-docker-explorations.html
-   * - https://github.com/jeffbryner/aws-cdk-example-deployment/blob/master/infrastructure/infrastructure.py
-   *
-   * Fargate with EFS:
-   * - https://bliskavka.com/2021/10/21/AWS-CDK-Fargate-with-EFS/
-   */
-
-  const accessPoint = efsAccessPoint({
-    fs,
-    id: "WeaviateAccessPoint",
-    path: "weaviate"
-  })
-
-  // CPU/RAM mappings at https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-cpu-memory-error.html
-  // TODO distribute these more intelligently through the tasks/services, I don't want to think right now
-  const resources = {
-    cpu: 512, // Default is 256
-    memoryLimitMiB: 2048 // Default is 512
-  } as const
-
-  const cluster = new ecs.Cluster(stack, "MlCluster", {vpc})
-
-  // a4829616 - t2v-transformers module. Having trouble with CloudMapping connecting
-  // the services, but I don't need the module anyway (using Haystack).
-
-  const task = new ecs.FargateTaskDefinition(stack, "weaviate-task", {
-    ...resources,
-  })
-  const container = task.addContainer("weaviate", {
-    image: ecs.ContainerImage.fromRegistry("semitechnologies/weaviate:1.16.5"),
-    essential: true,
-    logging: ecs.LogDrivers.awsLogs({
-      streamPrefix: "weaviateContainer",
-      logRetention: logs.RetentionDays.ONE_WEEK,
-    }),
-    portMappings: [{containerPort:8080, hostPort: 8080}],
-    environment: {
-      QUERY_DEFAULTS_LIMIT: "25",
-      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: 'true',
-      PERSISTENCE_DATA_PATH: '/mnt/weaviate',
-      DEFAULT_VECTORIZER_MODULE: 'none',
-      ENABLE_MODULES: 'ref2vec-centroid',
-      CLUSTER_HOSTNAME: 'node1'
-    },
-  })
-  task.addVolume({
-    name: "mntWeaviate",
-    efsVolumeConfiguration: {
-      fileSystemId: fs.fileSystemId,
-      transitEncryption: 'ENABLED',
-      authorizationConfig:{
-        accessPointId: accessPoint.accessPointId,
-        iam: 'ENABLED'
-      }
-    }
-  })
-  container.addMountPoints({
-    containerPath: '/mnt/weaviate',
-    sourceVolume: "mntWeaviate",
-    readOnly: false
-  });
-
-  task.addToTaskRolePolicy(
-    new iam.PolicyStatement({
-      actions: [
-        'elasticfilesystem:ClientRootAccess',
-        'elasticfilesystem:ClientWrite',
-        'elasticfilesystem:ClientMount',
-        'elasticfilesystem:DescribeMountTargets'
-      ],
-      resources: [fs.fileSystemArn]
-    })
-  )
-  task.addToTaskRolePolicy(
-    new iam.PolicyStatement({
-      actions: ['ec2:DescribeAvailabilityZones'],
-      resources: ['*']
-    })
-  );
-
-  // ---
-  // Services: string them together
-  // ---
-  const weaviateService = new ecs_patterns.ApplicationLoadBalancedFargateService(stack, "weaviate-service", {
-    serviceName: "weaviate",
-    cluster, // Required
-    ...resources,
-    desiredCount: 1,  // Default is 1
-    taskDefinition: task,
-    listenerPort: 8080,
-    // TODO make this false, and setup allowFromAnyIp below to only Lambda incoming
-    publicLoadBalancer: false,
-  })
-  // weaviateService.service.connections.allowFromAnyIpv4(
-  //   ec2.Port.tcp(8080), "weaviate inbound"
-  // )
-  const weaviateUrl = weaviateService.loadBalancer.loadBalancerDnsName
-
-  stack.addOutputs({
-    weaviateUrl_: weaviateUrl
-  })
-
-  return weaviateUrl
-}
-
-type Lambdas = MLService & {weaviateUrl: string}
-function lambdas({context: {app, stack}, vpc, fs, weaviateUrl}: Lambdas) {
+function lambdas({context: {app, stack}, vpc, fs}: MLService) {
   // Our ML functions need HF models (large files) cached. Two options:
   // 1. Save HF model into docker image (see git-lfs sample)
   // 2. Save HF models in EFS mount, cache folder
@@ -203,7 +82,7 @@ function lambdas({context: {app, stack}, vpc, fs, weaviateUrl}: Lambdas) {
   const accessPoint = efsAccessPoint({
     fs,
     id: "LambdaAccessPoint",
-    path: "transformers"
+    path: "mldata"
   })
 
   const mlFunctionProps = {
@@ -212,7 +91,7 @@ function lambdas({context: {app, stack}, vpc, fs, weaviateUrl}: Lambdas) {
     memorySize: 8846,
     timeout: cdk.Duration.minutes(10),
     vpc,
-    filesystem: lambda.FileSystem.fromEfsAccessPoint(accessPoint, '/mnt/models')
+    filesystem: lambda.FileSystem.fromEfsAccessPoint(accessPoint, '/mnt/mldata')
   } as const
 
   const fnSummarize = new lambda.DockerImageFunction(stack, "fn_summarize", {
@@ -226,9 +105,6 @@ function lambdas({context: {app, stack}, vpc, fs, weaviateUrl}: Lambdas) {
     code: lambda.DockerImageCode.fromImageAsset("ml", {
       file: "docstore.dockerfile"
     }),
-    environment: {
-      weaviate_host: `http://${weaviateUrl}`
-    }
   })
   fnSummarize.grantInvoke(fnSearch)
 
@@ -243,12 +119,10 @@ export function Ml(context: sst.StackContext) {
   const { app, stack } = context
 
   const {vpc, fs} = vpcAndEfs(context)
-  const weaviateUrl = weaviate({context, vpc, fs})
-  const {fnSearch, fnSummarize} = lambdas({context, vpc, fs, weaviateUrl})
+  const {fnSearch, fnSummarize} = lambdas({context, vpc, fs})
 
   return {
     fnSearch,
     fnSummarize,
-    weaviateUrl
   }
 }

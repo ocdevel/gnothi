@@ -1,4 +1,3 @@
-import {weaviateClient, weaviateDo} from "../data/weaviate";
 import {Entry} from '@gnothi/schemas/entries'
 import {summarize} from "./summarize";
 
@@ -27,6 +26,7 @@ async function getClusters(ids: LambdaIn): Promise<LambdaOut> {
   return res.data.Get.Paragraph
 }
 export async function themes(entries: FnIn): Promise<FnOut> {
+  return []  // FIXME
   const groups = await getClusters(entries.map(e => e.id))
   const texts = groups.map(g => g.content) as [string, ...string[]]
   const summaries = await summarize({

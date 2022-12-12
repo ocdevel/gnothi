@@ -1,7 +1,6 @@
-weaviate-client==3.9.0
 sentence-transformers==2.2.2
 keybert==0.7.0
 transformers[torch]==4.25.1
 faiss-cpu==1.7.2
-farm-haystack[faiss-cpu,weaviate]==1.11.0
+farm-haystack==1.11.0
 pytest==7.1.2

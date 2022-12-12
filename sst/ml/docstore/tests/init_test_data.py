@@ -1,9 +1,9 @@
 import json
 from docstore.main import main
-from docstore.docstore import store
 from os.path import exists
 from common.fixtures import articles
 from uuid import uuid4
+import datetime
 
 
 def _load_data():
@@ -18,6 +18,7 @@ def _download_data():
     for title, text in docs.items():
         entries.append(dict(
             text=text,
+            created_at=datetime.datetime.now().isoformat(),
             title=title,
             id=str(uuid4()),
             user_id=user_id
@@ -33,10 +34,7 @@ def init_test_data(reinit=False):
         reinit = True
 
     if reinit:
-        main({
-            "event": "init",
-            "data": {}
-        }, {})
+        # assign new user_id / entry_id so we have fresh start
         for d in data:
             main({
                 "event": "upsert",

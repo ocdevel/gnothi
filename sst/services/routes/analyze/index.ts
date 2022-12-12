@@ -52,9 +52,11 @@ r.analyze_get_request.fn = r.analyze_get_request.fnDef.implement(async (req, con
 })
 
 r.analyze_get_response.fn = r.analyze_get_response.fnDef.implement(async (req, context) => {
+  const user_id = context.user.id
   const {handleRes} = context
-  const hardFiltered = await facetFilter(req, context.user.id)
+  const hardFiltered = await facetFilter(req, user_id)
   const {answer, ids, books, groups, entries} = await search({
+    user_id,
     entries: hardFiltered,
     query: req.search
   })

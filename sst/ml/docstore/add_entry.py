@@ -1,15 +1,20 @@
+from common.env import VECTORS_PATH
 import os, json
 import numpy as np
 from typing import List, Dict, Optional
 import boto3
-from docstore.docstore import store
 from docstore.nodes import nodes
 from common.preprocess import CleanText
+from uuid import uuid4
+import pandas as pd
+import pyarrow as pa
+from pyarrow import parquet
+from box import Box
 
 region = os.getenv("REGION", "us-east-1")
 summarize_fn = os.getenv(
     "summarize_fn",
-    "arn:aws:lambda:us-east-1:488941609888:function:legionwin-gnothi-Ml-fnsummarize13BA0EC4-GupxhnRgBiDo"
+    "arn:aws:lambda:us-east-1:488941609888:function:legionwin3-gnothi-Ml-fnsummarize13BA0EC4-Ocv0FCykjbi7"
 )
 lambda_client = boto3.client("lambda", region_name=region)
 
@@ -37,12 +42,23 @@ def summarize(text: str):
 
 
 def add_entry(entry):
+    eid, text, uid, created_at = (
+        entry['id'],
+        entry['text'],
+        entry['user_id'],
+        entry['created_at']
+    )
+
+    # We'll be storing vectors on EFS
+    # TODO check against vectors_version (as we update schema)
+    user_dir = f"{VECTORS_PATH}/{uid}"
+    os.makedirs(user_dir, exist_ok=True)
+    all_file = f"{user_dir}/entries.parquet"
+
     # manually encode here because WeaviateDocumentStore will write document with np.rand,
     # then you re-fetch the document and update_embeddings()
     retriever = nodes.dense_retriever(batch_size=8)
     embed = retriever.embedding_encoder.embed
-
-    eid, text, uid = entry['id'], entry['text'], entry['user_id']
 
     # Convert text into paragraphs
     print("Cleaning entry, converting to paragraphs")
@@ -62,71 +78,64 @@ def add_entry(entry):
     embeddings = embed(paras)
 
     # Aggregate
-    paras = [dict(
-        # id=eid,  # wouldn't be unique. We'll filter via orig_id
-        orig_id=eid,
-        content=p,
-        embedding=embeddings[i]
-    ) for i, p in enumerate(paras)]
+    paras = pd.DataFrame([
+        dict(
+            id=str(uuid4()),  # wouldn't be unique. We'll filter via orig_id
+            obj_id=eid,
+            obj_type='paragraph',
+            content=p,
+            created_at=created_at,  # used for sorting in analyze later
+            embedding=embeddings[i]
+        ) for i, p in enumerate(paras)
+    ])
+    entry_mean = np.mean(embeddings, axis=0)
+    entry = pd.DataFrame([
+        dict(
+            id=eid,
+            obj_id=eid,
+            obj_type='entry',
+            content=summary, # will use for future summarizing many summaries
+            created_at=created_at,
+            embedding=entry_mean
+        )
+    ])
 
-    # Save paras to weaviate
-    print("Saving paragraphs to Weaviate")
-    store.document_store.delete_documents(
-        index="Paragraph",
-        filters={"orig_id": eid}
-    )
-    store.document_store.write_documents(
-        index="Paragraph",
-        documents=paras,
-    )
-
-    # Save entry with the paragraphs
-    # TODO if tokenize(text) < 300: summary = text
-    print("Saving entry to weaviate")
-    mean = np.mean(
-        [p['embedding'] for p in paras],
-        axis=0
-    )
-    store.document_store.write_documents(
-        index="Entry",
-        documents=[dict(
-            id=eid, # haystack will upsert if exists
-            orig_id=eid,
-            parent_id=uid,
-            content=text,
-            embedding=mean
+    print("Saving paragraphs to vecdb")
+    concats = [paras, entry]
+    if os.path.exists(all_file):
+        # TODO file-lock
+        # remove original paras, entry, and user-mean; this is an upsert
+        existing_df = parquet.read_table(
+            f"{user_dir}/entries.parquet",
+            filters=[("obj_id", "not in", {eid, uid})]
+        ).to_pandas()
+        concats.append(existing_df)
+    # TODO handle bio, people
+    new_df = pd.concat(concats)
+    user_mean = new_df[new_df.obj_type == "paragraph"].embedding.mean(axis=0)
+    new_df = pd.concat([
+        new_df,
+        pd.DataFrame([dict(
+            id=uid,
+            obj_id=uid,
+            obj_type='user',
+            content="",
+            created_at=created_at,  # inaccurate, but we're not using this anywhere
+            embedding=user_mean
         )]
-        # TODO use ref2vec-centroid instead of manual mean
-        # https://github.com/semi-technologies/weav    client.data_object.reference.add(iate-examples/blob/main/getting-started-with-python-client-colab/Getting_Started_With_Weaviate_Python_Client.ipynb
+    )])
+    parquet.write_table(
+        pa.Table.from_pandas(new_df),
+        all_file,
     )
-
-    entries = (store.weaviate_client.query.get(class_name="Entry")
-        .with_additional(["vector"])
-        .with_where({
-            'path': ["parent_id"],
-            'operator': "Equal",
-            "valueString": uid
-        })
-        .do())
-    entries = entries['data']['Get']['Entry']
-    mean = np.mean([
-        e['_additional']['vector']
-        for e in entries
-    ], axis=0)
-    store.document_store.write_documents(
-        index="User",
-        documents=[dict(
-            id=entry['user_id'],
-            embedding=mean,
-            content=""
-        )]
-    )
+    # TODO file-unlock
 
     result = {
         'title': title,
         'summary': summary,
         'keywords': keywords,
-        'emotion': emotion
+        'emotion': emotion,
+        'vector': user_mean
     }
     print("Done with result:", result)
     return result

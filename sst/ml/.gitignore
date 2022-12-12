@@ -7,3 +7,4 @@ books/db
 **/.pytest_cache
 mock_entries.json
 haystack
+**/*.parquet
