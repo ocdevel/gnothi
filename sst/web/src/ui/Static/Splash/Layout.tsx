@@ -22,16 +22,12 @@ import Button from "@mui/material/Button";
 import {AuthComponent} from "../../Setup/Auth";
 
 export default function Layout() {
-  const location = useLocation()
-  let [searchParams, setSearchParams] = useSearchParams();
-  const [showAuth, setShowAuth] = useState<"login"|"signup"|false>(false)
+  const [authTab, setAuthTab] = useState<"signIn"|"signUp"|undefined>(undefined)
   const error = useStore(state => state.apiError)
   const jwt = useStore(state => state.jwt)
 
   // Sign In button not in <Switch> because it uses the flex/center css from jumbotron, the auth routes use left-just
   // const showSignin = !jwt && !~['/auth', '/reset-password'].indexOf(location.pathname)
-
-
 
   function renderToolbar() {
     return <Grid container
@@ -71,14 +67,14 @@ export default function Layout() {
             <Button
               variant='contained'
               sx={sx.button1}
-              onClick={() => setShowAuth("login")}
-              id="button-show-login"
+              onClick={() => setAuthTab("signUp")}
+              className="button-show-signup"
             >Sign Up</Button>
             <Button
               variant='contained'
               sx={sx.button2}
-              onClick={() => setShowAuth("signup")}
-              id="button-show-signup"
+              onClick={() => setAuthTab("signIn")}
+              className="button-show-signin"
             >Log In</Button>
           </Stack>
         </Grid>
@@ -93,11 +89,11 @@ export default function Layout() {
   }
   function renderAuthModal() {
     return <BasicDialog
-      open={showAuth !== false}
-      onClose={() => setShowAuth(false)}
+      open={!!authTab}
+      onClose={() => setAuthTab(undefined)}
       size="xl"
     >
-      <AuthComponent />
+      <AuthComponent tab={authTab} />
     </BasicDialog>
   }
 

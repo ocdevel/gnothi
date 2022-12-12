@@ -9,7 +9,10 @@ import {theme as muiTheme} from '../Setup/Mui'
 
 Amplify.configure(awsConfig);
 
-export function AuthComponent() {
+interface AuthComponent {
+  tab: "signIn" | "signUp" | undefined
+}
+export function AuthComponent({tab}: AuthComponent) {
   // https://ui.docs.amplify.aws/react/connected-components/authenticator/customization
   // https://ui.docs.amplify.aws/react/theming#design-tokens
   // TODO customize colors / fonts
@@ -63,8 +66,13 @@ export function AuthComponent() {
       },
     },
   };
+
+  console.log({initialState: tab})
   return <ThemeProvider theme={theme}>
-    <Authenticator loginMechanisms={["email"]} />
+    <Authenticator
+      loginMechanisms={["email"]}
+      initialState={tab}
+    />
   </ThemeProvider>
   // return <Authenticator loginMechanisms={loginMechanisms}>
   //     {({ signOut, user }) => {

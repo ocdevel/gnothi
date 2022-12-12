@@ -31,12 +31,13 @@ test.beforeEach(async ({page}) => {
 })
 
 async function register(page: Page): Promise<Auth> {
-  await page.goto(`${URL}/?register=true`)
+  await page.goto(URL)
   // Expect a title "to contain" a substring.
   await expect(page).toHaveTitle(/Gnothi/)
 
   const auth = genAuth()
-  await page.getByText("Create Account").click()
+  await page.locator(".button-show-signup").click()
+  // await page.getByText("Create Account").click()
   await page.getByText("Email").fill(auth.email)
   await page.getByText("Password", {exact: true}).fill(auth.pass)
   await page.getByText("Confirm Password", {exact: true}).fill(auth.pass)
