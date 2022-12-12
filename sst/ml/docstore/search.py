@@ -58,7 +58,11 @@ def search(query, user_id, entry_ids):
             top_k=50,
             corpus_chunk_size=100
         )
-        idx_order = [r['corpus_id'] for r in search_res[0]]
+        idx_order = [
+            r['corpus_id']
+            for r in search_res[0]
+            if r['score'] > .5
+        ]
         df_user = df_user.iloc[idx_order]
 
     if not df_user.shape[0]:
