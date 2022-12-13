@@ -5,25 +5,9 @@ import CardContent from "@mui/material/CardContent";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
+import {styles} from '../../Setup/Mui'
 
-export const spacing = {
-  sm: 2,
-  md: 4,
-  lg: 6,
-  xl: 12
-}
-export const colors = {
-  grey: "#FAFAFA",
-  primaryMain: "#50577A",
-  primaryLight: "#A7ABBC",
-  black: "#000000",
-  white: "#FFFFFF"
-}
-export const sx = {
-  button1: {backgroundColor: "primary.main", color: colors.white, fontFamily: "Poppins"},
-  button2: {backgroundColor: "primary.light", color: colors.black, fontFamily: "Poppins"},
-  featureIcon: {fontSize: 40, color: "primary.main"}
-}
+const {colors, spacing} = styles
 
 type FeatureCard = {
   title?: string

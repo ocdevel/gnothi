@@ -13,13 +13,13 @@ import Error from '@gnothi/web/src/ui/Components/Error'
 import {Link} from '@gnothi/web/src/ui/Components/Link'
 import Stack from "@mui/material/Stack";
 import {BasicDialog, FullScreenDialog} from "../../Components/Dialog";
-import {
-  spacing,
-  colors,
-  sx
-} from "./Utils"
 import Button from "@mui/material/Button";
 import {AuthComponent} from "../../Setup/Auth";
+import AppBar from "@mui/material/AppBar";
+import Toolbar from "@mui/material/Toolbar";
+import {styles} from "../../Setup/Mui"
+
+const {sx, colors, spacing} = styles
 
 export default function Layout() {
   const [authTab, setAuthTab] = useState<"signIn"|"signUp"|undefined>(undefined)
@@ -103,7 +103,13 @@ export default function Layout() {
     }}
   >
     <Error message={error} />
-    {renderToolbar()}
+    <AppBar
+      position="fixed"
+      sx={{backgroundColor: colors.grey}}
+    >
+      {renderToolbar()}
+    </AppBar>
+    <Toolbar />
     {renderAuthModal()}
     <Outlet />
 

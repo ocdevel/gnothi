@@ -3,6 +3,26 @@ import CssBaseline from "@mui/material/CssBaseline";
 import StyledEngineProvider from "@mui/material/StyledEngineProvider";
 import {createTheme, ThemeProvider, ThemeOptions} from "@mui/material/styles";
 
+const colors = {
+  grey: "#fafafa",
+  black: "#000000",
+  white: "#ffffff"
+}
+export const styles = {
+  colors,
+  spacing: {
+    sm: 2,
+    md: 4,
+    lg: 6,
+    xl: 12
+  },
+  sx: {
+    button1: {backgroundColor: "primary.main", color: colors.white, fontFamily: "Poppins"},
+    button2: {backgroundColor: "primary.light", color: colors.black, fontFamily: "Poppins"},
+    featureIcon: {fontSize: 40, color: "primary.main"}
+  }
+}
+
 export const theme = createTheme({
   palette: {
     primary: {

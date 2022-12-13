@@ -32,7 +32,9 @@ import InsightsIcon from '@mui/icons-material/AutoFixHigh';
 import TherapyIcon from '@mui/icons-material/Chair';
 import ShareIcon from '@mui/icons-material/Share';
 
-import {spacing, colors, sx, Section, FeatureCard} from './Utils'
+import {Section, FeatureCard} from './Utils'
+import {styles} from '../../Setup/Mui'
+const {spacing, colors, sx} = styles
 
 export default function Layout() {
   const location = useLocation()
@@ -89,7 +91,7 @@ export default function Layout() {
           Gnothi uses a variety of cutting-edge machine learning models that make connections between what you’re writing, how you’re feeling, and your daily habits. That’s where most of us get stuck and overwhelmed. Gnothi helps you narrow your focus so you can navigate your journey of self-discovery with more awareness and direction.      </Typography>
         <Link.Button
           variant='contained'
-          sx={{backgroundColor: colors.primaryMain, color: colors.white, width: 360}}
+          sx={{width: 360}}
           to="/features"
         >
           Explore the features
