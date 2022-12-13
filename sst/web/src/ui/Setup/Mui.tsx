@@ -18,7 +18,7 @@ export const styles = {
   },
   sx: {
     button1: {backgroundColor: "primary.main", color: colors.white, fontFamily: "Poppins"},
-    button2: {backgroundColor: "primary.light", color: colors.black, fontFamily: "Poppins"},
+    button2: {backgroundColor: "primary.light", color: colors.white, fontFamily: "Poppins"},
     featureIcon: {fontSize: 40, color: "primary.main"}
   }
 }

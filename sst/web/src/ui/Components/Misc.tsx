@@ -37,9 +37,10 @@ export function ToolbarHeader(props) {
     alignItems='center'
   >
     <Grid item>
-      <Typography variant="h6" noWrap component="div" {...rest}>
+      {/*<Typography variant="h6" noWrap component="div" {...rest}>
         {title}
-      </Typography>
+      </Typography>*/}
+      <img src="/Gnothi-LOGO-G10.png" height={40} />
     </Grid>
     <Grid item>
       <Stack2 direction='row'>{buttons}</Stack2>

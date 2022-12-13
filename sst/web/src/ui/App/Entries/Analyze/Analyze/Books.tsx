@@ -12,7 +12,7 @@ import Stack from "@mui/material/Stack";
 
 export default function Summarize() {
   const submitted = useStore(s => !!s.res.analyze_get_response?.first)
-  const books = useStore(s => s.res.analyze_books_response)
+  const books = useStore(store => store.res.analyze_books_response)
 
   const waiting = !books?.first && submitted
 
@@ -22,9 +22,8 @@ export default function Summarize() {
     return <LinearProgress />
   }
 
-  const icons = {color: "secondary", fontSize: "large"} as const
-  return <Box>
-    {books.rows.slice(0,5).map(b => <Stack direction="column" mb={2}>
+  function renderBook(b) {
+    return <Stack direction="column" mb={2}>
       <Typography>{b.name}</Typography>
       <Stack spacing={1} direction="row">
         <RecommendIcon {...icons} />
@@ -32,6 +31,11 @@ export default function Summarize() {
           transform: "rotate(180deg)"
         }}/>
       </Stack>
-    </Stack>)}
+    </Stack>
+  }
+
+  const icons = {color: "secondary", fontSize: "large"} as const
+  return <Box>
+    {books?.rows.slice(0,5).map(renderBook)}
   </Box>
 }

@@ -21,11 +21,15 @@ import {useEffect} from "react";
 import Error from '@gnothi/web/src/ui/Components/Error'
 import {S, Loading} from '@gnothi/web/src/ui/Components/Routing'
 
+import {styles} from '../../Setup/Mui'
+
 const EntriesToolbar = React.lazy(() => import("../Entries/Toolbar"))
 const GroupsToolbar = React.lazy(() => import ("../Groups/List/Toolbar"))
 const GroupToolbar = React.lazy(() => import ("../Groups/View/Toolbar"))
 const SharingModal = React.lazy(() => import("../Account/Sharing"))
 const EntryModal = React.lazy(() => import("../Entries/Modal"))
+
+import Appbar from './Appbar'
 
 const drawerWidth = 240;
 
@@ -91,10 +95,16 @@ function PersistentDrawerLeft({children}: React.PropsWithChildren) {
   return (
     <Box sx={{ display: 'flex' }}>
       {/*<CssBaseline />*/}
-      <AppBar position="fixed" open={open}>
+      <AppBar
+        position="fixed"
+        open={open}
+        sx={{
+            backgroundColor: styles.colors.grey
+        }}
+      >
         <Toolbar>
           <IconButton
-            color="inherit"
+            color="primary"
             aria-label="open drawer"
             onClick={handleDrawerOpen}
             edge="start"
@@ -119,9 +129,6 @@ function PersistentDrawerLeft({children}: React.PropsWithChildren) {
         open={open}
       >
         <DrawerHeader>
-          <Typography variant="h6" component="div">
-            Gnothi
-          </Typography>
           <Divider />
           <IconButton onClick={handleDrawerClose}>
             {theme.direction === 'ltr' ? <ChevronLeftIcon /> : <ChevronRightIcon />}
