@@ -93,13 +93,13 @@ function lambdas({context: {app, stack}, vpc, fs, bucket}: MLService) {
 
   const fnSummarize = new lambda.DockerImageFunction(stack, "fn_summarize", {
     ...mlFunctionProps,
-    code: lambda.DockerImageCode.fromImageAsset("ml", {
+    code: lambda.DockerImageCode.fromImageAsset("services/ml/python", {
       file: "summarize.dockerfile"
     }),
   })
   const fnSearch = new lambda.DockerImageFunction(stack, "fn_search", {
     ...mlFunctionProps,
-    code: lambda.DockerImageCode.fromImageAsset("ml", {
+    code: lambda.DockerImageCode.fromImageAsset("services/ml/python", {
       file: "docstore.dockerfile"
     }),
   })

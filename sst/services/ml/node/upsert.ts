@@ -1,5 +1,5 @@
 import {Entry} from '@gnothi/schemas/entries'
-import {lambdaSend} from "../aws/handlers";
+import {lambdaSend} from "../../aws/handlers";
 
 type FnIn = Entry
 type LambdaIn = {

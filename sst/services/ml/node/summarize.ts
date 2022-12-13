@@ -1,4 +1,4 @@
-import {lambdaSend} from "../aws/handlers"
+import {lambdaSend} from "../../aws/handlers"
 import {Function} from "@serverless-stack/node/function";
 import {TextsParamsMatch} from "./errors";
 
