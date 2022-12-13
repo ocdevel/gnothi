@@ -17,50 +17,7 @@ retriever = nodes.dense_retriever(batch_size=8)
 from sentence_transformers.util import semantic_search
 
 
-def to_tensor(nparr):
-    # revisit: when getting directly, ValueError: setting an array element with a sequence.
-    return torch.tensor(nparr.tolist(), device="cpu")
 
-# TODO
-# currently loading bookstore & Q/A in master search lambda. These two tasks
-# should be separated to Lambdas, so it's (1) search/add-entry; (2) QA; (3) books
-class BookStore(object):
-    def __init__(self):
-        self.df = None
-        self.dir = f"{VECTORS_PATH}/books/embeddings.feather"
-        self.file = f"{self.dir}/embeddings.feather"
-
-    def load(self):
-        # TODO have s3->efs pipeline so I can upload/update
-        if not os.path.exists(self.file):
-            os.makedirs(self.dir, exist_ok=True)
-            s3_path = 'vectors/books/embeddings.feather'
-            logging.warning("{} doesn't exist. Downloading from {}/{}".format(
-                self.file,
-                os.getenv("bucket_name"),
-                s3_path
-            ))
-            import boto3
-            s3 = boto3.client('s3')
-            s3.download_file(
-                os.getenv("bucket_name"),
-                s3_path,
-                self.dir
-            )
-        self.df = feather.read_feather(self.file)
-
-    def search(self, search_emb):
-        if self.df is None:
-            self.load()
-        results = semantic_search(
-            query_embeddings=search_emb,
-            corpus_embeddings=to_tensor(self.df.embedding),
-            top_k=50,
-            corpus_chunk_size=100
-        )
-        idx_order = [r['corpus_id'] for r in results[0]]
-        ordered = self.df.iloc[idx_order].drop(columns=['embedding'])
-        return ordered.to_dict("records")
 
 class EntryStore(object):
     def __init__(self, user_id):

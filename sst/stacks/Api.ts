@@ -48,6 +48,7 @@ export function Api({ app, stack }: sst.StackContext) {
     environment: {
       fn_summarize: ml.fnSummarize.functionName,
       fn_search: ml.fnSearch.functionName,
+      fn_books: ml.fnBooks.functionName,
     },
     permissions: [
       ws
@@ -62,6 +63,7 @@ export function Api({ app, stack }: sst.StackContext) {
      actions: ["lambda:InvokeFunction"],
      effect: iam.Effect.ALLOW,
      resources: [
+       ml.fnBooks.functionArn,
        ml.fnSummarize.functionArn,
        ml.fnSearch.functionArn
      ],

@@ -1,7 +1,7 @@
 import re, os
 from common.env import VECTORS_PATH
+from common.preprocess import CleanText
 import pandas as pd
-from textacy import preprocessing
 from sqlalchemy import create_engine, text
 import pyarrow.feather as feather
 from bs4 import BeautifulSoup
@@ -20,14 +20,10 @@ def only_ascii(s):
     return re.sub(r"[^\x00-\x7F\xA9]+", "", s)
 
 
-cleanup = preprocessing.make_pipeline(
-    html2txt,
-    preprocessing.replace.urls,
-    preprocessing.replace.emails,
-    preprocessing.replace.phone_numbers,
-    only_ascii,
-    preprocessing.normalize.whitespace
-)
+def cleanup(s):
+    return (CleanText([s]).strip_html()
+            .only_ascii()
+            .multiple_whitespace())
 
 def mysql_to_df():
     engine = create_engine("mysql+pymysql://root:password@localhost:3306/books?charset=utf8mb4", echo=True, future=True)

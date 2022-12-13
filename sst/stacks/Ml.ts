@@ -91,6 +91,12 @@ function lambdas({context: {app, stack}, vpc, fs, bucket}: MLService) {
     }
   } as const
 
+  const fnBooks = new lambda.DockerImageFunction(stack, "fn_books", {
+    ...mlFunctionProps,
+    code: lambda.DockerImageCode.fromImageAsset("services/ml/python", {
+      file: "books.dockerfile"
+    }),
+  })
   const fnSummarize = new lambda.DockerImageFunction(stack, "fn_summarize", {
     ...mlFunctionProps,
     code: lambda.DockerImageCode.fromImageAsset("services/ml/python", {
@@ -106,12 +112,14 @@ function lambdas({context: {app, stack}, vpc, fs, bucket}: MLService) {
   fnSummarize.grantInvoke(fnSearch)
 
   // Let the functions read/write to the ML bucket
+  bucket.cdk.bucket.grantReadWrite(fnBooks)
   bucket.cdk.bucket.grantReadWrite(fnSummarize)
   bucket.cdk.bucket.grantReadWrite(fnSearch)
 
   stack.addOutputs({
     fnSearch_: fnSearch.functionArn,
     fnSummarize_: fnSummarize.functionArn,
+    fnBooks_: fnBooks.functionArn,
   })
   return {fnSearch, fnSummarize}
 }
@@ -137,5 +145,6 @@ export function Ml(context: sst.StackContext) {
   return {
     fnSearch,
     fnSummarize,
+    fnBooks
   }
 }
