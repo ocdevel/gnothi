@@ -67,7 +67,7 @@ export function AuthComponent({tab}: AuthComponent) {
     },
   };
 
-  console.log({initialState: tab})
+  // return <ThemeProvider theme={theme}>
   return <ThemeProvider theme={theme}>
     <Authenticator
       loginMechanisms={["email"]}

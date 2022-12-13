@@ -57,6 +57,7 @@ def add_entry(entry):
 
     print("Saving entry & paras to vector db")
     store.add_entry(entry, paras)
+    store.save()
 
     print("Done with result:", entry)
     return entry

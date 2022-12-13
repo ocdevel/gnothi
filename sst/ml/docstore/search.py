@@ -26,7 +26,7 @@ def search(query, user_id, entry_ids):
     ])
     if not df_user.shape[0]:
         return no_response
-    # TODO sort by created_at
+    # TODO sort by createdj_at
 
     query_classifier = nodes.query_classifier()
     dense_retriever = nodes.dense_retriever()

@@ -14,6 +14,7 @@ for env_key in [
     'SENTENCE_TRANSFORMERS_HOME'
 ]:
     os.environ[env_key] = f"{EFS}/models"
+os.environ["HAYSTACK_TELEMETRY_ENABLED"] = ""
 
 VECTORS_PATH = f"{EFS}/vectors"
 

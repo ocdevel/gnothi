@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
+import pyarrow.feather as feather
 from uuid import uuid4
 from docstore.nodes import nodes
 import torch
@@ -26,14 +27,30 @@ def to_tensor(nparr):
 class BookStore(object):
     def __init__(self):
         self.df = None
+        self.dir = f"{VECTORS_PATH}/books/embeddings.feather"
+        self.file = f"{self.dir}/embeddings.feather"
 
     def load(self):
-        # TODO convert to feather
         # TODO have s3->efs pipeline so I can upload/update
-        self.df = pd.read_pickle(f"{VECTORS_PATH}/books/embeddings.pkl")
+        if not os.path.exists(self.file):
+            os.makedirs(self.dir, exist_ok=True)
+            s3_path = 'vectors/books/embeddings.feather'
+            logging.warning("{} doesn't exist. Downloading from {}/{}".format(
+                self.file,
+                os.getenv("bucket_name"),
+                s3_path
+            ))
+            import boto3
+            s3 = boto3.client('s3')
+            s3.download_file(
+                os.getenv("bucket_name"),
+                s3_path,
+                self.dir
+            )
+        self.df = feather.read_feather(self.file)
 
     def search(self, search_emb):
-        if not self.df:
+        if self.df is None:
             self.load()
         results = semantic_search(
             query_embeddings=search_emb,
@@ -42,7 +59,7 @@ class BookStore(object):
             corpus_chunk_size=100
         )
         idx_order = [r['corpus_id'] for r in results[0]]
-        ordered = self.df.iloc[idx_order]
+        ordered = self.df.iloc[idx_order].drop(columns=['embedding'])
         return ordered.to_dict("records")
 
 class EntryStore(object):
@@ -102,7 +119,7 @@ class EntryStore(object):
         if os.path.exists(self.file):
             # TODO file-lock
             # remove original paras, entry, and user-mean; this is an upsert
-            df = self.load([("obj_id", "not in", {entry['entry_id'], self.user_id})])
+            df = self.load([("obj_id", "not in", {entry['id'], self.user_id})])
             self.dfs.append(df)
             # TODO handle bio, people
         new_df = pd.concat(self.dfs)

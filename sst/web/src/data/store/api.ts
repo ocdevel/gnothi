@@ -66,7 +66,7 @@ export const apiSlice: StateCreator<
       jwt,
       wsUrl: `${API_WS}?idToken=${jwt}`
     })
-    get().send("users_everything_request", {})
+    // users_everything_request kicked off by wsUrl listener
   },
   logout: async () => {
     await Auth.signOut()

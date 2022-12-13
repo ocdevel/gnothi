@@ -2,14 +2,7 @@ import * as sst from "@serverless-stack/resources";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as ec2 from "aws-cdk-lib/aws-ec2";
 import * as efs from "aws-cdk-lib/aws-efs";
-import * as ecr from "aws-cdk-lib/aws-ecr-assets";
 import * as cdk from "aws-cdk-lib";
-import * as ecs from "aws-cdk-lib/aws-ecs"
-import * as iam from "aws-cdk-lib/aws-iam"
-import logs from 'aws-cdk-lib/aws-logs'
-import ecs_patterns from 'aws-cdk-lib/aws-ecs-patterns'
-import {ApplicationProtocol} from "aws-cdk-lib/aws-elasticloadbalancingv2";
-import {DockerImageAsset} from "aws-cdk-lib/aws-ecr-assets";
 
 // Getting a cyclical deps error when I have these all as different stacks, per
 // sst recommended usage. Just calling them as functions for now
@@ -69,9 +62,10 @@ type MLService = {
   context: sst.StackContext,
   vpc: ec2.Vpc,
   fs: efs.FileSystem,
+  bucket: sst.Bucket
 }
 
-function lambdas({context: {app, stack}, vpc, fs}: MLService) {
+function lambdas({context: {app, stack}, vpc, fs, bucket}: MLService) {
   // Our ML functions need HF models (large files) cached. Two options:
   // 1. Save HF model into docker image (see git-lfs sample)
   // 2. Save HF models in EFS mount, cache folder
@@ -91,7 +85,10 @@ function lambdas({context: {app, stack}, vpc, fs}: MLService) {
     memorySize: 8846,
     timeout: cdk.Duration.minutes(10),
     vpc,
-    filesystem: lambda.FileSystem.fromEfsAccessPoint(accessPoint, '/mnt/mldata')
+    filesystem: lambda.FileSystem.fromEfsAccessPoint(accessPoint, '/mnt/mldata'),
+    environment: {
+      bucket_name: bucket.bucketName
+    }
   } as const
 
   const fnSummarize = new lambda.DockerImageFunction(stack, "fn_summarize", {
@@ -108,6 +105,10 @@ function lambdas({context: {app, stack}, vpc, fs}: MLService) {
   })
   fnSummarize.grantInvoke(fnSearch)
 
+  // Let the functions read/write to the ML bucket
+  bucket.cdk.bucket.grantReadWrite(fnSummarize)
+  bucket.cdk.bucket.grantReadWrite(fnSearch)
+
   stack.addOutputs({
     fnSearch_: fnSearch.functionArn,
     fnSummarize_: fnSummarize.functionArn,
@@ -118,8 +119,20 @@ function lambdas({context: {app, stack}, vpc, fs}: MLService) {
 export function Ml(context: sst.StackContext) {
   const { app, stack } = context
 
+  // Will put some assets in here like books.feather, and may move some EFS
+  // use-cases towards S3 + PyArrow
+  const bucket = new sst.Bucket(stack, "MlBucket")
+  stack.addOutputs({
+    mlBucket_: bucket.bucketName
+  })
+
   const {vpc, fs} = vpcAndEfs(context)
-  const {fnSearch, fnSummarize} = lambdas({context, vpc, fs})
+  const {fnSearch, fnSummarize} = lambdas({
+    context,
+    vpc,
+    fs,
+    bucket
+  })
 
   return {
     fnSearch,
