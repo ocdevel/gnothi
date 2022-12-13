@@ -15,13 +15,15 @@ export function sent2face(sentiment: Sentiment) {
   // style.padding = 5
   style.marginRight = 5
   const emoji_ = {
-    sadness: emoji("😢"),
+    sadness: emoji("😭"),
     joy: emoji("😃"),
     love: emoji("🥰"),
     anger: emoji("😡"),
-    fear: emoji("😱"),
+    fear: emoji("😨"),
     surprise: emoji("😯"),
-  }[sentiment] || emoji("⚠")
+    disgust: emoji("🤢"),
+  // }[sentiment] || emoji("😐") // neutral
+  }[sentiment] || null
   return (
     <Tooltip title="Sentiment is machine-generated from your entry's text">
       <span style={style}>{emoji_}</span>

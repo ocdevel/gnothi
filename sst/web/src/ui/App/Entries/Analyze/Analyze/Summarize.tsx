@@ -4,6 +4,7 @@ import {sent2face} from "@gnothi/web/src/utils/utils"
 import {useStore} from "@gnothi/web/src/data/store"
 import Typography from "@mui/material/Typography";
 import CircularProgress from "@mui/material/CircularProgress";
+import {LinearProgress} from "@mui/material";
 
 export default function Summarize() {
   const submitted = useStore(s => !!s.res.analyze_get_response?.first)
@@ -15,7 +16,7 @@ export default function Summarize() {
   // 26fecb16 - specify summary length
 
   if (waiting) {
-    return <CircularProgress />
+    return <LinearProgress />
   }
 
   if (!summary?.first) {

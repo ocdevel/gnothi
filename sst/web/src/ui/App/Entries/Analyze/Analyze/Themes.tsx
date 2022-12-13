@@ -12,6 +12,7 @@ import {analyze_themes_response} from '@gnothi/schemas/analyze'
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import Chip from "@mui/material/Chip";
+import {LinearProgress} from "@mui/material";
 
 export default function Themes() {
   const submitted = useStore(s => !!s.res.analyze_get_response?.first)
@@ -23,7 +24,7 @@ export default function Themes() {
   // 26fecb16 - specify summary length
 
   if (waiting) {
-    return <CircularProgress />
+    return <LinearProgress />
   }
 
   if (!themes?.first) {
