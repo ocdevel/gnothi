@@ -64,10 +64,20 @@ r.analyze_get_response.fn = r.analyze_get_response.fnDef.implement(async (req, c
     query
   })
 
+  const pSearch = handleRes(
+    r.analyze_search_response,
+    {
+      data: ids.map(id => ({id}))
+    },
+    context
+  )
+
   const pAsk = ask({
     query,
     user_id,
-    entry_ids: ids
+    // only send the top few matching documents. Ease the burden on QA ML, and
+    // ensure best relevance from embedding-match
+    entry_ids: ids.slice(0, 1)
   }).then(res => {
     // it will return {answer: ""} anyway
     if (!res.answer?.length) {return}
@@ -131,6 +141,6 @@ r.analyze_get_response.fn = r.analyze_get_response.fnDef.implement(async (req, c
     )
   })
 
-  const final = await Promise.all([pAsk, pSummarize, pBooks, pThemes])
+  const final = await Promise.all([pSearch, pAsk, pSummarize, pBooks, pThemes])
   return [{done: true}]
 })

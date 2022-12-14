@@ -9,12 +9,14 @@ import Pagination from '@mui/material/Pagination'
 import Button from '@mui/material/Button'
 import {Alert2, ToolbarHeader} from "../../../Components/Misc";
 
+import {entries_list_response} from '@gnothi/schema/entries'
+
 
 export default function Entries({group_id=null}) {
   const entries = useStore(s => s.res.entries_list_response)
+  const search_response = useStore(s => s.res.analyze_search_response?.rows)
   const selected = useStore(s => s.selectedTags)
   const filters = useStore(s => s.filters)
-
 
   const ids = entries?.ids || []
   const hash = entries?.hash || {}
@@ -32,10 +34,16 @@ export default function Entries({group_id=null}) {
     return <h5>{entries.res.data}</h5>
   }
 
-  let filtered = ids
-      // FIXME entry_tags
-      // .filter(eid => _.reduce(selected, (m, v, k) => hash[eid].tags[k] || m, false))
-      .filter(eid => !search.length || ~(hash[eid].entry.title + hash[eid].entry.text).toLowerCase().indexOf(search))
+  let filtered: string[] = []
+  if (search_response) {
+    filtered = search_response.map(r => r.id)
+  } else {
+    filtered = ids
+        // FIXME entry_tags
+        // .filter(eid => _.reduce(selected, (m, v, k) => hash[eid].tags[k] || m, false))
+        .filter(eid => !search.length || ~(hash[eid].entry.title + hash[eid].entry.text).toLowerCase().indexOf(search))
+
+  }
 
   const gotoForm = (entry_id?: string) => {
     const p = (entry_id ? `/j/${entry_id}/view` : 'entry')

@@ -58,6 +58,9 @@ export const analyze_books_response = z.object({
 })
 export type analyze_books_response = z.infer<typeof analyze_books_response>
 
+export const analyze_search_response = z.object({id: z.string()})
+export type analyze_search_response = z.infer<typeof analyze_search_response>
+
 export const routes = {
   analyze_get_request: new Route({
     i: {
@@ -86,6 +89,12 @@ export const routes = {
   }),
 
   // FIXME I'm breaking the Route system here, reconsider unidirectional routes
+  analyze_search_response: <DefO<any>>{
+    e: "analyze_search_response",
+    s: analyze_search_response,
+    t: {ws: true},
+    keyby: 'id'
+  },
   analyze_ask_response: <DefO<any>>{
     e: "analyze_ask_response",
     s: analyze_ask_response,

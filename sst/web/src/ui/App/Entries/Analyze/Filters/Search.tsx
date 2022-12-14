@@ -1,5 +1,5 @@
 import React, {useCallback, useState, ChangeEventHandler} from "react";
-import _ from "lodash";
+import debounce from "lodash/debounce";
 import SearchIcon from "@mui/icons-material/Search";
 import TextField from "@mui/material/TextField"
 import InputAdornment from "@mui/material/InputAdornment"
@@ -16,9 +16,12 @@ export default function Search() {
   const setFilters = useStore(s => s.setFilters)
   let [search, setSearch] = useState('')
 
-  const trigger = useCallback(_.debounce((search) => {
-    setFilters({search})
-  }, 500), [])
+  const trigger_ = (search: string) => setFilters({search})
+  const trigger = React.useMemo(
+    () => debounce(trigger_, 1000),
+   []
+  )
+  // TODO unlisten on unmount https://dmitripavlutin.com/react-throttle-debounce/
 
   const changeSearch: ChangeEventHandler<HTMLInputElement> = (e) => {
     const search = e.target.value

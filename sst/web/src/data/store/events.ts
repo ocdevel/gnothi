@@ -48,6 +48,7 @@ export interface EventsSlice {
     analyze_ask_response?: Api.ResUnwrap<Analyze.analyze_ask_response>
     analyze_themes_response?: Api.ResUnwrap<Analyze.analyze_themes_response>
     analyze_books_response?: Api.ResUnwrap<Analyze.analyze_books_response>
+    analyze_search_response?: Api.ResUnwrap<Analyze.analyze_search_response>
 
 
     analyze_books_list_response?: Api.ResUnwrap<Analyze.Book>
