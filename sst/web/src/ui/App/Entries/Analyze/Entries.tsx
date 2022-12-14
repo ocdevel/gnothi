@@ -9,8 +9,6 @@ import Pagination from '@mui/material/Pagination'
 import Button from '@mui/material/Button'
 import {Alert2, ToolbarHeader} from "../../../Components/Misc";
 
-import {entries_list_response} from '@gnothi/schema/entries'
-
 
 export default function Entries({group_id=null}) {
   const entries = useStore(s => s.res.entries_list_response)

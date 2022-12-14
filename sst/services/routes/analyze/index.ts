@@ -64,11 +64,17 @@ r.analyze_get_response.fn = r.analyze_get_response.fnDef.implement(async (req, c
     query
   })
 
+  // client needs 'id' for React 'key'
+  function wrapRes(res: any) {
+    const data = Array.isArray(res)
+      ? res.map(r => ({id: uuid(), ...r}))
+      : {id: uuid(), ...res}
+    return { data }
+  }
+
   const pSearch = handleRes(
     r.analyze_search_response,
-    {
-      data: ids.map(id => ({id}))
-    },
+    wrapRes(ids.map(id => ({id}))),
     context
   )
 
@@ -83,12 +89,7 @@ r.analyze_get_response.fn = r.analyze_get_response.fnDef.implement(async (req, c
     if (!res.answer?.length) {return}
     handleRes(
       r.analyze_ask_response,
-      {
-        data: [{
-          id: uuid(), // neede for React `key`
-          answer: res.answer
-        }]
-      },
+      wrapRes(res),
       context
     )
   })
@@ -97,13 +98,11 @@ r.analyze_get_response.fn = r.analyze_get_response.fnDef.implement(async (req, c
     search_mean
   }).then(res => handleRes(
     r.analyze_books_response,
-    {
-      data: res
-    },
+    wrapRes(res),
     context
   ))
 
-  // TODO summarize summaries, NOT full originals (to reduce token max)
+  // summarize summaries, NOT full originals (to reduce token max)
   const pSummarize = summarize({
     texts: [entries.map(e => e.text_summary || e.text).join('\n\n')],
     params: [{
@@ -114,12 +113,7 @@ r.analyze_get_response.fn = r.analyze_get_response.fnDef.implement(async (req, c
   }).then((summary) => {
       handleRes(
         r.analyze_summarize_response,
-        {
-          data: [{
-            id: uuid(), // neede for React `key`,
-            ...summary[0]
-          }]
-        },
+        wrapRes(summary[0]),
         context
       )
     })
@@ -131,12 +125,7 @@ r.analyze_get_response.fn = r.analyze_get_response.fnDef.implement(async (req, c
   }).then(res => {
     handleRes(
       r.analyze_themes_response,
-      {
-        data: res.map((r, i) => ({
-          id: uuid(), // needed for React `key`
-          ...r
-        }))
-      },
+      wrapRes(res),
       context
     )
   })

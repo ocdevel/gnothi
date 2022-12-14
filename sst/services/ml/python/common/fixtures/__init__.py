@@ -14,7 +14,7 @@ from common.preprocess import html2txt, html2md
 # I just grab-bagged two topics I like
 pages = [Box(x) for x in [
     {"url": "https://en.wikipedia.org/wiki/Cognitive_behavioral_therapy", "k": "cbt"},
-    {"url": "https://en.wikipedia.org/wiki/Virtual_reality", "k": "vr"}
+    {"url": "https://en.wikipedia.org/wiki/Artificial_intelligence", "k": "ai"}
 ]]
 root_ = Path(__file__).parent
 

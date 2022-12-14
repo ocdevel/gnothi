@@ -8,6 +8,8 @@ def search(data):
     query = data.get('query', '')
     entry_ids = data['entry_ids']
     user_id = data['user_id']
+    search_threshold = data.get('search_threshold', .5)
+    community_threshold = data.get('community_threshold', .75)
     no_response = dict(
         search_mean=None,
         ids=[],
@@ -45,7 +47,7 @@ def search(data):
         idx_order = [
             r['corpus_id']
             for r in search_res[0]
-            if r['score'] > .5
+            if r['score'] > search_threshold
         ]
         df_user = df_user.iloc[idx_order]
 
@@ -54,7 +56,11 @@ def search(data):
 
     # now narrowed by search
     corpus_filtered = fix_np(df_user.embedding.values, to_torch=True)
-    clusters = community_detection(corpus_filtered, threshold=.7, min_community_size=2)
+    clusters = community_detection(
+        corpus_filtered,
+        threshold=community_threshold,
+        min_community_size=2
+    )
     clusters = [
         [
             df_user.iloc[idx].obj_id

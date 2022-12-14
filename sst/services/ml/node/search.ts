@@ -30,7 +30,9 @@ export async function search({user_id, entries, query}: FnIn): Promise<FnOut> {
       data: {
         query,
         user_id,
-        entry_ids: entries.map(e => e.id)
+        entry_ids: entries.map(e => e.id),
+        search_threshold: .6,
+        community_threshold: .75
       }
     },
     process.env.fn_store,

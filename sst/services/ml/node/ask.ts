@@ -1,6 +1,4 @@
 import {lambdaSend} from "../../aws/handlers"
-import {Entry} from '@gnothi/schemas/entries'
-import {analyze_books_response} from '@gnothi/schemas/analyze'
 
 type FnIn = {
   query: string

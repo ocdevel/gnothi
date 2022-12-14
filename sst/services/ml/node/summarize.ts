@@ -13,18 +13,19 @@ interface Params {
   emotion?: boolean
 }
 interface FnIn {
-  texts: [string, ...string[]]
-  params: [Params, ...Params[]]
+  texts: string[]
+  params: Params[]
 }
 type LambdaIn = Array<{
   text: string,
   params: Params
 }>
-type LambdaOut = Array<{
+export type SummarizeOut = {
   summary: string
   keywords: string[]
   emotion: string
-}>
+}
+type LambdaOut = Array<SummarizeOut>
 type FnOut = LambdaOut
 export async function summarize({texts, params}: FnIn): Promise<FnOut> {
   // Get functionNames in here so we don't throw error when this file is imported
@@ -43,7 +44,7 @@ export async function summarize({texts, params}: FnIn): Promise<FnOut> {
     }])
   }
 
-  if (texts.length === params.length) {
+  if (texts.length === params.length && params.length > 0) {
     return call(texts.map((text, i) => ({
       text,
       params: params[i]

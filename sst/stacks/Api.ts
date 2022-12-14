@@ -51,10 +51,8 @@ export function Api({ app, stack }: sst.StackContext) {
       fn_summarize: ml.fnSummarize.functionName,
       fn_store: ml.fnStore.functionName,
     },
-    permissions: [
-      ws
-    ],
     bind: [
+      ws,
       APP_REGION,
       API_WS,
       rds,
