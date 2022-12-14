@@ -13,7 +13,7 @@ RUN pip3 install --no-cache-dir \
     clean-text==0.6.0 \
     unidecode==1.3.6 \
     # force-install preferred huggingface, lots of trouble with haystack's 4.22.1
-    && pip3 install --no-cache-dir --target=/tmp/pip transformers==4.25.1
+    && pip3 install --no-cache-dir transformers==4.25.1
 
 COPY __init__.py ${LAMBDA_TASK_ROOT}/__init__.py
 COPY common ${LAMBDA_TASK_ROOT}/common

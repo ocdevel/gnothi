@@ -84,6 +84,6 @@ def main(event, context):
         top_k=3,
     )
     # answer = tup[0]['answers'][0].answer  # from .run()
-    answer = res['answers'][0]
+    answer = res['answers'][0].answer
     # TODO return other attrs (score, context, etc)
     return {"answer": answer}

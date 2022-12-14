@@ -64,22 +64,24 @@ r.analyze_get_response.fn = r.analyze_get_response.fnDef.implement(async (req, c
     query
   })
 
-  // TODO send filtered results. Maybe analyze_filtered_response with just eids; and the client uses to apply filter
-
   const pAsk = ask({
     query,
     user_id,
     entry_ids: ids
-  }).then(res => handleRes(
-    r.analyze_ask_response,
-    {
-      data: [{
-        id: uuid(), // neede for React `key`
-        answer: res.answer
-      }]
-    },
-    context
-  ))
+  }).then(res => {
+    // it will return {answer: ""} anyway
+    if (!res.answer?.length) {return}
+    handleRes(
+      r.analyze_ask_response,
+      {
+        data: [{
+          id: uuid(), // neede for React `key`
+          answer: res.answer
+        }]
+      },
+      context
+    )
+  })
 
   const pBooks = books({
     search_mean

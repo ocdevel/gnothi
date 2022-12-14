@@ -21,7 +21,7 @@ export default function Search() {
   }, 500), [])
 
   const changeSearch: ChangeEventHandler<HTMLInputElement> = (e) => {
-    // const search = e.target.value.toLowerCase()
+    const search = e.target.value
     setSearch(search)
     trigger(search)
   }
