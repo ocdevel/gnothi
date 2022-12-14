@@ -1,7 +1,9 @@
 from common.env import USE_GPU
 from haystack.nodes import FARMReader
-
+from haystack import Document
+from store.store import EntryStore
 from haystack.nodes.base import BaseComponent
+
 SIMPLE_CLASSIFIER = True
 class QueryClassifier(BaseComponent):
     outgoing_edges = 2
@@ -44,11 +46,38 @@ qa_reader = FARMReader(
     use_gpu=USE_GPU
 )
 
+
+def entries_to_haystack(entries):
+    return [
+        Document(
+            id=d['id'],
+            content=d['content'],
+            meta={
+                'obj_id': d['obj_id'],
+                'obj_type': d['obj_type'],
+                'created_at': d['created_at']
+            },
+            embedding=d['embedding']
+        )
+        for d in entries
+    ]
+
 def main(event, context):
     query = event.get('query', '')
     if not query:
         return {"answer": ""}
-    docs = event['docs']
+    # TODO use QueryClassifier
+    if not query.endswith("?"):
+        return {"answer": ""}
+    entry_ids = event['entry_ids']
+    user_id = event['user_id']
+    entry_store = EntryStore(user_id)
+    df_user = entry_store.load([
+        ("obj_type", "=", "paragraph"),
+        ("obj_id", "in", entry_ids)
+    ])
+    docs = entries_to_haystack(df_user.to_dict("records"))
+
     res = qa_reader.predict(
         query=query,
         documents=docs,

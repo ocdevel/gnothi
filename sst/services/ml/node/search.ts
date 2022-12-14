@@ -16,32 +16,28 @@ type LambdaIn = {
   }
 }
 type LambdaOut = {
-  answer?: string
   ids: string[]
-  books: analyze_books_response[]
-  groups: any[]
+  clusters: string[][]
+  search_mean: number[]
 }
 type FnOut = LambdaOut & {
   entries: Entry[]
 }
 export async function search({user_id, entries, query}: FnIn): Promise<FnOut> {
-  const functionName = process.env.fn_search
-
-  async function call(data: LambdaIn): Promise<LambdaOut> {
-    const res = await lambdaSend<LambdaOut>(data, functionName, "RequestResponse")
-    return res.Payload
-  }
-
-  const res = await call({
-    event: "search",
-    data: {
-      query,
-      user_id,
-      entry_ids: entries.map(e => e.id)
-    }
-  })
+  const {Payload} = await lambdaSend<LambdaOut>(
+    {
+      event: "search",
+      data: {
+        query,
+        user_id,
+        entry_ids: entries.map(e => e.id)
+      }
+    },
+    process.env.fn_store,
+    "RequestResponse"
+  )
   return {
-    ...res,
-    entries: entries.filter(e => ~res.ids.indexOf(e.id))
+    ...Payload,
+    entries: entries.filter(e => ~Payload.ids.indexOf(e.id))
   }
 }

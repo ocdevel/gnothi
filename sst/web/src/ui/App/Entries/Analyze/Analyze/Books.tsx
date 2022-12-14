@@ -9,6 +9,7 @@ import Box from "@mui/material/Box";
 import {LinearProgress} from "@mui/material";
 import Checkbox from "@mui/material/Checkbox";
 import Stack from "@mui/material/Stack";
+import {analyze_books_response} from '@gnothi/schemas/analyze'
 
 export default function Summarize() {
   const submitted = useStore(s => !!s.res.analyze_get_response?.first)
@@ -22,7 +23,7 @@ export default function Summarize() {
     return <LinearProgress />
   }
 
-  function renderBook(b) {
+  function renderBook(b: analyze_books_response) {
     return <Stack direction="column" mb={2}>
       <Typography>{b.name}</Typography>
       <Stack spacing={1} direction="row">

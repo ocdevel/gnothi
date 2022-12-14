@@ -97,31 +97,37 @@ function lambdas({context: {app, stack}, vpc, fs, bucket}: MLService) {
       file: "books.dockerfile"
     }),
   })
+  const fnAsk = new lambda.DockerImageFunction(stack, "fn_ask", {
+    ...mlFunctionProps,
+    code: lambda.DockerImageCode.fromImageAsset("services/ml/python", {
+      file: "ask.dockerfile"
+    }),
+  })
   const fnSummarize = new lambda.DockerImageFunction(stack, "fn_summarize", {
     ...mlFunctionProps,
     code: lambda.DockerImageCode.fromImageAsset("services/ml/python", {
       file: "summarize.dockerfile"
     }),
   })
-  const fnSearch = new lambda.DockerImageFunction(stack, "fn_search", {
+  const fnStore = new lambda.DockerImageFunction(stack, "fn_store", {
     ...mlFunctionProps,
     code: lambda.DockerImageCode.fromImageAsset("services/ml/python", {
-      file: "docstore.dockerfile"
+      file: "store.dockerfile"
     }),
   })
-  fnSummarize.grantInvoke(fnSearch)
+  fnSummarize.grantInvoke(fnStore)
 
   // Let the functions read/write to the ML bucket
   bucket.cdk.bucket.grantReadWrite(fnBooks)
-  bucket.cdk.bucket.grantReadWrite(fnSummarize)
-  bucket.cdk.bucket.grantReadWrite(fnSearch)
+  bucket.cdk.bucket.grantReadWrite(fnStore)
 
   stack.addOutputs({
-    fnSearch_: fnSearch.functionArn,
-    fnSummarize_: fnSummarize.functionArn,
     fnBooks_: fnBooks.functionArn,
+    fnAsk_: fnAsk.functionArn,
+    fnSummarize_: fnSummarize.functionArn,
+    fnStore_: fnStore.functionArn,
   })
-  return {fnSearch, fnSummarize}
+  return {fnBooks, fnAsk, fnSummarize, fnStore}
 }
 
 export function Ml(context: sst.StackContext) {
@@ -135,16 +141,12 @@ export function Ml(context: sst.StackContext) {
   })
 
   const {vpc, fs} = vpcAndEfs(context)
-  const {fnSearch, fnSummarize} = lambdas({
+  const fns = lambdas({
     context,
     vpc,
     fs,
     bucket
   })
 
-  return {
-    fnSearch,
-    fnSummarize,
-    fnBooks
-  }
+  return fns
 }

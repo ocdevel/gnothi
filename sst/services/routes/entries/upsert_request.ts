@@ -1,8 +1,7 @@
 import * as S from '@gnothi/schemas'
 import {db} from '../../data/db'
 import {GnothiError} from "../errors";
-import {summarize} from '../../ml/nodesummarize'
-import {upsert} from '../../ml/nodeupsert'
+import {upsert} from '../../ml/node/upsert'
 
 const r = S.Routes.routes
 
@@ -65,7 +64,7 @@ r.entries_upsert_response.fn = r.entries_upsert_response.fnDef.implement(async (
     ...entry,
     title_summary: summary.title,
     text_summary: summary.summary,
-    sentiment: summary.emotion
+    sentiment: summary.emotion,
   }
 
   await db.executeStatement({

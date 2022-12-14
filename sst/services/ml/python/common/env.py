@@ -1,4 +1,5 @@
 EFS = "/mnt/mldata"
+VECTORS_PATH = f"{EFS}/vectors"
 
 import os
 # I tried setting the first two as ENV in Dockerfile but no cigar.
@@ -16,8 +17,6 @@ for env_key in [
     os.environ[env_key] = f"{EFS}/models"
 os.environ["HAYSTACK_TELEMETRY_ENABLED"] = ""
 
-VECTORS_PATH = f"{EFS}/vectors"
-
 USE_GPU = os.getenv("CUDA_VISIBLE_DEVICES", False)
 if not USE_GPU:
     # not present on env, explicitly tell downstream tasks not to use GPU by
@@ -27,3 +26,6 @@ if not USE_GPU:
 import logging
 logging.basicConfig(format="%(levelname)s - %(name)s - %(message)s", level=logging.WARNING)
 logging.getLogger("haystack").setLevel(logging.INFO)
+
+ENCODER_MODEL = "all-MiniLM-L6-v2"
+ENCODER_DIM = 384

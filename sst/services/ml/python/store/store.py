@@ -3,19 +3,25 @@ Utils for marshalling in / out of pandas
 """
 import os
 from typing import List, Dict, Optional
-from common.env import VECTORS_PATH
+from common.env import VECTORS_PATH, ENCODER_MODEL
 import numpy as np
 import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 import pyarrow.feather as feather
 from uuid import uuid4
-from docstore.nodes import nodes
 import torch
 import logging
-retriever = nodes.dense_retriever(batch_size=8)
 from sentence_transformers.util import semantic_search
+from sentence_transformers import SentenceTransformer
 
+encoder = SentenceTransformer(model_name_or_path=ENCODER_MODEL)
+
+
+def embed(texts: List[str]):
+    # manually encode here because WeaviateDocumentStore will write document with np.rand,
+    # then you re-fetch the document and update_embeddings()
+    return encoder.encode(texts)
 
 
 
@@ -31,11 +37,6 @@ class EntryStore(object):
         os.makedirs(self.dir, exist_ok=True)
         self.file = f"{self.dir}/entries.parquet"
 
-    def embed(self, texts: List[str]):
-        # manually encode here because WeaviateDocumentStore will write document with np.rand,
-        # then you re-fetch the document and update_embeddings()
-        return retriever.embedding_encoder.embed(texts)
-
     def load(self, filters: List):
         if not os.path.exists(self.file):
             logging.warning(f"{self.file} doesn't exist")
@@ -45,7 +46,7 @@ class EntryStore(object):
     def add_entry(self, entry: Dict, paras: List[str]):
         self.entry = entry
         print("Embedding paras")
-        paras_embeddings = self.embed(paras)
+        paras_embeddings = embed(paras)
         paras = pd.DataFrame([
             dict(
                 id=str(uuid4()),  # wouldn't be unique. We'll filter via orig_id
@@ -98,18 +99,4 @@ class EntryStore(object):
         )
         # TODO file-unlock
 
-    def entries_to_haystack(self, entries):
-        from haystack import Document
-        return [
-            Document(
-                id=d['id'],
-                content=d['content'],
-                meta={
-                    'obj_id': d['obj_id'],
-                    'obj_type': d['obj_type'],
-                    'created_at': d['created_at']
-                },
-                embedding=d['embedding']
-            )
-            for d in entries
-        ]
+

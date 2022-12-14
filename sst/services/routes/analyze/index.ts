@@ -8,9 +8,11 @@ import dayjs from 'dayjs'
 import {reduce as _reduce} from "lodash"
 import type {Entry} from '@gnothi/schemas/entries'
 import type {analyze_get_request, analyze_ask_response, analyze_themes_response, analyze_summarize_response} from '@gnothi/schemas/analyze'
-import {summarize} from '../../ml/nodesummarize'
-import {search} from '../../ml/nodesearch'
-import {themes} from '../../ml/nodethemes'
+import {summarize} from '../../ml/node/summarize'
+import {search} from '../../ml/node/search'
+import {books} from '../../ml/node/books'
+import {ask} from '../../ml/node/ask'
+import {themes} from '../../ml/node/themes'
 
 const r = S.Routes.routes
 
@@ -53,34 +55,41 @@ r.analyze_get_request.fn = r.analyze_get_request.fnDef.implement(async (req, con
 
 r.analyze_get_response.fn = r.analyze_get_response.fnDef.implement(async (req, context) => {
   const user_id = context.user.id
+  const query = req.search
   const {handleRes} = context
   const hardFiltered = await facetFilter(req, user_id)
-  const {answer, ids, books, groups, entries} = await search({
+  const {ids, entries, search_mean, clusters} = await search({
     user_id,
     entries: hardFiltered,
-    query: req.search
+    query
   })
 
   // TODO send filtered results. Maybe analyze_filtered_response with just eids; and the client uses to apply filter
 
-  const pAsk = handleRes(
+  const pAsk = ask({
+    query,
+    user_id,
+    entry_ids: ids
+  }).then(res => handleRes(
     r.analyze_ask_response,
     {
       data: [{
         id: uuid(), // neede for React `key`
-        answer
+        answer: res.answer
       }]
     },
     context
-  )
+  ))
 
-  const pBooks = handleRes(
+  const pBooks = books({
+    search_mean
+  }).then(res => handleRes(
     r.analyze_books_response,
     {
-      data: books
+      data: res
     },
     context
-  )
+  ))
 
   // TODO summarize summaries, NOT full originals (to reduce token max)
   const pSummarize = summarize({
@@ -104,12 +113,15 @@ r.analyze_get_response.fn = r.analyze_get_response.fnDef.implement(async (req, c
     })
 
   // Promise
-  const pThemes = themes(entries).then(res => {
+  const pThemes = themes({
+    clusters,
+    entries
+  }).then(res => {
     handleRes(
       r.analyze_themes_response,
       {
         data: res.map((r, i) => ({
-          id: uuid(), // neede for React `key`
+          id: uuid(), // needed for React `key`
           ...r
         }))
       },

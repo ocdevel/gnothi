@@ -1,7 +1,7 @@
 import os, json
 import boto3
 from common.preprocess import CleanText
-from docstore.docstore import  EntryStore
+from store.store import  EntryStore
 
 region = os.getenv("REGION", "us-east-1")
 summarize_fn = os.getenv(
@@ -33,7 +33,7 @@ def summarize(text: str):
     return json.loads(response['Payload'].read())
 
 
-def add_entry(entry):
+def upsert(entry):
     store = EntryStore(entry['user_id'])
     text = entry['text']
 

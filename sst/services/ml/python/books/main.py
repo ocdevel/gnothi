@@ -9,6 +9,9 @@ import boto3
 dir_ = f"{VECTORS_PATH}/books"
 file = f"{dir_}/embeddings.feather"
 
+# if os.path.isdir(file):
+#     import shutil
+#     shutil.rmtree(file)
 if not os.path.exists(file):
     os.makedirs(dir_, exist_ok=True)
     s3 = boto3.client('s3')

@@ -1,10 +1,9 @@
 import os
 # Use GPU for this
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
-from common.env import VECTORS_PATH
+from common.env import VECTORS_PATH, ENCODER_DIM
 import pandas as pd
 import re, pickle
-from docstore.nodes import nodes, embedding_dim
 import pyarrow.feather as feather
 
 books_dir = f"{VECTORS_PATH}/books"
