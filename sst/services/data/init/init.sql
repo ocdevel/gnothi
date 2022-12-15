@@ -14,6 +14,8 @@ create type groupprivacy as enum ('public', 'matchable', 'private');
 
 create type grouproles as enum ('member', 'owner', 'admin', 'banned');
 
+create type aistate as enum ('todo', 'skip', 'running', 'done');
+
 create table users
 (
     id uuid default uuid_generate_v4() not null primary key,
@@ -119,19 +121,22 @@ create index ix_auth_old_id
 
 create table entries
 (
-    id            uuid                     default uuid_generate_v4() not null
+    id uuid default uuid_generate_v4() not null
         primary key,
-    created_at    timestamp with time zone default now(),
-    updated_at    timestamp with time zone default now(),
-    n_notes       integer                  default 0,
-    title         varchar,
-    text          varchar                                             not null,
-    no_ai         boolean                  default false,
-    ai_ran        boolean                  default false,
-    title_summary varchar,
-    text_summary  varchar,
-    sentiment     varchar,
-    user_id       uuid
+    created_at timestamp with time zone default now(),
+    updated_at timestamp with time zone default now(),
+    n_notes integer default 0,
+    title varchar,
+    text varchar not null,
+
+    ai_index_state aistate default 'todo',
+    ai_summarize_state aistate default 'todo',
+    ai_title varchar,
+    ai_text varchar,
+    ai_sentiment varchar,
+    ai_keywords varchar[],
+
+    user_id uuid
         references users
             on delete cascade
 );

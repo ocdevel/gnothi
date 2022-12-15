@@ -4,6 +4,7 @@ import {Route} from './api'
 import {v4 as uuid} from "uuid";
 export * as Entries from './entries'
 
+const AiState = z.enum(['todo', 'skip', 'running', 'done']).optional()
 export const Entry = z.object({
   id: IdCol,
   created_at: DateCol,
@@ -13,13 +14,13 @@ export const Entry = z.object({
   // Title optional, otherwise generated from text. topic-modeled, or BERT summary, etc?
   title: z.string().optional(),
   text: z.string(),
-  no_ai: z.boolean().default(false),
-  ai_ran: z.boolean().default(false),
 
-  // Generated
-  title_summary: z.string().optional(),
-  text_summary: z.string().optional(),
-  sentiment: z.string().optional(),
+  ai_index_state: AiState,
+  ai_summarize_state: AiState,
+  ai_title: z.string().optional(),
+  ai_text: z.string().optional(),
+  ai_sentiment: z.string().optional(),
+  ai_keywords: z.string().array().optional(),
 
   user_id: IdCol, // FK users.id
 })
@@ -39,7 +40,6 @@ export const entries_upsert_request = z.object({
       id: true,
       title: true,
       text: true,
-      no_ai: true,
       created_at: true
     }),
   tags: BoolMap

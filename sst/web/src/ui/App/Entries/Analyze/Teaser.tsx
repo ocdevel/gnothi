@@ -26,10 +26,10 @@ export default function Teaser({eid, gotoForm}: Teaser) {
   if (!e) {return null}
   const {tags} = entry
 
-  let title = e.title || e.title_summary
-  const isSummary = e.text_summary && e.text !== e.text_summary
-  const summary = e.text_summary || e.text
-  const sentiment = e.sentiment && sent2face(e.sentiment)
+  let title = e.title || e.ai_title
+  const isSummary = e.ai_text && e.text !== e.ai_text
+  const summary = e.ai_text || e.text
+  const sentiment = e.ai_sentiment && sent2face(e.ai_sentiment)
 
   return <Box
     className='entry-teaser'

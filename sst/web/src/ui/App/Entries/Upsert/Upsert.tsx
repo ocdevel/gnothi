@@ -75,7 +75,7 @@ export default function Upsert(props: Entry) {
   useEffect(() => {
     return // FIXME!! maximum callstack exceeded
     if (!entry) {return}
-    const form_ = _.pick(entry, 'title text no_ai created_at'.split(' '))
+    const form_ = _.pick(entry, 'title text created_at'.split(' '))
     form.reset(form)
     setFormOrig(form_)
     setTags(entry.entry_tags)
@@ -166,6 +166,7 @@ export default function Upsert(props: Entry) {
         color="primary"
         variant='contained'
         type="submit"
+        className="button-entries-upsert"
         onClick={form.handleSubmit(submit)}
       >Submit
       </Button>
@@ -190,12 +191,6 @@ export default function Upsert(props: Entry) {
         />
 
         {advanced && <div>
-          <Checkbox2
-            name='no_ai'
-            label="Exclude from AI"
-            helperText="Use rarely, AI can't help with what it doesn't know. Example uses: technical note to a therapist, song lyrics, etc."
-            form={form}
-          />
           <TextField2
             name='created_at'
             label='Date'

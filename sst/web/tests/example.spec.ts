@@ -12,9 +12,10 @@ const mockEntries = JSON.parse(mockEntriesFile).map(e => ({
   text: e.text,
 }))
 // console.log(mockEntries)
-const someEntries = mockEntries.filter(e => (
-  ~["cbt_0", "cbt_1", "cbt_2", "ai_0", "ai_1"]
-))
+// const someEntries = mockEntries.filter(e => (
+//   ~["cbt_0", "cbt_1", "cbt_2", "ai_0", "ai_1"]
+// ))
+const someEntries = mockEntries
 const nEntries = someEntries.length
 
 type Auth = {email: string, pass: string}
@@ -56,24 +57,34 @@ test("Setup user", async ({page}) => {
 
   const auth = await register(page)
   console.log({auth})
-  // await page.goto(`${URL}/?redirect=false`)
+  await page.goto(`${URL}/?redirect=false`)
 
   // await expect(page.locator(".entry-teaser")).toHaveCount(0)
   // await page.locator(".toolbar-button").click()
 
   await page.locator(".button-tags-edit").click()
-  await page.locator(".textfield-tags-post input").fill("Skip AI")
+  await page.locator(".textfield-tags-post input").fill("SkipAI")
   await page.locator(".button-tags-post").click()
   const tagRow = await page.locator(".form-tags-put").nth(1)
   await tagRow.locator(".checkbox-tags-ai-summarize").click()
-  await tagRow.locator(".checkbox-tags-ai-index").click()
+  // Actually let's keep indexing enabled for tests, it's fast. It's summarize that's slow
+  // await tagRow.locator(".checkbox-tags-ai-index").click()
+  await page.locator(".button-dialog-close").click()
 
-  return
-
-  for (const entry of someEntries) {
-    await page.getByLabel("Title").fill(entry.title)
-    await page.locator(".rc-md-editor textarea").fill(entry.text)
-    await page.getByRole("button", {name: "Submit"}).click()
+  // Right now Main is selected, but not SkipAI. Add one entry through main,
+  // to ensure that summary works. Then add the rest through SkipAI to speed things up
+  async function addEntry({title, text}: {title: string, text: string}) {
+    await page.getByLabel("Title").fill(title)
+    await page.locator(".rc-md-editor textarea").fill(text)
+    await page.locator(".button-entries-upsert").click()
+  }
+  await addEntry(someEntries[0])
+  // now swap tags
+  await page.locator(".button-tags-tag").nth(0).click()
+  await page.waitForTimeout(6000) // summary takes a while, indexing is faster
+  await page.locator(".button-tags-tag").nth(1).click()
+  for (const entry of someEntries.slice(1)) {
+    await addEntry(entry)
     await page.waitForTimeout(6000)
   }
 

@@ -13,19 +13,16 @@ import {search} from '../../ml/node/search'
 import {books} from '../../ml/node/books'
 import {ask} from '../../ml/node/ask'
 import {themes} from '../../ml/node/themes'
+import {boolMapToKeys} from '@gnothi/schemas/utils'
 
 const r = S.Routes.routes
 
 async function facetFilter(req: analyze_get_request, user_id: string): Promise<Entry[]> {
   const {tags, startDate, endDate, search} = req
-  const tids = _reduce(tags, (m,v,k) => {
-    if (!v) {return m}
-    return [...m, k]
-  }, [])
+  const tids = boolMapToKeys(tags)
   if (!tids.length) {
     throw new GnothiError({key: "NO_TAGS"})
   }
-  const [tids_placeholder, tids_params] = db.arrayValueFix(tids)
   const endDate_ = (endDate === "now" || !endDate) ? dayjs().add(1, "day").toDate() : endDate
   const entries = await db.executeStatement({
     sql: `
@@ -35,7 +32,7 @@ async function facetFilter(req: analyze_get_request, user_id: string): Promise<E
       where e.user_id = :user_id
         and e.created_at > :startDate::date
         and e.created_at <= :endDate::date
-        and et.tag_id in (${tids_placeholder})
+        and et.tag_id in :tids
       group by e.id
       order by e.created_at asc;
     `,
@@ -43,7 +40,7 @@ async function facetFilter(req: analyze_get_request, user_id: string): Promise<E
       {name: "user_id", value: {stringValue: user_id}, typeHint: "UUID"},
       {name: "startDate", value: {stringValue: startDate}},
       {name: "endDate", value: {stringValue: endDate_}},
-      ...tids_params
+      {name: "tids", typeHint: "UUID", value: {arrayValue: {stringValues: tids}}}
     ]
   })
   return entries
@@ -104,7 +101,7 @@ r.analyze_get_response.fn = r.analyze_get_response.fnDef.implement(async (req, c
 
   // summarize summaries, NOT full originals (to reduce token max)
   const pSummarize = summarize({
-    texts: [entries.map(e => e.text_summary || e.text).join('\n\n')],
+    texts: [entries.map(e => e.ai_text || e.text).join('\n\n')],
     params: [{
       summarize: {min_length: 150, max_length: 300},
       keywords: {top_n: 5},

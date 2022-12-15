@@ -74,6 +74,7 @@ export default function Tags({
         variant={selected_ ? undefined : "outlined"}
         onClick={() => selectTag(tid, !selected_)}
         label={tag.name}
+        className="button-tags-tag"
       />
     </Grid>
   }

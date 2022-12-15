@@ -57,6 +57,7 @@ interface ExecReq {
 }
 
 type ExecRes = any[]
+type ExecuteStatementCommandInput_ = Pick<ExecuteStatementCommandInput, 'sql' | 'parameters'>
 
 export class DB {
   private driver: DBArgs = {
@@ -89,16 +90,17 @@ export class DB {
     })
   }
 
-  async executeStatement({sql, parameters}: Pick<ExecuteStatementCommandInput, 'sql' | 'parameters'>): Promise<object[]> {
+  async executeStatement<O = object>(statement: ExecuteStatementCommandInput_): Promise<O[]> {
     try {
+      const {sql, parameters} = this.arrayValueFix(statement)
       const response = await rdsClient.executeStatement({
-          includeResultMetadata: true,
-          ...this.driver,
-          sql,
-          parameters
-        })
-        const rows = this.transformRes(response)
-        return rows
+        includeResultMetadata: true,
+        ...this.driver,
+        sql,
+        parameters
+      })
+      const rows = this.transformRes(response)
+      return rows as O[]
     } catch (err: any) {
       debugger
       throw err
@@ -185,15 +187,36 @@ export class DB {
 
   // arrayValue doesn't work in rds-data-client, even though it's part of the documentation. Just says "not supported"
   // https://github.com/aws/aws-sdk/issues/9#issuecomment-1104182976
-  // TODO support multiple datatypes (currently only supports UUID)
-  arrayValueFix(ids: string[]): [string, SqlParameter[]] {
-    const parameters = ids.map((id, index) => ({
-      name: `id${index}`,
-      value: {stringValue: id},
-      typeHint: "UUID"
-    }))
-    const placeholder = [...Array(ids.length).keys()].map(x => `:id${x}`).join(',')
-    return [placeholder, parameters]
+  // TODO support multiple datatypes (currently only supports string)
+  arrayValueFix({sql, parameters}: ExecuteStatementCommandInput_): ExecuteStatementCommandInput_ {
+    let fixedSql = sql
+    let fixedParameters: ExecuteStatementCommandInput["parameters"] = []
+    let offset = 0
+    parameters.forEach((parameter, i) => {
+      if (!parameter.value.arrayValue) {
+        fixedParameters.push(parameter)
+        return // all good, carry on
+      }
+      const values = parameter.value.arrayValue.stringValues
+      if (!values) {
+        throw "Currently only applied arrayValue for stringValues. Fix this if need other array value-types"
+      }
+      const paramsSeparate = values.map((value, idx) => ({
+        name: `id${idx + offset}`,
+        value: {stringValue: value},
+        typeHint: parameter.typeHint
+      }))
+      // @ts-ignore
+      const placeholder = [...Array(values.length).keys()]
+        .map(idx => `:id${idx + offset}`).join(',')
+      offset += values.length
+      fixedSql = fixedSql.replace(
+        `:${parameter.name}`,
+        `(${placeholder})`
+      )
+      fixedParameters = [...fixedParameters, ...paramsSeparate]
+    })
+    return {sql: fixedSql, parameters: fixedParameters}
   }
 }
 

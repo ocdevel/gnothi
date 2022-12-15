@@ -47,6 +47,7 @@ export function FullScreenDialog({
       <AppBar>
         <Toolbar>
           <IconButton
+            className="button-dialog-close"
             edge="start"
             onClick={onClose as OnClick}
             aria-label="close"

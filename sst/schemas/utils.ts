@@ -14,3 +14,10 @@ export const IdCol = z.string().uuid()
 export const Passthrough = z.object({}).passthrough()
 
 export const BoolMap = z.record(z.string(), z.boolean())
+export type BoolMap = z.infer<typeof BoolMap>
+
+export function boolMapToKeys(boolMap: BoolMap) {
+  return Object.entries(boolMap)
+    .map(([k, v]) => v ? k : null)
+    .filter(v => v)
+}

@@ -2,13 +2,15 @@ import * as S from '@gnothi/schemas'
 import {db} from '../../data/db'
 import {GnothiError} from "../errors";
 import {upsert} from '../../ml/node/upsert'
+import {boolMapToKeys} from '@gnothi/schemas/utils'
 
 const r = S.Routes.routes
 
 r.entries_upsert_request.fn = r.entries_upsert_request.fnDef.implement(async (req, context: S.Api.FnContext) => {
   const user_id = context.user.id
-  const {tags, entry} = req
-  if (!Object.values(tags).some(v => v)) {
+  const {entry, tags} = req
+  const tids = boolMapToKeys(tags)
+  if (!tids.length) {
     throw new GnothiError({message: "Each entry must belong to at least one journal", key: "NO_TAGS"})
   }
 
@@ -43,37 +45,47 @@ r.entries_upsert_request.fn = r.entries_upsert_request.fnDef.implement(async (re
   //     db.commit()
 
   // TODO use batchExecuteStatement
-  for (const [tag_id, v] of Object.entries(tags)) {
-      if (!v) {continue}
+  for (const tag_id of tids) {
       await db.insert("entries_tags", {tag_id, entry_id})
   }
-
-  // TODO undefineds
-  dbEntry.text_summary = "Summary: AI is generating"
-  dbEntry.title_summary = "Title: AI is generating"
-  dbEntry.sentiment = "Sentiment: AI is generating"
 
   return [{entry: dbEntry, tags}]
 })
 
 r.entries_upsert_response.fn = r.entries_upsert_response.fnDef.implement(async (req, context) => {
-  const {entry, tags} = req
+  const {entry} = req
+  const tids = boolMapToKeys(req.tags)
+
+  const tags = await db.executeStatement<S.Tags.Tag>({
+    sql: `select * from tags where id in :tids and user_id=:user_id`,
+    parameters: [
+      {name: "tids", typeHint: "UUID", value: {arrayValue: {stringValues: tids}}},
+      {name: "user_id", typeHint: "UUID", value: {stringValue: context.user.id}}
+    ]
+  })
+
+  // TODO how to handle multiple tags, where some are yes-ai and some are no-ai?
+  // For now I'm assuming no.
+  const excludeSummarize = tags.some(t => t.ai_summarize === false)
+  const excludeIndex = tags.some(t => t.ai_index === false)
+
+  // TODO implement skip-index
 
   const summary = await upsert(entry)
   const updated = {
     ...entry,
-    title_summary: summary.title,
-    text_summary: summary.summary,
-    sentiment: summary.emotion,
+    ai_title: summary.title,
+    ai_text: summary.summary,
+    ai_sentiment: summary.emotion,
   }
 
   await db.executeStatement({
-    sql: `update entries set title_summary=:title_summary, text_summary=:text_summary, sentiment=:sentiment
+    sql: `update entries set ai_title=:ai_title, ai_text=:ai_text, ai_sentiment=:ai_sentiment
         where id=:id`,
     parameters: [
-      {name: "title_summary", value: {stringValue: updated.title_summary}},
-      {name: "text_summary", value: {stringValue: updated.text_summary}},
-      {name: "sentiment", value: {stringValue: updated.sentiment}},
+      {name: "ai_title", value: {stringValue: updated.ai_title}},
+      {name: "ai_text", value: {stringValue: updated.ai_text}},
+      {name: "ai_sentiment", value: {stringValue: updated.ai_sentiment}},
       {name: "id", value: {stringValue: entry.id}, typeHint: "UUID"}
     ]
   })
@@ -81,5 +93,5 @@ r.entries_upsert_response.fn = r.entries_upsert_response.fnDef.implement(async (
   // FIXME
   // entry.update_snoopers(d.db)
 
-  return [{entry: updated, tags}]
+  return [{entry: updated, tags: req.tags}]
 })
