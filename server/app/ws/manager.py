@@ -25,39 +25,6 @@ from inspect import signature, Signature
 from . import handlers, Auth, Insights
 from app.ws.auth import decode_jwt
 
-
-class BroadcastHelpers:
-    def __init__(self):
-        self.broadcast = Broadcast(vars.DB_FULL)
-
-    async def _startup(self):
-        await self.broadcast.connect()
-        asyncio.ensure_future(self._ws_jobs())
-
-    async def _shutdown(self):
-        await self.broadcast.disconnect()
-
-    async def _ws_receiver(self, websocket):
-        async for message in websocket.iter_text():
-            await self.broadcast.publish(channel="app", message=message)
-
-    async def _ws_sender(self, websocket):
-        async with self.broadcast.subscribe(channel="app") as subscriber:
-            async for event in subscriber:
-                await self.receive_message(websocket, event.message)
-                
-    async def _ws_jobs(self):
-        async with self.broadcast.subscribe(channel="jobs") as subscriber:
-            async for event in subscriber:
-                await Insights._job_done(self, event.message)
-
-    async def run_both(self, websocket):
-        await run_until_first_complete(
-            (self._ws_receiver, {"websocket": websocket}),
-            (self._ws_sender, {"websocket": websocket}),
-        )
-
-
 class Deps:
     def __init__(
         self,
@@ -87,19 +54,6 @@ class Deps:
 
 
 class WSManager(BroadcastHelpers):
-    def __init__(self):
-        super().__init__()
-        self.users: List[(str, WebSocket)] = []
-        asyncio.ensure_future(self.job_status_loop())
-
-    async def job_status_loop(self):
-        with with_db() as db:
-            while True:
-                res = M.Machine.gpu_status(db)
-                res = MessageOut(action='jobs/status', data=JobStatusOut(status=res))
-                if self.users:
-                    await self.send(res, uids=[uid for uid, _ in self.users])
-                await asyncio.sleep(2)
 
     async def init_socket(self, websocket, token):
         await websocket.accept()  # FastAPI
@@ -249,32 +203,3 @@ class WSManager(BroadcastHelpers):
             for ws in websockets
         ])
 
-
-def jwt_auth(args):
-    # TODO more robust authentication here
-    # if 'QUERY_STRING' in data[1]:
-    #     environ = data[1]
-    #     token = dict(parse_qsl(environ['QUERY_STRING']))['token']
-    # else:
-    #     token = data[1]['jwt']
-    token = args[1]['jwt']
-    try:
-        decoded = jwt.decode(token, SECRET)
-        return decoded['sub']
-    except:
-        return None
-
-
-# if auth or viewer or checkin:
-#     uid = jwt_auth(args)
-#     if not uid:
-#         return JWT_EXPIRED
-
-# @sio.on("disconnect")
-# async def on_disconnect(sid):
-#     try:
-#         sess = await sio.get_session(sid)
-#         await sio.emit("client/groups/online", {sess['uid']: False})
-#         print(sid, 'disconnected')
-#     except:
-#         pass

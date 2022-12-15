@@ -23,9 +23,6 @@ from common.pydantic.ws import MessageOut
 logger = logging.getLogger(__name__)
 
 
-@app.get('/health')
-def health_get():
-    return {'ok': True}
 
 
 @app.get('/stats')

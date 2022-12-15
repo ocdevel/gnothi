@@ -10,19 +10,6 @@ from common.database import with_db
 import common.models as M
 
 
-def submit_job(d, method, data):
-    # AI offline (it's spinning up from views.py->cloud_updown.py)
-    status = M.Machine.gpu_status(d.db)
-    if status == 'off':
-        raise AIOffline()
-
-    jid = M.Job.create_job(d.db, d.vid, method=method, data_in=data)
-    if not jid: return {}
-    return dict(
-        id=jid,
-        queue=M.Job.place_in_queue(d.db, jid)
-    )
-
 
 class Insights:
     @staticmethod
@@ -39,24 +26,6 @@ class Insights:
                 obj[fid] = {}
             obj[fid][iid] = r.score
         return obj
-
-    @staticmethod
-    async def _job_done(mgr, jid):
-        # TODO handle give-up after 10minutes
-        with with_db() as db:
-            jobq = db.query(M.Job).filter_by(id=jid)
-            job = jobq.first()
-            if job.user_id:
-                action = {
-                    'summarization': 'insights/summarize/get',
-                    'question-answering': 'insights/question/get',
-                    'themes': 'insights/themes/get'
-                }[job.method]
-                out = dict(action=action, data=job.data_out)
-                out = parse_obj_as(MessageOut, out)
-                await mgr.send(out, uids=[job.user_id])
-            jobq.delete()
-            db.commit()
 
     @staticmethod
     async def on_themes_post(data: PyI.ThemesPost, d) -> PyI.JobSubmitGet:

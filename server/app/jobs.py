@@ -23,9 +23,6 @@ try:
     for fn, timing in [
         [habitica.cron, dict(hour="*")],
         [run_influencers, dict(hour="*")],
-        [cloud_up_maybe, dict(second="*/5")],
-        [M.Machine.prune, dict(minute="*")],
-        [M.Job.prune, dict(minute="*")],
     ]:
         scheduler.add_job(run_job, args=[fn], trigger="cron", **timing)
     scheduler.start()
