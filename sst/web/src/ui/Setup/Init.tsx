@@ -1,11 +1,11 @@
 import React, {useEffect, useCallback} from "react";
-import {useLocation} from "react-router-dom";
+import {useLocation, useSearchParams} from "react-router-dom";
 import {useStore} from "../../data/store";
 import shallow from "zustand/shallow";
 
 export default function Init() {
+  const [searchParams, setSearchParams] = useSearchParams()
   const setUser = useStore(useCallback(state => state.setUser, []))
-  const location = useLocation()
 
   // listen to changes across, me, as, and users-list. Only set the viewer
   // when things needed are present.
@@ -35,10 +35,13 @@ export default function Init() {
   }, [])
 
   useEffect(() => {
-    const search = new URLSearchParams(location.search)
-    const code = search.get("code")
+    const code = searchParams.get("code") || ""
+    const testing = searchParams.get("testing") || ""
     if (code) {
       window.localStorage.setItem("affiliate", code)
+    }
+    if (testing) {
+      window.localStorage.setItem("testing", testing)
     }
   }, [])
 

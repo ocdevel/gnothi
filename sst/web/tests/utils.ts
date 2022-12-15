@@ -24,11 +24,15 @@ export class Utils {
     this.listenWebsockets()
   }
 
-
+  async navigate(url: string) {
+    await this.page.evaluate(() => {
+      window.history.pushState('', '', url);
+    });
+  }
 
   async signup() {
     const page = this.page
-    await page.goto(URL)
+    await page.goto(`${URL}/?testing=true`)
     await expect(page).toHaveTitle(/Gnothi/)
 
     const auth = {email: `${ulid()}@x.com`, pass: "MyPassword!1"}
@@ -62,9 +66,12 @@ export class Utils {
     await page.locator(".button-entries-upsert").click()
   }
 
-  async addEntries({n_summarize, n_index}: {n_summarize: number, n_index: number}) {
+  async addEntries({n_summarize=0, n_index=0}: {n_summarize: number, n_index: number}) {
     const page = this.page
-    await page.goto(`${URL}/?redirect=false`)
+
+    // FIXME how to redirect without loosing stuff? https://github.com/microsoft/playwright/issues/15889
+    // await this.navigate('/?redirect=false')
+
     // Right now Main is selected, but not SkipAI. Add x entries through main,
     // to ensure that summary works. Then add the rest through SkipAI to speed things up
     let buffer = mockEntries.slice()
@@ -82,9 +89,10 @@ export class Utils {
     await page.locator(".button-tags-tag").nth(0).click()
     await page.locator(".button-tags-tag").nth(1).click()
     // take only what's left, based on their n_index
-    n_index = mockEntries.length - this.entries.length - (n_index === -1 ? 0 : n_index)
-    // if we ate through it all in summarize, cancel
-    n_index = n_index < 1 ? 0 : n_index
+    let remaining = mockEntries.length - this.entries.length
+    if (n_index === -1 || n_index > remaining) {
+      n_index = remaining
+    } // else n_index stays as-is
     for (let i = 0; i < n_index; i++) {
       const entry = buffer[0]
       buffer = buffer.slice(1)
