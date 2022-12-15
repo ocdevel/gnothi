@@ -15,6 +15,7 @@ import {zodResolver} from '@hookform/resolvers/zod';
 import {useForm, Controller} from "react-hook-form";
 import {Tags} from '@gnothi/schemas/tags'
 import {debounce} from 'lodash'
+import Box from "@mui/material/Box";
 
 interface Form {
   tag: Tags.tags_list_response
@@ -39,7 +40,7 @@ export default function Form({tag}: Form) {
     }
   }
 
-  return <div data-test-id="form-tags-put">
+  return <Box className="form-tags-put">
     <Paper sx={styles.paper}>
       <Reorder />
       <Controller
@@ -62,11 +63,12 @@ export default function Form({tag}: Form) {
           <FormControlLabel
             control={<Switch
               {...field}
+              className="checkbox-tags-ai-index"
               checked={!!field.value}
               onChange={e => {field.onChange(e); submit()}}
               color='primary'
             />}
-            label={<FaRobot />}
+            label={<><FaRobot /> Index</>}
           />
         )}
       />
@@ -77,11 +79,12 @@ export default function Form({tag}: Form) {
           <FormControlLabel
             control={<Switch
               {...field}
+              className="checkbox-tags-ai-summarize"
               checked={!!field.value}
               color='primary'
               onChange={e => {field.onChange(e); submit()}}
             />}
-            label={<FaRobot />}
+            label={<><FaRobot /> Summarize</>}
           />
         )}
       />
@@ -89,5 +92,5 @@ export default function Form({tag}: Form) {
         <Delete />
       </IconButton>}
     </Paper>
-  </div>
+  </Box>
 }

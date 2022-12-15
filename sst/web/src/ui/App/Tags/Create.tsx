@@ -29,7 +29,7 @@ export default function Create() {
           placeholder="New tag name"
           value={field.value}
           onChange={field.onChange}
-          data-test-id="textfield-tags-post"
+          className="textfield-tags-post"
         />}
       />
 
@@ -38,7 +38,7 @@ export default function Create() {
         type='submit'
         color="primary"
         variant='contained'
-        data-test-id="button-tags-post"
+        className="button-tags-post"
       >Add</Button>
     </Paper>
   </form>

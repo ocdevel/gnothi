@@ -61,13 +61,14 @@ test("Setup user", async ({page}) => {
   // await expect(page.locator(".entry-teaser")).toHaveCount(0)
   // await page.locator(".toolbar-button").click()
 
-  // await page.getByTestId("button-tags-edit").click()
-  // await page.getByTestId("textfield-tags-post").fill("Skip AI")
-  // await page.getByTestId("button-tags-post").click()
-  // await page.getByTestId("checkbox-tags-ai-summarize-1").click()
-  // // await page.getByTestId("checkbox-tags-ai-index-1").click()
-  //
-  // return
+  await page.locator(".button-tags-edit").click()
+  await page.locator(".textfield-tags-post input").fill("Skip AI")
+  await page.locator(".button-tags-post").click()
+  const tagRow = await page.locator(".form-tags-put").nth(1)
+  await tagRow.locator(".checkbox-tags-ai-summarize").click()
+  await tagRow.locator(".checkbox-tags-ai-index").click()
+
+  return
 
   for (const entry of someEntries) {
     await page.getByLabel("Title").fill(entry.title)

@@ -85,7 +85,6 @@ export default function Tags({
         sx={{border: 'none'}}
         icon={<Label/>}
         label="Tags"
-        data-test-id="button-tags-edit"
       />
     }
     return <Chip
@@ -93,6 +92,7 @@ export default function Tags({
       icon={<Create /> }
       onClick={showEditTags}
       label="Tags"
+      className="button-tags-edit"
     />
   }
 

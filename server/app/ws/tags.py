@@ -11,16 +11,6 @@ class Tags:
     async def on_tags_get(data: BM, d) -> List[PyT.TagOut]:
         return M.Tag.snoop(d.db, d.vid, d.uid).all()
 
-    @staticmethod
-    async def on_tag_put(data: PyT.TagPut, d):
-        if d.snooping: raise CantSnoop()
-        tag = d.db.query(M.Tag).filter_by(user_id=d.vid, id=data.id).first()
-        data = data.dict()
-        for k, v in data.items():
-            if k == 'id': continue
-            setattr(tag, k, data[k])
-        d.db.commit()
-        await d.mgr.exec(d, 'tags/tags/get')
 
     @staticmethod
     async def on_tag_delete(data: BM_ID, d):
