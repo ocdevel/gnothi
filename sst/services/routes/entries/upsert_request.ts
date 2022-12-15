@@ -66,17 +66,21 @@ r.entries_upsert_response.fn = r.entries_upsert_response.fnDef.implement(async (
 
   // TODO how to handle multiple tags, where some are yes-ai and some are no-ai?
   // For now I'm assuming no.
-  const excludeSummarize = tags.some(t => t.ai_summarize === false)
-  const excludeIndex = tags.some(t => t.ai_index === false)
+  const skip_summarize = tags.some(t => t.ai_summarize === false)
+  const skip_index = tags.some(t => t.ai_index === false)
 
   // TODO implement skip-index
 
-  const summary = await upsert(entry)
+  const summary = await upsert({
+    skip_summarize,
+    skip_index,
+    entry
+  })
   const updated = {
     ...entry,
-    ai_title: summary.title,
-    ai_text: summary.summary,
-    ai_sentiment: summary.emotion,
+    ai_title: summary.title || "",
+    ai_text: summary.summary || "",
+    ai_sentiment: summary.emotion || "",
   }
 
   await db.executeStatement({

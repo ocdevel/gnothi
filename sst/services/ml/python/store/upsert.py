@@ -33,9 +33,14 @@ def summarize(text: str):
     return json.loads(response['Payload'].read())
 
 
-def upsert(entry):
-    store = EntryStore(entry['user_id'])
+def upsert(data):
+    skip_summarize = data.get('skip_summarize', False)
+    skip_index = data.get('skip_index', False)
+    entry = data['entry']
     text = entry['text']
+
+    if skip_summarize and skip_index:
+        return entry
 
     # Convert text into paragraphs
     print("Cleaning entry, converting to paragraphs")
@@ -47,17 +52,23 @@ def upsert(entry):
     text = " ".join(paras)  # now clean of markdown, grouped cleanly
 
     # Summarize
-    print("Summarizing entry")
-    summaries = summarize(text)
+    if skip_summarize:
+        print("Skipping summarize, setting to raw values")
+    else:
+        print("Summarizing entry")
+        summaries = summarize(text)
+        entry['title'] = summaries[0]['summary']
+        entry['summary'] = summaries[1]['summary']
+        entry['keywords'] = summaries[1]['keywords']
+        entry['emotion'] = summaries[1]['emotion']
 
-    entry['title'] = summaries[0]['summary']
-    entry['summary'] = summaries[1]['summary']
-    entry['keywords'] = summaries[1]['keywords']
-    entry['emotion'] = summaries[1]['emotion']
-
-    print("Saving entry & paras to vector db")
-    store.add_entry(entry, paras)
-    store.save()
+    if skip_index:
+        print("Skipping indexing")
+    else:
+        print("Saving entry & paras to vector db")
+        store = EntryStore(entry['user_id'])
+        entry['embedding'] = store.add_entry(entry, paras)
+        store.save()
 
     print("Done with result:", entry)
     return entry

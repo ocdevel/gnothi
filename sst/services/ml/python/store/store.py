@@ -60,17 +60,20 @@ class EntryStore(object):
         self.dfs.append(paras)
 
         entry_mean = np.mean(paras_embeddings, axis=0)
+        # Will use for future summarizing many summaries. But they may have specified skip_summarize
+        entry_content = entry.get("summary", entry['text'])
         entry = pd.DataFrame([
             dict(
                 id=entry['id'],
                 obj_id=entry['id'],
                 obj_type='entry',
-                content=entry['summary'],  # will use for future summarizing many summaries
+                content=entry_content,
                 created_at=entry['created_at'],
                 embedding=entry_mean
             )
         ])
         self.dfs.append(entry)
+        return entry_mean
 
     def save(self):
         entry = self.entry

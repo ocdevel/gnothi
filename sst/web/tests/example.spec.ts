@@ -81,11 +81,11 @@ test("Setup user", async ({page}) => {
   await addEntry(someEntries[0])
   // now swap tags
   await page.locator(".button-tags-tag").nth(0).click()
-  await page.waitForTimeout(6000) // summary takes a while, indexing is faster
+  await page.waitForTimeout(5000) // summary takes a while, indexing is faster
   await page.locator(".button-tags-tag").nth(1).click()
   for (const entry of someEntries.slice(1)) {
     await addEntry(entry)
-    await page.waitForTimeout(6000)
+    await page.waitForTimeout(1000)
   }
 
   await page.getByText("Dashboard").click()
