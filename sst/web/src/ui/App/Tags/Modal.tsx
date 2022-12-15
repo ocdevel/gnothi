@@ -16,6 +16,7 @@ import Grid from "@mui/material/Grid";
 import Sortable from "../../Components/Sortable";
 import Create from "./Create";
 import Form from './Form'
+import {Tags} from '@gnothi/schemas/tags'
 
 interface Modal {
   close: () => void
@@ -61,12 +62,14 @@ export default function Modal({close}: Modal) {
     </Card>
   }
 
-  function reorder(tags) {
+  function reorder(tags: Tags.tags_list_response[]) {
     const data = _.map(tags, ({id}, sort) => ({id, sort}))
     send('tags_reorder_request', data)
 
   }
-  const renderTag = (tag) => <Form tag={tag} />
+  const renderTag = (tag: Tags.tags_list_response) => (
+    <Form tag={tag} />
+  )
 
   return (
     <FullScreenDialog

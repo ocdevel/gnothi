@@ -67,11 +67,11 @@ export default function Tags({
   function renderTag (tid: string) {
     const selected_ = selectedTags_[tid]
     const tag = hash[tid]
-    const opts = selected_ ? {icon: <CheckCircle />} : {variant: 'outlined'}
     return <Grid item key={tid}>
       <Chip
         disabled={noClick}
-        {...opts}
+        icon={selected_ ? <CheckCircle /> : undefined}
+        variant={selected_ ? undefined : "outlined"}
         onClick={() => selectTag(tid, !selected_)}
         label={tag.name}
       />
@@ -85,6 +85,7 @@ export default function Tags({
         sx={{border: 'none'}}
         icon={<Label/>}
         label="Tags"
+        data-test-id="button-tags-edit"
       />
     }
     return <Chip

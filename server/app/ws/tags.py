@@ -12,16 +12,6 @@ class Tags:
         return M.Tag.snoop(d.db, d.vid, d.uid).all()
 
     @staticmethod
-    async def on_tags_post(data: PyT.TagIn, d):
-        if d.snooping: raise CantSnoop()
-        db = d.db
-        last = db.query(sa.func.max(M.Tag.sort)).filter_by(user_id=d.vid).scalar()
-        tag = M.Tag(name=data.name, user_id=d.vid, sort=last + 1)
-        db.add(tag)
-        db.commit()
-        await d.mgr.exec(d, action='tags/tags/get')
-
-    @staticmethod
     async def on_tag_put(data: PyT.TagPut, d):
         if d.snooping: raise CantSnoop()
         tag = d.db.query(M.Tag).filter_by(user_id=d.vid, id=data.id).first()

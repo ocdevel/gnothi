@@ -29,7 +29,6 @@ const GroupToolbar = React.lazy(() => import ("../Groups/View/Toolbar"))
 const SharingModal = React.lazy(() => import("../Account/Sharing"))
 const EntryModal = React.lazy(() => import("../Entries/Modal"))
 
-import Appbar from './Appbar'
 
 const drawerWidth = 240;
 

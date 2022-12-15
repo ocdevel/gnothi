@@ -1,6 +1,5 @@
 import {useStore} from "../../../data/store";
-import React, {useCallback, useState} from "react";
-import _ from "lodash";
+import React, {useCallback, useMemo, useState} from "react";
 import Paper from "@mui/material/Paper";
 import Reorder from "@mui/icons-material/Reorder";
 import InputBase from "@mui/material/InputBase";
@@ -13,55 +12,76 @@ import Delete from "@mui/icons-material/Delete";
 import {styles} from './utils'
 
 import {zodResolver} from '@hookform/resolvers/zod';
-import {useForm} from "react-hook-form";
+import {useForm, Controller} from "react-hook-form";
 import {Tags} from '@gnothi/schemas/tags'
+import {debounce} from 'lodash'
 
-export default function Form({tag}) {
-  const { register, handleSubmit, formState:{ errors } } = useForm({
-    resolver: zodResolver(Tags.tags_put_request)
+interface Form {
+  tag: Tags.tags_list_response
+}
+export default function Form({tag}: Form) {
+  const { getValues, register, handleSubmit, control, formState:{ errors } } = useForm({
+    resolver: zodResolver(Tags.tags_put_request),
+    defaultValues: tag
   });
 
   const send = useStore(s => s.send)
-  // Can't use useForm() since need custom onChange (which tiggers submit)
-  const [name, setName] = useState(tag.name)
-  const [ai, setAi] = useState(tag.ai)
-  const id = tag.id
 
-  function submit(data) {
+  function submit() {
+    const data = getValues()
     send('tags_put_request', data)
   }
-  const waitSubmit = useCallback(_.debounce(submit, 200), [])
-
-  const changeName = e => {
-    const name = e.target.value
-    waitSubmit({id, name, ai})
-    setName(e.target.value)
-  }
-  const changeAi = e => {
-    const ai = e.target.checked
-    submit({id, name, ai})
-    setAi(ai)
-  }
+  const waitSubmit = useMemo(() => debounce(submit, 300), [])
 
   const destroyTag = async () => {
     if (window.confirm("Are you sure? This will remove this tag from all entries (your entries will stay).")) {
-      send('tags_delete_request', {id})
+      send('tags_delete_request', {id: tag.id})
     }
   }
 
-  return <div>
+  return <div data-test-id="form-tags-put">
     <Paper sx={styles.paper}>
       <Reorder />
-      <InputBase
-        sx={styles.inputBase}
-        placeholder="Tag Name"
-        value={name}
-        onChange={changeName}
+      <Controller
+        name="name"
+        control={control}
+        render={({field}) => (
+          <InputBase
+            sx={styles.inputBase}
+            placeholder="Tag Name"
+            {...field}
+            onChange={e => {field.onChange(e); waitSubmit()}}
+          />
+        )}
       />
       <Divider orientation="vertical" />
-      <FormControlLabel
-        control={<Switch checked={ai} onChange={changeAi} name="ai" color='primary'/>}
-        label={<FaRobot />}
+      <Controller
+        name="ai_index"
+        control={control}
+        render={({ field }) => (
+          <FormControlLabel
+            control={<Switch
+              {...field}
+              onChange={e => {field.onChange(e); submit()}}
+              color='primary'
+            />}
+            label={<FaRobot />}
+          />
+        )}
+      />
+      <Controller
+        name="ai_summarize"
+        control={control}
+        render={({ field }) => (
+          <FormControlLabel
+            control={<Switch
+              {...field}
+              color='primary'
+              onChange={e => {field.onChange(e); submit()}}
+            />}
+            label={<FaRobot />}
+          />
+        )}
       />
       {tag.main ? <div /> : <IconButton onClick={destroyTag}>
         <Delete />

@@ -44,11 +44,10 @@ export function FullScreenDialog({
       onClose={onClose}
       TransitionComponent={Transition}
     >
-      <AppBar sx={{ position: 'relative' }}>
+      <AppBar>
         <Toolbar>
           <IconButton
             edge="start"
-            color="inherit"
             onClick={onClose as OnClick}
             aria-label="close"
           >
@@ -63,6 +62,7 @@ export function FullScreenDialog({
           </Button>*/}
         </Toolbar>
       </AppBar>
+      <Toolbar />
       {children}
     </Dialog>
   );

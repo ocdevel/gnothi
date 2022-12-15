@@ -14,17 +14,22 @@ export const Tag = z.object({
   selected: z.boolean().default(true),
   main: z.boolean().default(false),
   sort: z.number().default(0),
-  ai: z.boolean().default(true)
+  ai_index: z.boolean().default(true),
+  ai_summarize: z.boolean().default(true)
 })
 export type Tag = z.infer<typeof Tag>
 
 export const tags_post_request = Tag.pick({
   name: true,
-  main: true,
-  ai: true
 })
 export type tags_post_request = z.infer<typeof tags_post_request>
-export const tags_put_request = tags_post_request
+export const tags_put_request = Tag.pick({
+  id: true,
+  name: true,
+  ai_index: true,
+  ai_summarize: true,
+  sort: true,
+})
 export type tags_put_request = z.infer<typeof tags_put_request>
 export const tags_list_response = Tag
 export type tags_list_response = z.infer<typeof tags_list_response>
@@ -50,6 +55,34 @@ export const routes = {
       e: 'tags_list_response',
       s: Tag,
       t: {ws: true},
+    }
+  }),
+  tags_post_request: new Route({
+    i: {
+      e: 'tags_post_request',
+      s: tags_post_request,
+      t: {ws: true},
+      snoopable: false
+    },
+    o: {
+      e: 'tags_post_response',
+      s: Tag,
+      t: {ws: true},
+      event_as: "tags_list_response",
+    }
+  }),
+  tags_put_request: new Route({
+    i: {
+      e: 'tags_put_request',
+      s: tags_put_request,
+      t: {ws: true},
+      snoopable: false
+    },
+    o: {
+      e: 'tags_put_response',
+      s: Tag,
+      t: {ws: true},
+      event_as: "tags_list_response"
     }
   }),
   tags_toggle_request: new Route({

@@ -221,17 +221,18 @@ create index ix_shares_created_at
 
 create table tags
 (
-    id         uuid                     default uuid_generate_v4() not null
+    id uuid default uuid_generate_v4() not null
         primary key,
-    user_id    uuid
+    user_id uuid
         references users
             on delete cascade,
-    name       varchar                                             not null,
+    name varchar not null,
     created_at timestamp with time zone default now(),
-    selected   boolean                  default true,
-    main       boolean                  default false,
-    sort       integer                  default 0                  not null,
-    ai         boolean                  default true
+    selected boolean default true,
+    main boolean default false,
+    sort integer default 0 not null,
+    ai_index boolean default true,
+    ai_summarize boolean default true
 );
 
 create index ix_tags_user_id

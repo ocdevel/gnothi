@@ -10,11 +10,11 @@ import {Tags} from "@gnothi/schemas/tags";
 
 export default function Create() {
   const { control, register, reset, handleSubmit, formState:{ errors } } = useForm({
-    resolver: zodResolver(Tags.tags_put_request)
+    resolver: zodResolver(Tags.tags_post_request)
   });
   const send = useStore(s => s.send)
 
-  function submit(data) {
+  function submit(data: Tags.tags_post_request) {
     send('tags_post_request', data)
     reset()
   }
@@ -29,6 +29,7 @@ export default function Create() {
           placeholder="New tag name"
           value={field.value}
           onChange={field.onChange}
+          data-test-id="textfield-tags-post"
         />}
       />
 
@@ -37,6 +38,7 @@ export default function Create() {
         type='submit'
         color="primary"
         variant='contained'
+        data-test-id="button-tags-post"
       >Add</Button>
     </Paper>
   </form>

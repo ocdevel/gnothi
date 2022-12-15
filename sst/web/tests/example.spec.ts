@@ -6,12 +6,16 @@ import {readFileSync} from 'fs'
 const URL = 'http://localhost:3000'
 
 const mockEntriesFile = readFileSync("tests/mock_entries.json", {encoding: "utf-8"})
-const mockEntries = JSON.parse(mockEntriesFile)
+const mockEntries = JSON.parse(mockEntriesFile).map(e => ({
+  // remove unwanted fields like id/user_id/created_at
+  title: e.title,
+  text: e.text,
+}))
 // console.log(mockEntries)
-const nEntries = 5
 const someEntries = mockEntries.filter(e => (
-  ~["cbt_0", "cbt_1", "cbt_2", "vr_0", "vr_1"]
+  ~["cbt_0", "cbt_1", "cbt_2", "ai_0", "ai_1"]
 ))
+const nEntries = someEntries.length
 
 type Auth = {email: string, pass: string}
 const genAuth = () => ({email: `${ulid()}@x.com`, pass: "MyPassword!1"})
@@ -46,18 +50,26 @@ async function register(page: Page): Promise<Auth> {
   return auth
 }
 
-test('Create entry', async ({page}) => {
+test("Setup user", async ({page}) => {
   // const browser = await chromium.launch({ headless: false, slowMo: 100 })
   // const page = await browser.newPage()
 
   const auth = await register(page)
+  console.log({auth})
   // await page.goto(`${URL}/?redirect=false`)
 
   // await expect(page.locator(".entry-teaser")).toHaveCount(0)
   // await page.locator(".toolbar-button").click()
 
-  console.log({auth})
-  for (const entry of mockEntries) {
+  // await page.getByTestId("button-tags-edit").click()
+  // await page.getByTestId("textfield-tags-post").fill("Skip AI")
+  // await page.getByTestId("button-tags-post").click()
+  // await page.getByTestId("checkbox-tags-ai-summarize-1").click()
+  // // await page.getByTestId("checkbox-tags-ai-index-1").click()
+  //
+  // return
+
+  for (const entry of someEntries) {
     await page.getByLabel("Title").fill(entry.title)
     await page.locator(".rc-md-editor textarea").fill(entry.text)
     await page.getByRole("button", {name: "Submit"}).click()

@@ -98,10 +98,10 @@ export const theme = createTheme({
   components: {
     MuiAppBar: {
       styleOverrides: {
-        // colorInherit: {
-        //   backgroundColor: '#738fa7',
-        //   color: '#fff',
-        // },
+        colorPrimary: {
+          backgroundColor: styles.colors.grey,
+          color: '#fff',
+        },
       },
     },
     MuiButton: {
