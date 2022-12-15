@@ -52,6 +52,7 @@ export function Api({ app, stack }: sst.StackContext) {
       fn_store: ml.fnStore.functionName,
     },
     permissions: [
+      // when I put this in bind[], it says no access
       ws,
     ],
     bind: [

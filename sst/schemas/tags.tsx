@@ -55,6 +55,7 @@ export const routes = {
       e: 'tags_list_response',
       s: Tag,
       t: {ws: true},
+      keyby: "id"
     }
   }),
   tags_post_request: new Route({
@@ -69,6 +70,8 @@ export const routes = {
       s: Tag,
       t: {ws: true},
       event_as: "tags_list_response",
+      op: "append",
+      keyby: "id"
     }
   }),
   tags_put_request: new Route({
@@ -82,7 +85,9 @@ export const routes = {
       e: 'tags_put_response',
       s: Tag,
       t: {ws: true},
-      event_as: "tags_list_response"
+      event_as: "tags_list_response",
+      op: "update",
+      keyby: "id"
     }
   }),
   tags_toggle_request: new Route({

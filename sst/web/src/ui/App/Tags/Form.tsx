@@ -62,6 +62,7 @@ export default function Form({tag}: Form) {
           <FormControlLabel
             control={<Switch
               {...field}
+              checked={!!field.value}
               onChange={e => {field.onChange(e); submit()}}
               color='primary'
             />}
@@ -76,6 +77,7 @@ export default function Form({tag}: Form) {
           <FormControlLabel
             control={<Switch
               {...field}
+              checked={!!field.value}
               color='primary'
               onChange={e => {field.onChange(e); submit()}}
             />}

@@ -38,7 +38,7 @@ r.tags_post_request.fn = r.tags_post_request.fnDef.implement(async (req, context
 r.tags_put_request.fn = r.tags_put_request.fnDef.implement(async (req, context) => {
   const tag = await db.executeStatement({
     sql: `
-    update tags set name=:name, ai_index=:ai_index, ai_summary=:ai_summary, sort=:sort
+    update tags set name=:name, ai_index=:ai_index, ai_summarize=:ai_summarize, sort=:sort
     where user_id=:user_id and id=:id
     returning *;
     `,
@@ -46,7 +46,7 @@ r.tags_put_request.fn = r.tags_put_request.fnDef.implement(async (req, context) 
       {name: "name", value: {stringValue: req.name}},
       {name: "sort", value: {longValue: req.sort}},
       {name: "ai_index", value: {booleanValue: req.ai_index}},
-      {name: "ai_summary", value: {booleanValue: req.ai_summarize}},
+      {name: "ai_summarize", value: {booleanValue: req.ai_summarize}},
       {name: "user_id", value: {stringValue: context.user.id}, typeHint: "UUID"},
       {name: "id", value: {stringValue: req.id}, typeHint: "UUID"}
     ]

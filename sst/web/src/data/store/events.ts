@@ -146,10 +146,8 @@ export const eventsSlice: StateCreator<
       res,
       rows: data,
       first: Array.isArray(data) ? data[0] : data,
-      hash: !keyby ? {}
-        : _.reduce(data, (m, v) => ({...m, [_.get(v, keyby)]: v}), {}),
-      ids: !keyby ? []
-        : _.map(data, d => _.get(d, keyby))
+      hash: !keyby ? {} : _.keyBy(data, keyby),
+      ids: !keyby ? [] : _.map(data, d => _.get(d, keyby))
     }
     if (!keyby) {
       console.warn(`No keyby for ${event_}, ids[] and hash{} will be empty`)
@@ -158,12 +156,28 @@ export const eventsSlice: StateCreator<
     if (!op) {
       // no-op. updates go through as-is
     } else {
+      // order of these steps is important for reconstructing. hash/ids must come first, then rows
+
+      // 1. Reconstruct the hash
       if (~['update', 'prepend', 'append'].indexOf(op)) {
         updates.hash = {...current.hash, ...updates.hash}
       }
-      if (~['prepend', 'append'].indexOf(op)) {
-        updates.ids = op === 'prepend' ? [...updates.ids, ...current.ids] : [...current.ids, ...updates.arr]
+
+      // 2. Reconstruct ids
+      if (op === "update") {
+        updates.ids = current.ids
+      } else if (op === 'prepend') {
+        updates.ids = [...updates.ids, ...current.ids]
+      } else if (op === 'append') {
+        updates.ids = [...current.ids, ...updates.ids]
+      } else {
+        throw "What am I missing?"
       }
+
+      // 3. Reconstruct rows
+      updates.rows = updates.ids.map(id => updates.hash[id])
+
+      // 4. Leave .first and .res alone
     }
     set(produce(state => {
       state.res[event_] = updates
