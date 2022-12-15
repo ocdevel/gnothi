@@ -33,6 +33,10 @@ export const tags_put_request = Tag.pick({
 export type tags_put_request = z.infer<typeof tags_put_request>
 export const tags_list_response = Tag
 export type tags_list_response = z.infer<typeof tags_list_response>
+export const tags_delete_request = z.object({
+  id: z.string()
+})
+export type tags_delete_request = z.infer<typeof tags_delete_request>
 export const tags_toggle_request = Tag.pick({
   id: true
 })
@@ -88,6 +92,19 @@ export const routes = {
       event_as: "tags_list_response",
       op: "update",
       keyby: "id"
+    }
+  }),
+  tags_delete_request: new Route({
+    i: {
+      e: "tags_delete_request",
+      s: tags_delete_request,
+      t: {ws: true},
+      snoopable: false
+    },
+    o: {
+      e: "void", // will call tags_get_request
+      s: Passthrough,
+      t: {ws: true},
     }
   }),
   tags_toggle_request: new Route({

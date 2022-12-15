@@ -9,7 +9,7 @@ import {Routes, Api, Events, Users} from '@gnothi/schemas'
 import {Handlers} from './aws/handlers'
 import * as auth from './auth/appAuth'
 import './routes'
-import {CantSnoop} from "./routes/errors";
+import {CantSnoop, GnothiError} from "./routes/errors";
 import {z} from 'zod'
 
 const defaultResponse: APIGatewayProxyResultV2 = {statusCode: 200, body: "{}"}
@@ -88,17 +88,22 @@ async function handleReq(
     throw new CantSnoop()
   }
 
-  let output
+  let res: Partial<Api.Res<any>>
   try {
-    output = await route.fn(req.data, fnContext)
+    const data = await route.fn(req.data, fnContext)
+    res = {data}
   } catch (e) {
-    debugger
-    throw e
+    if (e instanceof GnothiError) {
+      res = {error: true, code: e.code, data: e.message}
+    } else {
+      debugger
+      throw e
+    }
   }
 
   return await handleRes(
     route.o,
-    {data: output},
+    res,
     fnContext
   )
 }

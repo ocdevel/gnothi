@@ -11,17 +11,6 @@ class Tags:
     async def on_tags_get(data: BM, d) -> List[PyT.TagOut]:
         return M.Tag.snoop(d.db, d.vid, d.uid).all()
 
-
-    @staticmethod
-    async def on_tag_delete(data: BM_ID, d):
-        if d.snooping: raise CantSnoop()
-        tagq = d.db.query(M.Tag).filter_by(user_id=d.vid, id=data.id)
-        if tagq.first().main:
-            raise GnothiException(400, "CANT_DELETE", "Can't delete your main journal")
-        tagq.delete()
-        d.db.commit()
-        await d.mgr.exec(d, 'tags/tags/get')
-
     @staticmethod
     async def on_tags_reorder(data: PyT.TagsOrder, d):
         if d.snooping: raise CantSnoop()

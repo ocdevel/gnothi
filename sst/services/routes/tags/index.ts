@@ -1,6 +1,7 @@
 import {Routes} from '@gnothi/schemas'
 import {Tag} from '@gnothi/schemas/tags'
 import {db} from '../../data/db'
+import {GnothiError} from "../errors";
 
 const r = Routes.routes
 
@@ -52,4 +53,24 @@ r.tags_put_request.fn = r.tags_put_request.fnDef.implement(async (req, context) 
     ]
   })
   return tag
+})
+
+r.tags_delete_request.fn = r.tags_delete_request.fnDef.implement(async (req, context) => {
+  const parameters = [
+    {name: "id", typeHint: "UUID", value: {stringValue: req.id}}
+  ]
+  const [tag, entries] = await Promise.all([
+    db.executeStatement<Tag>({sql: "select * from tags where id=:id", parameters}),
+    db.executeStatement<any>({sql: "select * from entries_tags where tag_id=:id", parameters})
+  ])
+  if (tag[0].main) {
+    throw new GnothiError({message: "Can't delete your main tag"})
+  }
+  if (entries?.length) {
+    // TODO
+    throw new GnothiError({message: "Can't delete tags which are applied to entries. Un-tag your entries first. I'll fix this eventually (by moving these entries to Main)."})
+  }
+  await db.executeStatement({sql: "delete from tags where id=:id", parameters})
+  await context.handleReq({event: "tags_list_request", data: {}}, context)
+  return null
 })
