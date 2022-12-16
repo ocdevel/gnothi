@@ -7,7 +7,6 @@ import Container from '@mui/material/Container';
 import Avatar from '@mui/material/Avatar';
 import Tooltip from '@mui/material/Tooltip';
 import MenuItem from '@mui/material/MenuItem';
-import AdbIcon from '@mui/icons-material/Adb';
 import React, {useState, useEffect} from 'react'
 import {
   Routes,
@@ -37,10 +36,8 @@ import { typographyVariant } from '@mui/system';
 import { RiAlignJustify } from 'react-icons/ri';
 
 
-
-
 const pages = ['Dashboard', 'Sharing', 'Resources'];
-const settings = ['Profile', 'Account', 'Dashboard', 'Logout'];
+const settings = ['Profile', 'Account', 'Settings', 'Logout'];
 
 function ResponsiveAppBar() {
   const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(null);
@@ -65,7 +62,7 @@ function ResponsiveAppBar() {
     return <Button
       key={page} 
       onClick={handleCloseNavMenu}
-      sx={{mx:2, my: 2, fontFamily:'poppins', fontSize:'1.1rem', color: 'primary.main', display: 'block' }}
+      sx={{mx:2, my: 2, fontWeight:'400', fontFamily:'poppins', fontSize:'1.1rem', color: 'primary.main', display: 'block' }}
     >
       {page}
     </Button>
@@ -107,7 +104,7 @@ function ResponsiveAppBar() {
             >
               {pages.map((page) => (
                 <MenuItem key={page} onClick={handleCloseNavMenu}>
-                  <Typography fontFamily='poppins' fontSize='1.1rem' textAlign="center">{page}</Typography>
+                  <Typography color='primary.main' fontFamily='poppins' fontSize='1.1rem' fontWeight='400' textAlign="center">{page}</Typography>
                 </MenuItem>
               ))}
             </Menu>
@@ -128,7 +125,9 @@ function ResponsiveAppBar() {
 
           <Box sx={{ flexGrow: 0 }}>
             <Tooltip title="Open settings">
-              <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
+              <IconButton 
+                onClick={handleOpenUserMenu} 
+                sx={{ fontWeight:'400', fontFamily:'poppins', fontSize:'1.1rem', color: 'primary.main', p: 0 }}>
                 <Avatar alt="Remy Sharp" src="/static/images/avatar/2.jpg" />
               </IconButton>
             </Tooltip>
@@ -149,8 +148,11 @@ function ResponsiveAppBar() {
               onClose={handleCloseUserMenu}
             >
               {settings.map((setting) => (
-                <MenuItem key={setting} onClick={handleCloseUserMenu}>
-                  <Typography textAlign="center">{setting}</Typography>
+                <MenuItem 
+                  sx= {{fontFamily:'poppins', fontSize:'1.1rem', color: 'primary.main',}}
+                  key={setting} 
+                  onClick={handleCloseUserMenu}>
+                  <Typography fontFamily='poppins' fontSize='1.1rem' fontWeight='400' textAlign="center">{setting}</Typography>
                 </MenuItem>
               ))}
             </Menu>
