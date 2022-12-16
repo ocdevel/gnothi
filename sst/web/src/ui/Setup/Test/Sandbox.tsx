@@ -38,6 +38,7 @@ import { RiAlignJustify } from 'react-icons/ri';
 
 
 
+
 const pages = ['Dashboard', 'Sharing', 'Resources'];
 const settings = ['Profile', 'Account', 'Dashboard', 'Logout'];
 
@@ -64,7 +65,7 @@ function ResponsiveAppBar() {
     return <Button
       key={page} 
       onClick={handleCloseNavMenu}
-      sx={{mx:2, my: 2, fontFamily:'antic didone', fontSize:'1.2rem', color: 'primary.main', display: 'block' }}
+      sx={{mx:2, my: 2, fontFamily:'poppins', fontSize:'1.1rem', color: 'primary.main', display: 'block' }}
     >
       {page}
     </Button>
@@ -106,7 +107,7 @@ function ResponsiveAppBar() {
             >
               {pages.map((page) => (
                 <MenuItem key={page} onClick={handleCloseNavMenu}>
-                  <Typography fontFamily='antic didone' fontSize='1.2rem' textAlign="center">{page}</Typography>
+                  <Typography fontFamily='poppins' fontSize='1.1rem' textAlign="center">{page}</Typography>
                 </MenuItem>
               ))}
             </Menu>
@@ -117,7 +118,7 @@ function ResponsiveAppBar() {
 
          
           <Box sx={{ alignItems: 'center', flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
-            <Box sx={{marginRight: 5}}>
+            <Box sx={{ marginTop: .6, marginRight: 5}}>
             <Link.Anchor to='/'>
               <img src="/Gnothi-LOGO-G10.png" height={40}/>
             </Link.Anchor>
@@ -160,3 +161,5 @@ function ResponsiveAppBar() {
   );
 }
 export default ResponsiveAppBar;
+
+
