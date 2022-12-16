@@ -98,7 +98,7 @@ export default function Layout() {
         </Stack>
         <Link.Button
           variant='contained'
-          sx={{backgroundColor: colors.primaryMain, color: colors.white, width: 360,}}
+          sx={{backgroundColor: "primary.main", color: colors.white, width: 360,}}
           to="/features"
         >
           Explore the features
