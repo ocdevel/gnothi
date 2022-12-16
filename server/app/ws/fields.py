@@ -21,14 +21,6 @@ class Fields:
         return M.Field.get_history(d.db, data.id)
 
     @staticmethod
-    async def on_fields_post(data: PyF.FieldPost, d):
-        if d.snooping: raise CantSnoop()
-        f = M.Field(**data.dict())
-        d.user.fields.append(f)
-        d.db.commit()
-        await d.mgr.exec(d, action='fields/fields/get')
-
-    @staticmethod
     async def on_field_put(data: PyF.FieldPut, d):
         if d.snooping: raise CantSnoop()
         f = d.db.query(M.Field).filter_by(user_id=d.vid, id=data.id).first()

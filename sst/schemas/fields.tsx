@@ -1,5 +1,5 @@
 import {z} from 'zod'
-import {Passthrough, IdCol, DateCol} from './utils'
+import {Passthrough, IdCol, DateCol, CoerceNumber} from './utils'
 import {Route} from './api'
 export * as Fields from './fields'
 import {v4 as uuid} from 'uuid'
@@ -27,7 +27,7 @@ export const DefaultValueTypes = z.enum([
   "value",  // which includes None
   "average",
   "ffill"
-]).default("value")
+]).default("ffill")
 
 export const Field = z.object({
   //Entries that change over time. Uses:
@@ -76,19 +76,49 @@ export const FieldEntry = z.object({
 })
 export type FieldEntry = z.infer<typeof FieldEntry>
 
+export const fields_post_request = Field.pick({
+  type: true,
+  name: true,
+  default_value: true,
+  default_value_value: true,
+})
+export type fields_post_request = z.infer<typeof fields_post_request>
+
+export const fields_list_request = Passthrough
+export type fields_list_request = z.infer<typeof fields_list_request>
+export const fields_list_response = Field
+export type fields_list_response = z.infer<typeof fields_list_response>
+
 export const routes = {
   fields_list_request: new Route({
     i: {
       e: 'fields_list_request',
-      s: Passthrough,
+      s: fields_list_request,
       t: {ws: true},
     },
     o: {
       e: 'fields_list_response',
-      s: Field,
+      s: fields_list_response,
       t: {ws: true},
     }
   }),
+  fields_post_request: new Route({
+    i: {
+      e: 'fields_post_request',
+      s: fields_post_request,
+      t: {ws: true},
+      snoopable: false
+    },
+    o: {
+      e: 'fields_post_response',
+      s: fields_list_response,
+      t: {ws: true},
+      event_as: 'fields_list_response',
+      op: 'append'
+    }
+  }),
+
+
   fields_entries_list_request: new Route({
     i: {
       e: 'fields_entries_list_request',

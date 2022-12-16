@@ -170,7 +170,6 @@ export function Autocomplete2(props) {
 }
 
 interface Select2 {
-  id: string
   name: string
   label: string
   form: any

@@ -7,25 +7,32 @@ import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import Button from "@mui/material/Button";
 import Grid from "@mui/material/Grid";
-import {yup, makeForm, TextField2, Select2} from "@gnothi/web/src/ui/Components/Form";
+import {TextField2, Select2} from "@gnothi/web/src/ui/Components/Form";
+import {useForm, Controller} from "react-hook-form"
+import {zodResolver} from "@hookform/resolvers/zod"
+import * as S from "@gnothi/schemas"
 
-const schema = yup.object().shape({
-  name: yup.string().min(1),
-  type: yup.string(),
-  default_value: yup.string(),
-  default_value_value: yup.string().nullable(),
-})
-const defaults = {name: '', type: 'number', default_value: 'value', default_value_value: ''}
-const useForm = makeForm(schema, defaults)
+const Partial = S.Fields.Field.partial()
+interface FieldModal {
+  close: (what?: boolean) => void
+  field?: S.Fields.Field
+}
+export default function FieldModal({close, field}: FieldModal) {
+  const editing = !!field?.id
+  field = editing ? field : S.Fields.fields_post_request.omit({name: true}).parse({})
+  const send = useStore(s => s.send)
+  const form = useForm({
+    resolver: zodResolver(Partial),
+    defaultValues: field
+  })
 
-export default function FieldModal({close, field= {}}) {
-const send = useStore(s => s.send)
-  const form = useForm(field.id ? field : null)
+  console.log(form.formState.errors)
 
-  const fid = field && field.id
+  const fid = editing && field.id
   const [type, default_value] = form.watch(['type', 'default_value'])
 
   function submit(data) {
+    console.log({data})
     if (_.isEmpty(data.default_value_value)) {
       data.default_value_value = null
     }

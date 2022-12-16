@@ -21,3 +21,8 @@ export function boolMapToKeys(boolMap: BoolMap) {
     .map(([k, v]) => v ? k : null)
     .filter(v => v)
 }
+
+// zodResolver doesn't convert <input type="number" /> values to number, even as it has
+// the zod schema. Oh well, just convert manually
+export const CoerceNumber = z.number()
+  .transform(val => typeof val === "string" ? parseFloat(val) : val)
