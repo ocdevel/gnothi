@@ -8,36 +8,22 @@ import Avatar from '@mui/material/Avatar';
 import Tooltip from '@mui/material/Tooltip';
 import MenuItem from '@mui/material/MenuItem';
 import React, {useState, useEffect} from 'react'
-import {
-  Routes,
-  Route,
-  useLocation,
-  useSearchParams,
-  useNavigate,
-  Outlet
-} from "react-router-dom"
-import Grid from '@mui/material/Grid'
-import {useStore} from '@gnothi/web/src/data/store'
-import Error from '@gnothi/web/src/ui/Components/Error'
 import {Link} from '@gnothi/web/src/ui/Components/Link'
-import Stack from "@mui/material/Stack";
-import {BasicDialog, FullScreenDialog} from "../../Components/Dialog";
-import {
-  spacing,
-  colors,
-  sx
-} from "../../Static/Splash/Utils"
+
 import Button from "@mui/material/Button";
-import {AuthComponent} from "../../Setup/Auth";
 import AppBar from '@mui/material/AppBar'
 import Toolbar from '@mui/material/Toolbar'
-import Footer from '../../Footer'
-import { typographyVariant } from '@mui/system';
-import { RiAlignJustify } from 'react-icons/ri';
 
 
-const pages = ['Dashboard', 'Sharing', 'Resources'];
-const settings = ['Profile', 'Account', 'Settings', 'Logout'];
+const pages = ['Dashboard', 'Sharing', 'Resources']
+const settings = ['Profile', 'Account', 'Settings', 'Logout']
+
+const buttonSx = {
+  fontWeight: 300,
+  fontFamily: 'poppins',
+  fontSize: '1rem',
+  color: "primary.main",
+}
 
 function ResponsiveAppBar() {
   const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(null);
@@ -56,24 +42,32 @@ function ResponsiveAppBar() {
 
   const handleCloseUserMenu = () => {
     setAnchorElUser(null);
-  };
+  }
 
   function renderButton(page: string) {
     return <Button
       key={page} 
       onClick={handleCloseNavMenu}
-      sx={{mx:2, my: 2, fontWeight:'400', fontFamily:'poppins', fontSize:'1.1rem', color: 'primary.main', display: 'block' }}
+      sx={{...buttonSx, mx: 2, my: 2, display: 'block'}}
     >
       {page}
     </Button>
   }
 
+  const logo =  <Box
+    sx={{height: 40}}
+  >
+    <Link.Anchor to="/">
+      <img src="/Gnothi-LOGO-G10.png" height="100%" />
+    </Link.Anchor>
+  </Box>
+
   return (
     <AppBar position="static" color='transparent'>
       <Container maxWidth={false}>
-        <Toolbar disableGutters>
+        <Toolbar disableGutters sx={{display: "flex", justifyContent: "space-between", alignItems: "center"}}>
 
-          <Box sx={{ flexGrow: 1, display: { xs: 'flex', md: 'none' } }}>
+          <Box sx={{ flexGrow: 1, display: { xs: 'flex', md: 'none' }, alignItems: "center" }}>
             <IconButton
               size="large"
               aria-label="account of current user"
@@ -104,59 +98,53 @@ function ResponsiveAppBar() {
             >
               {pages.map((page) => (
                 <MenuItem key={page} onClick={handleCloseNavMenu}>
-                  <Typography color='primary.main' fontFamily='poppins' fontSize='1.1rem' fontWeight='400' textAlign="center">{page}</Typography>
+                  <Typography sx={{...buttonSx, textAlign: "center"}}>{page}</Typography>
                 </MenuItem>
               ))}
             </Menu>
-            <Link.Anchor to='/'>
-            <img src="/Gnothi-LOGO-G10.png" height={40} />
-            </Link.Anchor>
-          </Box>   
+            {logo}
+          </Box>
 
-         
+
           <Box sx={{ alignItems: 'center', flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
-            <Box sx={{ marginTop: .6, marginRight: 5}}>
-            <Link.Anchor to='/'>
-              <img src="/Gnothi-LOGO-G10.png" height={40}/>
-            </Link.Anchor>
-            </Box>
+            {logo}
             {pages.map(renderButton)}
           </Box>
 
           <Box sx={{ flexGrow: 0 }}>
-            <Tooltip title="Open settings">
-              <IconButton 
-                onClick={handleOpenUserMenu} 
-                sx={{ fontWeight:'400', fontFamily:'poppins', fontSize:'1.1rem', color: 'primary.main', p: 0 }}>
-                <Avatar alt="Remy Sharp" src="/static/images/avatar/2.jpg" />
-              </IconButton>
-            </Tooltip>
-            <Menu
-              sx={{ mt: '45px' }}
-              id="menu-appbar"
-              anchorEl={anchorElUser}
-              anchorOrigin={{
-                vertical: 'top',
-                horizontal: 'right',
-              }}
-              keepMounted
-              transformOrigin={{
-                vertical: 'top',
-                horizontal: 'right',
-              }}
-              open={Boolean(anchorElUser)}
-              onClose={handleCloseUserMenu}
-            >
-              {settings.map((setting) => (
-                <MenuItem 
-                  sx= {{fontFamily:'poppins', fontSize:'1.1rem', color: 'primary.main',}}
-                  key={setting} 
-                  onClick={handleCloseUserMenu}>
-                  <Typography fontFamily='poppins' fontSize='1.1rem' fontWeight='400' textAlign="center">{setting}</Typography>
-                </MenuItem>
-              ))}
-            </Menu>
-          </Box>
+              <Tooltip title="Open settings">
+                <IconButton
+                  onClick={handleOpenUserMenu}
+                  sx={{ ...buttonSx, p: 0 }}>
+                  <Avatar alt="Remy Sharp" src="/static/images/avatar/2.jpg" />
+                </IconButton>
+              </Tooltip>
+              <Menu
+                sx={{ mt: '45px' }}
+                id="menu-appbar"
+                anchorEl={anchorElUser}
+                anchorOrigin={{
+                  vertical: 'top',
+                  horizontal: 'right',
+                }}
+                keepMounted
+                transformOrigin={{
+                  vertical: 'top',
+                  horizontal: 'right',
+                }}
+                open={Boolean(anchorElUser)}
+                onClose={handleCloseUserMenu}
+              >
+                {settings.map((setting) => (
+                  <MenuItem
+                    sx={{...buttonSx}}
+                    key={setting}
+                    onClick={handleCloseUserMenu}>
+                    <Typography sx={{...buttonSx, textAlign:"center"}}>{setting}</Typography>
+                  </MenuItem>
+                ))}
+              </Menu>
+            </Box>
         </Toolbar>
       </Container>
     </AppBar>
