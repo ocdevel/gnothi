@@ -44,6 +44,7 @@ export class Utils {
     await page.locator("button[type=submit]").click()
     await expect(page).toHaveTitle(/New Entry/)
     this.auth = auth
+    console.log({auth})
     return auth
   }
 

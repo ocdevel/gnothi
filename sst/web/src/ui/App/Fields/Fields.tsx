@@ -24,7 +24,7 @@ import CardHeader from "@mui/material/CardHeader";
 import Accordion from "@mui/material/Accordion";
 import AccordionSummary from "@mui/material/AccordionSummary";
 import AccordionDetails from "@mui/material/AccordionDetails";
-import Button from "@mui/material/Button";
+import Button, {ButtonProps} from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
 import ButtonGroup from "@mui/material/ButtonGroup";
 import Tooltip from "@mui/material/Tooltip";
@@ -127,7 +127,7 @@ function FieldsAdvanced({fetchFieldEntries}) {
     setConfirmWipe(e.target.value)
   }
 
-  const btnOpts = {size: 'small', variant: 'primary', fullWidth: true}
+  const btnOpts: ButtonProps = {size: 'small', variant: 'primary', fullWidth: true}
 
   return <div>
     <Button
@@ -340,6 +340,7 @@ export default function Fields() {
     const n_dupes = _.get(fe, 'dupes.length', 0)
     return (
       <Grid
+        className="fields-field"
         container
         sx={rowStyle}
         key={`${f.id}-${cacheBust}`}
@@ -424,6 +425,7 @@ export default function Fields() {
     if (g.service === 'custom') {
       return <Grid container justifyContent='space-around'>
         {!as && <Button
+          className="button-fields-field-new"
           color="primary"
           variant="contained"
           size="small"

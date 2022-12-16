@@ -169,26 +169,44 @@ export function Autocomplete2(props) {
   />
 }
 
-export function Select2(props) {
-  const {name, label, form, options, helperText, ...rest} = props
-
-  function renderField({field}) {
-    return <>
-      <FormControl fullWidth>
-        <InputLabel id={`${name}-select-label`}>{label}</InputLabel>
+interface Select2 {
+  id: string
+  name: string
+  label: string
+  form: any
+  options: Array<{value: string, label: string}>
+  helperText?: React.ReactNode
+  className?: string
+}
+export function Select2({name, label, form, options, helperText, className}: Select2) {
+  return <Controller
+    name={name}
+    control={form.control}
+    render={({field}) => {
+      const id = `${name}-select`
+      return <FormControl
+        fullWidth
+        className={id}
+      >
+        <InputLabel id={`${id}-label`}>{label}</InputLabel>
         <Select
-          labelId={`${name}-select-label`}
-          id={`${name}-select`}
+          labelId={`${id}-label`}
+          id={id}
           value={field.value}
           label={label}
           onChange={field.onChange}
         >
-          {options.map(o => <MenuItem value={o.value}>{o.label}</MenuItem>)}
+          {options.map(o => (
+            <MenuItem
+              className={`${id}-${o.value}`}
+              value={o.value}
+            >
+              {o.label}
+            </MenuItem>
+          ))}
         </Select>
         {helperText && <FormHelperText>{helperText}</FormHelperText>}
       </FormControl>
-    </>
-  }
-
-  return <Controller render={renderField} name={name} control={form.control}/>
+    }}
+  />
 }

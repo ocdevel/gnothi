@@ -74,7 +74,12 @@ const send = useStore(s => s.send)
       <DialogContent>
         <Grid container spacing={2} direction='column' sx={{minWidth:400}}>
           <Grid item>
-            <TextField2 name='name' label="Name" form={form} />
+            <TextField2
+              name='name'
+              label="Name"
+              className='input-fields-field-name'
+              form={form}
+            />
           </Grid>
           <Grid item>
             <Select2
@@ -105,6 +110,7 @@ const send = useStore(s => s.send)
             <Grid item>
               <TextField2
                 name='default_value_value'
+                className="input-fields-field-default_value_value"
                 label="Default Value"
                 type="number"
                 form={form}
@@ -167,7 +173,14 @@ const send = useStore(s => s.send)
 
       <DialogActions>
         <Button size="small" onClick={close}>Cancel</Button>
-        <Button color="primary" variant="contained" onClick={form.handleSubmit(submit)}>Save</Button>
+        <Button
+          color="primary"
+          variant="contained"
+          onClick={form.handleSubmit(submit)}
+          className="button-fields-field-post"
+        >
+          Save
+        </Button>
       </DialogActions>
     </BasicDialog>
   )

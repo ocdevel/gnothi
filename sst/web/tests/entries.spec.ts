@@ -1,12 +1,10 @@
 import {test, expect, chromium} from '@playwright/test'
-import type {Page} from '@playwright/test'
-import { ulid } from 'ulid'
 
 // @ts-ignore
 import {Utils} from './utils.ts'
 
 
-test("Smoke test", async ({page}) => {
+test("Basics", async ({page}) => {
   // const browser = await chromium.launch({ headless: false, slowMo: 100 })
   // const page = await browser.newPage()
 
@@ -17,4 +15,4 @@ test("Smoke test", async ({page}) => {
   await utils.addEntries({n_summarize: 1, n_index: 1})
   await page.getByText("Dashboard").click()
   await expect(page.locator('.entry-teaser')).toHaveCount(1)
-});
+})
