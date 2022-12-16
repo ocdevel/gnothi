@@ -3,6 +3,7 @@ import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as ec2 from "aws-cdk-lib/aws-ec2";
 import * as efs from "aws-cdk-lib/aws-efs";
 import * as cdk from "aws-cdk-lib";
+import {mlLambdaRam} from "./util";
 
 // Getting a cyclical deps error when I have these all as different stacks, per
 // sst recommended usage. Just calling them as functions for now
@@ -80,10 +81,8 @@ function lambdas({context: {app, stack}, vpc, fs, bucket}: MLService) {
   })
 
   const mlFunctionProps = {
-    // we need only about 4-6gb RAM; but we need the CPU power given by higher ram:
-    // https://stackoverflow.com/a/66523153
-    memorySize: 8846,
-    timeout: cdk.Duration.minutes(10),
+    memorySize: mlLambdaRam,
+    timeout: cdk.Duration.minutes(5),
     vpc,
     filesystem: lambda.FileSystem.fromEfsAccessPoint(accessPoint, '/mnt/mldata'),
     environment: {
@@ -93,24 +92,32 @@ function lambdas({context: {app, stack}, vpc, fs, bucket}: MLService) {
 
   const fnBooks = new lambda.DockerImageFunction(stack, "fn_books", {
     ...mlFunctionProps,
+    memorySize: 4459,
     code: lambda.DockerImageCode.fromImageAsset("services/ml/python", {
       file: "books.dockerfile"
     }),
   })
   const fnAsk = new lambda.DockerImageFunction(stack, "fn_ask", {
     ...mlFunctionProps,
+    // see utils.ts for how to determine optimal MB
+    memorySize: 3446,
     code: lambda.DockerImageCode.fromImageAsset("services/ml/python", {
       file: "ask.dockerfile"
     }),
   })
   const fnSummarize = new lambda.DockerImageFunction(stack, "fn_summarize", {
     ...mlFunctionProps,
+    memorySize: 4357,
+    // TODO figure out why so long
+    timeout: cdk.Duration.minutes(15),
     code: lambda.DockerImageCode.fromImageAsset("services/ml/python", {
       file: "summarize.dockerfile"
     }),
   })
   const fnStore = new lambda.DockerImageFunction(stack, "fn_store", {
     ...mlFunctionProps,
+    memorySize: 1107,
+    timeout: cdk.Duration.minutes(15),
     code: lambda.DockerImageCode.fromImageAsset("services/ml/python", {
       file: "store.dockerfile"
     }),

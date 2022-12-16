@@ -3,6 +3,8 @@ import { Database } from "./Database";
 import { Ml } from "./Ml";
 import { Auth } from './Auth'
 import * as iam from "aws-cdk-lib/aws-iam"
+import * as cdk from "aws-cdk-lib";
+import {smallLamdaRam} from './util'
 
 export function Api({ app, stack }: sst.StackContext) {
   const rds = sst.use(Database);
@@ -31,6 +33,7 @@ export function Api({ app, stack }: sst.StackContext) {
   const API_WS = new sst.Config.Parameter(stack, "API_WS", {value: ws.cdk.webSocketStage.callbackUrl})
 
   const fnInit = new sst.Function(stack, "fn_init", {
+    memorySize: smallLamdaRam,
     handler: "init.main",
     bind: [
       APP_REGION,
@@ -43,7 +46,8 @@ export function Api({ app, stack }: sst.StackContext) {
 
   const fnBackground = new sst.Function(stack, "fn_background", {
     handler: "main.main",
-    timeout: "10 minutes",
+    timeout: "3 minutes",
+    memorySize: smallLamdaRam,
     // the ML functions based on Dockerfiles can't use .bind(). Use the old way: permissions + environment
     environment: {
       fn_books: ml.fnBooks.functionName,
@@ -73,6 +77,7 @@ export function Api({ app, stack }: sst.StackContext) {
    }))
 
   const fnMain = new sst.Function(stack, "fn_main", {
+    memorySize: smallLamdaRam,
     handler: "main.proxy",
     bind: [
       APP_REGION,

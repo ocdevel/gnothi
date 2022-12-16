@@ -2,6 +2,7 @@ import * as sst from "@serverless-stack/resources";
 import { Database } from './Database'
 import {StringAttribute} from 'aws-cdk-lib/aws-cognito'
 import {RemovalPolicy} from 'aws-cdk-lib'
+import {smallLamdaRam} from "./util";
 
 export function Auth({ app, stack }: sst.StackContext) {
   const rds = sst.use(Database);
@@ -45,6 +46,7 @@ export function Auth({ app, stack }: sst.StackContext) {
     // https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools-working-with-aws-lambda-triggers.html
     triggers: {
       preSignUp: {
+        memorySize: smallLamdaRam,
         handler: "auth/preSignup.handler",
         bind: [rds]
       },
@@ -53,6 +55,7 @@ export function Auth({ app, stack }: sst.StackContext) {
 
   const authFn = new sst.Function(stack, "fn_authorizer", {
     handler: "auth/wsAuthorizer.handler",
+    memorySize: smallLamdaRam,
     environment: {
       USER_POOL_ID: auth.userPoolId,
       USER_POOL_CLIENT_ID: auth.userPoolClientId
