@@ -59,7 +59,7 @@ export function Section({children, color='light'}: React.PropsWithChildren<Secti
   return <Box
     sx={{
       py: spacing.xl,
-      px: spacing.lg,
+      px: spacing.xl,
       backgroundColor
   }}
   >

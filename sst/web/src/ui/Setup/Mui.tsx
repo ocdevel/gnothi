@@ -36,6 +36,7 @@ export const theme = createTheme({
     },
     background: {
       paper: '#f0efec', // #fff
+      default: '#fafafa'
     },
     text: {
       primary: '#071330',
@@ -53,25 +54,35 @@ export const theme = createTheme({
   typography: {
     fontFamily: 'Poppins',
     h1: {
-      //fontWeight: 800,
+      fontWeight: 400,
       fontFamily: 'Antic Didone',
+      fontSize: '4.8rem', 
+      lineHeight: '1.3',
     },
     h2: {
       fontFamily: 'Antic Didone',
-      //fontWeight: 1000,
+      fontSize: '3.5rem',
+      lineHeight: '1.3',
+      margin: '1.38rem'
     },
     h3: {
       //fontWeight: 700,
       fontFamily: 'Antic Didone',
+      fontSize: '2.8rem',
+      lineHeight: '1.3',
+      marginBottom: '1.3rem'
+    
     },
     h4: {
-      //fontWeight: 700,
-
-      fontFamily: 'Antic Didone',
+      fontWeight: 100,
+      fontFamily: 'Poppins',
+      fontSize: '1.5rem',
+      lineHeight: '1.3'
     },
     h5: {
       //fontWeight: 900,
       fontFamily: 'Antic Didone',
+      fontSize: "2rem"
     },
     subtitle1: {
       fontFamily: 'Poppins',
@@ -81,9 +92,14 @@ export const theme = createTheme({
     },
     body1: {
       fontFamily: 'Poppins',
+      fontWeight: '300',
+      fontSize: "1rem",
+      lineHeight: '1.75',
+      marginTop: '0rem'
     },
     body2: {
       fontFamily: 'Poppins',
+      fontWeight: '100'
     },
     caption: {
       fontFamily: 'Poppins',
@@ -92,16 +108,18 @@ export const theme = createTheme({
       fontFamily: 'Poppins',
     },
     button: {
-      fontFamily: "Poppins"
+      fontFamily: "Poppins",
+      fontSize: '0.9rem',
+      fontWeight: '400'
     },
   },
   components: {
     MuiAppBar: {
       styleOverrides: {
-        colorPrimary: {
-          backgroundColor: styles.colors.grey,
-          color: '#fff',
-        },
+        // colorPrimary: {
+        //   backgroundColor: styles.colors.grey,
+        //   color: '#fff',
+        // },
       },
     },
     MuiButton: {

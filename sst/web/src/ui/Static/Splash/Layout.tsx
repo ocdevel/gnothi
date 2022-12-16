@@ -20,6 +20,7 @@ import Toolbar from "@mui/material/Toolbar";
 import {styles} from "../../Setup/Mui"
 
 const {sx, colors, spacing} = styles
+import Footer from '../../Footer'
 
 export default function Layout() {
   const [authTab, setAuthTab] = useState<"signIn"|"signUp"|undefined>(undefined)
@@ -113,5 +114,6 @@ export default function Layout() {
     {renderAuthModal()}
     <Outlet />
 
+    <Footer />
   </Stack>
 }

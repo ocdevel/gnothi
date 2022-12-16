@@ -6,8 +6,16 @@ import Box from "@mui/material/Box";
 
 export default function Footer () {
   // TODO figure this out, https://www.freecodecamp.org/news/how-to-keep-your-footer-where-it-belongs-59c6aa05c59c/
-  return <Typography component='footer' variant='body2'>
-    <Stack direction='column' alignItems='center' spacing={1} mb={1}>
+  return <Typography 
+    component='footer' 
+    variant='body2'
+    >
+    <Stack 
+      direction='column' 
+      alignItems='center' 
+      spacing={1} 
+      mb={1}
+    >
       <div>
         <Link to='/about'>About</Link>{' '}&#183;{' '}
         <a href="mailto:tylerrenelle@gmail.com">Contact</a>{' '}&#183;{' '}

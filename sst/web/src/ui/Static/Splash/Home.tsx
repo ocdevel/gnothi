@@ -55,18 +55,21 @@ export default function Layout() {
         alignItems="center"
         justifyContent="center"
       >
-        <Stack sx={{maxWidth: 590}} alignItems="center">
+        <Stack sx={{maxWidth: 900,}} alignItems="center">
           <Typography
             variant="h1"
-            sx={{textAlign: "center", color: colors.white}}
+            sx={{textAlign: "center", color: colors.white, paddingBottom: spacing.md, paddingTop: spacing.sm}}
           >
             Know thyself with Gnothi
           </Typography>
+
+        </Stack>
+        <Stack sx={{maxWidth: 500}} alignItems="center">
           <Typography
             variant="h4"
-            sx={{textAlign: "center", color: colors.white}}
+            sx={{textAlign: "center", color: colors.white, paddingBottom: spacing.md}}
           >
-            An AI-powered journal and toolkit for a healthy and happy life.
+            An AI-powered journal and toolkit for a healthy and happy life
           </Typography>
         </Stack>
       </Stack>
@@ -80,18 +83,22 @@ export default function Layout() {
         spacing={spacing.lg}
         sx={{paddingBottom: spacing.lg}}
       >
+        <Stack
+          alignItems={'center'}>
         <Typography
           variant="h3"
         >
           A new kind of journal...
         </Typography>
         <Typography
-          sx={{textAlign: "center"}}
+          sx={{textAlign: "center", maxWidth: 950}}
         >
-          Gnothi uses a variety of cutting-edge machine learning models that make connections between what you’re writing, how you’re feeling, and your daily habits. That’s where most of us get stuck and overwhelmed. Gnothi helps you narrow your focus so you can navigate your journey of self-discovery with more awareness and direction.      </Typography>
+          Gnothi uses a variety of cutting-edge machine learning models that make connections between what you’re writing, how you’re feeling, and your daily habits. That’s where most of us get stuck and overwhelmed. Gnothi helps you narrow your focus so you can navigate your journey of self-discovery with more awareness and direction.
+          </Typography>
+        </Stack>
         <Link.Button
           variant='contained'
-          sx={{width: 360}}
+          sx={{backgroundColor: colors.primaryMain, color: colors.white, width: 360,}}
           to="/features"
         >
           Explore the features
@@ -101,7 +108,10 @@ export default function Layout() {
         container
         spacing={4}
         justifyContent="center"
-        alignItems="center"
+        alignItems="stretch"
+        paddingLeft={7}
+        paddingRight={7}
+
       >
         <FeatureCard
           icon={<SecureIcon sx={sx.featureIcon} />}
@@ -144,12 +154,13 @@ export default function Layout() {
         alignItems="center"
         justifyContent="center"
       >
-        <Grid item xs={12} md={4}>
+        <Grid item xs={12} md={6}>
           <Stack
             justifyContent="center"
             spacing={spacing.sm}
+            sx={{maxWidth: 500}}
           >
-            <Typography variant="h3">See the AI in action...</Typography>
+            <Typography variant="h3" >See the AI in action</Typography>
             <Typography>
               Most of the features are completely free. The goal is to provide a platform that prioritizes mental health. Whether you sign up for a free account or Gnothi Premium, there’s a lot to offer and much more to come.
             </Typography>
@@ -158,7 +169,8 @@ export default function Layout() {
                 variant="contained"
                 sx={{
                   backgroundColor: "primary.main",
-                  color: colors.white
+                  color: colors.white,
+                  marginTop: '1rem'
                 }}
               >
                 Watch a demo
@@ -166,7 +178,7 @@ export default function Layout() {
             </Box>
           </Stack>
         </Grid>
-        <Grid item xs={12} md={8}>
+        <Grid item xs={12} md={6}>
           <Skeleton animation="wave" variant="rectangular" width={590} height={400} />
         </Grid>
       </Grid>
@@ -193,6 +205,45 @@ export default function Layout() {
     </Section>
   }
 
+  function renderGetEarlyAccess() {
+    return <Section color="light">
+      <Grid container
+        direction="row"
+        spacing={spacing.lg}
+        alignItems="center"
+        justifyContent="center"
+      >
+
+        <Grid item xs={12} md={6}>
+          <Skeleton animation="wave" variant="rectangular" width={590} height={400} />
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <Stack
+            justifyContent="center"
+            spacing={spacing.sm}
+            sx={{maxWidth: 500}}
+          >
+            <Typography variant="h3" justifyContent={'left'}>Get early access to experimental features</Typography>
+            <Typography>
+            Gnothi is an open source, community-focused project. If you want to support us and get access to experimental features, join the waitlist.            </Typography>
+            <Box>
+              <Button
+                variant="contained"
+                sx={{
+                  backgroundColor: "primary.main",
+                  color: colors.white,
+                  marginTop: '1rem'
+                }}
+              >
+                Join the waitlist
+              </Button>
+            </Box>
+          </Stack>
+        </Grid>
+      </Grid>
+    </Section>
+  }
+
   return <Stack
     sx={{
       backgroundColor: colors.grey
@@ -203,6 +254,7 @@ export default function Layout() {
     {renderNewJournal()}
     {renderDemo()}
     {renderWhatsNext()}
+    {renderGetEarlyAccess()}
 
   </Stack>
 }
