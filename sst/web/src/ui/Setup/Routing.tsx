@@ -16,8 +16,8 @@ import appRoutes from '../App/Routes'
 
 const SplashLayout = React.lazy( () => import("../Static/Splash/Layout"))
 const AppLayout = React.lazy(() => import("../App/Layout/Layout"))
-const StyleTest = React.lazy(() => import("./Test/Test"))
-const Sandbox = React.lazy(() => import('./Test/Sandbox'))
+const StyleTest = React.lazy(() => import("../Static/Test/Test"))
+const Sandbox = React.lazy(() => import('../Static/Test/Sandbox'))
 
 const testRoutes = {
   path: "test",
