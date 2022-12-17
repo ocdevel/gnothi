@@ -15,7 +15,7 @@ services:
     volumes:
       - db:/var/lib/mysql
       # That's slick, it just imports the database if it's in this location!
-      - ./db/libgen.sql:/docker-entrypoint-initdb.d/init.sql
+      - /tmp/mldata/db/libgen.sql:/docker-entrypoint-initdb.d/init.sql
 volumes:
   db:
     driver: local
