@@ -2,6 +2,7 @@ import React from 'react'
 import strip from 'strip-markdown'
 import ReactMarkdown from "react-markdown"
 import emoji from 'remark-emoji'
+import Box from "@mui/material/Box";
 
 // see https://github.com/remarkjs/strip-markdown/blob/main/index.js
 const options = {keep: [
@@ -33,18 +34,27 @@ const options = {keep: [
 ]}
 
 
-export function FieldName({name, maxWidth=null}) {
+interface FieldName {
+  name: string
+  maxWidth?: number | "${number}%"
+}
+export function FieldName({name, maxWidth}: FieldName) {
   // https://css-tricks.com/snippets/css/truncate-string-with-ellipsis/
-  const style = {whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}
-  if (maxWidth) { style['maxWidth'] = maxWidth }
-
-  return <div style={style}>
+  return <Box
+    sx={{
+      whiteSpace: 'nowrap',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      maxWidth
+    }}
+  >
     <ReactMarkdown
       className='react-markdown'
-      plugins={[[strip, options], emoji]}
-      source={name}
-      escapeHtml={true}
+      remarkPlugins={[[strip, options], emoji]}
+      skipHtml={true}
       linkTarget={'_blank'}
-    />
-  </div>
+    >
+      {name}
+    </ReactMarkdown>
+  </Box>
 }

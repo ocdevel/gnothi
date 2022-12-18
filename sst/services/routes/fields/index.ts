@@ -15,15 +15,25 @@ r.fields_list_request.fn = r.fields_list_request.fnDef.implement(async (req, con
 
 r.fields_post_request.fn = r.fields_post_request.fnDef.implement(async (req, context) => {
   // TODO add snooping
+  const dvv = (req.default_value_value === undefined)
+    ? {isNull: true} as const
+    : {longValue: req.default_value_value} as const
   return db.executeStatement<fields_list_response>({
-    sql: `insert into fields (name, type, default_value, default_value_value, user_id)
-        values (:name, :type, :default_value, :default_value_value, :user_id)
-        returning *;`,
+    sql: `
+      insert into fields (name, type, default_value, default_value_value, user_id)
+      values (
+        :name, 
+        cast(:type as fieldtype), 
+        cast(:default_value as defaultvaluetypes), 
+        :default_value_value, 
+        :user_id
+      )
+      returning *;`,
     parameters: [
       {name: "name", value: {stringValue: req.name}},
       {name: "type", value: {stringValue: req.type}},
       {name: "default_value", value: {stringValue: req.default_value}},
-      {name: "default_value_value", value: {longValue: req.default_value_value}},
+      {name: "default_value_value", value: dvv},
       {name: "user_id", typeHint: "UUID", value: {stringValue: context.user.id}},
     ]
   })

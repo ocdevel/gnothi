@@ -1,21 +1,9 @@
 import React, {useCallback, useEffect, useState} from "react"
-import {Link, Route, Routes, useNavigate, Outlet} from "react-router-dom"
-import _ from 'lodash'
-import {Api} from "@gnothi/schemas"
 import {Helmet} from 'react-helmet-async'
 
-import Teaser from './Teaser'
-import {useStore} from '../../../../data/store'
 import {NotesAll, NotesNotifs} from "../Notes";
-import {MainTags} from "../../Tags/Tags";
-import Fields from "../../Fields/Fields";
-import Search from './Filters/Search'
 
-import Pagination from '@mui/material/Pagination'
 import Grid from '@mui/material/Grid'
-import Button from '@mui/material/Button'
-import {Alert2, ToolbarHeader} from "../../../Components/Misc";
-import Fab from "@mui/material/Fab";
 import Filters from './Filters'
 import Analyze from './Analyze'
 import Entries from "./Entries"

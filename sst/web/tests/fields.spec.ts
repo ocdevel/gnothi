@@ -4,7 +4,7 @@ import {test, expect, chromium} from '@playwright/test'
 import {Utils} from './utils.ts'
 
 
-test.only("Add field", async ({page}) => {
+test("Add field", async ({page}) => {
   const utils = new Utils(page)
   const auth = await utils.signup()
   await expect(page.locator('.fields-field')).toHaveCount(0)

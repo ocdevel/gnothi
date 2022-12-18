@@ -31,11 +31,8 @@ export default function FieldModal({close, field}: FieldModal) {
   const fid = editing && field.id
   const [type, default_value] = form.watch(['type', 'default_value'])
 
-  function submit(data) {
+  function submit(data: Partial) {
     console.log({data})
-    if (_.isEmpty(data.default_value_value)) {
-      data.default_value_value = null
-    }
     if (fid) {
        send('fields_put_request', {id: fid, ...data})
     } else {
