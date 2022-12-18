@@ -92,10 +92,10 @@ function FieldsAdvanced({fetchFieldEntries}) {
   const send = useStore(s => s.send)
   const jwt = useStore(s => s.jwt)
   const setServerError = useStore(s => s.apiError)
-  const hasDupes = useStore(s => s.res.fields_entries_hasdupes_response)
   const [confirmWipe, setConfirmWipe] = useState('')
 
   async function downloadCsv(version) {
+    return alert("Download csv not implemented")
     // TODO refactor this into actions.js/fetch_
     const obj = {
       method: 'get',
@@ -115,10 +115,6 @@ function FieldsAdvanced({fetchFieldEntries}) {
     }
   }
 
-  async function acceptDupes() {
-    send('fields_entries_cleardupes_request', {})
-  }
-
   async function startOver() {
     send('fields_entries_clear_request', {})
   }
@@ -127,7 +123,7 @@ function FieldsAdvanced({fetchFieldEntries}) {
     setConfirmWipe(e.target.value)
   }
 
-  const btnOpts: ButtonProps = {size: 'small', variant: 'primary', fullWidth: true}
+  const btnOpts: ButtonProps = {size: 'small', color: "primary", variant: 'outlined', fullWidth: true}
 
   return <div>
     <Button
@@ -135,24 +131,6 @@ function FieldsAdvanced({fetchFieldEntries}) {
       onClick={() => downloadCsv('new')}
     >Download field_entries.csv</Button>
     <Typography variant='caption'>Export your field-entries to CSV</Typography>
-    {hasDupes && <>
-      <Alert2 severity='warning'>
-        <Typography variant='caption'>Your field entries were effected by the <a href='https://github.com/lefnire/gnothi/issues/20' target='_blank'>duplicates bug</a>. See that link for details and what to do.</Typography>
-        <hr />
-        <Button
-          {...btnOpts}
-          onClick={() => downloadCsv('old')}
-        >Download field_entries_old.csv</Button>
-          <Typography variant='caption'>Export your original field-entries (before duplicates were fixed) to CSV</Typography>
-        <Button
-          {...btnOpts}
-          variant='outlined'
-          color='secondary'
-          onClick={acceptDupes}
-        >Accept Gnothi's fix</Button>
-        <Typography variant='caption'>You can click through each day to find duplicates and select the correct entry, or click this to accept Gnothi's chose duplicate fixes for all days.</Typography>
-      </Alert2>
-    </>}
     <Button
       {...btnOpts}
       disabled={confirmWipe !== 'wipe field entries'}
@@ -199,7 +177,7 @@ export default function Fields() {
   // Update field-entries as they type / click, but not too fast; can cause race-condition in DB
   // https://www.freecodecamp.org/news/debounce-and-throttle-in-react-with-hooks/
   // TODO should I be using useRef instead of useCallback? (see link)
-  const postFieldVal = useCallback(
+  const postFieldVal = React.useMemo(() =>
     _.debounce(postFieldVal_, 100),
     [day] // re-initialize with day-change
   )
@@ -215,29 +193,30 @@ export default function Fields() {
     send('fields_entries_list_request', {day})
   }
 
-  async function postFieldVal_(fid, value) {
+  async function postFieldVal_(fid: string, value: string) {
     if (value === "") {return}
-    value = parseFloat(value) // until we support strings
-    const body = {id: fid, value}
-    if (!isToday) {body['day'] = day}
-    send(`fields_entries_post_request`, body)
+    send(`fields_entries_post_request`, {
+      field_id: fid,
+      value: parseFloat(value), // until we support strings,
+      day: isToday ? undefined : day
+    })
   }
 
-  const fetchService = async (service) => {
+  const fetchService = async (service: string) => {
     send('habitica_sync_request', {})
   }
 
-  const changeFieldVal = (fid, direct=false) => e => {
+  const changeFieldVal = (fid: string, direct=false) => e => {
     let value = direct ? e : e.target.value
     setFieldValues({[fid]: value})
     postFieldVal(fid, value)
   }
 
-  const changeCheck = fid => e => {
+  const changeCheck = (fid: string) => (e: React.SyntheticEvent<HTMLInputElement>) => {
     changeFieldVal(fid, true)(~~!fieldValues[fid])
   }
 
-  const renderSyncButton = (service) => {
+  const renderSyncButton = (service: string) => {
     if (!~['habitica'].indexOf(service)) {return null}
     if (as) {return null}
     if (!me.habitica_user_id) {return null}
@@ -296,31 +275,6 @@ export default function Fields() {
     </>
   }
 
-  const pickDupe = async (fid, val) => {
-    await postFieldVal_(fid, val)
-    await fetchFieldEntries()
-    setCacheBust(+new Date)
-  }
-
-  function renderDupe(dupe) {
-    const f = fields[dupe.field_id]
-    const v = f.type === 'check' ? (dupe.value === 1 ? 'Yes' : 'No') : dupe.value
-    return <div className='mb-3' key={dupe.id || 'guess'}>
-      <Button variant='outline-dark' size='sm' onClick={() => pickDupe(f.id, dupe.value)}>
-        Pick
-      </Button>{' '}{v}{dupe.id ? '' : " (Gnothi's Guess)"}
-    </div>
-  }
-
-  const renderDupes = (f, fe) => {
-    return <Alert severity='warning'>
-      <div><FaExclamationTriangle /> Duplicates <a href="https://github.com/lefnire/gnothi/issues/20" target="_blank">bug</a>! Pick the one that's correct.</div>
-      {renderDupe(fe)}
-      {fe.dupes.map(renderDupe)}
-    </Alert>
-  }
-
-
 
   const renderField = (f) => {
     // let rowStyle = {width: '100%', margin: 0}
@@ -337,7 +291,6 @@ export default function Fields() {
       }
     }
     const fe = fieldEntries?.[f.id] || {}
-    const n_dupes = _.get(fe, 'dupes.length', 0)
     return (
       <Grid
         className="fields-field"
@@ -355,10 +308,7 @@ export default function Fields() {
         </Grid>
 
         <Grid item xs={5}>
-          {n_dupes > 1
-            ? renderDupes(f, fe)
-            : renderFieldEntry(f, fe)
-          }
+          {renderFieldEntry(f, fe)}
         </Grid>
 
         <Grid container item xs={2} justifyContent='flex-end'>
@@ -408,7 +358,7 @@ export default function Fields() {
     service: 'excluded',
     name: 'Excluded',
     fields: _(fields)
-      .filter(v => v.excluded_at)
+      .filter(v => !!v.excluded_at)
       .sortBy('id')
       .value(),
     emptyText: () => <small className='text-muted'>

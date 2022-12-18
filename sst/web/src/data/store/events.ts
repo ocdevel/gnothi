@@ -66,7 +66,7 @@ export interface EventsSlice {
   }
   hooks: {
     tags_list_response: (res: Api.ResUnwrap<z.infer<typeof r.tags_list_request.o.s>>) => void
-    field_entries_list_response: (res: Api.ResUnwrap<z.infer<typeof r.fields_entries_list_request.o.s>>) => void
+    fields_entries_list_response: (res: Api.ResUnwrap<Fields.fields_entries_list_response>) => void
   }
   handleEvent: (response: Api.Res) => void
 

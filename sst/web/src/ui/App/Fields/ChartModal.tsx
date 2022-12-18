@@ -17,16 +17,22 @@ import TableCell from "@mui/material/TableCell";
 import TableHead from "@mui/material/TableHead";
 import TableBody from "@mui/material/TableBody";
 import Paper from "@mui/material/Paper";
+import {fields_list_response} from '@gnothi/schemas/fields'
 
-const round_ = (v) => v ? v.toFixed(2) : null
+const round_ = (v: number | null) => v ? v.toFixed(2) : null
 
-export default function ChartModal({close, field=null, overall=false}) {
-  const as = useStore(state => state.as)
+interface ChartModal {
+  close: Function
+  field?: fields_list_response
+  overall?: boolean
+}
+export default function ChartModal({close, field, overall}: ChartModal) {
+  const as = useStore(state => state.user.as)
   const send = useStore(s => s.send)
   const history = useStore(s => s.res.fields_history_list_response?.data)
 
-  const fields = useStore(s => s.api.fields_list_response?.data)
-  const influencers = useStore(s => s.api.fields_influencers_list_response?.data)
+  const fields = useStore(s => s.res.fields_list_response?.rows)
+  const influencers = useStore(s => s.res.fields_influencers_list_response?.rows)
 
   useEffect(() => {
     if (field) {

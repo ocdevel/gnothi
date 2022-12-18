@@ -15,7 +15,7 @@ import * as S from "@gnothi/schemas"
 const Partial = S.Fields.Field.partial()
 interface FieldModal {
   close: (what?: boolean) => void
-  field?: S.Fields.Field
+  field?: Partial
 }
 export default function FieldModal({close, field}: FieldModal) {
   const editing = !!field?.id

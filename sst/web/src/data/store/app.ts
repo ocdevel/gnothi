@@ -52,7 +52,7 @@ export interface AppSlice {
 
   // ----- Other
   selectedTags: {[k: string]: boolean}
-  fieldValues: object
+  fieldValues: {[k: string]: number | null}
   setFieldValue: (x: any) => void
   sharePage: null | SharePage
   setSharePage: (sharePage: SharePage) => void
