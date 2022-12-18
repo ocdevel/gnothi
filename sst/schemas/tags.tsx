@@ -1,5 +1,5 @@
 import {z} from 'zod'
-import {Passthrough, DateCol} from './utils'
+import {Passthrough, dateCol} from './utils'
 import {Route} from './api'
 import {v4 as uuid} from "uuid";
 import {useStore} from "@gnothi/web/src/data/store";
@@ -9,7 +9,7 @@ export const Tag = z.object({
   id: z.string().uuid(),
   user_id: z.string().uuid(), // FK
   name: z.string(),
-  created_at: DateCol,
+  created_at: dateCol(),
   // save user's selected tags between sessions
   selected: z.boolean().default(true),
   main: z.boolean().default(false),

@@ -1,5 +1,5 @@
 import {z} from 'zod'
-import {IdCol, DateCol, Passthrough} from './utils'
+import {IdCol, dateCol, Passthrough} from './utils'
 import {Route}  from './api'
 import {v4 as uuid} from "uuid";
 import * as Users from './users'
@@ -26,12 +26,12 @@ export const Group = z.object({
   text_long: z.string().optional(),
   privacy: GroupPrivacy,
   official: z.boolean().default(false),
-  created_at: DateCol,
-  updated_at: DateCol,
+  created_at: dateCol(),
+  updated_at: dateCol(),
 
   n_members: z.number().default(1),
   n_messages: z.number().default(0),
-  last_message: DateCol,
+  last_message: dateCol(),
   owner_name: z.string().optional(),
 
   perk_member: z.number().default(0),
@@ -56,7 +56,7 @@ export const UserGroup = z.object({
   group_id: IdCol,
 
   username: z.string().default("GeneratedName"),
-  joined_at: DateCol,
+  joined_at: dateCol(),
   role: GroupRoles,
 })
 export type UserGroup = z.infer<typeof UserGroup>
@@ -74,8 +74,8 @@ export const GroupMessage = z.object({
   id: IdCol,
   user_id: IdCol,
   obj_id: IdCol, // groups.id
-  created_at: DateCol,
-  updated_at: DateCol,
+  created_at: dateCol(),
+  updated_at: dateCol(),
   text: z.string()
 })
 

@@ -2,7 +2,7 @@ import {z} from "zod";
 export * as Utils from './utils'
 import dayjs from 'dayjs'
 
-export const DateCol = z.preprocess(
+export const dateCol = () => z.preprocess(
     (v: string | number | Date | undefined) => {
       if (!v) {return undefined}
       if (v instanceof Date) {return v}

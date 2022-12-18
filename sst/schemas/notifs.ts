@@ -1,5 +1,5 @@
 import {Route} from "./api";
-import {DateCol, IdCol, Passthrough} from "./utils";
+import {dateCol, IdCol, Passthrough} from "./utils";
 import {z} from "zod";
 
 export * as Notifs from './notifs'
@@ -8,7 +8,7 @@ export const Notif = z.object({
   user_id: IdCol,
   obj_id: IdCol,
   count: z.number().default(0),
-  last_seen: DateCol
+  last_seen: dateCol()
 })
 export type Notif = z.infer<typeof Notif>
 

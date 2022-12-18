@@ -1,5 +1,5 @@
 import z from 'zod'
-import {Passthrough, DateCol} from './utils'
+import {Passthrough, dateCol} from './utils'
 import {Route} from './api'
 import {Events} from './events'
 import {v4 as uuid} from "uuid";
@@ -14,7 +14,7 @@ export const Profile = z.object({
   last_name: z.string().optional(),
   gender: z.string().optional(),
   orientation: z.string().optional(),
-  birthday: DateCol,
+  birthday: dateCol().optional(),
   timezone: z.string().optional(),
   bio: z.string().optional()
 })
@@ -25,8 +25,8 @@ export const User = Profile.extend({
   id: z.string().uuid(),
   email: z.string().email(),
   cognito_id: z.string().optional(),
-  created_at: DateCol,
-  updated_at: DateCol,
+  created_at: dateCol(),
+  updated_at: dateCol(),
 
   // Administrative
   is_superuser: z.boolean().default(false),
@@ -37,8 +37,8 @@ export const User = Profile.extend({
 
   // ML
   ai_ran: z.boolean().default(false),
-  last_books: DateCol,
-  last_influencers: DateCol,
+  last_books: dateCol().optional(),
+  last_influencers: dateCol().optional(),
 
   // Habitica
   habitica_user_id: z.string().optional(),

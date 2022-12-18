@@ -1,5 +1,5 @@
 import {z} from 'zod'
-import {Passthrough, IdCol, DateCol, CoerceNumber} from './utils'
+import {Passthrough, IdCol, dateCol, CoerceNumber} from './utils'
 import {Route} from './api'
 export * as Fields from './fields'
 import {v4 as uuid} from 'uuid'
@@ -39,12 +39,12 @@ export const Field = z.object({
   type: FieldType,
   name: z.string(),
   // Start entries/graphs/correlations here
-  created_at: z.date().default(() => new Date()),
+  created_at: dateCol().default(() => new Date()),
   // Don't actually delete fields, unless it's the same day. Instead
   // stop entries/graphs/correlations here
-  excluded_at: z.date().optional(),
+  excluded_at: dateCol().optional(),
   default_value: DefaultValueTypes,
-  default_value_value: z.number().default(0),
+  default_value_value: z.number().optional(),
   // option{single_or_multi, options:[], ..}
   // number{float_or_int, ..}
   attributes: z.object({}).passthrough().default({}), // JSON TODO
@@ -64,9 +64,9 @@ export type Field = z.infer<typeof Field>
 export const FieldEntry = z.object({
   // day & field_id may be queries independently, so compound primary-key not enough - index too
   field_id: IdCol,
-  day: DateCol,
+  day: dateCol(),
 
-  created_at: DateCol,
+  created_at: dateCol(),
   value: z.number().default(0),
   user_id: IdCol,
 

@@ -1,5 +1,5 @@
 import {z} from 'zod'
-import {Passthrough, IdCol, DateCol} from "./utils";
+import {Passthrough, IdCol, dateCol} from "./utils";
 import {Route} from './api'
 export * as Ws from './ws'
 

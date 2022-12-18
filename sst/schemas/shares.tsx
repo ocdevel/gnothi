@@ -1,13 +1,13 @@
 import {z} from 'zod'
 import {Route} from './api'
-import {Passthrough, DateCol, IdCol} from './utils'
+import {Passthrough, dateCol, IdCol} from './utils'
 export * as Shares from './shares'
 import {v4 as uuid} from 'uuid'
 
 export const Share = z.object({
   id: IdCol,
   user_id: IdCol,
-  created_at: DateCol,
+  created_at: dateCol(),
 
   email: z.boolean().default(false),
   username: z.boolean().default(true),
