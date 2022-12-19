@@ -41,74 +41,13 @@ function ResponsiveAppBar({title, links, cta, userMenu, onClose}: ResponsiveAppB
   const handleCloseNavMenu = () => setAnchorElNav(null);
   const handleCloseUserMenu = () => setAnchorElUser(null);
 
-  const logoLeft = title || links?.length
-
-    const logo =  <Box
+  const logo = <Box
       sx={{height: 40, mb: {md: .6}}}
     >
     <Link.Anchor to="/">
       <img src="/Gnothi-LOGO-G10.png" height="100%" />
     </Link.Anchor>
   </Box>
-
-  function renderLink({name, to}: {name: string, to: string}) {
-    return <Button
-      key={to}
-      onClick={handleCloseNavMenu}
-      sx={{...buttonSx, mx: 2, my: 2, display: 'block'}}
-    >
-      {name}
-    </Button>
-  }
-
-  function renderRight() {
-    if (cta) {
-      return <Button
-        variant="contained"
-        onClick={cta.fn}
-      >
-        {cta.name}
-      </Button>
-    }
-    if (userMenu) {
-      const settings = ['Profile', 'Account', 'Settings', 'Logout']
-      return <Box sx={{ flexGrow: 0 }}>
-        <Tooltip title="Open settings">
-          <IconButton
-            onClick={handleOpenUserMenu}
-            sx={{ ...buttonSx, p: 0 }}>
-            <Avatar alt="Remy Sharp" src="/static/images/avatar/2.jpg" />
-          </IconButton>
-        </Tooltip>
-        <Menu
-          sx={{ mt: '45px' }}
-          id="menu-appbar"
-          anchorEl={anchorElUser}
-          anchorOrigin={{
-            vertical: 'top',
-            horizontal: 'right',
-          }}
-          keepMounted
-          transformOrigin={{
-            vertical: 'top',
-            horizontal: 'right',
-          }}
-          open={Boolean(anchorElUser)}
-          onClose={handleCloseUserMenu}
-        >
-          {settings.map((setting) => (
-            <MenuItem
-              sx={{...buttonSx}}
-              key={setting}
-              onClick={handleCloseUserMenu}>
-              <Typography sx={{...buttonSx, textAlign:"center"}}>{setting}</Typography>
-            </MenuItem>
-          ))}
-        </Menu>
-      </Box>
-    }
-    return null
-  }
 
   function renderLeft() {
     if (onClose) {
@@ -175,11 +114,64 @@ function ResponsiveAppBar({title, links, cta, userMenu, onClose}: ResponsiveAppB
       }}
     >
       {!onClose && logo}
-      {links?.map(renderLink)}
+      {links?.map(link => <Button
+          key={link.to}
+          onClick={handleCloseNavMenu}
+          sx={{...buttonSx, mx: 2, my: 2, display: 'block'}}
+        >
+          {link.name}
+        </Button>)}
     </Box>
   }
 
-
+  function renderRight() {
+    if (cta) {
+      return <Button
+        variant="contained"
+        onClick={cta.fn}
+      >
+        {cta.name}
+      </Button>
+    }
+    if (userMenu) {
+      const settings = ['Profile', 'Account', 'Settings', 'Logout']
+      return <Box sx={{ flexGrow: 0 }}>
+        <Tooltip title="Open settings">
+          <IconButton
+            onClick={handleOpenUserMenu}
+            sx={{ ...buttonSx, p: 0 }}>
+            <Avatar alt="Remy Sharp" src="/static/images/avatar/2.jpg" />
+          </IconButton>
+        </Tooltip>
+        <Menu
+          sx={{ mt: '45px' }}
+          id="menu-appbar"
+          anchorEl={anchorElUser}
+          anchorOrigin={{
+            vertical: 'top',
+            horizontal: 'right',
+          }}
+          keepMounted
+          transformOrigin={{
+            vertical: 'top',
+            horizontal: 'right',
+          }}
+          open={Boolean(anchorElUser)}
+          onClose={handleCloseUserMenu}
+        >
+          {settings.map((setting) => (
+            <MenuItem
+              sx={{...buttonSx}}
+              key={setting}
+              onClick={handleCloseUserMenu}>
+              <Typography sx={{...buttonSx, textAlign:"center"}}>{setting}</Typography>
+            </MenuItem>
+          ))}
+        </Menu>
+      </Box>
+    }
+    return null
+  }
 
   return (
     <AppBar position="static" color='transparent'>

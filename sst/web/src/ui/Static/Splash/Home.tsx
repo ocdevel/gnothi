@@ -87,6 +87,7 @@ export default function Layout() {
           alignItems={'center'}>
         <Typography
           variant="h3"
+          align='center'
         >
           A new kind of journal...
         </Typography>
@@ -106,12 +107,10 @@ export default function Layout() {
       </Stack>
       <Grid
         container
+        px='10'
         spacing={4}
         justifyContent="center"
         alignItems="stretch"
-        paddingLeft={7}
-        paddingRight={7}
-
       >
         <FeatureCard
           icon={<SecureIcon sx={sx.featureIcon} />}
@@ -119,7 +118,7 @@ export default function Layout() {
          Rest easy knowing that your entries are secure
         </FeatureCard>
         <FeatureCard
-          icon={<InsightsIcon sx={sx.featureIcon} />}
+          icon={<InsightsIcon sx={{...sx.featureIcon, ml: 1}} />}
         >
           Get AI-generated insights to help you grow
         </FeatureCard>

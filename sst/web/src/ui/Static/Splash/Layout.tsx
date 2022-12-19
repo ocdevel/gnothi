@@ -42,6 +42,8 @@ export default function Layout() {
         xs={0}
         sm={4}
         lg={2}
+        justifyContent="center"
+        alignItems='center'
       />
       <Grid
         item container
@@ -49,8 +51,9 @@ export default function Layout() {
         sm={4}
         lg={8}
         justifyContent="center"
+        alignItems='center'
       >
-        <Grid item>
+        <Grid item alignItems='center' justifyContent='center'>
           <Link.Anchor to='/'>
             <img src="/Gnothi-LOGO-G10.png" height={50} />
           </Link.Anchor>

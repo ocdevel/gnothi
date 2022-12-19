@@ -10,24 +10,33 @@ import {
     Stack,
     Grid,
     Divider,
+    Container,
 } from "@mui/material";
-import {theme} from '../Mui'
+import {theme} from '../../Setup/Mui'
+import { grey } from '@mui/material/colors';
 
 export default function Test() {
-    return <Stack 
-        spacing={10}
-        margin={5}
+    return <Container 
+    sx= {{flexGrow: 0, alignItems: 'center', backgroundColor: 'white', borderRadius: 30}}
     >
+        <Grid 
+        container direction='row'
+        sx={{px: 5, py: 5}}>
+            <Grid item sx={{display: 'flex'}}>
+            <Typography
+            variant='h5'>
+            Title name 
+            </Typography>
+            <Typography 
+            variant= 'body1'>
+                content
+            </Typography>
+            </Grid>
 
+        </Grid>
         <Grid container direction="row" spacing={3}>
             <Grid item xs={12} md={3} sx={{backgroundColor: "blue"}}>
                 <Typography variant="h1">Grid1</Typography>    
-            </Grid>
-            <Grid item xs={12} md={6} sx={{backgroundColor: "green"}}>
-                <Typography variant="h1">Grid2</Typography>    
-            </Grid>
-            <Grid item xs={12} md={3} sx={{backgroundColor: "yellow"}}>
-                <Typography variant="h1">Grid2</Typography>    
             </Grid>
         </Grid>
 
@@ -94,5 +103,5 @@ export default function Test() {
                 </Button>
             </Stack>
         </Stack>
-    </Stack>
+    </Container>
 }

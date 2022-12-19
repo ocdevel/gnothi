@@ -16,17 +16,20 @@ type FeatureCard = {
 }
 export function FeatureCard({title, icon, children}: FeatureCard) {
   return <Grid
+    sx={{display: 'flex', flexGrow: 1}}
     item
     xs={12}
-    md={4}
+    md={6}
+    lg={4}
   >
     <Card
       sx={{
         py: spacing.md,
         px: spacing.lg,
-        backgroundColor: colors.white,
+        backgroundColor: "transparent",
         borderRadius: 5,
-        elevation: 0
+        elevation: 0,
+        boxShadow: 0,
       }}
     >
       <CardContent>
@@ -34,12 +37,13 @@ export function FeatureCard({title, icon, children}: FeatureCard) {
           alignItems="center"
           justifyContent="center"
           spacing={spacing.sm}
+          maxWidth= {384}
         >
           {icon}
           {title && <Typography variant="h5">{title}</Typography>}
           <Typography
-            variant="body1"
-            sx={{textAlign: "center"}}
+            variant="h6"
+            sx={{flexShrink: 1, textAlign: "center"}}
           >{children}</Typography>
         </Stack>
       </CardContent>

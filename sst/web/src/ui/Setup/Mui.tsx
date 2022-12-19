@@ -58,32 +58,43 @@ export const theme = createTheme({
       fontFamily: 'Antic Didone',
       fontSize: '4.8rem', 
       lineHeight: '1.3',
+      marginBottom: '1.38rem'
     },
     h2: {
+      fontWeight: 400,
       fontFamily: 'Antic Didone',
       fontSize: '3.5rem',
       lineHeight: '1.3',
-      margin: '1.38rem'
+      marginBottom: '1.38rem'
     },
     h3: {
-      //fontWeight: 700,
+      fontWeight: 400,
       fontFamily: 'Antic Didone',
       fontSize: '2.8rem',
       lineHeight: '1.3',
-      marginBottom: '1.3rem'
+      marginBottom: '1.38rem'
     
     },
     h4: {
-      fontWeight: 100,
+      fontWeight: 300,
       fontFamily: 'Poppins',
       fontSize: '1.5rem',
       lineHeight: '1.3'
     },
     h5: {
-      //fontWeight: 900,
+      fontWeight: 400,
       fontFamily: 'Antic Didone',
+      lineHeight: '1.3',
       fontSize: "2rem"
     },
+
+    h6: {
+      fontWeight: 400,
+      fontFamily: 'Antic Didone',
+      lineHeight: '1.1',
+      fontSize: '1.5rem'
+    },
+
     subtitle1: {
       fontFamily: 'Poppins',
     },
@@ -99,7 +110,9 @@ export const theme = createTheme({
     },
     body2: {
       fontFamily: 'Poppins',
-      fontWeight: '100'
+      fontWeight: '100',
+      fontSize: "1rem",
+      lineHeight: '1.75',
     },
     caption: {
       fontFamily: 'Poppins',
