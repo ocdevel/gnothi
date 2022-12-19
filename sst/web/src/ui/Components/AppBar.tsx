@@ -16,6 +16,8 @@ import Toolbar from '@mui/material/Toolbar'
 import CloseIcon from "@mui/icons-material/Close";
 import Stack from "@mui/material/Stack";
 
+import {styles} from '../Setup/Mui'
+
 
 const buttonSx = {
   fontWeight: 300,
@@ -24,22 +26,58 @@ const buttonSx = {
   color: "primary.main",
 }
 
+export function UserMenu() {
+  const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(null);
+  const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) => setAnchorElUser(event.currentTarget);
+  const handleCloseUserMenu = () => setAnchorElUser(null);
+  const settings = ['Profile', 'Account', 'Settings', 'Logout']
+  return <Box sx={{ flexGrow: 0 }}>
+    <Tooltip title="Open settings">
+      <IconButton
+        onClick={handleOpenUserMenu}
+        sx={{ ...buttonSx, p: 0 }}>
+        <Avatar alt="Remy Sharp" src="/static/images/avatar/2.jpg" />
+      </IconButton>
+    </Tooltip>
+    <Menu
+      sx={{ mt: '45px' }}
+      id="menu-appbar"
+      anchorEl={anchorElUser}
+      anchorOrigin={{
+        vertical: 'top',
+        horizontal: 'right',
+      }}
+      keepMounted
+      transformOrigin={{
+        vertical: 'top',
+        horizontal: 'right',
+      }}
+      open={Boolean(anchorElUser)}
+      onClose={handleCloseUserMenu}
+    >
+      {settings.map((setting) => (
+        <MenuItem
+          sx={{...buttonSx}}
+          key={setting}
+          onClick={handleCloseUserMenu}>
+          <Typography sx={{...buttonSx, textAlign:"center"}}>{setting}</Typography>
+        </MenuItem>
+      ))}
+    </Menu>
+  </Box>
+}
 
 interface ResponsiveAppBar {
   title?: string
   links?: {name: string, to: string}[]
-  cta?: {name: string, fn: () => void}
+  ctas?: Array<{name: string, fn: () => void}>
   userMenu?: boolean
   onClose?: () => void
 }
-function ResponsiveAppBar({title, links, cta, userMenu, onClose}: ResponsiveAppBar) {
+function ResponsiveAppBar({title, links, ctas, userMenu, onClose}: ResponsiveAppBar) {
   const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(null);
-  const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(null);
-
   const handleOpenNavMenu = (event: React.MouseEvent<HTMLElement>) => setAnchorElNav(event.currentTarget);
-  const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) => setAnchorElUser(event.currentTarget);
   const handleCloseNavMenu = () => setAnchorElNav(null);
-  const handleCloseUserMenu = () => setAnchorElUser(null);
 
   const logo = <Box
       sx={{height: 40, mb: {md: .6}}}
@@ -106,7 +144,7 @@ function ResponsiveAppBar({title, links, cta, userMenu, onClose}: ResponsiveAppB
   }
 
   function renderMiddle() {
-    return  <Box
+    return  <Stack spacing={2} direction="row"
       sx={{
         alignItems: 'center',
         flexGrow: 1,
@@ -117,60 +155,26 @@ function ResponsiveAppBar({title, links, cta, userMenu, onClose}: ResponsiveAppB
       {links?.map(link => <Button
           key={link.to}
           onClick={handleCloseNavMenu}
-          sx={{...buttonSx, mx: 2, my: 2, display: 'block'}}
+          sx={{...buttonSx, display: 'block'}}
         >
           {link.name}
         </Button>)}
-    </Box>
+    </Stack>
   }
 
   function renderRight() {
-    if (cta) {
-      return <Button
-        variant="contained"
-        onClick={cta.fn}
-      >
-        {cta.name}
-      </Button>
-    }
-    if (userMenu) {
-      const settings = ['Profile', 'Account', 'Settings', 'Logout']
-      return <Box sx={{ flexGrow: 0 }}>
-        <Tooltip title="Open settings">
-          <IconButton
-            onClick={handleOpenUserMenu}
-            sx={{ ...buttonSx, p: 0 }}>
-            <Avatar alt="Remy Sharp" src="/static/images/avatar/2.jpg" />
-          </IconButton>
-        </Tooltip>
-        <Menu
-          sx={{ mt: '45px' }}
-          id="menu-appbar"
-          anchorEl={anchorElUser}
-          anchorOrigin={{
-            vertical: 'top',
-            horizontal: 'right',
-          }}
-          keepMounted
-          transformOrigin={{
-            vertical: 'top',
-            horizontal: 'right',
-          }}
-          open={Boolean(anchorElUser)}
-          onClose={handleCloseUserMenu}
+    return <Stack spacing={2} direction="row" alignItems="center">
+      {ctas?.map((cta, i) => (
+        <Button
+          variant="contained"
+          onClick={cta.fn}
+          sx={i === 0 ? styles.sx.button1 : styles.sx.button2}
         >
-          {settings.map((setting) => (
-            <MenuItem
-              sx={{...buttonSx}}
-              key={setting}
-              onClick={handleCloseUserMenu}>
-              <Typography sx={{...buttonSx, textAlign:"center"}}>{setting}</Typography>
-            </MenuItem>
-          ))}
-        </Menu>
-      </Box>
-    }
-    return null
+          {cta.name}
+        </Button>
+      ))}
+      {userMenu && <UserMenu />}
+    </Stack>
   }
 
   return (

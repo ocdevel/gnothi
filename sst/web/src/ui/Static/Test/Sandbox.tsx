@@ -15,39 +15,57 @@ export default function Sandbox() {
       {name: "Resources", to: "/"},
     ],
     title: undefined,
-    cta: undefined,
+    ctas: undefined,
     userMenu: true
   }
 
   const splash = {
     links: [],
     title: undefined,
-    cta: undefined,
+    ctas: [
+      {name: "Sign Up", fn: () => {}},
+      {name: "Log In", fn: () => {}}
+    ],
     userMenu: false
   }
 
   const modal = {
     links: [],
     title: "Sharing",
-    cta: {
+    ctas: [{
       name: "Save",
       fn: () => alert("Saved!")
-    },
+    }],
     userMenu: false,
     onClose: () => alert("closed")
+  }
+
+  const journal = {
+    links: [
+      {name: "Dashboard", to: "/"},
+      {name: "Sharing", to: "/"},
+      {name: "Resources", to: "/"},
+    ],
+    title: undefined,
+    ctas: [{
+      name: "New Entry",
+      fn: () => {}
+    }],
+    userMenu: true
   }
 
   const props = {
     app,
     splash,
-    modal
-  }[bar]
+    modal,
+    journal
+  }
 
   return <>
-    <AppBar {...props} />
+    <AppBar {...props[bar]} />
     <Toolbar />
     <Stack spacing={2} direction="row">
-      {(["app", "splash", "modal"] as const).map(name => (
+      {Object.keys(props).map(name => (
         <Button variant="contained" onClick={() => setBar(name)}>
           {name}
         </Button>

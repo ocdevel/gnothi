@@ -15,7 +15,7 @@ import Stack from "@mui/material/Stack";
 import {BasicDialog, FullScreenDialog} from "../../Components/Dialog";
 import Button from "@mui/material/Button";
 import {AuthComponent} from "../../Setup/Auth";
-import AppBar from "@mui/material/AppBar";
+import AppBar from "../../Components/AppBar";
 import Toolbar from "@mui/material/Toolbar";
 import {styles} from "../../Setup/Mui"
 
@@ -30,66 +30,20 @@ export default function Layout() {
   // Sign In button not in <Switch> because it uses the flex/center css from jumbotron, the auth routes use left-just
   // const showSignin = !jwt && !~['/auth', '/reset-password'].indexOf(location.pathname)
 
-  function renderToolbar() {
-    return <Grid container
-      alignItems="center"
-      justifyContent="space-between"
-      direction="row"
-      sx={{px: spacing.lg, py: spacing.sm}}
-    >
-      <Grid
-        item
-        xs={0}
-        sm={4}
-        lg={2}
-        justifyContent="center"
-        alignItems='center'
-      />
-      <Grid
-        item container
-        xs={6}
-        sm={4}
-        lg={8}
-        justifyContent="center"
-        alignItems='center'
-      >
-        <Grid item alignItems='center' justifyContent='center'>
-          <Link.Anchor to='/'>
-            <img src="/Gnothi-LOGO-G10.png" height={50} />
-          </Link.Anchor>
-        </Grid>
-      </Grid>
-      <Grid
-        item container
-        xs={6}
-        sm={4}
-        lg={2}
-        justifyContent="flex-end"
-      >
-        <Grid item>
-          <Stack spacing={spacing.sm} direction="row">
-            <Button
-              variant='contained'
-              sx={sx.button1}
-              onClick={() => setAuthTab("signUp")}
-              className="button-show-signup"
-            >Sign Up</Button>
-            <Button
-              variant='contained'
-              sx={sx.button2}
-              onClick={() => setAuthTab("signIn")}
-              className="button-show-signin"
-            >Log In</Button>
-          </Stack>
-        </Grid>
-      </Grid>
-        {/*<Route path='/reset-password'>
-          <div className='auth-block'>
-            <ResetPassword />
-          </div>
-        </Route>*/}
-        {/*<Route path='/auth/old' element={<Authenticate />} />*/}
-    </Grid>
+  function renderAppbar() {
+    return <AppBar
+      ctas={[
+        {name: "Sign Up", fn: () => setAuthTab("signUp")},
+        {name: "Log In", fn: () => () => setAuthTab("signIn")}
+      ]}
+
+    />
+    {/*<Route path='/reset-password'>
+      <div className='auth-block'>
+        <ResetPassword />
+      </div>
+    </Route>*/}
+    {/*<Route path='/auth/old' element={<Authenticate />} />*/}
   }
   function renderAuthModal() {
     return <BasicDialog
@@ -107,13 +61,7 @@ export default function Layout() {
     }}
   >
     <Error message={error} />
-    <AppBar
-      position="fixed"
-      sx={{backgroundColor: colors.grey}}
-    >
-      {renderToolbar()}
-    </AppBar>
-    <Toolbar />
+    {renderAppbar()}
     {renderAuthModal()}
     <Outlet />
 
