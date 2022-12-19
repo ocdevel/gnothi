@@ -11,33 +11,47 @@ import {TextField2, Select2} from "@gnothi/web/src/ui/Components/Form";
 import {useForm, Controller} from "react-hook-form"
 import {zodResolver} from "@hookform/resolvers/zod"
 import * as S from "@gnothi/schemas"
+import {useFieldsStore} from "./store";
+import shallow from "zustand/shallow";
 
-interface FieldModal {
-  close: (what?: boolean) => void
-  field?: S.Fields.Field
-}
-export default function FieldModal({close, field}: FieldModal) {
-  const editing = !!field?.id
-  field = editing ? field : S.Fields.fields_post_request.omit({name: true}).parse({})
+
+export default function FieldModal() {
+  const fields = useStore(s => s.res.fields_list_response?.hash)
+  const [showForm, setShowForm] = useFieldsStore(s => [
+    s.showForm, s.setShowForm
+  ], shallow)
+  const fid = showForm === "new" || showForm === false ? null : showForm
+  const field = fid ? fields?.[fid] :
+    S.Fields.fields_post_request.omit({name: true}).parse({})
   const send = useStore(s => s.send)
   const form = useForm({
-    resolver: zodResolver(S.Fields.Field),
+    resolver: zodResolver(S.Fields.fields_post_request),
     defaultValues: field
   })
 
+  React.useEffect(() => {
+    form.reset(field)
+  }, [field])
+
+  if (showForm === false) {return null}
+  // fields.hash not yet ready
+  if (fid && !field) {return null}
+
   console.log(form.formState.errors)
 
-  const fid = editing && field.id
   const [type, default_value] = form.watch(['type', 'default_value'])
 
-  function submit(data: Partial) {
+  function close() {
+    setShowForm(false)
+  }
+
+  function submit(data: S.Fields.fields_post_request) {
     console.log({data})
     if (fid) {
        send('fields_put_request', {id: fid, ...data})
     } else {
        send('fields_post_request', data)
     }
-
     close()
   }
 
@@ -52,7 +66,7 @@ export default function FieldModal({close, field}: FieldModal) {
   const excludeField = async (exclude=true) => {
     const body = {excluded_at: exclude ? new Date() : null}
     send('fields_exclude_request', {id: fid, body})
-    close(false)
+    // close(false)
   }
 
   let defValHelp = {
@@ -124,7 +138,7 @@ export default function FieldModal({close, field}: FieldModal) {
           )}
         </Grid>
 
-        {fid && (
+        {fid && field && (
           <>
             <hr/>
             <div className='mb-3'>

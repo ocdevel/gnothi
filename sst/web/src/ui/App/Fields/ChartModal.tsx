@@ -18,27 +18,38 @@ import TableHead from "@mui/material/TableHead";
 import TableBody from "@mui/material/TableBody";
 import Paper from "@mui/material/Paper";
 import {fields_list_response} from '@gnothi/schemas/fields'
+import {useFieldsStore} from "./store";
+import shallow from "zustand/shallow";
 
 const round_ = (v: number | null) => v ? v.toFixed(2) : null
 
-interface ChartModal {
-  close: Function
-  field?: fields_list_response
-  overall?: boolean
-}
-export default function ChartModal({close, field, overall}: ChartModal) {
+export default function ChartModal() {
+  const [showChart, setShowChart] = useFieldsStore(s => [
+    s.showChart, s.setShowChart
+  ], shallow)
   const as = useStore(state => state.user.as)
   const send = useStore(s => s.send)
   const history = useStore(s => s.res.fields_history_list_response?.data)
 
-  const fields = useStore(s => s.res.fields_list_response?.rows)
+  const fields_ = useStore(s => s.res.fields_list_response)
   const influencers = useStore(s => s.res.fields_influencers_list_response?.rows)
+
+  const fields = fields_?.rows || []
+  const hash = fields_?.hash || {}
+  const field = typeof showChart === "string" ? hash[showChart]
+    : null
+  const overall = showChart === true
+
+  const close = React.useCallback(() => setShowChart(false), [])
 
   useEffect(() => {
     if (field) {
       send('fields_history_list_request', {id: field.id})
     }
   }, [field])
+
+  // hash not ready yet
+  if (!overall && !field) {return null}
 
   let influencers_ = _.isEmpty(influencers) ? false
     : field ? influencers[field.id]

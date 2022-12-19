@@ -5,7 +5,7 @@ import ReactStars from "react-stars";
 import SetupHabitica from "./SetupHabitica";
 import FieldModal from "./FieldModal";
 import ChartModal from "./ChartModal";
-import {FieldName, fmt, iso} from "./utils";
+import {FieldName} from "./utils";
 
 import {useStore} from "@gnothi/web/src/data/store"
 
@@ -35,25 +35,24 @@ import Box from "@mui/material/Box";
 import Advanced from "./Advanced";
 import DayChanger from './DayChanger'
 import * as S from '@gnothi/schemas'
-
+import {useFieldsStore} from './store'
+import shallow from 'zustand/shallow'
 
 export default function Fields() {
   const send = useStore(s => s.send)
   const user = useStore(s => s.user)
   const fields = useStore(state => state.res.fields_list_response)
-  const fieldsGet = useStore(state => state.res.fields_list_response?.res)
   const fieldEntries = useStore(s => s.res.fields_entries_list_response?.hash)
   const fieldValues = useStore(s => s.fieldValues)
   const setFieldValues = useStore(a => a.setFieldValue)
   const syncRes = useStore(s => s.res.habitica_sync_response?.res)
 
-  const [day, setDay] = useState(iso())
-  const [showForm, setShowForm] = useState(false)
-  const [showChart, setShowChart] = useState(false)
+  const [day, isToday, setShowForm, setShowChart] = useFieldsStore(s => [
+    s.day, s.isToday, s.setShowForm, s.setShowChart
+  ], shallow)
+
   // having lots of trouble refreshing certain things, esp. dupes list after picking. Force it for now
   const [cacheBust, setCacheBust] = useState(+new Date)
-
-  const isToday = iso() === iso(day)
 
   const {as, viewer, me} = user
 
@@ -111,14 +110,6 @@ export default function Fields() {
         <Button sx={{mb:2}} size='small' variant='contained' onClick={() => fetchService(service)}>Sync</Button>
       </Tooltip>
     </>
-  }
-
-  const onFormClose = () => {
-    setShowForm(false)
-  }
-
-  const onChartClose = () => {
-    setShowChart(false)
   }
 
   const renderFieldEntry = (f, fe) => {
@@ -264,13 +255,13 @@ export default function Fields() {
           color="primary"
           variant="contained"
           size="small"
-          onClick={() => setShowForm(true)}
+          onClick={() => setShowForm("new")}
         >New Field</Button>}
         {!!g.fields.length && <Button
           variant="outlined"
           color="primary"
           size="small"
-          onClick={() => setShowChart(true)}
+          onClick={() => setShowChart("overall")}
         >Top Influencers</Button>}
       </Grid>
     }
@@ -300,21 +291,6 @@ export default function Fields() {
 
   function renderFields() {
     return <div className="sidebar-fields">
-      {showForm && (
-        <FieldModal
-          close={onFormClose}
-          field={showForm === true ? {} : fields?.hash[showForm]}
-        />
-      )}
-
-      {showChart && (
-        <ChartModal
-          field={showChart === true ? null : fields?.hash[showChart]}
-          overall={showChart === true}
-          close={onChartClose}
-        />
-      )}
-
       {groups.map(renderGroup)}
     </div>
 
@@ -327,12 +303,14 @@ export default function Fields() {
           <CardHeader title="Fields" />
         </Grid>
         <Grid item>
-          <DayChanger day={day} isToday={isToday} setDay={setDay} />
+          <DayChanger />
         </Grid>
       </Grid>
       <CardContent>
         {renderFields()}
       </CardContent>
     </Card>
+    {<FieldModal />}
+    {<ChartModal />}
   </>
 }

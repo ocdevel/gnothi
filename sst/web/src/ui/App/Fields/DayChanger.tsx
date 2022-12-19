@@ -4,19 +4,18 @@ import Button from "@mui/material/Button";
 import {FaArrowLeft, FaArrowRight, FaRegCalendarAlt} from "react-icons/fa";
 import React from "react";
 import dayjs from 'dayjs'
-import {fmt, iso} from './utils'
+import {fmt, iso, useFieldsStore} from './store'
 
-type DayChanger = {
-  day: string,
-  setDay: (day: string) => void,
-  isToday: boolean,
-}
-export default function DayChanger({day, setDay, isToday}: DayChanger) {
+export default function DayChanger() {
+  const setDay = useFieldsStore(s => s.setDay)
+  const day = useFieldsStore(s => s.day)
+  const dayStr = useFieldsStore(s => s.dayStr)
+  const isToday = useFieldsStore(s => s.isToday)
   const changeDay = (dir: 1 | -1) => {
     if (dir === -1 ) {
-      setDay(dayjs(day).subtract(1, 'day').format(fmt))
+      setDay(dayjs(day).subtract(1, 'day'))
     } else {
-      setDay(dayjs(day).add(1, 'day').format(fmt))
+      setDay(dayjs(day).add(1, 'day'))
     }
   }
 
@@ -42,6 +41,6 @@ export default function DayChanger({day, setDay, isToday}: DayChanger) {
         ><FaArrowRight /></Button>
       </ButtonGroup>
     </Grid>
-    <Grid item>{day}</Grid>
+    <Grid item>{dayStr}</Grid>
   </Grid>
 }

@@ -2,9 +2,12 @@ import create, {StateCreator} from 'zustand'
 import {ApiSlice} from './api'
 import {EventsSlice} from './events'
 import {Users, Entries, Analyze} from "@gnothi/schemas"
-import moment from "moment-timezone";
-import _ from "lodash";
-import dayjs from "dayjs"
+
+import utc from 'dayjs/plugin/utc'
+import timezone from 'dayjs/plugin/timezone'
+import dayjs from 'dayjs'
+dayjs.extend(utc)
+dayjs.extend(timezone)
 
 
 // TODO use mainTag as default tag
@@ -141,7 +144,7 @@ export const appSlice: StateCreator<
     const user = res.data
     if (!user.timezone) {
       // Guess their default timezone (TODO should call this out?)
-      const timezone = moment.tz.guess(true)
+      const timezone = dayjs.tz.guess()
       emit(["users/timezone/put", {timezone}])
     }
     const code = localStorage.getItem("code")
