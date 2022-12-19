@@ -12,17 +12,16 @@ import {useForm, Controller} from "react-hook-form"
 import {zodResolver} from "@hookform/resolvers/zod"
 import * as S from "@gnothi/schemas"
 
-const Partial = S.Fields.Field.partial()
 interface FieldModal {
   close: (what?: boolean) => void
-  field?: Partial
+  field?: S.Fields.Field
 }
 export default function FieldModal({close, field}: FieldModal) {
   const editing = !!field?.id
   field = editing ? field : S.Fields.fields_post_request.omit({name: true}).parse({})
   const send = useStore(s => s.send)
   const form = useForm({
-    resolver: zodResolver(Partial),
+    resolver: zodResolver(S.Fields.Field),
     defaultValues: field
   })
 

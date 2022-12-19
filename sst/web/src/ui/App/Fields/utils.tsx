@@ -3,6 +3,13 @@ import strip from 'strip-markdown'
 import ReactMarkdown from "react-markdown"
 import emoji from 'remark-emoji'
 import Box from "@mui/material/Box";
+import dayjs from "dayjs";
+
+export const fmt = 'YYYY-MM-DD'
+export function iso(day?: string) {
+  const m = day ? dayjs(day) : dayjs()
+  return m.format(fmt)
+}
 
 // see https://github.com/remarkjs/strip-markdown/blob/main/index.js
 const options = {keep: [

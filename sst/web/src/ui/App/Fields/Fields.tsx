@@ -5,18 +5,10 @@ import ReactStars from "react-stars";
 import SetupHabitica from "./SetupHabitica";
 import FieldModal from "./FieldModal";
 import ChartModal from "./ChartModal";
-import {FieldName} from "./utils";
-import moment from 'moment'
+import {FieldName, fmt, iso} from "./utils";
 
 import {useStore} from "@gnothi/web/src/data/store"
-import {
-  FaArrowLeft,
-  FaArrowRight,
-  FaExclamationTriangle,
-  FaRegCalendarAlt
-} from "react-icons/fa";
-import axios from "axios";
-import fileDownload from 'js-file-download';
+
 import Card from "@mui/material/Card";
 import Grid from "@mui/material/Grid";
 import CardContent from "@mui/material/CardContent";
@@ -40,120 +32,15 @@ import ExpandMore from "@mui/icons-material/ExpandMore";
 import {Checkbox2} from "@gnothi/web/src/ui/Components/Form";
 import {Alert2} from "@gnothi/web/src/ui/Components/Misc";
 import Box from "@mui/material/Box";
-
-const fmt = 'YYYY-MM-DD'
-const iso = (day=null) => {
-  const m = day ? moment(day) : moment()
-  return m.format(fmt)
-}
-
-type DayChanger = {
-  day: string,
-  setDay: (day: string) => void,
-  isToday: boolean,
-}
-function DayChanger({day, setDay, isToday}: DayChanger) {
-  const changeDay = (dir: 1 | -1) => {
-    if (dir === -1 ) {
-      setDay(moment(day).subtract(1, 'day').format(fmt))
-    } else {
-      setDay(moment(day).add(1, 'day').format(fmt))
-    }
-  }
-
-  return <Grid
-    container
-    alignItems='center'
-    direction='column'
-    sx={{mt: 1, mr: 3 }}
-  >
-    <Grid item>
-      <ButtonGroup aria-label="Edit days">
-        <Button
-          className='border-right-0'
-          variant="outline-secondary"
-          onClick={() => changeDay(-1)}
-        ><FaArrowLeft /></Button>
-        <Button variant="outline-dark" disabled className='border-left-0 border-right-0'><FaRegCalendarAlt /></Button>
-        <Button
-          className='border-left-0'
-          variant="outline-secondary"
-          onClick={() => changeDay(1)}
-          disabled={isToday}
-        ><FaArrowRight /></Button>
-      </ButtonGroup>
-    </Grid>
-    <Grid item>{day}</Grid>
-  </Grid>
-}
-
-
-function FieldsAdvanced({fetchFieldEntries}) {
-  const send = useStore(s => s.send)
-  const jwt = useStore(s => s.jwt)
-  const setServerError = useStore(s => s.apiError)
-  const [confirmWipe, setConfirmWipe] = useState('')
-
-  async function downloadCsv(version) {
-    return alert("Download csv not implemented")
-    // TODO refactor this into actions.js/fetch_
-    const obj = {
-      method: 'get',
-      url: `${API_URL}/field-entries/csv/${version}`,
-      headers: {'Authorization' : `Bearer ${jwt}`},
-      responseType: 'blob',
-    }
-
-    try {
-      const {data} = await axios(obj)
-      const fname = {'new': 'field_entries', 'old': 'field_entries_old'}[version]
-      fileDownload(data, `${fname}.csv`);
-    } catch (error) {
-      let {statusText: message, data} = error.response
-      message = data.detail || message || "There was an error"
-      setServerError(message)
-    }
-  }
-
-  async function startOver() {
-    send('fields_entries_clear_request', {})
-  }
-
-  function changeConfirmWipe(e) {
-    setConfirmWipe(e.target.value)
-  }
-
-  const btnOpts: ButtonProps = {size: 'small', color: "primary", variant: 'outlined', fullWidth: true}
-
-  return <div>
-    <Button
-      {...btnOpts}
-      onClick={() => downloadCsv('new')}
-    >Download field_entries.csv</Button>
-    <Typography variant='caption'>Export your field-entries to CSV</Typography>
-    <Button
-      {...btnOpts}
-      disabled={confirmWipe !== 'wipe field entries'}
-      variant='outlined'
-      color='secondary'
-      onClick={startOver}
-      sx={{mb: 2}}
-    >Start Over</Button>
-    <TextField
-      size='small'
-      placeholder="wipe field entries"
-      value={confirmWipe}
-      onChange={changeConfirmWipe}
-      helperText={<>Wipe field entries for all days and start from scratch (keeping the fields, just clearing their entries). Enable the button by typing in the text-field "wipe field entries". <a href="https://github.com/lefnire/gnothi/issues/114" target="_blank">Why do this?</a></>}
-    />
-  </div>
-}
+import Advanced from "./Advanced";
+import DayChanger from './DayChanger'
+import * as S from '@gnothi/schemas'
 
 
 export default function Fields() {
   const send = useStore(s => s.send)
   const user = useStore(s => s.user)
-  const fields = useStore(state => state.res.fields_list_response?.rows)
+  const fields = useStore(state => state.res.fields_list_response)
   const fieldsGet = useStore(state => state.res.fields_list_response?.res)
   const fieldEntries = useStore(s => s.res.fields_entries_list_response?.hash)
   const fieldValues = useStore(s => s.fieldValues)
@@ -182,10 +69,8 @@ export default function Fields() {
     [day] // re-initialize with day-change
   )
 
-  console.log(fieldsGet)
-
-  if (fieldsGet?.code === 403) {
-    return <h5>{fieldsGet?.detail}</h5>
+  if (fields?.res?.error && fields.res.code === 403) {
+    return <h5>{fields.res.data}</h5>
   }
 
   async function fetchFieldEntries() {
@@ -329,7 +214,7 @@ export default function Fields() {
   const groups = [{
     service: 'custom',
     name: 'Custom',
-    fields: _(fields)
+    fields: _(fields?.rows)
       .filter(v => !v.service && !v.excluded_at)
       .sortBy('id').value(),
     emptyText: () => <small className='text-muted'>
@@ -345,7 +230,7 @@ export default function Fields() {
   }, {
     service: 'habitica',
     name: 'Habitica',
-    fields: _(fields)
+    fields: _(fields?.rows)
       .filter(v => v.service === 'habitica' && !v.excluded_at)
       .sortBy('id')
       .value(),
@@ -357,7 +242,7 @@ export default function Fields() {
   }, {
     service: 'excluded',
     name: 'Excluded',
-    fields: _(fields)
+    fields: _(fields?.rows)
       .filter(v => !!v.excluded_at)
       .sortBy('id')
       .value(),
@@ -368,7 +253,7 @@ export default function Fields() {
     service: 'advanced',
     name: 'Advanced',
     fields: [],
-    emptyText: () => <FieldsAdvanced fetchFieldEntries={fetchFieldEntries} />
+    emptyText: () => <Advanced fetchFieldEntries={fetchFieldEntries} />
   }]
 
   const renderButtons = g => {
@@ -418,13 +303,13 @@ export default function Fields() {
       {showForm && (
         <FieldModal
           close={onFormClose}
-          field={showForm === true ? {} : fields[showForm]}
+          field={showForm === true ? {} : fields?.hash[showForm]}
         />
       )}
 
       {showChart && (
         <ChartModal
-          field={showChart === true ? null : fields[showChart]}
+          field={showChart === true ? null : fields?.hash[showChart]}
           overall={showChart === true}
           close={onChartClose}
         />
@@ -435,17 +320,19 @@ export default function Fields() {
 
   }
 
-  return <Card>
-    <Grid container justifyContent='space-between'>
-      <Grid item>
-        <CardHeader title="Fields" />
+  return <>
+    <Card>
+      <Grid container justifyContent='space-between'>
+        <Grid item>
+          <CardHeader title="Fields" />
+        </Grid>
+        <Grid item>
+          <DayChanger day={day} isToday={isToday} setDay={setDay} />
+        </Grid>
       </Grid>
-      <Grid item>
-        <DayChanger day={day} isToday={isToday} setDay={setDay} />
-      </Grid>
-    </Grid>
-    <CardContent>
-      {renderFields()}
-    </CardContent>
-  </Card>
+      <CardContent>
+        {renderFields()}
+      </CardContent>
+    </Card>
+  </>
 }

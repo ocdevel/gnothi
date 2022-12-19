@@ -84,14 +84,14 @@ export const fields_post_request = Field.pick({
 })
 export type fields_post_request = z.infer<typeof fields_post_request>
 
-export const fields_list_request = z.object({
-  day: dateCol().optional()
-})
+export const fields_list_request = Passthrough
 export type fields_list_request = z.infer<typeof fields_list_request>
 export const fields_list_response = Field
 export type fields_list_response = z.infer<typeof fields_list_response>
 
-export const fields_entries_list_request = Passthrough
+export const fields_entries_list_request = z.object({
+  day: dateCol().optional()
+})
 export type fields_entries_list_request = z.infer<typeof fields_entries_list_request>
 export const fields_entries_list_response = FieldEntry
 export type fields_entries_list_response = z.infer<typeof fields_entries_list_response>
@@ -110,6 +110,7 @@ export const routes = {
       e: 'fields_list_request',
       s: fields_list_request,
       t: {ws: true},
+      snoopable: true
     },
     o: {
       e: 'fields_list_response',
@@ -139,6 +140,7 @@ export const routes = {
       e: 'fields_entries_list_request',
       s: Passthrough,
       t: {ws: true},
+      snoopable: true
     },
     o: {
       e: 'fields_entries_list_response',
@@ -153,6 +155,7 @@ export const routes = {
       e: 'fields_entries_post_request',
       s: fields_entries_post_request,
       t: {ws: true},
+      snoopable: false
     },
     o: {
       e: 'fields_entries_post_response',

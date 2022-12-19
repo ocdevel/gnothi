@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from "react";
 
 import {useStore} from "@gnothi/web/src/data/store"
-import {BasicDialog} from "@gnothi/web/src/ui/Components/Dialog";
+import {BasicDialog} from "../../Components/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import Typography from "@mui/material/Typography";
@@ -9,7 +9,11 @@ import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
 import Box from "@mui/material/Box";
 
-function DisconnectModal({show, close}) {
+interface DisconnectModal {
+  show: boolean
+  close: () => void
+}
+function DisconnectModal({show, close}: DisconnectModal) {
 const send = useStore(s => s.send)
 
   function disconnect() {

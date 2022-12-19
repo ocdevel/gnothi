@@ -14,47 +14,20 @@ import {books} from '../../ml/node/books'
 import {ask} from '../../ml/node/ask'
 import {themes} from '../../ml/node/themes'
 import {boolMapToKeys} from '@gnothi/schemas/utils'
+import {Analyze} from '../../data/models/analyze'
 
 const r = S.Routes.routes
-
-async function facetFilter(req: analyze_get_request, user_id: string): Promise<Entry[]> {
-  const {tags, startDate, endDate, search} = req
-  const tids = boolMapToKeys(tags)
-  if (!tids.length) {
-    throw new GnothiError({key: "NO_TAGS"})
-  }
-  const endDate_ = (endDate === "now" || !endDate) ? dayjs().add(1, "day").toDate() : endDate
-  const entries = await db.executeStatement({
-    sql: `
-      select e.*
-      from entries e
-             inner join entries_tags et on e.id = et.entry_id
-      where e.user_id = :user_id
-        and e.created_at > :startDate::date
-        and e.created_at <= :endDate::date
-        and et.tag_id in :tids
-      group by e.id
-      order by e.created_at asc;
-    `,
-    parameters: [
-      {name: "user_id", value: {stringValue: user_id}, typeHint: "UUID"},
-      {name: "startDate", value: {stringValue: startDate}},
-      {name: "endDate", value: {stringValue: endDate_}},
-      {name: "tids", typeHint: "UUID", value: {arrayValue: {stringValues: tids}}}
-    ]
-  })
-  return entries
-}
 
 r.analyze_get_request.fn = r.analyze_get_request.fnDef.implement(async (req, context) => {
   return [req]
 })
 
 r.analyze_get_response.fn = r.analyze_get_response.fnDef.implement(async (req, context) => {
+  const analyze = new Analyze(context.user.id)
   const user_id = context.user.id
   const query = req.search
   const {handleRes} = context
-  const hardFiltered = await facetFilter(req, user_id)
+  const hardFiltered = await analyze.facetFilter(req)
   const {ids, entries, search_mean, clusters} = await search({
     user_id,
     entries: hardFiltered,
