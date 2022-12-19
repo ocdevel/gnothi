@@ -36,11 +36,10 @@ export default function ChartModal() {
 
   const fields = fields_?.rows || []
   const hash = fields_?.hash || {}
-  const field = typeof showChart === "string" ? hash[showChart]
-    : null
-  const overall = showChart === true
+  const field = (showChart === "overall" || showChart === false) ? null
+    : hash?.[showChart]
+  const overall = showChart === "overall"
 
-  const close = React.useCallback(() => setShowChart(false), [])
 
   useEffect(() => {
     if (field) {
@@ -48,8 +47,10 @@ export default function ChartModal() {
     }
   }, [field])
 
-  // hash not ready yet
-  if (!overall && !field) {return null}
+  if (showChart === false) { return null }
+  if (!overall && !field) { return null }
+
+  const close = React.useCallback(() => setShowChart(false), [])
 
   let influencers_ = _.isEmpty(influencers) ? false
     : field ? influencers[field.id]

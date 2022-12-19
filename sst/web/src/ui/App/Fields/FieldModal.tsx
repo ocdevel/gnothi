@@ -31,7 +31,7 @@ export default function FieldModal() {
 
   React.useEffect(() => {
     form.reset(field)
-  }, [field])
+  }, [fid])
 
   if (showForm === false) {return null}
   // fields.hash not yet ready
