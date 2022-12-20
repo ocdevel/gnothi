@@ -16,7 +16,6 @@ import {BasicDialog, FullScreenDialog} from "../../Components/Dialog";
 import Button from "@mui/material/Button";
 import {AuthComponent} from "../../Setup/Auth";
 import AppBar from "../../Components/AppBar";
-import Toolbar from "@mui/material/Toolbar";
 import {styles} from "../../Setup/Mui"
 
 const {sx, colors, spacing} = styles
@@ -33,8 +32,8 @@ export default function Layout() {
   function renderAppbar() {
     return <AppBar
       ctas={[
-        {name: "Sign Up", fn: () => setAuthTab("signUp")},
-        {name: "Log In", fn: () => () => setAuthTab("signIn")}
+        {name: "Sign Up", onClick: () => setAuthTab("signUp")},
+        {name: "Log In", onClick: () => setAuthTab("signIn"), secondary: true}
       ]}
 
     />

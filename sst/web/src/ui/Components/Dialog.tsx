@@ -1,9 +1,6 @@
 import * as React from 'react';
 import Button from '@mui/material/Button';
 import Dialog, {DialogProps} from '@mui/material/Dialog';
-import AppBar from '@mui/material/AppBar';
-import Toolbar from '@mui/material/Toolbar';
-import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import CloseIcon from '@mui/icons-material/Close';
 import Slide from '@mui/material/Slide';
@@ -11,6 +8,8 @@ import { TransitionProps } from '@mui/material/transitions';
 import {ToolbarHeader} from "./Misc";
 import Grid from "@mui/material/Grid";
 import DialogTitle from "@mui/material/DialogTitle";
+import AppBar, {CTA} from './AppBar'
+import IconButton from "@mui/material/IconButton";
 
 const Transition = React.forwardRef(function Transition(
   props: TransitionProps & {
@@ -30,11 +29,11 @@ type Dialog = {
   children: React.ReactNode
 }
 type FullScreenDialog = Dialog & {
-  buttons?: React.ReactNode[]
+  ctas?: CTA[]
 }
 
 export function FullScreenDialog({
-  title, open, onClose, buttons, children
+  title, open, onClose, ctas, children
 }: FullScreenDialog) {
   return (
     <Dialog
@@ -44,26 +43,7 @@ export function FullScreenDialog({
       onClose={onClose}
       TransitionComponent={Transition}
     >
-      <AppBar>
-        <Toolbar>
-          <IconButton
-            className="button-dialog-close"
-            edge="start"
-            onClick={onClose as OnClick}
-            aria-label="close"
-          >
-            <CloseIcon />
-          </IconButton>
-          {/*<Typography sx={{ ml: 2, flex: 1 }} variant="h6" component="div">*/}
-          {/*  Sound*/}
-          {/*</Typography>*/}
-          <ToolbarHeader title={title} buttons={buttons} />
-          {/*<Button autoFocus color="inherit" onClick={handleClose}>
-            save
-          </Button>*/}
-        </Toolbar>
-      </AppBar>
-      <Toolbar />
+      <AppBar onClose={onClose} title={title} ctas={ctas} />
       {children}
     </Dialog>
   );

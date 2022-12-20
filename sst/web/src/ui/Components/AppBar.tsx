@@ -17,6 +17,8 @@ import CloseIcon from "@mui/icons-material/Close";
 import Stack from "@mui/material/Stack";
 
 import {styles} from '../Setup/Mui'
+import {useStore} from "../../data/store";
+import {useNavigate} from "react-router-dom";
 
 
 const buttonSx = {
@@ -67,17 +69,46 @@ export function UserMenu() {
   </Box>
 }
 
+type Clickable = {
+  name: string
+  to?: string
+  onClick?: () => void
+}
+type Link = Clickable
+export type CTA = Clickable & {
+  secondary?: boolean
+}
+
 interface ResponsiveAppBar {
+  clearBottom?: boolean
   title?: string
-  links?: {name: string, to: string}[]
-  ctas?: Array<{name: string, fn: () => void}>
-  userMenu?: boolean
+  links?: Link[]
+  ctas?: CTA[]
   onClose?: () => void
 }
-function ResponsiveAppBar({title, links, ctas, userMenu, onClose}: ResponsiveAppBar) {
-  const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(null);
-  const handleOpenNavMenu = (event: React.MouseEvent<HTMLElement>) => setAnchorElNav(event.currentTarget);
-  const handleCloseNavMenu = () => setAnchorElNav(null);
+export default function ResponsiveAppBar({
+  title,
+  links,
+  ctas,
+  onClose,
+  clearBottom
+}: ResponsiveAppBar) {
+  const navigate = useNavigate()
+  const jwt = useStore(s => s.jwt)
+
+  const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(null)
+  const handleOpenNavMenu = (event: React.MouseEvent<HTMLElement>) => setAnchorElNav(event.currentTarget)
+  const handleCloseNavMenu = () => setAnchorElNav(null)
+
+  const isModal = !!onClose
+  const isSplash = !jwt && !isModal
+  const isApp = !isSplash && !isModal
+
+  const onClick = (item: Clickable) => (e: React.SyntheticEvent<HTMLElement>) => {
+    if (item.onClick) { item.onClick() }
+    if (item.to) { navigate(item.to) }
+    handleCloseNavMenu()
+  }
 
   const logo = <Box
       sx={{height: 40, mb: {md: .6}}}
@@ -88,7 +119,7 @@ function ResponsiveAppBar({title, links, ctas, userMenu, onClose}: ResponsiveApp
   </Box>
 
   function renderLeft() {
-    if (onClose) {
+    if (isModal) {
       return <Stack spacing={1} direction="row" alignItems="center">
         <IconButton
           onClick={onClose}
@@ -96,7 +127,6 @@ function ResponsiveAppBar({title, links, ctas, userMenu, onClose}: ResponsiveApp
         >
           <CloseIcon />
         </IconButton>
-        <Typography variant="h6" color="primary">{title}</Typography>
       </Stack>
     }
     if (links?.length) {
@@ -129,16 +159,20 @@ function ResponsiveAppBar({title, links, ctas, userMenu, onClose}: ResponsiveApp
             display: { xs: 'block', md: 'none' },
           }}
         >
-          {links?.map(({name, to}) => (
-            <MenuItem key={to} onClick={handleCloseNavMenu}>
-              <Typography sx={{...buttonSx, textAlign: "center"}}>{name}</Typography>
+          {links?.map((link) => (
+            <MenuItem
+              key={link.to}
+              onClick={onClick(link)}
+            >
+              <Typography sx={{...buttonSx, textAlign: "center"}}>{link.name}</Typography>
             </MenuItem>
           ))}
         </Menu>
         {logo}
       </Box>
     }
-   return <Box sx={{ flexGrow: 1, display: { xs: 'flex', md: 'none' }, alignItems: "center" }}>
+
+    return <Box sx={{ flexGrow: 1, display: { xs: 'flex', md: 'none' }, alignItems: "center" }}>
       {logo}
     </Box>
   }
@@ -151,14 +185,18 @@ function ResponsiveAppBar({title, links, ctas, userMenu, onClose}: ResponsiveApp
         display: { xs: 'none', md: 'flex' }
       }}
     >
-      {!onClose && logo}
-      {links?.map(link => <Button
+      {isModal ? <>
+        <Typography variant="h6" color="primary">{title}</Typography>
+      </> : <>
+        {logo}
+        {links?.map(link => <Button
           key={link.to}
-          onClick={handleCloseNavMenu}
+          onClick={onClick(link)}
           sx={{...buttonSx, display: 'block'}}
         >
           {link.name}
         </Button>)}
+      </>}
     </Stack>
   }
 
@@ -167,18 +205,22 @@ function ResponsiveAppBar({title, links, ctas, userMenu, onClose}: ResponsiveApp
       {ctas?.map((cta, i) => (
         <Button
           variant="contained"
-          onClick={cta.fn}
-          sx={i === 0 ? styles.sx.button1 : styles.sx.button2}
+          onClick={onClick(cta)}
+          sx={cta.secondary ? styles.sx.button2 : styles.sx.button1}
         >
           {cta.name}
         </Button>
       ))}
-      {userMenu && <UserMenu />}
+      {isApp && <UserMenu />}
     </Stack>
   }
 
-  return (
-    <AppBar position="static" color='transparent'>
+  return <>
+    <AppBar
+      position="static"
+      color='transparent'
+      sx={{mb: 3}}
+    >
       <Container maxWidth={false}>
         <Toolbar disableGutters sx={{display: "flex", justifyContent: "space-between", alignItems: "center"}}>
           {renderLeft()}
@@ -187,8 +229,7 @@ function ResponsiveAppBar({title, links, ctas, userMenu, onClose}: ResponsiveApp
         </Toolbar>
       </Container>
     </AppBar>
-  );
+  </>
 }
-export default ResponsiveAppBar;
 
 
