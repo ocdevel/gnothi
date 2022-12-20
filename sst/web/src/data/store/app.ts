@@ -9,7 +9,6 @@ import dayjs from 'dayjs'
 dayjs.extend(utc)
 dayjs.extend(timezone)
 
-
 // TODO use mainTag as default tag
 export const initialFilters = Analyze.analyze_get_request.parse({})
 
@@ -26,8 +25,8 @@ interface SharePage {
 }
 
 type EntryModal = null | {
-  mode: "view" | "edit"
-  entry: Entries.entries_list_response
+  mode: "new" | "view" | "edit"
+  entry?: Entries.entries_list_response
 }
 
 export interface AppSlice {

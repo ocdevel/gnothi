@@ -5,28 +5,8 @@ import {fmtDate} from "../../../utils/utils";
 import {useParams} from "react-router-dom";
 import {Loading} from "../../Components/Routing";
 const View = React.lazy(() => import("./View"))
+const New = React.lazy(() => import("./Upsert/New"))
 const Upsert = React.lazy(() => import("./Upsert/Upsert"))
-
-export function EntriesRouter() {
-  const {entry_id, mode} = useParams()
-  const setEntryModal = useCallback(useStore(s => s.setEntryModal), [])
-  const entries = useStore(s => s.res.entries_list_response?.hash)
-
-  const entry = entry_id && entries?.[entry_id]
-
-  useEffect(() => {
-    if (!entry) {return}
-    setEntryModal({entry, mode})
-  }, [entry_id, mode])
-
-  // rendering handled in Modal.tsx
-
-  if (!entry) {
-    return <Loading label="entries_list_response" />
-  }
-
-  return null
-}
 
 
 export default function Modal() {
@@ -48,13 +28,16 @@ export default function Modal() {
     if (entry && mode === "view") {
       return <View entry={entry} onClose={onClose} />
     }
+    if (mode === "new") {
+      return <New onClose={onClose} />
+    }
     return null
   }
 
-  const title = entry ? fmtDate(entry.created_at) : '';
+  const title = entry ? fmtDate(entry.created_at) : "New Entry";
 
   return <FullScreenDialog
-    open={!!entry}
+    open={entryModal}
     onClose={onClose}
     title={title}
   >

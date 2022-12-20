@@ -7,7 +7,6 @@ import Books from './Books'
 import Therapists from './Therapists'
 import Grid from "@mui/material/Grid";
 import Button from "@mui/material/Button";
-import {ToolbarHeader} from "@gnothi/web/src/ui/Components/Misc";
 
 
 export default function Resources() {

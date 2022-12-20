@@ -4,8 +4,7 @@ import Dialog, {DialogProps} from '@mui/material/Dialog';
 import Typography from '@mui/material/Typography';
 import CloseIcon from '@mui/icons-material/Close';
 import Slide from '@mui/material/Slide';
-import { TransitionProps } from '@mui/material/transitions';
-import {ToolbarHeader} from "./Misc";
+import { TransitionProps } from '@mui/material/transitions'
 import Grid from "@mui/material/Grid";
 import DialogTitle from "@mui/material/DialogTitle";
 import AppBar, {CTA} from './AppBar'
@@ -43,7 +42,12 @@ export function FullScreenDialog({
       onClose={onClose}
       TransitionComponent={Transition}
     >
-      <AppBar onClose={onClose} title={title} ctas={ctas} />
+      <AppBar
+        onClose={onClose}
+        title={title}
+        ctas={ctas}
+        clearBottom={true}
+      />
       {children}
     </Dialog>
   );

@@ -14,10 +14,12 @@ import {
 
 interface Teaser {
   eid: string
-  gotoForm: (eid: string | undefined) => void
+  gotoForm: (eid: string) => void
 }
 export default function Teaser({eid, gotoForm}: Teaser) {
+  const setEntryModal = useStore(s => s.setEntryModal)
   const entry = useStore(useCallback(s => s.res.entries_list_response?.hash?.[eid], [eid]))
+  const me = useStore(s => s.user.me)
   const [hovered, setHovered] = useState(false)
   const onHover = () => setHovered(true)
   const onLeave = () => setHovered(false)
@@ -25,11 +27,14 @@ export default function Teaser({eid, gotoForm}: Teaser) {
   const e = entry?.entry
   if (!e) {return null}
   const {tags} = entry
-
   let title = e.title || e.ai_title
   const isSummary = e.ai_text && e.text !== e.ai_text
   const summary = e.ai_text || e.text
   const sentiment = e.ai_sentiment && sent2face(e.ai_sentiment)
+
+  function goToEntry() {
+    setEntryModal({mode: "view", entry})
+  }
 
   return <Box
     className='entry-teaser'
@@ -38,7 +43,7 @@ export default function Teaser({eid, gotoForm}: Teaser) {
   >
     <Card
       square
-      onClick={() => gotoForm(eid)}
+      onClick={goToEntry}
       variant='elevation'
       raised={hovered}
       sx={{cursor:'pointer', borderColor: 'primary.main', my: 2}}

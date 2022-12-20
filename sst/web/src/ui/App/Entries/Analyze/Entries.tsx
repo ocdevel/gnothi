@@ -7,7 +7,7 @@ import {useStore} from '../../../../data/store'
 
 import Pagination from '@mui/material/Pagination'
 import Button from '@mui/material/Button'
-import {Alert2, ToolbarHeader} from "../../../Components/Misc";
+import {Alert2} from "../../../Components/Misc";
 
 
 export default function Entries({group_id=null}) {
@@ -43,11 +43,6 @@ export default function Entries({group_id=null}) {
 
   }
 
-  const gotoForm = (entry_id?: string) => {
-    const p = (entry_id ? `/j/${entry_id}/view` : 'entry')
-    navigate(p)
-  }
-
   if (!filtered.length) {
     return <Alert2 severity='info'>No entries. If you're a new user, click <Button color="primary" size='small' variant='contained' disabled>New Entry</Button> above. If you're a therapist, select a client in left-sidebar {'>'} Account {'>'} [email]. You'll then be in that client's shoes.</Alert2>
   }
@@ -62,7 +57,7 @@ export default function Entries({group_id=null}) {
   }
 
   return <>
-    {filteredPage.map(eid => <Teaser eid={eid} gotoForm={gotoForm} key={eid}/> )}
+    {filteredPage.map(eid => <Teaser eid={eid} key={eid}/> )}
     {usePaging && <Pagination count={nPages} page={page} onChange={changePage} />}
   </>
 }

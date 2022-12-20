@@ -17,8 +17,7 @@ import BooksIcon from "@mui/icons-material/MenuBook";
 import CardContent from '@mui/material/CardContent'
 import CardHeader from '@mui/material/CardHeader'
 import Card from '@mui/material/Card'
-import {Alert2, ToolbarHeader} from "@gnothi/web/src/ui/Components/Misc";
-import {Stack2} from "../../../../Components/Misc";
+import {Stack2, Alert2} from "../../../../Components/Misc";
 
 // 62da7182: books attrs, popovers
 

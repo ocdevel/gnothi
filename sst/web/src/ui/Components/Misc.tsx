@@ -28,22 +28,3 @@ export function Stack2(props) {
     {...rest}
   >{children}</Stack>
 }
-
-export function ToolbarHeader(props) {
-  const {title, buttons, ...rest} = props
-  return <Grid
-    container
-    justifyContent='space-between'
-    alignItems='center'
-  >
-    <Grid item>
-      {/*<Typography variant="h6" noWrap component="div" {...rest}>
-        {title}
-      </Typography>*/}
-      <img src="/Gnothi-LOGO-G10.png" height={40} />
-    </Grid>
-    <Grid item>
-      <Stack2 direction='row'>{buttons}</Stack2>
-    </Grid>
-  </Grid>
-}

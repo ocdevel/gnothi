@@ -73,13 +73,12 @@ export default function Upsert(props: Entry) {
   }, [isNew])
 
   useEffect(() => {
-    return // FIXME!! maximum callstack exceeded
     if (!entry) {return}
     const form_ = _.pick(entry, 'title text created_at'.split(' '))
-    form.reset(form)
+    form.reset(form_)
     setFormOrig(form_)
-    setTags(entry.entry_tags)
-  }, [entry])
+    setTags(tags_)
+  }, [id])
 
   useEffect(() => {
     // return () => {

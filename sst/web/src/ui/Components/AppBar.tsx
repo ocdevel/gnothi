@@ -219,7 +219,7 @@ export default function ResponsiveAppBar({
     <AppBar
       position="static"
       color='transparent'
-      sx={{mb: 3}}
+      sx={clearBottom ? {mb: 3} : {}}
     >
       <Container maxWidth={false}>
         <Toolbar disableGutters sx={{display: "flex", justifyContent: "space-between", alignItems: "center"}}>
