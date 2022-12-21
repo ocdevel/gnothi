@@ -38,14 +38,20 @@ After you have one or two entries, head to the Insights and Resources links at t
 
 interface Entry {
   entry?: Entries.entries_list_response
-  onClose?: any
+  onClose?: Function
 }
 export default function Upsert(props: Entry) {
-  const entry = props.entry?.entry
-  const tags_ = props.entry?.tags || {}
-  const isNew = !entry?.id
+  const entryModal = useStore(s => s.entryModal!)
+  const setEntryModal = useStore(s => s.setEntryModal)
 
-  const defaults = entry ? {defaultValues: entry} : {}
+  const {mode} = entryModal
+  const [isNew, isEdit] = [mode === "new", mode === "edit"]
+
+  const [entry, tags_] = isNew ? [{}, {}] : [
+    props.entry!.entry, props.entry!.tags
+  ]
+
+  const defaults = isEdit ? {defaultValues: entry} : {}
   const form = useForm({
     resolver: zodResolver(Entries.entries_upsert_request.shape.entry),
     ...defaults
@@ -54,7 +60,7 @@ export default function Upsert(props: Entry) {
   const as = useStore(s => s.user.as)
   const send = useStore(s => s.send)
   const [formOrig, setFormOrig] = useState()
-  const [tags, setTags] = useState(tags_ || {})
+  const [tags, setTags] = useState(tags_)
   const [advanced, setAdvanced] = useState(false)
   const entriesUpsert = useStore(s => s.res.entries_upsert_response?.res)
   const entriesDel = useStore(s => s.res.entries_delete_response?.res)
@@ -65,7 +71,7 @@ export default function Upsert(props: Entry) {
 
   if (as) {
     // trying to create an entry while snooping
-    return <Navigate to='/j' replace={true} />
+    return setEntryModal(null)
   }
 
   useEffect(() => {
@@ -73,12 +79,13 @@ export default function Upsert(props: Entry) {
   }, [isNew])
 
   useEffect(() => {
+    return // fixme
     if (!entry) {return}
     const form_ = _.pick(entry, 'title text created_at'.split(' '))
     form.reset(form_)
     setFormOrig(form_)
     setTags(tags_)
-  }, [id])
+  }, [isEdit])
 
   useEffect(() => {
     // return () => {
@@ -88,6 +95,7 @@ export default function Upsert(props: Entry) {
 
   useEffect(() => {
     if (entriesUpsert?.code !== 200) { return }
+    clearDraft()
     clear(["entries_upsert_response"])
     props.onClose?.()
   }, [entriesUpsert])
@@ -113,8 +121,8 @@ export default function Upsert(props: Entry) {
   }
 
   const go = (to='/j/list') => {
-    props.onClose?.()
     clearDraft()
+    props.onClose?.()
     // send('entries_list_request', {})
     navigate(to)
   }
@@ -135,15 +143,14 @@ export default function Upsert(props: Entry) {
     saveDraft()
   }
 
-  const changeEditing = e => {
-    e.stopPropagation()
-    e.preventDefault()
-    if (editing) {
+  const cancel: React.EventHandler<any> = e => {
+    if (isEdit) {
       clearDraft()
+      setEntryModal({mode: "view", entry: props.entry})
     } else {
-      loadDraft()
+      // loadDraft()
+      setEntryModal(null)
     }
-    setEditing(!editing)
   }
 
   function renderButtons() {
@@ -157,7 +164,7 @@ export default function Upsert(props: Entry) {
         <Button color='secondary' sx={{marginRight: 'auto'}} size="small" onClick={deleteEntry}>
           Delete
         </Button>
-        <Button variant={false} size="small" onClick={changeEditing}>
+        <Button size="small" onClick={cancel}>
           Cancel
         </Button>
       </>}

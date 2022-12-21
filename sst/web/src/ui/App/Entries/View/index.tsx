@@ -38,6 +38,7 @@ interface Entry {
   onClose?: any
 }
 export default function View({entry, onClose}: Entry) {
+  const setEntryModal = useStore(s => s.setEntryModal)
   const navigate = useNavigate()
   const as = useStore(s => s.user.as)
   const send = useStore(s => s.send)
@@ -64,14 +65,14 @@ export default function View({entry, onClose}: Entry) {
       >
         What AI sees
       </Button>
-      <Link.Button
+      <Button
         variant='outlined'
         color='primary'
-        to={`j/${id}/edit`}
+        onClick={() => setEntryModal({mode: "edit", entry})}
         startIcon={<FaPen />}
       >
         Edit
-      </Link.Button>
+      </Button>
     </Stack>
   }
 
