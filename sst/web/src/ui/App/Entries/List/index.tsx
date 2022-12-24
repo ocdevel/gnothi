@@ -4,10 +4,10 @@ import {Helmet} from 'react-helmet-async'
 import {NotesAll, NotesNotifs} from "../Notes";
 
 import Grid from '@mui/material/Grid'
-import Filters from './Filters'
-import Analyze from './Analyze'
+import Filters from '../Analyze/Filters'
+import Analyze from '../Analyze/Analyze'
 import Entries from "./Entries"
-import Ask from './Analyze/Ask'
+import Ask from '../Analyze/Analyze/Ask'
 
 
 export default function List({group_id=null}) {

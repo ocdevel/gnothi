@@ -129,6 +129,7 @@ export const Events = z.enum([
   'analyze_ask_response',
   'analyze_summarize_response',
   'analyze_books_response',
+  'analyze_search_response',
   'analyze_get_final',
 
   'analyze_books_list_request',
@@ -149,6 +150,8 @@ export const Events = z.enum([
 
   'notifs_groups_list_request',
   'notifs_groups_list_response',
+  'notifs_shares_list_request',
+  'notifs_shares_list_response',
   'notifs_notes_list_request',
   'notifs_notes_list_response',
 

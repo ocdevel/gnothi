@@ -1,6 +1,6 @@
 import React, {useState} from "react";
-import Entry from "../../Entries/View/Entry";
-import Teaser from "../../Entries/Teaser";
+import Entry from "../../Entries/View";
+import Teaser from "../../Entries/List/Teaser";
 import {useStore} from '../../../../data/store'
 import {Loading} from "../../../Components/Routing";
 

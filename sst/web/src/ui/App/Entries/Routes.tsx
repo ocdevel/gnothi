@@ -3,7 +3,7 @@ import {useParams} from "react-router-dom";
 import {S, Error, Loading} from '../../Components/Routing'
 import {useStore} from "../../../data/store";
 const Layout = lazy(() => import("./Layout"))
-const Analyze = lazy(() => import("./Analyze"))
+const Analyze = lazy(() => import("./List"))
 const New = lazy(() => import("./Upsert/New"))
 // import {EntriesRouter as ModalRouter} from "./Modal"
 

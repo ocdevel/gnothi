@@ -5,7 +5,7 @@
   "scripts": {
     "start": "AWS_PROFILE=gnothiadmin sst start",
     "build": "AWS_PROFILE=gnothiadmin sst build",
-    "deploy": "AWS_PROFILE=gnothiadmin sst deploy",
+    "deploy:staging": "AWS_PROFILE=gnothiadmin sst deploy --stage=staging",
     "remove": "AWS_PROFILE=gnothiadmin sst remove",
     "console": "AWS_PROFILE=gnothiadmin sst console",
     "typecheck": "tsc --noEmit",
