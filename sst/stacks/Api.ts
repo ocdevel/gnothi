@@ -4,7 +4,7 @@ import { Ml } from "./Ml";
 import { Auth } from './Auth'
 import * as iam from "aws-cdk-lib/aws-iam"
 import * as cdk from "aws-cdk-lib";
-import {smallLamdaRam} from './util'
+import {smallLamdaRam, timeouts} from './util'
 
 export function Api({ app, stack }: sst.StackContext) {
   const rds = sst.use(Database);
@@ -32,17 +32,25 @@ export function Api({ app, stack }: sst.StackContext) {
   })
   const API_WS = new sst.Config.Parameter(stack, "API_WS", {value: ws.cdk.webSocketStage.callbackUrl})
 
-  const fnInit = new sst.Function(stack, "fn_init", {
+  // Create a function we can call manually, as well as the same thing which is init'd on deploy
+  const initProps: sst.FunctionProps = {
     memorySize: smallLamdaRam,
     handler: "init.main",
     bind: [
       APP_REGION,
       rds,
     ]
-  })
+  }
+  const fnInit = new sst.Function(stack, "fn_init", initProps)
   stack.addOutputs({
     fnInitArn: fnInit.functionArn
   })
+  // const initScript = new sst.Script(stack, "script_init", {
+  //   onCreate: {
+  //     ...initProps,
+  //     enableLiveDev: false
+  //   }
+  // })
 
   const fnBackground = new sst.Function(stack, "fn_background", {
     handler: "main.main",
@@ -78,6 +86,7 @@ export function Api({ app, stack }: sst.StackContext) {
 
   const fnMain = new sst.Function(stack, "fn_main", {
     memorySize: smallLamdaRam,
+    timeout: timeouts.md,
     handler: "main.proxy",
     bind: [
       APP_REGION,

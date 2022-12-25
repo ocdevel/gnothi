@@ -6,13 +6,10 @@ SELECT *
 FROM pg_catalog.pg_tables
 WHERE schemaname != 'pg_catalog' AND 
     schemaname != 'information_schema';
+`
 
 export async function initDb() {
-  
-}`
-
-export async function initDb() {
-  const sql = readFileSync('services/data/init/init.sql', {encoding: 'utf-8'})
+  const sql = readFileSync('data/init/init.sql', {encoding: 'utf-8'})
   const opts = {secretArn: driver.secretArn, resourceArn: driver.resourceArn}
   const {database} = driver
 
@@ -42,12 +39,4 @@ export async function initDb() {
     ...opts, database, sql
   })
     // .promise()
-
-  const res = await rdsClient.executeStatement({
-    ...opts,
-    database,
-    sql: `insert into users (email) values ('tylerrenelle@gmail.com');`,
-  })
-    // .promise()
-  console.log(res)
 }

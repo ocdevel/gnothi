@@ -4,7 +4,7 @@ import {readFileSync} from "fs";
 import {ulid} from "ulid";
 import _ from 'lodash'
 
-const URL = 'http://localhost:3000'
+const URL = 'http://localhost:5173'
 
 const mockEntriesFile = readFileSync("tests/mock_entries.json", {encoding: "utf-8"})
 const mockEntries = JSON.parse(mockEntriesFile).map(e => ({

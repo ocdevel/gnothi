@@ -1,10 +1,54 @@
-import {initDb} from './data/init/initDb'
+import {driver, rdsClient} from "./data/db";
+import {readFileSync} from "fs";
+import {resolve, dirname} from 'path'
+const showTables = `
+SELECT *
+FROM pg_catalog.pg_tables
+WHERE schemaname != 'pg_catalog' AND 
+    schemaname != 'information_schema';
+`
 
-export async function main() {
-  await Promise.all([
-    initDb(),
-  ])
-  return {statusCode: 200}
+export async function initDb() {
+  let sql: string
+  // depending on if Script or Function, CWD is different. I need to do relative-to-this-file kinda deal,
+  // but hit lots of issues.
+  try {
+    sql = readFileSync('data/init/init.sql', {encoding: 'utf-8'})
+  } catch {
+    sql = readFileSync('services/data/init/init.sql', {encoding: 'utf-8'})
+  }
+  const opts = {secretArn: driver.secretArn, resourceArn: driver.resourceArn}
+  const {database} = driver
+
+  // disconnect other clients from gnothidev so we can drop/re-create it
+  await rdsClient
+    .executeStatement({
+      ...opts,
+      database: "postgres",
+
+      sql: `SELECT pg_terminate_backend(pid)
+      FROM pg_stat_activity
+      WHERE pid <> pg_backend_pid() AND datname = '${database}'`,
+    })
+    // .promise();
+
+  await rdsClient.executeStatement({
+    ...opts,
+    database: "postgres",
+
+    sql: `drop database if exists ${database};
+    create database ${database};`,
+  })
+    // .promise()
+
+  // import the sql file
+  await rdsClient.executeStatement({
+    ...opts, database, sql
+  })
+    // .promise()
 }
 
-
+export async function main() {
+  await initDb()
+  return {statusCode: 200}
+}

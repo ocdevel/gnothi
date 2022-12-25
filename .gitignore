@@ -19,3 +19,4 @@ storage-dev
 **/*.csv
 
 tmp
+sst-remove
