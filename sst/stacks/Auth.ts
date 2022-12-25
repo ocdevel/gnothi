@@ -2,7 +2,7 @@ import * as sst from "@serverless-stack/resources";
 import { Database } from './Database'
 import {StringAttribute} from 'aws-cdk-lib/aws-cognito'
 import {RemovalPolicy} from 'aws-cdk-lib'
-import {smallLamdaRam} from "./util";
+import {smallLamdaRam, timeouts} from "./util";
 
 export function Auth({ app, stack }: sst.StackContext) {
   const rds = sst.use(Database);
@@ -26,15 +26,21 @@ export function Auth({ app, stack }: sst.StackContext) {
       // },
       userPool: {
         // TODO change these for stage/prod
+        passwordPolicy: {
+          // TODO removing all password requirements. Reconsider if we want to enforce this.
+          requireDigits: false,
+          minLength: 8,
+          requireLowercase: false,
+          requireSymbols: false,
+          requireUppercase: false
+        },
         selfSignUpEnabled: true,
         autoVerify: {email: true},
         removalPolicy: RemovalPolicy.DESTROY,
         customAttributes: {
-          // TODO remove these next fresh start (can't remove on existing stack)
-          // I couldn't get them working
+          // TODO remove these next fresh start (can't remove on existing stack), I couldn't get them working
           // 'gnothiId': new StringAttribute({ minLen: 5, maxLen: 15, mutable: false }),
-          'gnothiId': new StringAttribute({ mutable: false }),
-          'gnothiId2': new StringAttribute({ mutable: true }),
+          'gnothiId': new StringAttribute({ mutable: true }),
         },
       }
     },
@@ -47,7 +53,14 @@ export function Auth({ app, stack }: sst.StackContext) {
     triggers: {
       preSignUp: {
         memorySize: smallLamdaRam,
+        timeout: timeouts.md,
         handler: "auth/preSignup.handler",
+        bind: [rds]
+      },
+      postConfirmation: {
+        memorySize: smallLamdaRam,
+        timeout: timeouts.md,
+        handler: "auth/postConfirmation.handler",
         bind: [rds]
       },
     }
@@ -56,6 +69,7 @@ export function Auth({ app, stack }: sst.StackContext) {
   const authFn = new sst.Function(stack, "fn_authorizer", {
     handler: "auth/wsAuthorizer.handler",
     memorySize: smallLamdaRam,
+    timeout: timeouts.md,
     environment: {
       USER_POOL_ID: auth.userPoolId,
       USER_POOL_CLIENT_ID: auth.userPoolClientId

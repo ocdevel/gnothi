@@ -1,48 +1,25 @@
-// var aws = require('aws-sdk');
-// var ses = new aws.SES();
-//
-// exports.handler = (event, context, callback) => {
-//   console.log(event);
-//
-//   if (event.request.userAttributes.email) {
-//     sendEmail(event.request.userAttributes.email, "Congratulations " + event.userName + ", you have been confirmed: ", function (status) {
-//
-//       // Return to Amazon Cognito
-//       callback(null, event);
-//     });
-//   } else {
-//     // Nothing to do, the user's email ID is unknown
-//     callback(null, event);
-//   }
-// };
-//
-// function sendEmail(to, body, completedCallback) {
-//   var eParams = {
-//     Destination: {
-//       ToAddresses: [to]
-//     },
-//     Message: {
-//       Body: {
-//         Text: {
-//           Data: body
-//         }
-//       },
-//       Subject: {
-//         Data: "Cognito Identity Provider registration completed"
-//       }
-//     },
-//
-//     // Replace source_email with your SES validated email address
-//     Source: "<source_email>"
-//   };
-//
-//   var email = ses.sendEmail(eParams, function (err, data) {
-//     if (err) {
-//       console.log(err);
-//     } else {
-//       console.log("===EMAIL SENT===");
-//     }
-//     completedCallback('Email sent');
-//   });
-//   console.log("EMAIL CODE END");
-// };
+import {db} from '../data/db'
+import * as S from "@gnothi/schemas"
+const testing = process.env.IS_LOCAL
+
+export const handler = async (event, context, callback) => {
+  // create user in database. maybe add its uid to cognito
+  const dbUser = (await db.exec({
+    sql: "insert into users (email, cognito_id) values (:email, :cognito_id) returning *;",
+    values: {
+      email: event.request.userAttributes.email,
+      cognito_id: event.userName,
+    },
+    zIn: S.Users.User
+  }))[0]
+  event.request.userAttributes['gnothiId'] = dbUser.id
+
+  // All users need one immutable main tag
+  const mainTag = await db.exec({
+    sql: "insert into tags (user_id, name, main) values (:user_id, 'Main', true)",
+    values: {user_id: dbUser.id},
+    zIn: S.Tags.Tag
+  })
+
+  return event
+}

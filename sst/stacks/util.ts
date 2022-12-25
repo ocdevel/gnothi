@@ -12,5 +12,14 @@
  *          max(@duration / 1000) as maxDuration
  */
 
+import {Duration} from 'aws-cdk-lib'
+
 export const smallLamdaRam = 128
 export const mlLambdaRam = 8846
+
+export const timeouts = {
+  sm: "10 seconds" as const, //Duration.seconds(10),
+  md: "30 seconds" as const, //Duration.seconds(30),
+  lg: "3 minutes" as const, // Duration.minutes(3),
+  xl: "15 minutes" as const, // Duration.minutes(15)
+}
