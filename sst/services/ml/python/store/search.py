@@ -1,4 +1,7 @@
 import logging
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+
 from sentence_transformers import SentenceTransformer
 from sentence_transformers.util import semantic_search, community_detection
 from store.store import EntryStore, embed
@@ -16,9 +19,10 @@ def search(data):
         clusters=[]
     )
     if not entry_ids and not query:
-        logging.warning("No entry_ids|query provided")
+        logger.warning("No entry_ids|query provided")
         return no_response
 
+    logger.info("Loading entries")
     entry_store = EntryStore(user_id)
     # TODO use PyArrow partitioning for entry_id as filename, rather than scanning column
     df_user = entry_store.load(entry_store.dir_paras, [
@@ -31,13 +35,18 @@ def search(data):
 
     # 72fc4837 - queryclassifier. Just using '?' in QA lambda
 
+    n_b4 = df_user.shape[0]
     if not query:
+        logger.info("No query, skipping search")
         pass
     elif len(query.split()) < 2:
         # TODO: BM25 retriever
+        logger.info(f"Simple query, text-match")
         df_user = df_user[df_user.content.contains(query, case=False, regex=False)]
     else:
+        n_before = df_user.shape[0]
         # TODO add ANNLite, this is brute-force approach
+        logger.info("Complex query, running semantic search")
         query_emb = embed([query])
         search_res = semantic_search(
             query_embeddings=fix_np(query_emb),
@@ -51,24 +60,27 @@ def search(data):
             if r['score'] > search_threshold
         ]
         df_user = df_user.iloc[idx_order]
+    logger.info(f"n_before:{n_b4} n_after:{df_user.shape[0]}")
 
     if not df_user.shape[0]:
         return no_response
 
     # now narrowed by search
-    corpus_filtered = fix_np(df_user.embedding.values, to_torch=True)
-    clusters = community_detection(
-        corpus_filtered,
-        threshold=community_threshold,
-        min_community_size=2
-    )
-    clusters = [
-        [
-            df_user.iloc[idx].obj_id
-            for idx in clust
-        ]
-        for clust in clusters
-    ]
+    logger.info("Running clustering")
+    # corpus_filtered = fix_np(df_user.embedding.values, to_torch=True)
+    # clusters = community_detection(
+    #     corpus_filtered,
+    #     threshold=community_threshold,
+    #     min_community_size=2
+    # )
+    # clusters = [
+    #     [
+    #         df_user.iloc[idx].obj_id
+    #         for idx in clust
+    #     ]
+    #     for clust in clusters
+    # ]
+    clusters = []
 
     # Normalize orig_id since Paragraph.orig_id == entry_id, aka same for all
     # paragraphs in one entry
@@ -76,6 +88,7 @@ def search(data):
 
     # send back, used for books / groups matching
     search_mean = df_user.embedding.mean(axis=0).tolist()
+    logger.info("Returning results")
     result = dict(
         ids=ids,
         clusters=clusters,
