@@ -15,6 +15,10 @@ import logging
 from sentence_transformers.util import semantic_search
 from sentence_transformers import SentenceTransformer
 
+bucket_name = os.environ['bucket_name']
+bucket_name = f"s3://{bucket_name}"
+# region = os.environ['region']
+
 encoder = SentenceTransformer(model_name_or_path=ENCODER_MODEL)
 
 
@@ -24,44 +28,51 @@ def embed(texts: List[str]):
     return encoder.encode(texts)
 
 
+# PyArrow + S3, partition read/write with filters
+# https://arrow.apache.org/cookbook/py/io.html
+# Partition:Write - https://arrow.apache.org/cookbook/py/io.html#writing-partitioned-datasets
+# Partition:Read - https://arrow.apache.org/cookbook/py/io.html#reading-partitioned-data
+ext = "parquet"
 
 class EntryStore(object):
     def __init__(self, user_id):
         self.user_id = user_id
-        self.entry = None
-        self.dfs = []
 
-        # We'll be storing vectors on EFS
-        # TODO check against vectors_version (as we update schema)
-        self.dir = f"{VECTORS_PATH}/{user_id}"
-        os.makedirs(self.dir, exist_ok=True)
-        self.file = f"{self.dir}/entries.parquet"
+        # Each user has their own directory of dataframes for paragraphs, entries, etc
+        my_dir = f"{bucket_name}/vectors/{user_id}"
+        self.dir_entries = f"{my_dir}/entries"
+        self.dir_paras = f"{my_dir}/paras"
 
-    def load(self, filters: List):
-        if not os.path.exists(self.file):
-            logging.warning(f"{self.file} doesn't exist")
-            return pd.DataFrame([])
-        return pq.read_table(self.file, filters=filters).to_pandas()
+        # Then there's the single user embedding which is used at a global level to match-make
+        # to groups, each other, etc
+        self.user_global = f"{bucket_name}/vectors/users/{user_id}.{ext}"
 
-    def add_entry(self, entry: Dict, paras: List[str]):
-        self.entry = entry
+    def load(self, path, filters=None):
+        return pq.read_table(path, filters=filters).to_pandas()
+
+    def write_df(self, df, path):
+        table = pa.Table.from_pandas(df)
+        pq.write_table(table, path)
+
+    def add_entry(self, entry: Dict):
+        eid, paras, text = entry['id'], entry['text_paras'], entry['text_clean']
         print("Embedding paras")
         paras_embeddings = embed(paras)
         paras = pd.DataFrame([
             dict(
                 id=str(uuid4()),  # wouldn't be unique. We'll filter via orig_id
-                obj_id=entry['id'],
+                obj_id=eid,
                 obj_type='paragraph',
                 content=p,
                 created_at=entry['created_at'],  # used for sorting in analyze later
                 embedding=paras_embeddings[i]
             ) for i, p in enumerate(paras)
         ])
-        self.dfs.append(paras)
+        self.write_df(paras, f"{self.dir_paras}/{eid}.{ext}")
 
         entry_mean = np.mean(paras_embeddings, axis=0)
         # Will use for future summarizing many summaries. But they may have specified skip_summarize
-        entry_content = entry.get("summary", entry['text'])
+        entry_content = entry.get("ai_text", entry['text_clean'])
         entry = pd.DataFrame([
             dict(
                 id=entry['id'],
@@ -72,34 +83,22 @@ class EntryStore(object):
                 embedding=entry_mean
             )
         ])
-        self.dfs.append(entry)
-        return entry_mean
+        self.write_df(entry, f"{self.dir_entries}/{eid}.{ext}")
+        self.update_user_mean()
 
-    def save(self):
-        entry = self.entry
-        if os.path.exists(self.file):
-            # TODO file-lock
-            # remove original paras, entry, and user-mean; this is an upsert
-            df = self.load([("obj_id", "not in", {entry['id'], self.user_id})])
-            self.dfs.append(df)
-            # TODO handle bio, people
-        new_df = pd.concat(self.dfs)
-        user_mean = new_df[new_df.obj_type == "paragraph"].embedding.mean(axis=0)
-        new_df = pd.concat([
-            new_df,
-            pd.DataFrame([dict(
-                id=self.user_id,
-                obj_id=self.user_id,
-                obj_type='user',
-                content="",
-                created_at=entry['created_at'],  # inaccurate, but we're not using this anywhere
-                embedding=user_mean
-            )]
-            )])
-        pq.write_table(
-            pa.Table.from_pandas(new_df),
-            self.file,
+    def update_user_mean(self):
+        mean = (pq
+            .read_table(f"{self.dir_entries}") #, filters=[('x', '=', 'y')])
+            .to_pandas()
+            .embedding.mean(axis=0)
         )
-        # TODO file-unlock
-
+        df = pd.DataFrame([dict(
+            id=self.user_id,
+            obj_id=self.user_id,
+            obj_type='user',
+            content="",
+            created_at="",
+            embedding=mean
+        )])
+        self.write_df(df, self.user_global)
 

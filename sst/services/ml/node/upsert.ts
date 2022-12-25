@@ -2,8 +2,6 @@ import {Entry} from '@gnothi/schemas/entries'
 import {lambdaSend} from "../../aws/handlers";
 
 type FnIn = {
-  skip_summarize?: boolean
-  skip_index?: boolean
   entry: Entry
 }
 type LambdaIn = {

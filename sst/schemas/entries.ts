@@ -14,6 +14,8 @@ export const Entry = z.object({
   // Title optional, otherwise generated from text. topic-modeled, or BERT summary, etc?
   title: z.string().optional(),
   text: z.string(),
+  text_clean: z.string().optional(),
+  text_paras: z.string().array().optional(),
 
   ai_index_state: AiState,
   ai_summarize_state: AiState,

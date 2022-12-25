@@ -86,10 +86,19 @@ function lambdas({context: {app, stack}, vpc, fs, bucket}: MLService) {
     vpc,
     filesystem: lambda.FileSystem.fromEfsAccessPoint(accessPoint, '/mnt/mldata'),
     environment: {
+      region: app.region,
       bucket_name: bucket.bucketName
     }
   } as const
 
+  const fnPreprocess = new lambda.DockerImageFunction(stack, "fn_preprocess", {
+    ...mlFunctionProps,
+    memorySize: 512,
+    timeout: cdk.Duration.minutes(1),
+    code: lambda.DockerImageCode.fromImageAsset("services/ml/python", {
+      file: "preprocess.dockerfile"
+    }),
+  })
   const fnBooks = new lambda.DockerImageFunction(stack, "fn_books", {
     ...mlFunctionProps,
     memorySize: 4459,
@@ -133,8 +142,9 @@ function lambdas({context: {app, stack}, vpc, fs, bucket}: MLService) {
     fnAsk_: fnAsk.functionArn,
     fnSummarize_: fnSummarize.functionArn,
     fnStore_: fnStore.functionArn,
+    fnPreprocess_: fnPreprocess.functionArn,
   })
-  return {fnBooks, fnAsk, fnSummarize, fnStore}
+  return {fnBooks, fnAsk, fnSummarize, fnStore, fnPreprocess}
 }
 
 export function Ml(context: sst.StackContext) {

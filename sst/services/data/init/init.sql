@@ -128,6 +128,8 @@ create table entries
     n_notes integer default 0,
     title varchar,
     text varchar not null,
+    text_clean varchar,
+    text_paras varchar[],
 
     ai_index_state aistate default 'todo',
     ai_summarize_state aistate default 'todo',

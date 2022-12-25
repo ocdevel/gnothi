@@ -72,8 +72,8 @@ def main(event, context):
     entry_ids = event['entry_ids']
     user_id = event['user_id']
     entry_store = EntryStore(user_id)
-    df_user = entry_store.load([
-        ("obj_type", "=", "paragraph"),
+    df_user = entry_store.load(entry_store.dir_paras, [
+        # ("obj_type", "=", "paragraph"),
         ("obj_id", "in", entry_ids)
     ])
     docs = entries_to_haystack(df_user.to_dict("records"))

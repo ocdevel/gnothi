@@ -62,6 +62,7 @@ export function Api({ app, stack }: sst.StackContext) {
       fn_ask: ml.fnAsk.functionName,
       fn_summarize: ml.fnSummarize.functionName,
       fn_store: ml.fnStore.functionName,
+      fn_preprocess: ml.fnPreprocess.functionName,
     },
     permissions: [
       // when I put this in bind[], it says no access
@@ -80,7 +81,8 @@ export function Api({ app, stack }: sst.StackContext) {
        ml.fnBooks.functionArn,
        ml.fnAsk.functionArn,
        ml.fnSummarize.functionArn,
-       ml.fnStore.functionArn
+       ml.fnStore.functionArn,
+       ml.fnPreprocess.functionArn
      ],
    }))
 

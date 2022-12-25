@@ -204,6 +204,7 @@ export default function ResponsiveAppBar({
     return <Stack spacing={2} direction="row" alignItems="center">
       {ctas?.map((cta, i) => (
         <Button
+          key={cta.name}
           variant="contained"
           onClick={onClick(cta)}
           sx={cta.secondary ? styles.sx.button2 : styles.sx.button1}

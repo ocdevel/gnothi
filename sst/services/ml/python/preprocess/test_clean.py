@@ -1,6 +1,6 @@
 import pytest, pdb
-from common.preprocess import CleanText
-from common.fixtures import articles
+from preprocess.clean import CleanText
+from preprocess.fixtures import articles
 
 def test_md_split_1():
     doc = articles()[0]

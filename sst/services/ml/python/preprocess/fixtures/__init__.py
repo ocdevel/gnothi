@@ -8,7 +8,7 @@ from box import Box
 from pathlib import Path
 from typing import List
 from bs4 import BeautifulSoup
-from common.preprocess import html2txt, html2md
+from preprocess.clean import html2txt, html2md
 
 # Pick some that are pretty different. Or... consider some degree of overlap (to see how well clustering works)?
 # I just grab-bagged two topics I like

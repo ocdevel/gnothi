@@ -2,6 +2,8 @@ import * as S from '@gnothi/schemas'
 import {db} from '../../data/db'
 import {GnothiError} from "../errors";
 import {upsert} from '../../ml/node/upsert'
+import {preprocess} from '../../ml/node/preprocess'
+import {summarize, summarizeEntry, SummarizeEntryOut} from '../../ml/node/summarize'
 import {boolMapToKeys} from '@gnothi/schemas/utils'
 
 const r = S.Routes.routes
@@ -69,30 +71,54 @@ r.entries_upsert_response.fn = r.entries_upsert_response.fnDef.implement(async (
   const skip_summarize = tags.some(t => t.ai_summarize === false)
   const skip_index = tags.some(t => t.ai_index === false)
 
-  // TODO implement skip-index
+  const clean = await preprocess({text: entry.text, method: 'md2txt'})
 
-  const summary = await upsert({
-    skip_summarize,
-    skip_index,
-    entry
-  })
-  const updated = {
-    ...entry,
-    ai_title: summary.title || "",
-    ai_text: summary.summary || "",
-    ai_sentiment: summary.emotion || "",
+  const summary = !skip_summarize ? await summarizeEntry(clean) : {
+    title: "",
+    paras: clean.paras,
+    body: {text: clean.text, emotion: "", keywords: []}
   }
 
-  await db.executeStatement({
-    sql: `update entries set ai_title=:ai_title, ai_text=:ai_text, ai_sentiment=:ai_sentiment
-        where id=:id`,
+  const updated = {
+    ...entry,
+    text_clean: clean.text,
+    text_paras: clean.paras,
+    ai_title: summary.title,
+    ai_text: summary.body.text,
+    ai_sentiment: summary.body.emotion,
+    ai_keywords: summary.body.keywords
+  }
+
+  const promises = []
+
+  if (!skip_index) {
+    promises.push(upsert({entry: updated}))
+  }
+
+  // FIXME save keywords, getting error (I think due to rds data api + arrays):
+  // ERROR: column "ai_keywords" is of type character varying[] but expression is of type record
+  //   Hint: You will need to rewrite or cast the expression.
+  console.log("text_paras", updated.text_paras)
+  promises.push(db.executeStatement({
+    sql: `update entries set 
+        text_clean=:text_clean, 
+        --text_paras=:text_paras,
+        --ai_keywords=:ai_keywords,
+        ai_title=:ai_title, 
+        ai_text=:ai_text, 
+        ai_sentiment=:ai_sentiment
+      where id=:id`,
     parameters: [
+      {name: "text_clean", value: {stringValue: updated.text_clean}},
+      // {name: "text_paras", value: {arrayValue: {stringValues: updated.text_paras}}},
       {name: "ai_title", value: {stringValue: updated.ai_title}},
       {name: "ai_text", value: {stringValue: updated.ai_text}},
       {name: "ai_sentiment", value: {stringValue: updated.ai_sentiment}},
+      // {name: "ai_keywords", value: {arrayValue: {stringValues: updated.ai_keywords}}},
       {name: "id", value: {stringValue: entry.id}, typeHint: "UUID"}
     ]
-  })
+  }))
+  await Promise.all(promises)
 
   // FIXME
   // entry.update_snoopers(d.db)

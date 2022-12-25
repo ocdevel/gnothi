@@ -20,8 +20,9 @@ def search(data):
         return no_response
 
     entry_store = EntryStore(user_id)
-    df_user = entry_store.load([
-        ("obj_type", "=", "paragraph"),
+    # TODO use PyArrow partitioning for entry_id as filename, rather than scanning column
+    df_user = entry_store.load(entry_store.dir_paras, [
+        # ("obj_type", "=", "paragraph"),
         ("obj_id", "in", entry_ids)
     ])
     if not df_user.shape[0]:

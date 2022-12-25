@@ -62,6 +62,7 @@ export class Utils {
 
   async _addEntry(title, text) {
     const page = this.page
+    await page.getByText("New Entry").click()
     await page.getByLabel("Title").fill(title)
     await page.locator(".rc-md-editor textarea").fill(text)
     await page.locator(".button-entries-upsert").click()
