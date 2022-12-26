@@ -12,6 +12,7 @@ import {
 import {z} from 'zod'
 import { RDS } from "@serverless-stack/node/rds";
 import * as S from '@gnothi/schemas'
+// @ts-ignore
 import dayjs from 'dayjs'
 
 const dbSchema = {
@@ -44,9 +45,12 @@ interface DBArgs {
   schema?: string
 }
 
+type SqlParameter_ = SqlParameter & {
+  arrayFix?: "=" | "IN"
+}
 interface Statement {
-  sql: string
-  parameters: SqlParameter[]
+  sql: ExecuteStatementCommandInput['sql']
+  parameters: SqlParameter_[]
 }
 type Statements = Statement[]
 
@@ -57,7 +61,6 @@ interface ExecReq {
 }
 
 type ExecRes = any[]
-type ExecuteStatementCommandInput_ = Pick<ExecuteStatementCommandInput, 'sql' | 'parameters'>
 
 export class DB {
   private driver: DBArgs = {
@@ -90,7 +93,7 @@ export class DB {
     })
   }
 
-  async executeStatement<O = object>(statement: ExecuteStatementCommandInput_): Promise<O[]> {
+  async executeStatement<O = object>(statement: Statement): Promise<O[]> {
     try {
       const {sql, parameters} = this.arrayValueFix(statement)
       const response = await rdsClient.executeStatement({
@@ -136,7 +139,7 @@ export class DB {
     }
   }
 
-  transformReq<T extends z.AnyZodObject>(values: ExecReq["values"], schema?: T): SqlParameter[] {
+  transformReq<T extends z.AnyZodObject>(values: ExecReq["values"], schema?: T): SqlParameter_[] {
     if (!values) { return [] }
     return Object.keys(values).map((key) => {
       let value = values[key]
@@ -188,7 +191,7 @@ export class DB {
   // arrayValue doesn't work in rds-data-client, even though it's part of the documentation. Just says "not supported"
   // https://github.com/aws/aws-sdk/issues/9#issuecomment-1104182976
   // TODO support multiple datatypes (currently only supports string)
-  arrayValueFix({sql, parameters}: ExecuteStatementCommandInput_): ExecuteStatementCommandInput_ {
+  arrayValueFix({sql, parameters}: Statement): Statement {
     let fixedSql = sql
     let fixedParameters: ExecuteStatementCommandInput["parameters"] = []
     let offset = 0
@@ -210,9 +213,11 @@ export class DB {
       const placeholder = [...Array(values.length).keys()]
         .map(idx => `:id${idx + offset}`).join(',')
       offset += values.length
+      const placeholderWrap = parameter.arrayFix === "=" ? `ARRAY[${placeholder}]`
+        : `(${placeholder})`
       fixedSql = fixedSql.replace(
         `:${parameter.name}`,
-        `(${placeholder})`
+        placeholderWrap
       )
       fixedParameters = [...fixedParameters, ...paramsSeparate]
     })
