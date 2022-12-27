@@ -9,7 +9,7 @@
     "remove": "AWS_PROFILE=gnothiadmin sst remove",
     "console": "AWS_PROFILE=gnothiadmin sst console",
     "typecheck": "tsc --noEmit",
-    "test": "AWS_PROFILE=gnothiadmin node backend/test/convertEnv.js sst bind -- vitest run",
+    "test": "AWS_REGION=us-east-1 AWS_PROFILE=gnothiadmin sst bind -- vitest run",
     "gen": "hygen"
   },
   "devDependencies": {

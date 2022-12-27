@@ -129,8 +129,9 @@ async function handleRes(
     Object.entries(def.t).map(async ([trigger, triggerValue]) => {
       if (!triggerValue) {return}
       const handler = Handlers.handlers[trigger]
-      const handlerRes = handler.respond(resFull, fnContext)
+      const handlerRes = await handler.respond(resFull, fnContext)
       if (trigger === "http") {
+        console.log("final=handlerRes", handlerRes)
         final = handlerRes
       }
   }))

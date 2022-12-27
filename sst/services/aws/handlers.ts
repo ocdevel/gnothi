@@ -164,7 +164,10 @@ export const ws: Handler<APIGatewayProxyWebsocketEventV2> = {
   },
 
   async respond(res, {connectionId}): Promise<APIGatewayProxyResultV2> {
-    // if (!connectionId) { return }
+    if (!connectionId) {
+      console.warn("Trying to to WS without connectionId")
+      return {statusCode: 200}
+    }
     try {
       // try/catch because the connection may have gone away
       await clients.apig.send(new PostToConnectionCommand({
@@ -205,10 +208,10 @@ export const http: Handler<APIGatewayProxyEventV2> = {
     }]
   },
 
-  respond: async (response) => {
+  async respond(res): Promise<APIGatewayProxyResultV2> {
     return {
-      statusCode: response.code,
-      body: JSON.stringify(response)
+      statusCode: res.code,
+      body: JSON.stringify(res)
     }
   }
 }

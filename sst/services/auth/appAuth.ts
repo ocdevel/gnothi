@@ -57,18 +57,18 @@ export async function getUser(event: APIGatewayProxyWebsocketEventV2WithRequestC
       })
       return handled
     }
+    const user = (await db.executeStatement({
+      sql: `
+        select u.*
+        from users u
+        inner join ws_connections wc on u.id = wc.user_id
+        where wc.connection_id = :connection_id;
+      `,
+      parameters: [{name: "connection_id", value: {stringValue: connection_id}}]
+    }))
+    return {handled: false, user}
   }
 
-  const user = (await db.exec({
-    sql: `
-      select u.*
-      from users u
-             inner join ws_connections wc on u.id = wc.user_id
-      where wc.connection_id = :connection_id;
-    `,
-    values: {connection_id},
-    zIn: User,
-    zOut: User
-  }))[0]
+  const user = await fromCognito(cognitoId)
   return {handled: false, user}
 }
