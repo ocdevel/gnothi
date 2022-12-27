@@ -29,10 +29,25 @@ const buttonSx = {
 }
 
 export function UserMenu() {
+  const logout = useStore(s => s.logout)
   const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(null);
   const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) => setAnchorElUser(event.currentTarget);
   const handleCloseUserMenu = () => setAnchorElUser(null);
-  const settings = ['Profile', 'Account', 'Settings', 'Logout']
+  const items = [
+    {name: 'Profile', onClick: () => {
+      handleCloseUserMenu()
+    }},
+    {name: 'Account', onClick: () => {
+      handleCloseUserMenu()
+    }},
+    {name: 'Settings', onClick: () => {
+      handleCloseUserMenu()
+    }},
+    {name: 'Logout', onClick: () => {
+      handleCloseUserMenu()
+      logout()
+    }},
+  ]
   return <Box sx={{ flexGrow: 0 }}>
     <Tooltip title="Open settings">
       <IconButton
@@ -57,12 +72,13 @@ export function UserMenu() {
       open={Boolean(anchorElUser)}
       onClose={handleCloseUserMenu}
     >
-      {settings.map((setting) => (
+      {items.map((item) => (
         <MenuItem
           sx={{...buttonSx}}
-          key={setting}
-          onClick={handleCloseUserMenu}>
-          <Typography sx={{...buttonSx, textAlign:"center"}}>{setting}</Typography>
+          key={item.name}
+          onClick={item.onClick}
+        >
+          <Typography sx={{...buttonSx, textAlign:"center"}}>{item.name}</Typography>
         </MenuItem>
       ))}
     </Menu>
@@ -124,6 +140,7 @@ export default function ResponsiveAppBar({
         <IconButton
           onClick={onClose}
           aria-label="close"
+          className='button-dialog-close'
         >
           <CloseIcon />
         </IconButton>
@@ -161,7 +178,7 @@ export default function ResponsiveAppBar({
         >
           {links?.map((link) => (
             <MenuItem
-              key={link.to}
+              key={link.name}
               onClick={onClick(link)}
             >
               <Typography sx={{...buttonSx, textAlign: "center"}}>{link.name}</Typography>
@@ -190,7 +207,7 @@ export default function ResponsiveAppBar({
       </> : <>
         {logo}
         {links?.map(link => <Button
-          key={link.to}
+          key={link.name}
           onClick={onClick(link)}
           sx={{...buttonSx, display: 'block'}}
         >
@@ -204,6 +221,7 @@ export default function ResponsiveAppBar({
     return <Stack spacing={2} direction="row" alignItems="center">
       {ctas?.map((cta, i) => (
         <Button
+          className={`cta-${cta.secondary ? 'secondary' : 'primary'}`}
           key={cta.name}
           variant="contained"
           onClick={onClick(cta)}
@@ -220,6 +238,7 @@ export default function ResponsiveAppBar({
     <AppBar
       position="static"
       color='transparent'
+      className='appbar'
       sx={clearBottom ? {mb: 3} : {}}
     >
       <Container maxWidth={false}>

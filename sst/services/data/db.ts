@@ -176,10 +176,11 @@ export class DB {
     const rows = response.records.map((fields) =>
       Object.fromEntries(fields.map((field, i) => {
         const key: string = response.columnMetadata![i].name
-        const [hint, val] = Object.entries(field)[0]
+        const [sqlType, val] = Object.entries(field)[0]
         const shape = schema?.shape?.[key]
         const value = shape?.isDate ? dayjs(val).toDate()
-            : hint === "isNull" ? undefined
+            : sqlType === "isNull" ? undefined
+            : sqlType === "arrayValue" ? Object.values(val)[0]
             : val
         return [key, value]
       }))

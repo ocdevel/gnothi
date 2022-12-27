@@ -7,10 +7,8 @@ const Fields = React.lazy(() => import("../../Fields/Fields"))
 export default function New() {
   const setEntryModal = useStore(s => s.setEntryModal)
   function onCreate() {
-    // if (searchParams.get('redirect')) {
-    if (window.localStorage.getItem("testing") !== "true") {
-      setEntryModal(null)
-    }
+    // if (window.localStorage.getItem("testing")) { return }
+    setEntryModal(null)
   }
 
   return  <>

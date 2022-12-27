@@ -31,8 +31,8 @@ export default function Tags({
   const selectedTags = useStore(s => s.selectedTags)
   noEdit = !!as || noEdit
 
-  if (!tags) {return null}
-  const {ids, hash} = tags
+  const ids = tags?.ids || []
+  const hash = tags?.hash || {}
 
   // no selected,setSelected props indicates using global tags
   const selectedTags_ = selected || selectedTags

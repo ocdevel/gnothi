@@ -11,7 +11,9 @@ type LambdaOut = {
 type FnOut = LambdaOut
 
 export async function books({search_mean}: FnIn): Promise<FnOut> {
-
+  if (!search_mean?.length) {
+    return {books: []}
+  }
   const res = await lambdaSend<LambdaOut>(
     {embedding: search_mean},
     process.env.fn_books,

@@ -36,13 +36,13 @@ export class Utils {
     await expect(page).toHaveTitle(/Gnothi/)
 
     const auth = {email: `${ulid()}@x.com`, pass: "MyPassword!1"}
-    await page.locator(".button-show-signup").click()
+    await page.locator(".appbar .cta-primary").click() // signup
     // await page.getByText("Create Account").click()
     await page.getByText("Email").fill(auth.email)
     await page.getByText("Password", {exact: true}).fill(auth.pass)
     await page.getByText("Confirm Password", {exact: true}).fill(auth.pass)
     await page.locator("button[type=submit]").click()
-    await expect(page).toHaveTitle(/New Entry/)
+    // await expect(page).toHaveTitle(/New Entry/)
     this.auth = auth
     console.log({auth})
     return auth
@@ -60,11 +60,16 @@ export class Utils {
     await page.locator(".button-dialog-close").click()
   }
 
-  async _addEntry(title, text) {
+  async _addEntry(title, text, noai=false) {
     const page = this.page
-    await page.getByText("New Entry").click()
+    await page.locator(".appbar .cta-primary").click()
     await page.getByLabel("Title").fill(title)
     await page.locator(".rc-md-editor textarea").fill(text)
+    if (noai) {
+      // Swap tags
+      await page.locator(".button-tags-tag").nth(0).click()
+      await page.locator(".button-tags-tag").nth(1).click()
+    }
     await page.locator(".button-entries-upsert").click()
   }
 
@@ -87,9 +92,6 @@ export class Utils {
     }
 
     // then index the rest
-    // Swap tags
-    await page.locator(".button-tags-tag").nth(0).click()
-    await page.locator(".button-tags-tag").nth(1).click()
     // take only what's left, based on their n_index
     let remaining = mockEntries.length - this.entries.length
     if (n_index === -1 || n_index > remaining) {
@@ -99,7 +101,7 @@ export class Utils {
       const entry = buffer[0]
       buffer = buffer.slice(1)
       this.entries.push(entry)
-      await this._addEntry(entry.title, entry.text)
+      await this._addEntry(entry.title, entry.text, true)
       await page.waitForTimeout(500) // indexing is faster
     }
   }

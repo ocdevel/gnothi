@@ -36,7 +36,8 @@ export default function Summarize() {
   }
 
   const icons = {color: "secondary", fontSize: "large"} as const
+  if (!books?.rows?.length) {return null}
   return <Box>
-    {books?.rows?.slice(0,5).map(renderBook)}
+    {books.rows.slice(0,5).map(renderBook)}
   </Box>
 }
