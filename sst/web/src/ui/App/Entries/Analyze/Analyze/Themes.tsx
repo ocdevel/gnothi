@@ -21,6 +21,8 @@ export default function Themes() {
 
   const waiting = !themes?.first && submitted
 
+  return <Typography>FIXME</Typography>
+
   // 26fecb16 - specify summary length
 
   if (waiting) {

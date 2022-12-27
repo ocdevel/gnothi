@@ -61,6 +61,16 @@ export type analyze_books_response = z.infer<typeof analyze_books_response>
 export const analyze_search_response = z.object({id: z.string()})
 export type analyze_search_response = z.infer<typeof analyze_search_response>
 
+export const analyze_prompt_request = z.object({
+  filters: analyze_get_request,
+  prompt: z.string()
+})
+export type analyze_prompt_request = z.infer<typeof analyze_prompt_request>
+export const analyze_prompt_response = z.object({
+  response: z.string()
+})
+export type analyze_prompt_response = z.infer<typeof analyze_prompt_response>
+
 export const routes = {
   analyze_get_request: new Route({
     i: {
@@ -85,6 +95,20 @@ export const routes = {
       e: "analyze_get_final",
       s: analyze_get_final,
       t: {ws: true}
+    }
+  }),
+
+  analyze_prompt_request: new Route({
+    i: {
+      e: 'analyze_prompt_request',
+      s: analyze_prompt_request,
+      t: {ws: true},
+      snoopable: true
+    },
+    o: {
+      e: "analyze_prompt_response",
+      s: analyze_prompt_response,
+      t: {ws: true, background: true}
     }
   }),
 

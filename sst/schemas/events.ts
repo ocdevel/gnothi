@@ -131,6 +131,8 @@ export const Events = z.enum([
   'analyze_books_response',
   'analyze_search_response',
   'analyze_get_final',
+  'analyze_prompt_request',
+  'analyze_prompt_response',
 
   'analyze_books_list_request',
   'analyze_books_list_response',

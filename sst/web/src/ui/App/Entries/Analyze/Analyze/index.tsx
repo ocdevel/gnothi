@@ -2,6 +2,7 @@
 import Summarize from "./Summarize"
 // import Ask from "./Ask"
 import Themes from "./Themes"
+import Prompt from "./Prompt"
 import Books from "./Books"
 import {
   FaCubes as ThemesIcon,
@@ -14,6 +15,7 @@ import {
 import React, {useState, useEffect} from "react"
 import {useStore} from "@gnothi/web/src/data/store"
 import BooksIcon from "@mui/icons-material/MenuBook";
+import PromptIcon from '@mui/icons-material/Quickreply';
 import CardContent from '@mui/material/CardContent'
 import CardHeader from '@mui/material/CardHeader'
 import Card from '@mui/material/Card'
@@ -79,6 +81,13 @@ export default function Analyze() {
       description="Show common recurring themes across your entries."
     >
       <Themes />
+    </Insight>
+    <Insight
+      label="Prompt"
+      icon={<PromptIcon />}
+      description="Prompts"
+    >
+      <Prompt />
     </Insight>
     <Insight
       label="Books"
