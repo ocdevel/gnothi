@@ -99,4 +99,10 @@ export class Utils {
       await this._addEntry(entry.title, entry.text, true)
     }
   }
+
+  async wait(seconds: number) {
+    return new Promise((resolve, reject) => setTimeout(() => {
+      resolve(null)
+    }, seconds * 1000))
+  }
 }

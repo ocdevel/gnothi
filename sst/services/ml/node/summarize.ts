@@ -1,6 +1,8 @@
 import {lambdaSend} from "../../aws/handlers"
 import {Function} from "@serverless-stack/node/function";
 import {TextsParamsMatch} from "./errors";
+import {Config} from '@serverless-stack/node/config'
+const fnName = Config.fn_summarize_name
 
 interface Params {
   summarize?: {
@@ -28,12 +30,8 @@ export type SummarizeOut = {
 type LambdaOut = Array<SummarizeOut>
 type FnOut = LambdaOut
 export async function summarize({texts, params}: FnIn): Promise<FnOut> {
-  // Get functionNames in here so we don't throw error when this file is imported
-  // from proxy.ts
-  const functionName = process.env.fn_summarize
-
   async function call(data: LambdaIn): Promise<LambdaOut> {
-    const res = await lambdaSend<LambdaOut>(data, functionName, "RequestResponse")
+    const res = await lambdaSend<LambdaOut>(data, fnName, "RequestResponse")
     return res.Payload
   }
 

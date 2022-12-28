@@ -1,5 +1,7 @@
 import {lambdaSend} from "../../aws/handlers"
 import {analyze_books_response} from '@gnothi/schemas/analyze'
+import {Config} from '@serverless-stack/node/config'
+const fnName = Config.fn_books_name
 
 type FnIn = {
   search_mean: number[]
@@ -16,7 +18,7 @@ export async function books({search_mean}: FnIn): Promise<FnOut> {
   }
   const res = await lambdaSend<LambdaOut>(
     {embedding: search_mean},
-    process.env.fn_books,
+    fnName,
     "RequestResponse"
   )
   return res.Payload

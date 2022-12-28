@@ -1,5 +1,7 @@
 import {Entry} from '@gnothi/schemas/entries'
 import {lambdaSend} from "../../aws/handlers";
+import {Config} from '@serverless-stack/node/config'
+const fnName = Config.fn_store_name
 
 type FnIn = {
   entry: Entry
@@ -22,7 +24,7 @@ export async function upsert(data: FnIn): Promise<FnOut>{
       event: "upsert",
       data
     },
-    process.env.fn_store,
+    fnName,
     "RequestResponse"
   )
   return res.Payload

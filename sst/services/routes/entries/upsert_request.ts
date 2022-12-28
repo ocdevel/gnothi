@@ -101,8 +101,8 @@ r.entries_upsert_response.fn = r.entries_upsert_response.fnDef.implement(async (
   promises.push(db.executeStatement({
     sql: `update entries set 
         text_clean=:text_clean, 
-        text_paras=:text_paras,
-        ai_keywords=:ai_keywords,
+        text_paras=:text_paras::varchar[],
+        ai_keywords=:ai_keywords::varchar[],
         ai_title=:ai_title, 
         ai_text=:ai_text, 
         ai_sentiment=:ai_sentiment

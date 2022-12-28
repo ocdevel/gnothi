@@ -1,6 +1,8 @@
 import {lambdaSend} from "../../aws/handlers"
 import {Entry} from '@gnothi/schemas/entries'
 import {analyze_books_response} from '@gnothi/schemas/analyze'
+import {Config} from '@serverless-stack/node/config'
+const fnName = Config.fn_store_name
 
 type FnIn = {
   query: string
@@ -24,7 +26,7 @@ type FnOut = LambdaOut & {
   entries: Entry[]
 }
 export async function search({user_id, entries, query}: FnIn): Promise<FnOut> {
-  const {Payload} = await lambdaSend<LambdaOut>(
+  const res = await lambdaSend<LambdaOut>(
     {
       event: "search",
       data: {
@@ -35,9 +37,11 @@ export async function search({user_id, entries, query}: FnIn): Promise<FnOut> {
         community_threshold: .75
       }
     },
-    process.env.fn_store,
+    fnName,
     "RequestResponse"
   )
+  console.log({res})
+  const {Payload} = res
   return {
     ...Payload,
     entries: entries.filter(e => ~Payload.ids.indexOf(e.id))

@@ -52,23 +52,29 @@ export function Api({ app, stack }: sst.StackContext) {
   //   }
   // })
 
+  // the ML functions based on Dockerfiles can't use .bind(), so add the permissions explicitly, and
+  // the env-var as Config() + bind (latter needed for unit tests, which can't use env vars directly)
+  const fnBooksName = new sst.Config.Parameter(stack, "fn_books_name", {value: ml.fnBooks.functionName})
+  const fnAskName = new sst.Config.Parameter(stack, "fn_ask_name", {value: ml.fnAsk.functionName})
+  const fnSummarizeName = new sst.Config.Parameter(stack, "fn_summarize_name", {value: ml.fnSummarize.functionName})
+  const fnStoreName = new sst.Config.Parameter(stack, "fn_store_name", {value: ml.fnStore.functionName})
+  const fnPreprocessName = new sst.Config.Parameter(stack, "fn_preprocess_name", {value: ml.fnPreprocess.functionName})
+
   const fnBackground = new sst.Function(stack, "fn_background", {
     handler: "main.main",
     timeout: "3 minutes",
     memorySize: smallLamdaRam,
-    // the ML functions based on Dockerfiles can't use .bind(). Use the old way: permissions + environment
-    environment: {
-      fn_books: ml.fnBooks.functionName,
-      fn_ask: ml.fnAsk.functionName,
-      fn_summarize: ml.fnSummarize.functionName,
-      fn_store: ml.fnStore.functionName,
-      fn_preprocess: ml.fnPreprocess.functionName,
-    },
     permissions: [
       // when I put this in bind[], it says no access
       ws,
     ],
     bind: [
+      fnBooksName,
+      fnAskName,
+      fnSummarizeName,
+      fnStoreName,
+      fnPreprocessName,
+
       APP_REGION,
       API_WS,
       rds,

@@ -1,4 +1,6 @@
 import {lambdaSend} from "../../aws/handlers"
+import {Config} from '@serverless-stack/node/config'
+const fnName = Config.fn_ask_name
 
 type FnIn = {
   query: string
@@ -19,7 +21,7 @@ export async function ask({user_id, entry_ids, query}: FnIn): Promise<FnOut> {
       user_id,
       entry_ids
     },
-    process.env.fn_ask,
+    fnName,
     "RequestResponse"
   )
   return res.Payload
