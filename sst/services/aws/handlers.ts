@@ -98,17 +98,23 @@ export async function lambdaSend<O = any>(
   FunctionName: string,
   InvocationType: InvokeCommandInput['InvocationType']
 ): Promise<InvokeCommandOutput_<O>> {
-  const Payload = Buff.fromObj(data)
   const response = await clients.lambda.send(new InvokeCommand({
     InvocationType,
-    Payload,
+    Payload: Buff.fromObj(data),
     FunctionName,
   }))
+  const Payload = InvocationType === "Event" ? null
+      : Buff.toObj(response.Payload) as O
+  if (response.FunctionError) {
+    const Error = Payload as {errorType: string, errorMessage: string, stackTrace: string[]}
+    const error = `${Error.errorType}: ${Error.errorMessage}`
+    console.error(error, Error.stackTrace)
+    throw error
+  }
   return {
     ...response,
     // Revisit how to decode the Payload. Buffer vs Uint8Array?
-    Payload: InvocationType === "Event" ? null
-      : Buff.toObj(response.Payload) as O
+    Payload
   }
 }
 
