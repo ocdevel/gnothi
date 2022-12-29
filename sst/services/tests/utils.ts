@@ -24,10 +24,10 @@ export class Utils {
   noAiTag: string
   user: S.Users.User
   auth: {email: string, pass: string, cognito_id: string}
-  entries: any[]
+  eids: string[]
 
   constructor() {
-    this.entries = []
+    this.eids = []
   }
 
   async signup() {
@@ -67,13 +67,15 @@ export class Utils {
   }
 
   async _addEntry(title, text, noai=false) {
-    await this.request({
+    const entry = await this.request({
       event: "entries_upsert_request",
       data: {
         entry: {title, text},
         tags: noai ? {[this.noAiTag]: true} : {[this.mainTag]: true}
       }
     })
+    console.log({entryRes: entry})
+    this.eids.push(entry[0].entry.id)
   }
 
   async addEntries({n_summarize=0, n_index=0}: {n_summarize: number, n_index: number}) {
@@ -82,20 +84,18 @@ export class Utils {
     for (let i = 0; i < n_summarize; i++) {
       const entry = buffer[0]
       buffer = buffer.slice(1)
-      this.entries.push(entry)
       await this._addEntry(entry.title, entry.text)
     }
 
     // then index the rest
     // take only what's left, based on their n_index
-    let remaining = mockEntries.length - this.entries.length
+    let remaining = mockEntries.length - this.eids.length
     if (n_index === -1 || n_index > remaining) {
       n_index = remaining
     } // else n_index stays as-is
     for (let i = 0; i < n_index; i++) {
       const entry = buffer[0]
       buffer = buffer.slice(1)
-      this.entries.push(entry)
       await this._addEntry(entry.title, entry.text, true)
     }
   }

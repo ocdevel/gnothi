@@ -69,6 +69,7 @@ export function Api({ app, stack }: sst.StackContext) {
       ws,
     ],
     bind: [
+      ml.openAiKey,
       fnBooksName,
       fnAskName,
       fnSummarizeName,
@@ -97,6 +98,7 @@ export function Api({ app, stack }: sst.StackContext) {
     timeout: timeouts.md,
     handler: "main.proxy",
     bind: [
+      ml.openAiKey,
       APP_REGION,
       API_WS,
       auth,

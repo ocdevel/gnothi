@@ -2,6 +2,7 @@ import * as S from '@gnothi/schemas'
 import {db} from '../../data/db'
 import {GnothiError} from "../errors";
 import {v4 as uuid} from 'uuid'
+import {completion} from '../../ml/node/openai'
 import {z} from 'zod'
 // @ts-ignore
 import dayjs from 'dayjs'
@@ -102,4 +103,18 @@ r.analyze_get_response.fn = r.analyze_get_response.fnDef.implement(async (req, c
 
   const final = await Promise.all([pSearch, pAsk, pSummarize, pBooks, pThemes])
   return [{done: true}]
+})
+
+r.analyze_prompt_request.fn = r.analyze_prompt_request.fnDef.implement(async (req, context) => {
+  const entries = await db.executeStatement<S.Entries.Entry>({
+    sql: "select * from entries where user_id=:user_id and entry_id in :entry_ids order by created_at asc",
+    parameters: [
+      {name: "user_id", typeHint: "UUID", value: {stringValue: context.user.id}},
+      {name: "entry_ids", typeHint: "UUID", value: {arrayValue: {stringValues: req.entry_ids}}}
+    ]
+  })
+  const entry = entries.map(e => e.ai_text || e.text).join('\n')
+  const prompt = req.prompt.replace("<entry>", entry)
+  const response = await completion(prompt)
+  return [{response}]
 })

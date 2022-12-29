@@ -33,7 +33,7 @@ def main(event, context):
     results = semantic_search(
         query_embeddings=embedding,
         corpus_embeddings=fix_np(df.embedding.values),
-        top_k=50,
+        top_k=10,
         corpus_chunk_size=100
     )
     idx_order = [r['corpus_id'] for r in results[0]]

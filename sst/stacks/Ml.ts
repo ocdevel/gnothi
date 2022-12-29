@@ -74,6 +74,8 @@ function lambdas({context: {app, stack}, vpc, fs, bucket}: MLService) {
   // - https://github.com/cdk-patterns/serverless/blob/main/the-efs-lambda/typescript/lib/the-efs-lambda-stack.ts
   // Going with option 2 to save on lambda-start & CDK deployment times
 
+  const openAiKey = new sst.Config.Secret(stack, "openai_key")
+
   const accessPoint = efsAccessPoint({
     fs,
     id: "LambdaAccessPoint",
@@ -144,7 +146,7 @@ function lambdas({context: {app, stack}, vpc, fs, bucket}: MLService) {
     fnStore_: fnStore.functionArn,
     fnPreprocess_: fnPreprocess.functionArn,
   })
-  return {fnBooks, fnAsk, fnSummarize, fnStore, fnPreprocess}
+  return {fnBooks, fnAsk, fnSummarize, fnStore, fnPreprocess, openAiKey}
 }
 
 export function Ml(context: sst.StackContext) {

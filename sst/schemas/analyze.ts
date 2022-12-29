@@ -62,7 +62,7 @@ export const analyze_search_response = z.object({id: z.string()})
 export type analyze_search_response = z.infer<typeof analyze_search_response>
 
 export const analyze_prompt_request = z.object({
-  filters: analyze_get_request,
+  entry_ids: z.string().array(),
   prompt: z.string()
 })
 export type analyze_prompt_request = z.infer<typeof analyze_prompt_request>
