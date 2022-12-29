@@ -3,6 +3,9 @@ import {Events} from "./events";
 import type {Context} from 'aws-lambda'
 import {Passthrough} from './utils'
 import {User} from './users'
+import type {APIGatewayProxyResultV2} from 'aws-lambda'
+
+type RecordResult = APIGatewayProxyResultV2 | null
 
 export type Trigger = {
   ws?: boolean // send the result to the websocket
@@ -39,8 +42,8 @@ export type FnContext = {
 
   finalRes?: unknown
   connectionId?: string
-  handleRes: (def: DefO<any>, res: Res, fnContext: FnContext) => void
-  handleReq: (req: Req, fnContext: FnContext) => void
+  handleRes: <T extends z.ZodTypeAny = any>(def: DefO<T>, res: Partial<Res<T>>, fnContext: FnContext) => Promise<RecordResult>
+  handleReq: (req: Req, fnContext: FnContext) => Promise<RecordResult>
 }
 type FnDef<
   I extends z.ZodTypeAny,

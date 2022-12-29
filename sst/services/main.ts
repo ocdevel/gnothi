@@ -50,7 +50,7 @@ export async function proxy(
   return responses.find(r => !!r) || defaultResponse
 }
 
-// ------- Step 1: Main handler of event -------
+// ------- Step 2: Main handler of event -------
 // Either handle one record from the AWS proxy event, or handle a Lambda directly
 export async function main({req, context}: ReqParsed): Promise<RecordResult> {
   const {user} = context
@@ -71,10 +71,7 @@ export async function main({req, context}: ReqParsed): Promise<RecordResult> {
 // ------- Step 3: Main handler of event -------
 // Handle individual request. Separate function than above so we can pass itself
 // around to sub routes
-async function handleReq(
-  req: Api.Req,
-  fnContext: Api.FnContext
-): Promise<RecordResult> {
+const handleReq: Api.FnContext['handleReq'] = async (req, fnContext) => {
   // handling was skipped, eg OPTIONS or favicon
   if (!req) {return null}
 
@@ -109,11 +106,7 @@ async function handleReq(
 }
 
 // ------- Step 4: Send the final result -------
-async function handleRes(
-  def: Api.DefO<any>,
-  res: Partial<Api.Res>,
-  fnContext: Api.FnContext
-): Promise<RecordResult> {
+const handleRes: Api.FnContext['handleRes'] = async (def, res, fnContext) => {
   let final: RecordResult = null
   console.log("handleRes", def.e, res)
   const resFull = {
@@ -135,6 +128,11 @@ async function handleRes(
         final = handlerRes
       }
   }))
+  if (!final){
+    // This happens when calling the function directly, eg via tests. Otherwise an output trigger
+    // should be explicitly specified
+    return resFull
+  }
   return final
 }
 
