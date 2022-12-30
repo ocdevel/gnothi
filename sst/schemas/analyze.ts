@@ -67,6 +67,7 @@ export const analyze_prompt_request = z.object({
 })
 export type analyze_prompt_request = z.infer<typeof analyze_prompt_request>
 export const analyze_prompt_response = z.object({
+  id: z.string(),
   response: z.string()
 })
 export type analyze_prompt_response = z.infer<typeof analyze_prompt_response>

@@ -67,8 +67,8 @@ export class Utils {
     await page.locator(".rc-md-editor textarea").fill(text)
     if (noai) {
       // Swap tags
-      await page.locator(".button-tags-tag").nth(0).click()
-      await page.locator(".button-tags-tag").nth(1).click()
+      await page.locator(".entries-upsert-form .button-tags-tag").nth(0).click()
+      await page.locator(".entries-upsert-form .button-tags-tag").nth(1).click()
     }
     await page.locator(".button-entries-upsert").click()
   }

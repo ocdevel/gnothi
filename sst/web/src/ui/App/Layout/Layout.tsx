@@ -23,10 +23,10 @@ function AppBar_() {
   const setEntryModal = useStore(s => s.setEntryModal)
 
   const links = [
-    {name: "Journal", to: "/j"},
-    {name: "Sharing", onClick: () => setSharePage({create: true})},
-    // {name: "Groups", to: "/groups"},
-    {name: "Resources", to: "/"}
+    {name: "Journal", to: "/j", className: "button-journal"},
+    {name: "Sharing", onClick: () => setSharePage({create: true}), className: "button-sharing"},
+    // {name: "Groups", to: "/groups", className: "button-groups},
+    {name: "Resources", to: "/", className: "button-resources"}
   ] as const
 
   const journal = {

@@ -89,6 +89,7 @@ type Clickable = {
   name: string
   to?: string
   onClick?: () => void
+  className?: string
 }
 type Link = Clickable
 export type CTA = Clickable & {
@@ -180,6 +181,7 @@ export default function ResponsiveAppBar({
             <MenuItem
               key={link.name}
               onClick={onClick(link)}
+              className={link.className}
             >
               <Typography sx={{...buttonSx, textAlign: "center"}}>{link.name}</Typography>
             </MenuItem>
@@ -207,6 +209,7 @@ export default function ResponsiveAppBar({
       </> : <>
         {logo}
         {links?.map(link => <Button
+          className={link.className}
           key={link.name}
           onClick={onClick(link)}
           sx={{...buttonSx, display: 'block'}}

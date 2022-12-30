@@ -13,7 +13,7 @@ test("Basics", async ({page}) => {
   console.log({auth})
   await utils.addNoAiTag()
   await utils.addEntries({n_summarize: 1, n_index: 1})
-  await page.getByText("Dashboard").click()
+  await page.locator(".appbar .button-journal").click()
   await expect(page.locator('.entry-teaser')).toHaveCount(1)
 })
 
@@ -26,7 +26,7 @@ test.only("Many entries", async ({page}) => {
   const auth = await utils.signup()
   console.log({auth})
   await utils.addNoAiTag()
-  await utils.addEntries({n_summarize: 2, n_index: 20})
-  await page.getByText("Dashboard").click()
+  await utils.addEntries({n_summarize: 0, n_index: 10})
+  await page.locator(".appbar .button-journal").click()
   await expect(page.locator('.entry-teaser')).toHaveCount(1)
 })

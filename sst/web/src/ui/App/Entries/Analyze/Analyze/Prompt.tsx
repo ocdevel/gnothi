@@ -100,7 +100,7 @@ export default function Prompt() {
         id="demo-simple-select"
         value={preset}
         label="Presets"
-        onChange={changePreset}
+        onChange={changePreset as any}
       >
         {prompts.map(({key, label}) => (
           <MenuItem key={key} value={key}>{label}</MenuItem>
@@ -141,6 +141,7 @@ export default function Prompt() {
     {trips.responses.map((res, i) => <div key={res.id}>
       <Typography>Q: {trips.prompts[i]}</Typography>
       <Typography>A: {res.response}</Typography>
+      <Divider />
     </div>)}
   </Stack>
 }

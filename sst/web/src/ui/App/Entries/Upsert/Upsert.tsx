@@ -180,7 +180,7 @@ export default function Upsert(props: Entry) {
   }
 
   function renderForm() {
-    return <Box>
+    return <Box className="entries-upsert-form">
       <Box>
         <TextField2
           name='title'
