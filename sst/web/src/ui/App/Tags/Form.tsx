@@ -48,6 +48,7 @@ export default function Form({tag}: Form) {
         control={control}
         render={({field}) => (
           <InputBase
+            className="textfield-tags-name"
             sx={styles.inputBase}
             placeholder="Tag Name"
             {...field}
