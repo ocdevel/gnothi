@@ -4,7 +4,7 @@ import {Routes} from '@gnothi/schemas'
 const r = Routes.routes
 
 r.users_everything_request.fn = r.users_everything_request.fnDef.implement(async (req, context) => {
-  for (const event of [
+  await Promise.all(([
     'users_list_request',
     'tags_list_request',
     'entries_list_request',
@@ -15,9 +15,9 @@ r.users_everything_request.fn = r.users_everything_request.fnDef.implement(async
     'notifs_notes_list_request',
     'shares_ingress_list_request',
     'shares_egress_list_request',
-  ]) {
+  ] as const).map(async (event) => {
     await context.handleReq({event, data: {}}, context)
-  }
+  }))
   return []
 })
 

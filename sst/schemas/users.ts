@@ -49,10 +49,10 @@ export const User = Profile.extend({
 export type User = z.infer<typeof User>
 
 export const users_list_response = User.pick({
-        id: true, email: true, timezone: true,
-        habitica_user_id: true, habitica_api_token: true,
-        is_cool: true, paid: true, affiliate: true
-      })
+  id: true, email: true, timezone: true,
+  habitica_user_id: true, habitica_api_token: true,
+  is_cool: true, paid: true, affiliate: true
+})
 export type users_list_response = z.infer<typeof users_list_response>
 
 export const routes = {

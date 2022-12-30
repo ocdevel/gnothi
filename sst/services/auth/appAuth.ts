@@ -65,7 +65,7 @@ export async function getUser(event: APIGatewayProxyWebsocketEventV2WithRequestC
         where wc.connection_id = :connection_id;
       `,
       parameters: [{name: "connection_id", value: {stringValue: connection_id}}]
-    }))
+    }))[0]
     return {handled: false, user}
   }
 
