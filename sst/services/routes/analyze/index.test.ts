@@ -6,11 +6,11 @@ const longTimeout = 2 * 60 * 1000
 describe("analyze:get_response", () => {
   beforeAll(async () => {
     await utils.signup()
-    await utils.addEntries({n_summarize: 2, n_index: 10})
+    await utils.addEntries({n_summarize: 2, n_index: 2})
     await utils.wait(5)
   }, longTimeout)
 
-  it.only("should run insights", async () => {
+  it("should run insights", async () => {
     const res = await utils.request({
       event: "analyze_get_response",
       data: {
@@ -21,12 +21,12 @@ describe("analyze:get_response", () => {
     console.log(res)
   }, longTimeout)
 
-  it("should run prompt:entry", async () => {
+  it.only("should run prompt:entry", async () => {
     const res = await utils.request({
       event: "analyze_prompt_request",
       data: {
         entry_ids: [utils.eids[0]],
-        prompt: "Summarize the following: <entry>"
+        prompt: "Describe the following in one word: <entry>"
       }
     })
     console.log(res)

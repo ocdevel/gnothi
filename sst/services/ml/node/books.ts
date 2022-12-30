@@ -15,15 +15,15 @@ export async function books({search_mean, context}: FnIn): Promise<FnOut> {
   // Get fnName while inside function because will only be present for fn_background (not fn_main)
   const fnName = Config.fn_books_name
   let res: LambdaOut
-  if (!search_mean?.length) {
-    res = []
-  } else {
+  if (search_mean?.length) {
     const {Payload} = await lambdaSend<LambdaOut>(
       {embedding: search_mean},
       fnName,
       "RequestResponse"
     )
     res = Payload
+  } else {
+    res = []
   }
   if (context?.connectionId) {
     await context.handleRes(

@@ -11,30 +11,84 @@ import InputLabel from "@mui/material/InputLabel";
 import FormControl from "@mui/material/FormControl";
 import Stack from "@mui/material/Stack";
 import Button from "@mui/material/Button";
+import CircularProgress from "@mui/material/CircularProgress";
+import keyBy from 'lodash/keyBy'
+import * as S from '@gnothi/schemas'
+import Divider from "@mui/material/Divider";
+
+const prompts = [
+  {
+    key: "blank",
+    label: "Blank",
+    prompt: "",
+  },
+  {
+    key: "dream",
+    label: "Dream interpretation",
+    prompt: "Interpret the following dreams: <paragraphs>"
+  },
+  {
+    key: "advice",
+    label: "Live Advice",
+    prompt: "What advice would you have for someone who wrote the following: <summary>",
+  },
+  {
+    key: "books",
+    label: "Book recommends",
+    prompt: "What books would you recommend for someone who wrote the following: <summary>",
+  },
+  {
+    key: "podcasts",
+    label: "Podcast recommends",
+    prompt: "What books would you recommend for someone who wrote the following: <summary>",
+  }
+] as const
+const promptsObj = keyBy(prompts, 'key')
+type Preset = keyof typeof promptsObj
 
 export default function Prompt() {
-  const submitted = false // useStore(s => !!s.res.analyze_get_response?.first)
-  const promptResponse = useStore(s => s.res.analyze_prompt_response)
-  const filters = useStore(s => s.filters)
-  const [preset, setPreset] = useState("")
-  const [prompt, setPrompt] = useState("")
-  const [showHelp, setShowHelp] = useState(false)
+  // TODO useStore version of loading
+  const [trips, setTrips] = useState<{
+    waiting: boolean
+    responses: S.Analyze.analyze_prompt_response[],
+    prompts: string[]
+  }>({
+    prompts: [],
+    responses: [],
+    waiting: false,
+  })
+  const send = useStore(s => s.send)
+  const promptResponse = useStore(s => s.res.analyze_prompt_response?.first)
+  const filteredIds = useStore(s => s.res.analyze_search_response?.ids)
+  const [preset, setPreset] = useState<Preset>("")
+  const [prompt, setPrompt] = useState<string>("")
+  const [showHelp, setShowHelp] = useState<boolean>(false)
 
-  // const waiting = !prompt?.first && submitted
-  //
-  // if (waiting) {
-  //   return <LinearProgress />
-  // }
+  useEffect(() => {
+    if (!promptResponse) {return}
+    setTrips({
+      ...trips,
+      waiting: false,
+      responses: [...trips.responses, promptResponse]
+    })
+  }, [promptResponse])
 
-  function changePreset(preset: string) {
+  const changePreset: React.ChangeEventHandler<HTMLInputElement> = (e) => {
+    const preset = e.target.value as Preset
     setPreset(preset)
-    const prompts = {
-      "dream": "Interpret the following dreams: <paragraphs>",
-      "advice": "What advice would you have for someone who wrote the following: <summary>",
-      "books": "What books would you recommend for someone who wrote the following: <summary>",
-      "podcasts": "What books would you recommend for someone who wrote the following: <summary>",
-    }
-    setPrompt(prompts[preset])
+    setPrompt(promptsObj[preset].prompt)
+  }
+
+  function submit() {
+    setTrips({
+      ...trips,
+      waiting: true,
+      prompts: [...trips.prompts, prompt]
+    })
+    send("analyze_prompt_request", {
+      entry_ids: filteredIds,
+      prompt
+    })
   }
 
   return <Stack spacing={2} component="form">
@@ -46,12 +100,11 @@ export default function Prompt() {
         id="demo-simple-select"
         value={preset}
         label="Presets"
-        onChange={e => changePreset(e.target.value)}
+        onChange={changePreset}
       >
-        <MenuItem value="dream">Dream interpretation</MenuItem>
-        <MenuItem value="advice">Life advice</MenuItem>
-        <MenuItem value="books">Books</MenuItem>
-        <MenuItem value="podcasts">Podcasts</MenuItem>
+        {prompts.map(({key, label}) => (
+          <MenuItem key={key} value={key}>{label}</MenuItem>
+        ))}
       </Select>
     </FormControl>
 
@@ -76,13 +129,18 @@ export default function Prompt() {
       </ul>
     </Typography>}
 
-    <Button variant="contained" color="primary">Submit</Button>
+    <Button
+      variant="contained"
+      color="primary"
+      disabled={trips.waiting}
+      onClick={submit}
+    >
+      {trips.waiting ? <CircularProgress /> : "Submit"}
+    </Button>
+    <Divider />
+    {trips.responses.map((res, i) => <div key={res.id}>
+      <Typography>Q: {trips.prompts[i]}</Typography>
+      <Typography>A: {res.response}</Typography>
+    </div>)}
   </Stack>
-
-  // if (!prompt?.first) {
-  //   return <Typography>Nothing to summarize (try adjusting date range)</Typography>
-  // }
-  //
-  // // sent2face(reply_.sentiment)} {reply_.summary}
-  // return <Typography>{summary.first.summary}</Typography>
 }

@@ -108,7 +108,8 @@ export const routes = {
     o: {
       e: "analyze_prompt_response",
       s: analyze_prompt_response,
-      t: {ws: true, background: true}
+      t: {ws: true},
+      keyby: 'id',
     }
   }),
 

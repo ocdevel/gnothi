@@ -10,6 +10,13 @@ export async function completion(prompt, model='text-davinci-003'): Promise<stri
   const res = await openai.createCompletion({
     model,
     prompt,
+
+    temperature: 0.7,
+    max_tokens: 256,
+    top_p: 1,
+    // frequency_penalty
+    // presence_penalty
+    // best_of
   });
   return res.data.choices[0].text
 }

@@ -51,7 +51,6 @@ export interface EventsSlice {
     analyze_books_response?: Api.ResUnwrap<Analyze.analyze_books_response>
     analyze_search_response?: Api.ResUnwrap<Analyze.analyze_search_response>
 
-
     analyze_books_list_response?: Api.ResUnwrap<Analyze.Book>
     groups_list_response?: Api.ResUnwrap<z.infer<typeof r.groups_list_request.o.s>>
     groups_get_response?: Api.ResUnwrap<z.infer<typeof r.groups_get_request.o.s>>
