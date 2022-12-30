@@ -1,19 +1,42 @@
-export const API_WS = import.meta.env.VITE_API_WS!
-export const API_HTTP = import.meta.env.VITE_API_HTTP!
+export const STAGE = import.meta.env.VITE_STAGE
+const staging = {
+  "VITE_API_WS": "wss://gk25nph8o6.execute-api.us-east-1.amazonaws.com/staging",
+  "VITE_API_HTTP": "https://bel3k2njd8.execute-api.us-east-1.amazonaws.com",
+  "VITE_REGION": "us-east-1",
+  "VITE_USER_POOL_ID": "us-east-1_BJPuyWgb0",
+  "VITE_USER_POOL_CLIENT_ID": "282n7agovqicvma9rrti0nojo4"
+}
+const dev = {
+  "VITE_API_WS": import.meta.env.VITE_API_WS!,
+  "VITE_API_HTTP": import.meta.env.VITE_API_HTTP!,
+  "VITE_REGION": import.meta.env.VITE_REGION,
+  "VITE_USER_POOL_ID": import.meta.env.VITE_USER_POOL_ID,
+  "VITE_USER_POOL_CLIENT_ID": import.meta.env.VITE_USER_POOL_CLIENT_ID
+}
+const offline = {
+  "VITE_API_WS": "",
+  "VITE_API_HTTP": "",
+  "VITE_REGION": "",
+  "VITE_USER_POOL_ID": "",
+  "VITE_USER_POOL_CLIENT_ID": ""
+}
+const env = {staging, dev, offline}[STAGE]
 
-export const OFFLINE = import.meta.env.VITE_OFFLINE
-export const DEV = import.meta.env.VITE_STAGE==='dev'
-console.log({DEV})
+export const API_WS = env.VITE_API_WS
+export const API_HTTP = env.VITE_API_HTTP
+
+export const OFFLINE = STAGE === "offline"
+export const DEV = STAGE === "DEV"
 export const AUTHED = false
 
 
 console.log(API_WS, API_HTTP)
-export const awsConfig = OFFLINE ? {} : {
+export const awsConfig = {
   Auth: {
     // mandatorySignIn: true,
-    region: import.meta.env.VITE_REGION,
-    userPoolId: import.meta.env.VITE_USER_POOL_ID,
-    userPoolWebClientId: import.meta.env.VITE_USER_POOL_CLIENT_ID,
+    region: env.VITE_REGION,
+    userPoolId: env.VITE_USER_POOL_ID,
+    userPoolWebClientId: env.VITE_USER_POOL_CLIENT_ID,
   },
   // API: {
   //   endpoints: [
