@@ -73,9 +73,9 @@ export class Utils {
         entry: {title, text},
         tags: noai ? {[this.noAiTag]: true} : {[this.mainTag]: true}
       }
-    })
-    console.log({entryRes: entry})
-    this.eids.push(entry[0].entry.id)
+    }) as S.Api.Res<S.Entries.entries_upsert_response>
+    console.log({entryRes: entry.data[0]})
+    this.eids.push(entry.data[0].entry.id)
   }
 
   async addEntries({n_summarize=0, n_index=0}: {n_summarize: number, n_index: number}) {

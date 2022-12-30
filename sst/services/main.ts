@@ -128,11 +128,11 @@ const handleRes: Api.FnContext['handleRes'] = async (def, res, fnContext) => {
         final = handlerRes
       }
   }))
-  if (!final){
-    // This happens when calling the function directly, eg via tests. Otherwise an output trigger
-    // should be explicitly specified
-    return resFull
-  }
+  // if (!final){
+  //   // This happens when calling the function directly, eg via tests. Otherwise an output trigger
+  //   // should be explicitly specified
+  //   return resFull
+  // }
   return final
 }
 

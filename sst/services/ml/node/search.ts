@@ -1,13 +1,16 @@
 import {lambdaSend} from "../../aws/handlers"
-import {Entry} from '@gnothi/schemas/entries'
+import * as S from '@gnothi/schemas'
 import {analyze_books_response} from '@gnothi/schemas/analyze'
 import {Config} from '@serverless-stack/node/config'
-const fnName = Config.fn_store_name
+import {v4 as uuid} from 'uuid'
+
+const r = S.Routes.routes
 
 type FnIn = {
+  context?: S.Api.FnContext
   query: string
   user_id: string
-  entries: Entry[]
+  entries: S.Entries.Entry[]
 }
 type LambdaIn = {
   event: "search"
@@ -23,10 +26,12 @@ type LambdaOut = {
   search_mean: number[]
 }
 type FnOut = LambdaOut & {
-  entries: Entry[]
+  entries: S.Entries.Entry[]
 }
-export async function search({user_id, entries, query}: FnIn): Promise<FnOut> {
-  const res = await lambdaSend<LambdaOut>(
+export async function search({user_id, entries, query, context}: FnIn): Promise<FnOut> {
+  // Get fnName while inside function because will only be present for fn_background (not fn_main)
+  const fnName = Config.fn_store_name
+  const {Payload} = await lambdaSend<LambdaOut>(
     {
       event: "search",
       data: {
@@ -40,10 +45,17 @@ export async function search({user_id, entries, query}: FnIn): Promise<FnOut> {
     fnName,
     "RequestResponse"
   )
-  console.log({res})
-  const {Payload} = res
-  return {
+  const res = {
     ...Payload,
     entries: entries.filter(e => ~Payload.ids.indexOf(e.id))
   }
+  if (context?.connectionId) {
+    const ids = res.ids.map(id => ({id}))
+    await context.handleRes(
+      r.analyze_search_response,
+      {data: ids},
+      context
+    )
+  }
+  return res
 }

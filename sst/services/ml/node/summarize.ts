@@ -1,8 +1,9 @@
 import {lambdaSend} from "../../aws/handlers"
 import {Function} from "@serverless-stack/node/function";
+import * as S from '@gnothi/schemas'
 import {TextsParamsMatch} from "./errors";
 import {Config} from '@serverless-stack/node/config'
-const fnName = Config.fn_summarize_name
+import {v4 as uuid} from 'uuid'
 
 interface Params {
   summarize?: {
@@ -30,6 +31,8 @@ export type SummarizeOut = {
 type LambdaOut = Array<SummarizeOut>
 type FnOut = LambdaOut
 export async function summarize({texts, params}: FnIn): Promise<FnOut> {
+  // Get fnName while inside function because will only be present for fn_background (not fn_main)
+  const fnName = Config.fn_summarize_name
   async function call(data: LambdaIn): Promise<LambdaOut> {
     const res = await lambdaSend<LambdaOut>(data, fnName, "RequestResponse")
     return res.Payload
@@ -40,17 +43,30 @@ export async function summarize({texts, params}: FnIn): Promise<FnOut> {
       text: texts.join('\n\n'),
       params: params[0]
     }])
-  }
-
-  if (texts.length === params.length && params.length > 0) {
+  } else if (texts.length === params.length && params.length > 0) {
     return call(texts.map((text, i) => ({
       text,
       params: params[i]
     })))
   }
-
-  throw new TextsParamsMatch()
 }
+
+/**
+ * Helper function for sumamrize on analyze page
+ */
+type SummarizeAnalyze = FnIn & {context?: S.Api.FnContext}
+export async function summarizeAnalyze({context, ...rest}: SummarizeAnalyze): Promise<FnOut> {
+  const summary = await summarize(rest)
+  if (context?.connectionId) {
+    await context.handleRes(
+      S.Routes.routes.analyze_summarize_response,
+      {data: summary.map(s => ({id: uuid(), ...s}))},
+      context
+    )
+  }
+  return summary
+}
+
 
 /**
  * Helper function just for summarizing entries on submit

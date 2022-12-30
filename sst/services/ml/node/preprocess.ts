@@ -1,6 +1,5 @@
 import {lambdaSend} from "../../aws/handlers"
 import {Config} from '@serverless-stack/node/config'
-const fnName = Config.fn_preprocess_name
 
 interface FnIn {
   text: string
@@ -13,6 +12,7 @@ type LambdaOut = {
 }
 type FnOut = LambdaOut
 export async function preprocess(data: FnIn): Promise<FnOut> {
+  const fnName = Config.fn_preprocess_name
   const res = await lambdaSend<LambdaOut>(data, fnName, "RequestResponse")
   return res.Payload
 }

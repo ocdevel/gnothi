@@ -1,8 +1,11 @@
 import {Entry} from '@gnothi/schemas/entries'
 import {summarize, SummarizeOut} from "./summarize"
 import {keyBy} from 'lodash'
+import * as S from '@gnothi/schemas'
+import {v4 as uuid} from 'uuid'
 
 type FnIn = {
+  context?: S.Api.FnContext
   clusters: string[][],
   entries: Entry[]
 }
@@ -10,9 +13,11 @@ type LambdaIn = never
 type LambdaOut = never
 type FnOut = SummarizeOut[]
 
-export async function themes({clusters, entries}: FnIn): Promise<FnOut> {
+export async function themes({clusters, entries, context}: FnIn): Promise<FnOut> {
+  // FIXME
+  return []
   const entriesObj = keyBy(entries, 'id')
-  return Promise.all(clusters.map(async (cluster) => {
+  const res = Promise.all(clusters.map(async (cluster) => {
     const texts = cluster.map(id => entriesObj[id].text)
     const summary = await summarize({
       texts,
@@ -24,4 +29,12 @@ export async function themes({clusters, entries}: FnIn): Promise<FnOut> {
     })
     return summary[0]
   }))
+  if (context?.connectionId) {
+    await context.handleRes(
+      S.Routes.routes.analyze_themes_response,
+      {data: res.map(theme => ({id: uuid(), ...theme}))},
+      context
+    )
+  }
+  return res
 }

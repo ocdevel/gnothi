@@ -1,8 +1,10 @@
 import {lambdaSend} from "../../aws/handlers"
 import {Config} from '@serverless-stack/node/config'
-const fnName = Config.fn_ask_name
+import * as S from '@gnothi/schemas'
+import {v4 as uuid} from 'uuid'
 
 type FnIn = {
+  context?: S.Api.FnContext
   query: string
   user_id: string
   entry_ids: string[]
@@ -13,9 +15,10 @@ type LambdaOut = {
 }
 type FnOut = LambdaOut
 
-export async function ask({user_id, entry_ids, query}: FnIn): Promise<FnOut> {
-
-  const res = await lambdaSend<LambdaOut>(
+export async function ask({user_id, entry_ids, query, context}: FnIn): Promise<FnOut> {
+  // Get fnName while inside function because will only be present for fn_background (not fn_main)
+  const fnName = Config.fn_ask_name
+  const {Payload} = await lambdaSend<LambdaOut>(
     {
       query,
       user_id,
@@ -24,5 +27,15 @@ export async function ask({user_id, entry_ids, query}: FnIn): Promise<FnOut> {
     fnName,
     "RequestResponse"
   )
-  return res.Payload
+  if (context?.connectionId) {
+    // it will return {answer: ""} anyway
+    if (Payload.answer?.length) {
+      await context.handleRes(
+        S.Routes.routes.analyze_ask_response,
+        {data: [{id: uuid(), answer: Payload.answer}]},
+        context
+      )
+    }
+  }
+  return Payload
 }

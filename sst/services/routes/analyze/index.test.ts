@@ -10,7 +10,7 @@ describe("analyze:get_response", () => {
     await utils.wait(5)
   }, longTimeout)
 
-  it("should run insights", async () => {
+  it.only("should run insights", async () => {
     const res = await utils.request({
       event: "analyze_get_response",
       data: {
@@ -21,7 +21,7 @@ describe("analyze:get_response", () => {
     console.log(res)
   }, longTimeout)
 
-  it.only("should run prompt:entry", async () => {
+  it("should run prompt:entry", async () => {
     const res = await utils.request({
       event: "analyze_prompt_request",
       data: {
