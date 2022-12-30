@@ -39,18 +39,21 @@ export function Api({ app, stack }: sst.StackContext) {
     bind: [
       APP_REGION,
       rds,
-    ]
+    ],
+    bundle: {
+      copyFiles: [{from: "data/init/init.sql"}]
+    }
   }
   const fnInit = new sst.Function(stack, "fn_init", initProps)
   stack.addOutputs({
     fnInitArn: fnInit.functionArn
   })
-  // const initScript = new sst.Script(stack, "script_init", {
-  //   onCreate: {
-  //     ...initProps,
-  //     enableLiveDev: false
-  //   }
-  // })
+  const initScript = new sst.Script(stack, "script_init", {
+    onCreate: {
+      ...initProps,
+      enableLiveDev: false,
+    }
+  })
 
   // the ML functions based on Dockerfiles can't use .bind(), so add the permissions explicitly, and
   // the env-var as Config() + bind (latter needed for unit tests, which can't use env vars directly)

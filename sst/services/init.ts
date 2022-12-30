@@ -1,6 +1,14 @@
 import {driver, rdsClient} from "./data/db";
 import {readFileSync} from "fs";
-import {resolve, dirname} from 'path'
+import {dirname, resolve} from 'path';
+import { fileURLToPath } from 'url';
+
+// stacks/Api.ts - bundle: { copyFiles: [{from: "data/init/init.sql"}] }
+// should put in the same place as other files. I think maybe I need to copy it to {to: "services/data/init/init.sql"}?
+// For now I'll just use absolute path. Need to replace this with kysley migration anyway
+// const sqlFile = new URL('data/init/init.sql', import.meta.url);
+const sqlFile = '/var/task/data/init/init.sql'
+
 const showTables = `
 SELECT *
 FROM pg_catalog.pg_tables
@@ -9,14 +17,7 @@ WHERE schemaname != 'pg_catalog' AND
 `
 
 export async function initDb() {
-  let sql: string
-  // depending on if Script or Function, CWD is different. I need to do relative-to-this-file kinda deal,
-  // but hit lots of issues.
-  try {
-    sql = readFileSync('data/init/init.sql', {encoding: 'utf-8'})
-  } catch {
-    sql = readFileSync('services/data/init/init.sql', {encoding: 'utf-8'})
-  }
+  const sql = readFileSync(sqlFile, {encoding: "utf-8"})
   const opts = {secretArn: driver.secretArn, resourceArn: driver.resourceArn}
   const {database} = driver
 
