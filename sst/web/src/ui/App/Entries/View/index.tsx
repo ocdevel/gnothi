@@ -43,28 +43,15 @@ export default function View({entry, onClose}: Entry) {
   const as = useStore(s => s.user.as)
   const send = useStore(s => s.send)
   const [tags, setTags] = useState(entry.tags)
-  const [aiSees, setAiSees] = useState(false)
   const clear = useStore(a => a.clearEvents)
 
   const e = entry.entry
   const {id} = e
 
-  const showAiSees = async () => {
-    if (!id) { return }
-    setAiSees(!aiSees)
-    send('entries_cache_get_request', {id})
-  }
 
   function renderButtons() {
     if (as) {return null}
-    return <Stack spacing={2} direction='row'>
-      <Button
-        size='small'
-        color='primary'
-        onClick={showAiSees}
-      >
-        What AI sees
-      </Button>
+    return <>
       <Button
         variant='outlined'
         color='primary'
@@ -73,7 +60,7 @@ export default function View({entry, onClose}: Entry) {
       >
         Edit
       </Button>
-    </Stack>
+    </>
   }
 
   function renderEntry() {
@@ -89,9 +76,6 @@ export default function View({entry, onClose}: Entry) {
         event={/entries\/entr(ies|y).*/g}
         codeRange={[400, 500]}
       />
-      {aiSees && <div>
-        <CacheEntry/>
-      </div>}
 
       <Box display='flex' justifyContent='space-between' direction='row' alignItems='center'>
         <Tags
