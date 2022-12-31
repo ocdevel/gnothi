@@ -14,8 +14,22 @@ import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
 import InputLabel from "@mui/material/InputLabel";
 import FormControl from "@mui/material/FormControl";
+import {FullScreenDialog} from "../../Components/Dialog";
 
-export default function Prompt() {
+export default function ModalModal() {
+  const [modal2, setModal2] = useState(false)
+  return <div>
+    <FullScreenDialog title={"Modal1"} open={true} onClose={() => {}}>
+      <Typography>Modal 1 is open</Typography>
+      <Button onClick={() => setModal2(true)}>Open Modal 2</Button>
+    </FullScreenDialog>
+    <FullScreenDialog title={"Modal2"} open={modal2} onClose={() => setModal2(false)}>
+      <Typography>Modal 2 is open</Typography>
+    </FullScreenDialog>
+  </div>
+}
+
+function Prompt() {
   const submitted = false // useStore(s => !!s.res.analyze_get_response?.first)
   const filters = useStore(s => s.filters)
   const [preset, setPreset] = useState("dream")

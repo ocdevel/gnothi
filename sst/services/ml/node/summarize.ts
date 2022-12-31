@@ -89,8 +89,8 @@ export interface SummarizeEntryOut {
 const paramsExtra = {keywords: {top_n: 5}, emotion: true}
 const params = {
   title: {summarize: {min_length: 5, max_length: 15}},
-  para: {summarize: {min_length: 15, max_length: 100}},
-  text: {summarize: {min_length: 80, max_length: 300}, ...paramsExtra},
+  para: {summarize: {min_length: 15, max_length: 60}},
+  text: {summarize: {min_length: 40, max_length: 150}, ...paramsExtra},
   extra: paramsExtra
 }
 
@@ -101,8 +101,11 @@ export async function summarizeEntry(clean: SummarizeEntryIn): Promise<Summarize
   }
 
   if (clean.paras.length === 1) {
+  // Currently using 16384 model, so we can summarize the whole thing. Revert
+  // to "sumParas vs full" version if back to 4096 models
+  // if (true) {
     // The entry was a single paragraph. Don't bother with paragraph magic, just summarize wam-bam
-    const joined = clean.paras[0]
+    const joined = clean.paras.join('\n')
     const [title, body] = await summarize({
       texts: [joined, joined],
       params: [params.title, params.text]

@@ -58,9 +58,9 @@ r.analyze_get_response.fn = r.analyze_get_response.fnDef.implement(async (req, c
   promises.push(
     summarizeAnalyze({
       context,
-      texts: [entries.map(e => e.ai_text || e.text).join('\n\n')],
+      texts: [entries.map(e => e.ai_text || e.text).join('\n')],
       params: [{
-        summarize: {min_length: 150, max_length: 300},
+        summarize: {min_length: 40, max_length: 120},
         keywords: {top_n: 5},
         emotion: true
       }]

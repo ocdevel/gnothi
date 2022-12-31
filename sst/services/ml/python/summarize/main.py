@@ -9,6 +9,7 @@ from pprint import pprint
 class Summarize(object):
     def __init__(self):
         name_or_path = "ccdv/lsg-bart-base-16384"
+        # sshleifer/distilbart-xsum-12-6 | ccdv/lsg-bart-base-4096 | sshleifer/distill-pegasus-(cnn|xsum)-16-4
         self.tokenizer = AutoTokenizer.from_pretrained(name_or_path, trust_remote_code=True)
         model = AutoModelForSeq2SeqLM.from_pretrained(name_or_path, trust_remote_code=True)
 
@@ -17,15 +18,15 @@ class Summarize(object):
             model=model,
             tokenizer=self.tokenizer,
             no_repeat_ngram_size=2,
-            num_beams=4,
             truncation=True,
             repetition_penalty=1.0,
-            early_stopping=True
+            early_stopping=True,
+            # num_beams=4,
 
             # When trying num_beam_groups I get: Passing `max_length` to BeamSearchScorer is deprecated and has no effect. `max_length` should be passed directly to `beam_search(...)`, `beam_sample(...)`, or `group_beam_search(...)`.
-            #num_beams=6,
-            #num_beam_groups=3,
-            #diversity_penalty=2.0,
+            num_beams=6,
+            num_beam_groups=3,
+            diversity_penalty=2.0,
             #temperature=1.5,
         )
 

@@ -26,7 +26,7 @@ test.only("Many entries", async ({page}) => {
   const auth = await utils.signup()
   console.log({auth})
   await utils.addNoAiTag()
-  await utils.addEntries({n_summarize: 0, n_index: 10})
+  await utils.addEntries({n_summarize: 5, n_index: 0})
   await page.locator(".appbar .button-journal").click()
   await expect(page.locator('.entry-teaser')).toHaveCount(1)
 })
