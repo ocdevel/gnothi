@@ -6,8 +6,15 @@ import Chip from '@mui/material/Chip'
 import Grid from '@mui/material/Grid'
 import CheckCircle from "@mui/icons-material/CheckCircle";
 import Label from "@mui/icons-material/Label";
-import Create from "@mui/icons-material/Create";
+import Pencil from "@mui/icons-material/Create";
 import Modal from './Modal'
+import FormControlLabel from "@mui/material/FormControlLabel";
+import Switch from "@mui/material/Switch";
+import LabelIcon from '@mui/icons-material/Label';
+import SettingsIcon from '@mui/icons-material/Settings';
+import Box from "@mui/material/Box";
+import Stack from "@mui/material/Stack";
+import Button from "@mui/material/Button";
 
 interface Tags {
   selected?: Record<string, boolean>
@@ -67,16 +74,21 @@ export default function Tags({
   function renderTag (tid: string) {
     const selected_ = selectedTags_[tid]
     const tag = hash[tid]
-    return <Grid item key={tid}>
-      <Chip
-        disabled={noClick}
-        icon={selected_ ? <CheckCircle /> : undefined}
-        variant={selected_ ? undefined : "outlined"}
-        onClick={() => selectTag(tid, !selected_)}
+    return <Box key={tid}>
+      <FormControlLabel
+        control={
+          <Switch
+            defaultChecked
+            disabled={noClick}
+            icon={selected_ ? <CheckCircle /> : undefined}
+            variant={selected_ ? undefined : "outlined"}
+            onClick={() => selectTag(tid, !selected_)}
+            className="button-tags-tag"
+          />
+        }
         label={tag.name}
-        className="button-tags-tag"
       />
-    </Grid>
+    </Box>
   }
 
   function renderEditTags() {
@@ -90,7 +102,7 @@ export default function Tags({
     }
     return <Chip
       variant="outlined" color="primary"
-      icon={<Create /> }
+      icon={<SettingsIcon /> }
       onClick={showEditTags}
       label="Tags"
       className="button-tags-edit"
@@ -99,12 +111,14 @@ export default function Tags({
 
   return <>
     {editTags && <Modal close={closeEditTags} />}
-    <Grid container spacing={1}>
-      <Grid item>
-        {renderEditTags()}
-      </Grid>
+    <Stack
+      direction="row"
+      spacing={1}
+      alignItems="center"
+    >
       {ids.map(renderTag)}
-    </Grid>
+      {renderEditTags()}
+    </Stack>
   </>
 }
 
