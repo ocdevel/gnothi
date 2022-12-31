@@ -30,7 +30,7 @@ export default function ModalModal() {
 }
 
 function Prompt() {
-  const submitted = false // useStore(s => !!s.res.analyze_get_response?.first)
+  const submitted = false // useStore(s => !!s.res.insights_get_response?.first)
   const filters = useStore(s => s.filters)
   const [preset, setPreset] = useState("dream")
   const [model, setModel] = useState("text-davinci-003")

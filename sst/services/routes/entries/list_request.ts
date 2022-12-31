@@ -5,7 +5,6 @@ import {z} from 'zod'
 import {reduce as _reduce} from "lodash"
 import {Function} from "@serverless-stack/node/function"
 import {lambdaSend} from '../../aws/handlers'
-import {weaviateClient, weaviateDo} from '../../data/weaviate'
 
 const r = S.Routes.routes
 

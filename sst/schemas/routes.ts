@@ -7,7 +7,7 @@ import {Shares} from './shares'
 import {Notifs} from './notifs'
 import {Ws} from './ws'
 import {Auth} from './auth'
-import {Analyze} from './analyze'
+import {Insights} from './insights'
 
 export * as Routes from './routes'
 
@@ -21,5 +21,5 @@ export const routes = {
   ...Notifs.routes,
   ...Ws.routes,
   ...Auth.routes,
-  ...Analyze.routes
+  ...Insights.routes
 }

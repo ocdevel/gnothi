@@ -64,7 +64,7 @@ class EntryStore(object):
                 obj_id=eid,
                 obj_type='paragraph',
                 content=p,
-                created_at=entry['created_at'],  # used for sorting in analyze later
+                created_at=entry['created_at'],  # used for sorting in insights later
                 embedding=paras_embeddings[i]
             ) for i, p in enumerate(paras)
         ])

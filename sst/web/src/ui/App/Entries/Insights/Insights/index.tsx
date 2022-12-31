@@ -42,11 +42,11 @@ function Insight({label, icon, description, children}: Insight) {
 }
 
 
-export default function Analyze() {
+export default function Insights() {
   const selectedTags = useStore(s => s.selectedTags)
   const filters = useStore(s => s.filters)
   const entries = useStore(s => s.res.entries_list_response)
-  const res = useStore(s => s.res.analyze_get_response)
+  const res = useStore(s => s.res.insights_get_response)
   const send = useStore(s => s.send)
 
   useEffect(() => {
@@ -54,7 +54,7 @@ export default function Analyze() {
       ...filters,
       tags: selectedTags
     }
-    send("analyze_get_request", filters_)
+    send("insights_get_request", filters_)
   }, [filters])
 
   if (!entries?.ids?.length) {

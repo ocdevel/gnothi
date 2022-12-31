@@ -12,7 +12,7 @@ import {Alert2} from "../../../Components/Misc";
 
 export default function Entries({group_id=null}) {
   const entries = useStore(s => s.res.entries_list_response)
-  const search_response = useStore(s => s.res.analyze_search_response?.rows)
+  const search_response = useStore(s => s.res.insights_search_response?.rows)
   const selected = useStore(s => s.selectedTags)
   const filters = useStore(s => s.filters)
 

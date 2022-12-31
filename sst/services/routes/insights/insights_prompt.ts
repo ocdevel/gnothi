@@ -9,7 +9,7 @@ import dayjs from 'dayjs'
 
 const r = S.Routes.routes
 
-r.analyze_prompt_request.fn = r.analyze_prompt_request.fnDef.implement(async (req, context) => {
+r.insights_prompt_request.fn = r.insights_prompt_request.fnDef.implement(async (req, context) => {
   const entries = await db.executeStatement<S.Entries.Entry>({
     sql: "select text_clean, ai_text from entries where user_id=:user_id and id in :entry_ids order by created_at asc",
     parameters: [

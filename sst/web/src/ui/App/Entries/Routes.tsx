@@ -3,7 +3,7 @@ import {useParams} from "react-router-dom";
 import {S, Error, Loading} from '../../Components/Routing'
 import {useStore} from "../../../data/store";
 const Layout = lazy(() => import("./Layout"))
-const Analyze = lazy(() => import("./List"))
+const Insights = lazy(() => import("./List"))
 const New = lazy(() => import("./Upsert/New"))
 // import {EntriesRouter as ModalRouter} from "./Modal"
 
@@ -11,7 +11,7 @@ const defaults = {errorElement: <Error />}
 
 const routes = [
   {path: "j", ...defaults, element: <S><Layout /></S>, children: [
-    {index: true, ...defaults, element: <S><Analyze /></S>},
+    {index: true, ...defaults, element: <S><Insights /></S>},
     // {path: ":entry_id/:mode", ...defaults, element: <ModalRouter />},
   ]}
 ]

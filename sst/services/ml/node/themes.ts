@@ -31,7 +31,7 @@ export async function themes({clusters, entries, context}: FnIn): Promise<FnOut>
   }))
   if (context?.connectionId) {
     await context.handleRes(
-      S.Routes.routes.analyze_themes_response,
+      S.Routes.routes.insights_themes_response,
       {data: res.map(theme => ({id: uuid(), ...theme}))},
       context
     )

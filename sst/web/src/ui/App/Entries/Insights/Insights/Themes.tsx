@@ -8,15 +8,15 @@ import Grid from "@mui/material/Grid";
 import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
 import Typography from "@mui/material/Typography";
-import {analyze_themes_response} from '@gnothi/schemas/analyze'
+import {insights_themes_response} from '@gnothi/schemas/insights'
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import Chip from "@mui/material/Chip";
 import {LinearProgress} from "@mui/material";
 
 export default function Themes() {
-  const submitted = useStore(s => !!s.res.analyze_get_response?.first)
-  const themes = useStore(s => s.res.analyze_themes_response)
+  const submitted = useStore(s => !!s.res.insights_get_response?.first)
+  const themes = useStore(s => s.res.insights_themes_response)
   const filters = useStore(s => s.filters)
 
   const waiting = !themes?.first && submitted
@@ -42,7 +42,7 @@ export default function Themes() {
   //   </>)
   // }
 
-  function renderTheme(theme: analyze_themes_response, i: number) {
+  function renderTheme(theme: insights_themes_response, i: number) {
     return <Box key={theme.id}>
       <Typography>{theme.summary}</Typography>
       <Stack direction="row" spacing={2}>

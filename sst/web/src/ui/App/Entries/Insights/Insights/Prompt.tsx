@@ -50,7 +50,7 @@ export default function Prompt() {
   // TODO useStore version of loading
   const [trips, setTrips] = useState<{
     waiting: boolean
-    responses: S.Analyze.analyze_prompt_response[],
+    responses: S.Insights.insights_prompt_response[],
     prompts: string[]
   }>({
     prompts: [],
@@ -58,8 +58,8 @@ export default function Prompt() {
     waiting: false,
   })
   const send = useStore(s => s.send)
-  const promptResponse = useStore(s => s.res.analyze_prompt_response?.first)
-  const filteredIds = useStore(s => s.res.analyze_search_response?.ids)
+  const promptResponse = useStore(s => s.res.insights_prompt_response?.first)
+  const filteredIds = useStore(s => s.res.insights_search_response?.ids)
   const [preset, setPreset] = useState<Preset>("")
   const [prompt, setPrompt] = useState<string>("")
   const [showHelp, setShowHelp] = useState<boolean>(false)
@@ -85,7 +85,7 @@ export default function Prompt() {
       waiting: true,
       prompts: [...trips.prompts, prompt]
     })
-    send("analyze_prompt_request", {
+    send("insights_prompt_request", {
       entry_ids: filteredIds,
       prompt
     })

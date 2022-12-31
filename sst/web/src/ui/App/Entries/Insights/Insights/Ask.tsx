@@ -10,7 +10,7 @@ import Typography from '@mui/material/Typography'
 import {useStore} from "@gnothi/web/src/data/store"
 
 export default function Ask() {
-  const answer = useStore(s => s.res.analyze_ask_response?.first)
+  const answer = useStore(s => s.res.insights_ask_response?.first)
   console.log("answer", answer)
   if (!answer?.answer?.length) {
     return null

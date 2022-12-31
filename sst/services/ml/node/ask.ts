@@ -31,7 +31,7 @@ export async function ask({user_id, entry_ids, query, context}: FnIn): Promise<F
     // it will return {answer: ""} anyway
     if (Payload.answer?.length) {
       await context.handleRes(
-        S.Routes.routes.analyze_ask_response,
+        S.Routes.routes.insights_ask_response,
         {data: [{id: uuid(), answer: Payload.answer}]},
         context
       )

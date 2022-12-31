@@ -6,8 +6,8 @@ import {boolMapToKeys} from '@gnothi/schemas/utils'
 // @ts-ignore
 import dayjs from "dayjs";
 
-export class Analyze extends Base {
-  async facetFilter(req: S.Analyze.analyze_get_request): Promise<S.Entries.Entry[]> {
+export class Insights extends Base {
+  async facetFilter(req: S.Insights.insights_get_request): Promise<S.Entries.Entry[]> {
     const {tags, startDate, endDate, search} = req
     const tids = boolMapToKeys(tags)
     if (!tids.length) {

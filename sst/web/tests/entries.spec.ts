@@ -18,7 +18,7 @@ test("Basics", async ({page}) => {
 })
 
 
-test.only("Many entries", async ({page}) => {
+test("Many entries", async ({page}) => {
   // const browser = await chromium.launch({ headless: false, slowMo: 100 })
   // const page = await browser.newPage()
 

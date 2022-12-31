@@ -9,11 +9,11 @@ import Box from "@mui/material/Box";
 import {LinearProgress} from "@mui/material";
 import Checkbox from "@mui/material/Checkbox";
 import Stack from "@mui/material/Stack";
-import {analyze_books_response} from '@gnothi/schemas/analyze'
+import {insights_books_response} from '@gnothi/schemas/insights'
 
 export default function Summarize() {
-  const submitted = useStore(s => !!s.res.analyze_get_response?.first)
-  const books = useStore(store => store.res.analyze_books_response)
+  const submitted = useStore(s => !!s.res.insights_get_response?.first)
+  const books = useStore(store => store.res.insights_books_response)
 
   const waiting = !books?.first && submitted
 
@@ -23,7 +23,7 @@ export default function Summarize() {
     return <LinearProgress />
   }
 
-  function renderBook(b: analyze_books_response) {
+  function renderBook(b: insights_books_response) {
     return <Stack direction="column" mb={2}>
       <Typography>{b.name}</Typography>
       <Stack spacing={1} direction="row">

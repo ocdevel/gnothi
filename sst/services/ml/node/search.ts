@@ -1,6 +1,6 @@
 import {lambdaSend} from "../../aws/handlers"
 import * as S from '@gnothi/schemas'
-import {analyze_books_response} from '@gnothi/schemas/analyze'
+import {insights_books_response} from '@gnothi/schemas/insights'
 import {Config} from '@serverless-stack/node/config'
 import {v4 as uuid} from 'uuid'
 
@@ -52,7 +52,7 @@ export async function search({user_id, entries, query, context}: FnIn): Promise<
   if (context?.connectionId) {
     const ids = res.ids.map(id => ({id}))
     await context.handleRes(
-      r.analyze_search_response,
+      r.insights_search_response,
       {data: ids},
       context
     )

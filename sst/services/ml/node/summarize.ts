@@ -52,14 +52,14 @@ export async function summarize({texts, params}: FnIn): Promise<FnOut> {
 }
 
 /**
- * Helper function for summarize on analyze page
+ * Helper function for summarize on insights page
  */
-type SummarizeAnalyze = FnIn & {context?: S.Api.FnContext}
-export async function summarizeAnalyze({context, ...rest}: SummarizeAnalyze): Promise<FnOut> {
+type SummarizeInsights = FnIn & {context?: S.Api.FnContext}
+export async function summarizeInsights({context, ...rest}: SummarizeInsights): Promise<FnOut> {
   const summary = await summarize(rest)
   if (context?.connectionId) {
     await context.handleRes(
-      S.Routes.routes.analyze_summarize_response,
+      S.Routes.routes.insights_summarize_response,
       {data: summary.map(s => ({id: uuid(), ...s}))},
       context
     )

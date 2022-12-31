@@ -1,5 +1,5 @@
 import {lambdaSend} from "../../aws/handlers"
-import {analyze_books_response} from '@gnothi/schemas/analyze'
+import {insights_books_response} from '@gnothi/schemas/insights'
 import {Config} from '@serverless-stack/node/config'
 import * as S from "@gnothi/schemas"
 
@@ -8,7 +8,7 @@ type FnIn = {
   search_mean: number[]
 }
 type LambdaIn = FnIn
-type LambdaOut = analyze_books_response[]
+type LambdaOut = insights_books_response[]
 type FnOut = LambdaOut
 
 export async function books({search_mean, context}: FnIn): Promise<FnOut> {
@@ -27,7 +27,7 @@ export async function books({search_mean, context}: FnIn): Promise<FnOut> {
   }
   if (context?.connectionId) {
     await context.handleRes(
-      S.Routes.routes.analyze_books_response,
+      S.Routes.routes.insights_books_response,
       {data: res},
       context
     )

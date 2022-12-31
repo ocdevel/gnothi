@@ -10,10 +10,10 @@ import {Alert2} from "@gnothi/web/src/ui/Components/Misc";
 
 export default function TopBooks({close}) {
 const send = useStore(s => s.send)
-  const books = useStore(s => s.res['analyze_books_top_response'])
+  const books = useStore(s => s.res['insights_books_top_response'])
 
   useEffect(() => {
-    send('analyze_books_top_response', {})
+    send('insights_books_top_response', {})
   }, [])
 
   return <>
