@@ -40,7 +40,7 @@ export async function summarize({texts, params}: FnIn): Promise<FnOut> {
 
   if (params.length === 1) {
     return call([{
-      text: texts.join('\n\n'),
+      text: texts.join('\n'),
       params: params[0]
     }])
   } else if (texts.length === params.length && params.length > 0) {
@@ -52,7 +52,7 @@ export async function summarize({texts, params}: FnIn): Promise<FnOut> {
 }
 
 /**
- * Helper function for sumamrize on analyze page
+ * Helper function for summarize on analyze page
  */
 type SummarizeAnalyze = FnIn & {context?: S.Api.FnContext}
 export async function summarizeAnalyze({context, ...rest}: SummarizeAnalyze): Promise<FnOut> {
@@ -89,8 +89,8 @@ export interface SummarizeEntryOut {
 const paramsExtra = {keywords: {top_n: 5}, emotion: true}
 const params = {
   title: {summarize: {min_length: 5, max_length: 15}},
-  para: {summarize: {min_length: 10, max_length: 100}},
-  text: {summarize: {min_length: 10, max_length: 300}, ...paramsExtra},
+  para: {summarize: {min_length: 15, max_length: 100}},
+  text: {summarize: {min_length: 80, max_length: 300}, ...paramsExtra},
   extra: paramsExtra
 }
 
@@ -102,7 +102,7 @@ export async function summarizeEntry(clean: SummarizeEntryIn): Promise<Summarize
 
   if (clean.paras.length === 1) {
     // The entry was a single paragraph. Don't bother with paragraph magic, just summarize wam-bam
-    const joined = clean.paras.join('\n')
+    const joined = clean.paras[0]
     const [title, body] = await summarize({
       texts: [joined, joined],
       params: [params.title, params.text]
@@ -124,7 +124,7 @@ export async function summarizeEntry(clean: SummarizeEntryIn): Promise<Summarize
     texts: clean.paras,
     params: [params.para]
   })).map(p => p.summary)
-  const joined = sumParas.join('\n')
+  const joined = sumParas.join(' ')
   const [title, extra] = await summarize({
     texts: [joined, joined],
     params: [params.title, params.extra]

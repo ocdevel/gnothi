@@ -8,10 +8,26 @@ from pprint import pprint
 
 class Summarize(object):
     def __init__(self):
-        name_or_path = "ccdv/lsg-bart-base-4096-wcep"
-        tokenizer = AutoTokenizer.from_pretrained(name_or_path, trust_remote_code=True)
+        name_or_path = "ccdv/lsg-bart-base-16384"
+        self.tokenizer = AutoTokenizer.from_pretrained(name_or_path, trust_remote_code=True)
         model = AutoModelForSeq2SeqLM.from_pretrained(name_or_path, trust_remote_code=True)
-        self.model = pipeline("summarization", model=model, tokenizer=tokenizer)
+
+        self.pipe = pipeline(
+            "summarization",
+            model=model,
+            tokenizer=self.tokenizer,
+            no_repeat_ngram_size=2,
+            num_beams=4,
+            truncation=True,
+            repetition_penalty=1.0,
+            early_stopping=True
+
+            # When trying num_beam_groups I get: Passing `max_length` to BeamSearchScorer is deprecated and has no effect. `max_length` should be passed directly to `beam_search(...)`, `beam_sample(...)`, or `group_beam_search(...)`.
+            #num_beams=6,
+            #num_beam_groups=3,
+            #diversity_penalty=2.0,
+            #temperature=1.5,
+        )
 
     def predict(self, text, params):
         """
@@ -23,18 +39,12 @@ class Summarize(object):
         params_ = params.get('summarize', {})
         if not params_:
             return ""
-        return self.model(
-            text,
-            no_repeat_ngram_size=2,
-            num_beams=6,
-            num_beam_groups=3,
-            diversity_penalty=2.0,
-            # 'temperature': 1.5,
-            truncation=True,
-            repetition_penalty=1.0,
-            early_stopping=True,
-            **params_
-        )[0]['summary_text']
+
+        tokens = self.tokenizer.tokenize(text)
+        if len(tokens) <= params_['max_length']:
+            return text
+
+        return self.pipe(text, **params_)[0]['summary_text']
 
 
 class Keywords(object):
