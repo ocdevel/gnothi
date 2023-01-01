@@ -1,12 +1,51 @@
 import React, {useState, useEffect} from 'react'
-import {ErrorResponse} from '@gnothi/schemas/events'
 import Alert from '@mui/material/Alert'
 import {useStore} from "../../data/store";
+import {ResError} from "@gnothi/schemas/api";
+import Stack from "@mui/material/Stack";
+import Snackbar from "@mui/material/Snackbar";
+import Typography from "@mui/material/Typography";
 
 interface Error {
   message?: string // manual
   event?: RegExp // regex
   codes?: number[]
+}
+
+export function ErrorSnack() {
+  const lastRes = useStore(state => state.lastRes)
+  const [errors, setErrors] = useState<ResError[]>([])
+  
+  useEffect(() => {
+    if (lastRes?.error) {
+      setErrors([...errors, lastRes])
+      console.error(lastRes)
+    }
+  }, [lastRes])
+  
+  function closeError(i: number) {
+    setErrors(errors.filter((_, j) => j !== i))
+  }
+
+  function renderError(e: ResError, i: number) {
+    const handleClose = () => closeError(i)
+    return <Alert onClose={handleClose} severity="error">
+        <Typography>{e.data} - {e.code} - {e.event}</Typography>
+      </Alert>
+  }
+
+  if (!errors?.length) {return null}
+  //// Seems like Snackbar can't stack (multiple), see https://stackoverflow.com/a/67644083
+  // return <Snackbar
+  //     open={true}
+  //     onClose={() => {}}
+  //     anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+  //   >
+  return <Stack sx={{ position: "absolute", bottom: 24, right: 24 }} spacing={2}>
+    <Stack spacing={2} direction="column">
+      {errors.map(renderError)}
+    </Stack>
+   </Stack>
 }
 
 export default function Error({message, event, codes}: Error) {

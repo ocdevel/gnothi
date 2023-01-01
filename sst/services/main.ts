@@ -55,7 +55,6 @@ export async function proxy(
 export async function main({req, context}: ReqParsed): Promise<RecordResult> {
   const {user} = context
   if (!user) {
-    debugger
     throw new Error("User not found in appAuth.ts")
   }
   return await handleReq(req, {
@@ -66,6 +65,7 @@ export async function main({req, context}: ReqParsed): Promise<RecordResult> {
     handleReq,
     handleRes
   })
+
 }
 
 // ------- Step 3: Main handler of event -------
@@ -78,8 +78,7 @@ const handleReq: Api.FnContext['handleReq'] = async (req, fnContext) => {
   console.log("handleReq", req)
   const route = Routes.routes[req.event]
   if (!route) {
-    console.error("No route for", req.event)
-    return null
+    throw new GnothiError({message: `No route found for ${req.event}`})
   }
   if (fnContext.snooping && !route.snoopable) {
     throw new CantSnoop()
@@ -90,14 +89,14 @@ const handleReq: Api.FnContext['handleReq'] = async (req, fnContext) => {
     const data = await route.fn(req.data, fnContext)
     res = {data}
   } catch (e) {
-    if (e instanceof GnothiError) {
-      res = {error: true, code: e.code, data: e.message}
-    } else {
-      debugger
-      throw e
+    res = (e instanceof GnothiError) ? {
+      code: e.code, error: true, event: req.event, data: e.message
+    } : {
+      code: 500, error: true, event: req.event, data: e.toString()
     }
+    console.error(e)
+    debugger
   }
-
   return await handleRes(
     route.o,
     res,
@@ -132,7 +131,7 @@ const handleRes: Api.FnContext['handleRes'] = async (def, res, fnContext) => {
   if (!final) {
     // This happens when calling the function directly, eg via tests. Otherwise an output trigger
     // should be explicitly specified
-    return {statusCode: 200, body: JSON.stringify(resFull)}
+    return {statusCode: resFull.code, body: JSON.stringify(resFull)}
   }
 
   return final

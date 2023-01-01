@@ -12,6 +12,7 @@ import {styles} from '../../Setup/Mui'
 
 import AppBar from '../../Components/AppBar'
 import Container from "@mui/material/Container";
+import {ErrorSnack} from "../../Components/Error";
 const GroupsToolbar = React.lazy(() => import ("../Groups/List/Toolbar"))
 const GroupToolbar = React.lazy(() => import ("../Groups/View/Toolbar"))
 const SharingModal = React.lazy(() => import("../Account/Sharing"))
@@ -71,12 +72,12 @@ export default function Layout() {
   return <Box key={as}>
     <AppBar_ />
     <Container maxWidth={false}>
-      {/* TODO put these in drawer */}
-      <Error message={error} />
-      <Error codes={[422,401,500]} />
+      {/*<Error message={error} />*/}
+      {/*<Error codes={[422,401,500]} />*/}
       <Outlet />
     </Container>
     <S><SharingModal /></S>
     <S><EntryModal /></S>
+    <ErrorSnack />
   </Box>
 }
