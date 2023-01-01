@@ -5,6 +5,7 @@ import {v4 as uuid} from 'uuid'
 import {main, proxy} from '../main'
 import {Req, Res} from '@gnothi/schemas/api'
 import * as S from '@gnothi/schemas'
+import {entries_upsert_response, entries_list_response} from '@gnothi/schemas/entries'
 
 import {readFileSync} from "fs";
 import {ulid} from "ulid";
@@ -53,7 +54,7 @@ export class Utils {
     }))[0].id
   }
 
-  async request(req: Req): Promise<Res> {
+  async request<T = any>(req: Req): Promise<Res<T>> {
     const event = {
       requestContext: {
         authorizer: {jwt: {claims: {sub: this.auth.cognito_id}}},
@@ -63,19 +64,23 @@ export class Utils {
     }
     const context = {}
     // @ts-ignore
-    return await proxy(event, context, _.noop)
+    const res = await proxy(event, context, _.noop)
+    // @ts-ignore
+    return JSON.parse(res.body) as Res<T>
   }
 
-  async _addEntry(title, text, noai=false) {
-    const entry = await this.request({
+  async _addEntry(title, text, noai=false): Promise<entries_upsert_response> {
+    const res = await this.request<entries_upsert_response>({
       event: "entries_upsert_request",
       data: {
         entry: {title, text},
         tags: noai ? {[this.noAiTag]: true} : {[this.mainTag]: true}
       }
-    }) as S.Api.Res<S.Entries.entries_upsert_response>
-    console.log({entryRes: entry.data[0]})
-    this.eids.push(entry.data[0].entry.id)
+    })
+    // console.log({entryRes: JSON.stringify(res)})
+    const entry = res.data[0] as entries_upsert_response
+    this.eids.push(entry.entry.id)
+    return entry
   }
 
   async addEntries({n_summarize=0, n_index=0}: {n_summarize: number, n_index: number}) {
@@ -98,6 +103,15 @@ export class Utils {
       buffer = buffer.slice(1)
       await this._addEntry(entry.title, entry.text, true)
     }
+  }
+
+  async listEntries() {
+   const res = await this.request<entries_list_response>({
+      event: "entries_list_request",
+      data: {}
+    })
+    console.log({resListEntries: res})
+    return res
   }
 
   async wait(seconds: number) {

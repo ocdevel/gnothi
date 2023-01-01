@@ -129,7 +129,7 @@ const handleRes: Api.FnContext['handleRes'] = async (def, res, fnContext) => {
       }
   }))
 
-  if (!final){
+  if (!final) {
     // This happens when calling the function directly, eg via tests. Otherwise an output trigger
     // should be explicitly specified
     return {statusCode: 200, body: JSON.stringify(resFull)}

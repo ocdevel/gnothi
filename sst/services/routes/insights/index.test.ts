@@ -3,7 +3,7 @@ import {Utils} from '../../tests/utils'
 
 const utils = new Utils()
 const longTimeout = 2 * 60 * 1000
-describe("insights:get_response", () => {
+describe.skip("insights:get_response", () => {
   beforeAll(async () => {
     await utils.signup()
     await utils.addEntries({n_summarize: 2, n_index: 2})

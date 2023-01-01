@@ -19,15 +19,18 @@ r.entries_upsert_request.fn = r.entries_upsert_request.fnDef.implement(async (re
     dbEntry = (await db.insert("entries", {...entry, user_id}))[0]
     entry_id = dbEntry.id
   } else {
-    dbEntry = (await db.exec({
-      sql: `select * from entries where id=:entry_id`,
-      values: {id: entry_id},
-      zIn: S.Entries.Entry
+    const {text, title} = req.entry
+    dbEntry = (await db.executeStatement<S.Entries.Entry>({
+      sql: `update entries set title=:title, text=:text where id=:entry_id returning *`,
+      parameters: [
+        {name: "entry_id", typeHint: "UUID", value: {stringValue: entry_id}},
+        {name: "title", value: title?.length ? {stringValue: title} : {isNull: true}},
+        {name: "text", value: {stringValue: text}}
+      ]
     }))[0]
-    await db.exec({
-      sql: "delete from entry_tags where entry_id=:entry_id",
-      values: {entry_id},
-      zIn: S.Tags.EntryTag
+    await db.executeStatement({
+      sql: "delete from entries_tags where entry_id=:entry_id",
+      parameters: [{name: "entry_id", typeHint: "UUID", value: {stringValue: entry_id}}]
     })
   }
 

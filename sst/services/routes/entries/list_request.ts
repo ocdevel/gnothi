@@ -1,18 +1,19 @@
 import * as S from '@gnothi/schemas'
 import {db} from '../../data/db'
-import {GnothiError} from "../errors";
-import {z} from 'zod'
-import {reduce as _reduce} from "lodash"
-import {Function} from "@serverless-stack/node/function"
-import {lambdaSend} from '../../aws/handlers'
 
 const r = S.Routes.routes
 
+function tagsToBoolMap(tags: string): Record<string, boolean> {
+  // comes in from json_agg, field returned as JSON string
+  const tags_ = JSON.parse(tags)
+  return Object.fromEntries(tags_.map(({tag_id}) => [tag_id, true]))
+}
+
 r.entries_list_request.fn = r.entries_list_request.fnDef.implement(async (req, context) => {
-  const entries = await db.exec({
+  const rows = await db.exec({
     sql: `
       select e.*,
-             json_agg(et.*) as entries_tags
+             json_agg(et.*) as tags
       from entries e
              inner join entries_tags et on e.id = et.entry_id
       where e.user_id = :user_id
@@ -23,9 +24,8 @@ r.entries_list_request.fn = r.entries_list_request.fnDef.implement(async (req, c
     zIn: S.Tags.EntryTag.merge(S.Entries.Entry)
   })
   // TODO update SQL to do this conversion, we'll use it elsewhere
-  const withBoolMap = entries.map(entry => ({
+  return rows.map(({tags, ...entry}) => ({
     entry,
-    tags: _reduce(entry.tags, (m, v) => ({...m, [v.tag_id]: true}), {})
+    tags: tagsToBoolMap(tags)
   }))
-  return withBoolMap
 })
