@@ -39,6 +39,13 @@ interface Handler<E = any> {
   respond: (res: Api.Res, context: Api.FnContext) => Promise<APIGatewayProxyResultV2>
 }
 
+function proxyRes(res: Api.Res): APIGatewayProxyResultV2 {
+  if (res.error) {
+    return {statusCode: res.code, body: `${res.data} - ${res.event}`}
+  }
+  return {statusCode: 200, body: JSON.stringify(res)}
+}
+
 // TODO revisit, I can't figure this out
 // export class SNS<E extends SNSEvent> extends Handler<E> {
 export const sns: Handler<SNSEvent> = {
@@ -75,7 +82,7 @@ export const sns: Handler<SNSEvent> = {
 
   // https://docs.aws.amazon.com/lambda/latest/dg/with-sns.html
   respond: async (res) => {
-    return {statusCode: 200}
+    return proxyRes(res)
   }
 }
 
@@ -172,7 +179,6 @@ export const ws: Handler<APIGatewayProxyWebsocketEventV2> = {
   async respond(res, {connectionId}): Promise<APIGatewayProxyResultV2> {
     if (!connectionId) {
       console.warn("Trying to to WS without connectionId")
-      return {statusCode: 200}
     }
     try {
       // try/catch because the connection may have gone away
@@ -181,11 +187,13 @@ export const ws: Handler<APIGatewayProxyWebsocketEventV2> = {
         Data: Buff.fromObj(res),
       }))
     } catch (e) {
-      throw e
+      res.error = true
+      res.code = 500
+      // throw e
       // todo handle just disconnection error below, throw others
       console.error("WebSocketError: trying to send to disconnected client.")
     }
-    return {statusCode: 200}
+    return proxyRes(res)
   }
 }
 
@@ -215,10 +223,7 @@ export const http: Handler<APIGatewayProxyEventV2> = {
   },
 
   async respond(res): Promise<APIGatewayProxyResultV2> {
-    return {
-      statusCode: res.code,
-      body: JSON.stringify(res)
-    }
+    return proxyRes(res)
   }
 }
 

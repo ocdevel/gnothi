@@ -30,7 +30,7 @@ export function ErrorSnack() {
   function renderError(e: ResError, i: number) {
     const handleClose = () => closeError(i)
     return <Alert onClose={handleClose} severity="error">
-        <Typography>{e.data} - {e.code} - {e.event}</Typography>
+        <Typography>{e.data} | {e.code} | {e.event}</Typography>
       </Alert>
   }
 
