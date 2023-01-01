@@ -19,7 +19,7 @@ import Stack from "@mui/material/Stack";
 import {styles} from '../Setup/Mui'
 import {useStore} from "../../data/store";
 import {useNavigate} from "react-router-dom";
-
+import ProfileIcon from '@mui/icons-material/Person';
 
 const buttonSx = {
   fontWeight: 300,
@@ -29,6 +29,7 @@ const buttonSx = {
 }
 
 export function UserMenu() {
+  const user = useStore(s => s.user.viewer)
   const logout = useStore(s => s.logout)
   const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(null);
   const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) => setAnchorElUser(event.currentTarget);
@@ -53,7 +54,9 @@ export function UserMenu() {
       <IconButton
         onClick={handleOpenUserMenu}
         sx={{ ...buttonSx, p: 0 }}>
-        <Avatar alt="Remy Sharp" src="/static/images/avatar/2.jpg" />
+        <Avatar alt={user?.email}>
+          <ProfileIcon />
+        </Avatar>
       </IconButton>
     </Tooltip>
     <Menu

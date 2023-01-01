@@ -15,6 +15,7 @@ export default function Filters() {
       spacing={2}
       direction="row"
       alignItems="center"
+      flexWrap="wrap"
     >
       <DatePickers />
       <Box>{MainTags}</Box>

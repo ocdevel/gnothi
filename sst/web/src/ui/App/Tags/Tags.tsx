@@ -75,13 +75,14 @@ export default function Tags({
     const selected_ = selectedTags_[tid]
     const tag = hash[tid]
     return <Box key={tid}>
-      <FormControlLabel
+      <FormControlLabel 
         control={
           <Switch
             checked={selected_}
             disabled={noClick}
             icon={selected_ ? <CheckCircle /> : undefined}
             variant={selected_ ? undefined : "outlined"}
+            color= "secondary" 
             onChange={() => selectTag(tid, !selected_)}
             className="button-tags-tag"
           />
@@ -114,7 +115,9 @@ export default function Tags({
     <Stack
       direction="row"
       spacing={1}
-      alignItems="center"
+      alignItems="left"
+      justifyContent="left"
+      flexWrap="wrap"
     >
       {ids.map(renderTag)}
       {renderEditTags()}

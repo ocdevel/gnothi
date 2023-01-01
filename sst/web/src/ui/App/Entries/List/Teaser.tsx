@@ -46,7 +46,7 @@ export default function Teaser({eid, gotoForm}: Teaser) {
       onClick={goToEntry}
       variant='elevation'
       raised={hovered}
-      sx={{cursor:'pointer', borderColor: 'primary.main', my: 2}}
+      sx={{cursor:'pointer', backgroundColor: 'white', elevation: 10, borderRadius: 2, my: 2}}
     >
       <CardContent>
         <Typography variant='h6'>{title}</Typography>
