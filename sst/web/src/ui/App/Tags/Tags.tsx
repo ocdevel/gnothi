@@ -78,11 +78,11 @@ export default function Tags({
       <FormControlLabel
         control={
           <Switch
-            defaultChecked
+            checked={selected_}
             disabled={noClick}
             icon={selected_ ? <CheckCircle /> : undefined}
             variant={selected_ ? undefined : "outlined"}
-            onClick={() => selectTag(tid, !selected_)}
+            onChange={() => selectTag(tid, !selected_)}
             className="button-tags-tag"
           />
         }
