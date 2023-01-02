@@ -137,6 +137,7 @@ function lambdas({context: {app, stack}, vpc, fs, bucket}: MLService) {
 
   // Let the functions read/write to the ML bucket
   bucket.cdk.bucket.grantReadWrite(fnBooks)
+  bucket.cdk.bucket.grantReadWrite(fnAsk)
   bucket.cdk.bucket.grantReadWrite(fnStore)
 
   stack.addOutputs({

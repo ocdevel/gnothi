@@ -42,7 +42,7 @@ def search(data):
     elif len(query.split()) < 2:
         # TODO: BM25 retriever
         logger.info(f"Simple query, text-match")
-        df_user = df_user[df_user.content.contains(query, case=False, regex=False)]
+        df_user = df_user[df_user.content.str.contains(query, case=False, regex=False)]
     else:
         n_before = df_user.shape[0]
         # TODO add ANNLite, this is brute-force approach
