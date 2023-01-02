@@ -14,7 +14,7 @@ function tagsToBoolMap(tags: string): Record<string, boolean> {
 
 export class Entries extends Base {
   async filter(req: S.Entries.entries_list_response): Promise<S.Entries.entries_list_filtered[]> {
-    const {tags, startDate, endDate, search} = req
+    const {tags, startDate, endDate} = req
     const tids = boolMapToKeys(tags)
     if (!tids.length) {
       throw new GnothiError({key: "NO_TAGS"})
@@ -41,9 +41,6 @@ export class Entries extends Base {
       ]
     })
     // TODO update SQL to do this conversion, we'll use it elsewhere
-    return rows.map(({tags, ...entry}) => ({
-      entry,
-      tags: tagsToBoolMap(tags)
-    }))
+    return rows.map(row => ({...row, tags: tagsToBoolMap(row.tags)}))
   }
 }

@@ -9,9 +9,9 @@ import {boolMapToKeys} from '@gnothi/schemas/utils'
 const r = S.Routes.routes
 
 r.entries_upsert_response.fn = r.entries_upsert_response.fnDef.implement(async (req, context) => {
-  const {entry} = req
+  const entry = req
   const eid = entry.id
-  const tids = boolMapToKeys(req.tags)
+  const tids = boolMapToKeys(entry.tags)
   const promises = []
   let updated = {...entry}
 
@@ -63,14 +63,10 @@ r.entries_upsert_response.fn = r.entries_upsert_response.fnDef.implement(async (
     ai_keywords: summary.body.keywords
   }
 
-
   if (!skip_index) {
     promises.push(upsert({entry: updated}))
   }
 
-  // FIXME save keywords, getting error (I think due to rds data api + arrays):
-  // ERROR: column "ai_keywords" is of type character varying[] but expression is of type record
-  //   Hint: You will need to rewrite or cast the expression.
   promises.push(db.executeStatement({
     sql: `update entries set 
         ai_keywords=:ai_keywords::varchar[],
@@ -91,5 +87,5 @@ r.entries_upsert_response.fn = r.entries_upsert_response.fnDef.implement(async (
   // FIXME
   // entry.update_snoopers(d.db)
 
-  return [{entry: updated, tags: req.tags}]
+  return [{...updated, tags: req.tags}]
 })

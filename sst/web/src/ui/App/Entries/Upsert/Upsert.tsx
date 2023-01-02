@@ -48,12 +48,12 @@ export default function Upsert(props: Entry) {
   const [isNew, isEdit] = [mode === "new", mode === "edit"]
 
   const [entry, tags_] = isNew ? [{}, {}] : [
-    props.entry!.entry, props.entry!.tags
+    props.entry!, props.entry!.tags
   ]
 
   const defaults = isEdit ? {defaultValues: entry} : {}
   const form = useForm({
-    resolver: zodResolver(Entries.entries_upsert_request.shape.entry),
+    resolver: zodResolver(Entries.entries_upsert_request.omit({tags: true})),
     ...defaults
   })
   const navigate = useNavigate()
@@ -128,7 +128,8 @@ export default function Upsert(props: Entry) {
   }
 
   function submit(entry: Entries.entries_upsert_request) {
-    const data = {entry, tags}
+    const data = {...entry, tags}
+    console.log(data)
     send('entries_upsert_request', data)
   }
 

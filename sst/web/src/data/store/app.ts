@@ -26,7 +26,7 @@ interface SharePage {
 
 type EntryModal = null | {
   mode: "new" | "view" | "edit"
-  entry?: Entries.entries_list_response
+  entry?: Entries.entries_list_filtered
 }
 
 export interface AppSlice {

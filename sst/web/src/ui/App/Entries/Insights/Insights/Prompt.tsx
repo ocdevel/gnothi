@@ -29,7 +29,7 @@ const prompts = [
   },
   {
     key: "advice",
-    label: "Live Advice",
+    label: "Life Advice",
     prompt: "What advice would you have for someone who wrote the following: <summary>",
   },
   {

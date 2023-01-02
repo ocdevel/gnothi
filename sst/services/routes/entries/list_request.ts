@@ -31,7 +31,7 @@ r.entries_list_response.fn = r.entries_list_response.fnDef.implement(async (req,
   const {ids, entries, search_mean, clusters} = await search({
     context,
     user_id,
-    entries: filtered.map(f => f.entry),
+    entries: filtered,
     query
   })
 

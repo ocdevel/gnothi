@@ -79,7 +79,7 @@ export class Utils {
     })
     // console.log({entryRes: JSON.stringify(res)})
     const entry = res.data[0] as entries_upsert_response
-    this.eids.push(entry.entry.id)
+    this.eids.push(entry.id)
     return entry
   }
 

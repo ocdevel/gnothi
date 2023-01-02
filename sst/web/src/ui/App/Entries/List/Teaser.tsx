@@ -24,7 +24,7 @@ export default function Teaser({eid, gotoForm}: Teaser) {
   const onHover = () => setHovered(true)
   const onLeave = () => setHovered(false)
 
-  const e = entry?.entry
+  const e = entry
   if (!e) {return null}
   const {tags} = entry
   let title = e.title || e.ai_title

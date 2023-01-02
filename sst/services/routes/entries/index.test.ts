@@ -27,7 +27,7 @@ describe("entries", () => {
     const list1 = await utils.listEntries()
     const entry = list1.data[0]
     console.log({list1: entry})
-    entry.entry.text = "updated text"
+    entry.text = "updated text"
     await utils.request({
       event: "entries_upsert_request",
       data: entry

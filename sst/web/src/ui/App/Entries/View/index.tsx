@@ -45,8 +45,7 @@ export default function View({entry, onClose}: Entry) {
   const [tags, setTags] = useState(entry.tags)
   const clear = useStore(a => a.clearEvents)
 
-  const e = entry.entry
-  const {id} = e
+  const {id} = entry
 
 
   function renderButtons() {
@@ -65,11 +64,11 @@ export default function View({entry, onClose}: Entry) {
 
   function renderEntry() {
     return <Box>
-      <Typography variant='h2'>{e.title}</Typography>
+      <Typography variant='h2'>{entry.title}</Typography>
       <ReactMarkdown
         linkTarget='_blank'
       >
-        {e.text}
+        {entry.text}
       </ReactMarkdown>
 
       <Error
