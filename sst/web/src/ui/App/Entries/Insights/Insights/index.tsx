@@ -43,19 +43,8 @@ function Insight({label, icon, description, children}: Insight) {
 
 
 export default function Insights() {
-  const selectedTags = useStore(s => s.selectedTags)
-  const filters = useStore(s => s.filters)
-  const entries = useStore(s => s.res.entries_list_response)
-  const res = useStore(s => s.res.insights_get_response)
-  const send = useStore(s => s.send)
-
-  useEffect(() => {
-    const filters_ = {
-      ...filters,
-      tags: selectedTags
-    }
-    send("insights_get_request", filters_)
-  }, [filters])
+  const entriesRes = useStore(s => s.res.entries_list_response?.res)
+  const entries = useStore(s => s.res.entries_list_filtered)
 
   if (!entries?.ids?.length) {
     return <Alert2 severity='warning'>
@@ -63,8 +52,8 @@ export default function Insights() {
     </Alert2>
   }
 
-  if (res?.res?.code === 403) {
-    return <h5>{res.res.data}</h5>
+  if (entriesRes?.error && entriesRes.code === 403) {
+    return <h5>{entriesRes.data}</h5>
   }
 
   return <Stack2>

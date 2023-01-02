@@ -18,7 +18,7 @@ interface Teaser {
 }
 export default function Teaser({eid, gotoForm}: Teaser) {
   const setEntryModal = useStore(s => s.setEntryModal)
-  const entry = useStore(useCallback(s => s.res.entries_list_response?.hash?.[eid], [eid]))
+  const entry = useStore(useCallback(s => s.res.entries_list_filtered?.hash?.[eid], [eid]))
   const me = useStore(s => s.user.me)
   const [hovered, setHovered] = useState(false)
   const onHover = () => setHovered(true)

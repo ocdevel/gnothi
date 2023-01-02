@@ -50,7 +50,8 @@ export async function search({user_id, entries, query, context}: FnIn): Promise<
     entries: entries.filter(e => ~Payload.ids.indexOf(e.id))
   }
   if (context?.connectionId) {
-    const ids = res.ids.map(id => ({id}))
+    const ids = query?.length ? res.ids.map(id => ({id}))
+      : entries.map(e => ({id: e.id}))
     await context.handleRes(
       r.insights_search_response,
       {data: ids},

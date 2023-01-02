@@ -34,7 +34,7 @@ import * as Link from '../../../Components/Link'
 
 
 interface Entry {
-  entry: S.Entries.entries_list_response
+  entry: S.Entries.entries_list_filtered
   onClose?: any
 }
 export default function View({entry, onClose}: Entry) {

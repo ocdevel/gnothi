@@ -38,12 +38,12 @@ export interface EventsSlice {
     users_list_response?: Api.ResUnwrap<Users.users_list_response>
     tags_list_response?: Api.ResUnwrap<z.infer<typeof r.tags_list_request.o.s>>
     entries_list_response?: Api.ResUnwrap<Entries.entries_list_response>
+    entries_list_filtered?: Api.ResUnwrap<Entries.entries_list_filtered>
     fields_list_response?: Api.ResUnwrap<z.infer<typeof r.fields_list_request.o.s>>
     fields_entries_list_response?: Api.ResUnwrap<z.infer<typeof r.fields_entries_list_request.o.s>>
     entries_upsert_response?: Api.ResUnwrap<Entries.entries_upsert_response>
     // entries_delete_response?: Api.ResUnwrap<Entries.Entry>
 
-    insights_get_response?: Api.ResUnwrap<Insights.insights_get_response>
     insights_summarize_response?: Api.ResUnwrap<Insights.insights_summarize_response>
     insights_prompt_response?: Api.ResUnwrap<Insights.insights_prompt_response>
     insights_ask_response?: Api.ResUnwrap<Insights.insights_ask_response>

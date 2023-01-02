@@ -7,7 +7,7 @@ r.users_everything_request.fn = r.users_everything_request.fnDef.implement(async
   await Promise.all(([
     'users_list_request',
     'tags_list_request',
-    'entries_list_request',
+    // 'entries_list_request', // now this is kicked off client-side with filters
     'fields_list_request',
     'fields_entries_list_request',
     'groups_mine_list_request',

@@ -10,7 +10,7 @@ dayjs.extend(utc)
 dayjs.extend(timezone)
 
 // TODO use mainTag as default tag
-export const initialFilters = Insights.insights_get_request.parse({})
+export const initialFilters = Entries.entries_list_request.parse({})
 
 interface User {
   as: string | null,
@@ -32,8 +32,8 @@ type EntryModal = null | {
 export interface AppSlice {
   // ----- Insights
 
-  filters: Insights.insights_get_request
-  setFilters: (filters: Partial<Insights.insights_get_request>) => void
+  filters: Entries.entries_list_request
+  setFilters: (filters: Partial<Entries.entries_list_request>) => void
   clearFilters: () => void
   setInsight: (payload: [string, string]) => void
   // postInsight: (x: any) => Promise<void>
