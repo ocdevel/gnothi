@@ -5,7 +5,7 @@ import {useStore} from '../../../../data/store'
 import {Loading} from "../../../Components/Routing";
 
 export default function Entries() {
-  const entries = useStore(s => s.res.groups_entries_list_filtered)
+  const entries = useStore(s => s.res.groups_entries_list_response)
   const [eid, setEid] = useState<string | null>(null)
 
   if (!entries?.ids?.length) {

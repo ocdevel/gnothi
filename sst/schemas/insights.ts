@@ -4,6 +4,19 @@ export * as Insights from './insights'
 import dayjs from 'dayjs'
 import {Route, DefO} from "./api";
 
+export const insights_get_request = z.object({
+  entry_ids: z.string().array(),
+  insights: z.object({
+    summarize: z.boolean().optional(), // also includes themes
+    query: z.string().optional(), // if using a ?, acts as a question
+    books: z.boolean().optional(),
+    prompt: z.string().array().optional(),
+  })
+})
+export type insights_get_request = z.infer<typeof insights_get_request>
+export const insights_get_response = insights_get_request
+export type insights_get_response = z.infer<typeof insights_get_response>
+
 export const insights_ask_response = z.object({
   id: z.string(), // anything, just need for keyby
   answer: z.string()
@@ -55,6 +68,31 @@ export const insights_prompt_response = z.object({
 export type insights_prompt_response = z.infer<typeof insights_prompt_response>
 
 export const routes = {
+  insights_get_request: new Route({
+    i: {
+      e: 'insights_get_request',
+      s: insights_get_request,
+      snoopable: true,
+      t: {ws: true},
+    },
+    o: {
+      e: 'insights_get_response',
+      s: insights_get_response,
+      t: {ws: true, background: true},
+    }
+  }),
+  insights_get_response: new Route({
+    i: {
+      e: 'insights_get_response',
+      s: insights_get_response,
+      t: {background: true},
+    },
+    o: {
+      e: 'insights_get_final',
+      s: insights_get_final,
+      t: {ws: true},
+    }
+  }),
   insights_prompt_request: new Route({
     i: {
       e: 'insights_prompt_request',

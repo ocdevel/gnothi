@@ -26,14 +26,14 @@ interface SharePage {
 
 type EntryModal = null | {
   mode: "new" | "view" | "edit"
-  entry?: Entries.entries_list_filtered
+  entry?: Entries.entries_list_response
 }
 
 export interface AppSlice {
   // ----- Insights
 
-  filters: Entries.entries_list_request
-  setFilters: (filters: Partial<Entries.entries_list_request>) => void
+  filters: Entries.Filters
+  setFilters: (filters: Partial<Entries.Filters>) => void
   clearFilters: () => void
   setInsight: (payload: [string, string]) => void
   // postInsight: (x: any) => Promise<void>

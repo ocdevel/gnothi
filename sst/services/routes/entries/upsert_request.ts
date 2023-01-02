@@ -48,7 +48,7 @@ r.entries_upsert_request.fn = r.entries_upsert_request.fnDef.implement(async (re
 
   // TODO use batchExecuteStatement
   for (const tag_id of tids) {
-      await db.insert("entries_tags", {tag_id, entry_id})
+    await db.insert("entries_tags", {tag_id, entry_id})
   }
 
   return [{...dbEntry, tags}]

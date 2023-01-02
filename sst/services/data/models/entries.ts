@@ -13,7 +13,17 @@ function tagsToBoolMap(tags: string): Record<string, boolean> {
 }
 
 export class Entries extends Base {
-  async filter(req: S.Entries.entries_list_response): Promise<S.Entries.entries_list_filtered[]> {
+  async getByIds(ids: string[]) {
+    return db.executeStatement<any>({
+      sql: `select * from entries where id in :ids and user_id = :user_id`,
+      parameters: [
+        {name: "user_id", value: {stringValue: this.uid}, typeHint: "UUID"},
+        {name: "ids", typeHint: "UUID", value: {arrayValue: {stringValues: ids}}, arrayFix: "IN"}
+      ]
+    })
+  }
+
+  async filter(req: S.Entries.entries_list_request): Promise<S.Entries.entries_list_response[]> {
     const {tags, startDate, endDate} = req
     const tids = boolMapToKeys(tags)
     if (!tids.length) {

@@ -11,7 +11,7 @@ import {Alert2} from "../../../Components/Misc";
 
 
 export default function Entries({group_id=null}) {
-  const entries = useStore(s => s.res.entries_list_filtered)
+  const entries = useStore(s => s.res.entries_list_response)
   const search_response = useStore(s => s.res.insights_search_response?.rows)
 
   const ids = entries?.ids || []

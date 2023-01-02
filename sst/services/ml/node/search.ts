@@ -10,7 +10,7 @@ type FnIn = {
   context?: S.Api.FnContext
   query: string
   user_id: string
-  entries: S.Entries.Entry[]
+  entry_ids: string[]
 }
 type LambdaIn = {
   event: "search"
@@ -25,10 +25,8 @@ type LambdaOut = {
   clusters: string[][]
   search_mean: number[]
 }
-type FnOut = LambdaOut & {
-  entries: S.Entries.Entry[]
-}
-export async function search({user_id, entries, query, context}: FnIn): Promise<FnOut> {
+type FnOut = LambdaOut
+export async function search({user_id, entry_ids, query, context}: FnIn): Promise<FnOut> {
   // Get fnName while inside function because will only be present for fn_background (not fn_main)
   const fnName = Config.fn_store_name
   const {Payload} = await lambdaSend<LambdaOut>(
@@ -37,7 +35,7 @@ export async function search({user_id, entries, query, context}: FnIn): Promise<
       data: {
         query,
         user_id,
-        entry_ids: entries.map(e => e.id),
+        entry_ids,
         search_threshold: .6,
         community_threshold: .75
       }
@@ -45,16 +43,12 @@ export async function search({user_id, entries, query, context}: FnIn): Promise<
     fnName,
     "RequestResponse"
   )
-  const res = {
-    ...Payload,
-    entries: entries.filter(e => ~Payload.ids.indexOf(e.id))
-  }
+  const res = Payload
   if (context?.connectionId) {
-    const ids = query?.length ? res.ids.map(id => ({id}))
-      : entries.map(e => ({id: e.id}))
+    const ids = query?.length ? res.ids : entry_ids
     await context.handleRes(
       r.insights_search_response,
-      {data: ids},
+      { data: ids.map(id => ({id})) },
       context
     )
   }

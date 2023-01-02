@@ -42,7 +42,7 @@ export default function Fields() {
   const send = useStore(s => s.send)
   const user = useStore(s => s.user)
   const fields = useStore(state => state.res.fields_list_response)
-  const fieldEntries = useStore(s => s.res.fields_entries_list_filtered?.hash)
+  const fieldEntries = useStore(s => s.res.fields_entries_list_response?.hash)
   const fieldValues = useStore(s => s.fieldValues)
   const setFieldValues = useStore(a => a.setFieldValue)
   const syncRes = useStore(s => s.res.habitica_sync_response?.res)

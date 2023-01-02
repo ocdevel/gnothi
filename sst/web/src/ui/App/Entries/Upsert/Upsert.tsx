@@ -37,7 +37,7 @@ After you have one or two entries, head to the Insights and Resources links at t
 `
 
 interface Entry {
-  entry?: Entries.entries_list_filtered
+  entry?: Entries.entries_list_response
   onClose?: Function
 }
 export default function Upsert(props: Entry) {

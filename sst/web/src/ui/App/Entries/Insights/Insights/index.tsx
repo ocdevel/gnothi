@@ -78,9 +78,26 @@ const Insight = InsightRaw
 
 export default function Insights() {
   const entriesRes = useStore(s => s.res.entries_list_response?.res)
-  const entries = useStore(s => s.res.entries_list_filtered)
+  const entry_ids = useStore(s => s.res.entries_list_response?.ids)
 
-  if (!entries?.ids?.length) {
+  const selectedTags = useStore(s => s.selectedTags)
+  const filters = useStore(s => s.filters)
+  const send = useStore(s => s.send)
+
+  useEffect(() => {
+    if (!entry_ids?.length) {return}
+    send("insights_get_request", {
+      entry_ids,
+      insights: {
+        summarize: true,
+        query: filters.search,
+        books: true,
+        prompt: undefined
+      }
+    })
+  }, [filters.search, entry_ids])
+
+  if (!entry_ids?.length) {
     return <Alert2 severity='warning'>
       <FaLock /> Not enough entries to work with. Add an entry or adjust the filters
     </Alert2>

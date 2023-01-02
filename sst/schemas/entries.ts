@@ -35,26 +35,22 @@ export const EntryWithTags = Entry.extend({
 export type EntryWithTags = z.infer<typeof EntryWithTags>
 
 const JustDate = z.string().regex(/[0-9]{4}-[0-9]{2}-[0-9]{2}/)
-export const entries_list_request = z.object({
+export const Filters = z.object({
   startDate: JustDate
     .optional()
     .default(
       dayjs().subtract(3, 'month').format("YYYY-MM-DD")
     ),
   endDate: JustDate.or(z.literal("now")).default("now"),
-  search: z.string().optional(), // if using a ?, acts as a question
-  tags: BoolMap.default({})
+  tags: BoolMap.default({}),
+  search: z.string().optional(),
 })
-export type entries_list_request = z.infer<typeof entries_list_request>
-export const entries_list_response = entries_list_request
-export type entries_list_response = z.infer<typeof entries_list_response>
+export type Filters = z.infer<typeof Filters>
 
-export const entries_list_filtered = EntryWithTags
-export type entries_list_filtered = z.infer<typeof entries_list_filtered>
-export const entries_list_final = z.object({
-  done: z.boolean()
-})
-export type entries_list_final = z.infer<typeof entries_list_final>
+export const entries_list_request = Filters.omit({search: true})
+export type entries_list_request = z.infer<typeof entries_list_request>
+export const entries_list_response = EntryWithTags
+export type entries_list_response = z.infer<typeof entries_list_response>
 
 export const entries_upsert_request = EntryWithTags
   .partial({id: true})
@@ -66,7 +62,7 @@ export const entries_upsert_request = EntryWithTags
     tags: true
   })
 export type entries_upsert_request = z.infer<typeof entries_upsert_request>
-export const entries_upsert_response = entries_list_filtered
+export const entries_upsert_response = entries_list_response
 export type entries_upsert_response = z.infer<typeof entries_upsert_response>
 
 // _response will have a version without the AI inserts. _final will have all the inserts
@@ -83,27 +79,10 @@ export const routes = {
     o: {
       e: 'entries_list_response',
       s: entries_list_response,
-      t: {ws: true, background: true}
+      t: {ws: true},
+      keyby: 'id'
     },
   }),
-  entries_list_response: new Route({
-    i: {
-      e: "entries_list_response",
-      s: entries_list_response,
-      t: {background: true}
-    },
-    o: {
-      e: 'entries_list_final',
-      s: entries_list_final,
-      t: {ws: true}
-    }
-  }),
-  entries_list_filtered: <DefO<any>>{
-    e: "entries_list_filtered",
-    s: entries_list_filtered,
-    t: {ws: true},
-    keyby: 'id'
-  },
   entries_upsert_request: new Route({
     i: {
       e: 'entries_upsert_request',
@@ -113,7 +92,7 @@ export const routes = {
       e: 'entries_upsert_response',
       s: entries_upsert_response,
       t: {ws: true, background: true},
-      event_as: "entries_list_filtered",
+      event_as: "entries_list_response",
       keyby: 'id',
       op: "prepend",
     },
@@ -130,7 +109,7 @@ export const routes = {
       e: 'entries_upsert_final',
       s: entries_upsert_final,
       t: {ws: true},
-      event_as: "entries_list_filtered",
+      event_as: "entries_list_response",
       keyby: 'id',
       op: "update"
     },
