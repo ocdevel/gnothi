@@ -8,7 +8,8 @@ from pprint import pprint
 
 class Summarize(object):
     def __init__(self):
-        name_or_path = "ccdv/lsg-bart-base-16384"
+        # name_or_path = "ccdv/lsg-bart-base-16384"
+        name_or_path = "ccdv/lsg-bart-base-4096-wcep"
         # sshleifer/distilbart-xsum-12-6 | ccdv/lsg-bart-base-4096 | sshleifer/distill-pegasus-(cnn|xsum)-16-4
         self.tokenizer = AutoTokenizer.from_pretrained(name_or_path, trust_remote_code=True)
         model = AutoModelForSeq2SeqLM.from_pretrained(name_or_path, trust_remote_code=True)

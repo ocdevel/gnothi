@@ -88,7 +88,7 @@ export interface SummarizeEntryOut {
 
 const paramsExtra = {keywords: {top_n: 5}, emotion: true}
 const params = {
-  title: {summarize: {min_length: 5, max_length: 15}},
+  title: {summarize: {min_length: 3, max_length: 15}},
   para: {summarize: {min_length: 15, max_length: 60}},
   text: {summarize: {min_length: 40, max_length: 150}, ...paramsExtra},
   extra: paramsExtra
@@ -128,17 +128,17 @@ export async function summarizeEntry(clean: SummarizeEntryIn): Promise<Summarize
     params: [params.para]
   })).map(p => p.summary)
   const joined = sumParas.join(' ')
-  const [title, extra] = await summarize({
+  const [title, body] = await summarize({
     texts: [joined, joined],
-    params: [params.title, params.extra]
+    params: [params.title, params.text]
   })
   return {
     title: title.summary,
     paras: sumParas,
     body: {
-      text: joined,
-      emotion: extra.emotion,
-      keywords: extra.keywords
+      text: body.summary,
+      emotion: body.emotion,
+      keywords: body.keywords
     }
   }
 }
