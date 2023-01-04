@@ -52,6 +52,7 @@ function AppBar_() {
   // </>
 }
 
+// Have this separate since it'd otherwise cause a re-render after every lastJsonMessage, etc.
 function SetupApi() {
   useApi()
   return null

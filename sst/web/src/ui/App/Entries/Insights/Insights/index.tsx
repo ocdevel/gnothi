@@ -85,8 +85,11 @@ export default function Insights({entry_ids}: Insights) {
   const send = React.useCallback(useStore(s => s.send), [])
 
   useEffect(() => {
-    console.log('insights:useEffect', [search, entry_ids])
     if (!entry_ids?.length) {return}
+
+    // Logging each time this is called, since it's getting called a lot and I can't figure out why
+    console.log('insights:useEffect', [search, entry_ids])
+    
     send("insights_get_request", {
       entry_ids,
       insights: {

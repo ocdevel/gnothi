@@ -60,15 +60,9 @@ r.insights_get_response.fn = r.insights_get_response.fnDef.implement(async (req,
   if (insights.summarize) {
     const entries = await mEntries.getByIds(ids)
 
-    // summarize summaries, NOT full originals (to reduce token max)
     promises.push(summarizeInsights({
       context,
-      texts: [entries.map(e => e.ai_text || e.text).join('\n')],
-      params: [{
-        summarize: {min_length: 40, max_length: 120},
-        keywords: {top_n: 5},
-        emotion: true
-      }]
+      entries
     }))
 
     // Themes

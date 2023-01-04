@@ -54,9 +54,32 @@ export async function summarize({texts, params}: FnIn): Promise<FnOut> {
 /**
  * Helper function for summarize on insights page
  */
-type SummarizeInsights = FnIn & {context?: S.Api.FnContext}
-export async function summarizeInsights({context, ...rest}: SummarizeInsights): Promise<FnOut> {
-  const summary = await summarize(rest)
+interface SummarizeInsights {
+  entries: S.Entries.Entry[]
+  context: S.Api.FnContext
+}
+export async function summarizeInsights({context, entries}: SummarizeInsights): Promise<FnOut> {
+  let summary: FnOut
+  if (entries.length === 0) {
+    summary = []
+  } else if (entries.length === 1) {
+    // just use summary
+    summary = [{
+      summary: entries[0].ai_text,
+      keywords: entries[0].ai_keywords,
+      emotion: entries[0].ai_sentiment
+    }]
+  } else {
+    summary = await summarize({
+      // summarize summaries, NOT full originals (to reduce token max)
+      texts: [entries.map(e => e.ai_text || e.text).join('\n')],
+      params: [{
+        summarize: {min_length: 40, max_length: 120},
+        keywords: {top_n: 5},
+        emotion: true
+      }]
+    })
+  }
   if (context?.connectionId) {
     await context.handleRes(
       S.Routes.routes.insights_summarize_response,
