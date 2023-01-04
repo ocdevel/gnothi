@@ -4,22 +4,20 @@ import {FullScreenDialog} from "../../Components/Dialog";
 import {fmtDate} from "../../../utils/utils";
 import {useParams} from "react-router-dom";
 import {Loading} from "../../Components/Routing";
-const View = React.lazy(() => import("./View"))
-const New = React.lazy(() => import("./Upsert/New"))
-const Upsert = React.lazy(() => import("./Upsert/Upsert"))
+import View from "./View"
+import New from "./Upsert/New"
+import Upsert from './Upsert/Upsert'
 
 
 export default function Modal() {
   const entryModal = useStore(s => s.entryModal)
-  const setEntryModal = useStore(s => s.setEntryModal)
+  const setEntryModal = useCallback(useStore(s => s.setEntryModal), [])
   const as = useStore(s => s.user?.as)
 
   const entry = entryModal?.entry
   const mode = as ? "view" : entryModal?.mode
 
-  function onClose() {
-    setEntryModal(null)
-  }
+  const onClose = useCallback(() => setEntryModal(null), [])
 
   function renderContent() {
     if (entry && mode === 'edit') {

@@ -13,7 +13,12 @@ import {useStore} from "../../../../data/store";
 export default function List({group_id=null}) {
   const selectedTags = useStore(s => s.selectedTags)
   const filters = useStore(s => s.filters)
-  const send = useStore(s => s.send)
+  const send = useCallback(useStore(s => s.send), [])
+
+  const entries = useStore(s => s.res.entries_list_response)
+
+  const res = entries?.res || {}
+  const ids = entries?.ids || []
 
   useEffect(() => {
     // user's tags (end therefore selection) hasn't come in yet, don't fetch entries
@@ -27,6 +32,10 @@ export default function List({group_id=null}) {
     send("entries_list_request", filters_)
   }, [filters, selectedTags])
 
+  if (res.error && res.code === 403) {
+    return <h5>{res.data}</h5>
+  }
+
   return <>
     <Helmet>
       <title>Journal</title>
@@ -38,7 +47,7 @@ export default function List({group_id=null}) {
         <Entries />
       </Grid>
       <Grid item sm={12} lg={4} md={5}>
-        <Insights />
+        <Insights entry_ids={ids} />
         <NotesAll />
       </Grid>
     </Grid>

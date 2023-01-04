@@ -13,10 +13,10 @@ import {styles} from '../../Setup/Mui'
 import AppBar from '../../Components/AppBar'
 import Container from "@mui/material/Container";
 import {ErrorSnack} from "../../Components/Error";
-const GroupsToolbar = React.lazy(() => import ("../Groups/List/Toolbar"))
-const GroupToolbar = React.lazy(() => import ("../Groups/View/Toolbar"))
-const SharingModal = React.lazy(() => import("../Account/Sharing"))
-const EntryModal = React.lazy(() => import("../Entries/Modal"))
+import GroupsToolbar from "../Groups/List/Toolbar"
+import GroupToolbar from "../Groups/View/Toolbar"
+import SharingModal from "../Account/Sharing"
+import EntryModal from "../Entries/Modal"
 
 function AppBar_() {
   const location = useLocation()
@@ -52,13 +52,22 @@ function AppBar_() {
   // </>
 }
 
-export default function Layout() {
+function SetupApi() {
   useApi()
-  const as = useStore(state => state.user?.as);
+  return null
+}
+
+function Errors() {
   const error = useStore(state => state.apiError);
+  {/*<Error message={error} />*/}
+  {/*<Error codes={[422,401,500]} />*/}
+  return <ErrorSnack />
+}
+
+function Layout() {
+  const as = useStore(state => state.user?.as);
   const user = useStore(state => state.user?.me)
 	const navigate = useNavigate()
-
 
   useEffect(() => {
     // FIXME only do after first load
@@ -69,15 +78,22 @@ export default function Layout() {
     return <Loading label="Loading user" />
   }
 
-  return <Box key={as}>
+  // return <Box key={as}>
+  return <Box>
+    <SetupApi />
     <AppBar_ />
     <Container maxWidth={false}>
-      {/*<Error message={error} />*/}
-      {/*<Error codes={[422,401,500]} />*/}
       <Outlet />
     </Container>
-    <S><SharingModal /></S>
-    <S><EntryModal /></S>
-    <ErrorSnack />
+    <SharingModal />
+    <EntryModal />
+    <Errors />
   </Box>
+}
+
+export default function Wrapper() {
+  return <>
+    <SetupApi />
+    <Layout />
+  </>
 }

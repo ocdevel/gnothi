@@ -11,8 +11,8 @@ import {S, Error} from '../Components/Routing'
 export * as Static from './Routes'
 
 export const staticRoutes = [
-  {path: "privacy", element: <S><Privacy /></S>},
-  {path: "terms", element: <S><Terms /></S>}
+  {path: "privacy", element: <Privacy />},
+  {path: "terms", element: <Terms />}
 ]
 
 export const splashRoutes = [

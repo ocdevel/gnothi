@@ -1,8 +1,8 @@
 import React from 'react'
 import Grid from '@mui/material/Grid'
 import {useStore} from "../../../../data/store";
-const Upsert = React.lazy(() => import("./Upsert"))
-const Fields = React.lazy(() => import("../../Fields/Fields"))
+import Upsert from "./Upsert"
+import Fields from "../../Fields/Fields"
 
 export default function New() {
   const setEntryModal = useStore(s => s.setEntryModal)

@@ -31,6 +31,7 @@ import {useForm} from "react-hook-form";
 import {zodResolver} from "@hookform/resolvers/zod";
 import * as S from '@gnothi/schemas'
 import * as Link from '../../../Components/Link'
+import Insights from '../Insights/Insights'
 
 
 interface Entry {
@@ -38,12 +39,9 @@ interface Entry {
   onClose?: any
 }
 export default function View({entry, onClose}: Entry) {
-  const setEntryModal = useStore(s => s.setEntryModal)
-  const navigate = useNavigate()
+  const setEntryModal = useCallback(useStore(s => s.setEntryModal), [])
   const as = useStore(s => s.user.as)
-  const send = useStore(s => s.send)
   const [tags, setTags] = useState(entry.tags)
-  const clear = useStore(a => a.clearEvents)
 
   const {id} = entry
 
@@ -88,6 +86,21 @@ export default function View({entry, onClose}: Entry) {
     </Box>
   }
 
+  function renderNotes() {
+    return <Card>
+      <CardHeader title='Notes' />
+      <CardContent>
+        <NotesList entry_id={id} />
+      </CardContent>
+    </Card>
+  }
+
+  function renderSidebar() {
+    return <Card>
+      <Insights entry_ids={[id]} key={id} />
+    </Card>
+  }
+
   return <Grid container>
     <Grid item xs={12} lg={8}>
       <DialogContent>
@@ -102,12 +115,7 @@ export default function View({entry, onClose}: Entry) {
     </Grid>
     <Grid item xs={12} lg={4}>
       <DialogContent>
-        <Card>
-          <CardHeader title='Notes' />
-          <CardContent>
-            <NotesList entry_id={id} />
-          </CardContent>
-        </Card>
+        {renderSidebar()}
       </DialogContent>
     </Grid>
   </Grid>
