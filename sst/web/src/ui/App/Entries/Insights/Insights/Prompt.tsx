@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react'
+import React, {useState, useEffect, useCallback} from 'react'
 
 import {useStore} from "@gnothi/web/src/data/store"
 import Typography from "@mui/material/Typography";
@@ -40,13 +40,16 @@ const prompts = [
   {
     key: "podcasts",
     label: "Podcast recommends",
-    prompt: "What books would you recommend for someone who wrote the following: <summary>",
+    prompt: "What podcasts would you recommend for someone who wrote the following: <summary>",
   }
 ] as const
 const promptsObj = keyBy(prompts, 'key')
 type Preset = keyof typeof promptsObj
 
-export default function Prompt() {
+interface Prompt {
+  entry_ids: string[]
+}
+export default function Prompt({entry_ids}: Prompt) {
   // TODO useStore version of loading
   const [trips, setTrips] = useState<{
     waiting: boolean
@@ -57,9 +60,8 @@ export default function Prompt() {
     responses: [],
     waiting: false,
   })
-  const send = useStore(s => s.send)
+  const send = useCallback(useStore(s => s.send), [])
   const promptResponse = useStore(s => s.res.insights_prompt_response?.first)
-  const filteredIds = useStore(s => s.res.insights_search_response?.ids)
   const [preset, setPreset] = useState<Preset>("")
   const [prompt, setPrompt] = useState<string>("")
   const [showHelp, setShowHelp] = useState<boolean>(false)
@@ -85,8 +87,9 @@ export default function Prompt() {
       waiting: true,
       prompts: [...trips.prompts, prompt]
     })
+    console.log("prompt", entry_ids)
     send("insights_prompt_request", {
-      entry_ids: filteredIds,
+      entry_ids,
       prompt
     })
   }

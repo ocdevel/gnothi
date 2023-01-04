@@ -1,11 +1,11 @@
 import * as S from '@gnothi/schemas'
 import {db} from '../../data/db'
 import {GnothiError} from "../errors";
-import {v4 as uuid} from 'uuid'
 import {completion} from '../../ml/node/openai'
 import {z} from 'zod'
 // @ts-ignore
 import dayjs from 'dayjs'
+import {ulid} from 'ulid'
 
 const r = S.Routes.routes
 
@@ -22,5 +22,5 @@ r.insights_prompt_request.fn = r.insights_prompt_request.fnDef.implement(async (
     .replace("<summary>", entry) // FIXME
     .replace("<paragraphs>", entry) // FIXME
   const response = await completion(prompt)
-  return [{id: uuid(), response}]
+  return [{id: ulid(), response}]
 })

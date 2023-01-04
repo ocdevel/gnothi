@@ -89,7 +89,7 @@ export default function Insights({entry_ids}: Insights) {
 
     // Logging each time this is called, since it's getting called a lot and I can't figure out why
     console.log('insights:useEffect', [search, entry_ids])
-    
+
     send("insights_get_request", {
       entry_ids,
       insights: {
@@ -127,7 +127,7 @@ export default function Insights({entry_ids}: Insights) {
       icon={<PromptIcon {...iconProps} />}
       description="Prompts"
     >
-      <Prompt />
+      <Prompt entry_ids={entry_ids} />
     </Insight>
     <Insight
       label="Books"

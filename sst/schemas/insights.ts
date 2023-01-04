@@ -59,7 +59,7 @@ export type insights_books_response = z.infer<typeof insights_books_response>
 export const insights_search_response = z.object({id: z.string()})
 export type insights_search_response = z.infer<typeof insights_search_response>
 
-export const insights_prompt_request = Insight.extend({
+export const insights_prompt_request = z.object({
   entry_ids: z.string().array(),
   prompt: z.string()
 })
