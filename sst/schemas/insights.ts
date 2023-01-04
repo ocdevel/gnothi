@@ -2,7 +2,13 @@ import {z} from 'zod'
 export * as Insights from './insights'
 // @ts-ignore
 import dayjs from 'dayjs'
-import {Route, DefO} from "./api";
+import {Route, DefO} from "./api"
+
+
+const Insight = z.object({
+  // anything, just need for keyby. I'll use ulid so I can sort if needed
+  id: z.string(),
+})
 
 export const insights_get_request = z.object({
   entry_ids: z.string().array(),
@@ -17,15 +23,13 @@ export type insights_get_request = z.infer<typeof insights_get_request>
 export const insights_get_response = insights_get_request
 export type insights_get_response = z.infer<typeof insights_get_response>
 
-export const insights_ask_response = z.object({
-  id: z.string(), // anything, just need for keyby
+export const insights_ask_response = Insight.extend({
   answer: z.string()
   // consider adding the relevant passages, with links to the entries
 })
 export type insights_ask_response = z.infer<typeof insights_ask_response>
 
-export const insights_summarize_response = z.object({
-  id: z.string(), // anything, just need for keyby
+export const insights_summarize_response = Insight.extend({
   summary: z.string(),
   keywords: z.string().array(),
   emotion: z.enum([
@@ -44,8 +48,7 @@ export const insights_get_final = z.object({
   done: z.boolean()
 })
 
-export const insights_books_response = z.object({
-  id: z.string(),
+export const insights_books_response = Insight.extend({
   name: z.string(),
   content: z.string(),
   author: z.string(),
@@ -56,13 +59,12 @@ export type insights_books_response = z.infer<typeof insights_books_response>
 export const insights_search_response = z.object({id: z.string()})
 export type insights_search_response = z.infer<typeof insights_search_response>
 
-export const insights_prompt_request = z.object({
+export const insights_prompt_request = Insight.extend({
   entry_ids: z.string().array(),
   prompt: z.string()
 })
 export type insights_prompt_request = z.infer<typeof insights_prompt_request>
-export const insights_prompt_response = z.object({
-  id: z.string(),
+export const insights_prompt_response = Insight.extend({
   response: z.string()
 })
 export type insights_prompt_response = z.infer<typeof insights_prompt_response>

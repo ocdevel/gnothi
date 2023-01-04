@@ -18,6 +18,7 @@ type RecordResult = APIGatewayProxyResultV2 | null
 type ReqParsed = {
   req: Api.Req,
   context: {
+    requestId?: string
     connectionId?: string
     user: Users.User
   }
@@ -42,6 +43,7 @@ export async function proxy(
     records.map(async req => main({
       req,
       context: {
+        requestId: req.body.requestId,
         connectionId: event.requestContext?.connectionId,
         user,
       }
@@ -89,10 +91,16 @@ const handleReq: Api.FnContext['handleReq'] = async (req, fnContext) => {
     const data = await route.fn(req.data, fnContext)
     res = {data}
   } catch (e) {
-    res = (e instanceof GnothiError) ? {
-      code: e.code, error: true, event: req.event, data: e.message
-    } : {
-      code: 500, error: true, event: req.event, data: e.toString()
+    res = {
+      error: true,
+      event: req.event,
+      ...(e instanceof GnothiError ? {
+        code: e.code,
+        data: e.message
+      } : {
+        code: 500,
+        data: e.toString()
+      })
     }
     console.error(e)
     debugger
@@ -109,6 +117,7 @@ const handleRes: Api.FnContext['handleRes'] = async (def, res, fnContext) => {
   let final: RecordResult = null
   console.log("handleRes", def.e, res)
   const resFull = {
+    requestId: fnContext.requestId,
     error: res.error || false,
     code: res.code || 200,
     data: res.data,

@@ -10,6 +10,7 @@ import {Events, Api, Users, Routes} from "@gnothi/schemas";
 import {ReadyState} from "react-use-websocket";
 import {AppSlice} from "./app";
 import {Auth} from 'aws-amplify'
+import {ulid} from 'ulid'
 
 export interface ApiSlice {
   // Used to connect to the websocket
@@ -29,7 +30,7 @@ export interface ApiSlice {
   // AmplifyUser, not the user from database
   // user: any
 
-  send: (event: Events.Events, body: object, protocol?: "ws" | "http") => void
+  send: (event: Events.Events, body: object, extra?: {protocol?: "ws" | "http", requestId?: string}) => void
 
   apiError?: string,
   setApiError: (error: string) => void
@@ -76,7 +77,10 @@ export const apiSlice: StateCreator<
   apiError: undefined,
   setApiError: (apiError) => set({apiError}),
 
-  send: async (event, data, protocol='ws') => {
+  send: async (event, data, extra) => {
+    const protocol = extra?.protocol || "ws"
+    const requestId = extra?.requestId || ulid()
+
     // const jwt = await getJwt()
     // let {as: as_user} = helpers.getStoreState().user
     // let [action, data] = payload
@@ -87,7 +91,11 @@ export const apiSlice: StateCreator<
     // console.log(body)
     // ws.send(JSON.stringify(body))
 
-    const request: Api.Req = {event, data}
+    const request: Api.Req = {
+      event,
+      data,
+      requestId
+    }
     if (protocol === 'ws') {
       // ws response will come in useSend, then call back here to handler
       return get().sendJsonMessage(request)

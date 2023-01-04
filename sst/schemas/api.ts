@@ -40,6 +40,7 @@ export type FnContext = {
   snooping?: false
   everyone?: false
 
+  requestId?: string
   finalRes?: unknown
   connectionId?: string
   handleRes: <T extends z.ZodTypeAny = any>(def: DefO<T>, res: Partial<Res<T>>, fnContext: FnContext) => Promise<RecordResult>
@@ -98,20 +99,22 @@ export const Req = z.object({
   event: Events,
   trigger: z.enum(['ws', 'http', 'sns', 's3', 'lambda']).optional(),
   as_user: z.string().uuid().optional(),
-  data: AnyToObj
+  data: AnyToObj,
+  requestId: z.string().optional(),
 })
 export type Req = z.infer<typeof Req>
 
-export type ResError = {
+type Res_ = {
   event: Events
-  error: true
   code: number
+  requestId?: string
+}
+export type ResError = Res_ & {
+  error: true
   data: string
 }
-export type ResSuccess<T = unknown> = ResOverrides & {
-  event: Events
+export type ResSuccess<T = unknown> = Res_ & ResOverrides & {
   error: false
-  code: number
   data: T[]
 }
 export type Res<T = unknown> = ResSuccess<T> | ResError
