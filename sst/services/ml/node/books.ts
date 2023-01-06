@@ -2,13 +2,14 @@ import {lambdaSend} from "../../aws/handlers"
 import {insights_books_response} from '@gnothi/schemas/insights'
 import {Config} from '@serverless-stack/node/config'
 import * as S from "@gnothi/schemas"
+import {sendInsight} from "./utils";
 
 type FnIn = {
   context?: S.Api.FnContext
   search_mean: number[]
 }
 type LambdaIn = FnIn
-type LambdaOut = insights_books_response[]
+type LambdaOut = insights_books_response['books'][]
 type FnOut = LambdaOut
 
 export async function books({search_mean, context}: FnIn): Promise<FnOut> {
@@ -25,12 +26,10 @@ export async function books({search_mean, context}: FnIn): Promise<FnOut> {
   } else {
     res = []
   }
-  if (context?.connectionId) {
-    await context.handleRes(
-      S.Routes.routes.insights_books_response,
-      {data: res},
-      context
-    )
-  }
+  await sendInsight(
+    S.Routes.routes.insights_books_response,
+    {books: res},
+    context
+  )
   return res
 }

@@ -28,8 +28,10 @@ r.insights_get_response.fn = r.insights_get_response.fnDef.implement(async (req,
   const mEntries = new M.Entries(context.user.id)
   const user_id = context.user.id
   const promises = []
-  const {insights, entry_ids} = req
+  const {insights, entry_ids, view} = req
   const {query} = insights
+  // will be used to pair to which page called the insights client-side (eg list vs view)
+  context.requestId = req.view
 
   // Then run search, which will further filter the results
   const {ids, search_mean, clusters} = await search({
@@ -75,5 +77,5 @@ r.insights_get_response.fn = r.insights_get_response.fnDef.implement(async (req,
   }
 
   await Promise.all(promises)
-  return [{done: true}]
+  return [{view, done: true}]
 })

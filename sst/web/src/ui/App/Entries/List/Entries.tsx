@@ -12,7 +12,7 @@ import {Alert2} from "../../../Components/Misc";
 
 export default function Entries({group_id=null}) {
   const entries = useStore(s => s.res.entries_list_response)
-  const search_response = useStore(s => s.res.insights_search_response?.rows)
+  const search_response = useStore(s => s.res.insights_search_response?.hash?.list)
 
   const ids = entries?.ids || []
   const hash = entries?.hash || {}
@@ -31,7 +31,7 @@ export default function Entries({group_id=null}) {
 
   let filtered: string[] = ids
   if (search_response) {
-    filtered = search_response.map(r => r.id)
+    filtered = search_response.entry_ids
   }
 
   if (!filtered.length) {

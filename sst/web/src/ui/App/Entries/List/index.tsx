@@ -13,11 +13,11 @@ import {useStore} from "../../../../data/store";
 export default function List({group_id=null}) {
   const selectedTags = useStore(s => s.selectedTags)
   const filters = useStore(s => s.filters)
-  const send = useCallback(useStore(s => s.send), [])
+  const send = useStore(useCallback(s => s.send, []))
 
   const entries = useStore(s => s.res.entries_list_response)
 
-  const res = entries?.res || {}
+  const res = entries?.res
   const ids = entries?.ids || []
 
   useEffect(() => {
@@ -32,7 +32,7 @@ export default function List({group_id=null}) {
     send("entries_list_request", filters_)
   }, [filters, selectedTags])
 
-  if (res.error && res.code === 403) {
+  if (res?.error && res.code === 403) {
     return <h5>{res.data}</h5>
   }
 
@@ -43,7 +43,7 @@ export default function List({group_id=null}) {
     <Grid container spacing={2}>
       <Grid item sm={12} md={7} lg={8}>
         <Filters />
-        <Ask />
+        <Ask view={'list'} />
         <Entries />
       </Grid>
       <Grid item sm={12} lg={4} md={5}>

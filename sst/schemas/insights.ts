@@ -6,11 +6,12 @@ import {Route, DefO} from "./api"
 
 
 const Insight = z.object({
-  // anything, just need for keyby. I'll use ulid so I can sort if needed
-  id: z.string(),
+  // `id` will determine where these insights are run for. Eg, list-view's id might be
+  // 'list' or the concatenated ids. A single entry-view's id will be that entry.id.
+  view: z.string(),
 })
 
-export const insights_get_request = z.object({
+export const insights_get_request = Insight.extend({
   entry_ids: z.string().array(),
   insights: z.object({
     summarize: z.boolean().optional(), // also includes themes
@@ -44,19 +45,24 @@ export type insights_summarize_response = z.infer<typeof insights_summarize_resp
 export const insights_themes_response = insights_summarize_response
 export type insights_themes_response = z.infer<typeof insights_themes_response>
 
-export const insights_get_final = z.object({
+export const insights_get_final = Insight.extend({
   done: z.boolean()
 })
 
 export const insights_books_response = Insight.extend({
-  name: z.string(),
-  content: z.string(),
-  author: z.string(),
-  genre: z.string()
+  books: z.object({
+    id: z.number(),
+    name: z.string(),
+    content: z.string(),
+    author: z.string(),
+    genre: z.string()
+  }).array()
 })
 export type insights_books_response = z.infer<typeof insights_books_response>
 
-export const insights_search_response = z.object({id: z.string()})
+export const insights_search_response = Insight.extend({
+  entry_ids: z.string().array()
+})
 export type insights_search_response = z.infer<typeof insights_search_response>
 
 export const insights_prompt_request = z.object({
@@ -81,6 +87,7 @@ export const routes = {
       e: 'insights_get_response',
       s: insights_get_response,
       t: {ws: true, background: true},
+      keyby: 'view'
     }
   }),
   insights_get_response: new Route({
@@ -93,6 +100,7 @@ export const routes = {
       e: 'insights_get_final',
       s: insights_get_final,
       t: {ws: true},
+      keyby: 'view'
     }
   }),
   insights_prompt_request: new Route({
@@ -106,7 +114,7 @@ export const routes = {
       e: "insights_prompt_response",
       s: insights_prompt_response,
       t: {ws: true},
-      keyby: 'id',
+      keyby: 'view',
     }
   }),
 
@@ -115,30 +123,30 @@ export const routes = {
     e: "insights_search_response",
     s: insights_search_response,
     t: {ws: true},
-    keyby: 'id'
+    keyby: 'view'
   },
   insights_ask_response: <DefO<any>>{
     e: "insights_ask_response",
     s: insights_ask_response,
     t: {ws: true},
-    keyby: 'id'
+    keyby: 'view'
   },
   insights_themes_response: <DefO<any>>{
     e: "insights_themes_response",
     s: insights_themes_response,
     t: {ws: true},
-    keyby: 'id'
+    keyby: 'view'
   },
   insights_summarize_response: <DefO<any>>{
     e: "insights_summarize_response",
     s: insights_summarize_response,
     t: {ws: true},
-    keyby: 'id'
+    keyby: 'view'
   },
   insights_books_response: <DefO<any>>{
     e: "insights_books_response",
     s: insights_books_response,
     t: {ws: true},
-    keyby: 'id'
+    keyby: 'view'
   }
 }

@@ -2,7 +2,7 @@ import {lambdaSend} from "../../aws/handlers"
 import * as S from '@gnothi/schemas'
 import {insights_books_response} from '@gnothi/schemas/insights'
 import {Config} from '@serverless-stack/node/config'
-import {v4 as uuid} from 'uuid'
+import {sendInsight} from "./utils";
 
 const r = S.Routes.routes
 
@@ -44,13 +44,11 @@ export async function search({user_id, entry_ids, query, context}: FnIn): Promis
     "RequestResponse"
   )
   const res = Payload
-  if (context?.connectionId) {
-    const ids = query?.length ? res.ids : entry_ids
-    await context.handleRes(
-      r.insights_search_response,
-      { data: ids.map(id => ({id})) },
-      context
-    )
-  }
+  entry_ids = query?.length ? res.ids : entry_ids
+  await sendInsight(
+    r.insights_search_response,
+    {entry_ids},
+    context
+  )
   return res
 }

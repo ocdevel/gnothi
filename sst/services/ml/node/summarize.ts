@@ -4,6 +4,7 @@ import * as S from '@gnothi/schemas'
 import {TextsParamsMatch} from "./errors";
 import {Config} from '@serverless-stack/node/config'
 import {v4 as uuid} from 'uuid'
+import {sendInsight} from "./utils";
 
 interface Params {
   summarize?: {
@@ -59,18 +60,18 @@ interface SummarizeInsights {
   context: S.Api.FnContext
 }
 export async function summarizeInsights({context, entries}: SummarizeInsights): Promise<FnOut> {
-  let summary: FnOut
+  let summaries: FnOut
   if (entries.length === 0) {
-    summary = []
+    summaries = []
   } else if (entries.length === 1) {
     // just use summary
-    summary = [{
+    summaries = [{
       summary: entries[0].ai_text,
       keywords: entries[0].ai_keywords,
       emotion: entries[0].ai_sentiment
     }]
   } else {
-    summary = await summarize({
+    summaries = await summarize({
       // summarize summaries, NOT full originals (to reduce token max)
       texts: [entries.map(e => e.ai_text || e.text).join('\n')],
       params: [{
@@ -80,14 +81,12 @@ export async function summarizeInsights({context, entries}: SummarizeInsights): 
       }]
     })
   }
-  if (context?.connectionId) {
-    await context.handleRes(
-      S.Routes.routes.insights_summarize_response,
-      {data: summary.map(s => ({id: uuid(), ...s}))},
-      context
-    )
-  }
-  return summary
+  await sendInsight(
+    S.Routes.routes.insights_summarize_response,
+    summaries[0],
+    context
+  )
+  return summaries
 }
 
 

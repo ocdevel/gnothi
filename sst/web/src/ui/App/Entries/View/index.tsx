@@ -39,7 +39,7 @@ interface Entry {
   onClose?: any
 }
 export default function View({entry, onClose}: Entry) {
-  const setEntryModal = useCallback(useStore(s => s.setEntryModal), [])
+  const setEntryModal = useStore(useCallback(s => s.setEntryModal, []))
   const as = useStore(s => s.user.as)
   const [tags, setTags] = useState(entry.tags)
 

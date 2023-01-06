@@ -11,7 +11,7 @@ import Upsert from './Upsert/Upsert'
 
 export default function Modal() {
   const entryModal = useStore(s => s.entryModal)
-  const setEntryModal = useCallback(useStore(s => s.setEntryModal), [])
+  const setEntryModal = useStore(useCallback(s => s.setEntryModal, []))
   const as = useStore(s => s.user?.as)
 
   const entry = entryModal?.entry

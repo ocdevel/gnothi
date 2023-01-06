@@ -13,8 +13,9 @@ import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import Chip from "@mui/material/Chip";
 import {LinearProgress} from "@mui/material";
+import {Insight} from "./Utils";
 
-export default function Themes() {
+export default function Themes({view}: Insight) {
   const submitted = useStore(s => !!s.res.insights_get_response?.first)
   const themes = useStore(s => s.res.insights_themes_response)
   const filters = useStore(s => s.filters)

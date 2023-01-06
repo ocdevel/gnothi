@@ -9,7 +9,7 @@ import {
   FaLock
 } from "react-icons/fa"
 
-import React, {useState, useEffect} from "react"
+import React, {useState, useEffect, useCallback} from "react"
 import {useStore} from "@gnothi/web/src/data/store"
 
 
@@ -82,7 +82,8 @@ interface Insights {
 }
 export default function Insights({entry_ids}: Insights) {
   const search = useStore(s => s.filters.search)
-  const send = React.useCallback(useStore(s => s.send), [])
+  const send = useStore(useCallback(s => s.send, []))
+  const view = entry_ids.length === 1 ? entry_ids[0] : "list"
 
   useEffect(() => {
     if (!entry_ids?.length) {return}
@@ -91,6 +92,7 @@ export default function Insights({entry_ids}: Insights) {
     console.log('insights:useEffect', [search, entry_ids])
 
     send("insights_get_request", {
+      view,
       entry_ids,
       insights: {
         summarize: true,
@@ -113,28 +115,28 @@ export default function Insights({entry_ids}: Insights) {
       icon={<SummarizeIcon {...iconProps} />}
       description="Summarize your entries for an overview."
     >
-      <Summarize />
+      <Summarize view={view} />
     </Insight>
     <Insight
       label="Themes"
       icon={<ThemesIcon {...iconProps} />}
       description="Show common recurring themes across your entries."
     >
-      <Themes />
+      <Themes view={view} />
     </Insight>
     <Insight
       label="Prompt"
       icon={<PromptIcon {...iconProps} />}
       description="Prompts"
     >
-      <Prompt entry_ids={entry_ids} />
+      <Prompt entry_ids={entry_ids} view={view} />
     </Insight>
     <Insight
       label="Books"
       icon={<BooksIcon {...iconProps} />}
       description="Book recommendations based on your entries."
     >
-      <Books />
+      <Books view={view} />
     </Insight>
   </Stack2>
 }

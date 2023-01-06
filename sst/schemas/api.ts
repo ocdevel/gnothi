@@ -100,14 +100,12 @@ export const Req = z.object({
   trigger: z.enum(['ws', 'http', 'sns', 's3', 'lambda']).optional(),
   as_user: z.string().uuid().optional(),
   data: AnyToObj,
-  requestId: z.string().optional(),
 })
 export type Req = z.infer<typeof Req>
 
 type Res_ = {
   event: Events
   code: number
-  requestId?: string
 }
 export type ResError = Res_ & {
   error: true

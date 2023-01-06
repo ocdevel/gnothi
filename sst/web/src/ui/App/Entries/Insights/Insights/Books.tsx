@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react'
+import React, {useState, useEffect, useCallback} from 'react'
 import {sent2face} from "@gnothi/web/src/utils/utils"
 import RecommendIcon from '@mui/icons-material/Recommend';
 
@@ -10,12 +10,13 @@ import {LinearProgress} from "@mui/material";
 import Checkbox from "@mui/material/Checkbox";
 import Stack from "@mui/material/Stack";
 import {insights_books_response} from '@gnothi/schemas/insights'
+import {Insight} from './Utils'
 
-export default function Summarize() {
-  const submitted = useStore(s => !!s.res.insights_get_response?.first)
-  const books = useStore(store => store.res.insights_books_response)
+export default function Summarize({view}: Insight) {
+  const submitted = useStore(useCallback(s => !!s.res.insights_get_response?.hash?.[view], [view]))
+  const books = useStore(useCallback(s => s.res.insights_books_response?.hash?.[view]?.books, [view]))
 
-  const waiting = !books?.first && submitted
+  const waiting = !books?.length && submitted
 
   // 26fecb16 - specify summary length
 
@@ -23,7 +24,7 @@ export default function Summarize() {
     return <LinearProgress />
   }
 
-  function renderBook(b: insights_books_response) {
+  function renderBook(b: insights_books_response['books'][number]) {
     return <Stack direction="column" mb={2}>
       <Typography>{b.name}</Typography>
       <Stack spacing={1} direction="row">
@@ -36,8 +37,8 @@ export default function Summarize() {
   }
 
   const icons = {color: "secondary", fontSize: "large"} as const
-  if (!books?.rows?.length) {return null}
+  if (!books?.length) {return null}
   return <Box>
-    {books.rows.slice(0,5).map(renderBook)}
+    {books.slice(0,5).map(renderBook)}
   </Box>
 }

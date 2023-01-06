@@ -2,6 +2,7 @@ import {lambdaSend} from "../../aws/handlers"
 import {Config} from '@serverless-stack/node/config'
 import * as S from '@gnothi/schemas'
 import {v4 as uuid} from 'uuid'
+import {sendInsight} from "./utils";
 
 type FnIn = {
   context?: S.Api.FnContext
@@ -30,9 +31,9 @@ export async function ask({user_id, entry_ids, query, context}: FnIn): Promise<F
   if (context?.connectionId) {
     // it will return {answer: ""} anyway
     if (Payload.answer?.length) {
-      await context.handleRes(
+      await sendInsight(
         S.Routes.routes.insights_ask_response,
-        {data: [{id: uuid(), answer: Payload.answer}]},
+        Payload,
         context
       )
     }

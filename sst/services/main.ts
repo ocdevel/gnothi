@@ -18,7 +18,6 @@ type RecordResult = APIGatewayProxyResultV2 | null
 type ReqParsed = {
   req: Api.Req,
   context: {
-    requestId?: string
     connectionId?: string
     user: Users.User
   }
@@ -43,7 +42,6 @@ export async function proxy(
     records.map(async req => main({
       req,
       context: {
-        requestId: req.body.requestId,
         connectionId: event.requestContext?.connectionId,
         user,
       }
@@ -117,7 +115,6 @@ const handleRes: Api.FnContext['handleRes'] = async (def, res, fnContext) => {
   let final: RecordResult = null
   console.log("handleRes", def.e, res)
   const resFull = {
-    requestId: fnContext.requestId,
     error: res.error || false,
     code: res.code || 200,
     data: res.data,

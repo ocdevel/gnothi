@@ -15,6 +15,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import keyBy from 'lodash/keyBy'
 import * as S from '@gnothi/schemas'
 import Divider from "@mui/material/Divider";
+import {Insight} from './Utils'
 
 const prompts = [
   {
@@ -46,10 +47,10 @@ const prompts = [
 const promptsObj = keyBy(prompts, 'key')
 type Preset = keyof typeof promptsObj
 
-interface Prompt {
+type Prompt = Insight & {
   entry_ids: string[]
 }
-export default function Prompt({entry_ids}: Prompt) {
+export default function Prompt({entry_ids, view}: Prompt) {
   // TODO useStore version of loading
   const [trips, setTrips] = useState<{
     waiting: boolean
@@ -60,7 +61,7 @@ export default function Prompt({entry_ids}: Prompt) {
     responses: [],
     waiting: false,
   })
-  const send = useCallback(useStore(s => s.send), [])
+  const send = useStore(useCallback(s => s.send, []))
   const promptResponse = useStore(s => s.res.insights_prompt_response?.first)
   const [preset, setPreset] = useState<Preset>("")
   const [prompt, setPrompt] = useState<string>("")
@@ -89,6 +90,7 @@ export default function Prompt({entry_ids}: Prompt) {
     })
     console.log("prompt", entry_ids)
     send("insights_prompt_request", {
+      view,
       entry_ids,
       prompt
     })
@@ -141,7 +143,7 @@ export default function Prompt({entry_ids}: Prompt) {
       {trips.waiting ? <CircularProgress /> : "Submit"}
     </Button>
     <Divider />
-    {trips.responses.map((res, i) => <div key={res.id}>
+    {trips.responses.map((res, i) => <div key={i}>
       <Typography>Q: {trips.prompts[i]}</Typography>
       <Typography>A: {res.response}</Typography>
       <Divider />

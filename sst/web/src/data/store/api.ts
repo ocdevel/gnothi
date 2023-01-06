@@ -30,7 +30,7 @@ export interface ApiSlice {
   // AmplifyUser, not the user from database
   // user: any
 
-  send: (event: Events.Events, body: object, extra?: {protocol?: "ws" | "http", requestId?: string}) => void
+  send: (event: Events.Events, body: object, extra?: {protocol?: "ws" | "http"}) => void
 
   apiError?: string,
   setApiError: (error: string) => void
@@ -79,7 +79,6 @@ export const apiSlice: StateCreator<
 
   send: async (event, data, extra) => {
     const protocol = extra?.protocol || "ws"
-    const requestId = extra?.requestId || ulid()
 
     // const jwt = await getJwt()
     // let {as: as_user} = helpers.getStoreState().user
@@ -94,7 +93,6 @@ export const apiSlice: StateCreator<
     const request: Api.Req = {
       event,
       data,
-      requestId
     }
     if (protocol === 'ws') {
       // ws response will come in useSend, then call back here to handler
