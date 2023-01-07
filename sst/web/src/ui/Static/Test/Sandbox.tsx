@@ -7,7 +7,7 @@ import Stack from "@mui/material/Stack";
 
 import {useStore} from "@gnothi/web/src/data/store"
 import Typography from "@mui/material/Typography";
-import {LinearProgress} from "@mui/material";
+import {Chip, LinearProgress} from "@mui/material";
 import Box from "@mui/material/Box";
 import TextField from "@mui/material/TextField";
 import MenuItem from "@mui/material/MenuItem";
@@ -16,7 +16,15 @@ import InputLabel from "@mui/material/InputLabel";
 import FormControl from "@mui/material/FormControl";
 import {FullScreenDialog} from "../../Components/Dialog";
 
-export default function ModalModal() {
+import { styled } from '@mui/material/styles';
+import Paper from '@mui/material/Paper';
+import TagFacesIcon from '@mui/icons-material/TagFaces';
+import CheckCircle from "@mui/icons-material/CheckCircle";
+
+
+
+
+export function ModalModal() {
   const [modal2, setModal2] = useState(false)
   return <div>
     <FullScreenDialog title={"Modal1"} open={true} onClose={() => {}}>
@@ -195,3 +203,69 @@ function AppBarSandbox() {
     </Stack>
   </>
 }
+
+
+
+
+
+
+
+
+interface ChipData {
+  key: number;
+  label: string;
+}
+
+const ListItem = styled('li')(({ theme }) => ({
+  margin: theme.spacing(0.5),
+}));
+
+export default function ChipsArray() {
+  const [chipData, setChipData] = React.useState<readonly ChipData[]>([
+    { key: 0, label: 'Main' },
+    { key: 1, label: 'Dreams' },
+    { key: 2, label: 'Therapy' },
+    { key: 3, label: 'Poetry' },
+    { key: 4, label: 'Songs' },
+  ]);
+
+  const handleDelete = (chipToDelete: ChipData) => () => {
+    setChipData((chips) => chips.filter((chip) => chip.key !== chipToDelete.key));
+  };
+
+  return (
+    <Paper
+      sx={{
+        display: 'flex',
+        justifyContent: 'center',
+        flexWrap: 'wrap',
+        listStyle: 'none',
+        p: 5,
+        m: 0,
+      }}
+      component="ul"
+    >
+      {chipData.map((data) => {
+        let icon;
+
+        if (data.label === 'React') {
+          icon = <TagFacesIcon />;
+        }
+
+        return (
+          <ListItem key={data.key}>
+            <Chip
+             variant="filled" 
+             color= "primary"
+              icon={<CheckCircle />}
+              label={data.label}
+            />
+          </ListItem>
+        );
+      })}
+    </Paper>
+  );
+}
+
+
+    

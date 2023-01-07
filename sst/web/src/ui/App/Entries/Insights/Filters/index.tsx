@@ -15,10 +15,12 @@ export default function Filters() {
       spacing={2}
       direction="row"
       alignItems="center"
+      justifyContent="flex-start"
       flexWrap="wrap"
     >
       <DatePickers />
-      <Box>{MainTags}</Box>
+      <Box
+       sx={{paddingTop:2}}>{MainTags}</Box>
     </Stack>
     <Box>
       <Search />

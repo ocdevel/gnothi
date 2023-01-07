@@ -5,6 +5,7 @@ import {useStore} from "../../../data/store"
 import Chip from '@mui/material/Chip'
 import Grid from '@mui/material/Grid'
 import CheckCircle from "@mui/icons-material/CheckCircle";
+import CheckIcon from '@mui/icons-material/Check';
 import Label from "@mui/icons-material/Label";
 import Pencil from "@mui/icons-material/Create";
 import Modal from './Modal'
@@ -75,20 +76,18 @@ export default function Tags({
     const selected_ = selectedTags_[tid]
     const tag = hash[tid]
     return <Box key={tid}>
-      <FormControlLabel 
-        control={
-          <Switch
-            checked={selected_}
-            disabled={noClick}
-            icon={selected_ ? <CheckCircle /> : undefined}
-            variant={selected_ ? undefined : "outlined"}
-            color= "secondary" 
-            onChange={() => selectTag(tid, !selected_)}
-            className="button-tags-tag"
-          />
-        }
-        label={tag.name}
+      <Chip
+        variant={selected_? "filled" : "outlined"} 
+        disabled={noClick}
+        sx={{border: 'none'}}
+        icon={selected_ ? <CheckIcon /> : undefined}
+        size= "small" 
+        onClick={() => selectTag(tid, !selected_)}
+        className="button-tags-tag"
+        color= "primary"
+        label= {tag.name}
       />
+      
     </Box>
   }
 
