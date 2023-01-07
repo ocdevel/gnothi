@@ -94,7 +94,7 @@ type Clickable = {
   onClick?: () => void
   className?: string
 }
-type Link = Clickable
+export type Link = Clickable
 export type CTA = Clickable & {
   secondary?: boolean
 }

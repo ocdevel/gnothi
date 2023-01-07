@@ -12,7 +12,7 @@ import Stack from "@mui/material/Stack";
 import {insights_books_response} from '@gnothi/schemas/insights'
 import {Insight} from './Utils'
 
-export default function Summarize({view}: Insight) {
+export default function Books({view}: Insight) {
   const submitted = useStore(useCallback(s => !!s.res.insights_get_response?.hash?.[view], [view]))
   const books = useStore(useCallback(s => s.res.insights_books_response?.hash?.[view]?.books, [view]))
 
@@ -24,8 +24,11 @@ export default function Summarize({view}: Insight) {
     return <LinearProgress />
   }
 
-  function renderBook(b: insights_books_response['books'][number]) {
-    return <Stack direction="column" mb={2}>
+  function renderBook(
+    b: insights_books_response['books'][number],
+    i: number,
+  ) {
+    return <Stack direction="column" mb={2} key={b.id}>
       <Typography>{b.name}</Typography>
       <Stack spacing={1} direction="row">
         <RecommendIcon {...icons} />

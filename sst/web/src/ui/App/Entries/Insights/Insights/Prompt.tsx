@@ -16,6 +16,7 @@ import keyBy from 'lodash/keyBy'
 import * as S from '@gnothi/schemas'
 import Divider from "@mui/material/Divider";
 import {Insight} from './Utils'
+import Grow from '@mui/material/Grow';
 
 const prompts = [
   {
@@ -86,7 +87,7 @@ export default function Prompt({entry_ids, view}: Prompt) {
     setTrips({
       ...trips,
       waiting: true,
-      prompts: [...trips.prompts, prompt]
+      prompts: [prompt, ...trips.prompts]
     })
     console.log("prompt", entry_ids)
     send("insights_prompt_request", {
@@ -94,6 +95,26 @@ export default function Prompt({entry_ids, view}: Prompt) {
       entry_ids,
       prompt
     })
+  }
+
+  function renderResponse(
+    _: any,
+    i: number
+  ) {
+    const prompt = trips.prompts[i]
+    const res = trips.responses[i]
+    return <Grow
+      in={true}
+      key={res.id}
+      style={{ transformOrigin: '0 0 0' }}
+      timeout={1000}
+    >
+      <Box>
+        <Typography>Q: {prompt}</Typography>
+        <Typography>A: {res.response}</Typography>
+        <Divider />
+      </Box>
+    </Grow>
   }
 
   return <Stack spacing={2} component="form">
@@ -142,11 +163,6 @@ export default function Prompt({entry_ids, view}: Prompt) {
     >
       {trips.waiting ? <CircularProgress /> : "Submit"}
     </Button>
-    <Divider />
-    {trips.responses.map((res, i) => <div key={i}>
-      <Typography>Q: {trips.prompts[i]}</Typography>
-      <Typography>A: {res.response}</Typography>
-      <Divider />
-    </div>)}
+    {trips.responses.map(renderResponse)}
   </Stack>
 }

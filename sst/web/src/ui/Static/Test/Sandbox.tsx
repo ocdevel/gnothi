@@ -20,8 +20,31 @@ import { styled } from '@mui/material/styles';
 import Paper from '@mui/material/Paper';
 import TagFacesIcon from '@mui/icons-material/TagFaces';
 import CheckCircle from "@mui/icons-material/CheckCircle";
+import Divider from "@mui/material/Divider";
+import Grow from "@mui/material/Grow";
+import {ulid} from 'ulid'
 
 
+export default function Tmp() {
+  const [items, setItems] = useState<{name: string, id: string}[]>([])
+  function add() {
+    setItems([{name: ulid(), id: ulid()}, ...items])
+  }
+  return <div>
+    <Button onClick={add}>Add</Button>
+    {items.map(({name, id}) => <Grow
+      in={true}
+      key={id}
+      style={{ transformOrigin: '0 0 0' }}
+      timeout={1000}
+    >
+      <Box>
+        <Typography>{name}</Typography>
+        <Divider />
+      </Box>
+    </Grow>)}
+  </div>
+}
 
 
 export function ModalModal() {
@@ -220,7 +243,7 @@ const ListItem = styled('li')(({ theme }) => ({
   margin: theme.spacing(0.5),
 }));
 
-export default function ChipsArray() {
+export function ChipsArray() {
   const [chipData, setChipData] = React.useState<readonly ChipData[]>([
     { key: 0, label: 'Main' },
     { key: 1, label: 'Dreams' },
@@ -268,4 +291,3 @@ export default function ChipsArray() {
 }
 
 
-    
