@@ -65,7 +65,7 @@ export const insights_search_response = Insight.extend({
 })
 export type insights_search_response = z.infer<typeof insights_search_response>
 
-export const insights_prompt_request = z.object({
+export const insights_prompt_request = Insight.extend({
   entry_ids: z.string().array(),
   prompt: z.string()
 })

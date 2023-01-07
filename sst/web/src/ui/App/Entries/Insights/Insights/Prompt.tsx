@@ -62,7 +62,7 @@ export default function Prompt({entry_ids, view}: Prompt) {
     waiting: false,
   })
   const send = useStore(useCallback(s => s.send, []))
-  const promptResponse = useStore(s => s.res.insights_prompt_response?.first)
+  const promptResponse = useStore(s => s.res.insights_prompt_response?.hash?.[view])
   const [preset, setPreset] = useState<Preset>("")
   const [prompt, setPrompt] = useState<string>("")
   const [showHelp, setShowHelp] = useState<boolean>(false)
