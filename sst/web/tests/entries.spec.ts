@@ -18,7 +18,7 @@ test("Basics", async ({page}) => {
 })
 
 
-test("Many entries", async ({page}) => {
+test.only("Many entries", async ({page}) => {
   // const browser = await chromium.launch({ headless: false, slowMo: 100 })
   // const page = await browser.newPage()
 
@@ -26,7 +26,7 @@ test("Many entries", async ({page}) => {
   const auth = await utils.signup()
   console.log({auth})
   await utils.addNoAiTag()
-  await utils.addEntries({n_summarize: 5, n_index: 0})
+  await utils.addEntries({n_summarize: 20, n_index: 0})
   await page.locator(".appbar .button-journal").click()
   await expect(page.locator('.entry-teaser')).toHaveCount(1)
 })
