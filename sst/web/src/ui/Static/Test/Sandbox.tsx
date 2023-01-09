@@ -25,7 +25,7 @@ import Grow from "@mui/material/Grow";
 import {ulid} from 'ulid'
 
 
-export default function Tmp() {
+export function GrowTest() {
   const [items, setItems] = useState<{name: string, id: string}[]>([])
   function add() {
     setItems([{name: ulid(), id: ulid()}, ...items])
@@ -243,7 +243,7 @@ const ListItem = styled('li')(({ theme }) => ({
   margin: theme.spacing(0.5),
 }));
 
-export function ChipsArray() {
+export default function ChipsArray() {
   const [chipData, setChipData] = React.useState<readonly ChipData[]>([
     { key: 0, label: 'Main' },
     { key: 1, label: 'Dreams' },

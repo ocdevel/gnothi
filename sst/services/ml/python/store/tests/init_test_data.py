@@ -1,7 +1,7 @@
 import json
 from store.main import main
 from os.path import exists
-from common.fixtures import articles
+from preprocess.fixtures import articles
 from uuid import uuid4
 import datetime
 

@@ -2,17 +2,17 @@ import logging
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
-from sentence_transformers import SentenceTransformer
-from sentence_transformers.util import semantic_search, community_detection
+from sentence_transformers.util import semantic_search
+from store.cluster import cluster
 from store.store import EntryStore, embed
 from common.util import fix_np
+
 
 def search(data):
     query = data.get('query', '')
     entry_ids = data['entry_ids']
     user_id = data['user_id']
     search_threshold = data.get('search_threshold', .5)
-    community_threshold = data.get('community_threshold', .75)
     no_response = dict(
         search_mean=None,
         ids=[],
@@ -67,20 +67,18 @@ def search(data):
 
     # now narrowed by search
     logger.info("Running clustering")
-    # corpus_filtered = fix_np(df_user.embedding.values, to_torch=True)
-    # clusters = community_detection(
-    #     corpus_filtered,
-    #     threshold=community_threshold,
-    #     min_community_size=2
-    # )
-    # clusters = [
-    #     [
-    #         df_user.iloc[idx].obj_id
-    #         for idx in clust
-    #     ]
-    #     for clust in clusters
-    # ]
-    clusters = []
+    corpus_filtered = fix_np(df_user.embedding.values, to_torch=False)
+    centroids, labels = cluster(
+        corpus_filtered,
+        algo='kmeans-guess'
+    )
+    clusters = [
+        [
+            df_user.iloc[idx].obj_id
+            for idx in label
+        ]
+        for label in labels
+    ]
 
     # Normalize orig_id since Paragraph.orig_id == entry_id, aka same for all
     # paragraphs in one entry

@@ -5,6 +5,7 @@ RUN pip3 install --no-cache-dir \
     sentence-transformers==2.2.2 \
     pandas==1.5.2 \
     pyarrow==10.0.1 \
+    kneed==0.8.2 \
     # force-install preferred huggingface, lots of trouble with haystack's 4.22.1
     && pip3 install --no-cache-dir transformers==4.25.1
 
