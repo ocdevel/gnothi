@@ -11,5 +11,5 @@ def mock_data():
 def test_cluster(mock_data):
     texts = [m['text'] for m in mock_data]
     embeddings = embed(texts)
-    clusters = themes(texts, embeddings, algo="agglomorative")
+    clusters = themes(embeddings, algo="agglomorative")
     print(clusters)

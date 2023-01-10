@@ -3,7 +3,7 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 from sentence_transformers.util import semantic_search
-from store.cluster import cluster
+from store.cluster import cluster, themes
 from store.store import EntryStore, embed
 from common.util import fix_np
 
@@ -68,7 +68,7 @@ def search(data):
     # now narrowed by search
     logger.info("Running clustering")
     corpus_filtered = fix_np(df_user.embedding.values, to_torch=False)
-    centroids, labels = cluster(
+    labels = themes(
         corpus_filtered,
         algo='kmeans-guess'
     )

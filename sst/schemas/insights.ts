@@ -42,7 +42,12 @@ export type insights_summarize_response = z.infer<typeof insights_summarize_resp
 
 // summarize will be a single string wrapped as an array [string]
 // themes will be clustered version of the same, so multiple summaries
-export const insights_themes_response = insights_summarize_response
+export const insights_themes_response = z.object({
+  themes: insights_summarize_response.extend({
+    word: z.string().optional(),
+    id: z.string()
+  }).array()
+})
 export type insights_themes_response = z.infer<typeof insights_themes_response>
 
 export const insights_get_final = Insight.extend({

@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from "react"
+import React, {useCallback, useEffect, useState} from "react"
 import {sent2face} from "@gnothi/web/src/utils/utils"
 import _ from "lodash"
 import {BsGear, BsQuestionCircle} from "react-icons/bs"
@@ -14,15 +14,14 @@ import Stack from "@mui/material/Stack";
 import Chip from "@mui/material/Chip";
 import {LinearProgress} from "@mui/material";
 import {Insight} from "./Utils";
+import Divider from "@mui/material/Divider";
 
 export default function Themes({view}: Insight) {
-  const submitted = useStore(s => !!s.res.insights_get_response?.first)
-  const themes = useStore(s => s.res.insights_themes_response)
+  const submitted = useStore(useCallback(s => !!s.res.insights_get_response?.hash?.[view], [view]))
+  const themes = useStore(useCallback(s => s.res.insights_themes_response?.hash?.[view], [view]))
   const filters = useStore(s => s.filters)
 
-  const waiting = !themes?.first && submitted
-
-  return <Typography>FIXME</Typography>
+  const waiting = !themes && submitted
 
   // 26fecb16 - specify summary length
 
@@ -30,7 +29,7 @@ export default function Themes({view}: Insight) {
     return <LinearProgress />
   }
 
-  if (!themes?.first) {
+  if (!themes) {
     return <Typography>Nothing to summarize (try adjusting date range)</Typography>
   }
 
@@ -43,17 +42,19 @@ export default function Themes({view}: Insight) {
   //   </>)
   // }
 
-  function renderTheme(theme: insights_themes_response, i: number) {
+  function renderTheme(theme: insights_themes_response['themes'][number], i: number) {
     return <Box key={theme.id}>
+      <Typography variant="h6">{theme.word}</Typography>
       <Typography>{theme.summary}</Typography>
       <Stack direction="row" spacing={2}>
-        {theme.keywords.map(kw => <Chip key={kw} label={kw} />)}
+        {theme.keywords.map((kw: string) => <Chip key={kw} label={kw} />)}
       </Stack>
+      <Divider />
     </Box>
   }
 
   return <>
-    {themes.rows.map(renderTheme)}
+    {themes.themes.map(renderTheme)}
   </>
 
   // const themes_ =_.sortBy(reply.themes, 'n_entries').slice().reverse()

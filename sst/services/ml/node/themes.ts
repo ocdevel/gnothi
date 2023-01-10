@@ -2,7 +2,10 @@ import {Entry} from '@gnothi/schemas/entries'
 import {summarize, SummarizeOut} from "./summarize"
 import {keyBy} from 'lodash'
 import * as S from '@gnothi/schemas'
-import {v4 as uuid} from 'uuid'
+import {insights_themes_response, insights_summarize_response} from '@gnothi/schemas/insights'
+import {ulid} from 'ulid'
+import {sendInsight} from "./utils";
+import {completion} from './openai'
 
 type FnIn = {
   context?: S.Api.FnContext
@@ -11,30 +14,38 @@ type FnIn = {
 }
 type LambdaIn = never
 type LambdaOut = never
-type FnOut = SummarizeOut[]
+type FnOut = insights_themes_response['themes']
 
-export async function themes({clusters, entries, context}: FnIn): Promise<FnOut> {
-  // FIXME
-  return []
-  const entriesObj = keyBy(entries, 'id')
-  const res = Promise.all(clusters.map(async (cluster) => {
-    const texts = cluster.map(id => entriesObj[id].text)
-    const summary = await summarize({
+async function theme(texts: string[]): Promise<insights_themes_response['themes'][number]> {
+  const [word, summary] = await Promise.all([
+    completion(`What one word describes the following content: ${texts.join('\n')}`),
+    summarize({
       texts,
       params: [{
-        summarize: {min_length: 50, max_length: 100},
+        summarize: {min_length: 30, max_length: 90},
         emotion: true,
-        keywords: {top_n: 5}
+        keywords: {top_n: 3}
       }]
     })
-    return summary[0]
-  }))
-  if (context?.connectionId) {
-    await context.handleRes(
-      S.Routes.routes.insights_themes_response,
-      {data: res.map(theme => ({id: uuid(), ...theme}))},
-      context
-    )
+  ])
+
+  return {
+    ...summary[0] as insights_summarize_response,
+    id: ulid(),
+    word,
   }
+}
+
+export async function themes({clusters, entries, context}: FnIn): Promise<FnOut> {
+  const entriesObj = keyBy(entries, 'id')
+  const res = await Promise.all(clusters.map(async (cluster) => {
+    const texts = cluster.map(id => entriesObj[id].text)
+    return theme(texts)
+  }))
+  await sendInsight(
+    S.Routes.routes.insights_themes_response,
+    {themes: res},
+    context
+  )
   return res
 }

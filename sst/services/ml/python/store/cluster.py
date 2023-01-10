@@ -56,7 +56,7 @@ def cluster(embeddings, algo):
     # Label & return clustered centroids + labels
     return centroids(embeddings, labels), labels
 
-def themes(texts, embeddings, algo='kmeans-guess'):
+def themes(embeddings, algo='kmeans-guess'):
     """
     :param texts:
     :param embeddings:
@@ -64,7 +64,7 @@ def themes(texts, embeddings, algo='kmeans-guess'):
     :return:
     """
     # assert len(eids) == len(res)
-    texts = pd.Series(texts)
+    indexes = pd.Series(np.arange(len(embeddings)))
     centroids, labels = cluster(embeddings, algo)
 
     topics = []
@@ -76,12 +76,6 @@ def themes(texts, embeddings, algo='kmeans-guess'):
         if n_entries < 1:
             print('skipping')
             continue
-
-        texts_ = texts[mask]
-
-        topics.append({
-            'n_entries': n_entries,
-            'texts': texts_,
-        })
+        topics.append(indexes[mask].tolist())
 
     return topics
