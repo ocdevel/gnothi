@@ -36,6 +36,10 @@ export interface ApiSlice {
   setApiError: (error: string) => void
 }
 
+// TODO hack to prevent fetching too many times, due to React re-renders.
+// Fix at the re-render level, but doing this for now to save money
+const lastSent: Record<string,number> = {}
+
 export const apiSlice: StateCreator<
   ApiSlice & EventsSlice & AppSlice,
   [],
@@ -79,6 +83,12 @@ export const apiSlice: StateCreator<
 
   send: async (event, data, extra) => {
     const protocol = extra?.protocol || "ws"
+
+    // Check if last-sent was very recently, if so bail
+    if (lastSent[event]) {
+      if (Math.abs(Date.now() - lastSent[event]) < 1000) { return }
+    }
+    lastSent[event] = Date.now()
 
     // const jwt = await getJwt()
     // let {as: as_user} = helpers.getStoreState().user
