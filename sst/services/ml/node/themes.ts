@@ -18,7 +18,7 @@ type FnOut = insights_themes_response['themes']
 
 async function theme(texts: string[]): Promise<insights_themes_response['themes'][number]> {
   const [word, summary] = await Promise.all([
-    completion(`What one word describes the following content: ${texts.join('\n')}`),
+    completion({prompt: `What one word describes the following content: ${texts.join('\n')}`}),
     summarize({
       texts,
       params: [{

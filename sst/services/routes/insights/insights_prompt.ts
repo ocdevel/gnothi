@@ -21,7 +21,7 @@ r.insights_prompt_request.fn = r.insights_prompt_request.fnDef.implement(async (
   const prompt = req.prompt.replace("<entry>", entry)
     .replace("<summary>", entry) // FIXME
     .replace("<paragraphs>", entry) // FIXME
-  const response = await completion(prompt)
+  const response = await completion({prompt})
   return [{
     id: ulid(),
     view: req.view,
