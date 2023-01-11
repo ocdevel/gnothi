@@ -74,3 +74,15 @@ r.tags_delete_request.fn = r.tags_delete_request.fnDef.implement(async (req, con
   await context.handleReq({event: "tags_list_request", data: {}}, context)
   return null
 })
+
+r.tags_toggle_request.fn = r.tags_toggle_request.fnDef.implement(async (req, context) => {
+  return await db.executeStatement({
+    sql: `update tags set selected=(not sub.selected)
+      from (select selected from tags where id=:id) as sub 
+      where id=:id
+      returning *`,
+    parameters: [
+      {name: "id", value: {stringValue: req.id}, typeHint: "UUID"}
+    ]
+  })
+})

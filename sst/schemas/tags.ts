@@ -41,6 +41,8 @@ export const tags_toggle_request = Tag.pick({
   id: true
 })
 export type tags_toggle_request = z.infer<typeof tags_toggle_request>
+export const tags_toggle_response = tags_list_response
+export type tags_toggle_response = z.infer<typeof tags_toggle_response>
 
 export const EntryTag = z.object({
   entry_id: z.string().uuid(), // entries.id FK
@@ -115,7 +117,9 @@ export const routes = {
     },
     o: {
       e: 'tags_toggle_response',
-      s: Passthrough,
+      s: tags_toggle_response,
+      event_as: "tags_list_response",
+      op: "update",
       t: {ws: true},
     }
   })
