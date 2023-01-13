@@ -2,7 +2,6 @@ import { expect } from '@playwright/test';
 import type {Page} from "@playwright/test"
 import {readFileSync} from "fs";
 import {ulid} from "ulid";
-import _ from 'lodash'
 
 const URL = 'http://localhost:5173'
 // const URL = 'https://d345r2wooxhdr2.cloudfront.net'

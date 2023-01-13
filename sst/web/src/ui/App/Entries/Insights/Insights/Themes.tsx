@@ -43,7 +43,7 @@ export default function Themes({view}: Insight) {
   // }
 
   function renderTheme(theme: insights_themes_response['themes'][number], i: number) {
-    return <Box key={theme.id}>
+    return <Box key={theme.id} sx={{my:1}}>
       <Typography variant="h6">{theme.word}</Typography>
       <Typography>{theme.summary}</Typography>
       <Stack direction="row" spacing={2}>
