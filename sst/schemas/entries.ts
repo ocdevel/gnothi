@@ -69,6 +69,13 @@ export type entries_upsert_response = z.infer<typeof entries_upsert_response>
 export const entries_upsert_final = entries_upsert_response
 export type entries_upsert_final = z.infer<typeof entries_upsert_final>
 
+export const entries_delete_request = z.object({
+  id: z.string()
+})
+export type entries_delete_request = z.infer<typeof entries_delete_request>
+export const entries_delete_response = entries_list_response
+export type entries_delete_response = z.infer<typeof entries_delete_response>
+
 export const routes = {
   entries_list_request: new Route({
     i: {
@@ -114,4 +121,19 @@ export const routes = {
       op: "update"
     },
   }),
+  entries_delete_request: new Route({
+    i: {
+      e: 'entries_delete_request',
+      s: entries_delete_request,
+      t: {ws: true},
+    },
+    o: {
+      e: 'entries_delete_response',
+      s: entries_delete_response,
+      t: {ws: true},
+      event_as: "entries_list_response",
+      keyby: 'id',
+      op: "delete"
+    }
+  })
 }

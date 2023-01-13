@@ -5,6 +5,12 @@ import {boolMapToKeys} from '@gnothi/schemas/utils'
 // @ts-ignore
 import dayjs from "dayjs";
 import {db} from "../db";
+import {entries_list_response} from '@gnothi/schemas/entries'
+
+type EntriesListSQL = Omit<entries_list_response, 'tags'> & {
+  // comes as json string
+  tags: string // Array<S.Tags.Tag>
+}
 
 function tagsToBoolMap(tags: string): Record<string, boolean> {
   // comes in from json_agg, field returned as JSON string
@@ -14,7 +20,7 @@ function tagsToBoolMap(tags: string): Record<string, boolean> {
 
 export class Entries extends Base {
   async getByIds(ids: string[]) {
-    return db.executeStatement<any>({
+    return db.executeStatement<entries_list_response[]>({
       sql: `select * from entries where id in :ids and user_id = :user_id`,
       parameters: [
         {name: "user_id", value: {stringValue: this.uid}, typeHint: "UUID"},
@@ -23,14 +29,14 @@ export class Entries extends Base {
     })
   }
 
-  async filter(req: S.Entries.entries_list_request): Promise<S.Entries.entries_list_response[]> {
+  async filter(req: S.Entries.entries_list_request): Promise<entries_list_response[]> {
     const {tags, startDate, endDate} = req
     const tids = boolMapToKeys(tags)
     if (!tids.length) {
       throw new GnothiError({key: "NO_TAGS"})
     }
     const endDate_ = (endDate === "now" || !endDate) ? dayjs().add(1, "day").toDate() : endDate
-    const rows = await db.executeStatement<any>({
+    const rows = await db.executeStatement<EntriesListSQL>({
       sql: `
         select e.*,
             json_agg(et.*) as tags
@@ -52,5 +58,15 @@ export class Entries extends Base {
     })
     // TODO update SQL to do this conversion, we'll use it elsewhere
     return rows.map(row => ({...row, tags: tagsToBoolMap(row.tags)}))
+  }
+
+  async destroy(id: string) {
+    return (await db.executeStatement<entries_list_response[]>({
+      sql: `delete from entries where id=:id and user_id=:user_id returning *`,
+      parameters: [
+        {name: "user_id", value: {stringValue: this.uid}, typeHint: "UUID"},
+        {name: "id", typeHint: "UUID", value: {stringValue: id}}
+      ]
+    }))[0]
   }
 }
