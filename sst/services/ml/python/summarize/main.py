@@ -61,20 +61,26 @@ class Keywords(object):
         params_ = params.get('keywords', {})
         if not params_:
             return []
+        params_ = {
+            "keyphrase_ngram_range": (1, 1),
+            "stop_words": "english",
+            # Use one of these option-combos
+            # use_mmr=True, diversity=0.7,
+            # use_maxsum=True, nr_candidates=20,
+            **params_,
+        }
+        params_["keyphrase_ngram_range"] = tuple(params_["keyphrase_ngram_range"])
+        print("keywords:params", params_)
         res = self.model.extract_keywords(
             text,
-            keyphrase_ngram_range=(1, 3),
-            stop_words="english",
-
-            # Use one of these option-combos
-            use_mmr=True, diversity=0.7,
-            # use_maxsum=True, nr_candidates=20, top_n=5,
-
-            # TODO passing {'top_n': 5} errors about arg top_n?
-            # **params_
+            **params_
         )
+        print("keywords:res", res)
         # [ ["cognitive behavioral therapy", .9], ["cbt", .8], ..]
-        return [r[0] for r in res]
+        return [
+            r[0] for r in res
+            # if r[1] >= params_.get('min_score', .3)
+        ]
 
 
 class Emotion(object):

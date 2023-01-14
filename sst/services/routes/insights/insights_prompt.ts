@@ -6,27 +6,10 @@ import {z} from 'zod'
 // @ts-ignore
 import dayjs from 'dayjs'
 import {ulid} from 'ulid'
-import {Insights} from '../../data/models/insights'
+import {Insights, getText, getSummary, getParas} from '../../data/models/insights'
 import {Entry} from '@gnothi/schemas/entries'
 
 const r = S.Routes.routes
-
-// prioritize clean-text, worst-case markdown
-function getText (e: Entry): string {
-  return e.text_clean || e.text
-}
-// prioritize summary, worst-case full-text
-function getSummary(e: Entry): string {
-  return e.ai_text || getText(e)
-}
-function getParas(e: Entry): string[] {
-  if (e.text_paras?.length) {
-    return e.text_paras
-  }
-  // TODO text_clean won't have paras, it's clean-join()'d, no paras preserved. This line
-  // should be rare though, since text_paras is likely available by now.
-  return getText(e).split(/\n+/)
-}
 
 r.insights_prompt_request.fn = r.insights_prompt_request.fnDef.implement(async (req, context) => {
   const mInsights = new Insights(context.user.id)

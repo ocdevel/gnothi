@@ -1,11 +1,12 @@
 import {Entry} from '@gnothi/schemas/entries'
-import {summarize, SummarizeOut} from "./summarize"
+import {summarize, SummarizeOut, keywordsDefaults} from "./summarize"
 import {keyBy} from 'lodash'
 import * as S from '@gnothi/schemas'
 import {insights_themes_response, insights_summarize_response} from '@gnothi/schemas/insights'
 import {ulid} from 'ulid'
 import {sendInsight} from "./utils";
 import {completion} from './openai'
+import {getSummary} from "../../data/models/insights";
 
 type FnIn = {
   context?: S.Api.FnContext
@@ -16,15 +17,24 @@ type LambdaIn = never
 type LambdaOut = never
 type FnOut = insights_themes_response['themes']
 
+async function oneWord(text: string): Promise<string | undefined> {
+  try {
+    return completion({prompt: `What one word describes the following content: ${text}`})
+  } catch (e) {
+    return undefined
+  }
+}
+
 async function theme(texts: string[]): Promise<insights_themes_response['themes'][number]> {
+  const text = texts.join('\n')
   const [word, summary] = await Promise.all([
-    completion({prompt: `What one word describes the following content: ${texts.join('\n')}`}),
+    oneWord(text),
     summarize({
       texts,
       params: [{
         summarize: {min_length: 30, max_length: 90},
         emotion: true,
-        keywords: {top_n: 3}
+        keywords: keywordsDefaults
       }]
     })
   ])
@@ -39,7 +49,7 @@ async function theme(texts: string[]): Promise<insights_themes_response['themes'
 export async function themes({clusters, entries, context}: FnIn): Promise<FnOut> {
   const entriesObj = keyBy(entries, 'id')
   const res = await Promise.all(clusters.map(async (cluster) => {
-    const texts = cluster.map(id => entriesObj[id].text)
+    const texts = cluster.map(id => getSummary(entriesObj[id]))
     return theme(texts)
   }))
   await sendInsight(

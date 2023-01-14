@@ -11,11 +11,28 @@ interface Params {
     min_length: number
     max_length: number
   }
+  // https://github.com/MaartenGr/KeyBERT
   keywords?: {
-    top_n: number
+    keyphrase_ngram_range?: [number, number]
+    stop_words?: "english"
+
+    use_mmr?: boolean, // true
+    diversity?: number, // 0.7
+
+    use_maxsum?: boolean, // True,
+    nr_candidates?: number // 20,
+    top_n?: number
   }
   emotion?: boolean
 }
+
+export const keywordsDefaults: Params['keywords'] = {
+  keyphrase_ngram_range: [1, 1],
+  stop_words: "english",
+  // use_mmr: true,
+  // diversity: .10
+}
+
 interface FnIn {
   texts: string[]
   params: Params[]
@@ -76,7 +93,7 @@ export async function summarizeInsights({context, entries}: SummarizeInsights): 
       texts: [entries.map(e => e.ai_text || e.text).join('\n')],
       params: [{
         summarize: {min_length: 40, max_length: 120},
-        keywords: {top_n: 5},
+        keywords: keywordsDefaults,
         emotion: true
       }]
     })
@@ -108,7 +125,7 @@ export interface SummarizeEntryOut {
   }
 }
 
-const paramsExtra = {keywords: {top_n: 5}, emotion: true}
+const paramsExtra = {keywords: keywordsDefaults, emotion: true}
 const params = {
   title: {summarize: {min_length: 3, max_length: 15}},
   para: {summarize: {min_length: 15, max_length: 60}},
