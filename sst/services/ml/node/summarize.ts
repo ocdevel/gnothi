@@ -29,8 +29,8 @@ interface Params {
 export const keywordsDefaults: Params['keywords'] = {
   keyphrase_ngram_range: [1, 1],
   stop_words: "english",
-  // use_mmr: true,
-  // diversity: .10
+  use_mmr: true,
+  diversity: .10
 }
 
 interface FnIn {

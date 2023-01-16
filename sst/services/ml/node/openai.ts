@@ -14,13 +14,13 @@ export async function completion(
   try {
     const res = await openai.createCompletion({
       model: 'text-davinci-003',
-      temperature: 0.7,
-      max_tokens: 3000,
+      temperature: 0.0,
+      max_tokens: 256, // 4096 - prompt.len - 256 = 0
       top_p: 1,
-      ...opts
-      // frequency_penalty
-      // presence_penalty
+      frequency_penalty: 1.,
+      presence_penalty: .25,
       // best_of
+      ...opts
     });
     return res.data.choices[0].text
   } catch (error) {
