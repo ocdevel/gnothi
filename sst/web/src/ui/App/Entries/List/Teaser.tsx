@@ -14,7 +14,7 @@ import {
 
 interface Teaser {
   eid: string
-  gotoForm: (eid: string) => void
+  gotoForm?: (eid: string) => void
 }
 export default function Teaser({eid, gotoForm}: Teaser) {
   const setEntryModal = useStore(s => s.setEntryModal)

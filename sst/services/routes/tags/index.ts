@@ -76,11 +76,12 @@ r.tags_delete_request.fn = r.tags_delete_request.fnDef.implement(async (req, con
 })
 
 r.tags_toggle_request.fn = r.tags_toggle_request.fnDef.implement(async (req, context) => {
-  return await db.executeStatement({
-    sql: `update tags set selected=(not sub.selected)
-      from (select selected from tags where id=:id) as sub 
-      where id=:id
-      returning *`,
+  // update returning: https://stackoverflow.com/questions/7923237/return-pre-update-column-values-using-sql-only
+  return db.executeStatement({
+    sql: `update tags x set selected=(not y.selected)
+      from tags y 
+      where x.id=:id and x.id=y.id
+      returning x.*`,
     parameters: [
       {name: "id", value: {stringValue: req.id}, typeHint: "UUID"}
     ]

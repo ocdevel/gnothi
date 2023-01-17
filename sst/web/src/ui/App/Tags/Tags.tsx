@@ -32,7 +32,7 @@ export default function Tags({
   preSelectMain
 }: Tags) {
   const [editTags, setEditTags] = useState(false)
-  const as = useStore(state => state.as)
+  const as = useStore(state => state.user.as)
   const send = useStore(s => s.send)
   // tags sorted on server
   const tags = useStore(s => s.res.tags_list_response)

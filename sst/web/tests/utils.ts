@@ -2,6 +2,7 @@ import { expect } from '@playwright/test';
 import type {Page} from "@playwright/test"
 import {readFileSync} from "fs";
 import {ulid} from "ulid";
+import type {Events} from "@gnothi/schemas/events";
 
 const URL = 'http://localhost:5173'
 // const URL = 'https://d345r2wooxhdr2.cloudfront.net'
@@ -17,10 +18,12 @@ export class Utils {
   page: Page
   auth: {email: string, pass: string}
   entries: any[]
+  responseListeners: {[k in Events]?: (v: unknown) => void} // resolvers
 
   constructor(page: Page) {
     this.page = page
     this.entries = []
+    this.responseListeners = {}
     this.listenWebsockets()
   }
 
@@ -115,8 +118,25 @@ export class Utils {
     this.page.on('websocket', ws => {
       console.log(`WebSocket opened: ${ws.url()}>`);
       ws.on('framesent', event => console.log(event.payload));
-      ws.on('framereceived', event => console.log(event.payload));
+      ws.on('framereceived', async ({payload}) => {
+        const data = JSON.parse(payload)
+        console.log(data)
+        this.responseListeners[data.event]?.(data)
+      });
       ws.on('close', () => console.log('WebSocket closed'));
+    })
+  }
+
+  async catchRes(event: Events) {
+    // 1. initialize promise
+    return new Promise((resolve, reject) => {
+      this.responseListeners[event] = resolve
+    // 2. It's resolved in listenWebsockets#ws.on(framereceived)
+    }).then((data) => {
+      // 3. Final transformer and return
+      // delete this.responseListeners[event]
+      debugger
+      return data
     })
   }
 
