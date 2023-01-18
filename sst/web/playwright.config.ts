@@ -7,6 +7,8 @@ import { devices } from '@playwright/test';
  */
 // require('dotenv').config();
 
+const viewport = { width: 1920, height: 1080 } as const
+
 /**
  * See https://playwright.dev/docs/test-configuration.
  */
@@ -41,9 +43,12 @@ const config: PlaywrightTestConfig = {
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
 
+    // viewport
+
     video: {
       mode: 'on',
       // size: { width: 640, height: 480 }
+      size: viewport
     }
   },
 
@@ -53,6 +58,7 @@ const config: PlaywrightTestConfig = {
       name: 'chromium',
       use: {
         ...devices['Desktop Chrome'],
+        viewport
       },
     },
 

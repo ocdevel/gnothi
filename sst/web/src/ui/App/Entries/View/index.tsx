@@ -80,7 +80,7 @@ export default function View({entry, onClose}: Entry) {
           setSelected={setTags}
           noClick={true}
           noEdit={true}
-          preSelectMain={true}
+          preSelectMain={false}
         />
       </Box>
     </Box>
@@ -101,7 +101,7 @@ export default function View({entry, onClose}: Entry) {
     </Card>
   }
 
-  return <Grid container>
+  return <Grid container className="entry-view">
     <Grid item xs={12} lg={8}>
       <DialogContent>
         {renderEntry()}

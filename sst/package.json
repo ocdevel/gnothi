@@ -10,6 +10,7 @@
     "console": "AWS_PROFILE=gnothiadmin sst console",
     "typecheck": "tsc --noEmit",
     "test": "AWS_REGION=us-east-1 AWS_PROFILE=gnothiadmin sst bind -- vitest run",
+    "test:gendata": "AWS_REGION=us-east-1 AWS_PROFILE=gnothiadmin sst bind -- vitest run services/tests/setup_mock.spec.ts",
     "gen": "hygen"
   },
   "devDependencies": {

@@ -75,6 +75,8 @@ export default function Tags({
   function renderTag (tid: string) {
     const selected_ = selectedTags_[tid]
     const tag = hash[tid]
+    // used for tests, not CSS
+    const className = `button-tags-tag ${selected_ ? "tag-selected" : "tag-unselected"}`
     return <Box key={tid}>
       <Chip
         variant={selected_? "filled" : "outlined"} 
@@ -83,7 +85,7 @@ export default function Tags({
         icon={selected_ ? <CheckIcon /> : undefined}
         size= "small" 
         onClick={() => selectTag(tid, !selected_)}
-        className="button-tags-tag"
+        className={className}
         color= "primary"
         label= {tag.name}
       />

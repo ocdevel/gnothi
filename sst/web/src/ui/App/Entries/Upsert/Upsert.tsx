@@ -219,7 +219,7 @@ export default function Upsert(props: Entry) {
           setSelected={setTags}
           noClick={false}
           noEdit={false}
-          preSelectMain={true}
+          preSelectMain={isNew}
         />
       </Stack>
     </Box>

@@ -14,16 +14,23 @@ const mockEntries = JSON.parse(mockEntriesFile).map(e => ({
   text: e.text,
 }))
 
+type CatchWs = {
+  log?: boolean
+  debug?: boolean
+  once?: boolean
+}
+
 export class Utils {
   page: Page
   auth: {email: string, pass: string}
   entries: any[]
-  responseListeners: {[k in Events]?: (v: unknown) => void} // resolvers
+  tags: Record<string, string> = {} // {noai: <uuid>}
+  wsListeners: {[k in Events]?: (v: unknown) => void} // resolvers
 
   constructor(page: Page) {
     this.page = page
     this.entries = []
-    this.responseListeners = {}
+    this.wsListeners = {}
     this.listenWebsockets()
   }
 
@@ -34,9 +41,13 @@ export class Utils {
   }
 
   async signup() {
+    if (this.auth?.email) { return }
+
     const page = this.page
     await page.goto(`${URL}/?testing=true`)
     await expect(page).toHaveTitle(/Gnothi/)
+
+    const mainTagP = this.catchWs("tags_list_response", {log: false})
 
     const auth = {email: `${ulid()}@x.com`, pass: "MyPassword!1"}
     await page.locator(".appbar .cta-primary").click() // signup
@@ -45,17 +56,23 @@ export class Utils {
     await page.getByText("Password", {exact: true}).fill(auth.pass)
     await page.getByText("Confirm Password", {exact: true}).fill(auth.pass)
     await page.locator("button[type=submit]").click()
+    // TODO catchWs("tags_list_response") to save Main UUID
     // await expect(page).toHaveTitle(/New Entry/)
     this.auth = auth
     console.log({auth})
+    this.tags.main = (await mainTagP).data[0].id
     return auth
   }
 
   async addNoAiTag() {
+    if (this.tags?.noai) { return }
+    await this.signup()
+    const tagsPostP = this.catchWs("tags_post_response")
     const page = this.page
     await page.locator(".button-tags-edit").click()
-    await page.locator(".textfield-tags-post input").fill("SkipAI")
+    await page.locator(".textfield-tags-post input").fill("No AI")
     await page.locator(".button-tags-post").click()
+    this.tags["noai"] = (await tagsPostP).data[0].id
     const tagRow = await page.locator(".form-tags-put").nth(1)
     await tagRow.locator(".checkbox-tags-ai-summarize").click()
     // Actually let's keep indexing enabled for tests, it's fast. It's summarize that's slow
@@ -77,6 +94,7 @@ export class Utils {
   }
 
   async addEntries({n_summarize=0, n_index=0}: {n_summarize: number, n_index: number}) {
+    await this.addNoAiTag()
     const page = this.page
 
     // FIXME how to redirect without loosing stuff? https://github.com/microsoft/playwright/issues/15889
@@ -115,27 +133,38 @@ export class Utils {
         console.log(message.text())
       }
     })
+
+    const catchWs = async ({payload}: {payload: string | Buffer}) => {
+      const data = JSON.parse(payload as string)
+      this.wsListeners[data.event]?.(data)
+    }
+
     this.page.on('websocket', ws => {
-      console.log(`WebSocket opened: ${ws.url()}>`);
-      ws.on('framesent', event => console.log(event.payload));
-      ws.on('framereceived', async ({payload}) => {
-        const data = JSON.parse(payload)
-        console.log(data)
-        this.responseListeners[data.event]?.(data)
-      });
+      console.log(`WebSocket opened: ${ws.url()}>`)
+      ws.on('framesent', catchWs)
+      ws.on('framereceived', catchWs)
       ws.on('close', () => console.log('WebSocket closed'));
     })
   }
 
-  async catchRes(event: Events) {
+  async catchWs(event: Events, opts: CatchWs = {}) {
+    const {log, once, debug} = {log: true, once: true, debug: false, ...opts}
     // 1. initialize promise
     return new Promise((resolve, reject) => {
-      this.responseListeners[event] = resolve
+      this.wsListeners[event] = resolve
     // 2. It's resolved in listenWebsockets#ws.on(framereceived)
     }).then((data) => {
       // 3. Final transformer and return
-      // delete this.responseListeners[event]
-      debugger
+      if (log) {
+        console.log(data)
+        // debugger
+      }
+      if (once) {
+        this.wsListeners[event] = undefined
+      } else {
+        // set new listener. Can't resolve multiple times
+        new Promise(resolve => {this.wsListeners[event] = resolve})
+      }
       return data
     })
   }
