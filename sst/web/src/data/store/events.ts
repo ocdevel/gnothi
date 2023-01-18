@@ -37,6 +37,7 @@ export interface EventsSlice {
     auth_register_response?: Api.ResUnwrap<Auth.auth_register_response>
     users_list_response?: Api.ResUnwrap<Users.users_list_response>
     tags_list_response?: Api.ResUnwrap<z.infer<typeof r.tags_list_request.o.s>>
+    tags_post_response?: Api.ResUnwrap<Tags.tags_post_response>
     entries_list_response?: Api.ResUnwrap<Entries.entries_list_response>
     fields_list_response?: Api.ResUnwrap<z.infer<typeof r.fields_list_request.o.s>>
     fields_entries_list_response?: Api.ResUnwrap<z.infer<typeof r.fields_entries_list_request.o.s>>

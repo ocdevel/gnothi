@@ -19,10 +19,16 @@ export const Tag = z.object({
 })
 export type Tag = z.infer<typeof Tag>
 
+export const tags_list_response = Tag
+export type tags_list_response = z.infer<typeof tags_list_response>
+
 export const tags_post_request = Tag.pick({
   name: true,
 })
 export type tags_post_request = z.infer<typeof tags_post_request>
+export const tags_post_response = tags_list_response
+export type tags_post_response = z.infer<typeof tags_post_response>
+
 export const tags_put_request = Tag.pick({
   id: true,
   name: true,
@@ -31,8 +37,9 @@ export const tags_put_request = Tag.pick({
   sort: true,
 })
 export type tags_put_request = z.infer<typeof tags_put_request>
-export const tags_list_response = Tag
-export type tags_list_response = z.infer<typeof tags_list_response>
+export const tags_put_response = tags_list_response
+export type tags_put_response = z.infer<typeof tags_put_response>
+
 export const tags_delete_request = z.object({
   id: z.string()
 })
@@ -73,7 +80,7 @@ export const routes = {
     },
     o: {
       e: 'tags_post_response',
-      s: Tag,
+      s: tags_post_response,
       t: {ws: true},
       event_as: "tags_list_response",
       op: "append",
@@ -89,7 +96,7 @@ export const routes = {
     },
     o: {
       e: 'tags_put_response',
-      s: Tag,
+      s: tags_put_response,
       t: {ws: true},
       event_as: "tags_list_response",
       op: "update",

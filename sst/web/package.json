@@ -11,7 +11,7 @@
     "build": "NODE_OPTIONS=\"--max-old-space-size=8192\" vite build",
     "preview": "vite preview",
     "test": "playwright test --project=chromium --headed",
-    "test:specific": "playwright test --project=chromium --headed tests/tags.spec.ts"
+    "test:specific": "playwright test --project=chromium tests/tags.spec.ts"
   },
   "dependencies": {
     "@aws-amplify/ui-react": "^4.2.0",

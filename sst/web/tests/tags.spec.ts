@@ -25,7 +25,7 @@ test("Creates tag, clears form", async ({page}) => {
   await expect(page.locator(".textfield-tags-post input")).toBeEmpty()
 })
 
-test.only("Assigns tags on entry-create", async ({page}) => {
+test("Assigns tags on entry-create", async ({page}) => {
   const utils = new Utils(page)
   const entryPostP = utils.catchWs("entries_upsert_request")
   await utils.addEntries({n_summarize: 0, n_index: 1})
@@ -40,7 +40,7 @@ test.only("Assigns tags on entry-create", async ({page}) => {
   // await expect(page.locator("button-tags-tag").nth(1)).toHaveClass("tag-selected")
 })
 
-test.only("Filter on tags", async ({page}) => {
+test("Filter on tags", async ({page}) => {
   // TODO use manually-specified tag. Need to update Utils()
   // const utils = await createTag(page)
   const utils = new Utils(page)
@@ -58,10 +58,15 @@ test.only("Filter on tags", async ({page}) => {
   expect(toggle1.data[0].name).toBe("Main")
   expect(toggle1.data[0].selected).toBe(false)
   await expect(page.locator(".entry-teaser")).toHaveCount(2)
+  // remove when React-based re-render-based double-sends is fixed
+  await page.waitForTimeout(500)
 
   // de-select NoAI, only shows 0
   await page.locator(".button-tags-tag").nth(1).click()
   await expect(page.locator(".entry-teaser")).toHaveCount(0)
+
+  // re-select Main, only shows 1
+  await page.waitForTimeout(500)
   await page.locator(".button-tags-tag").nth(0).click()
   await expect(page.locator(".entry-teaser")).toHaveCount(1)
 })

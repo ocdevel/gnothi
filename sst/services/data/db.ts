@@ -94,8 +94,8 @@ export class DB {
   }
 
   async executeStatement<O = object>(statement: Statement): Promise<O[]> {
+    const {sql, parameters} = this.arrayValueFix(statement)
     try {
-      const {sql, parameters} = this.arrayValueFix(statement)
       const response = await rdsClient.executeStatement({
         includeResultMetadata: true,
         ...this.driver,
@@ -105,6 +105,7 @@ export class DB {
       const rows = this.transformRes(response)
       return rows as O[]
     } catch (err: any) {
+      console.log({sql, parameters})
       debugger
       throw err
     }

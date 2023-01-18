@@ -32,9 +32,13 @@ export class Entries extends Base {
   async filter(req: S.Entries.entries_list_request): Promise<entries_list_response[]> {
     const {tags, startDate, endDate} = req
     const tids = boolMapToKeys(tags)
+
+    // TODO how to handle this with good UX?
     if (!tids.length) {
-      throw new GnothiError({key: "NO_TAGS"})
+      // throw new GnothiError({key: "NO_TAGS"})
+      return []
     }
+
     const endDate_ = (endDate === "now" || !endDate) ? dayjs().add(1, "day").toDate() : endDate
     const rows = await db.executeStatement<EntriesListSQL>({
       sql: `

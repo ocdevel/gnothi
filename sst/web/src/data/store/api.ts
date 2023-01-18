@@ -86,7 +86,7 @@ export const apiSlice: StateCreator<
 
     // Check if last-sent was very recently, if so bail
     if (lastSent[event]) {
-      if (Math.abs(Date.now() - lastSent[event]) < 1000) { return }
+      if (Math.abs(Date.now() - lastSent[event]) < 200) { return }
     }
     lastSent[event] = Date.now()
 
