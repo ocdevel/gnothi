@@ -1,6 +1,7 @@
 import React, {useState, useEffect, useCallback} from 'react'
 
 import {useStore} from "@gnothi/web/src/data/store"
+import axios from "axios"
 import Typography from "@mui/material/Typography";
 import {LinearProgress} from "@mui/material";
 import Box from "@mui/material/Box";
@@ -18,35 +19,8 @@ import Divider from "@mui/material/Divider";
 import {Insight} from './Utils'
 import Grow from '@mui/material/Grow';
 
-const prompts = [
-  {
-    key: "blank",
-    label: "Blank",
-    prompt: "",
-  },
-  {
-    key: "dream",
-    label: "Dream interpretation",
-    prompt: "Interpret the following dreams: <paragraphs>"
-  },
-  {
-    key: "advice",
-    label: "Life Advice",
-    prompt: "What advice would you have for someone who wrote the following: <summary>",
-  },
-  {
-    key: "books",
-    label: "Book recommends",
-    prompt: "What books would you recommend for someone who wrote the following: <summary>",
-  },
-  {
-    key: "podcasts",
-    label: "Podcast recommends",
-    prompt: "What podcasts would you recommend for someone who wrote the following: <summary>",
-  }
-] as const
-const promptsObj = keyBy(prompts, 'key')
-type Preset = keyof typeof promptsObj
+// type Preset = keyof typeof promptsObj
+type Preset = string
 
 type Prompt = Insight & {
   entry_ids: string[]
@@ -64,9 +38,25 @@ export default function Prompt({entry_ids, view}: Prompt) {
   })
   const send = useStore(useCallback(s => s.send, []))
   const promptResponse = useStore(s => s.res.insights_prompt_response?.hash?.[view])
+  // start with just blank prompt, will populate other prompts via HTTP -> Gist
+  const [prompts, setPrompts] = useState<any>([{
+    "key": "blank",
+    "label": "Blank",
+    "prompt": ""
+  }])
   const [preset, setPreset] = useState<Preset>("")
   const [prompt, setPrompt] = useState<string>("")
   const [showHelp, setShowHelp] = useState<boolean>(false)
+  const promptsObj = keyBy(prompts, 'key')
+
+  async function getPrompts() {
+    const promptsUrl = "https://gist.githubusercontent.com/lefnire/57023741c902627064e7d24302aa402f/raw/prompts.json"
+    const {data} = await axios.get(promptsUrl)
+    setPrompts(data)
+  }
+  useEffect(() => {
+    getPrompts()
+  }, [])
 
   useEffect(() => {
     if (!promptResponse) {return}
