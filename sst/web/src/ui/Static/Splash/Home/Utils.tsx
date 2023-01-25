@@ -6,6 +6,7 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
 import {styles} from '../../../Setup/Mui'
+import { Container } from "@mui/material";
 
 const {colors, spacing} = styles
 
@@ -62,11 +63,21 @@ export function Section({children, color='light'}: React.PropsWithChildren<Secti
   }[color]
   return <Box
     sx={{
-      py: spacing.xl,
-      px: spacing.xl,
+      // py: spacing.xl,
+      // px: spacing.xl,
       backgroundColor
   }}
   >
+    <Container
+    sx={{
+      mt: 10,
+      mb: 15,
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center'
+
+    }}>
     {children}
+    </Container>
   </Box>
 }

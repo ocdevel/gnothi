@@ -6,6 +6,7 @@ import Stack from "@mui/material/Stack";
 import {styles} from '../../../Setup/Mui'
 const {spacing, colors, sx} = styles
 
+import DiscoverAI from './DiscoverAI';
 import NewJournal from "./NewJournal";
 import Hero from './Hero'
 import Demo from './Demo'
@@ -22,6 +23,7 @@ export default function Layout() {
   >
     <Error message={error} />
     <Hero />
+    <DiscoverAI />
     *<NewJournal />
     <Demo />
     <WhatsNext />
