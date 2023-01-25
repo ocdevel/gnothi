@@ -8,9 +8,9 @@ import {
   Outlet
 } from "react-router-dom"
 import Grid from '@mui/material/Grid'
-import {useStore} from '@gnothi/web/src/data/store'
-import Error from '@gnothi/web/src/ui/Components/Error'
-import {Link} from '@gnothi/web/src/ui/Components/Link'
+import {useStore} from '../../../data/store'
+import Error from '../../../ui/Components/Error'
+import {Link} from '../../../ui/Components/Link'
 import Stack from "@mui/material/Stack";
 import {BasicDialog, FullScreenDialog} from "../../Components/Dialog";
 import Button from "@mui/material/Button";

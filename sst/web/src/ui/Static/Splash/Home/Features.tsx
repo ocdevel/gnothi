@@ -1,8 +1,10 @@
 import React, {useState, useEffect} from "react"
 import Grid from "@mui/material/Grid";
 
-import {sx, FeatureCard, colors, spacing, Section} from './Utils'
+const {spacing, colors, sx} = styles
+import {Section} from './Utils'
 import Typography from "@mui/material/Typography";
+import {styles} from "../../../Setup/Mui";
 
 export default function Features() {
   return <Grid>
