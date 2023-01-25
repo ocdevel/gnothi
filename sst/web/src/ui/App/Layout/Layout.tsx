@@ -74,7 +74,7 @@ function Layout() {
   }, [as])
 
   if (!user) {
-    return <Loading label="Loading user" />
+    return <Loading label="user" />
   }
 
   // return <Box key={as}>

@@ -59,7 +59,10 @@ export function Auth({ app, stack }: sst.StackContext) {
       },
       postConfirmation: {
         memorySize: smallLamdaRam,
-        timeout: timeouts.md,
+
+        // TODO switch back to .md when fix RDS cold-start (migrate to v2)
+        timeout: timeouts.lg,
+        // timeout: timeouts.md,
         handler: "auth/postConfirmation.handler",
         bind: [rds]
       },
