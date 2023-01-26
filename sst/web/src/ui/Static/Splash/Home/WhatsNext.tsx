@@ -12,12 +12,18 @@ export default function WhatsNext() {
       alignItems="center"
     >
       <Typography
-        variant="h3"
+        variant="h2"
         sx={{textAlign: "center", maxWidth: 1004}}
-      >We’re a small company, but we’re doing big things</Typography>
-      <Typography
-        sx={{textAlign: "center", maxWidth: 1004}}
-      >Gnothi beta was launched in 2019 and, without any marketing, has supported about 5,000 people. There’s something here. It’s helping people, and we hope to do a lot more of that. Here’s a sneak peak at what we’re working on.</Typography>
+        >
+        TBD
+        </Typography>
+
+        <Typography
+          sx={{textAlign: "center", maxWidth: 1004}}
+          >
+          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer orci magna, tincidunt id interdum sed, auctor at libero. Morbi iaculis ligula ut mi tristique pretium. In vehicula auctor massa eu ultricies. Sed at nibh in risus porttitor ullamcorper.        
+          </Typography>
+
       <Stack direction="row" spacing={spacing.sm} mt={spacing.lg}>
         <Skeleton variant="rectangular" width={590} height={400} />
         <Skeleton variant="rectangular" width={590} height={400} />

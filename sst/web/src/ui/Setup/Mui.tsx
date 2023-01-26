@@ -19,7 +19,7 @@ export const styles = {
   sx: {
     button1: {backgroundColor: "primary.main", color: colors.white, fontFamily: "Poppins"},
     button2: {backgroundColor: "primary.light", color: colors.white, fontFamily: "Poppins"},
-    featureIcon: {fontSize: 40, color: "primary.main"}
+    featureIcon: {fontSize: 40, color: "#50627a"}
   }
 }
 
@@ -58,25 +58,23 @@ export const theme = createTheme({
       fontFamily: 'Antic Didone',
       fontSize: '4.8rem', 
       lineHeight: '1.3',
-      marginBottom: '1.38rem'
+     
     },
     h2: {
       fontWeight: 400,
       fontFamily: 'Antic Didone',
-      fontSize: '3.5rem',
+      fontSize: '3rem',
       lineHeight: '1.3',
-      marginBottom: '1.38rem'
+      marginBottom: '1rem'
     },
     h3: {
-      fontWeight: 400,
-      fontFamily: 'Antic Didone',
-      fontSize: '2.8rem',
-      lineHeight: '1.3',
-      marginBottom: '1.38rem'
-    
+      fontWeight: 500,
+      fontFamily: 'Poppins',
+      fontSize: '1.5rem',
+      lineHeight: '1.3',    
     },
     h4: {
-      fontWeight: 300,
+      fontWeight: 200,
       fontFamily: 'Poppins',
       fontSize: '1.5rem',
       lineHeight: '1.3'
@@ -89,12 +87,12 @@ export const theme = createTheme({
     },
 
     h6: {
-      fontWeight: 400,
-      fontFamily: 'Antic Didone',
-      lineHeight: '1.1',
-      fontSize: '1.5rem'
+      fontWeight: 700,
+      fontFamily: 'Poppins',
+      lineHeight: '1.3',
+      fontSize: '1rem',
     },
-
+    
     subtitle1: {
       fontFamily: 'Poppins',
     },
@@ -105,14 +103,14 @@ export const theme = createTheme({
       fontFamily: 'Poppins',
       fontWeight: '300',
       fontSize: "1rem",
-      lineHeight: '1.75',
+      lineHeight: '1.6',
       marginTop: '0rem'
     },
     body2: {
       fontFamily: 'Poppins',
       fontWeight: '100',
       fontSize: "1rem",
-      lineHeight: '1.75',
+      lineHeight: '1.7',
     },
     caption: {
       fontFamily: 'Poppins',

@@ -1,6 +1,5 @@
-import {Section} from "./Utils";
+import {Section, Skeleton2} from "./Utils";
 import Grid from '@mui/material/Grid';
-import Skeleton from '@mui/material/Skeleton';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
@@ -12,20 +11,28 @@ export default function Demo() {
     return <Section color="light">
       <Grid container
         direction="row"
-        spacing={spacing.lg}
+        spacing={2}
         alignItems="center"
         justifyContent="center"
       >
         <Grid item xs={12} md={6}>
           <Stack
-            justifyContent="center"
-            spacing={spacing.sm}
-            sx={{maxWidth: 500}}
-          >
-            <Typography variant="h3" >See the AI in action</Typography>
-            <Typography>
-              Most of the features are completely free. The goal is to provide a platform that prioritizes mental health. Whether you sign up for a free account or Gnothi Premium, there’s a lot to offer and much more to come.
-            </Typography>
+            maxWidth={500} 
+            display= 'flex'
+            justifyItems= "center"
+            alignItems= "flex-start"
+            >
+
+              <Typography 
+                variant="h2" 
+              >
+              See the AI in action
+              </Typography>
+              
+              <Typography>
+              Get a quick overview of all the ways you can use Gnothi. Whether you sign up for a free or premium account, there’s a lot to offer and much more to come.            
+              </Typography>
+
             <Box>
               <Button
                 variant="contained"
@@ -41,7 +48,8 @@ export default function Demo() {
           </Stack>
         </Grid>
         <Grid item xs={12} md={6}>
-          <Skeleton animation="wave" variant="rectangular" width={590} height={400} />
+          {/* <Skeleton animation="wave" variant="rectangular" width={590} height={400} /> */}
+          <Skeleton2 />
         </Grid>
       </Grid>
     </Section>

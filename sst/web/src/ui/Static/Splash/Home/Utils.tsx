@@ -5,19 +5,19 @@ import CardContent from "@mui/material/CardContent";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
-import {styles} from '../../../Setup/Mui'
+import { styles } from '../../../Setup/Mui'
 import { Container } from "@mui/material";
 
-const {colors, spacing} = styles
+const { colors, spacing } = styles
 
 type FeatureCard = {
   title?: string
   icon: React.ReactNode
   children: React.ReactNode
 }
-export function FeatureCard({title, icon, children}: FeatureCard) {
+export function FeatureCard({ title, icon, children }: FeatureCard) {
   return <Grid
-    sx={{display: 'flex', flexGrow: 1}}
+    sx={{ display: 'flex', flexGrow: 1 }}
     item
     xs={12}
     md={6}
@@ -38,13 +38,13 @@ export function FeatureCard({title, icon, children}: FeatureCard) {
           alignItems="center"
           justifyContent="center"
           spacing={spacing.sm}
-          maxWidth= {384}
+          maxWidth={384}
         >
           {icon}
           {title && <Typography variant="h5">{title}</Typography>}
           <Typography
             variant="h6"
-            sx={{flexShrink: 1, textAlign: "center"}}
+            sx={{ flexShrink: 1, textAlign: "center" }}
           >{children}</Typography>
         </Stack>
       </CardContent>
@@ -55,29 +55,42 @@ export function FeatureCard({title, icon, children}: FeatureCard) {
 interface Section {
   color: 'dark' | 'light' | 'grey'
 }
-export function Section({children, color='light'}: React.PropsWithChildren<Section>) {
+export function Section({ children, color = 'light' }: React.PropsWithChildren<Section>) {
   const backgroundColor = {
     dark: "primary.main",
     light: "secondary.main",
     grey: "#fafafa"
   }[color]
+  
   return <Box
     sx={{
       // py: spacing.xl,
       // px: spacing.xl,
       backgroundColor
-  }}
+    }}
   >
-    <Container
-    sx={{
-      mt: 10,
-      mb: 15,
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center'
-
-    }}>
-    {children}
-    </Container>
+    <Stack 
+      direction="column" 
+      spacing={4} 
+      alignItems="center"
+      sx={{
+        mt: 10,
+        mb: 15,
+        mx: {xs: 2, sm: 5, md: 8, lg: 12}
+      }}
+    >
+      {children}
+    </Stack>
   </Box>
+}
+
+export function Skeleton2() {
+  return <Box
+    sx={{ 
+      alignItems: "center",
+      width:'100%',
+      height:'300px',
+      backgroundColor: 'green' 
+    }}
+  ></Box>
 }

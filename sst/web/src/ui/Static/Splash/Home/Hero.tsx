@@ -9,14 +9,15 @@ export default   function Hero() {
       
             <Typography
               variant="h1"
-              sx={{textAlign: "center", color: colors.white, mb: 4, mt: { xs: 4, sm: 10 }}}
+              sx={{textAlign: "center", color: colors.white, mt: { xs: 4, sm: 10 }}}
             >
               Know thyself with Gnothi
             </Typography>
           
             <Typography
               variant="h4"
-              sx={{textAlign: "center", color: colors.white, paddingBottom: spacing.md}}
+              maxWidth= {500}
+              sx={{textAlign: "center", color: colors.white}}
             >
               An AI-powered journal and toolkit for a healthy and happy life
             </Typography>
