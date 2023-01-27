@@ -12,6 +12,7 @@ import Hero from './Hero'
 import Demo from './Demo'
 import WhatsNext from './WhatsNext'
 import SignUp from "./SignUp";
+import AboutUs from "./AboutUs";
 
 export default function Layout() {
   const error = useStore(state => state.apiError)
@@ -25,7 +26,7 @@ export default function Layout() {
     <Hero />
     <DiscoverAI />
     <Demo />
-    <WhatsNext />
+    <AboutUs />
     <SignUp />
   </Stack>
 }

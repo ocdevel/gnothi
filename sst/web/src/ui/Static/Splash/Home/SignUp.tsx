@@ -10,19 +10,28 @@ import Button from '@mui/material/Button';
 import { padding } from "@mui/system";
 
 export default function SignUp() {
-  return <Section color="light">
+  return <Section color="dark">
     <Stack
       direction='column'
-      sx={{ display: 'flex', justifyContent: "center", alignItems: "center"}}
+      sx={{ 
+        display: 'flex', 
+        justifyContent: "center", 
+        alignItems: "center"}}
       >
         <Typography 
         variant="h2" 
+        textAlign='center'
+        sx={{
+          color: colors.white}}
         >
         Start writing and exploring today            
         </Typography>
 
         <Typography 
         variant="h4" 
+        textAlign='center'
+        sx={{
+          color: colors.white}}
         >
         Create a free account or sign up for Gnothi Premium        
         </Typography>
@@ -30,12 +39,12 @@ export default function SignUp() {
         <Button
         variant="contained"
         sx={{
-        backgroundColor: "primary.main",
+        backgroundColor: "primary.light",
         color: colors.white,
         marginTop: '2rem',
         }}
         >
-        Sign up
+        Get started
         </Button>
        
     </Stack>

@@ -64,7 +64,7 @@ export default function DiscoverAI() {
         variant="h2"
         textAlign='center'
       >
-        Discover more with AI
+        Experience a new kind of journal      
       </Typography>
 
       <Typography
@@ -72,7 +72,7 @@ export default function DiscoverAI() {
         maxWidth={900}
         textAlign='center'
       >
-        Navigate your journey of self-discovery with more clarity and direction
+        The perfect combination of tech and soul      
       </Typography>
     </Stack>
 
@@ -108,32 +108,19 @@ export default function DiscoverAI() {
             px={4}
             maxWidth={500}
             >
-            <FeatureIntro
-              icon={<InsightsOutlinedIcon sx={sx.featureIcon} />}
-              title={"Identify themes and patterns"} 
-              >
-              <Typography>
-              As you write, Gnothi will get to know you better. You’ll get insights to narrow your focus and help you grow.          
-              </Typography>
-            </FeatureIntro>
+            <Typography
+              variant="body1"
+              textAlign='left'
+            >
+              Advances in machine learning may call to mind a future world ruled by robots, but not for the founders of Gnothi. The two psychology and personal development enthusiasts see an opportunity for new technologies to serve a more altruistic purpose.      
+            </Typography>
 
-            <FeatureIntro
-              icon={<BedtimeOutlinedIcon sx={sx.featureIcon} />}
-              title={"Analyze your dreams"} 
-              >
-              <Typography>
-              Ever wonder what your dreams mean? Plug them into Gnothi, and use interactive prompting to find out.           
-              </Typography>
-            </FeatureIntro>
-
-            <FeatureIntro
-              icon={<ChatOutlinedIcon sx={sx.featureIcon} />}
-              title={"Chat with Gnothi"} 
-              >
-              <Typography>
-              Interactive prompting can also be used to ask questions and get more out of your journaling experience.             
-              </Typography>
-            </FeatureIntro>
+            <Typography
+              variant="body1"
+              textAlign='left'
+            >
+              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer orci magna, tincidunt id interdum sed, auctor at libero. Morbi iaculis ligula ut mi tristique pretium. In vehicula auctor massa eu ultricies. Sed at nibh in risus porttitor ullamcorper.        
+            </Typography>
           </Stack>
         </Grid>
 
@@ -183,12 +170,6 @@ export default function DiscoverAI() {
       </Grid>
       </Box>
     
-    <Button
-      variant="contained"
-      sx={{ backgroundColor: "primary.main", color: colors.white, marginTop: '2rem' }}
-    >
-      Explore features and pricing
-    </Button>
 
 
   </Section>

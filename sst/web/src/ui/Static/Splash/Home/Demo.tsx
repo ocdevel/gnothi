@@ -19,14 +19,15 @@ export default function Demo() {
           <Stack
             maxWidth={500} 
             display= 'flex'
-            justifyItems= "center"
+            justifyItems= "flex-start"
             alignItems= "flex-start"
             >
 
               <Typography 
                 variant="h2" 
+                textAlign="left"
               >
-              See the AI in action
+              See Gnothi in action
               </Typography>
               
               <Typography>
@@ -39,7 +40,8 @@ export default function Demo() {
                 sx={{
                   backgroundColor: "primary.main",
                   color: colors.white,
-                  marginTop: '1rem'
+                  marginTop: '2rem',
+                  marginBottom: "1rem"
                 }}
               >
                 Watch a demo

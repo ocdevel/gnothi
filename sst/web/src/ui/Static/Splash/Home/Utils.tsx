@@ -90,7 +90,7 @@ export function Skeleton2() {
       alignItems: "center",
       width:'100%',
       height:'300px',
-      backgroundColor: 'green' 
+      backgroundColor: 'primary.main' 
     }}
   ></Box>
 }

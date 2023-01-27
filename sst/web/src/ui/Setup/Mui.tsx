@@ -57,14 +57,14 @@ export const theme = createTheme({
       fontWeight: 400,
       fontFamily: 'Antic Didone',
       fontSize: '4.8rem', 
-      lineHeight: '1.3',
+      lineHeight: '1.1',
      
     },
     h2: {
       fontWeight: 400,
       fontFamily: 'Antic Didone',
       fontSize: '3rem',
-      lineHeight: '1.3',
+      lineHeight: '1.1',
       marginBottom: '1rem'
     },
     h3: {
@@ -77,7 +77,8 @@ export const theme = createTheme({
       fontWeight: 200,
       fontFamily: 'Poppins',
       fontSize: '1.5rem',
-      lineHeight: '1.3'
+      lineHeight: '1.1',
+      marginBottom: '1rem'
     },
     h5: {
       fontWeight: 400,
