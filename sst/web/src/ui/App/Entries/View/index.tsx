@@ -101,7 +101,7 @@ export default function View({entry, onClose}: Entry) {
     </Card>
   }
 
-  return <Grid container className="entry-view">
+  return <Grid container className="view">
     <Grid item xs={12} lg={8}>
       <DialogContent>
         {renderEntry()}

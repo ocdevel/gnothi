@@ -16,14 +16,13 @@ export default function Summarize({view}: Insight) {
 
   // 26fecb16 - specify summary length
 
-  if (waiting) {
-    return <LinearProgress />
-  }
-
-  if (!summary) {
-    return <Typography>Nothing to summarize (try adjusting date range)</Typography>
-  }
-
   // sent2face(reply_.sentiment)} {reply_.summary}
-  return <Typography>{summary.summary}</Typography>
+
+  return <div className="summarize">
+    {
+      waiting ? <LinearProgress />
+      : summary ? <Typography className="result">{summary.summary}</Typography>
+      : <Typography className="no-result">Nothing to summarize (try adjusting date range)</Typography>
+    }
+  </div>
 }

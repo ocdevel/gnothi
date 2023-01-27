@@ -8,6 +8,7 @@ import {useStore} from '../../../../data/store'
 import Pagination from '@mui/material/Pagination'
 import Button from '@mui/material/Button'
 import {Alert2} from "../../../Components/Misc";
+import Box from "@mui/material/Box";
 
 
 export default function Entries({group_id=null}) {
@@ -48,8 +49,8 @@ export default function Entries({group_id=null}) {
     setPage(p)
   }
 
-  return <>
+  return <div className='list'>
     {filteredPage.map(eid => <Teaser eid={eid} key={eid}/> )}
     {usePaging && <Pagination count={nPages} page={page} onChange={changePage} />}
-  </>
+  </div>
 }

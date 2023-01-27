@@ -57,7 +57,10 @@ function InsightCardHeader({label, icon, description, children}: Insight) {
   </Card>
 }
 function InsightRaw({label, icon, description, children}: Insight) {
-  return <Card sx={{backgroundColor:'white', borderRadius: 2}} className='mb-3'>
+  return <Card
+    sx={{backgroundColor:'white', borderRadius: 2}}
+    className="mb-3"
+  >
     <CardContent>
       <Stack
         alignItems="center"
@@ -109,34 +112,36 @@ export default function Insights({entry_ids}: Insights) {
     </Alert2>
   }
 
-  return <Stack2>
-    <Insight
-      label="Summarize"
-      icon={<SummarizeIcon {...iconProps} />}
-      description="Summarize your entries for an overview."
-    >
-      <Summarize view={view} />
-    </Insight>
-    <Insight
-      label="Themes"
-      icon={<ThemesIcon {...iconProps} />}
-      description="Show common recurring themes across your entries."
-    >
-      <Themes view={view} />
-    </Insight>
-    <Insight
-      label="Prompt"
-      icon={<PromptIcon {...iconProps} />}
-      description="Prompts"
-    >
-      <Prompt entry_ids={entry_ids} view={view} />
-    </Insight>
-    <Insight
-      label="Books"
-      icon={<BooksIcon {...iconProps} />}
-      description="Book recommendations based on your entries."
-    >
-      <Books view={view} />
-    </Insight>
-  </Stack2>
+  return <div className="insights">
+    <Stack2>
+      <Insight
+        label="Summarize"
+        icon={<SummarizeIcon {...iconProps} />}
+        description="Summarize your entries for an overview."
+      >
+        <Summarize view={view} />
+      </Insight>
+      <Insight
+        label="Themes"
+        icon={<ThemesIcon {...iconProps} />}
+        description="Show common recurring themes across your entries."
+      >
+        <Themes view={view} />
+      </Insight>
+      <Insight
+        label="Prompt"
+        icon={<PromptIcon {...iconProps} />}
+        description="Prompts"
+      >
+        <Prompt entry_ids={entry_ids} view={view} />
+      </Insight>
+      <Insight
+        label="Books"
+        icon={<BooksIcon {...iconProps} />}
+        description="Book recommendations based on your entries."
+      >
+        <Books view={view} />
+      </Insight>
+    </Stack2>
+  </div>
 }

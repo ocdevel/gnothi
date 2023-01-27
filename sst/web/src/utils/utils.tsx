@@ -6,7 +6,7 @@ import Tooltip from "@mui/material/Tooltip";
 
 export const timezones = moment.tz.names()
 
-type Sentiment = "sadness" | "joy" | "love" | "anger" | "fear" | "surprise"| undefined
+export type Sentiment = "sadness" | "joy" | "love" | "anger" | "fear" | "surprise"| undefined
 export function sent2face(sentiment: Sentiment) {
   if (!sentiment) {return null}
   const style = {}
@@ -26,7 +26,7 @@ export function sent2face(sentiment: Sentiment) {
   }[sentiment] || null
   return (
     <Tooltip title="Sentiment is machine-generated from your entry's text">
-      <span style={style}>{emoji_}</span>
+      <span style={style} className='sentiment'>{emoji_}</span>
     </Tooltip>
   )
 }
