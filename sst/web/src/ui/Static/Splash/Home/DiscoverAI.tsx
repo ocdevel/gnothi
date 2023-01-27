@@ -29,25 +29,28 @@ type FeatureIntro = {
 }
 
 export function FeatureIntro({ icon, title, children }: FeatureIntro){
-  return <Stack
-    direction="row"
-    alignItems="flex-start"
-    justifyContent="flex-end"
-    spacing={2}
+  return <Grid item xs={12} md={6}>
+    <Stack
+      px={4}
+      direction="row"
+      alignItems="flex-start"
+      justifyContent="center"
+      spacing={2}
     >
-    {icon}  
-    <div>
-      <Typography 
-      variant='h6' 
-      color='#50627a'
-      marginBottom={1}>{title}
-      </Typography>
+      {icon}  
+      <Box maxWidth={450}>
+        <Typography 
+        variant='h6' 
+        color='#50627a'
+        marginBottom={1}>{title}
+        </Typography>
 
-      <Typography 
-      variant="body1"
-      >{children}</Typography>
-    </div>
-  </Stack>
+        <Typography 
+        variant="body1"
+        >{children}</Typography>
+      </Box>
+    </Stack>
+  </Grid>
 }
 export default function DiscoverAI() {
   return <Section color="grey">
@@ -55,10 +58,11 @@ export default function DiscoverAI() {
     <Stack
       direction='column'
       sx={{ 
-      paddingBottom: 2,
-      display: 'flex', 
-      justifyItems: "center", 
-      alignItems: "center"}}
+        paddingBottom: 2,
+        display: 'flex', 
+        justifyItems: "center", 
+        alignItems: "center"
+      }}
       >
       <Typography
         variant="h2"
@@ -76,112 +80,77 @@ export default function DiscoverAI() {
       </Typography>
     </Stack>
 
-    <Box
+    <Grid 
+      container 
       sx={{
-        alignContent:"center", 
-        }}>
-
-    <Grid container 
-      sx={{
-        display: 'flex',
         flexDirection: 'row',
-        alignContent: 'flex-start',
-        alignItems: 'flex-start',
-        justifyItems: 'space-between',
+        // alignContent: 'flex-start',
+        // alignItems: 'flex-start',
+        // justifyItems: 'space-between',
         justifyContent: 'space-between',
         mb: 6, 
+
+        alignItems: 'center', 
+        // alignContent: 'center',
+        // justifyItems: 'center',
+        // justifyContent: 'center'
       }}
-      >
+      spacing={4}
+    >
+      <FeatureIntro
+        icon={<InsightsOutlinedIcon sx={sx.featureIcon} />}
+        title={"Identify themes and patterns"} 
+        >
+        <Typography>
+        As you write, Gnothi will get to know you better. You’ll get insights to narrow your focus and help you grow.          
+        </Typography>
+      </FeatureIntro>
 
-      <Grid item xs={12} md={6} 
-        sx={{
-          alignItems: 'center', 
-          alignContent: 'center',
-          justifyItems: 'center',
-          justifyContent: 'center'}}
-          >
-          <Stack 
-            direction="column" 
-            alignItems="center"
-            justifyItems="center"
-            spacing={4}
-            px={4}
-            maxWidth={500}
-            >
-            <FeatureIntro
-              icon={<InsightsOutlinedIcon sx={sx.featureIcon} />}
-              title={"Identify themes and patterns"} 
-              >
-              <Typography>
-              As you write, Gnothi will get to know you better. You’ll get insights to narrow your focus and help you grow.          
-              </Typography>
-            </FeatureIntro>
+      <FeatureIntro
+        icon={<ShareIcon sx={sx.featureIcon} />}
+        title={"Share entries for support"} 
+        >
+        <Typography>
+        Create tags to share specific entries with therapists and friends to connect and exchange ideas.           
+        </Typography>
+      </FeatureIntro>
 
-            <FeatureIntro
-              icon={<BedtimeOutlinedIcon sx={sx.featureIcon} />}
-              title={"Analyze your dreams"} 
-              >
-              <Typography>
-              Ever wonder what your dreams mean? Plug them into Gnothi, and use interactive prompting to find out.           
-              </Typography>
-            </FeatureIntro>
+      <FeatureIntro
+        icon={<BedtimeOutlinedIcon sx={sx.featureIcon} />}
+        title={"Analyze your dreams"} 
+        >
+        <Typography>
+        Ever wonder what your dreams mean? Plug them into Gnothi, and use interactive prompting to find out.           
+        </Typography>
+      </FeatureIntro>
 
-            <FeatureIntro
-              icon={<ChatOutlinedIcon sx={sx.featureIcon} />}
-              title={"Chat with Gnothi"} 
-              >
-              <Typography>
-              Interactive prompting can also be used to ask questions and get more out of your journaling experience.             
-              </Typography>
-            </FeatureIntro>
-          </Stack>
-        </Grid>
+      <FeatureIntro
+        icon={<FitnessCenterIcon sx={sx.featureIcon} />}
+        title={"Focus on habits and behaviors"} 
+        >
+        <Typography>
+        Track things like mood, sleep, exercise, etc. Then, use data from AI to make changes that have you feeling your best.          
+        </Typography>
+      </FeatureIntro>
 
-        <Grid item xs={12} md={6}
-          sx={{
-            alignItems: 'center', 
-            alignContent: 'center',
-            justifyItems: 'center',
-            justifyContent: 'center'}}
-            >
-          <Stack 
-            direction="column" 
-            alignItems="center"
-            justifyItems="center"
-            spacing={4}
-            px={4}
-            maxWidth={500}
-            >
-            <FeatureIntro
-              icon={<ShareIcon sx={sx.featureIcon} />}
-              title={"Share entries for support"} 
-              >
-              <Typography>
-              Create tags to share specific entries with therapists and friends to connect and exchange ideas.           
-              </Typography>
-            </FeatureIntro>
-
-            <FeatureIntro
-              icon={<FitnessCenterIcon sx={sx.featureIcon} />}
-              title={"Focus on habits and behaviors"} 
-              >
-              <Typography>
-              Track things like mood, sleep, exercise, etc. Then, use data from AI to make changes that have you feeling your best.          
-              </Typography>
-            </FeatureIntro>
-
-            <FeatureIntro
-              icon={<AutoStoriesOutlinedIcon sx={sx.featureIcon} />}
-              title={"Get connected to resources"} 
-              >
-              <Typography>
-              Gnothi gives you book recommendations based on your writing. You can also interact with AI to get more tools.           
-              </Typography>
-            </FeatureIntro>
-          </Stack>
-        </Grid>
-      </Grid>
-      </Box>
+      <FeatureIntro
+        icon={<ChatOutlinedIcon sx={sx.featureIcon} />}
+        title={"Chat with Gnothi"} 
+        >
+        <Typography>
+        Interactive prompting can also be used to ask questions and get more out of your journaling experience.             
+        </Typography>
+      </FeatureIntro>
+      
+      <FeatureIntro
+        icon={<AutoStoriesOutlinedIcon sx={sx.featureIcon} />}
+        title={"Get connected to resources"} 
+        >
+        <Typography>
+        Gnothi gives you book recommendations based on your writing. You can also interact with AI to get more tools.           
+        </Typography>
+      </FeatureIntro>
+    </Grid>
     
     <Button
       variant="contained"
