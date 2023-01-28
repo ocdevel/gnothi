@@ -58,6 +58,7 @@ export const theme = createTheme({
       fontFamily: 'Antic Didone',
       fontSize: '4.8rem', 
       lineHeight: '1.1',
+      marginBottom: '1rem'
      
     },
     h2: {
@@ -77,7 +78,7 @@ export const theme = createTheme({
       fontWeight: 200,
       fontFamily: 'Poppins',
       fontSize: '1.5rem',
-      lineHeight: '1.1',
+      lineHeight: '1.5',
       marginBottom: '1rem'
     },
     h5: {

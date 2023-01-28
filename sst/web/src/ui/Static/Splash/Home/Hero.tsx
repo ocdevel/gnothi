@@ -15,6 +15,7 @@ export default   function Hero() {
         }}>
         <Typography
           variant="h1"
+          maxWidth={500}
           sx={{
             textAlign: "center", 
             color: colors.white, 
