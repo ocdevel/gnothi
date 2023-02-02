@@ -69,7 +69,7 @@ export function Section({ children, color = 'light' }: React.PropsWithChildren<S
       backgroundColor
     }}
   >
-    <Stack 
+    <Stack
       direction="column" 
       spacing={4} 
       alignItems="center"

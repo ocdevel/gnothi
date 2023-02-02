@@ -54,49 +54,30 @@ export function FeatureIntro({ icon, title, children }: FeatureIntro){
 }
 export default function DiscoverAI() {
   return <Section color="grey">
-
-    <Stack
-      direction='column'
-      sx={{ 
-        paddingBottom: 2,
-        display: 'flex', 
-        justifyItems: "center", 
-        alignItems: "center"
-      }}
-      >
-      <Typography
-        variant="h2"
-        textAlign='center'
-      >
-        Discover more with AI
-      </Typography>
-
-      <Typography
-        variant="h4"
-        maxWidth={900}
-        textAlign='center'
-      >
-        Navigate your journey of self-discovery with more clarity and direction
-      </Typography>
-    </Stack>
-
     <Grid 
       container 
-      sx={{
-        flexDirection: 'row',
-        // alignContent: 'flex-start',
-        // alignItems: 'flex-start',
-        // justifyItems: 'space-between',
-        justifyContent: 'space-between',
-        mb: 6, 
-
-        alignItems: 'center', 
-        // alignContent: 'center',
-        // justifyItems: 'center',
-        // justifyContent: 'center'
-      }}
+      mb={6}
+      flexDirection='row'
+      justifyContent='space-between'
+      alignItems='center'
       spacing={4}
     >
+      <Grid item xs={12} pb={2}>
+        <Typography
+          variant="h2"
+          textAlign='center'
+        >
+          Discover more with AI
+        </Typography>
+
+        <Typography
+          variant="h4"
+          maxWidth={900}
+          textAlign='center'
+        >
+          Navigate your journey of self-discovery with more clarity and direction
+        </Typography>
+      </Grid>
       <FeatureIntro
         icon={<InsightsOutlinedIcon sx={sx.featureIcon} />}
         title={"Identify themes and patterns"} 
