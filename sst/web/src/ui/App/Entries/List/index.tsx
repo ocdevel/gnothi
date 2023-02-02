@@ -4,10 +4,10 @@ import {Helmet} from 'react-helmet-async'
 import {NotesAll, NotesNotifs} from "../Notes";
 
 import Grid from '@mui/material/Grid'
-import Filters from '../Insights/Filters'
-import Insights from '../Insights/Insights'
+import Filters from '../../Insights/Filters'
+import Insights from '../../Insights/Insights'
 import Entries from "./Entries"
-import Ask from '../Insights/Insights/Ask'
+import Ask from '../../Insights/Insights/Ask'
 import {useStore} from "../../../../data/store";
 
 export default function List({group_id=null}) {
@@ -36,7 +36,7 @@ export default function List({group_id=null}) {
     return <h5>{res.data}</h5>
   }
 
-  return <>
+  return <div className="list">
     <Helmet>
       <title>Journal</title>
     </Helmet>
@@ -51,5 +51,5 @@ export default function List({group_id=null}) {
         <NotesAll />
       </Grid>
     </Grid>
-  </>
+  </div>
 }

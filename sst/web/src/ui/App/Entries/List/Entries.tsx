@@ -49,7 +49,7 @@ export default function Entries({group_id=null}) {
     setPage(p)
   }
 
-  return <div className='list'>
+  return <div className='entries'>
     {filteredPage.map(eid => <Teaser eid={eid} key={eid}/> )}
     {usePaging && <Pagination count={nPages} page={page} onChange={changePage} />}
   </div>

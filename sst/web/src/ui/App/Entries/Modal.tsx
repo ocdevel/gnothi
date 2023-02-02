@@ -35,6 +35,7 @@ export default function Modal() {
   const title = entry ? fmtDate(entry.created_at) : "New Entry";
 
   return <FullScreenDialog
+    className="entries modal"
     open={!!entryModal}
     onClose={onClose}
     title={title}

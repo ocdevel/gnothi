@@ -1,8 +1,8 @@
 import React, {useEffect, useState, useCallback} from 'react'
-import {MainTags} from "../../../Tags/Tags";
+import {MainTags} from "../../Tags/Tags";
 import Search from "./Search";
 import DatePickers from './DatePickers'
-import {useStore} from "../../../../../data/store";
+import {useStore} from "../../../../data/store";
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 

@@ -21,7 +21,7 @@ import ThemesIcon from '@mui/icons-material/OfflineBolt';
 import CardContent from '@mui/material/CardContent'
 import CardHeader from '@mui/material/CardHeader'
 import Card from '@mui/material/Card'
-import {Stack2, Alert2} from "../../../../Components/Misc";
+import {Stack2, Alert2} from "../../../Components/Misc";
 import Stack from "@mui/material/Stack"
 import { Typography } from "@mui/material"
 

@@ -4,7 +4,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import TextField from "@mui/material/TextField"
 import InputAdornment from "@mui/material/InputAdornment"
 import Box from "@mui/material/Box";
-import {useStore} from "../../../../../data/store";
+import {useStore} from "../../../../data/store";
 
 /**
  * Entries() is expensive, so isolate <Search /> and only update the Entries.search
