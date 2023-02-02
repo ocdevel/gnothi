@@ -13,5 +13,9 @@ export default defineConfig({
     alias: {
       './runtimeConfig': './runtimeConfig.browser',
     },
-  }
+  },
+  // https://stackoverflow.com/a/72962290
+  plugins: [react({
+    include: "**/*.tsx"
+  })]
 })
