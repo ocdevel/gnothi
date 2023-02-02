@@ -152,12 +152,16 @@ export default function DiscoverAI() {
       </FeatureIntro>
     </Grid>
     
+   <Grid item xs={12}
+      paddingTop={2}
+      >
     <Button
       variant="contained"
       sx={{ backgroundColor: "primary.main", color: colors.white, marginTop: '2rem' }}
     >
       Explore features and pricing
     </Button>
+    </Grid>
 
 
   </Section>
