@@ -14,7 +14,7 @@ export default function DiscoverAI() {
     <Grid
       container
       flexDirection='row'
-      alignItems="flex-start"
+      alignItems="center"
       justifyContent="center"
       spacing={4}
     >

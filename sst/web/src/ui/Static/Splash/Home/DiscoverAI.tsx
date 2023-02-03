@@ -56,7 +56,7 @@ export default function DiscoverAI() {
   return <Section color="grey">
     <Grid 
       container 
-      mb={6}
+      mb={7}
       flexDirection='row'
       justifyContent='space-between'
       alignItems='center'
@@ -66,6 +66,7 @@ export default function DiscoverAI() {
         <Typography
           variant="h2"
           textAlign='center'
+          
         >
           Discover more with AI
         </Typography>
@@ -78,6 +79,7 @@ export default function DiscoverAI() {
           Navigate your journey of self-discovery with more clarity and direction
         </Typography>
       </Grid>
+
       <FeatureIntro
         icon={<InsightsOutlinedIcon sx={sx.featureIcon} />}
         title={"Identify themes and patterns"} 
@@ -133,12 +135,10 @@ export default function DiscoverAI() {
       </FeatureIntro>
     </Grid>
     
-   <Grid item xs={12}
-      paddingTop={2}
-      >
+   <Grid item xs={12}>
     <Button
       variant="contained"
-      sx={{ backgroundColor: "primary.main", color: colors.white, marginTop: '2rem' }}
+      sx={{ backgroundColor: "primary.main", color: colors.white}}
     >
       Explore features and pricing
     </Button>

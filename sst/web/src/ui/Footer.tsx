@@ -43,19 +43,18 @@ export default function Footer2() {
     }}
   >
     <Grid container
-      spacing={4}
       sx={{
         flexDirection: 'row',
         alignItems: 'flex-start',   //align - vertical placement - top/bottom
-        justifyItems: 'center',
+        justifyItems: 'flex-start',
         marginTop: 10,
-        marginX: { xs: 2, sm: 5, md: 8, lg: 12 },
+        paddingX: {xs: 4, sm: 7, md: 10, lg: 14},
         marginBottom: 3
       }}
     >
       <Grid item
         xs={12}
-        md={4}
+        md={3}
         justifyContent='flex-start'
         alignContent='flex-start'
         spacing={4}
@@ -89,7 +88,7 @@ export default function Footer2() {
 
       <Grid item
         xs={12}
-        md={4}
+        md={3}
         justifyItems='flex-start'
         alignItems='flex-start'
         spacing={4}
@@ -125,7 +124,7 @@ export default function Footer2() {
 
       <Grid item
         xs={12}
-        md={4}
+        md={3}
         justifyItems='flex-start'
         alignItems='flex-start'
         spacing={4}
@@ -160,6 +159,39 @@ export default function Footer2() {
         </Typography>
       </Grid>
     </Grid>
+
+    <Box
+      sx={{
+        marginX: { xs: 2, sm: 5, md: 8, lg: 12 },
+        marginBottom: 3,
+      }}
+    >
+      <Divider
+        variant='middle'
+        sx={{ color: "green" }}
+      >
+      </Divider>
+    </Box>
+
+    <Box
+      sx={{
+        marginX: { xs: 4, sm: 7, md: 10, lg: 14 },
+        marginBottom: 4,
+        display: 'flex',
+        alignItems: { xs: 'center', md: "flex-end" },
+        justifyContent: { xs: 'center', md: "flex-end" }
+      }}
+    >
+      <Typography
+        variant='body1'
+        sx={{
+          display: 'flex',
+        }}
+      >
+        Copyright © 2020 OCDevel, LLC
+      </Typography>
+    </Box>
+
   </Box>
 
 }
