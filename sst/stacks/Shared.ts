@@ -10,9 +10,10 @@
  */
 
 import * as sst from "@serverless-stack/resources";
-import * as ec2 from "aws-cdk-lib/aws-ec2";
-import * as rds from "aws-cdk-lib/aws-rds";
-import * as ssm from "aws-cdk-lib/aws-ssm";
+import * as aws_ec2 from "aws-cdk-lib/aws-ec2";
+import * as aws_rds from "aws-cdk-lib/aws-rds";
+import * as aws_ssm from "aws-cdk-lib/aws-ssm";
+import * as aws_secretsmanager from "aws-cdk-lib/aws-secretsmanager";
 import * as cdk from "aws-cdk-lib";
 import {RDS, RDSProps, StackContext} from "@serverless-stack/resources";
 import { Construct } from "constructs";
@@ -30,10 +31,10 @@ export function SharedCreate(context: StackContext) {
   const {stage} = app
   const sharedStage_ = sharedStage(stage)
 
-  function createVpc(): ec2.Vpc {
+  function createVpc(): aws_ec2.Vpc {
     // Private subnet setup: https://adrianhesketh.com/2022/05/31/create-vpc-with-cdk/,
     // https://bobbyhadz.com/blog/aws-cdk-vpc-example
-    return new ec2.Vpc(stack, 'Vpc', {
+    return new aws_ec2.Vpc(stack, 'Vpc', {
       maxAzs: 2, // Default is all AZs in the region
       natGateways: 1,
       // enableDnsSupport: true,
@@ -41,14 +42,14 @@ export function SharedCreate(context: StackContext) {
       // subnetConfiguration: [
       //   {
       //     name: "isolated-subnet-1",
-      //     subnetType: ec2.SubnetType.PRIVATE_ISOLATED,
+      //     subnetType: aws_ec2.SubnetType.PRIVATE_ISOLATED,
       //     cidrMask: 28,
       //   },
       // ]
     })
   }
 
-  function createDbV1(): RDS {
+  function createRdsV1(): RDS {
     return new RDS(stack, "Rds", {
       scaling: {
         autoPause: true,
@@ -61,13 +62,13 @@ export function SharedCreate(context: StackContext) {
     })
   }
 
-  function createDbV2(vpc: ec2.Vpc): rds.DatabaseCluster {
+  function createRdsV2(vpc: aws_ec2.Vpc): aws_rds.DatabaseCluster {
     // TODO Aurora v2 via https://github.com/aws/aws-cdk/issues/20197#issuecomment-1360639346
     // need to re-work most things
     // Also see https://www.codewithyou.com/blog/aurora-serverless-v2-with-aws-cdk
-    const db = new rds.DatabaseCluster(stack, "Rds", {
-      engine: rds.DatabaseClusterEngine.auroraPostgres({
-        version: rds.AuroraPostgresEngineVersion.VER_14_4,
+    const rds = new aws_rds.DatabaseCluster(stack, "Rds", {
+      engine: aws_rds.DatabaseClusterEngine.auroraPostgres({
+        version: aws_rds.AuroraPostgresEngineVersion.VER_14_4,
       }),
       instanceProps: {
         vpc,
@@ -77,15 +78,15 @@ export function SharedCreate(context: StackContext) {
     });
     // Edit the generated cloudformation construct directly:
     (
-      db.node.findChild("Resource") as rds.CfnDBCluster
+      rds.node.findChild("Resource") as aws_rds.CfnDBCluster
     ).serverlessV2ScalingConfiguration = {
       minCapacity: 0.5,
       maxCapacity: 4,
     }
-    return db
+    return rds
   }
 
-  function exportVars(vpc: ec2.Vpc, db: rds.DatabaseCluster) {
+  function exportVars(vpc: aws_ec2.Vpc, rds: aws_rds.DatabaseCluster) {
     // Doesn't work - can't resolve tokens later: "All arguments to Vpc.fromLookup() must be concrete (no Tokens)"
     // https://lzygo1995.medium.com/how-to-resolve-all-arguments-to-vpc-fromlookup-must-be-concrete-no-tokens-error-in-cdk-add1c2aba97b
     function toExports([k, v]: [string, string]) {
@@ -97,7 +98,9 @@ export function SharedCreate(context: StackContext) {
 
     function toSsm([k, v]: [string, string]) {
       const sharedKey = exportName(stage, k)
-      return new ssm.StringParameter(stack, `ssm${sharedKey}`, {
+      // adding stackOutput anyway, but just for console.log (not exported variable)
+      stack.addOutputs({[sharedKey]: v})
+      return new aws_ssm.StringParameter(stack, `ssm${sharedKey}`, {
         parameterName: sharedKey,
         stringValue: v
       })
@@ -105,7 +108,8 @@ export function SharedCreate(context: StackContext) {
 
     const exported = Object.entries({
       VpcId: vpc.vpcId,
-      ClusterIdentifier: db.clusterIdentifier
+      ClusterIdentifier: rds.clusterIdentifier,
+      RdsSecretArn: rds.secret!.secretArn
     // }).map(toExports)
     }).map(toSsm)
 
@@ -113,9 +117,9 @@ export function SharedCreate(context: StackContext) {
   }
 
   const vpc = createVpc()
-  const db = createDbV2(vpc)
-  const exported = exportVars(vpc, db)
-  return {vpc, db, exported}
+  const rds = createRdsV2(vpc)
+  const exported = exportVars(vpc, rds)
+  return {vpc, rds, exported}
 }
 
 
@@ -123,20 +127,30 @@ export function SharedImport(context: StackContext) {
   const {app: {stage}, stack} = context
   const sharedStage_ = sharedStage(stage)
 
-  const vpcId = ssm.StringParameter.valueFromLookup(stack, exportName(stage, "VpcId"))
-  console.log({vpcId})
-  const vpc = ec2.Vpc.fromLookup(stack, "Vpc", {
-    vpcId
+  function fromSsm(k: string, lazy=false) {
+    // secretArn having trouble with this, not loaded in time. Using cdk.Lazy workaround.
+    // https://stackoverflow.com/questions/70759640/how-best-to-retrieve-aws-ssm-parameters-from-the-aws-cdk
+    const produce = () => aws_ssm.StringParameter.valueFromLookup(stack, exportName(stage, k))
+    return lazy ? cdk.Lazy.string({produce}) : produce()
+  }
+
+  const vpc = aws_ec2.Vpc.fromLookup(stack, "Vpc", {
+    vpcId: fromSsm("VpcId")
   })
 
-  const clusterIdentifier = ssm.StringParameter.valueFromLookup(stack, exportName(stage, "ClusterIdentifier"))
-  const db = rds.DatabaseCluster.fromDatabaseClusterAttributes(stack, 'Rds', {
-    clusterIdentifier,
+  const rds = aws_rds.DatabaseCluster.fromDatabaseClusterAttributes(stack, 'Rds', {
+    clusterIdentifier: fromSsm("ClusterIdentifier"),
+  })
+
+  const rdsSecret = aws_secretsmanager.Secret.fromSecretAttributes(stack, "RdsSecret", {
+    secretPartialArn: fromSsm("RdsSecretArn", true)
   })
 
   stack.addOutputs({
     vpcId: vpc.vpcId,
-    clusterIdentifier: db.clusterIdentifier,
+    clusterIdentifier: rds.clusterIdentifier,
+    rdsSecretArn: rdsSecret.secretArn,
+    // rdsSecretArn: rds.secret.secretArn // this should be working, but secret isn't coming from load.
   })
-  return {vpc, db}
+  return {vpc, rds, rdsSecret}
 }

@@ -25,7 +25,7 @@ export default function main(app: App) {
     app.stack(SharedCreate)
   } else {
     app.stack(SharedImport)
-      // .stack(Auth)
+      .stack(Auth)
       // .stack(Ml)
       // .stack(Api)
       // .stack(Web)

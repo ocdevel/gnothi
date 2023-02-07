@@ -1,11 +1,11 @@
 import * as sst from "@serverless-stack/resources";
-import { Database } from './Database'
+import { SharedImport } from './Shared'
 import {StringAttribute} from 'aws-cdk-lib/aws-cognito'
 import {RemovalPolicy} from 'aws-cdk-lib'
 import {smallLamdaRam, timeouts} from "./util";
 
 export function Auth({ app, stack }: sst.StackContext) {
-  const rds = sst.use(Database);
+  const {vpc, rds, rdsSecret} = sst.use(SharedImport);
 
   // SST samples
   // Cognito JWT example from https://sst.dev/examples/how-to-add-jwt-authorization-with-cognito-user-pool-to-a-serverless-api.html
@@ -13,6 +13,23 @@ export function Auth({ app, stack }: sst.StackContext) {
 
   // aws-samples/websockets
   // https://github.dev/aws-samples/websocket-api-cognito-auth-sample
+
+  const preSignUp = new sst.Function(stack, "PreSignUp", {
+    memorySize: smallLamdaRam,
+    timeout: timeouts.md,
+    handler: "auth/preSignup.handler",
+    environment: {
+      // maybe only need secretArn? Does it contain everything? (if so, can remove the full clusterId import/export)
+      clusterIdentifier: rds.clusterIdentifier,
+      secretArn: rdsSecret.secretArn,
+    }
+  })
+  // stack.addOutputs({
+  //   secretArn2: rds.secret.secretArn
+  // })
+  rdsSecret.grantRead(preSignUp)
+
+  return null
 
   const auth = new sst.Cognito(stack, "Auth", {
     login: ["email"],
