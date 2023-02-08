@@ -19,6 +19,7 @@ import AutoStoriesIcon from '@mui/icons-material/AutoStories';
 import AutoStoriesOutlinedIcon from '@mui/icons-material/AutoStoriesOutlined';
 import ChatOutlinedIcon from '@mui/icons-material/ChatOutlined';
 import { padding } from "@mui/system";
+import {Link} from "../../../Components/Link"
 const { spacing, colors, sx } = styles
 
 
@@ -66,7 +67,6 @@ export default function DiscoverAI() {
         <Typography
           variant="h2"
           textAlign='center'
-          
         >
           Discover more with AI
         </Typography>
@@ -136,12 +136,13 @@ export default function DiscoverAI() {
     </Grid>
     
    <Grid item xs={12}>
-    <Button
+    <Link.Button
       variant="contained"
       sx={{ backgroundColor: "primary.main", color: colors.white}}
+      to="/features"
     >
       Explore features and pricing
-    </Button>
+    </Link.Button>
     </Grid>
 
 

@@ -1,10 +1,10 @@
-import {Section} from "./Utils";
+import {Section} from "../Home/Utils";
 import Skeleton from '@mui/material/Skeleton';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import {styles} from '../../../Setup/Mui'
 import Button from "@mui/material/Button";
-import { Skeleton2 } from "./Utils";
+import { Skeleton2 } from "../Home/Utils";
 import Grid from "@mui/material/Grid";
 import Box from "@mui/material/Box";
 const {spacing, colors, sx} = styles

@@ -4,7 +4,7 @@ import Privacy from "./Privacy"
 import Terms from "./Terms"
 // const Overviews = React.lazy( () => import("./Splash/Overviews"))
 // const Details = React.lazy(() => import("./Splash/Details"))
-import Features from "./Splash/Home/Features"
+import Features from "./Splash/Features"
 import Home from "./Splash/Home"
 import {S, Error} from '../Components/Routing'
 

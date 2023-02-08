@@ -24,7 +24,7 @@ export default function SignUp() {
         sx={{
           color: colors.white}}
         >
-        Start writing and exploring today            
+        Get started on your journey today            
         </Typography>
 
         <Typography 
@@ -33,7 +33,7 @@ export default function SignUp() {
         sx={{
           color: colors.white}}
         >
-        Create a free account or sign up for Gnothi Premium        
+        Create a free account or join Gnothi Premium        
         </Typography>
 
         <Button
@@ -44,7 +44,7 @@ export default function SignUp() {
         marginTop: '2rem',
         }}
         >
-        Get started
+        Sign up
         </Button>
        
     </Stack>

@@ -1,4 +1,4 @@
-import {Section} from "./Utils";
+import {Section} from "../Home/Utils";
 import Skeleton from '@mui/material/Skeleton';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';

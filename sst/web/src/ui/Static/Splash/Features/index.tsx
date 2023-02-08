@@ -2,19 +2,12 @@ import React from 'react'
 import {useStore} from '../../../../data/store'
 import Error from '../../../../ui/Components/Error'
 import Stack from "@mui/material/Stack";
-
 import {styles} from '../../../Setup/Mui'
+import Hero_Features from './Hero_Features';
+import MachineLearning from './MachineLearning';
 const {spacing, colors, sx} = styles
 
-import DiscoverAI from './DiscoverAI';
-import NewJournal from "../Old/NewJournal";
-import Hero from './Hero'
-import Demo from './Demo'
-import WhatsNext from '../Old/WhatsNext'
-import SignUp from "./SignUp";
-import HowItWorks from "./HowItWorks";
-
-export default function Layout() {
+export default function Features() {
   const error = useStore(state => state.apiError)
 
   return <Stack
@@ -23,10 +16,7 @@ export default function Layout() {
     }}
   >
     <Error message={error} />
-    <Hero />
-    <DiscoverAI />
-    <Demo />
-    <HowItWorks />
-    <SignUp />
+    <Hero_Features/>
+    <MachineLearning/>
   </Stack>
 }

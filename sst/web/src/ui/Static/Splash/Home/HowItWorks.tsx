@@ -23,7 +23,7 @@ export default function DiscoverAI() {
           variant="h2"
           textAlign='center'
         >
-          Experience a new kind of journal
+          Start a truly life-changing routine
         </Typography>
 
         <Typography
@@ -31,7 +31,7 @@ export default function DiscoverAI() {
           maxWidth={900}
           textAlign='center'
         >
-          The perfect combination of tech and soul
+          Journal. Track your behavior. Explore insights. Repeat.
         </Typography>
       </Grid>
       <Grid item xs={12} md={6}>
@@ -46,7 +46,7 @@ export default function DiscoverAI() {
             variant="body1"
             textAlign='left'
           >
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
+            Nearly everyone would agree that practices like meditation, journaling, and self-reflection are associated with incredible health benefits. Similarly, we all know the importance of eating well, exercising, and meeting our needs in healthy ways. 
           </Typography>
 
           <Typography
@@ -54,7 +54,15 @@ export default function DiscoverAI() {
             variant="body1"
             textAlign='left'
           >
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
+            Gnothi was designed to combine journaling and behavior tracking with tons of AI-powered insights that help you narrow your focus. They highlight the aspects of your life where there are opportunities for learning and growth, and then you decide where to go from there. 
+          </Typography>
+
+          <Typography
+            maxWidth={550}
+            variant="body1"
+            textAlign='left'
+          >
+            It’s not a replacement for therapy or medical advice by any means, as experts agree that AI isn’t quite ready for that. Still, there are thousands of individuals that have found value in it, and we hope you do too. 
           </Typography>
         </Stack>
       </Grid>
