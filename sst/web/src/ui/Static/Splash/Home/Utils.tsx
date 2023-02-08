@@ -86,11 +86,48 @@ export function Section({ children, color = 'light' }: React.PropsWithChildren<S
 
 export function Skeleton2() {
   return <Box
+    borderRadius={10}
     sx={{ 
       alignItems: "center",
       width:'100%',
       height:'300px',
       backgroundColor: 'primary.main' 
+    }}
+  ></Box>
+}
+
+export function Skeleton3() {
+  return <Box
+    borderRadius={10}
+    sx={{ 
+      alignItems: "center",
+      width:'100%',
+      height:'300px',
+      backgroundColor: '#f1f1f4' 
+    }}
+  ></Box>
+}
+
+export function Skeleton4() {
+  return <Box
+    borderRadius={10}
+    sx={{ 
+      alignItems: "center",
+      width:'300px',
+      height:'250px',
+      backgroundColor: '#f1f1f4' 
+    }}
+  ></Box>
+}
+
+export function Skeleton5() {
+  return <Box
+    borderRadius={10}
+    sx={{ 
+      alignItems: "center",
+      width:'100%',
+      height:'300px',
+      backgroundColor: '#f1f1f4' 
     }}
   ></Box>
 }

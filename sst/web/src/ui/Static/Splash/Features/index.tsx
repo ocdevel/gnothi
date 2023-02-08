@@ -5,6 +5,7 @@ import Stack from "@mui/material/Stack";
 import {styles} from '../../../Setup/Mui'
 import Hero_Features from './Hero_Features';
 import MachineLearning from './MachineLearning';
+import FeatureLayout from "./FeatureLayout"
 const {spacing, colors, sx} = styles
 
 export default function Features() {
@@ -17,6 +18,6 @@ export default function Features() {
   >
     <Error message={error} />
     <Hero_Features/>
-    <MachineLearning/>
+    <FeatureLayout/>
   </Stack>
 }
