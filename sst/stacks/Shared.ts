@@ -35,30 +35,27 @@ export function SharedCreate(context: StackContext) {
     // Private subnet setup: https://adrianhesketh.com/2022/05/31/create-vpc-with-cdk/,
     // https://bobbyhadz.com/blog/aws-cdk-vpc-example
     return new aws_ec2.Vpc(stack, 'Vpc', {
-      maxAzs: 2, // Default is all AZs in the region
       natGateways: 1,
+      maxAzs: 2, // Default is all AZs in the region
       // enableDnsSupport: true,
       // enableDnsHostnames: true,
-      // subnetConfiguration: [
-      //   {
-      //     name: "isolated-subnet-1",
-      //     subnetType: aws_ec2.SubnetType.PRIVATE_ISOLATED,
-      //     cidrMask: 28,
-      //   },
-      // ]
-    })
-  }
-
-  function createRdsV1(): RDS {
-    return new RDS(stack, "Rds", {
-      scaling: {
-        autoPause: true,
-        minCapacity: "ACU_2",
-        maxCapacity: "ACU_8",
-      },
-      engine: "postgresql11.13",
-      defaultDatabaseName: `gnothi${stage}`,
-      migrations: "services/data/migrations"
+      subnetConfiguration: [
+        {
+          cidrMask: 24,
+          name: 'Private',
+          subnetType: aws_ec2.SubnetType.PRIVATE_ISOLATED,
+        },
+        {
+          cidrMask: 24,
+          name: 'PrivateWithEgress',
+          subnetType: aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
+        },
+        {
+          cidrMask: 24,
+          name: 'Public',
+          subnetType: aws_ec2.SubnetType.PUBLIC,
+        },
+      ]
     })
   }
 
@@ -66,14 +63,26 @@ export function SharedCreate(context: StackContext) {
     // TODO Aurora v2 via https://github.com/aws/aws-cdk/issues/20197#issuecomment-1360639346
     // need to re-work most things
     // Also see https://www.codewithyou.com/blog/aurora-serverless-v2-with-aws-cdk
+    // Props & subnet https://subaud.io/blog/build-a-private-rds-with-lambda-integration
+
+    const sg = new aws_ec2.SecurityGroup(stack, 'QuerySecurityGroup', {
+      vpc,
+      description: 'PSQL Query',
+      allowAllOutbound: true,
+    });
+    sg.addIngressRule(aws_ec2.Peer.anyIpv4(), aws_ec2.Port.tcp(5432));
+
     const rds = new aws_rds.DatabaseCluster(stack, "Rds", {
       engine: aws_rds.DatabaseClusterEngine.auroraPostgres({
         version: aws_rds.AuroraPostgresEngineVersion.VER_14_4,
       }),
+      instances: 1,
       instanceProps: {
         vpc,
+        vpcSubnets: { subnetType: aws_ec2.SubnetType.PRIVATE_ISOLATED },
         instanceType: "serverless" as any,
-        autoMinorVersionUpgrade: true
+        autoMinorVersionUpgrade: true,
+        securityGroups: [sg],
       },
     });
     // Edit the generated cloudformation construct directly:
@@ -83,6 +92,7 @@ export function SharedCreate(context: StackContext) {
       minCapacity: 0.5,
       maxCapacity: 4,
     }
+
     return rds
   }
 

@@ -1,8 +1,9 @@
 import * as sst from "@serverless-stack/resources";
 import { SharedImport } from './Shared'
 import {StringAttribute} from 'aws-cdk-lib/aws-cognito'
-import {RemovalPolicy} from 'aws-cdk-lib'
+import {aws_ec2, RemovalPolicy} from 'aws-cdk-lib'
 import {smallLamdaRam, timeouts} from "./util";
+import * as iam from "aws-cdk-lib/aws-iam";
 
 export function Auth({ app, stack }: sst.StackContext) {
   const {vpc, rds, rdsSecret} = sst.use(SharedImport);
@@ -13,6 +14,44 @@ export function Auth({ app, stack }: sst.StackContext) {
 
   // aws-samples/websockets
   // https://github.dev/aws-samples/websocket-api-cognito-auth-sample
+
+
+  const testFn = new sst.Function(stack, "TestFn", {
+    memorySize: smallLamdaRam,
+    timeout: timeouts.sm,
+    handler: "auth/testFn.main",
+    vpc,
+    vpcSubnets: {subnetType: aws_ec2.SubnetType.PRIVATE_WITH_EGRESS},
+    bundle: {
+      externalModules: ['pg-native'],
+    },
+    environment: {
+      // maybe only need secretArn? Does it contain everything? (if so, can remove the full clusterId import/export)
+      clusterIdentifier: rds.clusterIdentifier,
+      rdsSecretArn: rdsSecret.secretArn,
+    }
+  })
+  testFn.addToRolePolicy(new iam.PolicyStatement({
+     actions: ["secretsmanager:GetResourcePolicy",
+                "secretsmanager:GetSecretValue",
+                "secretsmanager:DescribeSecret",
+                "secretsmanager:ListSecretVersionIds"],
+     effect: iam.Effect.ALLOW,
+     resources: [
+       rdsSecret.secretArn,
+     ],
+   }))
+
+  stack.addOutputs({
+    testFnArn: testFn.functionArn
+  })
+  return null
+
+
+
+
+
+
 
   const preSignUp = new sst.Function(stack, "PreSignUp", {
     memorySize: smallLamdaRam,
@@ -29,7 +68,6 @@ export function Auth({ app, stack }: sst.StackContext) {
   // })
   rdsSecret.grantRead(preSignUp)
 
-  return null
 
   const auth = new sst.Cognito(stack, "Auth", {
     login: ["email"],
