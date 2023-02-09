@@ -7,39 +7,9 @@ import Button from '@mui/material/Button';
 import {styles} from '../../../Setup/Mui';
 import InsightsOutlinedIcon from "@mui/icons-material/InsightsOutlined";
 import AutoStoriesOutlinedIcon from '@mui/icons-material/AutoStoriesOutlined';
+import { FeatureIntro } from "../Utils";
 
 const {spacing, colors, sx} = styles
-
-type FeatureIntroBooks = {
-  icon?: React.ReactNode
-  title: string
-  children: React.ReactNode
-}
-
-export function FeatureIntroBooks({ icon, title, children }: FeatureIntroBooks){
-  return <Grid item xs={6}>
-    <Stack
-      px={4}
-      direction="row"
-      alignItems="flex-start"
-      justifyContent="center"
-      spacing={2}
-    >
-      {icon}  
-      <Box maxWidth={450}>
-        <Typography 
-        variant='h6' 
-        color='#553840'
-        marginBottom={1}>{title}
-        </Typography>
-
-        <Typography 
-        variant="body1"
-        >{children}</Typography>
-      </Box>
-    </Stack>
-  </Grid>
-}
 
 export default function Books() {
     return <Section color="grey">
@@ -86,29 +56,32 @@ export default function Books() {
               alignItems="flex-end"
               > 
 
-              <FeatureIntroBooks
+              <FeatureIntro
                 title={"Identify themes and patterns"} 
+                color='#553840'
               >
                 <Typography>
                 As you write, Gnothi will get to know you better. You’ll get insights to narrow your focus and help you grow.          
                 </Typography>
-              </FeatureIntroBooks>
+              </FeatureIntro>
 
-              <FeatureIntroBooks
+              <FeatureIntro
                 title={"Identify themes and patterns"} 
+                color='#553840'
               >
                 <Typography>
                 As you write, Gnothi will get to know you better. You’ll get insights to narrow your focus and help you grow.          
                 </Typography>
-              </FeatureIntroBooks>
+              </FeatureIntro>
 
-              <FeatureIntroBooks
+              <FeatureIntro
                 title={"Identify themes and patterns"} 
+                color='#553840'
               >
                 <Typography>
                 As you write, Gnothi will get to know you better. You’ll get insights to narrow your focus and help you grow.          
                 </Typography>
-              </FeatureIntroBooks>
+              </FeatureIntro>
 
             </Grid>
         </Grid>

@@ -19,14 +19,16 @@ export const styles = {
   sx: {
     button1: {backgroundColor: "primary.main", color: colors.white, fontFamily: "Poppins"},
     button2: {backgroundColor: "primary.light", color: colors.white, fontFamily: "Poppins"},
+    
     featureIcon: {fontSize: 40, color: "#50627a"},
     behaviorIcon: {fontSize: 40, color: "#507a6f"},
     bookIcon: {fontSize: 40, color: "#553840"},
+
     promptIconLg: {fontSize: 60, color: "#50627a"},
     behaviorIconLg: {fontSize: 60, color: "#507a6f"},
     organizationIconLg: {fontSize: 60, color: "#59547a"},
     booksIconLg: {fontSize: 60, color: "#553840"},
-    themesSummariesIconLg: {fontSize: 60, color: "green"}
+    themesSummariesIconLg: {fontSize: 60, color: "#59547a"}
   }
 }
 

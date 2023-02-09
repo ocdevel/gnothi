@@ -5,44 +5,12 @@ import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import {styles} from '../../../Setup/Mui'
-import { FeatureIntro } from "../Home/DiscoverAI";
+import { FeatureIntro } from "../Utils";
 import InsightsOutlinedIcon from "@mui/icons-material/InsightsOutlined";
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 import { AlignHorizontalRight } from "@mui/icons-material";
 
 const {spacing, colors, sx} = styles
-
-type FeatureIntroBehaviors = {
-  icon?: React.ReactNode
-  title: string
-  children: React.ReactNode
-}
-
-export function FeatureIntroBehaviors({ icon, title, children }: FeatureIntroBehaviors){
-  return <Grid item xs={6}>
-    <Stack
-      px={4}
-      direction="row"
-      alignItems="flex-start"
-      justifyContent="center"
-      spacing={2}
-    >
-      {icon}  
-      <Box maxWidth={450}>
-        <Typography 
-        variant='h6' 
-        color='#507a6f'
-        marginBottom={1}>{title}
-        </Typography>
-
-        <Typography 
-        variant="body1"
-        >{children}</Typography>
-      </Box>
-    </Stack>
-  </Grid>
-}
-
 
 export default function BehaviorTracking() {
   return <Section color="grey">
@@ -96,21 +64,23 @@ export default function BehaviorTracking() {
             alignItems="flex-end"
             > 
 
-            <FeatureIntroBehaviors
+            <FeatureIntro
               title={"Identify themes and patterns"} 
+              color='#507a6f'
             >
               <Typography>
               As you write, Gnothi will get to know you better. You’ll get insights to narrow your focus and help you grow.          
               </Typography>
-            </FeatureIntroBehaviors>
+            </FeatureIntro>
 
-            <FeatureIntroBehaviors
+            <FeatureIntro
               title={"Identify themes and patterns"} 
+              color='#507a6f'
             >
               <Typography>
               As you write, Gnothi will get to know you better. You’ll get insights to narrow your focus and help you grow.          
               </Typography>
-            </FeatureIntroBehaviors>
+            </FeatureIntro>
 
           </Grid>
 
@@ -135,21 +105,23 @@ export default function BehaviorTracking() {
             alignItems="flex-end"
             > 
 
-            <FeatureIntroBehaviors
+            <FeatureIntro
               title={"Identify themes and patterns"} 
+              color='#507a6f'
             >
               <Typography>
               As you write, Gnothi will get to know you better. You’ll get insights to narrow your focus and help you grow.          
               </Typography>
-            </FeatureIntroBehaviors>
+            </FeatureIntro>
 
-            <FeatureIntroBehaviors
+            <FeatureIntro
               title={"Identify themes and patterns"} 
+              color='#507a6f'
             >
               <Typography>
               As you write, Gnothi will get to know you better. You’ll get insights to narrow your focus and help you grow.          
               </Typography>
-            </FeatureIntroBehaviors>
+            </FeatureIntro>
 
           </Grid>
         </Grid>
