@@ -1,9 +1,9 @@
 import { App } from "@serverless-stack/resources";
 import { Api } from "./Api";
 import { Web } from "./Web";
-import { Database } from "./Database";
 import { Auth } from "./Auth";
 import { Ml } from "./Ml";
+import { Misc } from "./Misc";
 import { Tags } from 'aws-cdk-lib';
 import { SharedCreate, SharedImport, sharedStage } from './Shared'
 
@@ -25,9 +25,10 @@ export default function main(app: App) {
     app.stack(SharedCreate)
   } else {
     app.stack(SharedImport)
+      .stack(Misc)
       .stack(Auth)
-      // .stack(Ml)
-      // .stack(Api)
-      // .stack(Web)
+      .stack(Ml)
+      .stack(Api)
+      .stack(Web)
   }
 }

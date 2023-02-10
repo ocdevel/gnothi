@@ -16,22 +16,23 @@ r.entries_upsert_request.fn = r.entries_upsert_request.fnDef.implement(async (re
   let entry_id: string = entry.id
   let dbEntry: S.Entries.Entry
   if (!entry_id) {
-    dbEntry = (await db.insert("entries", {...entry, user_id}))[0]
+    // FIXME
+    dbEntry = await db.insert("entries", {...entry, user_id})
     entry_id = dbEntry.id
   } else {
     const {text, title} = req
-    dbEntry = (await db.executeStatement<S.Entries.Entry>({
-      sql: `update entries set title=:title, text=:text where id=:entry_id returning *`,
-      parameters: [
-        {name: "entry_id", typeHint: "UUID", value: {stringValue: entry_id}},
-        {name: "title", value: title?.length ? {stringValue: title} : {isNull: true}},
-        {name: "text", value: {stringValue: text}}
+    dbEntry = await db.queryFirst<S.Entries.Entry>(
+      `update entries set title=$1, text=$2 where id=$3 returning *`,
+      [
+        title,
+        text,
+        entry_id
       ]
-    }))[0]
-    await db.executeStatement({
-      sql: "delete from entries_tags where entry_id=:entry_id",
-      parameters: [{name: "entry_id", typeHint: "UUID", value: {stringValue: entry_id}}]
-    })
+    )
+    await db.query(
+      "delete from entries_tags where entry_id=:$1",
+      [entry_id]
+    )
   }
 
   // FIXME
@@ -48,6 +49,7 @@ r.entries_upsert_request.fn = r.entries_upsert_request.fnDef.implement(async (re
 
   // TODO use batchExecuteStatement
   for (const tag_id of tids) {
+    // FIXME
     await db.insert("entries_tags", {tag_id, entry_id})
   }
 

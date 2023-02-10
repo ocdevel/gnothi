@@ -61,14 +61,14 @@ export function SharedCreate(context: StackContext) {
   }
 
   function createRdsV2(vpc: aws_ec2.Vpc): aws_rds.DatabaseCluster {
-    // TODO Aurora v2 via https://github.com/aws/aws-cdk/issues/20197#issuecomment-1360639346
+    // Aurora v2 via https://github.com/aws/aws-cdk/issues/20197#issuecomment-1360639346
     // need to re-work most things
     // Also see https://www.codewithyou.com/blog/aurora-serverless-v2-with-aws-cdk
     // Props & subnet https://subaud.io/blog/build-a-private-rds-with-lambda-integration
 
-    const sg = new aws_ec2.SecurityGroup(stack, 'QuerySecurityGroup', {
+    const sg = new aws_ec2.SecurityGroup(stack, 'PostgresSG', {
       vpc,
-      description: 'PSQL Query',
+      description: 'Postgres SG',
       allowAllOutbound: true,
     });
     sg.addIngressRule(aws_ec2.Peer.anyIpv4(), aws_ec2.Port.tcp(5432));
@@ -179,16 +179,24 @@ export function SharedImport(context: StackContext) {
   })
 
   function withRds(stack: StackContext['stack'], id: string, props: sst.FunctionProps): sst.Function {
-    if (props.bundle) {throw "FIXME can't merge functionProps.bundle"}
+    let bundle: sst.FunctionProps['bundle'] = {
+      externalModules: ['pg-native'],
+      format: "esm" // bundle overrides the bundle-defaults from stacks/index.ts
+    }
+    if (props.bundle) {
+      // @ts-ignore
+      bundle = {...bundle, ...props.bundle}
+      console.error("Merging functionProps.bundle will likely cause problems. Result:", bundle)
+    }
     const fn = new sst.Function(stack, id, sst.Function.mergeProps(props, {
       vpc,
       vpcSubnets: {subnetType: aws_ec2.SubnetType.PRIVATE_WITH_EGRESS},
       // architecture: Architecture.ARM_64, // TODO try this, might be faster
-      bundle: {
-        externalModules: ['pg-native'],
-      },
+      bundle,
       environment: {
         rdsSecretArn: rdsSecret.secretArn,
+        stage,
+        sharedStage: sharedStage_,
       }
     }))
     fn.addToRolePolicy(readSecretPolicy)

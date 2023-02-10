@@ -2,7 +2,7 @@ import * as sst from "@serverless-stack/resources";
 import { SharedImport } from './Shared'
 import {StringAttribute} from 'aws-cdk-lib/aws-cognito'
 import {aws_ec2, RemovalPolicy} from 'aws-cdk-lib'
-import {smallLamdaRam, timeouts} from "./util";
+import {rams, timeouts} from "./util";
 import * as iam from "aws-cdk-lib/aws-iam";
 
 export function Auth({ app, stack }: sst.StackContext) {
@@ -15,33 +15,16 @@ export function Auth({ app, stack }: sst.StackContext) {
   // aws-samples/websockets
   // https://github.dev/aws-samples/websocket-api-cognito-auth-sample
 
-
-  const testFn = withRds(stack,"TestFn2", {
-    memorySize: smallLamdaRam,
-    timeout: timeouts.sm,
-    handler: "auth/testFn.main",
-  })
-
-  stack.addOutputs({
-    testFnArn: testFn.functionArn
-  })
-  return null
-
-
-  const preSignUp = new sst.Function(stack, "PreSignUp", {
-    memorySize: smallLamdaRam,
+  const preSignUp = withRds(stack, "PreSignUp", {
+    memorySize: rams.sm,
     timeout: timeouts.md,
     handler: "auth/preSignup.handler",
-    environment: {
-      // maybe only need secretArn? Does it contain everything? (if so, can remove the full clusterId import/export)
-      clusterIdentifier: rds.clusterIdentifier,
-      secretArn: rdsSecret.secretArn,
-    }
   })
-  // stack.addOutputs({
-  //   secretArn2: rds.secret.secretArn
-  // })
-  rdsSecret.grantRead(preSignUp)
+  const postConfirmation = withRds(stack, "PostConfirmation", {
+    memorySize: rams.sm,
+    timeout: timeouts.md,
+    handler: "auth/postConfirmation.handler",
+  })
 
 
   const auth = new sst.Cognito(stack, "Auth", {
@@ -81,27 +64,14 @@ export function Auth({ app, stack }: sst.StackContext) {
 
     // https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools-working-with-aws-lambda-triggers.html
     triggers: {
-      preSignUp: {
-        memorySize: smallLamdaRam,
-        timeout: timeouts.md,
-        handler: "auth/preSignup.handler",
-        bind: [rds]
-      },
-      postConfirmation: {
-        memorySize: smallLamdaRam,
-
-        // TODO switch back to .md when fix RDS cold-start (migrate to v2)
-        timeout: timeouts.lg,
-        // timeout: timeouts.md,
-        handler: "auth/postConfirmation.handler",
-        bind: [rds]
-      },
+      preSignUp,
+      postConfirmation
     }
   })
 
-  const authFn = new sst.Function(stack, "fn_authorizer", {
+  const authFn = withRds(stack, "fn_authorizer", {
     handler: "auth/wsAuthorizer.handler",
-    memorySize: smallLamdaRam,
+    memorySize: rams.sm,
     timeout: timeouts.md,
     environment: {
       USER_POOL_ID: auth.userPoolId,

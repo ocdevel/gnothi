@@ -575,3 +575,10 @@ create table ws_connections
     connection_id   varchar not null,
     primary key (user_id, connection_id)
 );
+
+create table keyvalues (
+  key varchar not null primary key,
+  value varchar not null
+);
+
+insert into keyvalues (key, value) values ('version', '1');

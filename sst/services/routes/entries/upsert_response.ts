@@ -15,13 +15,13 @@ r.entries_upsert_response.fn = r.entries_upsert_response.fnDef.implement(async (
   const promises = []
   let updated = {...entry}
 
-  const tags = await db.executeStatement<S.Tags.Tag>({
-    sql: `select * from tags where id in :tids and user_id=:user_id`,
-    parameters: [
-      {name: "tids", typeHint: "UUID", value: {arrayValue: {stringValues: tids}}},
-      {name: "user_id", typeHint: "UUID", value: {stringValue: context.user.id}}
+  const tags = await db.query<S.Tags.Tag>(
+    `select * from tags where id=any($1) and user_id=$2`,
+    [
+      tids,
+      context.user.id
     ]
-  })
+  )
 
   // TODO how to handle multiple tags, where some are yes-ai and some are no-ai?
   // For now I'm assuming no.
@@ -36,18 +36,18 @@ r.entries_upsert_response.fn = r.entries_upsert_response.fnDef.implement(async (
     text_clean: clean.text,
     text_paras: clean.paras
   }
-  promises.push(db.executeStatement({
-    sql: `update entries 
+  promises.push(db.query(
+    `update entries 
       set 
-        text_clean=:text_clean, 
-        text_paras=:text_paras::varchar[] 
-      where id=:id`,
-    parameters: [
-      {name: "text_clean", value: {stringValue: updated.text_clean}},
-      {name: "text_paras", value: {arrayValue: {stringValues: updated.text_paras}}, arrayFix: "="},
-      {name: "id", value: {stringValue: eid}, typeHint: "UUID"}
+        text_clean=$1, 
+        text_paras=$2::varchar[] 
+      where id=$3`,
+    [
+      updated.text_clean,
+      updated.text_paras,
+      eid
     ]
-  }))
+  ))
 
   const summary = !skip_summarize ? await summarizeEntry(clean) : {
     title: "",
@@ -67,21 +67,21 @@ r.entries_upsert_response.fn = r.entries_upsert_response.fnDef.implement(async (
     promises.push(upsert({entry: updated}))
   }
 
-  promises.push(db.executeStatement({
-    sql: `update entries set 
-        ai_keywords=:ai_keywords::varchar[],
-        ai_title=:ai_title, 
-        ai_text=:ai_text, 
-        ai_sentiment=:ai_sentiment
-      where id=:id`,
-    parameters: [
-      {name: "ai_title", value: {stringValue: updated.ai_title}},
-      {name: "ai_text", value: {stringValue: updated.ai_text}},
-      {name: "ai_sentiment", value: {stringValue: updated.ai_sentiment}},
-      {name: "ai_keywords", value: {arrayValue: {stringValues: updated.ai_keywords}}, arrayFix: "="},
-      {name: "id", value: {stringValue: eid}, typeHint: "UUID"}
+  promises.push(db.query(
+    `update entries set 
+        ai_keywords=$1::varchar[],
+        ai_title=$2, 
+        ai_text=$3, 
+        ai_sentiment=$4
+      where id=$5`,
+    [
+      updated.ai_keywords,
+      updated.ai_title,
+      updated.ai_text,
+      updated.ai_sentiment,
+      eid
     ]
-  }))
+  ))
   await Promise.all(promises)
 
   // FIXME

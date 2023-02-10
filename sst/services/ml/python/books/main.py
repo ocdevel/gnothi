@@ -8,6 +8,7 @@ import boto3
 
 dir_ = f"{VECTORS_PATH}/books"
 file = f"{dir_}/embeddings.feather"
+download_from = "gnothi-public"  # os.getenv("bucket_name")
 
 # if os.path.isdir(file):
 #     import shutil
@@ -18,11 +19,11 @@ if not os.path.exists(file):
     s3_path = 'vectors/books/embeddings.feather'
     logging.warning("{} doesn't exist. Downloading from {}/{}".format(
         file,
-        os.getenv("bucket_name"),
+        download_from,
         s3_path
     ))
     s3.download_file(
-        os.getenv("bucket_name"),
+        download_from,
         s3_path,
         file
     )

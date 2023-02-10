@@ -4,22 +4,20 @@ const testing = process.env.IS_LOCAL
 
 export const handler = async (event, context, callback) => {
   // create user in database. maybe add its uid to cognito
-  const dbUser = (await db.exec({
-    sql: "insert into users (email, cognito_id) values (:email, :cognito_id) returning *;",
-    values: {
-      email: event.request.userAttributes.email,
-      cognito_id: event.userName,
-    },
-    zIn: S.Users.User
-  }))[0]
+  const dbUser = await db.queryFirst<S.Users.User>(
+    "insert into users (email, cognito_id) values ($1, $2) returning *;",
+  [
+      event.request.userAttributes.email,
+      event.userName,
+    ]
+  )
   event.request.userAttributes['gnothiId'] = dbUser.id
 
   // All users need one immutable main tag
-  const mainTag = await db.exec({
-    sql: "insert into tags (user_id, name, main) values (:user_id, 'Main', true)",
-    values: {user_id: dbUser.id},
-    zIn: S.Tags.Tag
-  })
+  const mainTag = await db.query(
+    "insert into tags (user_id, name, main) values ($1, 'Main', true)",
+    [dbUser.id],
+  )
 
   return event
 }

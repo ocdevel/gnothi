@@ -14,8 +14,13 @@
 
 import {Duration} from 'aws-cdk-lib'
 
-export const smallLamdaRam = 128
-export const mlLambdaRam = 8846
+export const rams = {
+  sm: 128,
+  // md: 256, // haven't decided past small yet
+  // lg: 512,
+
+  ai: 8846
+}
 
 export const timeouts = {
   sm: "10 seconds" as const, //Duration.seconds(10),

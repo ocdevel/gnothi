@@ -6,62 +6,58 @@ import {GnothiError} from "../errors";
 const r = Routes.routes
 
 r.tags_list_request.fn = r.tags_list_request.fnDef.implement(async (req, context) => {
-  const tags = await db.executeStatement({
-    sql: 'select * from tags where user_id=:user_id order by sort asc',
-    parameters: [
-      {name: "user_id", value: {stringValue: context.user.id}, typeHint: "UUID"}
+  const tags = await db.query(
+    'select * from tags where user_id=$1 order by sort asc',
+    [
+      context.user.id
     ]
-  })
+  )
   return tags
 })
 
 
 r.tags_post_request.fn = r.tags_post_request.fnDef.implement(async (req, context) => {
-  const tag = await db.executeStatement({
-    sql: `
+  const tag = await db.query(`
     insert into tags (name, user_id, sort) 
     values (
-      :name, 
-      :user_id,
+      $1, 
+      $2,
       (select max(sort) + 1 as sort 
-        from tags where user_id=:user_id)
+        from tags where user_id=$2)
     )
     returning *;
     `,
-    parameters: [
-      {name: "name", value: {stringValue: req.name}},
-      {name: "user_id", value: {stringValue: context.user.id}, typeHint: "UUID"}
+    [
+      req.name,
+      context.user.id
     ]
-  })
+  )
   return tag
 })
 
 r.tags_put_request.fn = r.tags_put_request.fnDef.implement(async (req, context) => {
-  const tag = await db.executeStatement({
-    sql: `
-    update tags set name=:name, ai_index=:ai_index, ai_summarize=:ai_summarize, sort=:sort
-    where user_id=:user_id and id=:id
+  const tag = await db.query(`
+    update tags set name=$1, ai_index=$2, ai_summarize=$3, sort=$4
+    where user_id=$5 and id=$6
     returning *;
     `,
-    parameters: [
-      {name: "name", value: {stringValue: req.name}},
-      {name: "sort", value: {longValue: req.sort}},
-      {name: "ai_index", value: {booleanValue: req.ai_index}},
-      {name: "ai_summarize", value: {booleanValue: req.ai_summarize}},
-      {name: "user_id", value: {stringValue: context.user.id}, typeHint: "UUID"},
-      {name: "id", value: {stringValue: req.id}, typeHint: "UUID"}
+    [
+      req.name,
+      req.ai_index,
+      req.ai_summarize,
+      req.sort,
+      context.user.id,
+      req.id
     ]
-  })
+  )
   return tag
 })
 
 r.tags_delete_request.fn = r.tags_delete_request.fnDef.implement(async (req, context) => {
-  const parameters = [
-    {name: "id", typeHint: "UUID", value: {stringValue: req.id}}
-  ]
+  const params = [req.id]
   const [tag, entries] = await Promise.all([
-    db.executeStatement<Tag>({sql: "select * from tags where id=:id", parameters}),
-    db.executeStatement<any>({sql: "select * from entries_tags where tag_id=:id", parameters})
+    db.query<Tag>("select * from tags where id=:$1", params),
+    db.query<any>("select * from entries_tags where tag_id=$1", params)
   ])
   if (tag[0].main) {
     throw new GnothiError({message: "Can't delete your main tag"})
@@ -70,20 +66,18 @@ r.tags_delete_request.fn = r.tags_delete_request.fnDef.implement(async (req, con
     // TODO
     throw new GnothiError({message: "Can't delete tags which are applied to entries. Un-tag your entries first. I'll fix this eventually (by moving these entries to Main)."})
   }
-  await db.executeStatement({sql: "delete from tags where id=:id", parameters})
+  await db.query("delete from tags where id=$1", params)
   await context.handleReq({event: "tags_list_request", data: {}}, context)
   return null
 })
 
 r.tags_toggle_request.fn = r.tags_toggle_request.fnDef.implement(async (req, context) => {
   // update returning: https://stackoverflow.com/questions/7923237/return-pre-update-column-values-using-sql-only
-  return db.executeStatement({
-    sql: `update tags x set selected=(not y.selected)
+  return db.query(
+    `update tags x set selected=(not y.selected)
       from tags y 
-      where x.id=:id and x.id=y.id
+      where x.id=$1 and x.id=y.id
       returning x.*`,
-    parameters: [
-      {name: "id", value: {stringValue: req.id}, typeHint: "UUID"}
-    ]
-  })
+    [req.id]
+  )
 })

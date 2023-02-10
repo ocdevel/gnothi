@@ -26,13 +26,13 @@ export function getParas(e: Entry): string[] {
 
 export class Insights extends Base {
   async entriesByIds(entry_ids: string[]) {
-    return db.executeStatement<S.Entries.Entry>({
-      sql: `select text_clean, ai_text, text_paras, text from entries 
-        where user_id=:user_id and id in :entry_ids order by created_at asc`,
-      parameters: [
-        {name: "user_id", typeHint: "UUID", value: {stringValue: this.uid}},
-        {name: "entry_ids", typeHint: "UUID", value: {arrayValue: {stringValues: entry_ids}}}
+    return db.query<S.Entries.Entry>(
+      `select text_clean, ai_text, text_paras, text from entries 
+        where user_id=$1 and id=any($2) order by created_at asc`,
+      [
+        this.uid,
+        entry_ids
       ]
-    })
+    )
   }
 }

@@ -1,4 +1,4 @@
-import z from 'zod'
+import {z} from 'zod'
 import {Passthrough, dateCol} from './utils'
 import {Route} from './api'
 import {Events} from './events'

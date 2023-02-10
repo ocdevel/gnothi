@@ -39,19 +39,19 @@ export class Utils {
       userName: auth.cognito_id
     }
     const res = await postConfirmation(cognitoEvent, {}, _.noop)
-    this.user = (await db.executeStatement<S.Users.User>({
-      sql: "select * from users where cognito_id=:cognito_id",
-      parameters: [{name: "cognito_id", value: {stringValue: auth.cognito_id}}]
-    }))[0]
+    this.user = await db.queryFirst<S.Users.User>(
+      "select * from users where cognito_id=$1",
+      [auth.cognito_id]
+    )
     this.uid = this.user.id
-    this.mainTag = (await db.executeStatement<S.Tags.Tag>({
-      sql: "select * from tags where user_id=:user_id",
-      parameters: [{name: "user_id", value: {stringValue: this.uid}, typeHint: "UUID"}]
-    }))[0].id
-    this.noAiTag = (await db.executeStatement<S.Tags.Tag>({
-      sql: "insert into tags (name, ai_summarize, user_id) values ('NoAI', false, :user_id) returning *;",
-      parameters: [{name: "user_id", value: {stringValue: this.uid}, typeHint: "UUID"}]
-    }))[0].id
+    this.mainTag = (await db.queryFirst<S.Tags.Tag>(
+      "select * from tags where user_id=:$1",
+      [this.uid]
+    )).id
+    this.noAiTag = (await db.queryFirst<S.Tags.Tag>(
+      "insert into tags (name, ai_summarize, user_id) values ('NoAI', false, $1) returning *;",
+      [this.uid]
+    )).id
   }
 
   async request<T = any>(req: Req): Promise<Res<T>> {

@@ -16,11 +16,10 @@ import {WsConnection} from "@gnothi/schemas/ws";
 // Typehint picks up a UUID, but cognito_id is stored as varchar (in case they
 // change, since we have no control). un-hint it by not using kysley
 async function fromCognito(cognito_id: string, justId=false) {
-  const res = await db.exec({
-    sql: `select ${justId ? "id" : "*"} from users where cognito_id = :cognito_id`,
-    values: {cognito_id},
-    zOut: User
-  })
+  const res = await db.query<User>(
+    `select ${justId ? "id" : "*"} from users where cognito_id=$1`,
+    [cognito_id],
+  )
   return res[0]
 }
 
@@ -43,29 +42,24 @@ export async function getUser(event: APIGatewayProxyWebsocketEventV2WithRequestC
   if (connection_id) {
     if (routeKey == "$connect") {
       const user = await fromCognito(cognitoId, true)
-      await db.exec({
-        sql: `insert into ws_connections (user_id, connection_id) values (:user_id, :connection_id)`,
-        values: {user_id: user.id, connection_id},
-        zIn: WsConnection
-      })
+      await db.query(
+        `insert into ws_connections (user_id, connection_id) values ($1, $2)`,
+        [user.id, connection_id],
+      )
       return handled
     } else if (routeKey === "$disconnect") {
-      await db.exec({
-        sql: "delete from ws_connections where connection_id=:connection_id",
-        values: {connection_id},
-        zIn: WsConnection
-      })
+      await db.query(
+        "delete from ws_connections where connection_id=$1",
+        [connection_id],
+      )
       return handled
     }
-    const user = (await db.executeStatement({
-      sql: `
-        select u.*
-        from users u
-        inner join ws_connections wc on u.id = wc.user_id
-        where wc.connection_id = :connection_id;
-      `,
-      parameters: [{name: "connection_id", value: {stringValue: connection_id}}]
-    }))[0]
+    const user = await db.queryFirst(`
+      select u.*
+      from users u
+      inner join ws_connections wc on u.id = wc.user_id
+      where wc.connection_id = $1;
+    `, [connection_id])
     return {handled: false, user}
   }
 

@@ -3,7 +3,8 @@ import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as ec2 from "aws-cdk-lib/aws-ec2";
 import * as efs from "aws-cdk-lib/aws-efs";
 import * as cdk from "aws-cdk-lib";
-import {mlLambdaRam} from "./util";
+import {rams} from "./util";
+import {SharedImport} from "./Shared";
 
 // Getting a cyclical deps error when I have these all as different stacks, per
 // sst recommended usage. Just calling them as functions for now
@@ -29,39 +30,9 @@ function efsAccessPoint({fs, id, path}: AccessPoint) {
   })
 }
 
-function vpcAndEfs({stack}: sst.StackContext) {
-  // We try to get away with as much serverless as possible, but some resources
-  // need ot run more traditionally. For this, have a universal VPC the different resources
-  // can communicate behind
-
-  // Private subnet setup: https://adrianhesketh.com/2022/05/31/create-vpc-with-cdk/,
-  // https://bobbyhadz.com/blog/aws-cdk-vpc-example
-  const vpc = new ec2.Vpc(stack, 'Vpc', {
-    maxAzs: 2, // Default is all AZs in the region
-    natGateways: 1,
-    // enableDnsSupport: true,
-    // enableDnsHostnames: true,
-    // subnetConfiguration: [
-    //   {
-    //     name: "isolated-subnet-1",
-    //     subnetType: ec2.SubnetType.PRIVATE_ISOLATED,
-    //     cidrMask: 28,
-    //   },
-    // ]
-  })
-
-  // creates a file system in EFS to store cache models, weaviate data, etc
-  const fs = new efs.FileSystem(stack, 'Efs', {
-    vpc,
-    removalPolicy: cdk.RemovalPolicy.DESTROY
-  });
-
-  return {vpc, fs}
-}
-
 type MLService = {
   context: sst.StackContext,
-  vpc: ec2.Vpc,
+  vpc: ec2.IVpc,
   fs: efs.FileSystem,
   bucket: sst.Bucket
 }
@@ -83,7 +54,7 @@ function lambdas({context: {app, stack}, vpc, fs, bucket}: MLService) {
   })
 
   const mlFunctionProps = {
-    memorySize: mlLambdaRam,
+    memorySize: rams.ai,
     timeout: cdk.Duration.minutes(5),
     vpc,
     filesystem: lambda.FileSystem.fromEfsAccessPoint(accessPoint, '/mnt/mldata'),
@@ -152,6 +123,8 @@ function lambdas({context: {app, stack}, vpc, fs, bucket}: MLService) {
 
 export function Ml(context: sst.StackContext) {
   const { app, stack } = context
+  const {vpc} = sst.use(SharedImport);
+
 
   // Will put some assets in here like books.feather, and may move some EFS
   // use-cases towards S3 + PyArrow
@@ -160,7 +133,12 @@ export function Ml(context: sst.StackContext) {
     mlBucket_: bucket.bucketName
   })
 
-  const {vpc, fs} = vpcAndEfs(context)
+  // creates a file system in EFS to store cache models, weaviate data, etc
+  const fs = new efs.FileSystem(stack, 'Efs', {
+    vpc,
+    removalPolicy: cdk.RemovalPolicy.DESTROY
+  });
+
   const fns = lambdas({
     context,
     vpc,
