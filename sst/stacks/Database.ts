@@ -10,8 +10,8 @@ export function Database({ app, stack }: StackContext): RDS {
   const scaling: RDSProps['scaling'] = {
     prod: {
       autoPause: false,
-      minCapacity: "ACU_8",
-      maxCapacity: "ACU_64",
+      minCapacity: "ACU_2",
+      maxCapacity: "ACU_8",
     } as const,
     dev: {
       autoPause: true, // use this during active development/testing
@@ -20,7 +20,7 @@ export function Database({ app, stack }: StackContext): RDS {
     } as const
   }[stage_]
 
-  return new RDS(stack, "db", {
+  return new RDS(stack, "testdb", {
     scaling,
     engine: "postgresql11.13",
     defaultDatabaseName: `gnothi${stage_}`,

@@ -6,7 +6,7 @@ import {smallLamdaRam, timeouts} from "./util";
 import * as iam from "aws-cdk-lib/aws-iam";
 
 export function Auth({ app, stack }: sst.StackContext) {
-  const {vpc, rds, rdsSecret} = sst.use(SharedImport);
+  const {vpc, rdsSecret, readSecretPolicy, withRds} = sst.use(SharedImport);
 
   // SST samples
   // Cognito JWT example from https://sst.dev/examples/how-to-add-jwt-authorization-with-cognito-user-pool-to-a-serverless-api.html
@@ -16,41 +16,16 @@ export function Auth({ app, stack }: sst.StackContext) {
   // https://github.dev/aws-samples/websocket-api-cognito-auth-sample
 
 
-  const testFn = new sst.Function(stack, "TestFn", {
+  const testFn = withRds(stack,"TestFn2", {
     memorySize: smallLamdaRam,
     timeout: timeouts.sm,
     handler: "auth/testFn.main",
-    vpc,
-    vpcSubnets: {subnetType: aws_ec2.SubnetType.PRIVATE_WITH_EGRESS},
-    bundle: {
-      externalModules: ['pg-native'],
-    },
-    environment: {
-      // maybe only need secretArn? Does it contain everything? (if so, can remove the full clusterId import/export)
-      clusterIdentifier: rds.clusterIdentifier,
-      rdsSecretArn: rdsSecret.secretArn,
-    }
   })
-  testFn.addToRolePolicy(new iam.PolicyStatement({
-     actions: ["secretsmanager:GetResourcePolicy",
-                "secretsmanager:GetSecretValue",
-                "secretsmanager:DescribeSecret",
-                "secretsmanager:ListSecretVersionIds"],
-     effect: iam.Effect.ALLOW,
-     resources: [
-       rdsSecret.secretArn,
-     ],
-   }))
 
   stack.addOutputs({
     testFnArn: testFn.functionArn
   })
   return null
-
-
-
-
-
 
 
   const preSignUp = new sst.Function(stack, "PreSignUp", {

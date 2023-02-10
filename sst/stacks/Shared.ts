@@ -17,6 +17,7 @@ import * as aws_secretsmanager from "aws-cdk-lib/aws-secretsmanager";
 import * as cdk from "aws-cdk-lib";
 import {RDS, RDSProps, StackContext} from "@serverless-stack/resources";
 import { Construct } from "constructs";
+import * as iam from "aws-cdk-lib/aws-iam";
 
 export function sharedStage(stage: string) {
   return stage === "prod" ? "prod" : "dev"
@@ -83,6 +84,11 @@ export function SharedCreate(context: StackContext) {
         instanceType: "serverless" as any,
         autoMinorVersionUpgrade: true,
         securityGroups: [sg],
+
+        // https://github.com/schuettc/cdk-private-rds-with-lambda/blob/main/src/rds.ts
+        // multiAz: false,
+        // allowMajorVersionUpgrade: true,
+        // backupRetention: Duration.days(21),
       },
     });
     // Edit the generated cloudformation construct directly:
@@ -118,7 +124,6 @@ export function SharedCreate(context: StackContext) {
 
     const exported = Object.entries({
       VpcId: vpc.vpcId,
-      ClusterIdentifier: rds.clusterIdentifier,
       RdsSecretArn: rds.secret!.secretArn
     // }).map(toExports)
     }).map(toSsm)
@@ -148,19 +153,47 @@ export function SharedImport(context: StackContext) {
     vpcId: fromSsm("VpcId")
   })
 
-  const rds = aws_rds.DatabaseCluster.fromDatabaseClusterAttributes(stack, 'Rds', {
-    clusterIdentifier: fromSsm("ClusterIdentifier"),
-  })
+  // Don't need this, contained in secret
+  // const rds = aws_rds.DatabaseCluster.fromDatabaseClusterAttributes(stack, 'Rds', {
+  //   clusterIdentifier: fromSsm("ClusterIdentifier"),
+  // })
+  // this should be working, but secret isn't coming from load.
+  // stack.addOutputs({rdsSecretArn: rds.secret.secretArn})
 
   const rdsSecret = aws_secretsmanager.Secret.fromSecretAttributes(stack, "RdsSecret", {
     secretPartialArn: fromSsm("RdsSecretArn", true)
   })
 
-  stack.addOutputs({
-    vpcId: vpc.vpcId,
-    clusterIdentifier: rds.clusterIdentifier,
-    rdsSecretArn: rdsSecret.secretArn,
-    // rdsSecretArn: rds.secret.secretArn // this should be working, but secret isn't coming from load.
+  // stack.addOutputs({
+  //   vpcId: vpc.vpcId,
+  //   rdsSecretArn: rdsSecret.secretArn,
+  // })
+  const readSecretPolicy = new iam.PolicyStatement({
+   actions: [
+     "secretsmanager:GetResourcePolicy",
+      "secretsmanager:GetSecretValue",
+      "secretsmanager:DescribeSecret",
+      "secretsmanager:ListSecretVersionIds" ],
+   effect: iam.Effect.ALLOW,
+   resources: [ rdsSecret.secretArn ],
   })
-  return {vpc, rds, rdsSecret}
+
+  function withRds(stack: StackContext['stack'], id: string, props: sst.FunctionProps): sst.Function {
+    if (props.bundle) {throw "FIXME can't merge functionProps.bundle"}
+    const fn = new sst.Function(stack, id, sst.Function.mergeProps(props, {
+      vpc,
+      vpcSubnets: {subnetType: aws_ec2.SubnetType.PRIVATE_WITH_EGRESS},
+      // architecture: Architecture.ARM_64, // TODO try this, might be faster
+      bundle: {
+        externalModules: ['pg-native'],
+      },
+      environment: {
+        rdsSecretArn: rdsSecret.secretArn,
+      }
+    }))
+    fn.addToRolePolicy(readSecretPolicy)
+    return fn
+  }
+
+  return {vpc, rdsSecret, readSecretPolicy, withRds}
 }

@@ -98,6 +98,7 @@ export class DB {
     try {
       const response = await rdsClient.executeStatement({
         includeResultMetadata: true,
+        continueAfterTimeout: true,
         ...this.driver,
         sql,
         parameters
@@ -124,6 +125,7 @@ export class DB {
     const parameters = this.transformReq(values, zIn)
     try {
       const response = await rdsClient.executeStatement({
+        continueAfterTimeout: true,
         includeResultMetadata: true,
         ...this.driver,
         ...rest,
