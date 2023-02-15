@@ -14,15 +14,8 @@ const {spacing, colors, sx} = styles
 export default function Books() {
     return <Section color="grey">
 
-      <Box
-        sx={{
-          borderBottomStyle: 'solid',
-          borderBottomColor: "secondary.main",
-          borderBottomWidth: '1.5px',
-
-          paddingBottom: 10
-        }}>
-
+      <Box>
+      
       <Grid container
         direction="row"
         spacing={4}
@@ -33,18 +26,18 @@ export default function Books() {
         <Grid item xs={12}> 
         <Box
               display="flex"
-              justifyContent="flex-end"
+              justifyContent="flex-start"
               mb={2}>
               <AutoStoriesOutlinedIcon sx={sx.booksIconLg}/>
             </Box>
           <Typography 
             variant="subtitle1" 
-            textAlign="right"
+            textAlign="left"
             paddingBottom={4}
-            color='#553840'
+            color='#7B515C'
             fontWeight={600}
           >
-            Deepen your understanding with personalized book recommendations
+            Deepen your understanding with books picked for you
           </Typography>
         </Grid>
 
@@ -58,7 +51,7 @@ export default function Books() {
 
               <FeatureIntro
                 title={"Identify themes and patterns"} 
-                color='#553840'
+                color='#7B515C'
               >
                 <Typography>
                 As you write, Gnothi will get to know you better. You’ll get insights to narrow your focus and help you grow.          
@@ -67,7 +60,7 @@ export default function Books() {
 
               <FeatureIntro
                 title={"Identify themes and patterns"} 
-                color='#553840'
+                color='#7B515C'
               >
                 <Typography>
                 As you write, Gnothi will get to know you better. You’ll get insights to narrow your focus and help you grow.          
@@ -76,7 +69,7 @@ export default function Books() {
 
               <FeatureIntro
                 title={"Identify themes and patterns"} 
-                color='#553840'
+                color='#7B515C'
               >
                 <Typography>
                 As you write, Gnothi will get to know you better. You’ll get insights to narrow your focus and help you grow.          

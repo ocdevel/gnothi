@@ -7,29 +7,67 @@ import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
 import { styles } from '../../../Setup/Mui'
 import { Container } from "@mui/material";
+import CardActions from '@mui/material/CardActions';
+import CardMedia from '@mui/material/CardMedia';
+import Button from '@mui/material/Button';
 
 const { colors, spacing } = styles
+
+
+
+type FeatureCardSm = {
+  icon: React.ReactNode
+  title: string
+  color: string
+}
+
+export function FeatureCardSm({icon, title, color}: FeatureCardSm) {
+  return <Card 
+    sx={{
+      minWidth: 275,
+      elevation: 12,
+      borderRadius: 5,
+      backgroundColor: "#ffffff",
+      alignItems:"center",
+      justifyContent:"center"
+    }}
+    >
+      
+    <CardContent
+      color={color}
+      >
+      {icon}
+    </CardContent>
+
+    <CardContent>
+      <Typography
+        color={color}
+        >
+      {title}
+      </Typography>
+    </CardContent>  
+  </Card>
+}
 
 type FeatureCard = {
   title?: string
   icon: React.ReactNode
-  children: React.ReactNode
+  children?: React.ReactNode
 }
 export function FeatureCard({ title, icon, children }: FeatureCard) {
   return <Grid
-    sx={{ display: 'flex', flexGrow: 1 }}
+    sx={{flexGrow: 1 }}
     item
-    xs={12}
-    md={6}
-    lg={4}
+    xs={1}
+    
   >
     <Card
       sx={{
-        py: spacing.md,
-        px: spacing.lg,
-        backgroundColor: "transparent",
+        py: spacing.sm,
+        px: spacing.sm,
+        backgroundColor: "#ffffff",
         borderRadius: 5,
-        elevation: 0,
+        elevation: 10,
         boxShadow: 0,
       }}
     >
@@ -38,13 +76,13 @@ export function FeatureCard({ title, icon, children }: FeatureCard) {
           alignItems="center"
           justifyContent="center"
           spacing={spacing.sm}
-          maxWidth={384}
+          maxWidth={50}
         >
           {icon}
-          {title && <Typography variant="h5">{title}</Typography>}
+          {title && <Typography variant="h6">{title}</Typography>}
           <Typography
             variant="h6"
-            sx={{ flexShrink: 1, textAlign: "center" }}
+            sx={{ textAlign: "center" }}
           >{children}</Typography>
         </Stack>
       </CardContent>

@@ -14,6 +14,7 @@ import Organization from "./Organization";
 import Books from "./Books";
 import FreeVsPremium from "./FreeVsPremiumBlurb";
 import ThemesSummaries from "./ThemesSummaries";
+import PremPricingCTA from "./PremPricingCTA";
 
 const {spacing, colors, sx} = styles
 
@@ -35,7 +36,7 @@ export default function FeatureLayout() {
           textAlign='center'
           sx={{mb:2}}
       >
-        Explore the features
+        Explore the features and compare plans
       </Typography>
 
       <BasicTabs/>
@@ -83,8 +84,8 @@ export function BasicTabs() {
       <Box sx={{ width: '100%', bgcolor: 'transparent' }}>
       <Tabs value={value} onChange={handleChange} centered>
         <Tab label="Premium" />
-        <Tab label="Free" />
-        <Tab label="Compare" />
+        <Tab label="Basic" />
+        <Tab label="Pricing" />
       </Tabs>
 
     </Box>
@@ -95,6 +96,7 @@ export function BasicTabs() {
         <ThemesSummaries/>
         <Organization/>
         <Books/>
+        <PremPricingCTA/>
       </TabPanel>
 
       <TabPanel value={value} index={1}>

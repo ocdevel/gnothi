@@ -38,7 +38,8 @@ export default function DiscoverAI() {
       alignItems='center'
       spacing={4}
     >
-      <Grid item xs={12} pb={2}>
+      <Grid item xs={12} pb={4}
+        alignItems="center">
         <Typography
           variant="h2"
           textAlign='center'
@@ -47,9 +48,9 @@ export default function DiscoverAI() {
         </Typography>
 
         <Typography
-          variant="h4"
-          maxWidth={900}
+          variant="subtitle1"
           textAlign='center'
+          color="#50577A"
         >
           Navigate your journey of self-discovery with more clarity and direction
         </Typography>

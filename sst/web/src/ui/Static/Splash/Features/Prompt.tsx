@@ -57,7 +57,11 @@ export default function Prompt() {
               direction="column"
               spacing={2}
               >
-                <Grid item xs={12}> 
+                <Grid 
+                  item 
+                  xs={12}
+                  id='dreams'
+                > 
                   <Typography 
                     variant="h6" 
                     textAlign="left"
@@ -75,15 +79,12 @@ export default function Prompt() {
           </Grid>
         </Grid>
 
-
-
-
         <Grid item xs={12} md={5}>
           <Grid container
             direction="column"
             spacing={2}
             >
-              <Grid item xs={12}> 
+              <Grid item xs={12} id='expand'> 
                  <Typography 
                   variant="h6" 
                   textAlign="left"

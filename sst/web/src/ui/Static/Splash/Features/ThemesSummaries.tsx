@@ -7,6 +7,8 @@ import Button from '@mui/material/Button';
 import {styles} from '../../../Setup/Mui'
 import TroubleshootOutlinedIcon from '@mui/icons-material/TroubleshootOutlined';
 import AutoStoriesOutlinedIcon from '@mui/icons-material/AutoStoriesOutlined';
+import InsightsOutlinedIcon from '@mui/icons-material/InsightsOutlined';
+
 import { FeatureIntro } from "../Utils";
 
 const {spacing, colors, sx} = styles
@@ -36,7 +38,7 @@ export default function ThemesSummaries () {
           display="flex"
           justifyContent="flex-start"
           mb={2}>
-          <TroubleshootOutlinedIcon sx={sx.themesSummariesIconLg}/>
+          <InsightsOutlinedIcon sx={sx.themesSummariesIconLg}/>
         </Box>         
           <Typography 
             variant="subtitle1" 
@@ -59,7 +61,7 @@ export default function ThemesSummaries () {
 
               <FeatureIntro
                 title={"Identify themes and patterns"} 
-                color='#553840'
+                color='#59547a'
               >
                 <Typography>
                 As you write, Gnothi will get to know you better. You’ll get insights to narrow your focus and help you grow.          
@@ -68,7 +70,7 @@ export default function ThemesSummaries () {
 
               <FeatureIntro
                 title={"Identify themes and patterns"} 
-                color='#553840'
+                color='#59547a'
               >
                 <Typography>
                 As you write, Gnothi will get to know you better. You’ll get insights to narrow your focus and help you grow.          
@@ -77,7 +79,7 @@ export default function ThemesSummaries () {
 
               <FeatureIntro
                 title={"Identify themes and patterns"} 
-                color='#553840'
+                color='#59547a'
               >
                 <Typography>
                 As you write, Gnothi will get to know you better. You’ll get insights to narrow your focus and help you grow.          

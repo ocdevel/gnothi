@@ -5,12 +5,14 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import { styles } from '../../../Setup/Mui'
+import Box from "@mui/material/Box";
 const { spacing, colors, sx } = styles
 
 
 
-export default function DiscoverAI() {
+export default function HowItWorks() {
   return <Section color="grey">
+    <Box>
     <Grid
       container
       flexDirection='row'
@@ -18,7 +20,10 @@ export default function DiscoverAI() {
       justifyContent="center"
       spacing={4}
     >
-      <Grid item xs={12}>
+      <Grid item xs={12}
+        alignItems="center"
+        pb={4}
+        >
         <Typography
           variant="h2"
           textAlign='center'
@@ -27,11 +32,11 @@ export default function DiscoverAI() {
         </Typography>
 
         <Typography
-          variant="h4"
-          maxWidth={900}
+          variant="subtitle1"
           textAlign='center'
+          color="#50577A"
         >
-          Journal. Track your behavior. Explore insights. Repeat.
+          Journal. Track behavior. Explore AI insights.
         </Typography>
       </Grid>
       <Grid item xs={12} md={6}>
@@ -54,7 +59,7 @@ export default function DiscoverAI() {
             variant="body1"
             textAlign='left'
           >
-            Gnothi was designed to combine journaling and behavior tracking with tons of AI-powered insights that help you narrow your focus. They highlight the aspects of your life where there are opportunities for learning and growth, and then you decide where to go from there. 
+            Gnothi was designed to combine journaling and behavior tracking with AI-powered insights that help you narrow your focus. They highlight the aspects of your life where there are opportunities for learning and growth, and then you decide where to go from there. 
           </Typography>
 
           <Typography
@@ -72,5 +77,6 @@ export default function DiscoverAI() {
       </Grid>
 
     </Grid>
+  </Box>
   </Section>
 }

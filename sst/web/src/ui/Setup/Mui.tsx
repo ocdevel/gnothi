@@ -26,8 +26,8 @@ export const styles = {
 
     promptIconLg: {fontSize: 60, color: "#50627a"},
     behaviorIconLg: {fontSize: 60, color: "#507a6f"},
-    organizationIconLg: {fontSize: 60, color: "#59547a"},
-    booksIconLg: {fontSize: 60, color: "#553840"},
+    organizationIconLg: {fontSize: 60, color: '#696B38'},
+    booksIconLg: {fontSize: 60, color: '#7B515C'},
     themesSummariesIconLg: {fontSize: 60, color: "#59547a"}
   }
 }
@@ -74,7 +74,7 @@ export const theme = createTheme({
       fontWeight: 400,
       fontFamily: 'Antic Didone',
       fontSize: '3rem',
-      lineHeight: '1.1',
+      lineHeight: '1.3',
       marginBottom: '1rem'
     },
     h3: {
