@@ -20,18 +20,24 @@ import {Insight} from './Utils'
 import Grow from '@mui/material/Grow';
 
 // type Preset = keyof typeof promptsObj
-type Preset = string
+type Preset = {
+  key: string
+  label: string
+  prompt: string
+}
 
 type Prompt = Insight & {
   entry_ids: string[]
 }
+type Trips = {
+  waiting: boolean
+  responses: S.Insights.insights_prompt_response[]
+  prompts: string[]
+}
+
 export default function Prompt({entry_ids, view}: Prompt) {
   // TODO useStore version of loading
-  const [trips, setTrips] = useState<{
-    waiting: boolean
-    responses: S.Insights.insights_prompt_response[],
-    prompts: string[]
-  }>({
+  const [trips, setTrips] = useState<Trips>({
     prompts: [],
     responses: [],
     waiting: false,
@@ -39,12 +45,12 @@ export default function Prompt({entry_ids, view}: Prompt) {
   const send = useStore(useCallback(s => s.send, []))
   const promptResponse = useStore(s => s.res.insights_prompt_response?.hash?.[view])
   // start with just blank prompt, will populate other prompts via HTTP -> Gist
-  const [prompts, setPrompts] = useState<any>([{
+  const [prompts, setPrompts] = useState<Preset[]>([{
     "key": "blank",
     "label": "Blank",
     "prompt": ""
   }])
-  const [preset, setPreset] = useState<Preset>("")
+  const [preset, setPreset] = useState<string>("")
   const [prompt, setPrompt] = useState<string>("")
   const [showHelp, setShowHelp] = useState<boolean>(false)
   const promptsObj = keyBy(prompts, 'key')
@@ -52,7 +58,7 @@ export default function Prompt({entry_ids, view}: Prompt) {
   async function getPrompts() {
     const promptsUrl = "https://gist.githubusercontent.com/lefnire/57023741c902627064e7d24302aa402f/raw/prompts.json"
     const {data} = await axios.get(promptsUrl)
-    setPrompts(data)
+    setPrompts(data as Preset[])
   }
   useEffect(() => {
     getPrompts()
@@ -68,7 +74,7 @@ export default function Prompt({entry_ids, view}: Prompt) {
   }, [promptResponse])
 
   const changePreset: React.ChangeEventHandler<HTMLInputElement> = (e) => {
-    const preset = e.target.value as Preset
+    const preset = e.target.value
     setPreset(preset)
     setPrompt(promptsObj[preset].prompt)
   }
@@ -77,7 +83,7 @@ export default function Prompt({entry_ids, view}: Prompt) {
     setTrips({
       ...trips,
       waiting: true,
-      prompts: [prompt, ...trips.prompts]
+      prompts: [...trips.prompts, prompt]
     })
     console.log("prompt", entry_ids)
     send("insights_prompt_request", {
