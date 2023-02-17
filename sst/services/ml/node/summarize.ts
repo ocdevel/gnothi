@@ -5,6 +5,7 @@ import {TextsParamsMatch} from "./errors";
 import {Config} from '@serverless-stack/node/config'
 import {v4 as uuid} from 'uuid'
 import {sendInsight} from "./utils";
+import {completion} from "./openai";
 
 interface Params {
   summarize?: {
@@ -48,21 +49,66 @@ export type SummarizeOut = {
 }
 type LambdaOut = Array<SummarizeOut>
 type FnOut = LambdaOut
-export async function summarize({texts, params}: FnIn): Promise<FnOut> {
-  // Get fnName while inside function because will only be present for fn_background (not fn_main)
-  const fnName = Config.fn_summarize_name
-  async function call(data: LambdaIn): Promise<LambdaOut> {
+
+/**
+ * I've had a hell of a time with huggingface summarizers. They lean too heavily on
+ * the training data, and everything sounds like news. I've played with hyperparameters
+ * till I'm blue in the face, and I'm giving up for now and using OpenAI TLDR instead.
+ */
+const USE_OPENAI = true
+async function summarizeOpenai(data: LambdaIn[0]): Promise<SummarizeOut> {
+  const {params, text} = data
+
+  const summary = !params.summarize ? "" : await completion({
+    prompt: `Summarize this in fewer than ${params.summarize.max_length} words:\n\n${data.text}`,
+  })
+
+  const top_n = params.keywords?.top_n || 3
+  const keywords = !params.keywords ? [] : await completion({
+    prompt: `Extract the ${top_n} most relevant keywords from the following:\n\n${text}`
+  }).then(res => res
+    // "Keywords: this, that, other thing."
+    .replace(/^[kK]eywords[: ]*/, '')
+    .replace('\n', ', ')
+    .split(/[0-9\n,]+/)
+    .map(x => x
+      .toLowerCase()
+      .replace(/[^a-z() ]/, '')
+      .trim())
+    .filter(Boolean)
+  )
+  console.log({keywords})
+
+  const emotion = !params.emotion ? "" : await completion({
+    prompt: `Which emotion (anger, disgust, fear, joy, neutral, sadness, surprise) is expressed in this:\n\n${data.text}`
+  }).then(txt => txt
+    .toLowerCase() // "Sadness."
+    .replace('.', '')
+  )
+  return {summary, keywords, emotion}
+}
+
+
+async function summarize_(data: LambdaIn): Promise<LambdaOut> {
+  if (USE_OPENAI) {
+    return Promise.all(data.map(summarizeOpenai))
+  } else {
+    // Get fnName while inside function because will only be present for fn_background (not fn_main)
+    const fnName = Config.fn_summarize_name
     const res = await lambdaSend<LambdaOut>(data, fnName, "RequestResponse")
     return res.Payload
   }
 
+}
+
+export async function summarize({texts, params}: FnIn): Promise<FnOut> {
   if (params.length === 1) {
-    return call([{
+    return summarize_([{
       text: texts.join('\n'),
       params: params[0]
     }])
   } else if (texts.length === params.length && params.length > 0) {
-    return call(texts.map((text, i) => ({
+    return summarize_(texts.map((text, i) => ({
       text,
       params: params[i]
     })))
