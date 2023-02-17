@@ -59,32 +59,43 @@ const USE_OPENAI = true
 async function summarizeOpenai(data: LambdaIn[0]): Promise<SummarizeOut> {
   const {params, text} = data
 
-  const summary = !params.summarize ? "" : await completion({
-    prompt: `Summarize this in fewer than ${params.summarize.max_length} words:\n\n${data.text}`,
-  })
+  const summaryPrompt = async () => {
+    if (!params.summarize) {return ""}
+    return completion({
+      prompt: `Summarize this in fewer than ${params.summarize.max_length} words:\n\n${data.text}`,
+    })
+  }
 
-  const top_n = params.keywords?.top_n || 3
-  const keywords = !params.keywords ? [] : await completion({
-    prompt: `Extract the ${top_n} most relevant keywords from the following:\n\n${text}`
-  }).then(res => res
-    // "Keywords: this, that, other thing."
-    .replace(/^[kK]eywords[: ]*/, '')
-    .replace('\n', ', ')
-    .split(/[0-9\n,]+/)
-    .map(x => x
-      .toLowerCase()
-      .replace(/[^a-z() ]/, '')
-      .trim())
-    .filter(Boolean)
-  )
-  console.log({keywords})
+  const keywordsPrompt = async () => {
+    if (!params.keywords) {return []}
+    const top_n = params.keywords?.top_n || 3
+    return completion({
+      prompt: `Extract the ${top_n} most relevant keywords from the following:\n\n${text}`
+    }).then(res => res
+      // "Keywords: this, that, other thing."
+      .replace(/^[kK]eywords[: ]*/, '')
+      .replace('\n', ', ')
+      .split(/[0-9\n,]+/)
+      .map(x => x
+        .toLowerCase()
+        .replace(/[^a-z() ]/, '')
+        .trim())
+      .filter(Boolean)
+    )
+  }
 
-  const emotion = !params.emotion ? "" : await completion({
-    prompt: `Which emotion (anger, disgust, fear, joy, neutral, sadness, surprise) is expressed in this:\n\n${data.text}`
-  }).then(txt => txt
-    .toLowerCase() // "Sadness."
-    .replace('.', '')
-  )
+  const emotionsPrompt = async () => {
+    if (!params.emotion) {return ""}
+    return completion({
+      prompt: `Which emotion (anger, disgust, fear, joy, neutral, sadness, surprise) is expressed in this:\n\n${data.text}`
+    }).then(txt => txt
+      .toLowerCase() // "Sadness."
+      .replace('.', '')
+    )
+  }
+
+  const res = await Promise.all([summaryPrompt(), keywordsPrompt(), emotionsPrompt()])
+  const [summary, keywords, emotion] = res
   return {summary, keywords, emotion}
 }
 
