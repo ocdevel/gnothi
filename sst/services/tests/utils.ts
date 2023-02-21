@@ -45,7 +45,7 @@ export class Utils {
     )
     this.uid = this.user.id
     this.mainTag = (await db.queryFirst<S.Tags.Tag>(
-      "select * from tags where user_id=:$1",
+      "select * from tags where user_id=$1",
       [this.uid]
     )).id
     this.noAiTag = (await db.queryFirst<S.Tags.Tag>(

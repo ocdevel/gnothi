@@ -24,7 +24,8 @@ type OnClick = () => void
 type Dialog = {
   title: string
   open: boolean
-  onClose: () => void
+  onClose: () => void,
+  className?: string
   children: React.ReactNode
 }
 type FullScreenDialog = Dialog & {
@@ -32,10 +33,11 @@ type FullScreenDialog = Dialog & {
 }
 
 export function FullScreenDialog({
-  title, open, onClose, ctas, children
+  title, open, onClose, ctas, children, className
 }: FullScreenDialog) {
   return (
     <Dialog
+      className={className}
       disableEnforceFocus={true /* max callstack issue when popups inside modal */}
       fullScreen
       open={open}

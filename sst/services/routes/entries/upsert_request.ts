@@ -30,7 +30,7 @@ r.entries_upsert_request.fn = r.entries_upsert_request.fnDef.implement(async (re
       ]
     )
     await db.query(
-      "delete from entries_tags where entry_id=:$1",
+      "delete from entries_tags where entry_id=$1",
       [entry_id]
     )
   }

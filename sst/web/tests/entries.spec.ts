@@ -15,7 +15,16 @@ test.describe('crud', () => {
     await page.locator(".entries .list .teaser").nth(0).click()
     await expect(".modal .view .title").toBe(true)
   })
-  test.fixme("update", () => {})
+  test("update", async ({page}) => {
+    const utils = new Utils(page)
+    await utils.addEntries({n_summarize: 0, n_index: 1})
+    await page.locator(".entries .list .teaser").nth(0).click()
+    await page.locator(".entries.modal .view .btn-edit").click()
+    await page.locator(".entries.modal .upsert .editor textarea").fill("Updated content")
+    await page.locator(".entries.modal .upsert .btn-submit").click()
+    await expect(page.locator(".entries .list .teaser")).toHaveText("Updated content")
+    await page.pause()
+  })
   test.fixme("delete", () => {})
 })
 

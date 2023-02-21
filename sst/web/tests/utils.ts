@@ -90,7 +90,7 @@ export class Utils {
       await page.locator(".entries-upsert-form .button-tags-tag").nth(0).click()
       await page.locator(".entries-upsert-form .button-tags-tag").nth(1).click()
     }
-    await page.locator(".button-entries-upsert").click()
+    await page.locator(".entries.modal .upsert .btn-submit").click()
   }
 
   async addEntries({n_summarize=0, n_index=0}: {n_summarize: number, n_index: number}) {

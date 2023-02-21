@@ -50,6 +50,7 @@ export default function Editor(props: Editor) {
     name={name}
     control={form.control}
     render={({field}) => <MdEditor
+      className="editor"
       plugins={plugins}
       value={field.value}
       style={{ height: 300, width: '100%' }}

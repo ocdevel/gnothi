@@ -50,6 +50,7 @@ export default function View({entry, onClose}: Entry) {
     if (as) {return null}
     return <>
       <Button
+        className="btn-edit"
         variant='outlined'
         color='primary'
         onClick={() => setEntryModal({mode: "edit", entry})}

@@ -56,7 +56,7 @@ r.tags_put_request.fn = r.tags_put_request.fnDef.implement(async (req, context) 
 r.tags_delete_request.fn = r.tags_delete_request.fnDef.implement(async (req, context) => {
   const params = [req.id]
   const [tag, entries] = await Promise.all([
-    db.query<Tag>("select * from tags where id=:$1", params),
+    db.query<Tag>("select * from tags where id=$1", params),
     db.query<any>("select * from entries_tags where tag_id=$1", params)
   ])
   if (tag[0].main) {

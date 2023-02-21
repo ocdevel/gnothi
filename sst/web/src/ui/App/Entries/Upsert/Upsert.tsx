@@ -173,7 +173,7 @@ export default function Upsert(props: Entry) {
         color="primary"
         variant='contained'
         type="submit"
-        className="button-entries-upsert"
+        className="btn-submit"
         onClick={form.handleSubmit(submit)}
       >Submit
       </Button>
@@ -225,7 +225,7 @@ export default function Upsert(props: Entry) {
     </Box>
   }
 
-  return <Grid container>
+  return <Grid container className="upsert">
     <Grid item xs={12} lg={id ? 8 : 12}>
       <DialogContent>
         {renderForm()}
