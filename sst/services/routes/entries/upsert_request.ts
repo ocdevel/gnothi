@@ -5,35 +5,20 @@ import {boolMapToKeys} from '@gnothi/schemas/utils'
 
 const r = S.Routes.routes
 
-r.entries_upsert_request.fn = r.entries_upsert_request.fnDef.implement(async (req, context: S.Api.FnContext) => {
+type UpsertInner = (entry: S.Entries.Entry & {user_id: string}) => Promise<S.Entries.Entry>
+async function upsertOuter(
+  req: S.Entries.entries_post_request,
+  context: S.Api.FnContext,
+  upsertInner: UpsertInner
+): Promise<S.Entries.entries_upsert_response[]> {
   const user_id = context.user.id
   const {tags, ...entry} = req
   const tids = boolMapToKeys(tags)
   if (!tids.length) {
     throw new GnothiError({message: "Each entry must belong to at least one journal", key: "NO_TAGS"})
   }
-
-  let entry_id: string = entry.id
-  let dbEntry: S.Entries.Entry
-  if (!entry_id) {
-    // FIXME
-    dbEntry = await db.insert("entries", {...entry, user_id})
-    entry_id = dbEntry.id
-  } else {
-    const {text, title} = req
-    dbEntry = await db.queryFirst<S.Entries.Entry>(
-      `update entries set title=$1, text=$2 where id=$3 returning *`,
-      [
-        title,
-        text,
-        entry_id
-      ]
-    )
-    await db.query(
-      "delete from entries_tags where entry_id=$1",
-      [entry_id]
-    )
-  }
+  const dbEntry = await upsertInner({...entry, user_id})
+  const entry_id = dbEntry.id
 
   // FIXME
   // manual created-at override
@@ -54,4 +39,27 @@ r.entries_upsert_request.fn = r.entries_upsert_request.fnDef.implement(async (re
   }
 
   return [{...dbEntry, tags}]
+}
+
+r.entries_post_request.fn = r.entries_post_request.fnDef.implement(async (req, context: S.Api.FnContext) => {
+  return upsertOuter(req, context, async (entry) => {
+    return db.insert("entries", entry)
+  })
+})
+
+
+r.entries_put_request.fn = r.entries_put_request.fnDef.implement(async (req, context: S.Api.FnContext) => {
+  const {id} = req
+  return upsertOuter(req, context, async ({title, text, user_id}) => {
+    // FIXME insecure. x-ref user-id with inner join
+    await db.query(
+      "delete from entries_tags where entry_id=$1",
+      [id]
+    )
+    return db.queryFirst<S.Entries.Entry>(`
+      update entries set title=$1, text=$2 
+      where id=$3 and user_id=$4 
+      returning *
+    `, [title, text, id, user_id])
+  })
 })

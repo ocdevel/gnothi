@@ -22,10 +22,14 @@ test.describe('crud', () => {
     await page.locator(".entries.modal .view .btn-edit").click()
     await page.locator(".entries.modal .upsert .editor textarea").fill("Updated content")
     await page.locator(".entries.modal .upsert .btn-submit").click()
-    await expect(page.locator(".entries .list .teaser")).toHaveText("Updated content")
+    await expect(page.locator(".entries .list .teaser .text")).toContainText("Updated content")
     await page.pause()
   })
   test.fixme("delete", () => {})
+})
+
+test.describe("edge cases", () => {
+  test.fixme("manually set date", async () => {})
 })
 
 const ai_text_bug = "FIXME - ai_text is being set to entry plaintext, meaning I can't test if is-ai (for the mouse-hover about-summary)."

@@ -52,8 +52,7 @@ export type entries_list_request = z.infer<typeof entries_list_request>
 export const entries_list_response = EntryWithTags
 export type entries_list_response = z.infer<typeof entries_list_response>
 
-export const entries_upsert_request = EntryWithTags
-  .partial({id: true})
+export const entries_put_request = EntryWithTags
   .pick({
     id: true,
     title: true,
@@ -61,7 +60,10 @@ export const entries_upsert_request = EntryWithTags
     created_at: true,
     tags: true
   })
-export type entries_upsert_request = z.infer<typeof entries_upsert_request>
+export const entries_post_request = entries_put_request.omit({id: true})
+
+export type entries_put_request = z.infer<typeof entries_put_request>
+export type entries_post_request = z.infer<typeof entries_post_request>
 export const entries_upsert_response = entries_list_response
 export type entries_upsert_response = z.infer<typeof entries_upsert_response>
 
@@ -90,10 +92,24 @@ export const routes = {
       keyby: 'id'
     },
   }),
-  entries_upsert_request: new Route({
+  entries_put_request: new Route({
     i: {
-      e: 'entries_upsert_request',
-      s: entries_upsert_request,
+      e: 'entries_put_request',
+      s: entries_put_request,
+    },
+    o: {
+      e: 'entries_upsert_response',
+      s: entries_upsert_response,
+      t: {ws: true, background: true},
+      event_as: "entries_list_response",
+      keyby: 'id',
+      op: "update",
+    },
+  }),
+  entries_post_request: new Route({
+    i: {
+      e: 'entries_post_request',
+      s: entries_post_request,
     },
     o: {
       e: 'entries_upsert_response',
