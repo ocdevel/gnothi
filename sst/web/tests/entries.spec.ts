@@ -23,13 +23,13 @@ test.describe('crud', () => {
     await page.locator(".entries.modal .upsert .editor textarea").fill("Updated content")
     await page.locator(".entries.modal .upsert .btn-submit").click()
     await expect(page.locator(".entries .list .teaser .text")).toContainText("Updated content")
-    await page.pause()
   })
   test.fixme("delete", () => {})
 })
 
 test.describe("edge cases", () => {
   test.fixme("manually set date", async () => {})
+  test.fixme("update/delete should handle s3 files too", async () => {})
 })
 
 const ai_text_bug = "FIXME - ai_text is being set to entry plaintext, meaning I can't test if is-ai (for the mouse-hover about-summary)."

@@ -38,6 +38,16 @@ import * as S from '@gnothi/schemas'
 import {useFieldsStore} from './store'
 import shallow from 'zustand/shallow'
 
+type FE = S.Fields.fields_entries_list_response
+type F = S.Fields.fields_list_response
+
+interface FieldGroup {
+  service: string
+  name: string
+  fields: F[]
+  emptyText: () => JSX.Element
+}
+
 export default function Fields() {
   const send = useStore(s => s.send)
   const user = useStore(s => s.user)
@@ -112,7 +122,7 @@ export default function Fields() {
     </>
   }
 
-  const renderFieldEntry = (f, fe) => {
+  const renderFieldEntry = (f: F, fe: FE) => {
     const v = fieldValues[f.id]
     if (f.type === 'fivestar') return <>
       <ReactStars
@@ -152,26 +162,22 @@ export default function Fields() {
   }
 
 
-  const renderField = (f) => {
+  const renderField = (f: S.Fields.Field) => {
     // let rowStyle = {width: '100%', margin: 0}
-    let rowStyle = {
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      mb: 1
-    }
-    if (f.excluded_at) {
-      rowStyle = {
-        ...rowStyle,
-        textDecoration: 'line-through',
-        opacity: .5
-      }
-    }
     const fe = fieldEntries?.[f.id] || {}
     return (
       <Grid
-        className="fields-field"
+        className="field"
         container
-        sx={rowStyle}
+        sx={{
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          mb: 1,
+          ...(f.excluded_at ? {
+            textDecoration: 'line-through',
+            opacity: .5
+          } : {})
+        }}
         key={`${f.id}-${cacheBust}`}
       >
         <Grid item xs={5} className='field-name'>
@@ -202,7 +208,7 @@ export default function Fields() {
 
   // see 3b92a768 for dynamic field groups. Revisit when more than one service,
   // currently just habitica
-  const groups = [{
+  const groups: FieldGroup[] = [{
     service: 'custom',
     name: 'Custom',
     fields: _(fields?.rows)
@@ -247,7 +253,7 @@ export default function Fields() {
     emptyText: () => <Advanced fetchFieldEntries={fetchFieldEntries} />
   }]
 
-  const renderButtons = g => {
+  const renderButtons = (g: FieldGroup) => {
     if (g.service === 'custom') {
       return <Grid container justifyContent='space-around'>
         {!as && <Button
@@ -271,7 +277,7 @@ export default function Fields() {
     return null
   }
 
-  const renderGroup = g => (
+  const renderGroup = (g: FieldGroup) => (
     <Accordion key={g.service} defaultExpanded={g.service === "custom"}>
       <AccordionSummary
         expandIcon={<ExpandMore />}
@@ -296,7 +302,7 @@ export default function Fields() {
 
   }
 
-  return <>
+  return <div className="fields">
     <Card>
       <Grid container justifyContent='space-between'>
         <Grid item>
@@ -312,5 +318,5 @@ export default function Fields() {
     </Card>
     {<FieldModal />}
     {<ChartModal />}
-  </>
+  </div>
 }
