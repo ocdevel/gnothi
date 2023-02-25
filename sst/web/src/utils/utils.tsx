@@ -2,6 +2,7 @@ import React, {useEffect, useState} from "react"
 import _ from "lodash"
 import emoji from 'react-easy-emoji'
 import moment from "moment-timezone";
+import dayjs from "dayjs"
 import Tooltip from "@mui/material/Tooltip";
 
 export const timezones = moment.tz.names()
@@ -48,9 +49,11 @@ export function trueObj(arr) {
   }, {})
 }
 
-export const fmtDate = d => moment(d).format('YYYY-MM-DD ha')
 
-export const timeAgo = d => moment(d).fromNow(true) + ' ago'
+// Format options at https://day.js.org/docs/en/display/format
+export const fmtDate = (d: Date | string) => dayjs(d).format("dddd, MMMM D, YYYY")
+
+export const timeAgo = (d: Date | string) => moment(d).fromNow(true) + ' ago'
 
 export const DEFAULT_IDS = {
   ADMIN_ID: '484b32c8-6463-49c5-83ca-75340f0abdc3',

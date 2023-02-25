@@ -61,7 +61,6 @@ function InsightCardHeader({label, icon, description, children}: Insight) {
 function InsightRaw({label, icon, description, children}: Insight) {
   return <Card
     sx={{backgroundColor:'white', borderRadius: 2}}
-    className="mb-3"
   >
     <CardContent>
       <Stack
@@ -72,7 +71,9 @@ function InsightRaw({label, icon, description, children}: Insight) {
         {icon}
         <Typography variant="h6">{label}</Typography>
       </Stack>
-      <Typography color="secondary" variant="body17">{description}</Typography>
+      <Typography color="secondary" variant="body1">{description}</Typography>
+    </CardContent>
+    <CardContent>
       {children}
     </CardContent>
   </Card>

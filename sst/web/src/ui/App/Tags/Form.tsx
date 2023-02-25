@@ -1,7 +1,7 @@
 import {useStore} from "../../../data/store";
 import React, {useCallback, useMemo, useState} from "react";
 import Paper from "@mui/material/Paper";
-import Reorder from "@mui/icons-material/Reorder";
+import Reorder from '@mui/icons-material/DragIndicatorOutlined';
 import InputBase from "@mui/material/InputBase";
 import Divider from "@mui/material/Divider";
 import FormControlLabel from "@mui/material/FormControlLabel";
