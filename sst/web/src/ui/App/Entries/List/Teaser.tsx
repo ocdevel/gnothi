@@ -7,6 +7,7 @@ import CardActions from '@mui/material/CardActions'
 import CardContent from '@mui/material/CardContent'
 import Typography from '@mui/material/Typography'
 import {NotesNotifs} from "../Notes";
+import Tags from '../../Tags/Tags'
 import {
   Sentiment,
   sent2face,
@@ -99,15 +100,23 @@ function Teaser({entry, goToForm}: Teaser) {
       <CardContent>
         {title}
         {date}
-        <Typography variant="body1" sx={{pt: 1}}>
+        <Typography variant="body1" sx={{pt: 1, pb: 2}}>
           {sentiment}
           {text}
           {hoverText}
         </Typography>
+        <Tags 
+          hideUnselected={true}
+          noClick={true}
+          noEdit={true} 
+          preSelectMain={false} 
+          selected={entry.tags}
+        />
       </CardContent>
-      <CardActions>
+      {/*<CardActions>
         <NotesNotifs entry_id={entry.id} />
-      </CardActions>
+      </CardActions>*/}
+      
     </Card>
   </Box>
 }

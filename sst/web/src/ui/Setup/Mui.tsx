@@ -43,6 +43,9 @@ export const theme = createTheme({
       main: '#A7ABBC', // '#738fa7',
       light: '#b8bbc9', // '#6ba9bb',
     },
+    // custom: {
+    //   light: "#ffffff"
+    // },
     background: {
       paper: '#f0efec', // #fff
       default: '#fafafa'
