@@ -64,6 +64,7 @@ export function BasicDialog({
   onClose,
   title,
   children,
+  className,
   size="xl"
 }: BasicDialog) {
   return <Dialog
@@ -71,6 +72,7 @@ export function BasicDialog({
     maxWidth={size}
     open={open}
     onClose={onClose}
+    className={className}
   >
     <Grid container direction='row' alignItems='center'>
       {title && <Grid item sx={{flex: 1}}>

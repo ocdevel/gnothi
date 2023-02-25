@@ -84,6 +84,7 @@ export default function FieldModal() {
   return (
     <BasicDialog
       size="large"
+      className="fields modal"
       open={true}
       onClose={close}
       title={fid ? "Edit Field" : "New Field"}
@@ -94,7 +95,7 @@ export default function FieldModal() {
             <TextField2
               name='name'
               label="Name"
-              className='input-fields-field-name'
+              className='input-name'
               form={form}
             />
           </Grid>
@@ -127,7 +128,7 @@ export default function FieldModal() {
             <Grid item>
               <TextField2
                 name='default_value_value'
-                className="input-fields-field-default_value_value"
+                className="input-default_value_value"
                 label="Default Value"
                 type="number"
                 form={form}
@@ -194,7 +195,7 @@ export default function FieldModal() {
           color="primary"
           variant="contained"
           onClick={form.handleSubmit(submit)}
-          className="button-fields-field-post"
+          className="btn-save"
         >
           Save
         </Button>

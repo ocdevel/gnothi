@@ -257,7 +257,7 @@ export default function Fields() {
     if (g.service === 'custom') {
       return <Grid container justifyContent='space-around'>
         {!as && <Button
-          className="button-fields-field-new"
+          className="btn-new"
           color="primary"
           variant="contained"
           size="small"
@@ -294,14 +294,6 @@ export default function Fields() {
     </Accordion>
   )
 
-
-  function renderFields() {
-    return <div className="sidebar-fields">
-      {groups.map(renderGroup)}
-    </div>
-
-  }
-
   return <div className="fields">
     <Card>
       <Grid container justifyContent='space-between'>
@@ -313,7 +305,7 @@ export default function Fields() {
         </Grid>
       </Grid>
       <CardContent>
-        {renderFields()}
+        {groups.map(renderGroup)}
       </CardContent>
     </Card>
     {<FieldModal />}

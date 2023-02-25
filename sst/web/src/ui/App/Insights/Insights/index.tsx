@@ -4,6 +4,7 @@ import Summarize from "./Summarize"
 import Themes from "./Themes"
 import Prompt from "./Prompt"
 import Books from "./Books"
+import Behaviors from "./Behaviors"
 
 import {
   FaLock
@@ -17,6 +18,7 @@ import BooksIcon from "@mui/icons-material/MenuBook";
 import PromptIcon from '@mui/icons-material/Quickreply';
 import SummarizeIcon from '@mui/icons-material/FitScreen';
 import ThemesIcon from '@mui/icons-material/OfflineBolt';
+import BehaviorsIcon from '@mui/icons-material/InsertChart';
 
 import CardContent from '@mui/material/CardContent'
 import CardHeader from '@mui/material/CardHeader'
@@ -70,7 +72,7 @@ function InsightRaw({label, icon, description, children}: Insight) {
         {icon}
         <Typography variant="h6">{label}</Typography>
       </Stack>
-      <Typography color="secondary" variant="subtitle1">{description}</Typography>
+      <Typography color="secondary" variant="body17">{description}</Typography>
       {children}
     </CardContent>
   </Card>
@@ -106,11 +108,12 @@ export default function Insights({entry_ids}: Insights) {
     })
   }, [search, entry_ids])
 
-  if (!entry_ids?.length) {
-    return <Alert2 severity='warning'>
-      <FaLock /> Not enough entries to work with. Add an entry or adjust the filters
-    </Alert2>
-  }
+  // FIXME handle on a per-insight basis
+  // if (!entry_ids?.length) {
+  //   return <Alert2 severity='warning'>
+  //     <FaLock /> Not enough entries to work with. Add an entry or adjust the filters
+  //   </Alert2>
+  // }
 
   return <div className="insights">
     <Stack2>
@@ -141,6 +144,13 @@ export default function Insights({entry_ids}: Insights) {
         description="Book recommendations based on your entries."
       >
         <Books view={view} />
+      </Insight>
+      <Insight
+        label="Behaviors"
+        icon={<BehaviorsIcon {...iconProps} />}
+        description="Track stuff."
+      >
+        <Behaviors />
       </Insight>
     </Stack2>
   </div>
