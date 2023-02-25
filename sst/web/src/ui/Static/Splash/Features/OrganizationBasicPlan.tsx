@@ -68,13 +68,13 @@ export default function Organization() {
               textAlign="left"
               color='#696B38'
             >
-              Magic Search: Find entries and ask questions
+            Search: Revisit past entries
             </Typography>
           </Grid>
 
           <Grid item xs={12}>
             <Typography>
-            Super-charged by AI, Magic Search makes it easy to ask your journal questions and get optimized search results for any keyword related to past entries. 
+            It’s often helpful to re-read what you’ve written in the past. Use the search tool to find entries by typing in keywords or phrases.
             </Typography>
           </Grid>
         </Grid>

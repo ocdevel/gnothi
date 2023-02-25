@@ -60,29 +60,29 @@ export default function ThemesSummaries () {
               > 
 
               <FeatureIntro
-                title={"Identify themes and patterns"} 
+                title={"Summaries: Get helpful snapshots"} 
                 color='#59547a'
               >
                 <Typography>
-                As you write, Gnothi will get to know you better. You’ll get insights to narrow your focus and help you grow.          
+                Turn a long entry into a short snippet, or summarize a whole year of entries. AI summarizes your entries over days, weeks, months, or years. 
                 </Typography>
               </FeatureIntro>
 
               <FeatureIntro
-                title={"Identify themes and patterns"} 
+                title={"Themes: Zoom out with keywords"} 
                 color='#59547a'
               >
                 <Typography>
-                As you write, Gnothi will get to know you better. You’ll get insights to narrow your focus and help you grow.          
+                Our lives are often vexed by a handful of the same recurring issues. You might not even be aware of these until you step back. AI can help with this process. 
                 </Typography>
               </FeatureIntro>
 
               <FeatureIntro
-                title={"Identify themes and patterns"} 
+                title={"Use themes and summaries in therapy"} 
                 color='#59547a'
               >
                 <Typography>
-                As you write, Gnothi will get to know you better. You’ll get insights to narrow your focus and help you grow.          
+                If you choose to share specified journals with a therapist, they'll be able to generate these insights for a quick catch-up, so you get the most out of each session. 
                 </Typography>
               </FeatureIntro>
 

@@ -34,7 +34,7 @@ export default function PremPricingCTA() {
         sx={{
           color: colors.white}}
         >
-        Sign up for Gnothi Premium today           
+        Sign up for Gnothi Premium          
         </Typography>
 
         <Typography 
@@ -43,7 +43,7 @@ export default function PremPricingCTA() {
         sx={{
           color: colors.white}}
         >
-        Subheading here        
+        Get access to features like Prompt and Magic Search for $9.99/month
         </Typography>
         </Grid>
 
@@ -56,7 +56,7 @@ export default function PremPricingCTA() {
         marginTop: '2rem',
         }}
         >
-        Sign up
+        Get started 
         </Button>
         </Grid>
       </Grid>

@@ -65,20 +65,20 @@ export default function BehaviorTracking() {
             > 
 
             <FeatureIntro
-              title={"Identify themes and patterns"} 
+              title={"Track custom fields"} 
               color='#507a6f'
             >
               <Typography>
-              As you write, Gnothi will get to know you better. You’ll get insights to narrow your focus and help you grow.          
+              Come up with a list of things you’d like to track daily—like mood, sleep, exercise, alcohol, energy, meditation, etc. Then do quick check-ins when you journal.
               </Typography>
             </FeatureIntro>
 
             <FeatureIntro
-              title={"Identify themes and patterns"} 
+              title={"Identify the top influencer"} 
               color='#507a6f'
             >
               <Typography>
-              As you write, Gnothi will get to know you better. You’ll get insights to narrow your focus and help you grow.          
+              Gnothi will determine which field has the greatest impact on your life. This will be the primary habit you'll want to focus on each day. 
               </Typography>
             </FeatureIntro>
 
@@ -106,20 +106,20 @@ export default function BehaviorTracking() {
             > 
 
             <FeatureIntro
-              title={"Identify themes and patterns"} 
+              title={"Uncover behavioral patterns"} 
               color='#507a6f'
             >
               <Typography>
-              As you write, Gnothi will get to know you better. You’ll get insights to narrow your focus and help you grow.          
+              Gnothi also shows you field-to-field correlations. This allows you to see how each choice you make affects every other choice you make.
               </Typography>
             </FeatureIntro>
 
             <FeatureIntro
-              title={"Identify themes and patterns"} 
+              title={"Make meaningful changes"} 
               color='#507a6f'
             >
               <Typography>
-              As you write, Gnothi will get to know you better. You’ll get insights to narrow your focus and help you grow.          
+              With tons of data at your fingertips, you’ll have more clarity about what’s working, what isn’t, and which areas of your life to focus on most. 
               </Typography>
             </FeatureIntro>
 

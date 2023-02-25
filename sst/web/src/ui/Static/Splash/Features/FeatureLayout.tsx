@@ -15,6 +15,7 @@ import Books from "./Books";
 import FreeVsPremium from "./FreeVsPremiumBlurb";
 import ThemesSummaries from "./ThemesSummaries";
 import PremPricingCTA from "./PremPricingCTA";
+import OrganizationBasicPlan from "./OrganizationBasicPlan"
 
 const {spacing, colors, sx} = styles
 
@@ -100,7 +101,10 @@ export function BasicTabs() {
       </TabPanel>
 
       <TabPanel value={value} index={1}>
-        Item Two
+        <Books/>
+        <BehaviorTracking/>
+        <ThemesSummaries/>
+        <OrganizationBasicPlan/>
       </TabPanel>
 
       <TabPanel value={value} index={2}>
