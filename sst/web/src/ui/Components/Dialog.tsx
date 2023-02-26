@@ -27,13 +27,14 @@ type Dialog = {
   onClose: () => void,
   className?: string
   children: React.ReactNode
+  backButton?: boolean
 }
 type FullScreenDialog = Dialog & {
   ctas?: CTA[]
 }
 
 export function FullScreenDialog({
-  title, open, onClose, ctas, children, className
+  title, open, onClose, ctas, children, className, backButton
 }: FullScreenDialog) {
   return (
     <Dialog
@@ -46,6 +47,7 @@ export function FullScreenDialog({
     >
       <AppBar
         onClose={onClose}
+        backButton={backButton}
         title={title}
         ctas={ctas}
         clearBottom={true}

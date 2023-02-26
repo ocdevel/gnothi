@@ -134,7 +134,7 @@ export default function Insights({entry_ids}: Insights) {
         icon={<PromptIcon {...iconProps} />}
         description="Ask Gnothi anything about an entry or set of entries. Choose a topic and question, or create a custom prompt."
       >
-        <Prompt entry_ids={entry_ids} view={view} />
+        <Prompt entry_ids={entry_ids} view={view} teaser={true}/>
       </Insight>
 
       <Insight
@@ -142,7 +142,7 @@ export default function Insights({entry_ids}: Insights) {
         icon={<ThemesIcon {...iconProps} />}
         description="See the recurring themes across your entries that AI sees. Use these to identify patterns in your thoughts and feelings. "
       >
-        <Themes view={view} />
+        <Themes view={view} teaser={true}/>
       </Insight>
 
       <Insight
@@ -151,7 +151,7 @@ export default function Insights({entry_ids}: Insights) {
         description="This is an AI-generated summary based on your search results. You can adjust filters to see different summaries.
         "
       >
-        <Summarize view={view} />
+        <Summarize view={view} teaser={true}/>
       </Insight>
 
       
@@ -161,14 +161,14 @@ export default function Insights({entry_ids}: Insights) {
         icon={<BooksIcon {...iconProps} />}
         description="Gnothi recommends the following books to you based on the entries in this search. You can thumbs up or down books to train AI on your interests, or add titles you’re interested in to your bookshelf."
       >
-        <Books view={view} />
+        <Books view={view} teaser={true}/>
       </Insight>
       <Insight
         label="Behavior Tracking"
         icon={<BehaviorsIcon {...iconProps} />}
         description="Here’s an overview of the daily habits and behaviors you’ve been tracking through Gnothi."
       >
-        <Behaviors />
+        <Behaviors teaser={true} />
       </Insight>
     </Stack2>
   </div>

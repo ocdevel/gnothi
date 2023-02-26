@@ -26,7 +26,7 @@ export default function Search() {
 
   const filters = useStore(s => s.filters)
   const setFilters = useStore(s => s.setFilters)
-  let [search, setSearch] = useState('')
+  const [search, setSearch] = useState('')
 
   const trigger_ = (search: string) => setFilters({search})
   const trigger = React.useMemo(

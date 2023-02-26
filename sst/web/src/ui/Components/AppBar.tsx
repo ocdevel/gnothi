@@ -20,6 +20,7 @@ import {styles} from '../Setup/Mui'
 import {useStore} from "../../data/store";
 import {useNavigate} from "react-router-dom";
 import ProfileIcon from '@mui/icons-material/Person';
+import BackIcon from '@mui/icons-material/ArrowBackIosNewOutlined';
 
 const buttonSx = {
   fontWeight: 300,
@@ -105,13 +106,15 @@ interface ResponsiveAppBar {
   links?: Link[]
   ctas?: CTA[]
   onClose?: () => void
+  backButton?: boolean
 }
 export default function ResponsiveAppBar({
   title,
   links,
   ctas,
   onClose,
-  clearBottom
+  clearBottom,
+  backButton,
 }: ResponsiveAppBar) {
   const navigate = useNavigate()
   const jwt = useStore(s => s.jwt)
@@ -146,7 +149,7 @@ export default function ResponsiveAppBar({
           aria-label="close"
           className='button-dialog-close'
         >
-          <CloseIcon />
+          {backButton ? <BackIcon /> : <CloseIcon />}
         </IconButton>
       </Stack>
     }

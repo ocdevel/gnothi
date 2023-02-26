@@ -29,6 +29,8 @@ type EntryModal = null | {
   entry?: Entries.entries_list_response
 }
 
+type Insight = "themes" | "summary" | "prompt" | "books" | "behaviors" | null
+
 export interface AppSlice {
   // ----- Insights
 
@@ -58,6 +60,8 @@ export interface AppSlice {
   setFieldValue: (x: any) => void
   sharePage: null | SharePage
   setSharePage: (sharePage: SharePage) => void
+  insightsModal: Insight
+  setInsightsModal: (insight: Insight) => void
 
   // ----- EE
   ee: { [k: string]: any }
@@ -175,4 +179,7 @@ export const appSlice: StateCreator<
     toolbar_groups_create: false
   },
   setEe: (k, v) => set({ee: {...get().ee, [k]: v}}),
+
+  insightsModal: null,
+  setInsightsModal: (insight) => set({insightsModal: insight})
 })

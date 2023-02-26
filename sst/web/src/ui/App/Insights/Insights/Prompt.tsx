@@ -35,7 +35,12 @@ type Trips = {
   prompts: string[]
 }
 
-export default function Prompt({entry_ids, view}: Prompt) {
+export default function Prompt({
+  entry_ids,
+  view,
+  teaser
+}: Prompt) {
+  const setInsightsModal = useStore(s => s.setInsightsModal)
   // TODO useStore version of loading
   const [trips, setTrips] = useState<Trips>({
     prompts: [],
@@ -135,7 +140,6 @@ export default function Prompt({entry_ids, view}: Prompt) {
       </Select>
     </FormControl>
 
-
     <TextField
       sx={{
         '& fieldset': {
@@ -171,5 +175,10 @@ export default function Prompt({entry_ids, view}: Prompt) {
       {trips.waiting ? <CircularProgress /> : "Submit"}
     </Button>
     {trips.responses.map(renderResponse)}
+    {teaser && <Button onClick={() => setInsightsModal("prompt")}>Dive Deeper</Button>}
   </Stack>
+}
+
+export function PromptModal() {
+  return <Box>hi</Box>
 }
