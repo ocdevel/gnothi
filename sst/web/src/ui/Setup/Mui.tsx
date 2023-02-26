@@ -112,7 +112,8 @@ export const theme = createTheme({
       fontSize: '1.6rem'
     },
     subtitle2: {
-      fontFamily: 'Poppins',
+      fontFamily: 'Antic Didone',
+      fontSize: '1.6rem'
     },
     body1: {
       fontFamily: 'Poppins',

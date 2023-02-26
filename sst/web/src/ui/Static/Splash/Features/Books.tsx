@@ -6,7 +6,7 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import {styles} from '../../../Setup/Mui';
 import InsightsOutlinedIcon from "@mui/icons-material/InsightsOutlined";
-import AutoStoriesOutlinedIcon from '@mui/icons-material/AutoStoriesOutlined';
+import BooksIcon from '@mui/icons-material/AutoStoriesOutlined';
 import { FeatureIntro } from "../Utils";
 
 const {spacing, colors, sx} = styles
@@ -35,7 +35,7 @@ export default function Books() {
               display="flex"
               justifyContent="flex-start"
               mb={2}>
-              <AutoStoriesOutlinedIcon sx={sx.booksIconLg}/>
+              <BooksIcon sx={sx.booksIconLg}/>
             </Box>
           <Typography 
             variant="subtitle1" 

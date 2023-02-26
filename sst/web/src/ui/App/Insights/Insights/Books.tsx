@@ -1,6 +1,9 @@
 import React, {useState, useEffect, useCallback} from 'react'
 import {sent2face} from "@gnothi/web/src/utils/utils"
 import RecommendIcon from '@mui/icons-material/Recommend';
+import ThumbUpIcon from '@mui/icons-material/ThumbUpAltOutlined';
+import ThumbDownIcon from '@mui/icons-material/ThumbDownOutlined';
+import BookmarkIcon from '@mui/icons-material/BookmarkAddOutlined';
 
 import {useStore} from "@gnothi/web/src/data/store"
 import Typography from "@mui/material/Typography";
@@ -29,12 +32,21 @@ export default function Books({view}: Insight) {
     i: number,
   ) {
     return <Stack direction="column" mb={2} key={b.id}>
-      <Typography>{b.name}</Typography>
-      <Stack spacing={1} direction="row">
-        <RecommendIcon {...icons} />
-        <RecommendIcon {...icons} sx={{
-          transform: "rotate(180deg)"
-        }}/>
+      <Typography 
+        sx={{
+          fontStyle: "italic", 
+          variant: 'body1', mb: 1
+         }}
+         >
+          {b.name}
+         </Typography>
+      <Stack spacing={1.5} direction="row">
+        <ThumbUpIcon sx={{color:"primary.main"}}
+          />
+        <ThumbDownIcon sx={{mt: 2, color:'#7B515C'}}
+        />
+        <BookmarkIcon sx={{color:"#40635A"}}
+        />
       </Stack>
     </Stack>
   }
@@ -42,6 +54,6 @@ export default function Books({view}: Insight) {
   const icons = {color: "secondary", fontSize: "large"} as const
   if (!books?.length) {return null}
   return <Box>
-    {books.slice(0,5).map(renderBook)}
+    {books.slice(0,3).map(renderBook)}
   </Box>
 }

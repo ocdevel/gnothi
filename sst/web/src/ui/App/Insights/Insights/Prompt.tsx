@@ -113,11 +113,15 @@ export default function Prompt({entry_ids, view}: Prompt) {
     </Grow>
   }
 
+  const borderRadius = 3
+
   return <Stack spacing={2} component="form">
 
     <FormControl fullWidth>
-      <InputLabel id="demo-simple-select-label">Presets</InputLabel>
+      <InputLabel 
+        id="demo-simple-select-label">Presets</InputLabel>
       <Select
+        sx={{borderRadius}}
         labelId="demo-simple-select-label"
         id="demo-simple-select"
         value={preset}
@@ -125,20 +129,26 @@ export default function Prompt({entry_ids, view}: Prompt) {
         onChange={changePreset as any}
       >
         {prompts.map(({key, label}) => (
-          <MenuItem key={key} value={key}>{label}</MenuItem>
+          <MenuItem 
+            key={key} value={key}>{label}</MenuItem>
         ))}
       </Select>
     </FormControl>
 
 
     <TextField
+      sx={{
+        '& fieldset': {
+          borderRadius,
+        },
+      }}
       id="outlined-multiline-flexible"
       label="Prompt"
       multiline
       value={prompt}
       onChange={e => setPrompt(e.target.value)}
       maxRows={4}
-      helperText="Enter a prompt, with <placeholder> values like so: Interpret the following dream <paragraphs>"
+      // helperText="Enter a prompt, with <placeholder> values like so: Interpret the following dream <paragraphs>"
     />
 
     <Button onClick={() => setShowHelp(!showHelp)}>{showHelp ? "Hide help" : "Show Help"}</Button>
@@ -152,8 +162,9 @@ export default function Prompt({entry_ids, view}: Prompt) {
     </Typography>}
 
     <Button
+      sx={{elevation:12}}
       variant="contained"
-      color="primary"
+      color="secondary"
       disabled={trips.waiting}
       onClick={submit}
     >

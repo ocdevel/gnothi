@@ -53,6 +53,7 @@ function Teaser({entry, goToForm}: Teaser) {
   const title = useMemo(() => {
     return <Typography
       variant='h6'
+      color="primary"
       className={entry.ai_title ? 'title ai' : 'title'}
     >
       {entry.title || entry.ai_title}
@@ -61,8 +62,11 @@ function Teaser({entry, goToForm}: Teaser) {
 
   const date = useMemo(() => {
     return <Typography
+      variant='body2'
+      fontWeight={300}
+      marginBottom={1}
       className='date'
-      color='text.secondary'
+      color='primary'
     >
       {fmtDate(entry.created_at)}
     </Typography>
@@ -80,7 +84,13 @@ function Teaser({entry, goToForm}: Teaser) {
 
   const hoverText = useMemo(() => {
     if (!isSummary) {return null}
-    return <Typography variant='caption' sx={{display: hovered ? 'block' : 'none'}}>
+    return <Typography 
+      variant='caption' 
+      fontStyle='italic'
+      color='#black'
+      fontWeight={300}
+      marginTop={2}
+      sx={{display: hovered ? 'block' : 'none'}}>
       This is an AI-generated summary of this entry. Click to read the original.
     </Typography>
   }, [hovered, isSummary])
@@ -98,8 +108,8 @@ function Teaser({entry, goToForm}: Teaser) {
       sx={{cursor:'pointer', backgroundColor: 'white', elevation: 10, borderRadius: 2, my: 2}}
     >
       <CardContent>
-        {title}
         {date}
+        {title}
         <Typography variant="body1" sx={{pt: 1, pb: 2}}>
           {sentiment}
           {text}

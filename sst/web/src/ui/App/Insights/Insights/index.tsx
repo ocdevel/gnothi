@@ -14,11 +14,13 @@ import React, {useState, useEffect, useCallback} from "react"
 import {useStore} from "@gnothi/web/src/data/store"
 
 
-import BooksIcon from "@mui/icons-material/MenuBook";
-import PromptIcon from '@mui/icons-material/Quickreply';
-import SummarizeIcon from '@mui/icons-material/FitScreen';
-import ThemesIcon from '@mui/icons-material/OfflineBolt';
-import BehaviorsIcon from '@mui/icons-material/InsertChart';
+import BooksIcon from '@mui/icons-material/AutoStoriesOutlined';
+import SummaryIcon from '@mui/icons-material/SummarizeOutlined';
+import ThemesIcon from '@mui/icons-material/DashboardOutlined';
+import BehaviorsIcon from '@mui/icons-material/InsertChartOutlinedRounded';
+import PromptIcon from '@mui/icons-material/ChatOutlined';
+
+
 
 import CardContent from '@mui/material/CardContent'
 import CardHeader from '@mui/material/CardHeader'
@@ -46,7 +48,7 @@ function InsightCardHeader({label, icon, description, children}: Insight) {
     spacing={2}
   >
     {icon}
-    <Typography variant="h6">{label}</Typography>
+    <Typography variant="h6" >{label}</Typography>
   </Stack>
   return <Card className='mb-3'>
     <CardHeader
@@ -69,9 +71,18 @@ function InsightRaw({label, icon, description, children}: Insight) {
         spacing={2}
       >
         {icon}
-        <Typography variant="h6">{label}</Typography>
+        <Typography 
+          variant="subtitle2" 
+          color="primary.main"
+          >{label}
+          </Typography>
       </Stack>
-      <Typography color="secondary" variant="body1">{description}</Typography>
+      <Typography 
+        color="primary.main" 
+        variant="body2"
+        fontWeight={300}
+        >{description}
+        </Typography>
     </CardContent>
     <CardContent>
       {children}
@@ -118,38 +129,44 @@ export default function Insights({entry_ids}: Insights) {
 
   return <div className="insights">
     <Stack2>
-      <Insight
-        label="Summarize"
-        icon={<SummarizeIcon {...iconProps} />}
-        description="Summarize your entries for an overview."
-      >
-        <Summarize view={view} />
-      </Insight>
-      <Insight
-        label="Themes"
-        icon={<ThemesIcon {...iconProps} />}
-        description="Show common recurring themes across your entries."
-      >
-        <Themes view={view} />
-      </Insight>
-      <Insight
+    <Insight
         label="Prompt"
         icon={<PromptIcon {...iconProps} />}
-        description="Prompts"
+        description="Ask Gnothi anything about an entry or set of entries. Choose a topic and question, or create a custom prompt."
       >
         <Prompt entry_ids={entry_ids} view={view} />
       </Insight>
+
+      <Insight
+        label="Themes"
+        icon={<ThemesIcon {...iconProps} />}
+        description="See the recurring themes across your entries that AI sees. Use these to identify patterns in your thoughts and feelings. "
+      >
+        <Themes view={view} />
+      </Insight>
+
+      <Insight
+        label="Summary"
+        icon={<SummaryIcon {...iconProps} />}
+        description="This is an AI-generated summary based on your search results. You can adjust filters to see different summaries.
+        "
+      >
+        <Summarize view={view} />
+      </Insight>
+
+      
+      
       <Insight
         label="Books"
         icon={<BooksIcon {...iconProps} />}
-        description="Book recommendations based on your entries."
+        description="Gnothi recommends the following books to you based on the entries in this search. You can thumbs up or down books to train AI on your interests, or add titles you’re interested in to your bookshelf."
       >
         <Books view={view} />
       </Insight>
       <Insight
-        label="Behaviors"
+        label="Behavior Tracking"
         icon={<BehaviorsIcon {...iconProps} />}
-        description="Track stuff."
+        description="Here’s an overview of the daily habits and behaviors you’ve been tracking through Gnothi."
       >
         <Behaviors />
       </Insight>

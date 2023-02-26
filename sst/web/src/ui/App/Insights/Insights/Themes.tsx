@@ -30,7 +30,7 @@ export default function Themes({view}: Insight) {
   }
 
   if (!themes) {
-    return <Typography>Nothing to summarize (try adjusting date range)</Typography>
+    return <Typography>There are not enough entries selected to generate themes (try adjusting date range)</Typography>
   }
 
   // sent2face(reply_.sentiment)} {reply_.summary}
@@ -44,12 +44,32 @@ export default function Themes({view}: Insight) {
 
   function renderTheme(theme: insights_themes_response['themes'][number], i: number) {
     return <Box key={theme.id} sx={{my:1}}>
-      <Typography variant="h6">{theme.word}</Typography>
-      <Typography>{theme.summary}</Typography>
-      <Stack direction="row" spacing={2}>
-        {theme.keywords.map((kw: string) => <Chip key={kw} label={kw} />)}
+      
+      <Typography 
+        marginBottom={1}
+        variant="h6"
+        color="primary">{theme.word}</Typography>
+        <Typography
+          variant="body2"
+          fontStyle="italic"
+          color="primary"
+          mt={-1}
+          mb={1}>
+        Related summary from your entries:
+      </Typography>
+      <Typography 
+        marginBottom={2}>{theme.summary}</Typography>
+      
+      <Stack 
+        display="flex"
+        alignContent="flex-start"
+        justifyContent="flex-start"
+        flexWrap='wrap'
+        direction="row" 
+        >
+        {theme.keywords.map((kw: string) => <Chip sx={{marginRight:1, marginBottom:2}} key={kw} label={kw} />)}
       </Stack>
-      <Divider />
+      <Divider sx={{marginTop: 2}} />
     </Box>
   }
 

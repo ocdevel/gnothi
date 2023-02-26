@@ -19,7 +19,6 @@ import Button from "@mui/material/Button";
 
 const colors = [
   "#40635A",
-  "#50627A",
   "#7B515C",
   "#384555",
   "#696B38",
