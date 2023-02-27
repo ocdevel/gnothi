@@ -3,7 +3,7 @@ import {Typography} from "@mui/material";
 import Container from "@mui/material/Container";
 import Box from "@mui/material/Box";
 import {useStore} from "../../../data/store";
-import Prompt, {PromptModal} from './Insights/Prompt'
+import Prompt from './Insights/Prompt'
 
 export default function InsightsModal () {
   const insightsModal = useStore(s => s.insightsModal)
@@ -18,7 +18,7 @@ export default function InsightsModal () {
     backButton={true}
   >
     <Container maxWidth={false}>
-      {insightsModal === "prompt" ? <PromptModal /> : null}
+      {insightsModal === "prompt" ? <Prompt /> : null}
     </Container>
   </FullScreenDialog>
 }

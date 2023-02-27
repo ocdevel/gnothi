@@ -41,7 +41,12 @@ export function ErrorSnack() {
   //     onClose={() => {}}
   //     anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
   //   >
-  return <Stack sx={{ position: "absolute", bottom: 24, right: 24 }} spacing={2}>
+  return <Stack sx={{
+    position: "absolute",
+    bottom: 24,
+    right: 24,
+    zIndex: 9999
+  }} spacing={2}>
     <Stack spacing={2} direction="column">
       {errors.map(renderError)}
     </Stack>

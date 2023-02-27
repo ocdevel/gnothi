@@ -153,7 +153,7 @@ export const theme = createTheme({
       styleOverrides: {
         root: {
           textTransform: 'initial',
-          borderRadius: 20,
+          borderRadius: 10,
           elevation: 12,
         },
       },
