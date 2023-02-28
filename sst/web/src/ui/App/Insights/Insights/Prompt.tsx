@@ -24,15 +24,12 @@ import Divider from "@mui/material/Divider";
 import {Insight} from './Utils'
 import Grow from '@mui/material/Grow';
 
-import Tabs from '@mui/material/Tabs';
-import Tab from '@mui/material/Tab';
-import {BasicTabs} from "../../../Static/Splash/Features/FeatureLayout";
-
 import Accordion from '@mui/material/Accordion';
 import AccordionDetails from '@mui/material/AccordionDetails';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-
+import Tabs from "../../../Components/Tabs"
+import Accordions from "../../../Components/Accordions"
 
 // type Preset = keyof typeof promptsObj
 type Preset = {
@@ -41,28 +38,19 @@ type Preset = {
   prompt: string
 }
 
+
 type Prompt = Insight & {
   entry_ids: string[]
 }
-type Trips = {
-  waiting: boolean
-  responses: S.Insights.insights_prompt_response[]
-  prompts: string[]
-}
 
-export default function Prompt({
-                                 entry_ids,
-                                 view,
-                               }: Prompt) {
+
+export default function Prompt({entry_ids, view}: Prompt) {
   const insightsModal = useStore(s => s.insightsModal)
   const teaser = insightsModal === null
   const setInsightsModal = useStore(s => s.setInsightsModal)
+  const promptTrips = useStore(s => s.promptTrips)
+  const setPromptTrips = useStore(s => s.setPromptTrips)
   // TODO useStore version of loading
-  const [trips, setTrips] = useState<Trips>({
-    prompts: [],
-    responses: [],
-    waiting: false,
-  })
   const send = useStore(useCallback(s => s.send, []))
   const promptResponse = useStore(s => s.res.insights_prompt_response?.hash?.[view])
   // start with just blank prompt, will populate other prompts via HTTP -> Gist
@@ -90,10 +78,10 @@ export default function Prompt({
     if (!promptResponse) {
       return
     }
-    setTrips({
-      ...trips,
+    setPromptTrips({
+      ...promptTrips,
       waiting: false,
-      responses: [...trips.responses, promptResponse]
+      responses: [...promptTrips.responses, promptResponse]
     })
   }, [promptResponse])
 
@@ -104,37 +92,101 @@ export default function Prompt({
   }
 
   function submit() {
-    setTrips({
-      ...trips,
+    setPromptTrips({
+      ...promptTrips,
       waiting: true,
-      prompts: [...trips.prompts, prompt]
+      prompts: [...promptTrips.prompts, prompt]
     })
-    console.log("prompt", entry_ids)
     send("insights_prompt_request", {
       view,
       entry_ids,
       prompt
     })
+    if (teaser) {
+      setInsightsModal('prompt')
+    }
   }
 
   function renderResponse(
     _: any,
     i: number
   ) {
-    const prompt = trips.prompts[i]
-    const res = trips.responses[i]
+    const prompt = promptTrips.prompts[i]
+    const res = promptTrips.responses[i]
+
     return <Grow
       in={true}
       key={res.id}
       style={{transformOrigin: '0 0 0'}}
       timeout={1000}
     >
-      <Box>
-        <Typography>Q: {prompt}</Typography>
-        <Typography>A: {res.response}</Typography>
-        <Divider/>
-      </Box>
+      <Grid
+        container
+        direction='row'
+        marginTop={5}
+        spacing={4}
+      >
+        <Grid
+          item
+          xs={12} md={6}
+          alignItems='center'
+          justifyItems='flex-start'
+        >
+          <Card
+            sx={{
+              display: 'inline-block',
+              transform: 'scale(0.8)',
+              backgroundColor: '#C3C7CC',
+              borderRadius: 3
+            }}
+          >
+            <CardContent>
+              <Typography
+                textAlign='left'>
+                Question:
+              </Typography>
+              <Typography
+                textAlign='left'
+                fontStyle='italic'
+              >
+                {prompt}
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid
+          item
+          xs={12} md={6}
+          alignItems='center'
+          justifyItems='flex-end'
+        >
+          <Card
+            sx={{
+              display: 'inline-block',
+              transform: 'scale(0.8)',
+              mt: 8,
+              backgroundColor: '#ffffff',
+              borderRadius: 3
+            }}
+          >
+            <CardContent>
+              <Typography
+                textAlign='left'>
+                Answer:
+              </Typography>
+              <Typography
+                textAlign='left'
+                fontStyle='italic'
+              >
+                {res.response}
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
     </Grow>
+
+
   }
 
   const borderRadius = 3
@@ -199,82 +251,14 @@ export default function Prompt({
           sx={{elevation: 12}}
           variant="contained"
           color="secondary"
-          disabled={trips.waiting}
+          disabled={promptTrips.waiting}
           onClick={submit}
         >
-          {trips.waiting ? <CircularProgress/> : "Submit"}
+          {promptTrips.waiting ? <CircularProgress/> : "Submit"}
         </Button>
       </Box>
-      {trips.responses.map(renderResponse)}
       <Button onClick={() => setInsightsModal("prompt")}>Explore Prompt</Button>
     </Stack>
-  }
-
-  interface TabPanelProps {
-    children?: React.ReactNode;
-    index: number;
-    value: number;
-  }
-
-
-  function TabPanel(props: TabPanelProps) {
-    const {children, value, index, ...other} = props;
-
-    return (
-      <div
-        role="tabpanel"
-        hidden={value !== index}
-        id={`simple-tabpanel-${index}`}
-        aria-labelledby={`simple-tab-${index}`}
-        {...other}
-      >
-        {value === index && (
-          <Box sx={{p: 3}}>
-            <Typography>{children}</Typography>
-          </Box>
-        )}
-      </div>
-    );
-  }
-
-  function a11yProps(index: number) {
-    return {
-      id: `simple-tab-${index}`,
-      'aria-controls': `simple-tabpanel-${index}`,
-    };
-  }
-
-  function BasicTabs() {
-    const [value, setValue] = React.useState(0);
-
-    const handleChange = (event: React.SyntheticEvent, newValue: number) => {
-      setValue(newValue);
-    };
-
-    return (
-      <Box sx={{width: '100%'}}>
-        <Box sx={{width: '100%', bgcolor: 'transparent'}}>
-          <Tabs value={value} onChange={handleChange} centered>
-            <Tab label="Prompt"/>
-            <Tab label="Info"/>
-            <Tab label="History"/>
-          </Tabs>
-
-        </Box>
-        <TabPanel value={value} index={0}>
-          <PromptTab1/>
-        </TabPanel>
-
-        <TabPanel value={value} index={1}>
-          <PromptTab2/>
-        </TabPanel>
-
-        <TabPanel value={value} index={2}>
-          Prompt history
-        </TabPanel>
-
-      </Box>
-    );
   }
 
   function renderModal() {
@@ -288,12 +272,20 @@ export default function Prompt({
         Prompt
       </Typography>
 
-      <BasicTabs/>
+      <Tabs
+        tabs={[
+          {value: "0", label: "Prompt", render: () => <PromptTab0 />},
+          {value: "1", label: "Info", render: () => <PromptTab1 />},
+          {value: "2", label: "History", render: () => <PromptTab2 />},
+
+        ]}
+        defaultTab="0"
+      />
     </Box>
   }
 
 
-  function PromptTab1() {
+  function PromptTab0() {
     return <Stack spacing={2} component="form">
 
       <FormControl fullWidth>
@@ -334,192 +326,61 @@ export default function Prompt({
         sx={{elevation: 12}}
         variant="contained"
         color="secondary"
-        disabled={trips.waiting}
+        disabled={promptTrips.waiting}
         onClick={submit}
       >
-        {trips.waiting ? <CircularProgress/> : "Submit"}
+        {promptTrips.waiting ? <CircularProgress/> : "Submit"}
       </Button>
-      {trips.responses.map(renderResponse)}
-
-      <Box>
-        <Grid container
-          direction='row'
-          marginTop={5}
-          spacing={4}
-          >
-          <Grid item
-            xs={12} md={6}
-            alignItems='center'
-            justifyItems='flex-start'
-            >
-            <Card
-                 sx={{
-                   display: 'inline-block',
-                   transform: 'scale(0.8)',
-                   backgroundColor: '#C3C7CC',
-                   borderRadius: 3
-                  }}
-                  >
-              <CardContent>
-                  <Typography
-                    textAlign='left'>
-                Question:
-              </Typography>
-                <Typography
-                textAlign='left'
-                fontStyle='italic'
-                >
-                I have a lot to say so I'm going to say it here and see how it all goes.
-              </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item
-            xs={12} md={6}
-            alignItems='center'
-            justifyItems='flex-end'
-            >
-            <Card
-              sx={{
-               display: 'inline-block',
-               transform: 'scale(0.8)',
-                mt: 8,
-                backgroundColor: '#ffffff',
-                borderRadius: 3
-              }}
-              >
-              <CardContent>
-                  <Typography
-                textAlign='left'>
-                Answer:
-              </Typography>
-                 <Typography
-                textAlign='left'
-                fontStyle='italic'
-                >
-                I have a lot to say so I'm going to say it here and see how it all goes.
-              </Typography>
-              </CardContent>
-            </Card>
-
-
-
-          </Grid>
-
-        </Grid>
-      </Box>
+      {promptTrips.responses.map(renderResponse)}
 
     </Stack>
   }
 
 
-
+  function PromptTab1() {
+    return <Accordions
+      accordions={[{
+        title: "The basics",
+        subtitle: "Find out more about how Prompt works",
+        content: <Typography>
+          Nulla facilisi. Phasellus sollicitudin nulla et quam mattis feugiat.
+          Aliquam eget maximus est, id dignissim quam.
+        </Typography>
+      }, {
+        title: "Using placeholders",
+        subtitle: "Learn how to use placeholders in your prompts",
+        content: <Typography>
+          Donec placerat, lectus sed mattis semper, neque lectus feugiat lectus,
+          varius pulvinar diam eros in elit. Pellentesque convallis laoreet
+          laoreet.
+        </Typography>
+      }, {
+        title: "Custom prompts",
+        subtitle: "Get info about creating your own prompts",
+        content: <Typography>
+          Nunc vitae orci ultricies, auctor nunc in, volutpat nisl. Integer sit
+          amet egestas eros, vitae egestas augue. Duis vel est augue.
+        </Typography>
+      }, {
+        title: "Tutorials",
+        subtitle: "Watch videos and read more about Prompt",
+        content: <Typography>
+          Nunc vitae orci ultricies, auctor nunc in, volutpat nisl. Integer sit
+          amet egestas eros, vitae egestas augue. Duis vel est augue.
+        </Typography>
+      }]}
+    />
+  }
 
   function PromptTab2() {
-    const [expanded, setExpanded] = React.useState<string | false>(false);
-
-    const handleChange =
-      (panel: string) => (event: React.SyntheticEvent, isExpanded: boolean) => {
-        setExpanded(isExpanded ? panel : false);
-      };
-
-      return ( <div>
-          <Accordion expanded={expanded === 'panel1'} onChange={handleChange('panel1')}>
-            <AccordionSummary
-              expandIcon={<ExpandMoreIcon/>}
-              aria-controls="panel1bh-content"
-              id="panel1bh-header"
-            >
-              <Typography sx={{width: '33%', flexShrink: 0}}>
-                The basics
-              </Typography>
-              <Typography sx={{color: 'text.secondary'}}>
-                Find out more about how Prompt works
-              </Typography>
-            </AccordionSummary>
-            <AccordionDetails>
-              <Typography>
-                Nulla facilisi. Phasellus sollicitudin nulla et quam mattis feugiat.
-                Aliquam eget maximus est, id dignissim quam.
-              </Typography>
-            </AccordionDetails>
-
-          </Accordion>
-          <Accordion expanded={expanded === 'panel2'} onChange={handleChange('panel2')}>
-            <AccordionSummary
-              expandIcon={<ExpandMoreIcon/>}
-              aria-controls="panel2bh-content"
-              id="panel2bh-header"
-            >
-              <Typography sx={{width: '33%', flexShrink: 0}}>
-                Using placeholders
-              </Typography>
-              <Typography sx={{color: 'text.secondary'}}>
-                Learn how to use placeholders in your prompts
-              </Typography>
-            </AccordionSummary>
-            <AccordionDetails>
-              <Typography>
-                Donec placerat, lectus sed mattis semper, neque lectus feugiat lectus,
-                varius pulvinar diam eros in elit. Pellentesque convallis laoreet
-                laoreet.
-              </Typography>
-            </AccordionDetails>
-
-          </Accordion>
-          <Accordion expanded={expanded === 'panel3'} onChange={handleChange('panel3')}>
-            <AccordionSummary
-              expandIcon={<ExpandMoreIcon/>}
-              aria-controls="panel3bh-content"
-              id="panel3bh-header"
-            >
-              <Typography sx={{width: '33%', flexShrink: 0}}>
-                Custom prompts
-              </Typography>
-              <Typography sx={{color: 'text.secondary'}}>
-                Get info about creating your own prompts
-              </Typography>
-            </AccordionSummary>
-            <AccordionDetails>
-              <Typography>
-                Nunc vitae orci ultricies, auctor nunc in, volutpat nisl. Integer sit
-                amet egestas eros, vitae egestas augue. Duis vel est augue.
-              </Typography>
-            </AccordionDetails>
-
-            </Accordion>
-          <Accordion expanded={expanded === 'panel4'} onChange={handleChange('panel4')}>
-            <AccordionSummary
-              expandIcon={<ExpandMoreIcon/>}
-              aria-controls="panel3bh-content"
-              id="panel3bh-header"
-            >
-              <Typography sx={{width: '33%', flexShrink: 0}}>
-                Tutorials
-              </Typography>
-              <Typography sx={{color: 'text.secondary'}}>
-                Watch videos and read more about Prompt
-              </Typography>
-            </AccordionSummary>
-            <AccordionDetails>
-              <Typography>
-                Nunc vitae orci ultricies, auctor nunc in, volutpat nisl. Integer sit
-                amet egestas eros, vitae egestas augue. Duis vel est augue.
-              </Typography>
-            </AccordionDetails>
-
-          </Accordion>
+    return <>Prompt history</>
+  }
 
 
-        </div>
-      );
-    }
-
-
-    if (teaser) {
-      return renderTeaser()
-    }
-    return renderModal()
-    }
+  if (teaser) {
+    return renderTeaser()
+  }
+  return renderModal()
+}
 
 

@@ -24,15 +24,17 @@ export default function Tabs({tabs, defaultTab}: Tabs) {
 
   return <Box sx={{ width: '100%', typography: 'body1' }}>
     <TabContext value={value}>
-      <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-        <TabList onChange={handleChange} aria-label="Tabs">
-          {tabs.map(t => <Tab
-            label={t.label}
-            value={t.value}
-            key={t.value}
-          />)}
-        </TabList>
-      </Box>
+      <TabList
+        onChange={handleChange}
+        centered
+        aria-label="Tabs"
+      >
+        {tabs.map(t => <Tab
+          label={t.label}
+          value={t.value}
+          key={t.value}
+        />)}
+      </TabList>
       {tabs.map(t => <TabPanel
         value={t.value}
         key={t.value}

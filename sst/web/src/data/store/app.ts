@@ -31,6 +31,12 @@ type EntryModal = null | {
 
 type Insight = "themes" | "summary" | "prompt" | "books" | "behaviors" | null
 
+type PromptTrips = {
+  waiting: boolean
+  responses: Insights.insights_prompt_response[]
+  prompts: string[]
+}
+
 export interface AppSlice {
   // ----- Insights
 
@@ -66,6 +72,9 @@ export interface AppSlice {
   // ----- EE
   ee: { [k: string]: any }
   setEe: (k: string, v: any) => void
+
+  promptTrips: PromptTrips
+  setPromptTrips: (promptTrips: PromptTrips) => void
 }
 
 export const appSlice: StateCreator<
@@ -181,5 +190,20 @@ export const appSlice: StateCreator<
   setEe: (k, v) => set({ee: {...get().ee, [k]: v}}),
 
   insightsModal: null,
-  setInsightsModal: (insight) => set({insightsModal: insight})
+  setInsightsModal: (insight) => set({insightsModal: insight}),
+
+  promptTrips: {
+    prompts: [],
+    responses: [],
+    // prompts: ["I have a lot to say so I'm going to say it here and see how it all goes."],
+    // responses: [{
+    //   view: "list",
+    //   id: '123',
+    //   response: "I have a lot to say so I'm going to say it here and see how it all goes."
+    // }],
+    waiting: false,
+  },
+  setPromptTrips: (promptTrips) => {
+    set({promptTrips})
+  },
 })
