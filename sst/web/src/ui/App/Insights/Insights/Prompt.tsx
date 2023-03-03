@@ -24,12 +24,12 @@ import Divider from "@mui/material/Divider";
 import {Insight} from './Utils'
 import Grow from '@mui/material/Grow';
 
-import Accordion from '@mui/material/Accordion';
-import AccordionDetails from '@mui/material/AccordionDetails';
-import AccordionSummary from '@mui/material/AccordionSummary';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import Tabs from "../../../Components/Tabs"
 import Accordions from "../../../Components/Accordions"
+import Container from "@mui/material/Container";
+import {FullScreenDialog} from "../../../Components/Dialog";
+
+
 
 // type Preset = keyof typeof promptsObj
 type Preset = {
@@ -43,18 +43,37 @@ type Prompt = Insight & {
   entry_ids: string[]
 }
 
+const SHOW_SAMPLE = true
+type Trips = {
+  isSample: boolean
+  waiting: boolean
+  responses: S.Insights.insights_prompt_response[]
+  prompts: string[]
+}
 
 export default function Prompt({entry_ids, view}: Prompt) {
-  const insightsModal = useStore(s => s.insightsModal)
-  const teaser = insightsModal === null
-  const setInsightsModal = useStore(s => s.setInsightsModal)
-  const promptTrips = useStore(s => s.promptTrips)
-  const setPromptTrips = useStore(s => s.setPromptTrips)
+  const [modal, setModal] = useState(false)
+  const [trips, setTrips] = useState<Trips>(SHOW_SAMPLE ? {
+    isSample: true,
+    waiting: false,
+    prompts: ["I have a lot to say so I'm going to say it here and see how it all goes."],
+    responses: [{
+      view: "list",
+      id: "123",
+      response: "I have a lot to say so I'm going to say it here and see how it all goes."
+    }]
+  } : {
+    isSample: false,
+    waiting: false,
+    prompts: [],
+    responses: []
+  })
+
   // TODO useStore version of loading
   const send = useStore(useCallback(s => s.send, []))
   const promptResponse = useStore(s => s.res.insights_prompt_response?.hash?.[view])
   // start with just blank prompt, will populate other prompts via HTTP -> Gist
-  const [prompts, setPrompts] = useState<Preset[]>([{
+  const [presets, setPresets] = useState<Preset[]>([{
     "key": "blank",
     "label": "Blank",
     "prompt": ""
@@ -62,64 +81,79 @@ export default function Prompt({entry_ids, view}: Prompt) {
   const [preset, setPreset] = useState<string>("")
   const [prompt, setPrompt] = useState<string>("")
   const [showHelp, setShowHelp] = useState<boolean>(false)
-  const promptsObj = keyBy(prompts, 'key')
+  const presetsObj = keyBy(presets, 'key')
 
-  async function getPrompts() {
-    const promptsUrl = "https://gist.githubusercontent.com/lefnire/57023741c902627064e7d24302aa402f/raw/prompts.json"
-    const {data} = await axios.get(promptsUrl)
-    setPrompts(data as Preset[])
+  async function fetchPresets() {
+    const presetsUrl = "https://gist.githubusercontent.com/lefnire/57023741c902627064e7d24302aa402f/raw/prompts.json"
+    const {data} = await axios.get(presetsUrl)
+    setPresets(data as Preset[])
   }
 
   useEffect(() => {
-    getPrompts()
+    fetchPresets()
   }, [])
 
   useEffect(() => {
     if (!promptResponse) {
       return
     }
-    setPromptTrips({
-      ...promptTrips,
+    setTrips({
+      ...trips,
       waiting: false,
-      responses: [...promptTrips.responses, promptResponse]
+      responses: [...trips.responses, promptResponse]
     })
   }, [promptResponse])
 
   const changePreset: React.ChangeEventHandler<HTMLInputElement> = (e) => {
     const preset = e.target.value
     setPreset(preset)
-    setPrompt(promptsObj[preset].prompt)
+    setPrompt(presetsObj[preset].prompt)
   }
 
   function submit() {
-    setPromptTrips({
-      ...promptTrips,
-      waiting: true,
-      prompts: [...promptTrips.prompts, prompt]
-    })
+    // They didn't enter anything
+    if (!prompt?.length) {return}
+
+    // Remove the sample on first submit
+    if (trips.isSample) {
+      setTrips({
+        isSample: false,
+        waiting: true,
+        prompts: [prompt],
+        responses: []
+      })
+    } else {
+      setTrips({
+        ...trips,
+        waiting: true,
+        prompts: [...trips.prompts, prompt]
+      })
+    }
     send("insights_prompt_request", {
       view,
       entry_ids,
       prompt
     })
-    if (teaser) {
-      setInsightsModal('prompt')
+    if (!modal) {
+      setModal(true)
     }
   }
+
 
   function renderResponse(
     _: any,
     i: number
   ) {
-    const prompt = promptTrips.prompts[i]
-    const res = promptTrips.responses[i]
+    const prompt = trips.prompts[i]
+    const res = trips.responses[i]
 
-    return <Grow
-      in={true}
-      key={res.id}
-      style={{transformOrigin: '0 0 0'}}
-      timeout={1000}
-    >
+    // return <Grow
+    //   in={true}
+    //   key={res.id}
+    //   style={{transformOrigin: '0 0 0'}}
+    //   timeout={1000}
+    // >
+    return <div key={res.id}>
       <Grid
         container
         direction='row'
@@ -184,15 +218,14 @@ export default function Prompt({entry_ids, view}: Prompt) {
           </Card>
         </Grid>
       </Grid>
-    </Grow>
-
-
+    </div>
+    // </Grow>
   }
 
   const borderRadius = 3
 
 
-  function renderTeaser() {
+  function PromptTeaser() {
     return <Stack
       spacing={2}
       component="form"
@@ -209,7 +242,7 @@ export default function Prompt({entry_ids, view}: Prompt) {
           label="Presets"
           onChange={changePreset as any}
         >
-          {prompts.map(({key, label}) => (
+          {presets.map(({key, label}) => (
             <MenuItem
               key={key} value={key}>{label}</MenuItem>
           ))}
@@ -251,136 +284,143 @@ export default function Prompt({entry_ids, view}: Prompt) {
           sx={{elevation: 12}}
           variant="contained"
           color="secondary"
-          disabled={promptTrips.waiting}
+          disabled={trips.waiting}
           onClick={submit}
         >
-          {promptTrips.waiting ? <CircularProgress/> : "Submit"}
+          {trips.waiting ? <CircularProgress/> : "Submit"}
         </Button>
       </Box>
-      <Button onClick={() => setInsightsModal("prompt")}>Explore Prompt</Button>
+      <Button onClick={() => setModal(true)}>Explore Prompt</Button>
     </Stack>
   }
 
-  function renderModal() {
-    return <Box
-      sx={{mt: 2}}>
-      <Typography
-        variant="h5"
-        alignItems='flex-start'
-        sx={{mb: 2}}
-      >
-        Prompt
-      </Typography>
+  function PromptModal() {
 
-      <Tabs
-        tabs={[
-          {value: "0", label: "Prompt", render: () => <PromptTab0 />},
-          {value: "1", label: "Info", render: () => <PromptTab1 />},
-          {value: "2", label: "History", render: () => <PromptTab2 />},
+    function tab0() {
+      return <Stack spacing={2} component="form">
+        <FormControl fullWidth>
+          <InputLabel
+            id="demo-simple-select-label">Presets</InputLabel>
+          <Select
+            sx={{borderRadius}}
+            labelId="demo-simple-select-label"
+            id="demo-simple-select"
+            value={preset}
+            label="Presets"
+            onChange={changePreset as any}
+          >
+            {presets.map(({key, label}) => (
+              <MenuItem
+                key={key} value={key}>{label}</MenuItem>
+            ))}
+          </Select>
+        </FormControl>
 
-        ]}
-        defaultTab="0"
-      />
-    </Box>
-  }
+        <TextField
+          sx={{
+            '& fieldset': {
+              borderRadius,
+            },
+          }}
+          id="outlined-multiline-flexible"
+          label="Prompt"
+          multiline
+          value={prompt}
+          onChange={e => setPrompt(e.target.value)}
+          maxRows={4}
+          // helperText="Enter a prompt, with <placeholder> values like so: Interpret the following dream <paragraphs>"
+        />
 
 
-  function PromptTab0() {
-    return <Stack spacing={2} component="form">
-
-      <FormControl fullWidth>
-        <InputLabel
-          id="demo-simple-select-label">Presets</InputLabel>
-        <Select
-          sx={{borderRadius}}
-          labelId="demo-simple-select-label"
-          id="demo-simple-select"
-          value={preset}
-          label="Presets"
-          onChange={changePreset as any}
+        <Button
+          sx={{elevation: 12}}
+          variant="contained"
+          color="secondary"
+          disabled={trips.waiting}
+          onClick={submit}
         >
-          {prompts.map(({key, label}) => (
-            <MenuItem
-              key={key} value={key}>{label}</MenuItem>
-          ))}
-        </Select>
-      </FormControl>
+          {trips.waiting ? <CircularProgress/> : "Submit"}
+        </Button>
+        {trips.responses.map(renderResponse)}
 
-      <TextField
-        sx={{
-          '& fieldset': {
-            borderRadius,
-          },
-        }}
-        id="outlined-multiline-flexible"
-        label="Prompt"
-        multiline
-        value={prompt}
-        onChange={e => setPrompt(e.target.value)}
-        maxRows={4}
-        // helperText="Enter a prompt, with <placeholder> values like so: Interpret the following dream <paragraphs>"
+      </Stack>
+    }
+
+    function tab1() {
+      return <Accordions
+        accordions={[{
+          title: "The basics",
+          subtitle: "Find out more about how Prompt works",
+          content: <Typography>
+            Nulla facilisi. Phasellus sollicitudin nulla et quam mattis feugiat.
+            Aliquam eget maximus est, id dignissim quam.
+          </Typography>
+        }, {
+          title: "Using placeholders",
+          subtitle: "Learn how to use placeholders in your prompts",
+          content: <Typography>
+            Donec placerat, lectus sed mattis semper, neque lectus feugiat lectus,
+            varius pulvinar diam eros in elit. Pellentesque convallis laoreet
+            laoreet.
+          </Typography>
+        }, {
+          title: "Custom prompts",
+          subtitle: "Get info about creating your own prompts",
+          content: <Typography>
+            Nunc vitae orci ultricies, auctor nunc in, volutpat nisl. Integer sit
+            amet egestas eros, vitae egestas augue. Duis vel est augue.
+          </Typography>
+        }, {
+          title: "Tutorials",
+          subtitle: "Watch videos and read more about Prompt",
+          content: <Typography>
+            Nunc vitae orci ultricies, auctor nunc in, volutpat nisl. Integer sit
+            amet egestas eros, vitae egestas augue. Duis vel est augue.
+          </Typography>
+        }]}
       />
+    }
 
+    function tab2() {
+      return <>Prompt history</>
+    }
+    return <Container maxWidth={false}>
+      <Box
+        sx={{mt: 2}}>
+        <Typography
+          variant="h5"
+          alignItems='flex-start'
+          sx={{mb: 2}}
+        >
+          Prompt
+        </Typography>
 
-      <Button
-        sx={{elevation: 12}}
-        variant="contained"
-        color="secondary"
-        disabled={promptTrips.waiting}
-        onClick={submit}
-      >
-        {promptTrips.waiting ? <CircularProgress/> : "Submit"}
-      </Button>
-      {promptTrips.responses.map(renderResponse)}
+        <Tabs
+          tabs={[
+            {value: "0", label: "Prompt", render: tab0},
+            {value: "1", label: "Info", render: tab1},
+            {value: "2", label: "History", render: tab2},
 
-    </Stack>
+          ]}
+          defaultTab="0"
+        />
+      </Box>
+    </Container>
   }
 
-
-  function PromptTab1() {
-    return <Accordions
-      accordions={[{
-        title: "The basics",
-        subtitle: "Find out more about how Prompt works",
-        content: <Typography>
-          Nulla facilisi. Phasellus sollicitudin nulla et quam mattis feugiat.
-          Aliquam eget maximus est, id dignissim quam.
-        </Typography>
-      }, {
-        title: "Using placeholders",
-        subtitle: "Learn how to use placeholders in your prompts",
-        content: <Typography>
-          Donec placerat, lectus sed mattis semper, neque lectus feugiat lectus,
-          varius pulvinar diam eros in elit. Pellentesque convallis laoreet
-          laoreet.
-        </Typography>
-      }, {
-        title: "Custom prompts",
-        subtitle: "Get info about creating your own prompts",
-        content: <Typography>
-          Nunc vitae orci ultricies, auctor nunc in, volutpat nisl. Integer sit
-          amet egestas eros, vitae egestas augue. Duis vel est augue.
-        </Typography>
-      }, {
-        title: "Tutorials",
-        subtitle: "Watch videos and read more about Prompt",
-        content: <Typography>
-          Nunc vitae orci ultricies, auctor nunc in, volutpat nisl. Integer sit
-          amet egestas eros, vitae egestas augue. Duis vel est augue.
-        </Typography>
-      }]}
-    />
-  }
-
-  function PromptTab2() {
-    return <>Prompt history</>
-  }
-
-
-  if (teaser) {
-    return renderTeaser()
-  }
-  return renderModal()
+  return <>
+    {!modal && <PromptTeaser />}
+    <FullScreenDialog
+      title=""
+      open={!!modal}
+      onClose={() => setModal(false)}
+      ctas={[]}
+      className="insights"
+      backButton={true}
+    >
+      <PromptModal />
+    </FullScreenDialog>
+  </>
 }
 
 
