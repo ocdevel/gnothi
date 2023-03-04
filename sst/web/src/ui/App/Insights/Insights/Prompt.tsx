@@ -110,7 +110,7 @@ export default function Prompt({entry_ids, view}: Prompt) {
     setPrompt(presetsObj[preset].prompt)
   }
 
-  function submit() {
+  const submit = () => {
     // They didn't enter anything
     if (!prompt?.length) {return}
 
@@ -140,10 +140,10 @@ export default function Prompt({entry_ids, view}: Prompt) {
   }
 
 
-  function renderResponse(
+  const renderResponse = (
     _: any,
     i: number
-  ) {
+  ) => {
     const prompt = trips.prompts[i]
     const res = trips.responses[i]
 
@@ -224,8 +224,7 @@ export default function Prompt({entry_ids, view}: Prompt) {
 
   const borderRadius = 3
 
-
-  function PromptTeaser() {
+  function renderTeaser() {
     return <Stack
       spacing={2}
       component="form"
@@ -294,7 +293,7 @@ export default function Prompt({entry_ids, view}: Prompt) {
     </Stack>
   }
 
-  function PromptModal() {
+  function renderModal() {
 
     function tab0() {
       return <Stack spacing={2} component="form">
@@ -409,7 +408,7 @@ export default function Prompt({entry_ids, view}: Prompt) {
   }
 
   return <>
-    {!modal && <PromptTeaser />}
+    {!modal && renderTeaser()}
     <FullScreenDialog
       title=""
       open={!!modal}
@@ -418,7 +417,7 @@ export default function Prompt({entry_ids, view}: Prompt) {
       className="insights"
       backButton={true}
     >
-      <PromptModal />
+      {renderModal()}
     </FullScreenDialog>
   </>
 }
