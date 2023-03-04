@@ -1,28 +1,41 @@
 import {Config} from '@serverless-stack/node/config'
-import { Configuration, OpenAIApi, CreateCompletionRequest, CreateCompletionRequestPrompt } from "openai"
+import {
+  Configuration,
+  OpenAIApi,
+  CreateCompletionRequest,
+  CreateCompletionRequestPrompt,
+  CreateChatCompletionRequest,
+  CreateChatCompletionResponse
+} from "openai"
 
 const configuration = new Configuration({
   apiKey: Config.openai_key,
 })
 const openai = new OpenAIApi(configuration);
 
+// 0d5c00b81263fb653e89d9dae95f15fc9d14f078 - davinci-003 and standard completions (10x cost)
 export async function completion(
   opts: Partial<CreateCompletionRequest> & {
-    prompt: CreateCompletionRequestPrompt // just mark as required
+    prompt: string // just mark as required
   }
 ): Promise<string> {
   try {
-    const res = await openai.createCompletion({
-      model: 'text-davinci-003',
+    const {prompt, ...rest} = opts
+    const res = await openai.createChatCompletion({
+      model: 'gpt-3.5-turbo',
       temperature: 0.0,
       max_tokens: 256, // 4096 - prompt.len - 256 = 0
       top_p: 1,
       frequency_penalty: 1.,
       presence_penalty: .25,
       // best_of
-      ...opts
+      ...rest,
+      messages: [
+        {"role": "system", "content": "You are a helpful therapist."},
+        {"role": "user", "content": prompt}
+      ]
     });
-    return res.data.choices[0].text
+    return res.data.choices[0].message.content
   } catch (error) {
     if (error.response) {
       console.error(error.response.status);
