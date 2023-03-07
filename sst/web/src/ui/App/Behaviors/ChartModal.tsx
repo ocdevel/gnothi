@@ -18,14 +18,13 @@ import TableHead from "@mui/material/TableHead";
 import TableBody from "@mui/material/TableBody";
 import Paper from "@mui/material/Paper";
 import {fields_list_response} from '@gnothi/schemas/fields'
-import {useFieldsStore} from "./store";
 import shallow from "zustand/shallow";
 
 const round_ = (v: number | null) => v ? v.toFixed(2) : null
 
 export default function ChartModal() {
-  const [showChart, setShowChart] = useFieldsStore(s => [
-    s.showChart, s.setShowChart
+  const [showChart, setShowChart] = useStore(s => [
+    s.behaviors.showChart, s.behaviors.setShowChart
   ], shallow)
   const as = useStore(state => state.user.as)
   const send = useStore(s => s.send)

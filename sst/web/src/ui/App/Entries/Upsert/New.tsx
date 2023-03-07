@@ -2,7 +2,7 @@ import React from 'react'
 import Grid from '@mui/material/Grid'
 import {useStore} from "../../../../data/store";
 import Upsert from "./Upsert"
-import Fields from "../../Fields/Fields"
+import Behaviors from "../../Behaviors/Behaviors"
 
 export default function New() {
   const setEntryModal = useStore(s => s.setEntryModal)
@@ -18,7 +18,7 @@ export default function New() {
 
       </Grid>
       <Grid item sm={12} lg={4} md={5}>
-        <Fields  />
+        <Behaviors  />
       </Grid>
     </Grid>
   </>

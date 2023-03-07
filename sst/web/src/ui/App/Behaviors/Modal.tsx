@@ -11,14 +11,13 @@ import {TextField2, Select2} from "@gnothi/web/src/ui/Components/Form";
 import {useForm, Controller} from "react-hook-form"
 import {zodResolver} from "@hookform/resolvers/zod"
 import * as S from "@gnothi/schemas"
-import {useFieldsStore} from "./store";
 import shallow from "zustand/shallow";
 
 
-export default function FieldModal() {
+export default function Modal() {
   const fields = useStore(s => s.res.fields_list_response?.hash)
-  const [showForm, setShowForm] = useFieldsStore(s => [
-    s.showForm, s.setShowForm
+  const [showForm, setShowForm] = useStore(s => [
+    s.behaviors.showForm, s.behaviors.setShowForm
   ], shallow)
   const fid = showForm === "new" || showForm === false ? null : showForm
   const field = fid ? fields?.[fid] :

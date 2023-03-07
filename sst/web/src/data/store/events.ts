@@ -20,6 +20,7 @@ import {
 import produce from 'immer'
 import {Res, ResUnwrap} from "@gnothi/schemas/api";
 import {z} from 'zod'
+import {behaviorsSlice, BehaviorsSlice} from "./behaviors";
 
 const r = Routes.routes
 // const responses = Object.fromEntries(
@@ -67,7 +68,8 @@ export interface EventsSlice {
   }
   hooks: {
     tags_list_response: (res: Api.ResUnwrap<z.infer<typeof r.tags_list_request.o.s>>) => void
-    fields_entries_list_response: (res: Api.ResUnwrap<Fields.fields_entries_list_response>) => void
+    fields_entries_list_response: BehaviorsSlice['behaviors']['fields_entries_list_response']
+
   }
   handleEvent: (response: Api.Res) => void
 
@@ -80,7 +82,7 @@ export interface EventsSlice {
 }
 
 export const eventsSlice: StateCreator<
-  AppSlice & EventsSlice & ApiSlice,
+  AppSlice & EventsSlice & ApiSlice & BehaviorsSlice,
   [],
   [],
   EventsSlice
@@ -110,10 +112,7 @@ export const eventsSlice: StateCreator<
       set({selectedTags})
       console.log(selectedTags)
     },
-    fields_entries_list_response: (res) => {
-      const obj = _.keyBy(res.rows, 'field_id')
-      set({fieldValues: _.mapValues(obj, 'value')})
-    },
+    fields_entries_list_response: (res) => get().behaviors.fields_entries_list_response(res)
   },
 
   handleEvent: (res: Api.Res) => {

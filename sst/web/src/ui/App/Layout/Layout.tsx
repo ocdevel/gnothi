@@ -17,7 +17,7 @@ import GroupsToolbar from "../Groups/List/Toolbar"
 import GroupToolbar from "../Groups/View/Toolbar"
 import SharingModal from "../Account/Sharing"
 import EntryModal from "../Entries/Modal"
-import InsightsModal from "../Insights/Modal"
+import BehaviorsModal from "../Behaviors/Modal"
 
 function AppBar_() {
   const location = useLocation()
@@ -87,7 +87,7 @@ function Layout() {
     </Container>
     <SharingModal />
     <EntryModal />
-    <InsightsModal />
+    <BehaviorsModal />
     <Errors />
   </Box>
 }

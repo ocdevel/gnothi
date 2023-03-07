@@ -11,6 +11,7 @@ import {ReadyState} from "react-use-websocket";
 import {AppSlice} from "./app";
 import {Auth} from 'aws-amplify'
 import {ulid} from 'ulid'
+import {BehaviorsSlice} from "./behaviors";
 
 export interface ApiSlice {
   // Used to connect to the websocket
@@ -41,7 +42,7 @@ export interface ApiSlice {
 const lastSent: Record<string,number> = {}
 
 export const apiSlice: StateCreator<
-  ApiSlice & EventsSlice & AppSlice,
+  ApiSlice & EventsSlice & AppSlice & BehaviorsSlice,
   [],
   [],
   ApiSlice

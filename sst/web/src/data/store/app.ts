@@ -1,6 +1,7 @@
 import create, {StateCreator} from 'zustand'
 import {ApiSlice} from './api'
 import {EventsSlice} from './events'
+import {BehaviorsSlice} from './behaviors'
 import {Users, Entries, Insights} from "@gnothi/schemas"
 
 import utc from 'dayjs/plugin/utc'
@@ -58,12 +59,8 @@ export interface AppSlice {
 
   // ----- Other
   selectedTags: {[k: string]: boolean}
-  fieldValues: {[k: string]: number | null}
-  setFieldValue: (x: any) => void
   sharePage: null | SharePage
   setSharePage: (sharePage: SharePage) => void
-  insightsModal: Insight
-  setInsightsModal: (insight: Insight) => void
 
   // ----- EE
   ee: { [k: string]: any }
@@ -71,7 +68,7 @@ export interface AppSlice {
 }
 
 export const appSlice: StateCreator<
-  AppSlice & EventsSlice & ApiSlice,
+  AppSlice & EventsSlice & ApiSlice & BehaviorsSlice,
   [],
   [],
   AppSlice
@@ -164,12 +161,6 @@ export const appSlice: StateCreator<
 
   // ----- Tags
   selectedTags: {},
-  fieldValues: {},
-
-  // ----- Fields
-  setFieldValue: (payload) => {
-    set({fieldValues: {...get().fieldValues, ...payload}})
-  },
 
   // ----- Share
   // {create: bool, list: bool, group: str, ..}
@@ -181,7 +172,4 @@ export const appSlice: StateCreator<
     toolbar_groups_create: false
   },
   setEe: (k, v) => set({ee: {...get().ee, [k]: v}}),
-
-  insightsModal: null,
-  setInsightsModal: (insight) => set({insightsModal: insight}),
 })

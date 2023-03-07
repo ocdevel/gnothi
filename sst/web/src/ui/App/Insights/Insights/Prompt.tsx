@@ -264,19 +264,19 @@ export default function Prompt({entry_ids, view}: Prompt) {
         // helperText="Enter a prompt, with <placeholder> values like so: Interpret the following dream <paragraphs>"
       />
 
-      {/*<Button onClick={() => setShowHelp(!showHelp)}>{showHelp ? "Hide help" : "Show Help"}</Button>*/}
-      {/*{showHelp && <Typography>*/}
-      {/*  Legend. The following placeholders are supported in your prompt:*/}
-      {/*  <ul>*/}
-      {/*    <li>&lt;entry&gt; - Uses your entire entry as the context for the prompt. Use with caution, as there's a max*/}
-      {/*      number of characters that OpenAI can take as input. If you exceed, your entry will be truncated. If you know*/}
-      {/*      your entry is short enough, use this. Otherwise, use &lt;paragraphs&gt; or &lt;summary&gt;</li>*/}
-      {/*    <li>&lt;paragraphs&gt; - Runs the prompt independently for each paragraph in your entry</li>*/}
-      {/*    <li>&lt;summary&gt; - Runs the prompt over the summary of your entry. Ideal for longer entries, where the*/}
-      {/*      context should capture the essence of your entry (rather than the specifics).*/}
-      {/*    </li>*/}
-      {/*  </ul>*/}
-      {/*</Typography>}*/}
+      {/*<Button onClick={() => setShowHelp(!showHelp)}>{showHelp ? "Hide help" : "Show Help"}</Button>
+      {showHelp && <Typography>
+        Legend. The following placeholders are supported in your prompt:
+        <ul>
+          <li>&lt;entry&gt; - Uses your entire entry as the context for the prompt. Use with caution, as there's a max
+            number of characters that OpenAI can take as input. If you exceed, your entry will be truncated. If you know
+            your entry is short enough, use this. Otherwise, use &lt;paragraphs&gt; or &lt;summary&gt;</li>
+          <li>&lt;paragraphs&gt; - Runs the prompt independently for each paragraph in your entry</li>
+          <li>&lt;summary&gt; - Runs the prompt over the summary of your entry. Ideal for longer entries, where the
+            context should capture the essence of your entry (rather than the specifics).
+          </li>
+        </ul>
+      </Typography>}*/}
 
       <Box>
         <Button

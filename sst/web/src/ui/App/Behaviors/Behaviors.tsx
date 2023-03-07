@@ -3,7 +3,7 @@ import React, {useEffect, useState, useCallback} from "react";
 import _ from "lodash";
 import ReactStars from "react-stars";
 import SetupHabitica from "./SetupHabitica";
-import FieldModal from "./FieldModal";
+import Modal from "./Modal";
 import ChartModal from "./ChartModal";
 import {FieldName} from "./utils";
 
@@ -35,7 +35,6 @@ import Box from "@mui/material/Box";
 import Advanced from "./Advanced";
 import DayChanger from './DayChanger'
 import * as S from '@gnothi/schemas'
-import {useFieldsStore} from './store'
 import shallow from 'zustand/shallow'
 
 type FE = S.Fields.fields_entries_list_response
@@ -48,17 +47,17 @@ interface FieldGroup {
   emptyText: () => JSX.Element
 }
 
-export default function Fields() {
+export default function Behaviors() {
   const send = useStore(s => s.send)
   const user = useStore(s => s.user)
   const fields = useStore(state => state.res.fields_list_response)
   const fieldEntries = useStore(s => s.res.fields_entries_list_response?.hash)
-  const fieldValues = useStore(s => s.fieldValues)
-  const setFieldValues = useStore(a => a.setFieldValue)
+  const fieldValues = useStore(s => s.behaviors.values)
+  const setFieldValues = useStore(a => a.behaviors.setValue)
   const syncRes = useStore(s => s.res.habitica_sync_response?.res)
 
-  const [day, isToday, setShowForm, setShowChart] = useFieldsStore(s => [
-    s.day, s.isToday, s.setShowForm, s.setShowChart
+  const [day, isToday, setShowForm, setShowChart] = useStore(s => [
+    s.behaviors.day, s.behaviors.isToday, s.behaviors.setShowForm, s.behaviors.setShowChart
   ], shallow)
 
   // having lots of trouble refreshing certain things, esp. dupes list after picking. Force it for now
@@ -308,7 +307,7 @@ export default function Fields() {
         {groups.map(renderGroup)}
       </CardContent>
     </Card>
-    {<FieldModal />}
+    {<Modal />}
     {<ChartModal />}
   </div>
 }
