@@ -76,8 +76,12 @@ export function BasicDialog({
     open={open}
     onClose={onClose}
     className={className}
+
   >
-    <Grid container direction='row' alignItems='center'>
+    <Grid container
+          direction='row'
+          alignItems='center'
+    >
       {title && <Grid item sx={{flex: 1}}>
         <DialogTitle>{title}</DialogTitle>
       </Grid>}
