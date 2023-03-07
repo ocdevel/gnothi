@@ -13,8 +13,15 @@ export function iso(day?: Dayjs | string) {
   return dayjs(day).format(fmt)
 }
 
-type ShowForm = "new" | string | false
-type ShowChart = "overall" | string | false
+type Id = string
+export type ViewPage = "entry" | "dashboard" | "modal"
+export type ViewView = "new" | "overall" | "view" | "edit" | null
+type View = {
+  lastPage: ViewPage
+  page: ViewPage
+  view: ViewView
+  fid: Id | null
+}
 export interface BehaviorsSlice {
   behaviors: {
     values: {[k: string]: number | null}
@@ -24,11 +31,9 @@ export interface BehaviorsSlice {
     dayStr: string
     setDay: (day: Dayjs) => void
     isToday: boolean
-    selectedField: S.Fields.fields_post_request | null
-    showForm: ShowForm
-    setShowForm: (showForm: ShowForm) => void
-    showChart: ShowChart
-    setShowChart: (showChart: ShowChart) => void
+
+    view: View
+    setView: (view: Partial<View>) => void
 
     fields_entries_list_response: (res: S.Api.ResUnwrap<S.Fields.fields_entries_list_response>) => void
   }
@@ -57,14 +62,19 @@ export const behaviorsSlice: StateCreator<
       }
     })),
     isToday: true,
-    selectedField: null,
-    showForm: false,
-    setShowForm: (showForm) => set(produce(state => {
-      state.behaviors.showForm = showForm
-    })),
-    showChart: false,
-    setShowChart: (showChart) => set(produce(state => {
-      state.behaviors.showChart = showChart
+
+    view: {
+      lastPage: "dashboard",
+      page: "dashboard",
+      view: null,
+      fid: null
+    },
+    setView: (view) => set(produce(state => {
+      state.behaviors.view = {
+        ...state.behaviors.view,
+        lastPage: state.behaviors.view.page,
+        ...view
+      }
     })),
 
     fields_entries_list_response: (res) => {
