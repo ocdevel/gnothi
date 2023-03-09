@@ -9,9 +9,10 @@ import Grid from "@mui/material/Grid";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
-import {FullScreenDialog} from "../../Components/Dialog";
-import {ViewView, ViewPage} from "../../../data/store/behaviors";
+import {FullScreenDialog} from "../../../Components/Dialog";
 import Container from "@mui/material/Container";
+import Behavior from './Behavior'
+import View from './View'
 
 export default function Modal() {
   const [send, fields, view, setView] = useStore(s => [
@@ -20,17 +21,6 @@ export default function Modal() {
     s.behaviors.view,
     s.behaviors.setView
   ], shallow)
-
-  function renderFields(fid: string, i: number) {
-    const field = fields?.hash?.[fid]
-    if (!field) {return null}
-    return <Box
-      onClick={() => setView({view: "edit", fid})}
-      key={fid}
-    >
-      <Typography>{field.name}</Typography>
-    </Box>
-  }
 
   return <FullScreenDialog
     title="Behaviors"
@@ -42,13 +32,14 @@ export default function Modal() {
     onClose={() => setView({page: view.lastPage})}
   >
     <Container maxWidth={false}>
-      <Grid container direction="row">
+      <Grid container direction="row" spacing={2}>
         <Grid item xs={6}>
-          {fields?.ids?.map(renderFields)}
+          {fields?.ids?.map(fid => <Behavior fid={fid} key={fid} />)}
         </Grid>
         <Grid item xs={6}>
           {view.view === "new" && <Create />}
           {view.view === "edit" && <Update />}
+          {view.view === "view" && <View />}
         </Grid>
       </Grid>
     </Container>

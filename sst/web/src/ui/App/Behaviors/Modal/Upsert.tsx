@@ -174,7 +174,7 @@ function Form({field, submit}: Form) {
         <hr/>
         <div className='mb-3'>
           <Button
-            color='secondary'
+            color='error'
             disabled={field.service}
             onClick={destroyField}
             size='small'
@@ -196,7 +196,7 @@ function Form({field, submit}: Form) {
           {field.excluded_at ? (
             <>
             <Button
-              color='secondary'
+              color='info'
               onClick={() => excludeField(false)}
               size='small'
             >Include</Button>
@@ -206,7 +206,7 @@ function Form({field, submit}: Form) {
           ) : (
             <>
             <Button
-              color='secondary'
+              color='error'
               onClick={() => excludeField(true)}
               size='small'
             >Remove</Button>

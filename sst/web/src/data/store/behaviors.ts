@@ -70,10 +70,13 @@ export const behaviorsSlice: StateCreator<
       fid: null
     },
     setView: (view) => set(produce(state => {
+      const curr = state.behaviors.view
       state.behaviors.view = {
         ...state.behaviors.view,
-        lastPage: state.behaviors.view.page,
-        ...view
+        ...view,
+        lastPage: (
+          view.page === "modal" && ["entry", "dashboard"].includes(curr.page) ? curr.page
+          : view.page),
       }
     })),
 
