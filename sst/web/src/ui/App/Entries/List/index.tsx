@@ -40,9 +40,9 @@ export default function List({group_id=null}) {
     <Helmet>
       <title>Journal</title>
     </Helmet>
+    <Filters />
     <Grid container spacing={2}>
       <Grid item sm={12} md={7} lg={8}>
-        <Filters />
         <Ask view={'list'} />
         <Entries />
       </Grid>
