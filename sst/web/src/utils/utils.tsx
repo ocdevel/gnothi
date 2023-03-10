@@ -25,6 +25,7 @@ export function sent2face(sentiment: Sentiment) {
     disgust: emoji("🤢"),
   // }[sentiment] || emoji("😐") // neutral
   }[sentiment] || null
+  if (!emoji_) {return null}
   return (
     <Tooltip title="Sentiment is machine-generated from your entry's text">
       <span style={style} className='sentiment'>{emoji_}</span>
