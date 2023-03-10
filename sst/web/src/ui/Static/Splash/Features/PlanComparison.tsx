@@ -15,6 +15,7 @@ import List from "@mui/material/List";
 import ListItem_ from "@mui/material/ListItem";
 import CardActions from "@mui/material/CardActions";
 import CheckIcon from '@mui/icons-material/TaskAlt';
+import StarIcon from '@mui/icons-material/StarBorder';
 
 
 
@@ -30,18 +31,23 @@ export default function PlanComparison() {
       direction='row'
       spacing={8}
       justifyContent='center'
-      alignItems='flex-start'
       >
 
       <Grid item
-        xs={12} md={4}>
+        xs={12} md={4}
+      >
+
         <Card
           sx={{
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
             backgroundColor: '#ffffff',
             borderRadius: 3,
             borderColor: '#50577A',
             borderStyle: 'solid',
-            borderWidth: '1px'
+            borderWidth: '1px',
         }}
           >
           <CardContent>
@@ -69,16 +75,26 @@ export default function PlanComparison() {
               Billed monthly. Cancel anytime.
             </Typography>
 
-            <Typography
+            <Stack
               marginTop={3}
-              variant="body1"
-              fontWeight={500}
-              textAlign="left"
-              color='#59887c'
-              sx={{textDecoration: 'underline'}}
+              direction="row"
+              spacing={.5}
+              alignItems="center"
             >
-              Everything in Basic, plus:
-            </Typography>
+              <CheckIcon
+                fontSize='inherit'
+                sx={{color: "#59887c"}}
+              />
+              <Typography
+                variant="body1"
+                fontWeight={700}
+                textAlign="left"
+                color='#59887c'
+                //sx={{textDecoration: 'underline'}}
+              >
+                Everything in Basic, plus:
+              </Typography>
+            </Stack>
 
             <Typography
               marginTop={3}
@@ -150,14 +166,19 @@ export default function PlanComparison() {
       </Grid>
 
       <Grid item
-        xs={12} md={4}>
+        xs={12} md={4}
+      >
         <Card
           sx={{
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
             backgroundColor: '#ffffff',
             borderRadius: 3,
             borderColor: '#50577A',
             borderStyle: 'solid',
-            borderWidth: '1px'
+            borderWidth: '1px',
         }}
           >
           <CardContent>
@@ -270,7 +291,7 @@ export default function PlanComparison() {
               variant="body2"
               textAlign="left"
               color='black'
-              marginBottom={2.5}
+              //marginBottom={2.5}
             >
             Get access to videos, tutorials, and other information to learn how to take advantage of all the features
             </Typography>
