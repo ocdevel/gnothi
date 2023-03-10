@@ -105,7 +105,7 @@ function Teaser({entry, goToForm}: Teaser) {
       onClick={goToEntry}
       variant='elevation'
       raised={hovered}
-      sx={{cursor:'pointer', backgroundColor: 'white', elevation: 10, borderRadius: 2, my: 2}}
+      sx={{cursor:'pointer', backgroundColor: 'white', elevation: 10, borderRadius: 2, mb: 2}}
     >
       <CardContent>
         {date}
