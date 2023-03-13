@@ -34,7 +34,6 @@ export default function HowItWorks() {
         <Typography
           variant="subtitle1"
           textAlign='center'
-          color="#50577A"
         >
           Journal. Track behavior. Explore AI insights.
         </Typography>

@@ -34,7 +34,7 @@ export default function Filters() {
         item
         flexWrap="wrap"
         marginX={-3}
-        sx={{paddingY: 2}}
+        sx={{paddingTop: 2, paddingBottom: 4}}
       >
         {MainTags}
       </Grid>

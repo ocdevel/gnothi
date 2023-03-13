@@ -106,6 +106,7 @@ export function BasicTabs() {
         <BehaviorTracking/>
         <ThemesSummaries/>
         <OrganizationBasicPlan/>
+        <PremPricingCTA/>
       </TabPanel>
 
       <TabPanel value={value} index={2}>

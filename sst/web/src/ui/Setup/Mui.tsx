@@ -18,9 +18,9 @@ export const styles = {
   },
   sx: {
     button1: {backgroundColor: "primary.main", color: colors.white, fontFamily: "Poppins"},
-    button2: {backgroundColor: "primary.light", color: colors.white, fontFamily: "Poppins"},
+    button2: {backgroundColor: "secondary.main", color: colors.black, fontFamily: "Poppins"},
     
-    featureIcon: {fontSize: 40, color: "#50627a"},
+    featureIcon: {fontSize: 40, color: "#597191"},
     behaviorIcon: {fontSize: 40, color: "#507a6f"},
     bookIcon: {fontSize: 40, color: "#553840"},
 
@@ -101,7 +101,7 @@ export const theme = createTheme({
     },
 
     h6: {
-      fontWeight: 700,
+      fontWeight: 600,
       fontFamily: 'Poppins',
       lineHeight: '1.3',
       fontSize: '1rem',
@@ -109,7 +109,8 @@ export const theme = createTheme({
     
     subtitle1: {
       fontFamily: 'Poppins',
-      fontSize: '1.6rem'
+      fontSize: '1.6rem',
+      fontWeight: '300',
     },
     subtitle2: {
       fontFamily: 'Antic Didone',
@@ -137,7 +138,7 @@ export const theme = createTheme({
     button: {
       fontFamily: "Poppins",
       fontSize: '0.9rem',
-      fontWeight: '400'
+      fontWeight: '400',
     },
   },
   components: {

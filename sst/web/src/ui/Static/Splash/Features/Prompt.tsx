@@ -40,7 +40,7 @@ export default function Prompt() {
             <Typography 
               variant="subtitle1" 
               textAlign="left"
-              paddingBottom={4}
+              paddingBottom={2}
               color='#50627a'
               fontWeight={600}
             >
@@ -50,16 +50,14 @@ export default function Prompt() {
               variant="body1" 
               textAlign="left"
               paddingBottom={4}
-              color='#50627a'
-              fontWeight={500}
               maxWidth={1100}
             >
-            Only available through Gnothi Premium, Prompt is a powerhouse of a tool that gives you the ability to ask AI questions with your entries as context. Choose from a long list of skillfully engineered prompts to get the most robust responses from AI, or create custom prompts of your own.            
+            Prompt is a powerhouse of a tool that gives you the ability to ask AI questions with your entries as context. Choose from a long list of skillfully engineered prompts to get the most robust responses from AI, or create custom prompts of your own.
             </Typography>
             
             <Link.Button
               variant="contained"
-              sx={{ marginBottom:5, backgroundColor: '#50627a', color: colors.white}}
+              sx={{ marginBottom:5, backgroundColor: 'secondary.main', color: colors.black}}
               to="/features"
              >
             Watch a demo

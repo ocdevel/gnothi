@@ -50,7 +50,7 @@ export default function DiscoverAI() {
         <Typography
           variant="subtitle1"
           textAlign='center'
-          color="#50577A"
+
         >
           Navigate your journey of self-discovery with more clarity and direction
         </Typography>
