@@ -18,11 +18,11 @@ import Stack from "@mui/material/Stack";
 import Button from "@mui/material/Button";
 
 const colors = [
-  "#40635A",
-  "#7B515C",
-  "#384555",
-  "#696B38",
-  "#553840"
+  "#50577A",
+  "#838FC7",
+  "#344391",
+  "#485DC7",
+  "#2F3347",
 ]
 
 interface Tags {

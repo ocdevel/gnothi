@@ -53,7 +53,6 @@ function Teaser({entry, goToForm}: Teaser) {
   const title = useMemo(() => {
     return <Typography
       variant='h6'
-      color="primary"
       className={entry.ai_title ? 'title ai' : 'title'}
     >
       {entry.title || entry.ai_title}
@@ -87,7 +86,7 @@ function Teaser({entry, goToForm}: Teaser) {
     return <Typography 
       variant='caption' 
       fontStyle='italic'
-      color='#black'
+      color='black'
       fontWeight={300}
       marginTop={2}
       sx={{display: hovered ? 'block' : 'none'}}>

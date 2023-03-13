@@ -39,12 +39,12 @@ export default function SignUp() {
         <Button
         variant="contained"
         sx={{
-        backgroundColor: "primary.light",
-        color: colors.white,
+        backgroundColor: "white",
+        color: colors.black,
         marginTop: '2rem',
         }}
         >
-        Sign up
+        Explore plans
         </Button>
        
     </Stack>

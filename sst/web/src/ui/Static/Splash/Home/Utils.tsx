@@ -129,7 +129,7 @@ export function Skeleton2() {
       alignItems: "center",
       width:'100%',
       height:'300px',
-      backgroundColor: 'primary.main' 
+      backgroundColor: '#AFB3C2'
     }}
   ></Box>
 }
