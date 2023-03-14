@@ -35,7 +35,7 @@ export class Fields extends Base {
       where fe.user_id=${uid}
       and date(${this.tz_read(day)})=
           --use created_at rather than day in case they switch timezones
-          date(fe.created_at ${this.at_tz})`)
+          date(fe.created_at at time zone with_tz.tz)`)
   }
 
   async entries_post(req: S.Fields.fields_entries_post_request) {

@@ -11,14 +11,14 @@ export class Base {
       from users where id=${user_id}
     )`
   }
-  at_tz = "at time zone with_tz.tz"
+  at_tz = sql`at time zone with_tz.tz`
   // tz_read = `coalesce(:day ::timestamp ${this.at_tz}, now() ${this.at_tz})`
   // tz_write = `coalesce(:day ::timestamp ${this.at_tz}, now())`
   tz_read(day: string | Date) {
-    return sql`coalesce(${day || null} ::timestamp ${this.at_tz}, now() ${this.at_tz})`
+    return sql`coalesce(${day || null} ::timestamp at time zone with_tz.tz, now() at time zone with_tz.tz)`
   }
   tz_write(day: string | Date | undefined) {
-    return sql`coalesce(${day || null} ::timestamp ${this.at_tz}, now())`
+    return sql`coalesce(${day || null} ::timestamp at time zone with_tz.tz, now())`
   }
 
   constructor(uid: string, vid?: string) {
