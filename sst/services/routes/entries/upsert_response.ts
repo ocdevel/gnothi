@@ -5,6 +5,7 @@ import {upsert} from '../../ml/node/upsert'
 import {preprocess} from '../../ml/node/preprocess'
 import {summarize, summarizeEntry, SummarizeEntryOut} from '../../ml/node/summarize'
 import {boolMapToKeys} from '@gnothi/schemas/utils'
+import {sql} from "drizzle-orm/sql"
 
 const r = S.Routes.routes
 
@@ -16,11 +17,7 @@ r.entries_upsert_response.fn = r.entries_upsert_response.fnDef.implement(async (
   let updated = {...entry}
 
   const tags = await db.query<S.Tags.Tag>(
-    `select * from tags where id=any($1) and user_id=$2`,
-    [
-      tids,
-      context.user.id
-    ]
+    sql`select * from tags where id in ${tids} and user_id=${context.user_id}`
   )
 
   // TODO how to handle multiple tags, where some are yes-ai and some are no-ai?
@@ -37,16 +34,11 @@ r.entries_upsert_response.fn = r.entries_upsert_response.fnDef.implement(async (
     text_paras: clean.paras
   }
   promises.push(db.query(
-    `update entries 
+    sql`update entries 
       set 
-        text_clean=$1, 
-        text_paras=$2::varchar[] 
-      where id=$3`,
-    [
-      updated.text_clean,
-      updated.text_paras,
-      eid
-    ]
+        text_clean=${updated.text_clean}, 
+        text_paras=${updated.text_paras}::varchar[] 
+      where id=${eid}`
   ))
 
   const summary = !skip_summarize ? await summarizeEntry(clean) : {
@@ -68,19 +60,12 @@ r.entries_upsert_response.fn = r.entries_upsert_response.fnDef.implement(async (
   }
 
   promises.push(db.query(
-    `update entries set 
-        ai_keywords=$1::varchar[],
-        ai_title=$2, 
-        ai_text=$3, 
-        ai_sentiment=$4
-      where id=$5`,
-    [
-      updated.ai_keywords,
-      updated.ai_title,
-      updated.ai_text,
-      updated.ai_sentiment,
-      eid
-    ]
+    sql`update entries set 
+        ai_keywords=${updated.ai_keywords}::varchar[],
+        ai_title=${updated.ai_title}, 
+        ai_text=${updated.ai_text}, 
+        ai_sentiment=${updated.ai_sentiment}
+      where id=${eid}`
   ))
   await Promise.all(promises)
 

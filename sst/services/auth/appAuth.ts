@@ -12,15 +12,15 @@ import {
 import {db} from '../data/db'
 import {User} from '@gnothi/schemas/users'
 import {WsConnection} from "@gnothi/schemas/ws";
+import {sql} from "drizzle-orm/sql"
 
 // Typehint picks up a UUID, but cognito_id is stored as varchar (in case they
 // change, since we have no control). un-hint it by not using kysley
 async function fromCognito(cognito_id: string, justId=false) {
-  const res = await db.query<User>(
-    `select ${justId ? "id" : "*"} from users where cognito_id=$1`,
-    [cognito_id],
+  const res = await db.queryFirst<User>(
+    sql`select * from users where cognito_id=${cognito_id}`
   )
-  return res[0]
+  return res
 }
 
 type GetUser = {
@@ -41,25 +41,23 @@ export async function getUser(event: APIGatewayProxyWebsocketEventV2WithRequestC
 
   if (connection_id) {
     if (routeKey == "$connect") {
-      const user = await fromCognito(cognitoId, true)
+      const user = await fromCognito(cognitoId)
       await db.query(
-        `insert into ws_connections (user_id, connection_id) values ($1, $2)`,
-        [user.id, connection_id],
+        sql`insert into ws_connections (user_id, connection_id) values (${user.id}, ${connection_id})`
       )
       return handled
     } else if (routeKey === "$disconnect") {
       await db.query(
-        "delete from ws_connections where connection_id=$1",
-        [connection_id],
+        sql`delete from ws_connections where connection_id=${connection_id}`
       )
       return handled
     }
-    const user = await db.queryFirst(`
+    const user = await db.queryFirst(sql`
       select u.*
       from users u
       inner join ws_connections wc on u.id = wc.user_id
-      where wc.connection_id = $1;
-    `, [connection_id])
+      where wc.connection_id = ${connection_id};
+    `)
     return {handled: false, user}
   }
 

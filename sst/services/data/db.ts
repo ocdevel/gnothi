@@ -1,10 +1,9 @@
 import { GetSecretValueCommand, SecretsManagerClient } from '@aws-sdk/client-secrets-manager'
 import {APIGatewayEvent, APIGatewayProxyResult, Context} from 'aws-lambda'
-import { Client as PgClient, Pool } from 'pg'
-
-// import {readFileSync} from "fs";
-// import _map from 'lodash/'
-// import _reduce from 'lodash/reduce'
+import { Client as PgClient, Pool, QueryResult } from 'pg'
+import { pgTable, serial, text, varchar } from 'drizzle-orm/pg-core';
+import { drizzle, NodePgDatabase } from 'drizzle-orm/node-postgres'
+import { sql, SQL } from 'drizzle-orm/sql'
 
 import {z} from 'zod'
 import * as S from '@gnothi/schemas'
@@ -31,7 +30,7 @@ export class DB {
   // private variable which will be singleton-initialized for running lambda (for all
   // future invocations). Note use of this class exported as an instance (bottom of file),
   // not instantiated by callers
-  private client_: PgClient | undefined
+  private client_: NodePgDatabase | undefined
   private dbName: string
 
   constructor(dbName: string) {
@@ -50,7 +49,7 @@ export class DB {
     return `gnothi${process.env.stage}`
   }
 
-  async createClient(): Promise<PgClient> {
+  async createClient(): Promise<NodePgDatabase> {
     // set localhost defaults, override if deployed
     let secretValues = {
       host: "localhost",
@@ -80,6 +79,8 @@ export class DB {
       password: secretValues.password, // this is the password for the default database in the db cluster
       database: this.dbName,
     })
+    // await client.connect()
+    const db = drizzle(client)
 
     // See https://gist.github.com/streamich/6175853840fb5209388405910c6cc04b
     // If using Pool (not Client), we can forgo connect() and the pool will self-manage.
@@ -88,10 +89,10 @@ export class DB {
     // try {await client.query(q)}
     // finally {client.release(true)}
 
-    return client
+    return db
   }
 
-  async client(): Promise<PgClient> {
+  async client(): Promise<NodePgDatabase> {
     if (!this.client_) {
       this.client_ = await this.createClient()
     }
@@ -109,14 +110,14 @@ export class DB {
     return Object.fromEntries(Object.entries(obj).filter(([_, v]) => v !== undefined));
   }
 
-  async query<O = object>(sql: string, params: any[]): Promise<O[]> {
+  async query<O = any>(sql_: SQL): Promise<O[]> {
     try {
       const client = await this.client()
-      const queryResult = await client.query(sql, params)
+      const queryResult: QueryResult<O> = await client.execute<O>(sql_)
       return queryResult.rows.map(this._removeNull)
     } catch (error) {
       // (await this.client()).release(true)
-      console.error({error, sql, params})
+      console.error({error, sql_})
       debugger
       throw error
     // } finally {
@@ -125,8 +126,8 @@ export class DB {
     //   // this.client_.release()
     }
   }
-  async queryFirst<O = object>(sql: string, params: any[]): Promise<O> {
-    const rows = await this.query<O>(sql, params)
+  async queryFirst<O = any>(sql_: SQL): Promise<O> {
+    const rows = await this.query<O>(sql_)
     return rows[0]
   }
 

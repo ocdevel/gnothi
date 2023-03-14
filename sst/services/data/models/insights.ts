@@ -6,6 +6,7 @@ import {boolMapToKeys} from '@gnothi/schemas/utils'
 // @ts-ignore
 import dayjs from "dayjs";
 import {Entry} from '@gnothi/schemas/entries'
+import {sql} from "drizzle-orm/sql"
 
 // prioritize clean-text, worst-case markdown
 export function getText (e: Entry): string {
@@ -27,12 +28,8 @@ export function getParas(e: Entry): string[] {
 export class Insights extends Base {
   async entriesByIds(entry_ids: string[]) {
     return db.query<S.Entries.Entry>(
-      `select text_clean, ai_text, text_paras, text from entries 
-        where user_id=$1 and id=any($2) order by created_at asc`,
-      [
-        this.uid,
-        entry_ids
-      ]
+      sql`select text_clean, ai_text, text_paras, text from entries 
+        where user_id=${this.uid} and id in ${entry_ids} order by created_at asc`
     )
   }
 }

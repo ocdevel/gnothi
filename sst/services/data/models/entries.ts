@@ -6,6 +6,7 @@ import {boolMapToKeys} from '@gnothi/schemas/utils'
 import dayjs from "dayjs";
 import {db} from "../db";
 import {entries_list_response} from '@gnothi/schemas/entries'
+import {sql} from "drizzle-orm/sql"
 
 type EntriesListSQL = Omit<entries_list_response, 'tags'> & {
   // comes as json string
@@ -20,8 +21,7 @@ function tagsToBoolMap(tags: any): Record<string, boolean> {
 export class Entries extends Base {
   async getByIds(ids: string[]) {
     return db.query<entries_list_response>(
-      `select * from entries where id = any($1) and user_id = $2`,
-      [ids, this.uid]
+      sql`select * from entries where id in ${ids} and user_id = ${this.uid}`
     )
   }
 
@@ -40,31 +40,25 @@ export class Entries extends Base {
       ? dayjs().add(2, "day").format('YYYY-MM-DD')
       : endDate
 
-    const rows = await db.query<EntriesListSQL>(`
+    const rows = await db.query<EntriesListSQL>(sql`
       select e.*,
           json_agg(et.*) as tags
       from entries e
              inner join entries_tags et on e.id = et.entry_id
-      where e.user_id = $1
-        and e.created_at > $2::date
-        and e.created_at <= $3::date
-        and et.tag_id = any($4)
+      where e.user_id = ${this.uid}
+        and e.created_at > ${startDate}::date
+        and e.created_at <= ${endDate_}::date
+        and et.tag_id in ${tids}
       group by e.id
       order by e.created_at desc;
-    `, [
-      this.uid,
-      startDate,
-      endDate_,
-      tids
-    ])
+    `)
     // TODO update SQL to do this conversion, we'll use it elsewhere
     return rows.map(row => ({...row, tags: tagsToBoolMap(row.tags)}))
   }
 
   async destroy(id: string) {
     return await db.queryFirst<entries_list_response>(
-      `delete from entries where id=$1 and user_id=$2 returning *`,
-      [id, this.uid]
+      sql`delete from entries where id=${id} and user_id=${this.uid} returning *`
     )
   }
 }

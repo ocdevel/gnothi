@@ -2,6 +2,7 @@ import * as S from '@gnothi/schemas'
 import {db} from '../../data/db'
 import {GnothiError} from "../errors";
 import {boolMapToKeys} from '@gnothi/schemas/utils'
+import {sql} from "drizzle-orm/sql"
 
 const r = S.Routes.routes
 
@@ -53,13 +54,12 @@ r.entries_put_request.fn = r.entries_put_request.fnDef.implement(async (req, con
   return upsertOuter(req, context, async ({title, text, user_id}) => {
     // FIXME insecure. x-ref user-id with inner join
     await db.query(
-      "delete from entries_tags where entry_id=$1",
-      [id]
+      sql`delete from entries_tags where entry_id=${id}`
     )
-    return db.queryFirst<S.Entries.Entry>(`
-      update entries set title=$1, text=$2 
-      where id=$3 and user_id=$4 
+    return db.queryFirst<S.Entries.Entry>(sql`
+      update entries set title=${title}, text=${text} 
+      where id=${id} and user_id=${user_id} 
       returning *
-    `, [title, text, id, user_id])
+    `)
   })
 })
