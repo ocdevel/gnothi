@@ -23,6 +23,7 @@ export default function Modal() {
   ], shallow)
 
   return <FullScreenDialog
+    className="behaviors modal"
     title="Behaviors"
     ctas={[{
       name: "Create",

@@ -12,7 +12,7 @@ export const handler = async (event, context, callback) => {
 
   // All users need one immutable main tag
   const mainTag = await db.query(
-    sql`insert into tags (user_id, name, main) values (${dbUser.id}, 'Main', true)`,
+    sql`insert into tags (user_id, name, main) values (${dbUser.id}, 'Main', true)`
   )
 
   return event

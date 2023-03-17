@@ -114,7 +114,7 @@ function Form({field, submit}: Form) {
   }
   defValHelp = defValHelp[default_value]
 
-  return <>
+  return <div className="upsert">
     <Grid
       container
       spacing={2}
@@ -227,5 +227,5 @@ function Form({field, submit}: Form) {
     >
       Save
     </Button>
-  </>
+  </div>
 }

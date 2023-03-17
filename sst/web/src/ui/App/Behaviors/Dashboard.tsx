@@ -37,6 +37,7 @@ export default function Dashboard() {
       {fields?.ids?.map(id => {
         const field = fields?.hash?.[id]
         return <Typography
+          className="behavior"
           key={id}
           onClick={() => setView({page: "modal", view: "edit", fid: id})}
         >
@@ -49,6 +50,7 @@ export default function Dashboard() {
   return <div className="dashboard">
     {fields?.ids?.length ? renderList() : renderEmpty()}
     <Button
+      className="btn-expand"
       variant="contained"
       onClick={showModal}
     >

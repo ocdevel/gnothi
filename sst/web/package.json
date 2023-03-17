@@ -60,7 +60,7 @@
     "zustand": "^4.1.4"
   },
   "devDependencies": {
-    "@playwright/test": "^1.27.1",
+    "@playwright/test": "^1.31.2",
     "@serverless-stack/static-site-env": "^1.15.16",
     "@types/lodash": "^4.14.187",
     "@types/markdown-it": "^12.2.3",

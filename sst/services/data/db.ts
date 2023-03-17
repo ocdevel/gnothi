@@ -11,20 +11,6 @@ import * as S from '@gnothi/schemas'
 import dayjs from 'dayjs'
 import {readFileSync} from "fs";
 
-const dbSchema = {
-  users: S.Users.User,
-  ws_connections: S.Ws.WsConnection,
-  tags: S.Tags.Tag,
-  entries: S.Entries.Entry,
-  entries_tags: S.Tags.EntryTag,
-  fields: S.Fields.Field,
-  field_entries: S.Fields.FieldEntry,
-  groups: S.Groups.Group,
-  shares: S.Shares.Share,
-  shares_tags: S.Shares.ShareTag,
-  shares_users: S.Shares.ShareUser,
-  notifs: S.Notifs.Notif,
-}
 
 export class DB {
   // private variable which will be singleton-initialized for running lambda (for all

@@ -1,5 +1,6 @@
 import {Routes, Fields} from '@gnothi/schemas'
 import {Fields as FieldsModel} from '../../data/models/fields'
+import {FieldEntries as FieldEntriesModel} from '../../data/models/fieldEntries'
 
 const r = Routes.routes
 
@@ -14,9 +15,10 @@ r.fields_post_request.fn = r.fields_post_request.fnDef.implement(async (req, con
 
 
 r.fields_entries_list_request.fn = r.fields_entries_list_request.fnDef.implement(async (req, context) => {
-  return new FieldsModel(context.user.id).entries_list(req)
+  return new FieldEntriesModel(context.user.id).list(req)
 })
 
 r.fields_entries_post_request.fn = r.fields_entries_post_request.fnDef.implement(async (req, context) => {
-  return new FieldsModel(context.user.id).entries_post(req)
+  return new FieldEntriesModel(context.user.id).post(req)
 })
+
