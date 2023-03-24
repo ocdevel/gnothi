@@ -1,5 +1,4 @@
 import * as S from '@gnothi/schemas'
-import {db} from '../../data/db'
 import {GnothiError} from "../errors";
 import {completion} from '../../ml/node/openai'
 import {z} from 'zod'

@@ -11,9 +11,9 @@ export function Misc({ app, stack }: sst.StackContext) {
   const dbMigrate = withRds(stack, "DbMigrate2", {
     memorySize: rams.sm,
     timeout: timeouts.sm,
-    handler: "data/migrations/index.main",
+    handler: "data/migrate.main",
     bundle: {
-      copyFiles: [{from: "data/init/init.sql"}]
+      copyFiles: [{from: "data/migrations"}]
     },
   })
 

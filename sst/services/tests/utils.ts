@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import {db} from '../data/db'
+import {db} from '../data/dbSingleton'
 import {handler as postConfirmation} from '../auth/postConfirmation'
 import {v4 as uuid} from 'uuid'
 import {main, proxy} from '../main'

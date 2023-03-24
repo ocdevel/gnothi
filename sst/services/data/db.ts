@@ -5,55 +5,75 @@ import { pgTable, serial, text, varchar } from 'drizzle-orm/pg-core';
 import { drizzle, NodePgDatabase } from 'drizzle-orm/node-postgres'
 import { sql, SQL } from 'drizzle-orm/sql'
 
-import {readFileSync} from "fs";
+export const sharedStage = `gnothi${process.env.sharedStage}`
 
-const stagename = `gnothi${process.env.stage}`
-
-// set localhost defaults, override if deployed
-let secretValues = {
-  host: "localhost",
-  port: 5432,
-  username: "postgres",
-  password: "password"
+type ConnectionArgs = {
+  host: string
+  port: number
+  username: string
+  password: string
 }
-if (!process.env.IS_LOCAL) {
-  // get the secret from secrets manager.
-  const secretsClient = new SecretsManagerClient({})
-  const secret = await secretsClient.send(new GetSecretValueCommand({
-    SecretId: process.env.rdsSecretArn,
-  }))
-  secretValues = JSON.parse(secret.SecretString ?? '{}')
-}
-
-// TODO use env.stage as db name
-// TODO initialize DB if not exists
-console.log('secreteKeys', Object.keys(secretValues))
-// const pgClient = new PgClient({
-const pgClient = new Pool({
-  max: 1, min: 0, // single connection for singleton Lambda
-  host: secretValues.host, // host is the endpoint of the db cluster
-  port: secretValues.port, // port is 5432
-  user: secretValues.username, // username is the same as the secret name
-  password: secretValues.password, // this is the password for the default database in the db cluster
-  database: stagename
-})
-// await pgClient.connect()
-const drizzleClient = drizzle(pgClient)
-
-// See https://gist.github.com/streamich/6175853840fb5209388405910c6cc04b
-// If using Pool (not Client), we can forgo connect() and the pool will self-manage.
-// Otherwise, we'd need:
-// const client = await pool.connect()
-// try {await client.query(q)}
-// finally {client.release(true)}
-
 
 export class DB {
   // private variable which will be singleton-initialized for running lambda (for all
   // future invocations). Note use of this class exported as an instance (bottom of file),
   // not instantiated by callers
-  client = drizzleClient
-  private dbName: string
+  private inited = false
+  public pg: Pool
+  public drizzle: NodePgDatabase
+  public dbName: string
+
+  constructor(dbName?: string) {
+    this.dbName = dbName || sharedStage
+  }
+
+  async getConnectionArgs(): Promise<ConnectionArgs> {
+    // set localhost defaults, override if deployed
+    if (process.env.IS_LOCAL) {
+      return {
+        host: "localhost",
+        port: 5432,
+        username: "postgres",
+        password: "password"
+      }
+    }
+    // get the secret from secrets manager.
+    const secretsClient = new SecretsManagerClient({})
+    const secret = await secretsClient.send(new GetSecretValueCommand({
+      SecretId: process.env.rdsSecretArn,
+    }))
+    const obj = JSON.parse(secret.SecretString ?? '{}')
+    return obj as ConnectionArgs
+  }
+
+  async init() {
+    if (this.inited) { return }
+    this.inited = true
+    const connectionArgs = await this.getConnectionArgs()
+    // const pgClient = new PgClient({
+    const pgClient = new Pool({
+      max: 1, min: 0, // single connection for singleton Lambda
+      host: connectionArgs.host, // host is the endpoint of the db cluster
+      port: connectionArgs.port, // port is 5432
+      user: connectionArgs.username, // username is the same as the secret name
+      password: connectionArgs.password, // this is the password for the default database in the db cluster
+      database: this.dbName
+    })
+    // await pgClient.connect()
+    const drizzleClient = drizzle(pgClient)
+
+    // await pgClient.connect()
+
+    // See https://gist.github.com/streamich/6175853840fb5209388405910c6cc04b
+    // If using Pool (not Client), we can forgo connect() and the pool will self-manage.
+    // Otherwise, we'd need:
+    // const client = await pool.connect()
+    // try {await client.query(q)}
+    // finally {client.release(true)}
+
+    this.drizzle = drizzleClient
+    this.pg = pgClient
+  }
 
   static prepLambda(context: Context) {
     // https://gist.github.com/streamich/6175853840fb5209388405910c6cc04b
@@ -72,8 +92,11 @@ export class DB {
   }
 
   async query<O = any>(sql_: SQL): Promise<O[]> {
+    if (!this.inited) {
+      await this.init()
+    }
     try {
-      const queryResult: QueryResult<O> = await drizzleClient.execute<O>(sql_)
+      const queryResult: QueryResult<O> = await this.drizzle.execute<O>(sql_)
       return queryResult.rows.map(this.removeNull)
     } catch (error) {
       // (await this.client()).release(true)
@@ -99,5 +122,3 @@ export class DB {
     return this.queryFirst<O>(sql, values)
   }
 }
-
-export const db = new DB()

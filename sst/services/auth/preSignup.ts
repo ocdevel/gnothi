@@ -1,4 +1,4 @@
-import {db} from '../data/db'
+import {db} from '../data/dbSingleton'
 import * as S from "@gnothi/schemas"
 const testing = process.env.IS_LOCAL
 

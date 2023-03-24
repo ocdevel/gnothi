@@ -79,7 +79,9 @@ function Form({field, submit}: Form) {
   const [type, default_value] = form.watch(['type', 'default_value'])
 
   function close() {
-    setView({fid: null})
+    // close the new-field (upsert) form, NOT the modal. Just go
+    // back to overview mode
+    setView({view: "overall", fid: null})
   }
 
   function submit_(data: fields_post_request) {

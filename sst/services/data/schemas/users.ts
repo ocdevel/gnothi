@@ -1,18 +1,9 @@
-import {Base} from './base'
-import {db} from '../db'
-import * as S from '@gnothi/schemas'
-import {sql} from "drizzle-orm/sql"
-import { and, asc, desc, eq, or } from 'drizzle-orm/expressions';
 import {
   pgTable,
   index,
-  text,
   varchar,
   uuid,
-  pgEnum,
-  doublePrecision,
   timestamp,
-  json,
   date,
   boolean,
   integer

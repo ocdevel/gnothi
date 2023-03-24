@@ -1,5 +1,4 @@
 import * as S from '@gnothi/schemas'
-import {db} from '../../data/db'
 import {GnothiError} from "../errors";
 import {v4 as uuid} from 'uuid'
 import {completion} from '../../ml/node/openai'

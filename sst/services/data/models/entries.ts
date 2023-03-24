@@ -4,7 +4,7 @@ import * as S from '@gnothi/schemas'
 import {boolMapToKeys} from '@gnothi/schemas/utils'
 // @ts-ignore
 import dayjs from "dayjs";
-import {db} from "../db";
+import {db} from "../dbSingleton";
 import {entries_list_response} from '@gnothi/schemas/entries'
 import {sql} from "drizzle-orm/sql"
 

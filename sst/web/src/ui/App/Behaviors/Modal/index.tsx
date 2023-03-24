@@ -13,6 +13,7 @@ import {FullScreenDialog} from "../../../Components/Dialog";
 import Container from "@mui/material/Container";
 import Behavior from './Behavior'
 import View from './View'
+import Overall from './Overall'
 
 export default function Modal() {
   const [send, fields, view, setView] = useStore(s => [
@@ -21,6 +22,14 @@ export default function Modal() {
     s.behaviors.view,
     s.behaviors.setView
   ], shallow)
+
+  useEffect(() => {
+    // no fields present. No matter why they came here, they
+    // probably need to create a field first
+    if (!fields?.ids?.length) {
+      setView({view: "new", fid: null})
+    }
+  }, [fields])
 
   return <FullScreenDialog
     className="behaviors modal"
@@ -41,6 +50,7 @@ export default function Modal() {
           {view.view === "new" && <Create />}
           {view.view === "edit" && <Update />}
           {view.view === "view" && <View />}
+          {view.view === "overall" && <Overall />}
         </Grid>
       </Grid>
     </Container>

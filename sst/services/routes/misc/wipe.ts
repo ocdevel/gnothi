@@ -1,5 +1,4 @@
 import {initDb} from '../../data/init/init'
-import {DB} from '../../data/db'
 import {Misc} from '@gnothi/schemas'
 
 export const main = async (req) => {

@@ -20,7 +20,7 @@ export default function Dashboard() {
   function showModal() {
     setView({
       page: "modal",
-      view: "new",
+      view: "overall",
       fid: null
     })
   }

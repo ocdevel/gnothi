@@ -1,6 +1,6 @@
 import {Routes} from '@gnothi/schemas'
 import {Tag} from '@gnothi/schemas/tags'
-import {db} from '../../data/db'
+import {db} from '../../data/dbSingleton'
 import {GnothiError} from "../errors";
 import {sql} from 'drizzle-orm/sql'
 

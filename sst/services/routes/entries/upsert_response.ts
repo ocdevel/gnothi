@@ -1,5 +1,5 @@
 import * as S from '@gnothi/schemas'
-import {db} from '../../data/db'
+import {db} from '../../data/dbSingleton'
 import {GnothiError} from "../errors";
 import {upsert} from '../../ml/node/upsert'
 import {preprocess} from '../../ml/node/preprocess'

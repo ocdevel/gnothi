@@ -2,7 +2,9 @@
   "name": "@gnothi/services",
   "version": "0.0.0",
   "type": "module",
-  "scripts": {},
+  "scripts": {
+    "db:migrate": "npx drizzle-kit generate:pg --out data/migrations --schema data/schemas"
+  },
   "dependencies": {
     "@aws-sdk/client-apigatewaymanagementapi": "^3.209.0",
     "@aws-sdk/client-application-auto-scaling": "^3.209.0",

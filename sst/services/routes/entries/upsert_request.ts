@@ -1,5 +1,5 @@
 import * as S from '@gnothi/schemas'
-import {db} from '../../data/db'
+import {db} from '../../data/dbSingleton'
 import {GnothiError} from "../errors";
 import {boolMapToKeys} from '@gnothi/schemas/utils'
 import {sql} from "drizzle-orm/sql"

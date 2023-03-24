@@ -1,5 +1,4 @@
 import * as S from '@gnothi/schemas'
-import {db} from '../../data/db'
 import * as M from '../../data/models'
 const r = S.Routes.routes
 

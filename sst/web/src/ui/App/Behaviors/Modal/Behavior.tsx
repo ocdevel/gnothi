@@ -30,6 +30,7 @@ export default function Behavior({fid}: {fid: string}) {
 
   if (!field) {return null}
   return <Stack
+    className="behavior"
     direction="row"
     spacing={2}
     alignItems="center"

@@ -1,4 +1,4 @@
-import {db} from '../../data/db'
+import {db} from '../../data/dbSingleton'
 import {Routes} from '@gnothi/schemas'
 
 const r = Routes.routes

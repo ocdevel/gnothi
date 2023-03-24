@@ -1,12 +1,12 @@
-import {db} from '../data/db'
+import {db} from '../data/dbSingleton'
 import * as S from "@gnothi/schemas"
 const testing = process.env.IS_LOCAL
 import {sql} from 'drizzle-orm/sql'
-import {users} from '../data/models/users'
+import {users} from '../data/schemas/users'
 
 export const handler = async (event, context, callback) => {
   // create user in database. maybe add its uid to cognito
-  const dbUser = await db.client.insert(users).values({
+  const dbUser = await db.drizzle.insert(users).values({
     email: event.request.userAttributes.email,
     cognito_id: event.userName,
   }).returning()

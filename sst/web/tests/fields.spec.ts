@@ -28,10 +28,11 @@ test.describe("fields", () => {
     test("create", async ({page}) => {
       const utils = new Utils(page)
       await utils.signup()
-      await expect(page.locator('.insights .behaviors .dashboard .behavior')).toHaveCount(0)
       await page.locator(".insights .behaviors .dashboard .btn-expand").click()
+      //await expect(page.locator('.insights .behaviors .dashboard .behavior')).toHaveCount(0)
+      await expect(page.locator('.behaviors.modal .behavior')).toHaveCount(0)
       await addBehaviorsAndEntries({page, name: "field1", type: "fivestar"})
-      await expect(page.locator(".insights .fields .field")).toHaveCount(1)
+      await expect(page.locator('.behaviors.modal .behavior')).toHaveCount(1)
     })
   })
 })

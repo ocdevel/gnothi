@@ -1,5 +1,5 @@
 import {Base} from './base'
-import {db} from '../db'
+import {db} from '../dbSingleton'
 import * as S from '@gnothi/schemas'
 import {GnothiError} from "../../routes/errors";
 import {boolMapToKeys} from '@gnothi/schemas/utils'

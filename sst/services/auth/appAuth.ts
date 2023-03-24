@@ -9,7 +9,7 @@ import {
   Context,
   APIGatewayProxyWebsocketEventV2WithRequestContext
 } from "aws-lambda";
-import {db} from '../data/db'
+import {db} from '../data/dbSingleton'
 import {User} from '@gnothi/schemas/users'
 import {WsConnection} from "@gnothi/schemas/ws";
 import {sql} from "drizzle-orm/sql"
