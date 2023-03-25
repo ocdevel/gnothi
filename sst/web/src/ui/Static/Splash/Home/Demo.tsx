@@ -38,8 +38,8 @@ export default function Demo() {
               <Button
                 variant="contained"
                 sx={{
-                  backgroundColor: "primary.main",
-                  color: colors.white,
+                  backgroundColor: "white",
+                  color: colors.black,
                   marginTop: '2rem',
                   marginBottom: "1rem"
                 }}

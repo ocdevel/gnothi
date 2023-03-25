@@ -120,7 +120,7 @@ export default function DiscoverAI() {
    <Grid item xs={12}>
     <Link.Button
       variant="contained"
-      sx={{ backgroundColor: "primary.main", color: colors.white}}
+      sx={{ backgroundColor: 'primary.main', color: colors.white}}
       to="/features"
     >
       Explore features and pricing
