@@ -18,11 +18,25 @@ import Stack from "@mui/material/Stack";
 import Button from "@mui/material/Button";
 
 const colors = [
-  "#50577A",
-  "#838FC7",
-  "#344391",
-  "#485DC7",
-  "#2F3347",
+  '#1A3E59',
+  '#3B5C80',
+  '#4C6B90',
+  '#5E7A9F',
+  '#718BAF',
+  '#839ABE',
+  '#94A9CD',
+  // '#A5B8DC',
+  // '#B6C7ED',
+  // '#C7D6FC',
+
+  // ALternates from GPT #2E2E4B, #3B3C78, #4848A4, #54548F, #605CB9, #6E6ED6, #7B7BF3, #8A8AEF, #9797EE, #A3A3ED
+
+  // '#485DC7',
+  // "#50577A",
+  // "#838FC7",
+  // "#344391",
+  // '#596187',
+  // "#2F3347",
 ]
 
 interface Tags {

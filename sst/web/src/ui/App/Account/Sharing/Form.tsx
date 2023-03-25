@@ -68,17 +68,17 @@ const profile_fields = {
 const feature_map = {
   profile: {
     label: 'Profile & People',
-    help: "Users can view your profile fields. Expand this for more fine-grained control.",
+    help: "This allows users to view your profile info. Expand for more fine-grained control.",
     extraHelp: <>You'll need to add these profile fields manually under <Link to='/profile'>Profile.</Link>. If you checked a box, but that field isn't in your profile, Gnothi will use fall-backs where possible.</>
   },
   fields: {
-    label: "Fields & Charts",
-    help: "Users can view your fields & field-entries, history, and charts."
+    label: "Behavior Tracking",
+    help: "Users can view your tracked behaviors and charts."
   },
-  books: {
-    label:'Books',
-    help: "Users can view your AI-recommended books, your bookshelves (liked, disliked, etc), and can recommend books to you (goes to 'Recommended' shelf)."
-  },
+  // books: {
+  //   label:'Books',
+  //   help: "Users can view your AI-recommended books, your bookshelves (liked, disliked, etc), and can recommend books to you (goes to 'Recommended' shelf)."
+  // },
 }
 
 const shareSchema = z.object({
@@ -144,14 +144,23 @@ function ShareCheck({k, form, setForm, profile=false}: ShareCheck) {
       </FormHelperText>}
     </FormControl>
     {k === 'profile' && <div>
-      <div
-        className='text-muted small cursor-pointer'
-        onClick={() => setShowMore(!showMore)}
-      >
-        {showMore
-          ? <><FaChevronDown /> Hide fine-grained options</>
-          : <><FaChevronRight /> Show fine-grained options</>}
-      </div>
+     <Typography
+       variant='body2'
+       component="div"
+       marginLeft={3.5}
+       onClick={() => setShowMore(!showMore)}
+       sx={{cursor: "pointer", display: "flex", alignItems: "center"}}
+     >
+      {showMore
+        ? <>
+          <FaChevronDown />
+          <span>Hide fine-grained options</span>
+        </>
+        : <>
+          <FaChevronRight />
+          <span>Show fine-grained options</span>
+        </>}
+     </Typography>
     </div>}
     {k === 'profile' && showMore && <Box sx={{ml:2}}>
       {_.map(profile_fields, (v, k) => (
@@ -206,40 +215,93 @@ export default function ShareForm({s={}}) {
     send('shares_delete_request', {id})
   }
 
-  return <Card>
-    <CardContent>
-      <Grid container spacing={2}>
-        <Grid item xs={12} md={6}>
-          <Typography color='text.secondary' textAlign='center'>Share</Typography>
-          {_.map(feature_map, (v, k) => (
-            <ShareCheck key={k} v={v} k={k} form={share} setForm={setShare} />
-          ))}
 
-          <div>Entries <FaRegQuestionCircle onClick={() => setEntriesHelp(!entriesHelp)}/></div>
-          {entriesHelp && <div className='small text-muted'>
-            User can view entries with these tags, and can use features involving these entries:
-            <ul>
-              <li>Summaries</li>
-              <li>Question-answering</li>
-              <li>Themes</li>
-            </ul>
-            Example use: sharing darker entries with a therapist, and lighter entries (eg travel, dreams) with friends.
-          </div>}
-          <Tags
-            selected={tags}
-            setSelected={setTags}
-          />
-        </Grid>
-        <Grid item xs={12} md={6}>
-          <Typography color='text.secondary' textAlign='center'>With</Typography>
-          <Grid container spacing={2} direction='column'>
-            <Grid item><Users users={users} setUsers={setUsers} /></Grid>
-            <Grid item><Groups groups={groups} setGroups={setGroups} /></Grid>
+  return <Card
+    sx={{
+      height: '100%',
+      maxWidth: 800,
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      backgroundColor: '#ffffff',
+      borderRadius: 3,
+    }}>
+    <CardContent>
+      <Grid container direction='column'>
+
+        <Grid item xs={12}>
+          <Typography
+            variant='subtitle2'
+            color='text.secondary'
+            textAlign='left'
+          >
+            Set up a new share
+          </Typography>
+
+          <Grid item>
+            <Users users={users} setUsers={setUsers} />
           </Grid>
+            <Grid item>
+              <Groups groups={groups} setGroups={setGroups} />
+        </Grid>
+
+
+        <Grid item xs={12}>
+          <Typography
+            variant='body1'
+            fontWeight={400}
+            marginTop={4}
+          >
+            Which tagged entries would you like to share?
+          </Typography>
+          <Typography
+            variant='body2'
+            marginBottom={2}>
+            You can create a new tag for this share by selecting “manage tags.”
+          </Typography>
+        {/*<div> <FaRegQuestionCircle onClick={() => setEntriesHelp(!entriesHelp)}/></div>*/}
+        {/*{entriesHelp && <div className='small text-muted'>*/}
+        {/*  User can view entries with these tags, and can use features involving these entries:*/}
+        {/*  <ul>*/}
+        {/*    <li>Summaries</li>*/}
+        {/*    <li>Prompt (if they have premium)</li>*/}
+        {/*    <li>Themes</li>*/}
+        {/*</div>}*/}
+        <Tags
+          selected={tags}
+          setSelected={setTags}
+        />
+      </Grid>
+
+      <Grid item xs={12}>
+        <Typography
+          variant='body1'
+          fontWeight={400}
+          marginTop={4}
+        >
+          What other information do you want to share?
+        </Typography>
+        <Typography
+          variant='body2'
+          marginBottom={1}
+        >
+          Leave unchecked if you’d prefer not to share any of these.
+        </Typography>
+
+        <Box
+          marginLeft={2}>
+          {_.map(feature_map, (v, k) => (
+          <ShareCheck key={k} v={v} k={k} form={share} setForm={setShare} />
+        ))}
+          </Box>
+        </Grid>
         </Grid>
       </Grid>
+
     </CardContent>
-    <CardActions>
+    <CardActions
+      sx={{alignItems: 'center', justifyContent: 'center', marginBottom: 2}}
+    >
       <Button
         onClick={submit}
         variant='contained'
@@ -259,4 +321,60 @@ export default function ShareForm({s={}}) {
       >Cancel</Button>
     </CardActions>
   </Card>
-}
+  }
+
+
+  // return <Card>
+  //   <CardContent>
+  //     <Grid container spacing={2}>
+  //       <Grid item xs={12} md={6}>
+  //         <Typography color='text.secondary' textAlign='center'>Share</Typography>
+  //         {_.map(feature_map, (v, k) => (
+  //           <ShareCheck key={k} v={v} k={k} form={share} setForm={setShare} />
+  //         ))}
+  //
+  //         <div>Entries <FaRegQuestionCircle onClick={() => setEntriesHelp(!entriesHelp)}/></div>
+  //         {entriesHelp && <div className='small text-muted'>
+  //           User can view entries with these tags, and can use features involving these entries:
+  //           <ul>
+  //             <li>Summaries</li>
+  //             <li>Question-answering</li>
+  //             <li>Themes</li>
+  //           </ul>
+  //           Example use: sharing darker entries with a therapist, and lighter entries (eg travel, dreams) with friends.
+  //         </div>}
+  //         <Tags
+  //           selected={tags}
+  //           setSelected={setTags}
+  //         />
+  //       </Grid>
+  //       <Grid item xs={12} md={6}>
+  //         <Typography color='text.secondary' textAlign='center'>With</Typography>
+  //         <Grid container spacing={2} direction='column'>
+  //           <Grid item><Users users={users} setUsers={setUsers} /></Grid>
+  //           <Grid item><Groups groups={groups} setGroups={setGroups} /></Grid>
+  //         </Grid>
+  //       </Grid>
+  //     </Grid>
+  //   </CardContent>
+  //   <CardActions>
+  //     <Button
+  //       onClick={submit}
+  //       variant='contained'
+  //       color="primary"
+  //       disabled={postRes?.submitting}
+  //     >
+  //       {id ? 'Save' : 'Submit'}
+  //     </Button>&nbsp;
+  //     {id && <Button
+  //       color="secondary"
+  //       size="small"
+  //       onClick={deleteShare}
+  //     >Delete</Button>}
+  //     <Button
+  //       size='small'
+  //       onClick={() => setSharePage({list: true})}
+  //     >Cancel</Button>
+  //   </CardActions>
+  // </Card>
+

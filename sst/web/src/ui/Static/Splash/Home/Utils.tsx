@@ -90,12 +90,13 @@ export function FeatureCard({ title, icon, children }: FeatureCard) {
   </Grid>
 }
 
+
 interface Section {
   color: 'dark' | 'light' | 'grey'
 }
 export function Section({ children, color = 'light' }: React.PropsWithChildren<Section>) {
   const backgroundColor = {
-    dark: "primary.main",
+    dark: 'primary.main',
     light: "secondary.main",
     grey: "#fafafa"
   }[color]

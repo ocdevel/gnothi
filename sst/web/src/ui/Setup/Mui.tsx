@@ -7,7 +7,10 @@ const colors = {
   grey: "#fafafa",
   black: "#000000",
   white: "#ffffff"
+
 }
+
+
 export const styles = {
   colors,
   spacing: {
@@ -17,10 +20,11 @@ export const styles = {
     xl: 12
   },
   sx: {
-    button1: {backgroundColor: "primary.main", color: colors.white, fontFamily: "Poppins"},
-    button2: {backgroundColor: "secondary.main", color: colors.black, fontFamily: "Poppins"},
+    button1: {backgroundColor: 'primary.main', color: colors.white, fontFamily: "Poppins", fontWeight: '500'},
+    //'#3A4784',
+    button2: {backgroundColor: "secondary.main", color: colors.black, fontFamily: "Poppins", fontWeight: '500'},
     
-    featureIcon: {fontSize: 40, color: "#597191"},
+    featureIcon: {fontSize: 40, color: "#50577a"},
     behaviorIcon: {fontSize: 40, color: "#507a6f"},
     bookIcon: {fontSize: 40, color: "#553840"},
 
@@ -43,6 +47,8 @@ export const theme = createTheme({
       main: '#A7ABBC', // '#738fa7',
       light: '#b8bbc9', // '#6ba9bb',
     },
+
+
     // custom: {
     //   light: "#ffffff"
     // },
@@ -154,8 +160,10 @@ export const theme = createTheme({
       styleOverrides: {
         root: {
           textTransform: 'initial',
-          borderRadius: 10,
+          borderRadius: 12,
           elevation: 12,
+          // dropShadow: '0px 0px 10px rgba(0, 0, 0, 0.25)',
+          fontWeight: '500',
         },
       },
     },

@@ -1,4 +1,5 @@
 
+import Box from "@mui/material/Box"
 import Summarize from "./Summarize"
 // import Ask from "./Ask"
 import Themes from "./Themes"
@@ -62,7 +63,7 @@ function InsightCardHeader({label, icon, description, children}: Insight) {
 }
 function InsightRaw({label, icon, description, children}: Insight) {
   return <Card
-    sx={{backgroundColor:'white', borderRadius: 2}}
+    sx={{ backgroundColor:'white', borderRadius: 2}}
   >
     <CardContent>
       <Stack

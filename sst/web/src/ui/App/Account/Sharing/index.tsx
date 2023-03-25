@@ -11,6 +11,7 @@ import DialogContent from "@mui/material/DialogContent";
 import {FullScreenDialog} from "@gnothi/web/src/ui/Components/Dialog";
 import Add from "@mui/icons-material/Add";
 import ArrowBack from "@mui/icons-material/ArrowBack";
+import Box from "@mui/material/Box";
 
 function Share({s}) {
   let myGroups = useStore(s => s.res.groups_mine_list_response?.hash)
@@ -61,14 +62,14 @@ export default function SharingModal() {
       </div>
     }
     return <div>
-      <Button
-        variant={undefined /*false*/}
-        size='small'
-        onClick={() => setSharePage({list: true})}
-        startIcon={<ArrowBack />}
-      >
-        List Shares
-      </Button>
+      {/*<Button*/}
+      {/*  variant={undefined /*false*!/*/}
+      {/*  size='small'*/}
+      {/*  onClick={() => setSharePage({list: true})}*/}
+      {/*  startIcon={<ArrowBack />}*/}
+      {/*>*/}
+      {/*  List Shares*/}
+      {/*</Button>*/}
       {sharePage.create ? <ShareForm />
         : sharePage.id ? <ShareForm s={hash[sharePage.id]} />
         : null}
@@ -95,7 +96,9 @@ export default function SharingModal() {
       buttons={buttons}
     >
       <DialogContent>
-        {renderContent()}
+        <Box sx={{display:'flex', justifyContent: 'center'}}>
+          {renderContent()}
+        </Box>
       </DialogContent>
     </FullScreenDialog>
   </>
