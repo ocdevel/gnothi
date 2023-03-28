@@ -12,10 +12,10 @@ import {
 import {users} from './users'
 
 export const wsConnections = pgTable('ws_connections', {
+  connection_id: varchar('connection_id').notNull().primaryKey(),
   user_id: uuid('user_id').notNull().references(() => users.id, {onDelete: 'cascade'}),
-  connection_id: varchar('connection_id').notNull(),
 }, (table) => {
   return {
-    pk: primaryKey(table.user_id, table.connection_id),
+    ix_ws_connections_user_id: index("ix_ws_connections_user_id").on(table.user_id),
   }
 })

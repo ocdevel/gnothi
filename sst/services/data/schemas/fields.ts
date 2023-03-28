@@ -1,21 +1,55 @@
-import {users} from './users'
+import {users, userId} from './users'
 
 import { pgTable, index, varchar, uuid, pgEnum, doublePrecision, timestamp, json } from 'drizzle-orm/pg-core';
+import {idCol, tsCol} from './utils'
 
-export const fieldTypes = pgEnum('field_type', ["number", "fivestar", "check", "option"])
-export const defaultValTypes = pgEnum('default_value_type', ["value", "average", "ffill"])
+export const fieldTypes = pgEnum('field_type', [
+  // medication changes / substance intake
+  // sleep, diet, weight
+  "number",
+  // happiness score
+  "fivestar",
+  // exercise
+  "check",
+  // moods (happy, sad, anxious, wired, bored, ..)
+  "option"
+  // think of more
+  // weather_api?
+  // text entries?
+])
+export const defaultValTypes = pgEnum('default_value_type', [
+  "value",  // which includes None
+  "average",
+  "ffill"
+])
+
+/**
+ * Entries that change over time. Uses:
+ * - Charts
+ * - Effects of sentiment, topics on entries
+ * - Global trends (exercise -> 73% happiness)
+ */
 export const fields = pgTable('fields', {
-  id: uuid('id').defaultRandom().notNull().primaryKey(),
+  id: idCol(),
   type: fieldTypes("type").default("fivestar"),
   name: varchar('name').notNull(),
-  created_at: timestamp('created_at', {withTimezone: true}).defaultNow(),
+  // Start entries/graphs/correlations here
+  created_at: tsCol('created_at'),
+  // Don't actually delete fields, unless it's the same day. Instead
+  // stop entries/graphs/correlations here
   excluded_at: timestamp('excluded_at', {withTimezone: true}),
   default_value: defaultValTypes("default_value").default("value"),
   default_value_value: doublePrecision('default_value_value'),
+  // option{single_or_multi, options:[], ..}
+  // number{float_or_int, ..}
   attributes: json("attributes"),
   service: varchar('service'),
+  // Used if pulling from external service
   service_id: varchar('service_id'),
-  user_id: uuid('user_id').notNull().references(() => users.id, {onDelete: 'cascade'}),
+
+  user_id: userId(),
+
+  // Populated via ml.influencers.
   influencer_score: doublePrecision("influencer_score").default(0),
   next_pred: doublePrecision("next_pred").default(0),
   avg: doublePrecision("avg").default(0),

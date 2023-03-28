@@ -85,15 +85,6 @@ class WSManager(BroadcastHelpers):
             if tup[1] != websocket: continue
             self.users.remove(tup)
 
-    def get_handler(self, action):
-        split = action.split('/')
-        klass, fn = split[0], '_'.join(split[1:])
-        # print(klass, fn)
-        klass = handlers.get(klass, None)
-        fn = klass and getattr(klass, f"on_{fn}", None)
-        if not fn:
-            raise NotFound(action)
-        return fn
 
     def ws_to_uid(self, websocket):
         return next(iter([uid for uid, ws in self.users if ws == websocket]), None)

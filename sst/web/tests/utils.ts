@@ -69,7 +69,7 @@ export class Utils {
     await this.signup()
     const tagsPostP = this.catchWs("tags_post_response")
     const page = this.page
-    await page.locator(".button-tags-edit").click()
+    await page.locator(".entries .tags .btn-edit").click()
     await page.locator(".textfield-tags-post input").fill("No AI")
     await page.locator(".button-tags-post").click()
     this.tags["noai"] = (await tagsPostP).data[0].id
@@ -87,8 +87,8 @@ export class Utils {
     await page.locator(".rc-md-editor textarea").fill(text)
     if (noai) {
       // Swap tags
-      await page.locator(".entries-upsert-form .button-tags-tag").nth(0).click()
-      await page.locator(".entries-upsert-form .button-tags-tag").nth(1).click()
+      await page.locator(".entries-upsert-form .tags .btn-select").nth(0).click()
+      await page.locator(".entries-upsert-form .tags .btn-select").nth(1).click()
     }
     await page.locator(".entries.modal .upsert .btn-submit").click()
   }

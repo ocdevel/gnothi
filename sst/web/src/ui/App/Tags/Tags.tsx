@@ -99,7 +99,7 @@ export default function Tags({
       borderWidth: 2
     }
 
-    const className = `button-tags-tag ${selected_ ? "tag-selected" : "tag-unselected"}`
+    const className = `btn-select ${selected_ ? "selected" : "unselected"}`
     return <Chip
       key={tid}
       variant={selected_? "filled" : "outlined"} 
@@ -125,11 +125,11 @@ export default function Tags({
       onClick={showEditTags}
       label="Manage tags"
       size="small"
-      className="button-tags-edit"
+      className="btn-edit"
     />
   }
 
-  return <>
+  return <div className="tags">
     {editTags && <Modal close={closeEditTags} />}
     <Stack
       direction="row"
@@ -141,7 +141,7 @@ export default function Tags({
       {ids.map(renderTag)}
       {renderEditTags()}
     </Stack>
-  </>
+  </div>
 }
 
 export const MainTags = <Tags />

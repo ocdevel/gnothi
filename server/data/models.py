@@ -1,7 +1,6 @@
-import enum, pdb, re, threading, time, datetime, traceback, shortuuid
-from typing import Optional, List, Any, Dict, Union
+import enum, re, datetime, shortuuid
+from typing import List
 from pydantic import UUID4
-# import pandas as pd
 
 from data.db import Base, with_session
 from utils.errors import AccessDenied, GroupDenied, GnothiException
@@ -10,12 +9,9 @@ from data.seed import ADMIN_ID, GROUP_ID as MAIN_GROUP
 import sqlalchemy as sa
 from sqlalchemy import func
 import sqlalchemy.orm as orm
-from psycopg2.extras import Json as to_jsonb
 from sqlalchemy.dialects import postgresql as psql
-from sqlalchemy_utils.types import EmailType
 from sqlalchemy_utils.types.encrypted.encrypted_type import StringEncryptedType, FernetEngine
 from sqlalchemy.orm import Session
-import sqlalchemy.sql.expression as expr
 import petname
 
 from settings import settings, logger
@@ -61,51 +57,10 @@ class AuthOld(Base):
     updated_at = DateCol()
 
 
-class WSConnections(Base):
-    __tablename__ = "ws_connections"
-
-    connection_id = sa.Column(sa.Unicode, primary_key=True)
-    user_id = FKCol('users.id', index=True, nullable=False)
-
-
 class User(Base):
-    __tablename__ = 'users'
-
-    # Core
-    id = IDCol()
-    email = sa.Column(sa.String(length=320), unique=True, index=True, nullable=False)
-    cognito_id = sa.Column(sa.Unicode, index=True, unique=True)
-    # ws_id = sa.Column(sa.Unicode, index=True)
-    # as = FKCol('users.id')
-
-    created_at = DateCol()
     updated_at = DateCol(update=True)
 
-    # Profile Fields
-    username = sa.Column(sa.Unicode, index=True, unique=True)
-    first_name = Encrypt()
-    last_name = Encrypt()
-    gender = Encrypt()
-    orientation = Encrypt()
-    birthday = sa.Column(sa.Date)  # TODO encrypt (how to store/migrate dates?)
-    timezone = sa.Column(sa.Unicode)
-    bio = Encrypt()
-
-    # Administrative
-    is_superuser = sa.Column(sa.Boolean, server_default='false')
-    is_cool = sa.Column(sa.Boolean, server_default='false')
-    therapist = sa.Column(sa.Boolean, server_default='false')
-    n_tokens = sa.Column(sa.Integer, server_default="0")  # like free group-creations, etc
     affiliate = sa.Column(sa.Unicode, sa.ForeignKey('codes.code'))
-
-    # ML
-    ai_ran = sa.Column(sa.Boolean, server_default='false')
-    last_books = DateCol(default=False)
-    last_influencers = DateCol(default=False)
-
-    # Habitica
-    habitica_user_id = Encrypt()
-    habitica_api_token = Encrypt()
 
     # Relationships
     entries = orm.relationship("Entry", order_by='Entry.created_at.desc()', **parent_cascade)
@@ -173,23 +128,15 @@ class User(Base):
 
 
 class Entry(Base):
-    __tablename__ = 'entries'
-
-    id = IDCol()
-    created_at = DateCol()
     updated_at = DateCol(update=True)
-    n_notes = sa.Column(sa.Integer, server_default="0")
-
-    # Title optional, otherwise generated from text. topic-modeled, or BERT summary, etc?
-    title = Encrypt()
     text = Encrypt(sa.Unicode, nullable=False)
-    no_ai = sa.Column(sa.Boolean, server_default='false')
-    ai_ran = sa.Column(sa.Boolean, server_default='false')
+    # no_ai = sa.Column(sa.Boolean, server_default='false')
+    # ai_ran = sa.Column(sa.Boolean, server_default='false')
 
     # Generated
-    title_summary = Encrypt()
-    text_summary = Encrypt()
-    sentiment = Encrypt()
+    # title_summary = Encrypt()
+    # text_summary = Encrypt()
+    # sentiment = Encrypt()
 
     user_id = FKCol('users.id', index=True)
     entry_tags_ = orm.relationship("EntryTag", **parent_cascade)
@@ -376,65 +323,7 @@ class Note(Base):
             obj[eid].append(r)
         return obj
 
-
-class FieldType(enum.Enum):
-    # medication changes / substance intake
-    # exercise, sleep, diet, weight
-    number = "number"
-
-    # happiness score
-    fivestar = "fivestar"
-
-    # periods
-    check = "check"
-
-    # moods (happy, sad, anxious, wired, bored, ..)
-    option = "option"
-
-    # think of more
-    # weather_api?
-    # text entries?
-
-
-class DefaultValueTypes(enum.Enum):
-    value = "value"  # which includes None
-    average = "average"
-    ffill = "ffill"
-
-
 class Field(Base):
-    """Entries that change over time. Uses:
-    * Charts
-    * Effects of sentiment, topics on entries
-    * Global trends (exercise -> 73% happiness)
-    """
-    __tablename__ = 'fields'
-
-    id = IDCol()
-
-    type = sa.Column(sa.Enum(FieldType))
-    name = Encrypt()
-    # Start entries/graphs/correlations here
-    created_at = DateCol()
-    # Don't actually delete fields, unless it's the same day. Instead
-    # stop entries/graphs/correlations here
-    excluded_at = DateCol(default=False)
-    default_value = sa.Column(sa.Enum(DefaultValueTypes), server_default="value")
-    default_value_value = sa.Column(sa.Float)
-    # option{single_or_multi, options:[], ..}
-    # number{float_or_int, ..}
-    attributes = sa.Column(sa.JSON)
-    # Used if pulling from external service
-    service = sa.Column(sa.Unicode)
-    service_id = sa.Column(sa.Unicode)
-
-    user_id = FKCol('users.id', index=True)
-
-    # Populated via ml.influencers.
-    influencer_score = sa.Column(sa.Float, server_default='0')
-    next_pred = sa.Column(sa.Float, server_default='0')
-    avg = sa.Column(sa.Float, server_default="0")
-
     user = orm.relationship("User")
 
     @staticmethod
@@ -534,47 +423,15 @@ class FieldEntry(Base):
 
 
 class Person(Base):
-    __tablename__ = 'people'
-    id = IDCol()
-    name = Encrypt()
-    relation = Encrypt()
-    issues = Encrypt()
-    bio = Encrypt()
-
-    user_id = FKCol('users.id', index=True)
-
     user = orm.relationship("User")
 
 
 class Share(Base):
-    __tablename__ = 'shares'
-    id = IDCol()
-    user_id = FKCol('users.id', index=True)
-    created_at = DateCol()
-
-    # profile = sa.Column(sa.Boolean, server_default="false")
-    email = sa.Column(sa.Boolean, server_default="false")
-    username = sa.Column(sa.Boolean, server_default="true")
-    first_name = sa.Column(sa.Boolean, server_default="false")
-    last_name = sa.Column(sa.Boolean, server_default="false")
-    gender = sa.Column(sa.Boolean, server_default="false")
-    orientation = sa.Column(sa.Boolean, server_default="false")
-    birthday = sa.Column(sa.Boolean, server_default="false")
-    timezone = sa.Column(sa.Boolean, server_default="false")
-    bio = sa.Column(sa.Boolean, server_default="false")
-    people = sa.Column(sa.Boolean, server_default="false")
-
-    fields = sa.Column(sa.Boolean, server_default="false")
-    books = sa.Column(sa.Boolean, server_default="false")
-
     user = orm.relationship("User")
     shares_users = orm.relationship("ShareUser")
     shares_groups = orm.relationship("ShareGroup")
     # share_tags = orm.relationship("ShareTag", **parent_cascade)
     # tags_ = orm.relationship("Tag", secondary="shares_tags")
-
-    # last_seen = DateCol()
-    # new_entries = sa.Column(sa.Integer, server_default=sa.text("0"))
 
     @staticmethod
     def share_fields(profile=True, share=True):
@@ -697,16 +554,7 @@ class Share(Base):
 
 
 class Tag(Base):
-    __tablename__ = 'tags'
-    id = IDCol()
-    user_id = FKCol('users.id', index=True)
-    name = Encrypt(sa.Unicode, nullable=False)
-    created_at = DateCol()
-    # Save user's selected tags between sessions
-    selected = sa.Column(sa.Boolean, server_default="true")
-    main = sa.Column(sa.Boolean, server_default="false")
-    sort = sa.Column(sa.Integer, server_default="0", nullable=False)
-    ai = sa.Column(sa.Boolean, server_default="true")
+    # ai = sa.Column(sa.Boolean, server_default="true")
 
     user = orm.relationship("User")
 
@@ -735,24 +583,6 @@ class EntryTag(Base):
     entry = orm.relationship("Entry")
     tag = orm.relationship("Tag")
 
-
-class ShareTag(Base):
-    __tablename__ = 'shares_tags'
-    share_id = FKCol('shares.id', primary_key=True)
-    tag_id = FKCol('tags.id', primary_key=True)
-    selected = sa.Column(sa.Boolean, server_default="true")
-
-    tag = orm.relationship("Tag")
-    share = orm.relationship("Share")
-
-
-class ShareUser(Base):
-    __tablename__ = 'shares_users'
-    share_id = FKCol('shares.id', primary_key=True)
-    obj_id = FKCol('users.id', primary_key=True)
-
-    share = orm.relationship("Share")
-    obj = orm.relationship("User")
 
 
 class ShareGroup(Base):

@@ -3,6 +3,9 @@ import {db} from '../../data/dbSingleton'
 import {GnothiError} from "../errors";
 import {boolMapToKeys} from '@gnothi/schemas/utils'
 import {sql} from "drizzle-orm/sql"
+import {entries} from "../../data/schemas/entries"
+import {entriesTags} from "../../data/schemas/entriesTags"
+
 
 const r = S.Routes.routes
 
@@ -36,7 +39,7 @@ async function upsertOuter(
   // TODO use batchExecuteStatement
   for (const tag_id of tids) {
     // FIXME
-    await db.insert("entries_tags", {tag_id, entry_id})
+    await db.drizzle.insert(entriesTags).values({tag_id, entry_id})
   }
 
   return [{...dbEntry, tags}]
@@ -44,7 +47,7 @@ async function upsertOuter(
 
 r.entries_post_request.fn = r.entries_post_request.fnDef.implement(async (req, context: S.Api.FnContext) => {
   return upsertOuter(req, context, async (entry) => {
-    return db.insert("entries", entry)
+    return db.drizzle.insert(entries).values(entry)
   })
 })
 

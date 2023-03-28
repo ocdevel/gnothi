@@ -1,13 +1,15 @@
 import { pgTable, index, text, integer, date, varchar, uuid, pgEnum, doublePrecision, timestamp, json, primaryKey } from 'drizzle-orm/pg-core';
-import {users} from './users'
+import {users, userId} from './users'
+import {idCol, tsCol} from './utils'
 
 export const aistate = pgEnum('aistate', ['todo', 'skip', 'running', 'done'])
 
 export const entries = pgTable('entries', {
-  id: uuid('id').defaultRandom().notNull().primaryKey(),
-  created_at: timestamp("created_at", {withTimezone: true}).defaultNow(),
-  updated_at: timestamp("updated_at", {withTimezone: true}).defaultNow(),
+  id: idCol(),
+  created_at: tsCol('created_at'),
+  updated_at: tsCol('updated_at'), // TODO
   n_notes: integer("n_notes").default(0),
+  // Title optional, otherwise generated from text. topic-modeled, or BERT summary, etc?
   title: varchar("title"),
   text: varchar("text").notNull(),
   text_clean: varchar("text_clean"),

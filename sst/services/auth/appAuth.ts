@@ -42,9 +42,11 @@ export async function getUser(event: APIGatewayProxyWebsocketEventV2WithRequestC
   if (connection_id) {
     if (routeKey == "$connect") {
       const user = await fromCognito(cognitoId)
-      await db.query(
-        sql`insert into ws_connections (user_id, connection_id) values (${user.id}, ${connection_id})`
-      )
+      await db.query(sql`
+        insert into ws_connections (user_id, connection_id) 
+        values (${user.id}, ${connection_id}) 
+        on conflict do nothing
+      `)
       return handled
     } else if (routeKey === "$disconnect") {
       await db.query(

@@ -1,4 +1,4 @@
-import {users} from './users'
+import {userId, users} from './users'
 import {
   pgTable,
   index,
@@ -8,13 +8,16 @@ import {
   boolean,
   integer
 } from 'drizzle-orm/pg-core';
+import {idCol} from "./utils";
 
 
 export const tags = pgTable('tags', {
-  id: uuid('id').defaultRandom().notNull().primaryKey(),
-  user_id: uuid('user_id').notNull().references(() => users.id, {onDelete: 'cascade'}),
+  id: idCol(),
+  user_id: userId(),
   name: varchar("name").notNull(),
   created_at: timestamp("created_at", {withTimezone: true}).defaultNow(),
+
+  // Save user's selected tags between sessions
   selected: boolean("selected").default(true),
   main: boolean("main").default(false),
   sort: integer("sort").default(0).notNull(),
