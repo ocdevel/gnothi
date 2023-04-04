@@ -58,7 +58,7 @@ export const EntryTag = z.object({
 export type EntryTag = z.infer<typeof EntryTag>
 
 export const routes = {
-  tags_list_request: new Route({
+  tags_list_request: {
     i: {
       e: 'tags_list_request',
       s: Passthrough,
@@ -70,8 +70,8 @@ export const routes = {
       t: {ws: true},
       keyby: "id"
     }
-  }),
-  tags_post_request: new Route({
+  },
+  tags_post_request: {
     i: {
       e: 'tags_post_request',
       s: tags_post_request,
@@ -86,8 +86,8 @@ export const routes = {
       op: "append",
       keyby: "id"
     }
-  }),
-  tags_put_request: new Route({
+  },
+  tags_put_request: {
     i: {
       e: 'tags_put_request',
       s: tags_put_request,
@@ -102,8 +102,8 @@ export const routes = {
       op: "update",
       keyby: "id"
     }
-  }),
-  tags_delete_request: new Route({
+  },
+  tags_delete_request: {
     i: {
       e: "tags_delete_request",
       s: tags_delete_request,
@@ -115,8 +115,8 @@ export const routes = {
       s: Passthrough,
       t: {ws: true},
     }
-  }),
-  tags_toggle_request: new Route({
+  },
+  tags_toggle_request: {
     i: {
       e: 'tags_toggle_request',
       s: tags_toggle_request,
@@ -129,5 +129,5 @@ export const routes = {
       op: "update",
       t: {ws: true},
     }
-  })
+  }
 }

@@ -1,12 +1,13 @@
 import {Routes} from '@gnothi/schemas'
-import {DB, raw} from '../../data/db'
+import {DB} from '../../data/db'
+import {Route} from '../types'
 
 const r = Routes.routes
 
-r.shares_ingress_list_request.fn = r.shares_ingress_list_request.fnDef.implement(async (req, context) => {
+export const shares_ingress_list_request = new Route(r.shares_ingress_list_request, async (req, context) => {
   return []
 })
 
-r.shares_egress_list_request.fn = r.shares_egress_list_request.fnDef.implement(async (req, context) => {
+export const shares_egress_list_request = new Route(r.shares_egress_list_request, async (req, context) => {
   return []
 })

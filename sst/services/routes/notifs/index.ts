@@ -1,12 +1,13 @@
 import {Routes} from '@gnothi/schemas'
-import {DB, raw} from '../../data/db'
+import {DB} from '../../data/db'
+import {Route} from '../types'
 
 const r = Routes.routes
 
-r.notifs_groups_list_request.fn = r.notifs_groups_list_request.fnDef.implement(async (req, context) => {
+export const notifs_groups_list_request = new Route(r.notifs_groups_list_request, async (req, context) => {
   return []
 })
 
-r.notifs_notes_list_request.fn = r.notifs_notes_list_request.fnDef.implement(async (req, context) => {
+export const notifs_notes_list_request = new Route(r.notifs_notes_list_request, async (req, context) => {
   return []
 })

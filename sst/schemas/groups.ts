@@ -83,7 +83,7 @@ export const GroupMessage = z.object({
 
 
 export const routes = {
-  groups_list_request: new Route({
+  groups_list_request: {
     i: {
       e: 'groups_list_request',
       s: z.object({}),
@@ -94,8 +94,8 @@ export const routes = {
       s: Group,
       t: {ws: true},
     }
-  }),
-  groups_get_request: new Route({
+  },
+  groups_get_request: {
     i: {
       e: 'groups_get_request',
       s: z.object({}),
@@ -106,8 +106,8 @@ export const routes = {
       s: Group,
       t: {ws: true},
     }
-  }),
-  groups_enter_request: new Route({
+  },
+  groups_enter_request: {
     i: {
       e: 'groups_enter_request',
       s: Passthrough,
@@ -118,8 +118,8 @@ export const routes = {
       s: Passthrough,
       t: {ws: true},
     }
-  }),
-  groups_members_list_request: new Route({
+  },
+  groups_members_list_request: {
     i: {
       e: 'groups_members_list_request',
       s: Passthrough,
@@ -131,8 +131,8 @@ export const routes = {
       t: {ws: true},
       keyby: 'users.id',
     }
-  }),
-  groups_mine_list_request: new Route({
+  },
+  groups_mine_list_request: {
     i: {
       e: 'groups_mine_list_request',
       s: Passthrough,
@@ -143,6 +143,5 @@ export const routes = {
       s: Group,
       t: {ws: true},
     }
-  }),
-
+  },
 }

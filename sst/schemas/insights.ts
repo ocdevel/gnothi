@@ -82,7 +82,7 @@ export const insights_prompt_response = Insight.extend({
 export type insights_prompt_response = z.infer<typeof insights_prompt_response>
 
 export const routes = {
-  insights_get_request: new Route({
+  insights_get_request: {
     i: {
       e: 'insights_get_request',
       s: insights_get_request,
@@ -95,8 +95,8 @@ export const routes = {
       t: {ws: true, background: true},
       keyby: 'view'
     }
-  }),
-  insights_get_response: new Route({
+  },
+  insights_get_response: {
     i: {
       e: 'insights_get_response',
       s: insights_get_response,
@@ -108,8 +108,8 @@ export const routes = {
       t: {ws: true},
       keyby: 'view'
     }
-  }),
-  insights_prompt_request: new Route({
+  },
+  insights_prompt_request: {
     i: {
       e: 'insights_prompt_request',
       s: insights_prompt_request,
@@ -122,7 +122,7 @@ export const routes = {
       t: {ws: true},
       keyby: 'view',
     }
-  }),
+  },
 
   // FIXME I'm breaking the Route system here, reconsider unidirectional routes
   insights_search_response: <DefO<any>>{

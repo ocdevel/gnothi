@@ -79,7 +79,7 @@ export const entries_delete_response = entries_list_response
 export type entries_delete_response = z.infer<typeof entries_delete_response>
 
 export const routes = {
-  entries_list_request: new Route({
+  entries_list_request: {
     i: {
       e: 'entries_list_request',
       s: entries_list_request,
@@ -91,8 +91,8 @@ export const routes = {
       t: {ws: true},
       keyby: 'id'
     },
-  }),
-  entries_put_request: new Route({
+  },
+  entries_put_request: {
     i: {
       e: 'entries_put_request',
       s: entries_put_request,
@@ -105,8 +105,8 @@ export const routes = {
       keyby: 'id',
       op: "update",
     },
-  }),
-  entries_post_request: new Route({
+  },
+  entries_post_request: {
     i: {
       e: 'entries_post_request',
       s: entries_post_request,
@@ -119,8 +119,8 @@ export const routes = {
       keyby: 'id',
       op: "prepend",
     },
-  }),
-  entries_upsert_response: new Route({
+  },
+  entries_upsert_response: {
     i: {
       e: 'entries_upsert_response',
       s: entries_upsert_response,
@@ -136,8 +136,8 @@ export const routes = {
       keyby: 'id',
       op: "update"
     },
-  }),
-  entries_delete_request: new Route({
+  },
+  entries_delete_request: {
     i: {
       e: 'entries_delete_request',
       s: entries_delete_request,
@@ -151,5 +151,5 @@ export const routes = {
       keyby: 'id',
       op: "delete"
     }
-  })
+  }
 }

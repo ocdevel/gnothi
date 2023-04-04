@@ -31,7 +31,7 @@ export type auth_register_response = z.infer<typeof auth_register_response>
 
 
 export const routes = {
-  auth_login_request: new Route({
+  auth_login_request: {
     i: {
       s: auth_login_request,
       e: 'auth_login_request',
@@ -42,8 +42,8 @@ export const routes = {
       e: 'auth_login_response',
       t: {http: true},
     }
-  }),
-  auth_register_request: new Route({
+  } as Route,
+  auth_register_request: {
     i: {
       s: auth_register_request,
       e: 'auth_register_request',
@@ -54,5 +54,5 @@ export const routes = {
       e: 'auth_register_response',
       t: {http: true},
     }
-  })
+  } as Route
 }

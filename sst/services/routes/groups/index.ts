@@ -1,17 +1,18 @@
 import {Routes} from '@gnothi/schemas'
-import {DB, raw} from '../../data/db'
+import {DB} from '../../data/db'
+import {Route} from '../types'
 
 const r = Routes.routes
 
-r.groups_enter_request.fn = r.groups_enter_request.fnDef.implement(async (req, context) => {
+export const groups_enter_request = new Route(r.groups_enter_request, async (req, context) => {
   context.handleReq({event: "groups_get_request", data: {}}, context)
   context.handleReq({event: "groups_members_list_request", data: {}}, context)
 })
 
-r.groups_list_request.fn = r.groups_list_request.fnDef.implement(async (req, context) => {
+export const groups_list_request = new Route(r.groups_list_request, async (req, context) => {
   return []
 })
 
-r.groups_mine_list_request.fn = r.groups_mine_list_request.fnDef.implement(async (req, context) => {
+export const groups_mine_list_request = new Route(r.groups_mine_list_request, async (req, context) => {
   return []
 })

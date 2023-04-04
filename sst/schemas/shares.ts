@@ -46,7 +46,7 @@ export const shares_egress_list_response = Share
 export type shares_egress_list_response = z.infer<typeof shares_egress_list_response>
 
 export const routes = {
-  shares_ingress_list_request: new Route({
+  shares_ingress_list_request: {
     i: {
       e: 'shares_ingress_list_request',
       s: Passthrough,
@@ -56,8 +56,8 @@ export const routes = {
       s: shares_ingress_list_response,
       keyby: "obj_id"
     }
-  }),
-  shares_egress_list_request: new Route({
+  },
+  shares_egress_list_request: {
     i: {
       e: "shares_egress_list_request",
       s: Passthrough,
@@ -67,5 +67,5 @@ export const routes = {
       s: shares_egress_list_response,
     }
 
-  })
+  }
 }

@@ -56,7 +56,7 @@ export const users_list_response = User.pick({
 export type users_list_response = z.infer<typeof users_list_response>
 
 export const routes = {
-  users_everything_request: new Route({
+  users_everything_request: {
     i: {
       e: 'users_everything_request',
       s: Passthrough,
@@ -66,8 +66,8 @@ export const routes = {
       e: 'void',
       s: z.void(),
     }
-  }),
-  users_list_request: new Route({
+  },
+  users_list_request: {
     i: {
       e: 'users_list_request',
       s: Passthrough,
@@ -76,7 +76,7 @@ export const routes = {
       e: 'users_list_response',
       s: users_list_response,
     }
-  }),
+  },
 }
 
 

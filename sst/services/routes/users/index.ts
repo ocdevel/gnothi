@@ -1,9 +1,10 @@
 import {db} from '../../data/dbSingleton'
 import {Routes} from '@gnothi/schemas'
+import {Route} from '../types'
 
 const r = Routes.routes
 
-r.users_everything_request.fn = r.users_everything_request.fnDef.implement(async (req, context) => {
+export const users_everything_request = new Route(r.users_everything_request, async (req, context) => {
   await Promise.all(([
     'users_list_request',
     'tags_list_request',
@@ -21,7 +22,7 @@ r.users_everything_request.fn = r.users_everything_request.fnDef.implement(async
   return []
 })
 
-r.users_list_request.fn = r.users_list_request.fnDef.implement(async function(req, context) {
+export const users_list_request = new Route(r.users_list_request,async function(req, context) {
   // main user always comes first
   const users =  [context.user]
 

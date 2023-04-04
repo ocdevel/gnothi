@@ -10,7 +10,7 @@ export const WsConnection = z.object({
 export type WsConnection = z.infer<typeof WsConnection>
 
 export const routes = {
-  wipe_request: new Route({
+  wipe_request: {
     i: {
       s: Passthrough,
       e: 'wipe_request',
@@ -21,5 +21,5 @@ export const routes = {
       e: 'void',
       t: {ws: true},
     }
-  })
+  }
 }

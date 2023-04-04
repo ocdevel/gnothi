@@ -105,7 +105,7 @@ export const fields_entries_post_response = fields_entries_list_response
 export type fields_entries_post_response = z.infer<typeof fields_entries_post_response>
 
 export const routes = {
-  fields_list_request: new Route({
+  fields_list_request: {
     i: {
       e: 'fields_list_request',
       s: fields_list_request,
@@ -117,8 +117,8 @@ export const routes = {
       s: fields_list_response,
       t: {ws: true},
     }
-  }),
-  fields_post_request: new Route({
+  },
+  fields_post_request: {
     i: {
       e: 'fields_post_request',
       s: fields_post_request,
@@ -132,10 +132,10 @@ export const routes = {
       event_as: 'fields_list_response',
       op: 'append'
     }
-  }),
+  },
 
 
-  fields_entries_list_request: new Route({
+  fields_entries_list_request: {
     i: {
       e: 'fields_entries_list_request',
       s: Passthrough,
@@ -148,9 +148,9 @@ export const routes = {
       t: {ws: true},
       keyby: 'field_id',
     }
-  }),
+  },
 
-  fields_entries_post_request: new Route({
+  fields_entries_post_request: {
     i: {
       e: 'fields_entries_post_request',
       s: fields_entries_post_request,
@@ -164,6 +164,6 @@ export const routes = {
       keyby: 'field_id',
       event_as: 'fields_entries_list_response'
     }
-  }),
+  },
 
 }

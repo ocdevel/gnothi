@@ -16,7 +16,7 @@ export const notifs_notes_list_response = Notif
 export type notifs_notes_list_response = z.infer<typeof notifs_notes_list_response>
 
 export const routes = {
-  notifs_groups_list_request: new Route({
+  notifs_groups_list_request: {
     i: {
       e: 'notifs_groups_list_request',
       s: Passthrough,
@@ -26,8 +26,8 @@ export const routes = {
       s: Notif,
       keyby: "obj_id"
     },
-  }),
-  notifs_notes_list_request: new Route({
+  },
+  notifs_notes_list_request: {
     i: {
       e: 'notifs_notes_list_request',
       s: Passthrough,
@@ -37,8 +37,8 @@ export const routes = {
       s: Notif,
       keyby: "obj_id"
     },
-  }),
-  notifs_shares_list_request: new Route({
+  },
+  notifs_shares_list_request: {
     i: {
       e: 'notifs_shares_list_request',
       s: Passthrough,
@@ -48,5 +48,5 @@ export const routes = {
       s: Notif,
       keyby: "obj_id"
     },
-  })
+  }
 }

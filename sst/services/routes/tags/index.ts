@@ -2,11 +2,12 @@ import {Routes} from '@gnothi/schemas'
 import {Tag} from '@gnothi/schemas/tags'
 import {db} from '../../data/dbSingleton'
 import {GnothiError} from "../errors";
+import {Route} from '../types'
 import {sql} from 'drizzle-orm/sql'
 
 const r = Routes.routes
 
-r.tags_list_request.fn = r.tags_list_request.fnDef.implement(async (req, context) => {
+export const tags_list_request = new Route(r.tags_list_request, async (req, context) => {
   const tags = await db.query(
     sql`select * from tags where user_id=${context.user.id} order by sort asc`
   )
@@ -14,7 +15,7 @@ r.tags_list_request.fn = r.tags_list_request.fnDef.implement(async (req, context
 })
 
 
-r.tags_post_request.fn = r.tags_post_request.fnDef.implement(async (req, context) => {
+export const tags_post_request = new Route(r.tags_post_request, async (req, context) => {
   const tag = await db.query(sql`
     insert into tags (name, user_id, sort) 
     values (
@@ -29,7 +30,7 @@ r.tags_post_request.fn = r.tags_post_request.fnDef.implement(async (req, context
   return tag
 })
 
-r.tags_put_request.fn = r.tags_put_request.fnDef.implement(async (req, context) => {
+export const tags_put_request = new Route(r.tags_put_request, async (req, context) => {
   const tag = await db.query(sql`
     update tags set name=${req.name}, ai_index=${req.ai_index}, ai_summarize=${req.ai_summarize}, sort=${req.sort}
     where user_id=${context.user.id} and id=${req.id}
@@ -39,7 +40,7 @@ r.tags_put_request.fn = r.tags_put_request.fnDef.implement(async (req, context) 
   return tag
 })
 
-r.tags_delete_request.fn = r.tags_delete_request.fnDef.implement(async (req, context) => {
+export const tags_delete_request = new Route(r.tags_delete_request, async (req, context) => {
   const params = []
   const [tag, entries] = await Promise.all([
     db.query<Tag>(sql`select * from tags where id=${req.id}`),
@@ -57,7 +58,7 @@ r.tags_delete_request.fn = r.tags_delete_request.fnDef.implement(async (req, con
   return null
 })
 
-r.tags_toggle_request.fn = r.tags_toggle_request.fnDef.implement(async (req, context) => {
+export const tags_toggle_request = new Route(r.tags_toggle_request, async (req, context) => {
   // update returning: https://stackoverflow.com/questions/7923237/return-pre-update-column-values-using-sql-only
   return db.query(
     sql`update tags x set selected=(not y.selected)

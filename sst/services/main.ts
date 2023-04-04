@@ -5,10 +5,11 @@ import {
   APIGatewayProxyHandlerV2WithJWTAuthorizer,
   APIGatewayProxyWebsocketEventV2WithRequestContext
 } from "aws-lambda"
-import {Routes, Api, Events, Users} from '@gnothi/schemas'
+import {Api, Events, Users} from '@gnothi/schemas'
+import {FnContext} from './routes/types'
 import {Handlers} from './aws/handlers'
 import * as auth from './auth/appAuth'
-import './routes'
+import routes from './routes'
 import {CantSnoop, GnothiError} from "./routes/errors";
 import {z} from 'zod'
 
@@ -71,12 +72,12 @@ export async function main({req, context}: ReqParsed): Promise<RecordResult> {
 // ------- Step 3: Main handler of event -------
 // Handle individual request. Separate function than above so we can pass itself
 // around to sub routes
-const handleReq: Api.FnContext['handleReq'] = async (req, fnContext) => {
+const handleReq: FnContext['handleReq'] = async (req, fnContext) => {
   // handling was skipped, eg OPTIONS or favicon
   if (!req) {return null}
 
   console.log("handleReq", req)
-  const route = Routes.routes[req.event]
+  const route = routes[req.event]
   if (!route) {
     throw new GnothiError({message: `No route found for ${req.event}`})
   }
@@ -111,7 +112,7 @@ const handleReq: Api.FnContext['handleReq'] = async (req, fnContext) => {
 }
 
 // ------- Step 4: Send the final result -------
-const handleRes: Api.FnContext['handleRes'] = async (def, res, fnContext) => {
+const handleRes: FnContext['handleRes'] = async (def, res, fnContext) => {
   let final: RecordResult = null
   console.log("handleRes", def.e, res)
   const resFull = {
