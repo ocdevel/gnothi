@@ -1,4 +1,4 @@
-import {boolean, index, pgTable, varchar, uuid, primaryKey} from "drizzle-orm/pg-core";
+import {boolean, index, pgTable, varchar, uuid, primaryKey, InferModel} from "drizzle-orm/pg-core";
 import {idCol, tsCol} from "./utils";
 import {userId, users} from "./users";
 import {tags} from './tags'
@@ -33,6 +33,8 @@ export const shares = pgTable('shares', {
   }
 })
 
+export type Share = InferModel<typeof shares>
+
 export const sharesTags = pgTable('shares_tags', {
   share_id: uuid("share_id").notNull().references(() => shares.id, {onDelete: 'cascade'}),
   tag_id: uuid("tag_id").notNull().references(() => tags.id, {onDelete: 'cascade'}),
@@ -43,6 +45,8 @@ export const sharesTags = pgTable('shares_tags', {
   }
 })
 
+export type ShareTag = InferModel<typeof sharesTags>
+
 export const sharesUsers = pgTable('shares_users', {
   share_id: uuid("share_id").notNull().references(() => shares.id, {onDelete: 'cascade'}),
   obj_id: uuid("obj_id").notNull().references(() => users.id, {onDelete: 'cascade'}),
@@ -51,3 +55,5 @@ export const sharesUsers = pgTable('shares_users', {
     pk: primaryKey(table.share_id, table.obj_id)
   }
 })
+
+export type ShareUser = InferModel<typeof sharesUsers>

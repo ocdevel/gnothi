@@ -1,6 +1,6 @@
   import {userId} from './users'
 
-import { pgTable, index, varchar } from 'drizzle-orm/pg-core';
+import {pgTable, index, varchar, InferModel} from 'drizzle-orm/pg-core';
 import {idCol} from './utils'
 
 export const people = pgTable('people', {
@@ -15,3 +15,5 @@ export const people = pgTable('people', {
     ix_people_user_id: index("ix_people_user_id").on(table.user_id),
   }
 })
+
+export type Person = InferModel<typeof people>

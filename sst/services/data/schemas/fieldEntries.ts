@@ -1,6 +1,19 @@
 import {users} from './users'
 
-import { pgTable, index, text, date, varchar, uuid, pgEnum, doublePrecision, timestamp, json, primaryKey } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  index,
+  text,
+  date,
+  varchar,
+  uuid,
+  pgEnum,
+  doublePrecision,
+  timestamp,
+  json,
+  primaryKey,
+  InferModel
+} from 'drizzle-orm/pg-core';
 
 import {fields} from "./fields"
 
@@ -19,3 +32,5 @@ export const fieldEntries = pgTable('field_entries2', {
     ix_field_entries2_field_id: index("ix_field_entries2_field_id").on(table.field_id),
   }
 })
+
+export type FieldEntry = InferModel<typeof fieldEntries>

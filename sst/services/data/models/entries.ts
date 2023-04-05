@@ -1,4 +1,4 @@
-import {Base} from './base'
+import {Base} from './index'
 import {GnothiError} from "../../routes/errors";
 import * as S from '@gnothi/schemas'
 import {boolMapToKeys} from '@gnothi/schemas/utils'
@@ -7,6 +7,8 @@ import dayjs from "dayjs";
 import {db} from "../dbSingleton";
 import {entries_list_response} from '@gnothi/schemas/entries'
 import {sql} from "drizzle-orm/sql"
+import {entries} from '../schemas/entries'
+import {entriesTags} from '../schemas/entriesTags'
 
 type EntriesListSQL = Omit<entries_list_response, 'tags'> & {
   // comes as json string
@@ -21,11 +23,12 @@ function tagsToBoolMap(tags: any): Record<string, boolean> {
 export class Entries extends Base {
   async getByIds(ids: string[]) {
     return db.query<entries_list_response>(
-      sql`select * from entries where id in ${ids} and user_id = ${this.uid}`
+      sql`select * from ${entries} where id in ${ids} and user_id = ${this.context.vid}`
     )
   }
 
   async filter(req: S.Entries.entries_list_request): Promise<entries_list_response[]> {
+    const {uid} = this.context
     const {tags, startDate, endDate} = req
     const tids = boolMapToKeys(tags)
 
@@ -43,9 +46,9 @@ export class Entries extends Base {
     const rows = await db.query<EntriesListSQL>(sql`
       select e.*,
           json_agg(et.*) as tags
-      from entries e
-             inner join entries_tags et on e.id = et.entry_id
-      where e.user_id = ${this.uid}
+      from ${entries} e
+             inner join ${entriesTags} et on e.id = et.entry_id
+      where e.user_id = ${uid}
         and e.created_at > ${startDate}::date
         and e.created_at <= ${endDate_}::date
         and et.tag_id in ${tids}
@@ -57,8 +60,9 @@ export class Entries extends Base {
   }
 
   async destroy(id: string) {
+    const {uid} = this.context
     return await db.queryFirst<entries_list_response>(
-      sql`delete from entries where id=${id} and user_id=${this.uid} returning *`
+      sql`delete from ${entries} where id=${id} and user_id=${uid} returning *`
     )
   }
 }

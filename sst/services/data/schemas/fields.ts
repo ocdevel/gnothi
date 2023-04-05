@@ -1,6 +1,6 @@
 import {users, userId} from './users'
 
-import { pgTable, index, varchar, uuid, pgEnum, doublePrecision, timestamp, json } from 'drizzle-orm/pg-core';
+import {pgTable, index, varchar, uuid, pgEnum, doublePrecision, timestamp, json, InferModel} from 'drizzle-orm/pg-core';
 import {idCol, tsCol} from './utils'
 
 export const fieldTypes = pgEnum('field_type', [
@@ -60,3 +60,5 @@ export const fields = pgTable('fields', {
     ix_fields_created_at: index("ix_fields_created_at").on(table.created_at),
   }
 })
+
+export type Field = InferModel<typeof fields>

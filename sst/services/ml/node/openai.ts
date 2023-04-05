@@ -23,11 +23,11 @@ export async function completion(
     const {prompt, ...rest} = opts
     const res = await openai.createChatCompletion({
       model: 'gpt-3.5-turbo',
-      temperature: 0.0,
+      temperature: 0.0, // 0.5
       max_tokens: 256, // 4096 - prompt.len - 256 = 0
       top_p: 1,
-      frequency_penalty: 1.,
-      presence_penalty: .25,
+      frequency_penalty: 1., // 2.0
+      presence_penalty: .25, // 1.0
       // best_of
       ...rest,
       messages: [

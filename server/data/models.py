@@ -71,60 +71,6 @@ class User(Base):
     tags = orm.relationship("Tag", order_by='Tag.name.asc()', **parent_cascade)
     groups = orm.relationship("Group", secondary="users_groups")
 
-    @staticmethod
-    def snoop(db, viewer, sid=None):
-        vid = viewer.id
-        if not sid or vid == sid:
-            return viewer, False
-        res = (
-            db.query(User, Share)
-            .select_from(User)
-            .join(Share)
-            .join(ShareUser, sa.and_(
-                Share.id == ShareUser.share_id,
-                Share.user_id == sid,
-                ShareUser.obj_id == vid,
-            ))
-            .first()
-        )
-        if not res:
-            return viewer, False
-        as_user = res[0]
-        as_user.share_data = res[1]
-        return as_user, True
-
-    def profile_to_text(self):
-        txt = ''
-        if self.gender:
-            txt += f"I am {self.gender}. "
-        if self.orientation and not re.match("straight", self.orientation, re.IGNORECASE):
-            txt += f"I am {self.orientation}. "
-        if self.bio:
-            txt += self.bio
-        for p in self.people:
-            whose = "" if "'" in p.relation.split(' ')[0] else "my "
-            txt += f"{p.name} is {whose}{p.relation}. "
-            if p.bio: txt += p.bio
-            # if p.issues: txt += f" {p.name} has these issues: {p.issues} "
-        txt = re.sub(r'\s+', ' ', txt)
-        # print(txt)
-        return txt
-
-    @staticmethod
-    def last_checkin(db):
-        return db.execute(f"""
-        select extract(
-            epoch FROM (now() - max(updated_at))
-        ) / 60 as mins
-        from users limit 1 
-        """).fetchone().mins or 99
-
-    @staticmethod
-    def tz(db, user_id):
-        return db.execute(sa.text(f"""
-        select coalesce(timezone, 'America/Los_Angeles') as tz
-        from users where id=:user_id
-        """), dict(user_id=user_id)).fetchone().tz
 
 
 class Entry(Base):

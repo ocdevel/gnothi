@@ -6,7 +6,7 @@ import {
   uuid,
   timestamp,
   boolean,
-  integer
+  integer, InferModel
 } from 'drizzle-orm/pg-core';
 import {idCol} from "./utils";
 
@@ -30,3 +30,5 @@ export const tags = pgTable('tags', {
     ix_tags_created_at: index("ix_tags_created_at").on(t.created_at),
   }
 })
+
+export type Tag = InferModel<typeof tags>

@@ -12,17 +12,11 @@ import * as auth from './auth/appAuth'
 import routes from './routes'
 import {CantSnoop, GnothiError} from "./routes/errors";
 import {z} from 'zod'
+import {db} from './data/dbSingleton'
+import {User, users} from './data/schemas/users'
 
 const defaultResponse: APIGatewayProxyResultV2 = {statusCode: 200, body: "{}"}
 type RecordResult = APIGatewayProxyResultV2 | null
-
-type ReqParsed = {
-  req: Api.Req,
-  context: {
-    connectionId?: string
-    user: Users.User
-  }
-}
 
 // ------- Step 1: Proxy event from AWS -------
 // Takes AWS proxy events (APIG WS/HTTP, SNS, etc) and passes them to the main function.
@@ -35,37 +29,50 @@ export async function proxy(
   context
 ): Promise<APIGatewayProxyResultV2> {
   const {user, handled} = await auth.getUser(event, context)
+
   if (handled) { return defaultResponse }
   const triggerIn = Handlers.whichHandler(event, context)
   const handler = Handlers.handlers[triggerIn]
   const records = await handler.parse(event)
-  const responses = await Promise.all(
-    records.map(async req => main({
+  const responses = await Promise.all(records.map(async req => {
+    return main({
       req,
       context: {
         connectionId: event.requestContext?.connectionId,
         user,
       }
-    }))
-  )
+    })
+  }))
   return responses.find(r => !!r) || defaultResponse
 }
 
 // ------- Step 2: Main handler of event -------
 // Either handle one record from the AWS proxy event, or handle a Lambda directly
+type ReqParsed = {
+  req: Api.Req,
+  context: {
+    connectionId?: string
+    user: User
+  }
+}
 export async function main({req, context}: ReqParsed): Promise<RecordResult> {
-  const {user} = context
+  const {connectionId, user} = context
   if (!user) {
     throw new Error("User not found in appAuth.ts")
   }
-  return await handleReq(req, {
-    ...context,
-    viewer: context.user, // TODO
-    snooping: false, // TODO
+
+  const fnContext = new FnContext({
+    db,
+    user,
+    vid: req.as_user,
+    connectionId,
     // TODO handle this later instead, set toUids or something which pulls from DB
     handleReq,
-    handleRes
+    handleRes,
   })
+  await fnContext.init()
+
+  return await handleReq(req, fnContext)
 
 }
 

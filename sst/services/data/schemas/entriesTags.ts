@@ -3,7 +3,7 @@ import {entries} from './entries'
 import {
   pgTable,
   uuid,
-  primaryKey
+  primaryKey, InferModel
 } from 'drizzle-orm/pg-core';
 
 
@@ -16,3 +16,6 @@ export const entriesTags = pgTable('entries_tags', {
     pk: primaryKey(t.entry_id, t.tag_id)
   }
 })
+
+
+export type EntryTag = InferModel<typeof entriesTags>

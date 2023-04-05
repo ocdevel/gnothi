@@ -7,7 +7,7 @@ import {
   date,
   boolean,
   integer,
-  primaryKey
+  primaryKey, InferModel
 } from 'drizzle-orm/pg-core';
 import {users} from './users'
 
@@ -19,3 +19,5 @@ export const wsConnections = pgTable('ws_connections', {
     ix_ws_connections_user_id: index("ix_ws_connections_user_id").on(table.user_id),
   }
 })
+
+export type WsConnection = InferModel<typeof wsConnections>

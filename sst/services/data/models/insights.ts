@@ -1,11 +1,10 @@
 import {Base} from './base'
-import {db} from '../dbSingleton'
 import * as S from '@gnothi/schemas'
 import {GnothiError} from "../../routes/errors";
 import {boolMapToKeys} from '@gnothi/schemas/utils'
 // @ts-ignore
 import dayjs from "dayjs";
-import {Entry} from '@gnothi/schemas/entries'
+import {entries, Entry} from '../schemas/entries'
 import {sql} from "drizzle-orm/sql"
 
 // prioritize clean-text, worst-case markdown
@@ -27,9 +26,11 @@ export function getParas(e: Entry): string[] {
 
 export class Insights extends Base {
   async entriesByIds(entry_ids: string[]) {
-    return db.query<S.Entries.Entry>(
-      sql`select text_clean, ai_text, text_paras, text from entries 
-        where user_id=${this.uid} and id in ${entry_ids} order by created_at asc`
+    const {uid} = this.context
+    const {drizzle} = this.context.db
+    return drizzle.execute<Entry>(
+      sql`select text_clean, ai_text, text_paras, text from ${entries} 
+        where user_id=${uid} and id in ${entry_ids} order by created_at asc`
     )
   }
 }

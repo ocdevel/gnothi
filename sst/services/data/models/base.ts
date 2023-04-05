@@ -1,14 +1,17 @@
 import {sql} from "drizzle-orm/sql"
+import {Users} from './users'
+import {users, User} from '../schemas/users'
+import {FnContext} from "../../routes/types";
+import {DB} from '../db'
+
 export class Base {
-  uid: string
-  vid: string | undefined
-  snooping: boolean
+  context: FnContext
 
   // NOTE!! Wherever this is used, make sure the $param order is respected
-  with_tz(user_id: string) {
+  with_tz() {
     return sql`with with_tz as (
       select id, coalesce(timezone, 'America/Los_Angeles') as tz
-      from users where id=${user_id}
+      from ${users} where id=${this.context.vid}
     )`
   }
   at_tz = sql`at time zone with_tz.tz`
@@ -21,9 +24,7 @@ export class Base {
     return sql`coalesce(${day || null} ::timestamp at time zone with_tz.tz, now())`
   }
 
-  constructor(uid: string, vid?: string) {
-    this.uid = uid
-    this.vid = vid
-    this.snooping = vid && vid !== uid
+  constructor(context: FnContext) {
+    this.context = context
   }
 }

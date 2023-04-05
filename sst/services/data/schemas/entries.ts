@@ -1,4 +1,18 @@
-import { pgTable, index, text, integer, date, varchar, uuid, pgEnum, doublePrecision, timestamp, json, primaryKey } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  index,
+  text,
+  integer,
+  date,
+  varchar,
+  uuid,
+  pgEnum,
+  doublePrecision,
+  timestamp,
+  json,
+  primaryKey,
+  InferModel
+} from 'drizzle-orm/pg-core';
 import {users, userId} from './users'
 import {idCol, tsCol} from './utils'
 
@@ -30,3 +44,5 @@ export const entries = pgTable('entries', {
     ix_entries_updated_at: index("ix_entries_updated_at").on(table.updated_at),
   }
 })
+
+export type Entry = InferModel<typeof entries>

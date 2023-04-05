@@ -42,7 +42,7 @@ export const routes = {
       e: 'auth_login_response',
       t: {http: true},
     }
-  } as Route,
+  },
   auth_register_request: {
     i: {
       s: auth_register_request,
@@ -54,5 +54,5 @@ export const routes = {
       e: 'auth_register_response',
       t: {http: true},
     }
-  } as Route
+  }
 }
