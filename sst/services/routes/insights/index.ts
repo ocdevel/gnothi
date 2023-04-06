@@ -16,7 +16,6 @@ import {themes} from '../../ml/node/themes'
 import {boolMapToKeys} from '@gnothi/schemas/utils'
 import {getParas, getSummary, getText, Insights} from '../../data/models/insights'
 import {Route} from '../types'
-import * as M from "../../data/models";
 import {ulid} from "ulid";
 
 const r = S.Routes.routes
@@ -83,7 +82,7 @@ export const insights_get_response = new Route(r.insights_get_response,async (re
 
 
 export const insights_prompt_request = new Route(r.insights_prompt_request,async (req, context) => {
-  const mInsights = new Insights(context.user.id)
+  const mInsights = context.m.insights
   const entries = await mInsights.entriesByIds(req.entry_ids)
   const {prompt, view} = req
 

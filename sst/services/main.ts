@@ -28,7 +28,7 @@ export async function proxy(
   event: APIGatewayProxyWebsocketEventV2WithRequestContext<any>,
   context
 ): Promise<APIGatewayProxyResultV2> {
-  const {user, handled} = await auth.getUser(event, context)
+  const {user, handled} = await auth.getUser(event, context, db)
 
   if (handled) { return defaultResponse }
   const triggerIn = Handlers.whichHandler(event, context)

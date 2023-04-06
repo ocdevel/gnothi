@@ -9,12 +9,14 @@ import { and, asc, desc, eq, or } from 'drizzle-orm/expressions';
 
 export class Fields extends Base {
   async list() {
-    const res = await db.drizzle.select().from(fields).where(eq(fields.user_id, this.uid))
+    const {drizzle} = this.context.db
+    const res = await drizzle.select().from(fields).where(eq(fields.user_id, this.uid))
     return res.map(db.removeNull)
   }
 
   async post(req: S.Fields.fields_post_request) {
-    const res = await db.drizzle.insert(fields).values({
+    const {drizzle} = this.context.db
+    const res = await drizzle.insert(fields).values({
       name: req.name,
       type: req.type,
       default_value: req.default_value,
@@ -25,10 +27,10 @@ export class Fields extends Base {
   }
 
   async entriesList(req: S.Fields.fields_entries_list_request) {
-    const uid = this.uid
+    const {uid} = this.context
     const day = req.day
     return db.query<S.Fields.fields_list_response>(sql`
-      ${this.with_tz(uid)}
+      ${this.with_tz()}
       select fe.* from ${fieldEntries} fe
       inner join with_tz on with_tz.id=fe.user_id 
       where fe.user_id=${uid}
@@ -38,10 +40,10 @@ export class Fields extends Base {
   }
 
   async entriesPost(req: S.Fields.fields_entries_post_request) {
-    const {uid} = this
+    const {uid} = this.context
     const {day, field_id, value} = req
     return db.query(sql`
-      ${this.with_tz(uid)}
+      ${this.with_tz()}
       insert into ${fieldEntries} (user_id, field_id, value, day, created_at)
       select ${uid}, ${field_id}, ${value}, date(${this.tz_read(day)}), ${this.tz_write(day)}
       from with_tz

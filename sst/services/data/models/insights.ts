@@ -26,8 +26,8 @@ export function getParas(e: Entry): string[] {
 
 export class Insights extends Base {
   async entriesByIds(entry_ids: string[]) {
-    const {uid} = this.context
-    const {drizzle} = this.context.db
+    const {uid, db} = this.context
+    const {drizzle} = db
     return drizzle.execute<Entry>(
       sql`select text_clean, ai_text, text_paras, text from ${entries} 
         where user_id=${uid} and id in ${entry_ids} order by created_at asc`

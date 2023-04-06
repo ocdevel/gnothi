@@ -13,6 +13,9 @@ import {User, users} from '../data/schemas/users'
 import {WsConnection, wsConnections} from '../data/schemas/wsConnections'
 
 import {Users} from '../data/models/users'
+import {Entries} from '../data/models/entries'
+import {Fields} from '../data/models/fields'
+import {Insights} from '../data/models/insights'
 
 import {Events} from '@gnothi/schemas/events'
 import {DB} from '../data/db'
@@ -28,23 +31,6 @@ import {
 
 
 type RecordResult = APIGatewayProxyResultV2 | null
-
-// export type FnContext = {
-//   db: DB
-//   m: M
-//
-//   user: User
-//   viewer: { user: User, share?: Share }
-//   snooping: boolean
-//
-//   everyone?: false
-//
-//   requestId?: string
-//   finalRes?: unknown
-//   connectionId?: string
-//   handleRes: <T extends z.ZodTypeAny = any>(def: DefO<T>, res: Partial<Res<T>>, fnContext: FnContext) => Promise<RecordResult>
-//   handleReq: (req: Req, fnContext: FnContext) => Promise<RecordResult>
-// }
 
 type Viewer = { user: User, share?: Share }
 type HandleRes = <T extends z.ZodTypeAny = any>(def: DefO<T>, res: Partial<Res<T>>, fnContext: FnContext) => Promise<RecordResult>
@@ -92,8 +78,6 @@ export class FnContext {
     tags,
     users,
     wsConnections,
-
-
   }
 
   // Instantiate models as properties to the FnContext. This allows the models context-access
@@ -101,6 +85,9 @@ export class FnContext {
   // every model method
   m: {
     users: Users
+    entries: Entries
+    fields: Fields
+    insights: Insights
   }
 
   user: User
@@ -122,9 +109,11 @@ export class FnContext {
     this.handleRes = handleRes
     this.handleReq = handleReq
 
-    this.s = {users}
     this.m = {
-      users: new Users(this)
+      users: new Users(this),
+      entries: new Entries(this),
+      fields: new Fields(this),
+      insights: new Insights(this),
     }
   }
 

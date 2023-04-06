@@ -17,7 +17,7 @@ import {FnContext} from "../routes/types";
 import {DB} from "../data/db";
 
 async function getFromCognito(db: DB, cognito_id: string): Promise<User> {
-  const res = db.drizzle.select()
+  const res = await db.drizzle.select()
     .from(users)
     .where(eq(users.cognito_id, cognito_id))
   return res[0]
@@ -28,16 +28,17 @@ type GetUser = {
   user?: User
 }
 
-type GetUserContext = Context & { db: DB }
-export async function getUser(event: APIGatewayProxyWebsocketEventV2WithRequestContext<any>, context: GetUserContext) : Promise<GetUser> {
+export async function getUser(
+  event: APIGatewayProxyWebsocketEventV2WithRequestContext<any>,
+  context: Context,
+  db: DB
+) : Promise<GetUser> {
   // Check if exists from custom websocket authorizer
   const cognitoId = event.requestContext?.authorizer?.userId ||
     // or from outa-the-box HTTP jwt authorizer
     event.requestContext.authorizer?.jwt?.claims?.sub;
   const routeKey = event.requestContext?.routeKey
   const connection_id = event.requestContext?.connectionId
-
-  const {db} = context
 
   // return this if this function did everything the call needed; don't continue.
   // Eg, ws connect & disconnect handle everything here

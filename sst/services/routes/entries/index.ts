@@ -1,11 +1,10 @@
-import * as S from '@gnothi/schemas'
-import * as M from '../../data/models'
 import {Route, FnContext} from '../types'
+import * as S from '@gnothi/schemas'
 import {boolMapToKeys} from '@gnothi/schemas/utils'
 import {GnothiError} from "../errors";
 import {db} from "../../data/dbSingleton";
 import {entriesTags} from "../../data/schemas/entriesTags";
-import {entries} from "../../data/schemas/entries";
+import {entries, Entry} from "../../data/schemas/entries";
 import {sql} from "drizzle-orm/sql";
 import {preprocess} from "../../ml/node/preprocess";
 import {summarizeEntry} from "../../ml/node/summarize";
@@ -14,13 +13,11 @@ import {upsert} from "../../ml/node/upsert";
 const r = S.Routes.routes
 
 export const entries_list_request = new Route(r.entries_list_request, async (req, context) => {
-  const mEntries = new M.Entries(context.user.id)
-  return mEntries.filter(req)
+  return context.m.entries.filter(req)
 })
 
 export const entries_delete_request = new Route(r.entries_delete_request, async (req, context) => {
-  const mEntries = new M.Entries(context.user.id)
-  return mEntries.destroy(req.id)
+  return context.m.entries.destroy(req.id)
 })
 
 
@@ -60,22 +57,24 @@ async function upsertOuter(
   return [{...dbEntry, tags}]
 }
 
-export const entries_post_request = new Route(r.entries_post_request, async (req, context: S.Api.FnContext) => {
+export const entries_post_request = new Route(r.entries_post_request, async (req, context) => {
+  const {drizzle} = context.db
   return upsertOuter(req, context, async (entry) => {
-    return db.drizzle.insert(entries).values(entry)
+    return drizzle.insert(entries).values(entry)
   })
 })
 
 
-export const entries_put_request = new Route(r.entries_put_request, async (req, context: S.Api.FnContext) => {
+export const entries_put_request = new Route(r.entries_put_request, async (req, context) => {
   const {id} = req
+  const {db, s} = context
   return upsertOuter(req, context, async ({title, text, user_id}) => {
     // FIXME insecure. x-ref user-id with inner join
     await db.query(
-      sql`delete from entries_tags where entry_id=${id}`
+      sql`delete from ${s.entriesTags} where entry_id=${id}`
     )
     return db.queryFirst<S.Entries.Entry>(sql`
-      update entries set title=${title}, text=${text} 
+      update ${s.entries} set title=${title}, text=${text} 
       where id=${id} and user_id=${user_id} 
       returning *
     `)
