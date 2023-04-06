@@ -1,4 +1,4 @@
-import {Base} from './index'
+import {Base} from './base'
 import {GnothiError} from "../../routes/errors";
 import * as S from '@gnothi/schemas'
 import {boolMapToKeys} from '@gnothi/schemas/utils'
@@ -6,9 +6,21 @@ import {boolMapToKeys} from '@gnothi/schemas/utils'
 import dayjs from "dayjs";
 import {db} from "../dbSingleton";
 import {entries_list_response} from '@gnothi/schemas/entries'
-import {sql} from "drizzle-orm/sql"
-import {entries} from '../schemas/entries'
+import {eq, and, or, not, inArray, lt, asc, desc} from 'drizzle-orm/pg-core/expressions'
+import {sql, SQL} from "drizzle-orm/sql"
+import {entries, Entry} from '../schemas/entries'
 import {entriesTags} from '../schemas/entriesTags'
+import {InferModel} from "drizzle-orm/pg-core";
+
+type Snoop = {
+  sid: string
+  entry_id?: string
+  group_id?: string
+  order_by?: SQL
+  tags?: string[]
+  days?: number
+  for_ai?: boolean
+}
 
 type EntriesListSQL = Omit<entries_list_response, 'tags'> & {
   // comes as json string
@@ -64,5 +76,67 @@ export class Entries extends Base {
     return await db.queryFirst<entries_list_response>(
       sql`delete from ${entries} where id=${id} and user_id=${uid} returning *`
     )
+  }
+
+  async snoop({sid, entry_id, group_id, order_by, tags, days, for_ai}: Snoop): Promise<Entry[]> {
+    const {s, db, snooping, vid} = this.context
+    const {drizzle} = db
+
+    let q;
+
+    if (snooping) {
+      q = drizzle.select().from(s.entries)
+        .innerJoin(s.entriesTags, eq(s.entriesTags.entry_id, s.entries.id))
+        .innerJoin(s.sharesTags, eq(s.sharesTags.tag_id, s.entriesTags.tag_id))
+        .innerJoin(s.shares, eq(s.shares.id, s.sharesTags.share_id))
+        .innerJoin(s.sharesUsers, eq(s.sharesUsers.share_id, s.shares.id))
+        .where(and(
+          eq(s.sharesUsers.obj_id, vid),
+          eq(s.shares.user_id, sid)
+        ))
+    // } else if (group_id) {
+    //   q = db.query(Entry)
+    //     .join(EntryTag)
+    //     .join(ShareTag, ShareTag.tag_id == EntryTag.tag_id)
+    //     .join(ShareGroup, sa.and_(
+    //       ShareGroup.share_id == ShareTag.share_id,
+    //       ShareGroup.obj_id == group_id
+    //     ))
+    //     .join(UserGroup, sa.and_(
+    //       UserGroup.group_id == ShareGroup.obj_id,
+    //       UserGroup.user_id == vid
+    //     ));
+    } else {
+      q = drizzle.select().from(s.entries).where(eq(s.entries.user_id, vid))
+    }
+
+    if (entry_id) {
+      q = q.where(eq(s.entries.id, entry_id))
+    }
+
+    if (for_ai) {
+      // q = q.filter(Entry.no_ai.isnot(True));
+      q = q.where(not(sql`${s.entries.no_ai}=true`))
+    }
+
+    if (tags) {
+      if (!snooping) {
+        q = q.innerJoin(s.entriesTags, eq(s.entries.id, s.entriesTags.entry_id))
+          .innerJoin(s.tags, eq(s.entriesTags.tag_id, s.tags.id))
+      }
+      q = q.where(inArray(s.entriesTags.tag_id, tags))
+    }
+
+    if (days) {
+      const now = new Date();
+      const x_days = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+      q = q.where(lt(s.entries.created_at, x_days))
+      order_by = asc(s.entries.created_at)
+    }
+
+    if (!order_by) {
+      order_by = desc(s.entries.created_at);
+    }
+    return q.order_by(order_by);
   }
 }
