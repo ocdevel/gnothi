@@ -161,6 +161,9 @@ export const eventsSlice: StateCreator<
       // 1. Reconstruct the hash
       if (~['update', 'prepend', 'append'].indexOf(op)) {
         updates.hash = {...current.hash, ...updates.hash}
+      } else if (op === 'delete') {
+        // From current.hash, remove each item keyed by updates.ids. Assign to updates.hash
+        updates.hash = _.omit(current.hash, updates.ids)
       }
 
       // 2. Reconstruct ids
@@ -170,8 +173,11 @@ export const eventsSlice: StateCreator<
         updates.ids = [...updates.ids, ...current.ids]
       } else if (op === 'append') {
         updates.ids = [...current.ids, ...updates.ids]
+      } else if (op === "delete") {
+        // remove updates.ids from current.ids, assign to updates.ids
+        updates.ids = current.ids.filter((id: string) => !~updates.ids.indexOf(id))
       } else {
-        throw "What am I missing?"
+        throw `What am I missing? op=${op}`
       }
 
       // 3. Reconstruct rows

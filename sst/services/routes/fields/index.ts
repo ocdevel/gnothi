@@ -14,6 +14,13 @@ export const fields_post_request = new Route(r.fields_post_request, async (req, 
   return context.m.fields.post(req)
 })
 
+export const fields_put_request = new Route(r.fields_put_request, async (req, context) => {
+  return context.m.fields.put(req)
+})
+
+export const fields_delete_request = new Route(r.fields_delete_request, async (req, context) => {
+  return context.m.fields.delete(req)
+})
 
 export const fields_entries_list_request = new Route(r.fields_entries_list_request, async (req, context) => {
   return context.m.fields.entriesList(req)

@@ -83,6 +83,10 @@ export const fields_post_request = Field.pick({
   default_value_value: true,
 })
 export type fields_post_request = z.infer<typeof fields_post_request>
+export const fields_put_request = fields_post_request.extend({
+  id: IdCol,
+})
+export type fields_put_request = z.infer<typeof fields_put_request>
 
 export const fields_list_request = Passthrough
 export type fields_list_request = z.infer<typeof fields_list_request>
@@ -100,9 +104,17 @@ export const fields_entries_post_request = FieldEntry.pick({
   day: true,
   value: true
 })
+export const fields_delete_request = z.object({
+  id: IdCol
+})
+export type fields_delete_request = z.infer<typeof fields_delete_request>
+// export const fields_delete_response = fields_delete_request
+// export type fields_delete_response = z.infer<typeof fields_delete_response>
+
 export type fields_entries_post_request = z.infer<typeof fields_entries_post_request>
 export const fields_entries_post_response = fields_entries_list_response
 export type fields_entries_post_response = z.infer<typeof fields_entries_post_response>
+
 
 export const routes = {
   fields_list_request: {
@@ -116,6 +128,7 @@ export const routes = {
       e: 'fields_list_response',
       s: fields_list_response,
       t: {ws: true},
+      keyby: "id"
     }
   },
   fields_post_request: {
@@ -130,10 +143,41 @@ export const routes = {
       s: fields_list_response,
       t: {ws: true},
       event_as: 'fields_list_response',
-      op: 'append'
+      op: 'append',
+      keyby: "id"
     }
   },
-
+  fields_put_request: {
+    i: {
+      e: 'fields_put_request',
+      s: fields_put_request,
+      t: {ws: true},
+      snoopable: false,
+    },
+    o: {
+      e: 'fields_put_response',
+      s: fields_list_response,
+      t: {ws: true},
+      event_as: 'fields_list_response',
+      op: "update",
+      keyby: "id"
+    }
+  },
+  fields_delete_request: {
+    i: {
+      e: "fields_delete_request",
+      s: fields_delete_request,
+      t: {ws: true},
+      snoopable: false,
+    },
+    o: {
+      e: "fields_delete_response",
+      s: fields_list_response,
+      event_as: "fields_list_response",
+      op: "delete",
+      keyby: "id"
+    }
+  },
 
   fields_entries_list_request: {
     i: {

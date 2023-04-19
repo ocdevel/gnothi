@@ -176,6 +176,7 @@ function Form({field, submit}: Form) {
         <hr/>
         <div className='mb-3'>
           <Button
+            className="btn-delete"
             color='error'
             disabled={field.service}
             onClick={destroyField}
@@ -186,7 +187,7 @@ function Form({field, submit}: Form) {
             style={field.service ? {textDecoration: 'line-through'}: {}}
             className='text-muted'
           >
-            Permenantly delete this field and all its entries
+            Permanently delete this field and all its entries
           </small>
           {field.service && <>
             <br/>
@@ -208,6 +209,7 @@ function Form({field, submit}: Form) {
           ) : (
             <>
             <Button
+              className='btn-remove'
               color='error'
               onClick={() => excludeField(true)}
               size='small'

@@ -20,15 +20,6 @@ class Fields:
             raise CantSnoop('fields')
         return M.Field.get_history(d.db, data.id)
 
-    @staticmethod
-    async def on_field_put(data: PyF.FieldPut, d):
-        if d.snooping: raise CantSnoop()
-        f = d.db.query(M.Field).filter_by(user_id=d.vid, id=data.id).first()
-        for k, v in data.dict().items():
-            if k == 'id': continue
-            setattr(f, k, v)
-        d.db.commit()
-        await d.mgr.exec(d, action='fields/fields/get')
 
     @staticmethod
     async def on_field_exclude(data: PyF.FieldExcludeIn, d):
@@ -37,13 +28,6 @@ class Fields:
         f.excluded_at = data.excluded_at  # just do datetime.utcnow()?
         d.db.commit()
         await d.mgr.exec(d, 'fields/fields/get')
-
-    @staticmethod
-    async def on_field_delete(data: BM_ID, d):
-        if d.snooping: raise CantSnoop()
-        d.db.query(M.Field).filter_by(user_id=d.vid, id=data.id).delete()
-        d.db.commit()
-        await d.mgr.exec(d, action='fields/fields/get')
 
     @staticmethod
     async def on_field_entries_get(data: PyF.FieldEntriesIn, d) -> List[PyF.FieldEntryOut]:

@@ -42,10 +42,10 @@ export default function Behavior({fid}: {fid: string}) {
       >
         <SortIcon />
       </IconButton>
-      <IconButton onClick={handleEdit}>
+      <IconButton onClick={handleEdit} className='btn-edit'>
         <EditIcon />
       </IconButton>
-      <IconButton onClick={handleView}>
+      <IconButton onClick={handleView} className='btn-view'>
         <ViewIcon />
       </IconButton>
     </Stack>

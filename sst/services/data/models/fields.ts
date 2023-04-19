@@ -9,22 +9,53 @@ import { and, asc, desc, eq, or } from 'drizzle-orm/expressions';
 
 export class Fields extends Base {
   async list() {
-    const {drizzle} = this.context.db
-    const res = await drizzle.select().from(fields).where(eq(fields.user_id, this.uid))
+    const {uid, db} = this.context
+    const {drizzle} = db
+    const res = await drizzle.select().from(fields).where(eq(fields.user_id, uid))
     return res.map(db.removeNull)
   }
 
+
+
   async post(req: S.Fields.fields_post_request) {
-    const {drizzle} = this.context.db
+    const {uid, db} = this.context
+    const {drizzle} = db
     const res = await drizzle.insert(fields).values({
       name: req.name,
       type: req.type,
       default_value: req.default_value,
       default_value_value: req.default_value_value,
-      user_id: this.uid
+      user_id: uid
     }).returning()
     return res.map(db.removeNull)
   }
+
+  async put(req: S.Fields.fields_put_request) {
+    const {uid, db} = this.context
+    const {drizzle} = db
+    const {id, ...field} = req
+    const res = await drizzle.update(fields)
+      .set(field)
+      .where(and(
+        eq(fields.id, id),
+        eq(fields.user_id, uid)
+      ))
+      .returning()
+    return res.map(db.removeNull)
+  }
+
+  async delete(req: S.Fields.fields_delete_request) {
+    const {uid, db} = this.context
+    const {drizzle} = db
+    const res = await drizzle.delete(fields)
+      .where(and(
+        eq(fields.id, req.id),
+        eq(fields.user_id, uid)
+      ))
+      .returning()
+    return res.map(db.removeNull)
+  }
+
 
   async entriesList(req: S.Fields.fields_entries_list_request) {
     const {uid} = this.context
