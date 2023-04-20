@@ -2,9 +2,7 @@ import React, {useEffect, useState, useCallback} from "react";
 // import {API_URL} from '../redux/ws'
 import _ from "lodash";
 import ReactStars from "react-stars";
-import SetupHabitica from "./SetupHabitica";
-import Modal from "./Modal";
-import ChartModal from "./ChartModal";
+import SetupHabitica from "./Modal/SetupHabitica";
 import {FieldName} from "./utils";
 
 import {useStore} from "@gnothi/web/src/data/store"
@@ -32,10 +30,11 @@ import ExpandMore from "@mui/icons-material/ExpandMore";
 import {Checkbox2} from "@gnothi/web/src/ui/Components/Form";
 import {Alert2} from "@gnothi/web/src/ui/Components/Misc";
 import Box from "@mui/material/Box";
-import Advanced from "./Advanced";
+import Advanced from "./Modal/Advanced";
 import DayChanger from './DayChanger'
 import * as S from '@gnothi/schemas'
 import shallow from 'zustand/shallow'
+import {Behavior} from './Behavior'
 
 type FE = S.Fields.fields_entries_list_response
 type F = S.Fields.fields_list_response
@@ -47,35 +46,46 @@ interface FieldGroup {
   emptyText: () => JSX.Element
 }
 
-export default function Behaviors() {
-  const send = useStore(s => s.send)
-  const user = useStore(s => s.user)
-  const fields = useStore(state => state.res.fields_list_response)
-  const fieldEntries = useStore(s => s.res.fields_entries_list_response?.hash)
-  const fieldValues = useStore(s => s.behaviors.values)
-  const setFieldValues = useStore(a => a.behaviors.setValue)
-  const syncRes = useStore(s => s.res.habitica_sync_response?.res)
+interface Behaviors {
+  advanced: boolean
+}
 
-  const [day, isToday, setShowForm, setShowChart] = useStore(s => [
-    s.behaviors.day, s.behaviors.isToday, s.behaviors.setShowForm, s.behaviors.setShowChart
+// TODO memoize this component, with some setter just for advanced=true|false. False just
+// hides certain elements
+export default function Behaviors({advanced}: Behaviors) {
+  const [
+    send,
+    user,
+    fields,
+    syncRes,
+
+    day,
+    isToday,
+    setView
+  ] = useStore(s => [
+    s.send,
+    s.user,
+    s.res.fields_list_response,
+    s.res.habitica_sync_response?.res,
+
+    s.behaviors.day,
+    s.behaviors.isToday,
+    s.behaviors.setView
   ], shallow)
 
+
+  // TODO cache-busting @ 49d212a2
+  // ensure no longer needed. Original comment:
   // having lots of trouble refreshing certain things, esp. dupes list after picking. Force it for now
-  const [cacheBust, setCacheBust] = useState(+new Date)
 
   const {as, viewer, me} = user
+
+  const showNew = useCallback(() => setView({view: "new"}), [])
+  const showOverall = useCallback(() => setView({view: "overall"}), [])
 
   useEffect(() => {
     fetchFieldEntries()
   }, [fields, day])
-
-  // Update field-entries as they type / click, but not too fast; can cause race-condition in DB
-  // https://www.freecodecamp.org/news/debounce-and-throttle-in-react-with-hooks/
-  // TODO should I be using useRef instead of useCallback? (see link)
-  const postFieldVal = React.useMemo(() =>
-    _.debounce(postFieldVal_, 100),
-    [day] // re-initialize with day-change
-  )
 
   if (fields?.res?.error && fields.res.code === 403) {
     return <h5>{fields.res.data}</h5>
@@ -86,27 +96,8 @@ export default function Behaviors() {
     send('fields_entries_list_request', {day})
   }
 
-  async function postFieldVal_(fid: string, value: string) {
-    if (value === "") {return}
-    send(`fields_entries_post_request`, {
-      field_id: fid,
-      value: parseFloat(value), // until we support strings,
-      day: isToday ? undefined : day
-    })
-  }
-
   const fetchService = async (service: string) => {
     send('habitica_sync_request', {})
-  }
-
-  const changeFieldVal = (fid: string, direct=false) => e => {
-    let value = direct ? e : e.target.value
-    setFieldValues({[fid]: value})
-    postFieldVal(fid, value)
-  }
-
-  const changeCheck = (fid: string) => (e: React.SyntheticEvent<HTMLInputElement>) => {
-    changeFieldVal(fid, true)(~~!fieldValues[fid])
   }
 
   const renderSyncButton = (service: string) => {
@@ -119,90 +110,6 @@ export default function Behaviors() {
         <Button sx={{mb:2}} size='small' variant='contained' onClick={() => fetchService(service)}>Sync</Button>
       </Tooltip>
     </>
-  }
-
-  const renderFieldEntry = (f: F, fe: FE) => {
-    const v = fieldValues[f.id]
-    if (f.type === 'fivestar') return <>
-      <ReactStars
-        value={v || 0}
-        half={false}
-        size={25}
-        onChange={changeFieldVal(f.id, true)}
-      />
-    </>
-    if (f.type === 'check') return <div>
-      <FormControlLabel
-        label={<Typography variant='body2'>Yes</Typography>}
-        control={<Radio
-          size='small'
-          checked={v > 0}
-          onChange={changeCheck(f.id)}
-        />}
-      />
-      <FormControlLabel
-        label={<Typography variant='body2'>No</Typography>}
-        control={<Radio
-          checked={v < 1}
-          size='small'
-          onChange={changeCheck(f.id)}
-        />}
-      />
-    </div>
-    return <>
-      <TextField
-        disabled={!!f.service && isToday}
-        type='number'
-        size="small"
-        value={v || 0}
-        onChange={changeFieldVal(f.id)}
-      />
-    </>
-  }
-
-
-  const renderField = (f: S.Fields.Field) => {
-    // let rowStyle = {width: '100%', margin: 0}
-    const fe = fieldEntries?.[f.id] || {}
-    return (
-      <Grid
-        className="field"
-        container
-        sx={{
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          mb: 1,
-          ...(f.excluded_at ? {
-            textDecoration: 'line-through',
-            opacity: .5
-          } : {})
-        }}
-        key={`${f.id}-${cacheBust}`}
-      >
-        <Grid item xs={5} className='field-name'>
-          <ButtonBase
-            sx={{width:'100%', justifyContent: 'flex-start'}}
-            onClick={() => setShowForm(f.id)}
-          >
-            <FieldName name={f.name}/>
-          </ButtonBase>
-        </Grid>
-
-        <Grid item xs={5}>
-          {renderFieldEntry(f, fe)}
-        </Grid>
-
-        <Grid container item xs={2} justifyContent='flex-end'>
-          <Badge 
-            badgeContent={f.avg && f.avg.toFixed(1)}
-            onClick={() => setShowChart(f.id)}
-            sx={{cursor: 'pointer'}}
-          >
-            <BarChart />
-          </Badge>
-        </Grid>
-      </Grid>
-    )
   }
 
   // see 3b92a768 for dynamic field groups. Revisit when more than one service,
@@ -260,13 +167,14 @@ export default function Behaviors() {
           color="primary"
           variant="contained"
           size="small"
-          onClick={() => setShowForm("new")}
+          onClick={showNew}
+          // FIXME recursive render <Behaviors /> ?
         >New Field</Button>}
         {!!g.fields.length && <Button
           variant="outlined"
           color="primary"
           size="small"
-          onClick={() => setShowChart("overall")}
+          onClick={showOverall}
         >Top Influencers</Button>}
       </Grid>
     }
@@ -286,7 +194,7 @@ export default function Behaviors() {
         <Typography>{g.name}</Typography>
       </AccordionSummary>
       <AccordionDetails>
-        {g.fields.length ? g.fields.map(renderField) : g.emptyText()}
+        {!g.fields.length ? g.emptyText() : g.fields.map(f => <Behavior key={f.id} fid={f.id} />)}
         {renderSyncButton(g.service)}
         {renderButtons(g)}
       </AccordionDetails>
@@ -297,17 +205,16 @@ export default function Behaviors() {
     <Card>
       <Grid container justifyContent='space-between'>
         <Grid item>
-          <CardHeader title="Fields" />
-        </Grid>
-        <Grid item>
-          <DayChanger />
+          {advanced ? <>
+            <DayChanger />
+          </> : <>
+            <CardHeader title="Behaviors" />
+          </>}
         </Grid>
       </Grid>
       <CardContent>
         {groups.map(renderGroup)}
       </CardContent>
     </Card>
-    {<Modal />}
-    {<ChartModal />}
   </div>
 }

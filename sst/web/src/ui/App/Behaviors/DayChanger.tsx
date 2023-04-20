@@ -6,6 +6,8 @@ import React from "react";
 import dayjs from 'dayjs'
 import {fmt, iso} from '../../../data/store/behaviors'
 import {useStore} from "../../../data/store";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
 
 export default function DayChanger() {
   const setDay = useStore(s => s.behaviors.setDay)
@@ -22,26 +24,38 @@ export default function DayChanger() {
 
   return <Grid
     container
-    alignItems='center'
-    direction='column'
-    sx={{mt: 1, mr: 3 }}
+    direction="row"
+    alignItems="center"
+    spacing={2}
   >
     <Grid item>
       <ButtonGroup aria-label="Edit days">
         <Button
           className='border-right-0'
-          variant="outline-secondary"
+          variant="outlined"
           onClick={() => changeDay(-1)}
-        ><FaArrowLeft /></Button>
-        <Button variant="outline-dark" disabled className='border-left-0 border-right-0'><FaRegCalendarAlt /></Button>
+        >
+          <FaArrowLeft />
+        </Button>
+        <Button
+          variant="outlined"
+          disabled
+          className='border-left-0 border-right-0'
+        >
+          <FaRegCalendarAlt />
+        </Button>
         <Button
           className='border-left-0'
-          variant="outline-secondary"
+          variant="outlined"
           onClick={() => changeDay(1)}
           disabled={isToday}
-        ><FaArrowRight /></Button>
+        >
+          <FaArrowRight />
+        </Button>
       </ButtonGroup>
     </Grid>
-    <Grid item>{dayStr}</Grid>
+    <Grid item>
+      <Button disabled>{dayStr}</Button>
+    </Grid>
   </Grid>
 }

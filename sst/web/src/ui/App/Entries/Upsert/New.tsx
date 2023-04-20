@@ -18,7 +18,7 @@ export default function New() {
 
       </Grid>
       <Grid item sm={12} lg={4} md={5}>
-        <Behaviors  />
+        <Behaviors advanced={false}/>
       </Grid>
     </Grid>
   </>

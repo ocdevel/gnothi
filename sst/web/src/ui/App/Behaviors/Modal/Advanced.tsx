@@ -4,7 +4,7 @@ import fileDownload from "js-file-download";
 import Button, {ButtonProps} from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
 import TextField from "@mui/material/TextField";
-import {useStore} from '../../../data/store'
+import {useStore} from '../../../../data/store'
 
 interface Advanced {
   fetchFieldEntries: Function

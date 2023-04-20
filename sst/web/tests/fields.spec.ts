@@ -27,11 +27,11 @@ const sel = {
   },
 }
 
-type Behavior = {name: string, type: "number" | "fivestar" | "checkbox"}
+type Behavior = {name: string, type: "number" | "fivestar" | "check"}
 const behaviors: Behavior[] = [
   {name: "Number Field", type: "number"},
   {name: "Fivestar Field", type: "fivestar"},
-  {name: "Checkbox Field", type: "checkbox"},
+  {name: "Checkbox Field", type: "check"},
 ]
 
 type AddBehavior = Behavior & {
@@ -122,6 +122,8 @@ test.describe("Behaviors", () => {
       }
       
       const getItem = (n: number) => page.locator(sel.modal.item).nth(n)
+
+      await expect.soft(page.locator(sel.modal.form.name)).toBeEmpty()
   
       await page.pause()
     })
@@ -131,5 +133,6 @@ test.describe("Behaviors", () => {
 
     test.fixme("habitica", () => {})
     test.fixme("influencers", () => {})
+    test.fixme("excluded", () => {})
   })  
 })

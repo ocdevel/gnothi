@@ -57,10 +57,10 @@ interface Form {
 }
 
 function Form({field, submit}: Form) {
-  const [send, view, setView] = useStore(s => [
+  const [send, view, setView, ] = useStore(s => [
     s.send,
     s.behaviors.view,
-    s.behaviors.setView
+    s.behaviors.setView,
   ], shallow)
 
   const form = useForm({
@@ -84,10 +84,10 @@ function Form({field, submit}: Form) {
     setView({view: "overall", fid: null})
   }
 
-  function submit_(data: fields_post_request) {
-    submit(data)
-    close()
-  }
+  // function submit_(data: fields_post_request) {
+  //   submit(data)
+  //   close()
+  // }
 
   const destroyField = async () => {
     if (!fid) {return}
