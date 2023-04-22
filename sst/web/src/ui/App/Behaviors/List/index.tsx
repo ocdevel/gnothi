@@ -1,9 +1,7 @@
 import React, {useEffect, useState, useCallback} from "react";
 // import {API_URL} from '../redux/ws'
 import _ from "lodash";
-import ReactStars from "react-stars";
-import SetupHabitica from "./Modal/SetupHabitica";
-import {FieldName} from "./utils";
+import SetupHabitica from "../Modal/SetupHabitica";
 
 import {useStore} from "@gnothi/web/src/data/store"
 
@@ -16,33 +14,20 @@ import AccordionSummary from "@mui/material/AccordionSummary";
 import AccordionDetails from "@mui/material/AccordionDetails";
 import Button, {ButtonProps} from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
-import ButtonGroup from "@mui/material/ButtonGroup";
 import Tooltip from "@mui/material/Tooltip";
 import CircularProgress from "@mui/material/CircularProgress";
-import Alert from "@mui/material/Alert";
-import Badge from "@mui/material/Badge";
-import ButtonBase from "@mui/material/ButtonBase";
-import TextField from "@mui/material/TextField";
-import FormControlLabel from "@mui/material/FormControlLabel";
-import Radio from "@mui/material/Radio";
-import BarChart from "@mui/icons-material/BarChart";
 import ExpandMore from "@mui/icons-material/ExpandMore";
-import {Checkbox2} from "@gnothi/web/src/ui/Components/Form";
-import {Alert2} from "@gnothi/web/src/ui/Components/Misc";
 import Box from "@mui/material/Box";
-import Advanced from "./Modal/Advanced";
-import DayChanger from './DayChanger'
+import Advanced from "../Modal/Advanced";
+import DayChanger from '../Modal/DayChanger'
 import * as S from '@gnothi/schemas'
 import shallow from 'zustand/shallow'
-import {Behavior} from './Behavior'
-
-type FE = S.Fields.fields_entries_list_response
-type F = S.Fields.fields_list_response
+import Behavior from './Item'
 
 interface FieldGroup {
   service: string
   name: string
-  fields: F[]
+  fields: S.Fields.fields_list_response[]
   emptyText: () => JSX.Element
 }
 
@@ -83,9 +68,10 @@ export default function Behaviors({advanced}: Behaviors) {
   const showNew = useCallback(() => setView({view: "new"}), [])
   const showOverall = useCallback(() => setView({view: "overall"}), [])
 
+  // [day] dependency handled in store setter
   useEffect(() => {
     fetchFieldEntries()
-  }, [fields, day])
+  }, [fields])
 
   if (fields?.res?.error && fields.res.code === 403) {
     return <h5>{fields.res.data}</h5>
@@ -162,26 +148,30 @@ export default function Behaviors({advanced}: Behaviors) {
   const renderButtons = (g: FieldGroup) => {
     if (g.service === 'custom') {
       return <Grid container justifyContent='space-around'>
-        {!as && <Button
-          className="btn-new"
-          color="primary"
-          variant="contained"
-          size="small"
-          onClick={showNew}
-          // FIXME recursive render <Behaviors /> ?
-        >New Field</Button>}
-        {!!g.fields.length && <Button
+        {!!g.fields.length && advanced && <Button
           variant="outlined"
           color="primary"
           size="small"
           onClick={showOverall}
         >Top Influencers</Button>}
+        {!advanced && <Button
+          variant="outlined"
+          color="primary"
+          size="small"
+          onClick={() => setView({page: "modal", view: "new"})}
+        >
+          Manage
+        </Button>}
       </Grid>
     }
     if (g.service === 'habitica' && !as) {
       return <SetupHabitica />
     }
     return null
+  }
+
+  function renderBehavior(f: S.Fields.fields_list_response) {
+    return <Behavior key={f.id} fid={f.id} advanced={advanced} />
   }
 
   const renderGroup = (g: FieldGroup) => (
@@ -194,7 +184,7 @@ export default function Behaviors({advanced}: Behaviors) {
         <Typography>{g.name}</Typography>
       </AccordionSummary>
       <AccordionDetails>
-        {!g.fields.length ? g.emptyText() : g.fields.map(f => <Behavior key={f.id} fid={f.id} />)}
+        {!g.fields.length ? g.emptyText() : g.fields.map(renderBehavior)}
         {renderSyncButton(g.service)}
         {renderButtons(g)}
       </AccordionDetails>

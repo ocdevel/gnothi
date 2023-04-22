@@ -16,7 +16,6 @@ export class Fields extends Base {
   }
 
 
-
   async post(req: S.Fields.fields_post_request) {
     const {uid, db} = this.context
     const {drizzle} = db
@@ -78,7 +77,7 @@ export class Fields extends Base {
       insert into ${fieldEntries} (user_id, field_id, value, day, created_at)
       select ${uid}, ${field_id}, ${value}, date(${this.tz_read(day)}), ${this.tz_write(day)}
       from with_tz
-      on conflict (field_id, day) do update set value=${value}, dupes=null, dupe=0
+      on conflict (field_id, day) do update set value=${value}
       returning *
     `)
   }

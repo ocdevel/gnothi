@@ -10,6 +10,7 @@ import _ from "lodash";
 
 export const fmt = 'YYYY-MM-DD'
 export function iso(day?: Dayjs | string) {
+  // return dayjs(day).tz(myTz).format(fmt)
   return dayjs(day).format(fmt)
 }
 
@@ -48,19 +49,30 @@ export const behaviorsSlice: StateCreator<
   behaviors: {
     values: {},
     setValue: (payload) => {
-      set(produce(state => state.behaviors.values = {...state.behaviors.values, payload}))
+      set(produce((state) => {
+        state.behaviors.values = {
+          ...state.behaviors.values,
+          ...payload
+        }
+      }))
     },
 
     day: dayjs(),
     dayStr: iso(),
-    setDay: (day) => set(state => ({
-      behaviors: {
-        ...get().behaviors,
-        day,
-        dayStr: iso(day),
-        isToday: iso() === iso(day),
-      }
-    })),
+    setDay: (day) => {
+      const dayStr = iso(day)
+      set(state => ({
+        behaviors: {
+          ...get().behaviors,
+          day,
+          dayStr,
+          isToday: iso() === dayStr,
+        }
+      }))
+      get().send('fields_entries_list_request', {
+        day: dayStr
+      })
+    },
     isToday: true,
 
     view: {

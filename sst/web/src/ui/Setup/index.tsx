@@ -6,6 +6,13 @@ import Routing from "./Routing";
 import {AuthProvider} from './Auth'
 import {HelmetProvider} from 'react-helmet-async'
 
+// extend dayjs with timezone support, for later dayjs usage
+import utc from 'dayjs/plugin/utc'
+import timezone from 'dayjs/plugin/timezone'
+import dayjs from 'dayjs'
+dayjs.extend(utc)
+dayjs.extend(timezone)
+
 // moved to inside SetupRouter, since it needs RouterProvider which can't take children
 // import SetupInit from "./SetupInit";
 

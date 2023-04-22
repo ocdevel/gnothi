@@ -4,11 +4,7 @@ import {EventsSlice} from './events'
 import {BehaviorsSlice} from './behaviors'
 import {Users, Entries, Insights} from "@gnothi/schemas"
 
-import utc from 'dayjs/plugin/utc'
-import timezone from 'dayjs/plugin/timezone'
 import dayjs from 'dayjs'
-dayjs.extend(utc)
-dayjs.extend(timezone)
 
 // TODO use mainTag as default tag
 export const initialFilters = Entries.entries_list_request.parse({})

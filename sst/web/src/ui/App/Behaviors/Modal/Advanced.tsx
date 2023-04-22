@@ -15,7 +15,7 @@ export default function Advanced({fetchFieldEntries}: Advanced) {
   const setServerError = useStore(s => s.apiError)
   const [confirmWipe, setConfirmWipe] = useState('')
 
-  async function downloadCsv(version) {
+  async function downloadCsv(version: string) {
     return alert("Download csv not implemented")
     // TODO refactor this into actions.js/fetch_
     const obj = {

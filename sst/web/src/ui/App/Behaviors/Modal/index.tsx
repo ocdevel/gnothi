@@ -11,18 +11,21 @@ import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import {FullScreenDialog} from "../../../Components/Dialog";
 import Container from "@mui/material/Container";
-import Behaviors from '../Behaviors'
+import Behaviors from '../List'
 import View from './View'
 import Overall from './Overall'
-import DayChanger from "../DayChanger";
 
 export default function Modal() {
-  const [send, fields, view, setView] = useStore(s => [
+  const [user, send, fields, view, setView] = useStore(s => [
+    s.user,
     s.send,
     s.res.fields_list_response,
     s.behaviors.view,
     s.behaviors.setView
   ], shallow)
+
+  const {as, viewer, me} = user
+
 
   useEffect(() => {
     // no fields present. No matter why they came here, they
@@ -43,15 +46,17 @@ export default function Modal() {
 
 
   const onCta = useCallback(() => setView({view: "new", fid: null}), [])
+  const ctas = as ? [] : [{
+    name: "Create",
+    onClick: onCta,
+  }]
+
   const onClose = useCallback(() => setView({page: view.lastPage}), [])
 
   return <FullScreenDialog
     className="behaviors modal"
     title="Behaviors"
-    ctas={[{
-      name: "Create",
-      onClick: onCta,
-    }]}
+    ctas={ctas}
     open={view.page === "modal"}
     onClose={onClose}
   >

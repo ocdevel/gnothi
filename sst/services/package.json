@@ -18,7 +18,7 @@
     "@aws-sdk/util-utf8-node": "^3.208.0",
     "aws-jwt-verify": "^3.2.0",
     "aws-sdk": "^2.1253.0",
-    "drizzle-orm": "^0.21.1",
+    "drizzle-orm": "^0.24.4",
     "openai": "^3.1.0",
     "pg": "^8.10.0",
     "pg-native": "^3.0.1",

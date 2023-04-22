@@ -7,6 +7,12 @@ import { sql, SQL } from 'drizzle-orm/sql'
 
 export const sharedStage = `gnothi${process.env.sharedStage}`
 
+class MyLogger implements Logger {
+  logQuery(query: string, params: unknown[]): void {
+    console.log({ query, params });
+  }
+}
+
 type ConnectionArgs = {
   host: string
   port: number
@@ -60,7 +66,7 @@ export class DB {
       database: this.dbName
     })
     // await pgClient.connect()
-    const drizzleClient = drizzle(pgClient)
+    const drizzleClient = drizzle(pgClient, {logger: new MyLogger()})
 
     // await pgClient.connect()
 

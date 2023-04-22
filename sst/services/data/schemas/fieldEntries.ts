@@ -18,7 +18,7 @@ import {
 import {fields} from "./fields"
 
 export const fieldEntries = pgTable('field_entries2', {
-  field_id: uuid('id').notNull().references(() => fields.id, {onDelete: 'cascade'}),
+  field_id: uuid('field_id').notNull().references(() => fields.id, {onDelete: 'cascade'}),
   day: date('day').notNull(),
   created_at: timestamp('created_at', {withTimezone: true}).defaultNow(),
   value: doublePrecision('value'),

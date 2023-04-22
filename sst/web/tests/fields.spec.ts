@@ -103,6 +103,7 @@ test.describe("Behaviors", () => {
     })
   
     test.fixme("crud from Entry.Create", () => {})
+    test.fixme("Entry.Create sets day=today (in case it was fiddled with in modal)", () => {})
     test.fixme("crud from Entry.Update", () => {})
   
     test.fixme("Can't CRUD while snooping", () => {})

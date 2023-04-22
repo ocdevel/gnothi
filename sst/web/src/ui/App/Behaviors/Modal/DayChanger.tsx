@@ -4,8 +4,8 @@ import Button from "@mui/material/Button";
 import {FaArrowLeft, FaArrowRight, FaRegCalendarAlt} from "react-icons/fa";
 import React from "react";
 import dayjs from 'dayjs'
-import {fmt, iso} from '../../../data/store/behaviors'
-import {useStore} from "../../../data/store";
+import {fmt, iso} from '../../../../data/store/behaviors'
+import {useStore} from "../../../../data/store";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 

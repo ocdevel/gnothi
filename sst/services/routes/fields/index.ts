@@ -27,6 +27,6 @@ export const fields_entries_list_request = new Route(r.fields_entries_list_reque
 })
 
 export const fields_entries_post_request = new Route(r.fields_entries_post_request, async (req, context) => {
-  return context.m.fields.entriesPost()
+  return context.m.fields.entriesPost(req)
 })
 
