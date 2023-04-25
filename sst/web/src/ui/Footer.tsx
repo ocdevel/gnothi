@@ -123,6 +123,7 @@ export default function Footer2() {
       </Grid>
 
       <Grid item
+        direction="row"
         xs={12}
         md={3}
         justifyItems='flex-start'
@@ -140,23 +141,18 @@ export default function Footer2() {
           Legal
         </Typography>
 
-        <Typography
-          marginBottom='.5rem'
-        >
-          Privacy Policy
-        </Typography>
-
-        <Typography
-          marginBottom='.5rem'
-        >
-          Terms of Use
-        </Typography>
-
-        <Typography
-          marginBottom='.5rem'
-        >
-          Disclaimer
-        </Typography>
+        <Box
+          marginBottom='.5rem'>
+       <Link to='/privacy'>Privacy Policy</Link>
+          </Box>
+          <Box
+             marginBottom='.5rem'>
+       <Link to='/terms'>Terms and Conditions</Link>
+          </Box>
+        <Box
+             marginBottom='.5rem'>
+       <Link to='/disclaimer'>Disclaimer</Link>
+          </Box>
       </Grid>
     </Grid>
 

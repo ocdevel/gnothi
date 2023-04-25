@@ -2,6 +2,7 @@ import {Navigate} from "react-router-dom";
 import React from "react";
 import Privacy from "./Privacy"
 import Terms from "./Terms"
+import Disclaimer from "./Disclaimer"
 // const Overviews = React.lazy( () => import("./Splash/Overviews"))
 // const Details = React.lazy(() => import("./Splash/Details"))
 import Features from "./Splash/Features"
@@ -12,7 +13,8 @@ export * as Static from './Routes'
 
 export const staticRoutes = [
   {path: "privacy", element: <Privacy />},
-  {path: "terms", element: <Terms />}
+  {path: "terms", element: <Terms />},
+  {path: "disclaimer", element: <Disclaimer />}
 ]
 
 export const splashRoutes = [
