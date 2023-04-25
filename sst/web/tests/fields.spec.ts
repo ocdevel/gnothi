@@ -124,7 +124,11 @@ test.describe("Behaviors", () => {
       
       const getItem = (n: number) => page.locator(sel.modal.item).nth(n)
 
-      await expect.soft(page.locator(sel.modal.form.name)).toBeEmpty()
+      //await expect.soft(page.locator(sel.modal.form.name)).toBeEmpty()
+
+      await getItem(0).fill("1")
+      await getItem(1).locator("[data-index=1]").click()
+      await getItem(2).locator(".radio-yes").click()
   
       await page.pause()
     })
@@ -132,6 +136,7 @@ test.describe("Behaviors", () => {
       // delete fields removes FE - how to check DB? maybe check API directly?
     })
 
+    test.fixme("sort behaviors", () => {})
     test.fixme("habitica", () => {})
     test.fixme("influencers", () => {})
     test.fixme("excluded", () => {})

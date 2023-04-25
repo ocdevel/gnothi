@@ -2,12 +2,12 @@ import {useStore} from "../../../../data/store";
 import shallow from "zustand/shallow";
 import React from "react";
 import _ from "lodash";
-import ReactStars from "react-stars";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Typography from "@mui/material/Typography";
 import Radio from "@mui/material/Radio";
 import TextField from "@mui/material/TextField";
 import * as S from "@gnothi/schemas";
+import Rating from '@mui/material/Rating';
 
 interface Entry {
   f: S.Fields.fields_list_response
@@ -33,17 +33,21 @@ export default function Entry({f}: Entry) {
     s.behaviors.isToday,
   ], shallow)
 
-  const v = fieldValues[f.id]
+  const fid = f.id
+  const v = fieldValues[fid]
+
+  // manual (text) entry should wait a good while for them to finish typing. Otherwise, send immediately
+  const waitFor = f.type === "number" ? 1000 : 0
 
   // Update field-entries as they type / click, but not too fast; can cause race-condition in DB
   // https://www.freecodecamp.org/news/debounce-and-throttle-in-react-with-hooks/
   // TODO should I be using useRef instead of useCallback? (see link)
   const postFieldVal = React.useMemo(() =>
-    _.debounce(postFieldVal_, 100),
+    _.debounce(postFieldVal_, waitFor),
     [day] // re-initialize with day-change
   )
 
-  async function postFieldVal_(fid: string, value: string) {
+  async function postFieldVal_(value: string) {
     if (value === "") {return}
     send(`fields_entries_post_request`, {
       field_id: fid,
@@ -52,39 +56,44 @@ export default function Entry({f}: Entry) {
     })
   }
 
-   const changeFieldVal = (fid: string, direct=false) => e => {
-    let value = direct ? e : e.target.value
+   const changeFieldVal = (e: any) => {
+    let value = e?.target?.value ?? e
     setFieldValues({[fid]: value})
-    postFieldVal(fid, value)
+    postFieldVal(value)
   }
 
-  const changeCheck = (fid: string) => (e: React.SyntheticEvent<HTMLInputElement>) => {
-    changeFieldVal(fid, true)(~~!fieldValues[fid])
+  const changeStar = (event: any, newValue: number | null) => {
+    changeFieldVal(newValue)
+  }
+
+  const changeCheck = (e: React.SyntheticEvent<HTMLInputElement>) => {
+    changeFieldVal(~~!fieldValues[fid])
   }
 
   if (f.type === 'fivestar') return <>
-    <ReactStars
+    <Rating
       value={v || 0}
-      half={false}
-      size={25}
-      onChange={changeFieldVal(f.id, true)}
+      precision={1 /*0.5*/}
+      onChange={changeStar}
     />
   </>
   if (f.type === 'check') return <div>
     <FormControlLabel
+      className="radio-yes"
       label={<Typography variant='body2'>Yes</Typography>}
       control={<Radio
         size='small'
         checked={v > 0}
-        onChange={changeCheck(f.id)}
+        onChange={changeCheck}
       />}
     />
     <FormControlLabel
+      className="radio-no"
       label={<Typography variant='body2'>No</Typography>}
       control={<Radio
         checked={v < 1}
         size='small'
-        onChange={changeCheck(f.id)}
+        onChange={changeCheck}
       />}
     />
   </div>
@@ -94,7 +103,7 @@ export default function Entry({f}: Entry) {
       type='number'
       size="small"
       value={v || 0}
-      onChange={changeFieldVal(f.id)}
+      onChange={changeFieldVal}
     />
   </>
 }

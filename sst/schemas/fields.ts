@@ -206,6 +206,7 @@ export const routes = {
       s: fields_entries_post_response,
       t: {ws: true},
       keyby: 'field_id',
+      op: "update",
       event_as: 'fields_entries_list_response'
     }
   },
