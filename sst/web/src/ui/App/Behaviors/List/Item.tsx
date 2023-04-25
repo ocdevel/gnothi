@@ -49,7 +49,7 @@ export default function Item({fid, advanced}: Item) {
 
   return (
     <Grid
-      className="behavior"
+      className={`behavior behavior-${f.type}`}
       container
       sx={{
         alignItems: 'center',

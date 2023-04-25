@@ -122,13 +122,13 @@ test.describe("Behaviors", () => {
         await addBehaviorsAndEntries({page, ...behavior})
       }
       
-      const getItem = (n: number) => page.locator(sel.modal.item).nth(n)
+      const getItem = (type: string) => page.locator(`${sel.modal.item}.behavior-${type}`)
 
       //await expect.soft(page.locator(sel.modal.form.name)).toBeEmpty()
 
-      await getItem(0).fill("1")
-      await getItem(1).locator("[data-index=1]").click()
-      await getItem(2).locator(".radio-yes").click()
+      await getItem("number").locator("input").fill("3")
+      await getItem("fivestar").locator("label").nth(3).click()
+      await getItem("check").locator(".check-yes").click()
   
       await page.pause()
     })

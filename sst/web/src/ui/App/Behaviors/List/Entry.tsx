@@ -72,6 +72,7 @@ export default function Entry({f}: Entry) {
 
   if (f.type === 'fivestar') return <>
     <Rating
+      className="fivestar"
       value={v || 0}
       precision={1 /*0.5*/}
       onChange={changeStar}
@@ -79,7 +80,7 @@ export default function Entry({f}: Entry) {
   </>
   if (f.type === 'check') return <div>
     <FormControlLabel
-      className="radio-yes"
+      className="check-yes"
       label={<Typography variant='body2'>Yes</Typography>}
       control={<Radio
         size='small'
@@ -88,7 +89,7 @@ export default function Entry({f}: Entry) {
       />}
     />
     <FormControlLabel
-      className="radio-no"
+      className="check-no"
       label={<Typography variant='body2'>No</Typography>}
       control={<Radio
         checked={v < 1}

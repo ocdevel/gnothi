@@ -69,10 +69,6 @@ export const FieldEntry = z.object({
   created_at: dateCol(),
   value: z.number().default(0),
   user_id: IdCol,
-
-  // remove these after duplicates bug handled
-  dupes: z.object({}).passthrough().default({}),
-  dupe: z.number().default(0),
 })
 export type FieldEntry = z.infer<typeof FieldEntry>
 

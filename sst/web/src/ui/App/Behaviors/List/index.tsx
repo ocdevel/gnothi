@@ -191,7 +191,7 @@ export default function Behaviors({advanced}: Behaviors) {
     </Accordion>
   )
 
-  return <div className="fields">
+  return <div className="list">
     <Card>
       <Grid container justifyContent='space-between'>
         <Grid item>
