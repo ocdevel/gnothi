@@ -128,7 +128,7 @@ test.describe("Behaviors", () => {
 
       await getItem("number").locator("input").fill("3")
       await getItem("fivestar").locator("label").nth(3).click()
-      await getItem("check").locator(".check-yes").click()
+      await getItem("check").locator(".check-yes").click() // .modal.behaviors .behavior-check .check-yes
   
       await page.pause()
     })

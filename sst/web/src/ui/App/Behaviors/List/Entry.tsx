@@ -1,6 +1,6 @@
 import {useStore} from "../../../../data/store";
 import shallow from "zustand/shallow";
-import React from "react";
+import React, {useCallback, useEffect} from "react";
 import _ from "lodash";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Typography from "@mui/material/Typography";
@@ -16,7 +16,6 @@ export default function Entry({f}: Entry) {
   const [
     send,
     fieldEntries,
-    fieldValues,
     setFieldValues,
 
     day,
@@ -24,8 +23,7 @@ export default function Entry({f}: Entry) {
     isToday,
   ] = useStore(s => [
     s.send,
-    s.res.fields_entries_list_response?.hash,
-    s.behaviors.values,
+    s.res.fields_entries_list_response,
     s.behaviors.setValue,
 
     s.behaviors.day,
@@ -34,7 +32,7 @@ export default function Entry({f}: Entry) {
   ], shallow)
 
   const fid = f.id
-  const v = fieldValues[fid]
+  const v = fieldEntries?.hash?.[fid]?.value ?? undefined
 
   // manual (text) entry should wait a good while for them to finish typing. Otherwise, send immediately
   const waitFor = f.type === "number" ? 1000 : 0
@@ -66,8 +64,8 @@ export default function Entry({f}: Entry) {
     changeFieldVal(newValue)
   }
 
-  const changeCheck = (e: React.SyntheticEvent<HTMLInputElement>) => {
-    changeFieldVal(~~!fieldValues[fid])
+  const changeCheck = (v: number) => (e: React.SyntheticEvent<HTMLInputElement>) => {
+    changeFieldVal(v)
   }
 
   if (f.type === 'fivestar') return <>
@@ -84,17 +82,17 @@ export default function Entry({f}: Entry) {
       label={<Typography variant='body2'>Yes</Typography>}
       control={<Radio
         size='small'
-        checked={v > 0}
-        onChange={changeCheck}
+        checked={v === 1}
+        onChange={changeCheck(1)}
       />}
     />
     <FormControlLabel
       className="check-no"
       label={<Typography variant='body2'>No</Typography>}
       control={<Radio
-        checked={v < 1}
+        checked={v === 0}
         size='small'
-        onChange={changeCheck}
+        onChange={changeCheck(0)}
       />}
     />
   </div>

@@ -45,6 +45,7 @@ export default function Behaviors({advanced}: Behaviors) {
     syncRes,
 
     day,
+    dayStr,
     isToday,
     setView
   ] = useStore(s => [
@@ -54,6 +55,7 @@ export default function Behaviors({advanced}: Behaviors) {
     s.res.habitica_sync_response?.res,
 
     s.behaviors.day,
+    s.behaviors.dayStr,
     s.behaviors.isToday,
     s.behaviors.setView
   ], shallow)
@@ -79,7 +81,7 @@ export default function Behaviors({advanced}: Behaviors) {
 
   async function fetchFieldEntries() {
     if (_.isEmpty(fields)) {return}
-    send('fields_entries_list_request', {day})
+    send('fields_entries_list_request', {day: dayStr})
   }
 
   const fetchService = async (service: string) => {

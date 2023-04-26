@@ -91,12 +91,5 @@ export const behaviorsSlice: StateCreator<
           : view.page),
       }
     })),
-
-    fields_entries_list_response: (res) => {
-      const obj = _.keyBy(res.rows, 'field_id')
-      set(produce(state => {
-        state.behaviors.values = _.mapValues(obj, 'value')
-      }))
-    }
   }
 })

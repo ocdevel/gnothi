@@ -193,7 +193,7 @@ export const routes = {
   fields_entries_post_request: {
     i: {
       e: 'fields_entries_post_request',
-      s: fields_entries_post_request,
+      s: fields_entries_post_request, // {field_id: 1, day: '2020-01-01', value: 1}
       t: {ws: true},
       snoopable: false
     },
