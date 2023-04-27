@@ -16,6 +16,7 @@ import {Users} from '../data/models/users'
 import {Entries} from '../data/models/entries'
 import {Fields} from '../data/models/fields'
 import {Insights} from '../data/models/insights'
+import {Shares} from '../data/models/shares'
 
 import {Events} from '@gnothi/schemas/events'
 import {DB} from '../data/db'
@@ -88,6 +89,7 @@ export class FnContext {
     entries: Entries
     fields: Fields
     insights: Insights
+    shares: Shares
   }
 
   user: User
@@ -114,6 +116,7 @@ export class FnContext {
       entries: new Entries(this),
       fields: new Fields(this),
       insights: new Insights(this),
+      shares: new Shares(this)
     }
   }
 

@@ -25,6 +25,7 @@
   },
   "dependencies": {
     "@serverless-stack/node": "^1.18.4",
+    "drizzle-zod": "^0.4.1",
     "openai": "^3.2.1"
   },
   "workspaces": [
