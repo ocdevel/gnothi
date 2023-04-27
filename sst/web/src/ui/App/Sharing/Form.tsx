@@ -6,7 +6,7 @@ import {FaChevronDown, FaChevronRight, FaRegQuestionCircle} from "react-icons/fa
 import {useStore} from "@gnothi/web/src/data/store"
 import Groups from "./Groups";
 import Users from './Users'
-import Tags from "../../Tags/Tags";
+import Tags from "../Tags/Tags";
 import {AiOutlineWarning} from "react-icons/ai";
 import {trueObj} from "@gnothi/web/src/utils/utils";
 import Button from '@mui/material/Button'

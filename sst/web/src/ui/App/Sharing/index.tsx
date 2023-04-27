@@ -90,6 +90,7 @@ export default function SharingModal() {
 
   return <>
     <FullScreenDialog
+      className="sharing modal"
       open={!!sharePage}
       onClose={close}
       title='Sharing'

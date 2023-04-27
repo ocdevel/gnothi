@@ -15,7 +15,7 @@ import Container from "@mui/material/Container";
 import {ErrorSnack} from "../../Components/Error";
 import GroupsToolbar from "../Groups/List/Toolbar"
 import GroupToolbar from "../Groups/View/Toolbar"
-import SharingModal from "../Account/Sharing"
+import SharingModal from "../Sharing"
 import EntryModal from "../Entries/Modal"
 import BehaviorsModal from "../Behaviors/Modal"
 
@@ -25,10 +25,10 @@ function AppBar_() {
   const setEntryModal = useStore(s => s.setEntryModal)
 
   const links: Link[] = [
-    {name: "Journal", to: "/j", className: "button-journal"},
-    {name: "Sharing", onClick: () => setSharePage({create: true}), className: "button-sharing"},
-    // {name: "Groups", to: "/groups", className: "button-groups},
-    {name: "Resources", to: "/", className: "button-resources"}
+    {name: "Journal", to: "/j", className: "btn-journal"},
+    {name: "Sharing", onClick: () => setSharePage({create: true}), className: "btn-sharing"},
+    // {name: "Groups", to: "/groups", className: "btn-groups},
+    {name: "Resources", to: "/", className: "btn-resources"}
   ]
 
   const ctas: CTA[] =
