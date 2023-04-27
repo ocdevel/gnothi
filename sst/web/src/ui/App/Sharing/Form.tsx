@@ -174,8 +174,8 @@ function ShareCheck({k, form, setForm, profile=false}: ShareCheck) {
 export default function ShareForm({s={}}) {
   const send = useStore(s => s.send)
   const postRes = useStore(s => s.res.shares_post_response?.res)
-  const sharePage = useStore(s => s.sharePage)
-  const setSharePage = useStore(a => a.setSharePage)
+  const sharePage = useStore(s => s.sharing.view)
+  const setSharePage = useStore(a => a.sharing.setView)
   const [entriesHelp, setEntriesHelp] = useState(false)
   const [share, setShare] = useState(s.share || {})
   const [tags, setTags] = useState(trueObj(s?.tags) || {})

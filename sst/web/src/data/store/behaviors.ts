@@ -7,6 +7,7 @@ import {ApiSlice} from "./api";
 import {AppSlice} from "./app";
 import produce from 'immer'
 import _ from "lodash";
+import {SharingSlice} from "./sharing";
 
 export const fmt = 'YYYY-MM-DD'
 export function iso(day?: Dayjs | string) {
@@ -35,13 +36,11 @@ export interface BehaviorsSlice {
 
     view: View
     setView: (view: Partial<View>) => void
-
-    fields_entries_list_response: (res: S.Api.ResUnwrap<S.Fields.fields_entries_list_response>) => void
   }
 }
 
 export const behaviorsSlice: StateCreator<
-  AppSlice & EventsSlice & ApiSlice & BehaviorsSlice,
+  AppSlice & EventsSlice & ApiSlice & BehaviorsSlice & SharingSlice,
   [],
   [],
   BehaviorsSlice

@@ -21,6 +21,7 @@ import produce from 'immer'
 import {Res, ResUnwrap} from "@gnothi/schemas/api";
 import {z} from 'zod'
 import {behaviorsSlice, BehaviorsSlice} from "./behaviors";
+import {SharingSlice} from "./sharing";
 
 const r = Routes.routes
 // const responses = Object.fromEntries(
@@ -82,7 +83,7 @@ export interface EventsSlice {
 }
 
 export const eventsSlice: StateCreator<
-  AppSlice & EventsSlice & ApiSlice & BehaviorsSlice,
+  AppSlice & EventsSlice & ApiSlice & BehaviorsSlice & SharingSlice,
   [],
   [],
   EventsSlice

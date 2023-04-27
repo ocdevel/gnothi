@@ -4,7 +4,7 @@ import Box from '@mui/material/Box';
 import {Route, Routes, useLocation, Outlet, useNavigate} from "react-router-dom";
 import useApi from "@gnothi/web/src/data/api";
 import {useStore} from "@gnothi/web/src/data/store";
-import {useEffect} from "react";
+import {useEffect, useCallback} from "react";
 import Error from '@gnothi/web/src/ui/Components/Error'
 import {Loading} from '@gnothi/web/src/ui/Components/Routing'
 
@@ -18,15 +18,28 @@ import GroupToolbar from "../Groups/View/Toolbar"
 import SharingModal from "../Sharing"
 import EntryModal from "../Entries/Modal"
 import BehaviorsModal from "../Behaviors/Modal"
+import shallow from "zustand/shallow";
 
 function AppBar_() {
   const location = useLocation()
-  const setSharePage = useStore(s => s.setSharePage)
-  const setEntryModal = useStore(s => s.setEntryModal)
+  const [
+    setShareView,
+    setEntryModal,
+  ] = useStore(s => [
+    s.sharing.setView,
+    s.setEntryModal,
+  ], shallow)
+
+  const clickSharing = useCallback(() => {
+    setShareView({view: "new", sid: null})
+  }, [])
+  const clickEntry = useCallback(() => {
+    setEntryModal({mode: "new"})
+  }, [])
 
   const links: Link[] = [
     {name: "Journal", to: "/j", className: "btn-journal"},
-    {name: "Sharing", onClick: () => setSharePage({create: true}), className: "btn-sharing"},
+    {name: "Sharing", onClick: clickSharing, className: "btn-sharing"},
     // {name: "Groups", to: "/groups", className: "btn-groups},
     {name: "Resources", to: "/", className: "btn-resources"}
   ]
@@ -34,7 +47,7 @@ function AppBar_() {
   const ctas: CTA[] =
     location.pathname.startsWith("/j") ? [{
       name: "New Entry",
-      onClick: () => setEntryModal({mode: "new"}),
+      onClick: clickEntry,
     }]
     : []
 

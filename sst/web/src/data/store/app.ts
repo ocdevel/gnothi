@@ -5,6 +5,7 @@ import {BehaviorsSlice} from './behaviors'
 import {Users, Entries, Insights} from "@gnothi/schemas"
 
 import dayjs from 'dayjs'
+import {SharingSlice} from "./sharing";
 
 // TODO use mainTag as default tag
 export const initialFilters = Entries.entries_list_request.parse({})
@@ -13,12 +14,6 @@ interface User {
   as: string | null,
   me: Users.users_list_response | null
   viewer: Users.users_list_response | null
-}
-
-interface SharePage {
-  list?: boolean
-  create?: boolean
-  id?: string
 }
 
 type EntryModal = null | {
@@ -55,8 +50,6 @@ export interface AppSlice {
 
   // ----- Other
   selectedTags: {[k: string]: boolean}
-  sharePage: null | SharePage
-  setSharePage: (sharePage: SharePage) => void
 
   // ----- EE
   ee: { [k: string]: any }
@@ -64,7 +57,7 @@ export interface AppSlice {
 }
 
 export const appSlice: StateCreator<
-  AppSlice & EventsSlice & ApiSlice & BehaviorsSlice,
+  AppSlice & EventsSlice & ApiSlice & BehaviorsSlice & SharingSlice,
   [],
   [],
   AppSlice
@@ -157,11 +150,6 @@ export const appSlice: StateCreator<
 
   // ----- Tags
   selectedTags: {},
-
-  // ----- Share
-  // {create: bool, list: bool, group: str, ..}
-  sharePage: null,
-  setSharePage: (sharePage) => set({sharePage}),
 
   // ----- EE
   ee: {
