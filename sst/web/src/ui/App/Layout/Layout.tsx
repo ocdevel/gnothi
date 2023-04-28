@@ -31,7 +31,7 @@ function AppBar_() {
   ], shallow)
 
   const clickSharing = useCallback(() => {
-    setShareView({view: "new", sid: null})
+    setShareView({tab: "inbound", outbound: "new", sid: null})
   }, [])
   const clickEntry = useCallback(() => {
     setEntryModal({mode: "new"})

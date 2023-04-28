@@ -9,14 +9,14 @@ import produce from 'immer'
 import _ from "lodash";
 
 
-type Id = string
-//export type ViewPage = "entry" | "dashboard" | "modal"
-export type ViewView = "new" | "view" | "edit" | null
+type Id = string | null
+// null means close the modal
+export type Tab = "inbound" | "outbound" | "info" | null
+export type Outbound = "new" | "view" | "edit"
 type View = {
-  //lastPage: ViewPage
-  page: any //ViewPage
-  view: ViewView
-  sid: Id | null
+  tab: Tab
+  outbound: Outbound
+  sid?: Id
   group?: Id
 }
 export interface SharingSlice {
@@ -34,20 +34,16 @@ export const sharingSlice: StateCreator<
 > = (set, get) => ({
   sharing: {
     view: {
-      //lastPage: "dashboard",
-      page: "dashboard",
-      view: null,
+      tab: "inbound",
+      outbound: "new",
       sid: null,
-      group: undefined
+      group: null
     },
     setView: (view) => set(produce(state => {
-      const curr = state.sharing.view
+      // for keeping track of lastPage (where to close modal too), see behaviors
       state.sharing.view = {
         ...state.sharing.view,
         ...view,
-        lastPage: (
-          view.page === "modal" && ["entry", "dashboard"].includes(curr.page) ? curr.page
-          : view.page),
       }
     })),
   }

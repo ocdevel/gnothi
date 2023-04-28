@@ -27,6 +27,6 @@
   "devDependencies": {
     "@types/aws-lambda": "^8.10.108",
     "@types/pg": "^8.6.6",
-    "drizzle-kit": "^0.17.0"
+    "drizzle-kit": "^0.17.6"
   }
 }

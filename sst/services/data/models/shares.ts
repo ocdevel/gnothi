@@ -19,7 +19,8 @@ export class Shares extends Base {
       .from(sharesUsers)
       .innerJoin(users, eq(users.id, sharesUsers.obj_id))
     )
-    const res = await drizzle.select({
+    const res = await drizzle.with(usersSq)
+      .select({
         share: shares,
         tags: sql`array_agg(${sharesTags.tag_id})`.as('tags'),
         users: sql`array_agg(${usersSq.email})`.as('users'),
@@ -29,6 +30,7 @@ export class Shares extends Base {
       .where(eq(shares.user_id, vid))
       .leftJoin(sharesTags, eq(sharesTags.share_id, shares.id))
       .leftJoin(usersSq, eq(usersSq.share_id, shares.id))
+      .groupBy(shares.id)
     return res.map(db.removeNull)
   }
 

@@ -47,6 +47,7 @@ export async function getUser(
   if (connection_id) {
     if (routeKey == "$connect") {
       const user = await getFromCognito(db, cognitoId)
+      debugger
       await db.query(sql`
         insert into ${wsConnections} (user_id, connection_id) 
         values (${user.id}, ${connection_id}) 

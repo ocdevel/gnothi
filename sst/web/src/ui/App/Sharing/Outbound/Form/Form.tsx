@@ -6,7 +6,7 @@ import {FaChevronDown, FaChevronRight, FaRegQuestionCircle} from "react-icons/fa
 import {useStore} from "@gnothi/web/src/data/store"
 import Groups from "./Groups";
 import Users from './Users'
-import Tags from "../Tags/Tags";
+import Tags from "../../../Tags/Tags";
 import {AiOutlineWarning} from "react-icons/ai";
 import {trueObj} from "@gnothi/web/src/utils/utils";
 import Button from '@mui/material/Button'
@@ -21,6 +21,8 @@ import FormControlLabel from '@mui/material/FormControlLabel'
 import Box from '@mui/material/Box'
 import Divider from '@mui/material/Divider'
 import Typography from '@mui/material/Typography'
+import shallow from "zustand/shallow";
+import * as S from '@gnothi/schemas'
 
 const profile_fields = {
   username: {
@@ -171,18 +173,30 @@ function ShareCheck({k, form, setForm, profile=false}: ShareCheck) {
   </div>
 }
 
-export default function ShareForm({s={}}) {
-  const send = useStore(s => s.send)
+interface ShareForm {
+  s?: S.Shares.shares_egress_list_response
+}
+export default function ShareForm({s}: ShareForm) {
+  const [
+    send,
+    shares,
+    view,
+    setView
+  ] = useStore(s => [
+    s.send,
+    s.res.shares_egress_list_response,
+    s.sharing.view,
+    s.sharing.setView
+  ], shallow)
+
   const postRes = useStore(s => s.res.shares_post_response?.res)
-  const sharePage = useStore(s => s.sharing.view)
-  const setSharePage = useStore(a => a.sharing.setView)
   const [entriesHelp, setEntriesHelp] = useState(false)
   const [share, setShare] = useState(s.share || {})
   const [tags, setTags] = useState(trueObj(s?.tags) || {})
   const [users, setUsers] = useState(trueObj(s?.users) || {})
   const [groups, setGroups] = useState(
     share?.id ? trueObj(s.groups)
-    : sharePage.group ? {[sharePage.group]: true}
+    : view.group ? {[view.group]: true}
     : {}
   )
 
@@ -317,7 +331,7 @@ export default function ShareForm({s={}}) {
       >Delete</Button>}
       <Button
         size='small'
-        onClick={() => setSharePage({list: true})}
+        onClick={() => setView({outbound: null})}
       >Cancel</Button>
     </CardActions>
   </Card>
