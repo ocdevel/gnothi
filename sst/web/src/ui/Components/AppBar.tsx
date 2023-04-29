@@ -36,15 +36,15 @@ export function UserMenu() {
   const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) => setAnchorElUser(event.currentTarget);
   const handleCloseUserMenu = () => setAnchorElUser(null);
   const items = [
-    {name: 'Profile', onClick: () => {
-      handleCloseUserMenu()
-    }},
-    {name: 'Account', onClick: () => {
-      handleCloseUserMenu()
-    }},
-    {name: 'Settings', onClick: () => {
-      handleCloseUserMenu()
-    }},
+    // {name: 'Profile', onClick: () => {
+    //   handleCloseUserMenu()
+    // }},
+    // {name: 'Account', onClick: () => {
+    //   handleCloseUserMenu()
+    // }},
+    // {name: 'Settings', onClick: () => {
+    //   handleCloseUserMenu()
+    // }},
     {name: 'Logout', onClick: () => {
       handleCloseUserMenu()
       logout()

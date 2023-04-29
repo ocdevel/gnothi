@@ -34,7 +34,7 @@ export const sharingSlice: StateCreator<
 > = (set, get) => ({
   sharing: {
     view: {
-      tab: "inbound",
+      tab: null,
       outbound: "new",
       sid: null,
       group: null

@@ -10,7 +10,6 @@ import {Loading} from '@gnothi/web/src/ui/Components/Routing'
 
 import {styles} from '../../Setup/Mui'
 
-import AppBar, {Link, CTA} from '../../Components/AppBar'
 import Container from "@mui/material/Container";
 import {ErrorSnack} from "../../Components/Error";
 import GroupsToolbar from "../Groups/List/Toolbar"
@@ -19,50 +18,9 @@ import SharingModal from "../Sharing"
 import EntryModal from "../Entries/Modal"
 import BehaviorsModal from "../Behaviors/Modal"
 import shallow from "zustand/shallow";
+import AppBar from './AppBar'
 
-function AppBar_() {
-  const location = useLocation()
-  const [
-    setShareView,
-    setEntryModal,
-  ] = useStore(s => [
-    s.sharing.setView,
-    s.setEntryModal,
-  ], shallow)
 
-  const clickSharing = useCallback(() => {
-    setShareView({tab: "inbound", outbound: "new", sid: null})
-  }, [])
-  const clickEntry = useCallback(() => {
-    setEntryModal({mode: "new"})
-  }, [])
-
-  const links: Link[] = [
-    {name: "Journal", to: "/j", className: "btn-journal"},
-    {name: "Sharing", onClick: clickSharing, className: "btn-sharing"},
-    // {name: "Groups", to: "/groups", className: "btn-groups},
-    {name: "Resources", to: "/", className: "btn-resources"}
-  ]
-
-  const ctas: CTA[] =
-    location.pathname.startsWith("/j") ? [{
-      name: "New Entry",
-      onClick: clickEntry,
-    }]
-    : []
-
-  return <AppBar
-    clearBottom={true}
-    links={links}
-    ctas={ctas}
-  />
-  // return <>
-  //   <Routes>
-  //     <Route path='/groups/*' element={<S><GroupsToolbar /></S>} />
-  //     <Route path='/groups/:gid' element={<S><GroupToolbar /></S>} />
-  //   </Routes>
-  // </>
-}
 
 // Have this separate since it'd otherwise cause a re-render after every lastJsonMessage, etc.
 function SetupApi() {
@@ -94,7 +52,7 @@ function Layout() {
   // return <Box key={as}>
   return <Box>
     <SetupApi />
-    <AppBar_ />
+    <AppBar />
     <Container maxWidth={false}>
       <Outlet />
     </Container>

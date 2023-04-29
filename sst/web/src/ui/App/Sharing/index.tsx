@@ -7,6 +7,7 @@ import shallow from "zustand/shallow";
 import {useStore} from "../../../data/store";
 import Inbound from "./Inbound";
 import Outbound from './Outbound'
+import Typography from "@mui/material/Typography";
 
 export default function Sharing() {
   const [
@@ -21,6 +22,8 @@ export default function Sharing() {
     s.sharing.setView
   ], shallow)
 
+  const comingSoon = true
+
   useEffect(() => {
     send('shares_egress_list_request', {})
   }, [])
@@ -32,7 +35,7 @@ export default function Sharing() {
     setView({tab: null})
   }, [])
 
-  const ctas: CTA[] = [{
+  const ctas: CTA[] = comingSoon ? [] : [{
     name: "New Share",
     onClick: clickNew,
   }]
@@ -40,6 +43,20 @@ export default function Sharing() {
   const renderInbound = useCallback(() => <Inbound />, [])
   const renderOutbound = useCallback(() => <Outbound />, [])
   const renderInfo = useCallback(() => <div>Info goes here</div>, [])
+
+  function renderContent() {
+    if (comingSoon) {
+      return <Typography>This feature is currently being migrated from the old site, coming back soon</Typography>
+    }
+    return <Tabs
+      defaultTab={view.tab || "inbound"}
+      tabs={[
+        {label: "Inbound", value: "inbound", render: renderInbound},
+        {label: "Outbound", value: "outbound", render: renderOutbound},
+        {label: "Info", value: "info", render: renderInfo},
+      ]}
+    />
+  }
 
   return <FullScreenDialog
       className="sharing modal"
@@ -49,14 +66,7 @@ export default function Sharing() {
       ctas={ctas}
     >
       <DialogContent>
-        <Tabs
-          defaultTab={view.tab || "inbound"}
-          tabs={[
-            {label: "Inbound", value: "inbound", render: renderInbound},
-            {label: "Outbound", value: "outbound", render: renderOutbound},
-            {label: "Info", value: "info", render: renderInfo},
-          ]}
-        />
+        {renderContent()}
       </DialogContent>
   </FullScreenDialog>
 }
