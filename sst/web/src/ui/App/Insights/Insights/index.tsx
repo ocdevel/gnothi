@@ -130,13 +130,13 @@ export default function Insights({entry_ids}: Insights) {
 
   return <div className="insights">
     <Stack2>
-    <Insight
+      {/*<Insight
         label="Prompt"
         icon={<PromptIcon {...iconProps} />}
         description="Ask Gnothi anything about an entry or set of entries. Choose a topic and question, or create a custom prompt."
       >
         <Prompt entry_ids={entry_ids} view={view} />
-      </Insight>
+      </Insight>*/}
 
       <Insight
         label="Themes"

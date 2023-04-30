@@ -9,6 +9,7 @@ import {sql} from "drizzle-orm/sql";
 import {preprocess} from "../../ml/node/preprocess";
 import {summarizeEntry} from "../../ml/node/summarize";
 import {upsert} from "../../ml/node/upsert";
+import {eq, and} from "drizzle-orm/expressions"
 
 const r = S.Routes.routes
 
@@ -48,19 +49,18 @@ async function upsertOuter(
   //     """), dict(day=created_at, tz=tz, id=entry.id))
   //     db.commit()
 
-  // TODO use batchExecuteStatement
-  for (const tag_id of tids) {
-    // FIXME
-    await db.drizzle.insert(entriesTags).values({tag_id, entry_id})
-  }
-
-  return [{...dbEntry, tags}]
+  await db.drizzle.insert(entriesTags)
+    .values(tids.map(tag_id => ({tag_id, entry_id})))
+  // fixme gotta find a way to not need removeNull everywhere
+  const ret = db.removeNull({...dbEntry, tags})
+  return [ret]
 }
 
 export const entries_post_request = new Route(r.entries_post_request, async (req, context) => {
   const {drizzle} = context.db
   return upsertOuter(req, context, async (entry) => {
-    return drizzle.insert(entries).values(entry)
+    const res = await drizzle.insert(entries).values(entry).returning()
+    return res[0]
   })
 })
 
@@ -73,11 +73,11 @@ export const entries_put_request = new Route(r.entries_put_request, async (req, 
     await db.query(
       sql`delete from ${s.entriesTags} where entry_id=${id}`
     )
-    return db.queryFirst<S.Entries.Entry>(sql`
-      update ${s.entries} set title=${title}, text=${text} 
-      where id=${id} and user_id=${user_id} 
-      returning *
-    `)
+    const res = await db.drizzle.update(entries)
+      .set({title, text})
+      .where(and(eq(entries.id, id), eq(entries.user_id, user_id)))
+      .returning()
+    return res[0]
   })
 })
 
@@ -89,7 +89,7 @@ export const entries_upsert_response = new Route(r.entries_upsert_response, asyn
   let updated = {...entry}
 
   const tags = await db.query<S.Tags.Tag>(
-    sql`select * from tags where id in ${tids} and user_id=${context.user_id}`
+    sql`select * from tags where id in ${tids} and user_id=${context.uid}`
   )
 
   // TODO how to handle multiple tags, where some are yes-ai and some are no-ai?

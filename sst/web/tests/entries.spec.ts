@@ -12,6 +12,12 @@ test.describe("Entries", () => {
   test.describe('CRUD', () => {
     // create accounted for everywhere
     test("view", async ({page}) => {
+      /**
+       * 
+       * error: null value in column "entry_id" of relation "entries_tags" violates not-null constraint | 500 | entries_post_request
+       * 
+       [ { "code": "invalid_arguments", "argumentsError": { "issues": [ { "code": "invalid_type", "expected": "object", "received": "string", "path": [ 0 ], "message": "Expected object, received string" } ], "name": "ZodError" }, "path": [], "message": "Invalid function arguments" } ] | 500 | entries_post_request
+       */
       await (new Utils(page)).addEntries({n_index: 1})
       await page.locator(".entries .list .teaser").nth(0).click()
       await expect(".modal .view .title").toBe(true)
