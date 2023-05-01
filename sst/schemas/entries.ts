@@ -5,29 +5,14 @@ import {v4 as uuid} from "uuid";
 import dayjs from "dayjs";
 import {insights_books_response} from "./insights";
 export * as Entries from './entries'
+import {createInsertSchema} from "drizzle-zod";
+import {entries} from '../services/data/schemas/entries'
 
 const AiState = z.enum(['todo', 'skip', 'running', 'done']).optional()
 
-export const Entry = z.object({
-  id: IdCol,
+const Entry = createInsertSchema(entries, {
   created_at: dateCol(),
   updated_at: dateCol(),
-  n_notes: z.number().default(0),
-
-  // Title optional, otherwise generated from text. topic-modeled, or BERT summary, etc?
-  title: z.string().optional(),
-  text: z.string(),
-  text_clean: z.string().optional(),
-  text_paras: z.string().array().optional(),
-
-  ai_index_state: AiState,
-  ai_summarize_state: AiState,
-  ai_title: z.string().optional(),
-  ai_text: z.string().optional(),
-  ai_sentiment: z.string().optional(),
-  ai_keywords: z.string().array().optional(),
-
-  user_id: IdCol, // FK users.id
 })
 export type Entry = z.infer<typeof Entry>
 export const EntryWithTags = Entry.extend({

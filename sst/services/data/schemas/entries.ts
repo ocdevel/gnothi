@@ -11,8 +11,8 @@ import {
   timestamp,
   json,
   primaryKey,
-  InferModel
 } from 'drizzle-orm/pg-core';
+import {InferModel} from "drizzle-orm"
 import {users, userId} from './users'
 import {idCol, tsCol} from './utils'
 
