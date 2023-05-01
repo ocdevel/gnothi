@@ -25,7 +25,7 @@ export const insights_get_request = new Route(r.insights_get_request,async (req,
 })
 
 export const insights_get_response = new Route(r.insights_get_response,async (req, context) => {
-  const mEntries = new M.Entries(context.user.id)
+  const mEntries = context.m.entries
   const user_id = context.user.id
   const promises = []
   const {insights, entry_ids, view} = req

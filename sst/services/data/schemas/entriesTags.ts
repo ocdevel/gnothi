@@ -1,9 +1,10 @@
 import {tags} from './tags'
 import {entries} from './entries'
+import {InferModel} from 'drizzle-orm'
 import {
   pgTable,
   uuid,
-  primaryKey, InferModel
+  primaryKey
 } from 'drizzle-orm/pg-core';
 
 

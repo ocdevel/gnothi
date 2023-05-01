@@ -5,11 +5,12 @@ import {GnothiError} from "../errors";
 import {db} from "../../data/dbSingleton";
 import {entriesTags} from "../../data/schemas/entriesTags";
 import {entries, Entry} from "../../data/schemas/entries";
+import {tags, Tag} from "../../data/schemas/tags";
 import {sql} from "drizzle-orm/sql";
 import {preprocess} from "../../ml/node/preprocess";
 import {summarizeEntry} from "../../ml/node/summarize";
 import {upsert} from "../../ml/node/upsert";
-import {eq, and} from "drizzle-orm/expressions"
+import {eq, and, inArray} from "drizzle-orm/expressions"
 
 const r = S.Routes.routes
 
@@ -82,20 +83,21 @@ export const entries_put_request = new Route(r.entries_put_request, async (req, 
 })
 
 export const entries_upsert_response = new Route(r.entries_upsert_response, async (req, context) => {
+  const drizzle = context.db.drizzle
   const entry = req
   const eid = entry.id
   const tids = boolMapToKeys(entry.tags)
   const promises = []
   let updated = {...entry}
 
-  const tags = await db.query<S.Tags.Tag>(
-    sql`select * from tags where id in ${tids} and user_id=${context.uid}`
-  )
+  const tags_ = await drizzle.select()
+    .from(tags)
+    .where(and(inArray(tags.id, tids), eq(tags.user_id, context.uid)))
 
   // TODO how to handle multiple tags, where some are yes-ai and some are no-ai?
   // For now I'm assuming no.
-  const skip_summarize = tags.some(t => t.ai_summarize === false)
-  const skip_index = tags.some(t => t.ai_index === false)
+  const skip_summarize = tags_.some(t => t.ai_summarize === false)
+  const skip_index = tags_.some(t => t.ai_index === false)
 
   const clean = await preprocess({text: entry.text, method: 'md2txt'})
 
@@ -105,13 +107,12 @@ export const entries_upsert_response = new Route(r.entries_upsert_response, asyn
     text_clean: clean.text,
     text_paras: clean.paras
   }
-  promises.push(db.query(
-    sql`update entries 
-      set 
-        text_clean=${updated.text_clean}, 
-        text_paras=${updated.text_paras}::varchar[] 
-      where id=${eid}`
-  ))
+  promises.push(drizzle.update(entries)
+    .set({
+      text_clean: updated.text_clean,
+      text_paras: updated.text_paras // varchar[]
+    })
+    .where(eq(entries.id, eid)))
 
   const summary = !skip_summarize ? await summarizeEntry(clean) : {
     title: "",
@@ -131,14 +132,16 @@ export const entries_upsert_response = new Route(r.entries_upsert_response, asyn
     promises.push(upsert({entry: updated}))
   }
 
-  promises.push(db.query(
-    sql`update entries set 
-        ai_keywords=${updated.ai_keywords}::varchar[],
-        ai_title=${updated.ai_title}, 
-        ai_text=${updated.ai_text}, 
-        ai_sentiment=${updated.ai_sentiment}
-      where id=${eid}`
-  ))
+
+  promises.push(drizzle.update(entries)
+    .set({
+      ai_keywords: updated.ai_keywords, // varchar[],
+      ai_title: updated.ai_title,
+      ai_text: updated.ai_text,
+      ai_sentiment: updated.ai_sentiment
+    })
+    .where(eq(entries.id, eid)))
+
   await Promise.all(promises)
 
   // FIXME

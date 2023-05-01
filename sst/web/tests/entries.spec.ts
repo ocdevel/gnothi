@@ -20,7 +20,7 @@ test.describe("Entries", () => {
        */
       await (new Utils(page)).addEntries({n_index: 1})
       await page.locator(".entries .list .teaser").nth(0).click()
-      await expect(".modal .view .title").toBe(true)
+      await expect(page.locator(".entries.modal .view .title")).toHaveCount(1)
     })
     test("update", async ({page}) => {
       const utils = new Utils(page)

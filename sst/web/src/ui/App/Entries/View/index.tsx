@@ -63,7 +63,7 @@ export default function View({entry, onClose}: Entry) {
 
   function renderEntry() {
     return <Box>
-      <Typography variant='h2'>{entry.title}</Typography>
+      <Typography variant='h2' className='title'>{entry.title}</Typography>
       <ReactMarkdown
         linkTarget='_blank'
       >

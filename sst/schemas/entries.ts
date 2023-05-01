@@ -7,6 +7,7 @@ import {insights_books_response} from "./insights";
 export * as Entries from './entries'
 
 const AiState = z.enum(['todo', 'skip', 'running', 'done']).optional()
+
 export const Entry = z.object({
   id: IdCol,
   created_at: dateCol(),
