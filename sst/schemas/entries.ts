@@ -61,7 +61,7 @@ export const entries_delete_request = z.object({
   id: z.string()
 })
 export type entries_delete_request = z.infer<typeof entries_delete_request>
-export const entries_delete_response = entries_list_response
+export const entries_delete_response = entries_delete_request
 export type entries_delete_response = z.infer<typeof entries_delete_response>
 
 export const routes = {

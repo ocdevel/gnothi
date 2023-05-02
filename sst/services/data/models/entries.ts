@@ -72,9 +72,11 @@ export class Entries extends Base {
 
   async destroy(id: string) {
     const {uid, db} = this.context
-    return db.drizzle.delete(entries)
+    const res = await db.drizzle.delete(entries)
       .where(and(eq(entries.id, id), eq(entries.user_id, uid)))
-      .returning()
+      // .returning()
+    // I can't think of why we'd return the full deleted-entry, so just returning ID for now
+    return [{id}]
   }
 
   async snoop({sid, entry_id, group_id, order_by, tags, days, for_ai}: Snoop): Promise<Entry[]> {
