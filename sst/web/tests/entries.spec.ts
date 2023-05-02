@@ -12,13 +12,7 @@ test.describe("Entries", () => {
   test.describe('CRUD', () => {
     // create accounted for everywhere
     test("view", async ({page}) => {
-      /**
-       * 
-       * error: null value in column "entry_id" of relation "entries_tags" violates not-null constraint | 500 | entries_post_request
-       * 
-       [ { "code": "invalid_arguments", "argumentsError": { "issues": [ { "code": "invalid_type", "expected": "object", "received": "string", "path": [ 0 ], "message": "Expected object, received string" } ], "name": "ZodError" }, "path": [], "message": "Invalid function arguments" } ] | 500 | entries_post_request
-       */
-      await (new Utils(page)).addEntries({n_index: 1})
+      await (new Utils(page)).addEntries({n_summarize: 0, n_index: 1})
       await page.locator(".entries .list .teaser").nth(0).click()
       await expect(page.locator(".entries.modal .view .title")).toHaveCount(1)
     })
@@ -31,7 +25,15 @@ test.describe("Entries", () => {
       await page.locator(".entries.modal .upsert .btn-submit").click()
       await expect(page.locator(".entries .list .teaser .text")).toContainText("Updated content")
     })
-    test.fixme("delete", () => {})
+    test("delete", async ({page}) => {
+      const utils = new Utils(page)
+      await utils.addEntries({n_summarize: 0, n_index: 1})
+      await page.locator(".entries .list .teaser").nth(0).click()
+      await page.locator(".entries.modal .view .btn-edit").click()
+      await page.locator(".entries.modal .upsert .btn-delete").click()
+      await expect(page.locator(".entries.modal")).toBeFalsy()
+      await expect(page.locator(".entries .list .teaser")).toHaveCount(0)
+    })
   })
   
   test.describe("edge cases", () => {
@@ -81,3 +83,12 @@ test.describe("Entries", () => {
   })
 })
 
+test.describe("Notes", () => {
+  test.fixme("Crud", () => {})
+  test.fixme("Shows up under entry.view", () => {})
+  test.fixme("Other use can view, if shared", () => {})
+  test.describe("multiple notes", () => {
+    test.fixme("listed in chronological order", () => {})
+
+  })
+})

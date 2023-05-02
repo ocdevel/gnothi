@@ -28,6 +28,7 @@ import Stack from "@mui/material/Stack";
 import {useForm} from "react-hook-form";
 import {zodResolver} from "@hookform/resolvers/zod";
 import {Entries} from '@gnothi/schemas'
+import dayjs from 'dayjs'
 
 const placeholder = `Write a journal entry, whatever's on your mind. Hard times you're going through, politics, philosophy, the weather. Be verbose, AI works best with long-form content - a paragraph or more is ideal, less might result in poor insights or resource-recommendations.
  
@@ -120,7 +121,7 @@ export default function Upsert(props: Entry) {
     if (formOrig) {form.reset(formOrig)}
   }
 
-  const go = (to='/j/list') => {
+  const go = (to='/j') => {
     clearDraft()
     props.onClose?.()
     // send('entries_list_request', {})
@@ -139,7 +140,8 @@ export default function Upsert(props: Entry) {
 
   const deleteEntry = async () => {
     if (isNew) {return}
-    if (window.confirm(`Delete "${entry.title}"`)) {
+    const title = entry.title || entry.ai_title || entry.created_at
+    if (window.confirm(`Delete entry: ${title}?`)) {
       send('entries_delete_request', {id: id})
     }
   }

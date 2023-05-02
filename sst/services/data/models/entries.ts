@@ -72,10 +72,9 @@ export class Entries extends Base {
 
   async destroy(id: string) {
     const {uid, db} = this.context
-    const res = await db.delete().from(entries)
+    return db.drizzle.delete(entries)
       .where(and(eq(entries.id, id), eq(entries.user_id, uid)))
       .returning()
-    return res[0]
   }
 
   async snoop({sid, entry_id, group_id, order_by, tags, days, for_ai}: Snoop): Promise<Entry[]> {
@@ -172,17 +171,17 @@ export class Entries extends Base {
     return [ret]
   }
 
-  async put(req: entries_put_request) {
+  async put(req: S.Entries.entries_put_request) {
     const {id} = req
     const {drizzle} = this.context.db
     return this.upsertOuter(req, async ({title, text, user_id}) => {
-      await db.drizzle.delete().from(entriesTags)
+      await drizzle.delete(entriesTags)
         .where(and(
           eq(entriesTags.entry_id, id),
           // FIXME insecure. x-ref user-id with inner join. Need a CTE for user_id
           // eq(entriesTags.user_id, user_id)
         ))
-      const res = await db.drizzle.update(entries)
+      const res = await drizzle.update(entries)
         .set({title, text})
         .where(and(eq(entries.id, id), eq(entries.user_id, user_id)))
         .returning()
@@ -190,7 +189,7 @@ export class Entries extends Base {
     })
   }
 
-  async post(req: entries_post_request) {
+  async post(req: S.Entries.entries_post_request) {
     const {drizzle} = this.context.db
     return this.upsertOuter(req, async (entry) => {
       const res = await drizzle.insert(entries).values(entry).returning()
