@@ -11,6 +11,7 @@ import {preprocess} from "../../ml/node/preprocess";
 import {summarizeEntry} from "../../ml/node/summarize";
 import {upsert} from "../../ml/node/upsert";
 import {eq, and, inArray} from "drizzle-orm/expressions"
+import {containsListTokenElement} from "aws-cdk-lib/core/lib/private/encoding";
 
 const r = S.Routes.routes
 
@@ -22,64 +23,13 @@ export const entries_delete_request = new Route(r.entries_delete_request, async 
   return context.m.entries.destroy(req.id)
 })
 
-
-type UpsertInner = (entry: S.Entries.Entry & {user_id: string}) => Promise<S.Entries.Entry>
-async function upsertOuter(
-  req: S.Entries.entries_post_request,
-  context: FnContext,
-  upsertInner: UpsertInner
-): Promise<S.Entries.entries_upsert_response[]> {
-  const user_id = context.user.id
-  const {tags, ...entry} = req
-  const tids = boolMapToKeys(tags)
-  if (!tids.length) {
-    throw new GnothiError({message: "Each entry must belong to at least one journal", key: "NO_TAGS"})
-  }
-  const dbEntry = await upsertInner({...entry, user_id})
-  const entry_id = dbEntry.id
-
-  // FIXME
-  // manual created-at override
-  // iso_fmt = r"^\d{4}-([0]\d|1[0-2])-([0-2]\d|3[01])$"
-  // created_at = data.get('created_at', None)
-  // if created_at and re.match(iso_fmt, created_at):
-  //     tz = M.User.tz(db, vid)
-  //     db.execute(text("""
-  //     update entries set created_at=(:day ::timestamp at time zone :tz)
-  //     where id=:id
-  //     """), dict(day=created_at, tz=tz, id=entry.id))
-  //     db.commit()
-
-  await db.drizzle.insert(entriesTags)
-    .values(tids.map(tag_id => ({tag_id, entry_id})))
-  // fixme gotta find a way to not need removeNull everywhere
-  const ret = db.removeNull({...dbEntry, tags})
-  return [ret]
-}
-
 export const entries_post_request = new Route(r.entries_post_request, async (req, context) => {
-  const {drizzle} = context.db
-  return upsertOuter(req, context, async (entry) => {
-    const res = await drizzle.insert(entries).values(entry).returning()
-    return res[0]
-  })
+  return context.m.entries.post(req)
 })
 
 
 export const entries_put_request = new Route(r.entries_put_request, async (req, context) => {
-  const {id} = req
-  const {db, s} = context
-  return upsertOuter(req, context, async ({title, text, user_id}) => {
-    // FIXME insecure. x-ref user-id with inner join
-    await db.query(
-      sql`delete from ${s.entriesTags} where entry_id=${id}`
-    )
-    const res = await db.drizzle.update(entries)
-      .set({title, text})
-      .where(and(eq(entries.id, id), eq(entries.user_id, user_id)))
-      .returning()
-    return res[0]
-  })
+  return context.m.entries.put(req)
 })
 
 export const entries_upsert_response = new Route(r.entries_upsert_response, async (req, context) => {
@@ -131,7 +81,6 @@ export const entries_upsert_response = new Route(r.entries_upsert_response, asyn
   if (!skip_index) {
     promises.push(upsert({entry: updated}))
   }
-
 
   promises.push(drizzle.update(entries)
     .set({

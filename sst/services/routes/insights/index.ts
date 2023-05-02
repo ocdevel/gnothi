@@ -25,8 +25,8 @@ export const insights_get_request = new Route(r.insights_get_request,async (req,
 })
 
 export const insights_get_response = new Route(r.insights_get_response,async (req, context) => {
-  const mEntries = context.m.entries
-  const user_id = context.user.id
+  const {m, uid} = context
+  const user_id = uid
   const promises = []
   const {insights, entry_ids, view} = req
   const {query} = insights
@@ -60,7 +60,7 @@ export const insights_get_response = new Route(r.insights_get_response,async (re
   }
 
   if (insights.summarize) {
-    const entries = await mEntries.getByIds(ids)
+    const entries = await m.entries.getByIds(ids)
 
     promises.push(summarizeInsights({
       context,
