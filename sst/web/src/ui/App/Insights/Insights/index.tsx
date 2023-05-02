@@ -6,6 +6,7 @@ import Themes from "./Themes"
 import Prompt from "./Prompt"
 import Books from "./Books"
 import Behaviors from "./Behaviors"
+import Divider from "@mui/material/Divider";
 
 import {
   FaLock
@@ -39,7 +40,7 @@ const iconProps = {
 interface Insight {
   label: string
   icon: React.ReactNode
-  description: string
+  description?: string
   children: React.ReactNode
 }
 function InsightCardHeader({label, icon, description, children}: Insight) {
@@ -49,9 +50,9 @@ function InsightCardHeader({label, icon, description, children}: Insight) {
     spacing={2}
   >
     {icon}
-    <Typography variant="h6" >{label}</Typography>
+    <Typography variant="inherit" >{label}</Typography>
   </Stack>
-  return <Card className='mb-3'>
+  return <Card className='mb-3' >
     <CardHeader
       title={title}
       subheader={description}
@@ -63,29 +64,29 @@ function InsightCardHeader({label, icon, description, children}: Insight) {
 }
 function InsightRaw({label, icon, description, children}: Insight) {
   return <Card
-    sx={{ backgroundColor:'white', borderRadius: 2}}
+    sx={{ backgroundColor:'white', borderRadius: 2, boxShadow: 1}}
   >
     <CardContent>
       <Stack
         alignItems="center"
         direction="row"
-        spacing={2}
+        spacing={1}
       >
         {icon}
         <Typography 
-          variant="subtitle2" 
+          variant="h4"
+          fontWeight={500}
+          textAlign={'center'}
           color="primary.main"
           >{label}
           </Typography>
       </Stack>
-      <Typography 
-        color="primary.main" 
+      {description && <Typography
+        color="primary.main"
         variant="body2"
         fontWeight={300}
         >{description}
-        </Typography>
-    </CardContent>
-    <CardContent>
+        </Typography> }
       {children}
     </CardContent>
   </Card>
@@ -137,11 +138,31 @@ export default function Insights({entry_ids}: Insights) {
       >
         <Prompt entry_ids={entry_ids} view={view} />
       </Insight>*/}
+      <Stack>
+        <Typography
+          variant="h2"
+          color="primary.main"
+          mb={1}
+          mt={0}
+          textAlign='center'
+        >
+          Insights
+        </Typography>
+        {/*<Typography*/}
+        {/*  color="primary.main"*/}
+        {/*  variant="body1"*/}
+        {/*  fontWeight={300}*/}
+        {/*  mb={2}*/}
+        {/*>*/}
+        {/*  These are the results based on your search and the entries you’ve selected. You can adjust filters to see different insights.*/}
+        {/*</Typography>*/}
+        <Divider/>
+      </Stack>
 
       <Insight
         label="Themes"
         icon={<ThemesIcon {...iconProps} />}
-        description="See the recurring themes across your entries that AI sees. Use these to identify patterns in your thoughts and feelings. "
+        // description="See the recurring themes across your entries that AI sees. Use these to identify patterns in your thoughts and feelings. "
       >
         <Themes view={view}/>
       </Insight>
@@ -149,28 +170,28 @@ export default function Insights({entry_ids}: Insights) {
       <Insight
         label="Summary"
         icon={<SummaryIcon {...iconProps} />}
-        description="This is an AI-generated summary based on your search results. You can adjust filters to see different summaries.
-        "
+        // description="This is an AI-generated summary based on your search results. You can adjust filters to see different summaries.
+        // "
       >
         <Summarize view={view} />
       </Insight>
 
-      
-      
-      <Insight
-        label="Books"
-        icon={<BooksIcon {...iconProps} />}
-        description="Gnothi recommends the following books to you based on the entries in this search. You can thumbs up or down books to train AI on your interests, or add titles you’re interested in to your bookshelf."
-      >
-        <Books view={view}/>
-      </Insight>
       <Insight
         label="Behavior Tracking"
         icon={<BehaviorsIcon {...iconProps} />}
-        description="Here’s an overview of the daily habits and behaviors you’ve been tracking through Gnothi."
+      //   description="Here’s an overview of the daily habits and behaviors you’ve been tracking through Gnothi."//
       >
         <Behaviors/>
       </Insight>
+      
+      <Insight
+        label="Top Books"
+        icon={<BooksIcon {...iconProps} />}
+        // description="Gnothi recommends the following books to you based on the entries in this search." //You can thumbs up or down books to train AI on your interests, or add titles you’re interested in to your bookshelf."
+      >
+        <Books view={view}/>
+      </Insight>
+
     </Stack2>
   </div>
 }

@@ -5,6 +5,7 @@ import ThumbUpIcon from '@mui/icons-material/ThumbUpAltOutlined';
 import ThumbDownIcon from '@mui/icons-material/ThumbDownOutlined';
 import BookmarkIcon from '@mui/icons-material/BookmarkAddOutlined';
 
+
 import {useStore} from "@gnothi/web/src/data/store"
 import Typography from "@mui/material/Typography";
 import CircularProgress from "@mui/material/CircularProgress";
@@ -14,6 +15,7 @@ import Checkbox from "@mui/material/Checkbox";
 import Stack from "@mui/material/Stack";
 import {insights_books_response} from '@gnothi/schemas/insights'
 import {Insight} from './Utils'
+import Divider from "@mui/material/Divider";
 
 export default function Books({view}: Insight) {
   const submitted = useStore(useCallback(s => !!s.res.insights_get_response?.hash?.[view], [view]))
@@ -31,6 +33,7 @@ export default function Books({view}: Insight) {
     b: insights_books_response['books'][number],
     i: number,
   ) {
+
     return <Stack direction="column" mb={2} key={b.id}>
       <Typography 
         sx={{
@@ -38,22 +41,25 @@ export default function Books({view}: Insight) {
           variant: 'body1', mb: 1
          }}
          >
-          {b.name}
+        {b.name} by {b.author}
          </Typography>
-      <Stack spacing={1.5} direction="row">
-        <ThumbUpIcon sx={{color:"primary.main"}}
-          />
-        <ThumbDownIcon sx={{mt: 2, color:'#7B515C'}}
-        />
-        <BookmarkIcon sx={{color:"#40635A"}}
-        />
-      </Stack>
+
+      <Divider/>
+
+      {/*<Stack spacing={1.5} direction="row">*/}
+      {/*  <ThumbUpIcon sx={{color:"primary.main"}}*/}
+      {/*    />*/}
+      {/*  <ThumbDownIcon sx={{mt: 2, color:'#7B515C'}}*/}
+      {/*  />*/}
+      {/*  <BookmarkIcon sx={{color:"#40635A"}}*/}
+      {/*  />*/}
+      {/*</Stack>*/}
     </Stack>
   }
 
   const icons = {color: "secondary", fontSize: "large"} as const
   if (!books?.length) {return null}
   return <Box>
-    {books.slice(0,3).map(renderBook)}
+    {books.slice(0,7).map(renderBook)}
   </Box>
 }

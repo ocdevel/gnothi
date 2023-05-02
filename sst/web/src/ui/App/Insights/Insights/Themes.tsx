@@ -47,7 +47,8 @@ export default function Themes({view}: Insight) {
       
       <Typography 
         marginBottom={1}
-        variant="h6"
+        variant="body1"
+        fontWeight={500}
         color="primary">{theme.word}</Typography>
         <Typography
           variant="body2"
@@ -57,7 +58,9 @@ export default function Themes({view}: Insight) {
           mb={1}>
         Related summary from your entries:
       </Typography>
+
       <Typography 
+        variant='body1'
         marginBottom={2}>{theme.summary}</Typography>
       
       <Stack 
@@ -69,6 +72,7 @@ export default function Themes({view}: Insight) {
         >
         {theme.keywords.map((kw: string) => <Chip sx={{marginRight:1, marginBottom:2}} key={kw} label={kw} />)}
       </Stack>
+
       <Divider sx={{marginTop: 2}} />
     </Box>
   }
