@@ -5,7 +5,9 @@ import { pgTable, serial, text, varchar } from 'drizzle-orm/pg-core';
 import { drizzle, NodePgDatabase } from 'drizzle-orm/node-postgres'
 import { sql, SQL } from 'drizzle-orm/sql'
 
-export const sharedStage = `gnothi${process.env.sharedStage}`
+ // TODO why was I using the sharedStage for the DB? shouldn't it stage-specific?
+// export const sharedStage = `gnothi${process.env.sharedStage}`
+export const sharedStage = `gnothi${process.env.stage}`
 
 class MyLogger implements Logger {
   logQuery(query: string, params: unknown[]): void {
