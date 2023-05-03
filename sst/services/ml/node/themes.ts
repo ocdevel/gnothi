@@ -6,7 +6,7 @@ import {insights_themes_response, insights_summarize_response} from '@gnothi/sch
 import {ulid} from 'ulid'
 import {sendInsight} from "./utils";
 import {completion} from './openai'
-import {getSummary} from "../../data/models/insights";
+import {getSummary} from "@gnothi/schemas/entries";
 
 type FnIn = {
   context?: S.Api.FnContext

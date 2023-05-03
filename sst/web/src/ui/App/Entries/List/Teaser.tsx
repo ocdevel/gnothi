@@ -14,6 +14,7 @@ import {
   fmtDate,
 } from "@gnothi/web/src/utils/utils"
 import {entries_list_response} from "@gnothi/schemas/entries";
+import * as S from "@gnothi/schemas"
 
 // Separate loader component to make assuming entry!=null easier to work with
 type GoToForm = (eid: string) => void
@@ -43,7 +44,7 @@ function Teaser({entry, goToForm}: Teaser) {
   // Note: using a lot of useCallback and useMemo optimizations because hover will
   // cause alot of re-renders
 
-  const isSummary = entry.ai_text && entry.text !== entry.ai_text
+  const isSummary = entry.ai_text?.length && entry.text !== entry.ai_text
 
   const goToEntry = useCallback(
     () => setEntryModal({mode: "view", entry}),
@@ -76,8 +77,9 @@ function Teaser({entry, goToForm}: Teaser) {
   }, [entry.ai_sentiment])
 
   const text = useMemo(() => {
+    // debugger
     return <span className={isSummary ? "text ai" : "text"}>
-      {entry.ai_text || entry.text}
+      {S.Entries.getText(entry)}
     </span>
   }, [entry.ai_text, entry.text])
 

@@ -56,7 +56,7 @@ export const entries_upsert_response = new Route(r.entries_upsert_response, asyn
   const summary = !skip_summarize ? await summarizeEntry(clean) : {
     title: "",
     paras: clean.paras,
-    body: {text: clean.text, emotion: "", keywords: []}
+    body: {text: "", emotion: "", keywords: []}
   }
   console.log({summary})
 

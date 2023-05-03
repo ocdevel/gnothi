@@ -9,3 +9,5 @@ test("Creates a main tag", async ({page}) => {
   const auth = await utils.signup()
   await expect(page.locator('.entries .list .tags .btn-select.selected')).toHaveCount(1)
 })
+
+test.fixme("agreement checkboxes", () => {})

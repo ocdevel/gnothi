@@ -6,8 +6,9 @@ import {
   uuid,
   timestamp,
   boolean,
-  integer, InferModel
+  integer,
 } from 'drizzle-orm/pg-core';
+import {InferModel} from 'drizzle-orm'
 import {idCol} from "./utils";
 
 

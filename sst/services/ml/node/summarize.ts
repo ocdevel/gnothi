@@ -6,6 +6,7 @@ import {Config} from '@serverless-stack/node/config'
 import {v4 as uuid} from 'uuid'
 import {sendInsight} from "./utils";
 import {completion} from "./openai";
+import {getSummary} from '@gnothi/schemas/entries'
 
 interface Params {
   summarize?: {
@@ -147,7 +148,7 @@ export async function summarizeInsights({context, entries}: SummarizeInsights): 
   } else {
     summaries = await summarize({
       // summarize summaries, NOT full originals (to reduce token max)
-      texts: [entries.map(e => e.ai_text || e.text).join('\n')],
+      texts: [entries.map(getSummary).join('\n')],
       params: [{
         summarize: {min_length: 40, max_length: 120},
         keywords: keywordsDefaults,

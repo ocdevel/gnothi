@@ -35,7 +35,6 @@ test.describe("Entries", () => {
       await expect.soft(page.locator(".entries.modal")).not.toBeVisible()
       await expect(page.locator(".entries .list .teaser")).toHaveCount(0)
     })
-    test.fixme("generates title and summary", () => {})
   })
   
   test.describe("edge cases", () => {
@@ -59,7 +58,7 @@ test.describe("Entries", () => {
         "Both entries show in list"
       ).toHaveCount(2)
   
-      await expect.soft(
+      await expect(
         page.locator(".entries .list .teaser .text.ai"),
         ai_text_bug
       ).toHaveCount(1)
@@ -82,12 +81,16 @@ test.describe("Entries", () => {
       ).toHaveCount(0)
       await expect(page.locator(".entries .insights .summarize .no-result")).toHaveCount(1)
     })
+
+    test.fixme("if no_ai, modal summary should be invisible. Themes should be just keywords", () => {})
   })
   
   test.describe("index", () => {
     test.fixme("no-index, no-summarize shouldn't show anything in sidebar, nor generate summary for entry", () => {})
   })
 })
+
+
 
 test.describe("Notes", () => {
   test.fixme("Crud", () => {})

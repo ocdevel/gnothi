@@ -14,7 +14,8 @@ import {books} from '../../ml/node/books'
 import {ask} from '../../ml/node/ask'
 import {themes} from '../../ml/node/themes'
 import {boolMapToKeys} from '@gnothi/schemas/utils'
-import {getParas, getSummary, getText, Insights} from '../../data/models/insights'
+import {getParas, getSummary, getText} from '@gnothi/schemas/entries'
+import {Insights} from '../../data/models/insights'
 import {Route} from '../types'
 import {ulid} from "ulid";
 import {inArray, eq, and} from "drizzle-orm/expressions";
