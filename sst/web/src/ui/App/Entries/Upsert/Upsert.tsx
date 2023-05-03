@@ -168,7 +168,13 @@ export default function Upsert(props: Entry) {
 
     return <>
       {id && <>
-        <Button color='secondary' sx={{marginRight: 'auto'}} size="small" onClick={deleteEntry}>
+        <Button
+          color='secondary'
+          className='btn-delete'
+          sx={{marginRight: 'auto'}}
+          size="small"
+          onClick={deleteEntry}
+        >
           Delete
         </Button>
         <Button size="small" onClick={cancel}>

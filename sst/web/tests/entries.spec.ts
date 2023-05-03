@@ -30,8 +30,9 @@ test.describe("Entries", () => {
       await utils.addEntries({n_summarize: 0, n_index: 1})
       await page.locator(".entries .list .teaser").nth(0).click()
       await page.locator(".entries.modal .view .btn-edit").click()
+      page.on('dialog', dialog => dialog.accept());
       await page.locator(".entries.modal .upsert .btn-delete").click()
-      await expect(page.locator(".entries.modal")).toBeFalsy()
+      await expect.soft(page.locator(".entries.modal")).not.toBeVisible()
       await expect(page.locator(".entries .list .teaser")).toHaveCount(0)
     })
   })
@@ -40,8 +41,10 @@ test.describe("Entries", () => {
     test.fixme("manually set date", async () => {})
     test.fixme("update/delete should handle s3 files too", async () => {})
   })
-  
+
   const ai_text_bug = "FIXME - ai_text is being set to entry plaintext, meaning I can't test if is-ai (for the mouse-hover about-summary)."
+
+  test.fixme("search", () => {})
   
   test.describe("summaries", () => {
     test("sum:1 index:1", async ({page}) => {

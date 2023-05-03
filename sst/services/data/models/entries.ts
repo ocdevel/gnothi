@@ -34,6 +34,7 @@ function tagsToBoolMap(tags: any): Record<string, boolean> {
 export class Entries extends Base {
   async getByIds(ids: string[]) {
     const {db, vid} = this.context
+    if (!ids.length) return []
     return db.drizzle.select().from(entries)
       .where(and(inArray(entries.id, ids), eq(entries.user_id, vid)))
   }
