@@ -63,8 +63,8 @@ export default function Upsert(props: Entry) {
   const [formOrig, setFormOrig] = useState()
   const [tags, setTags] = useState(tags_)
   const [advanced, setAdvanced] = useState(false)
-  const entriesUpsert = useStore(s => s.res.entries_upsert_response?.res)
-  const entriesDel = useStore(s => s.res.entries_delete_response?.res)
+  const entries_upsert_response = useStore(s => s.res.entries_upsert_response?.res)
+  const entries_delete_response = useStore(s => s.res.entries_delete_response?.res)
   const clear = useStore(a => a.clearEvents)
 
   const id = entry?.id
@@ -95,15 +95,15 @@ export default function Upsert(props: Entry) {
   }, [])
 
   useEffect(() => {
-    if (entriesUpsert?.code !== 200) { return }
+    if (entries_upsert_response?.code !== 200) { return }
     clearDraft()
     clear(["entries_upsert_response"])
     props.onClose?.()
-  }, [entriesUpsert])
+  }, [entries_upsert_response])
 
   useEffect(() => {
-    if (entriesDel?.code === 200) {go()}
-  }, [entriesDel])
+    if (entries_delete_response?.code === 200) {go()}
+  }, [entries_delete_response])
 
   const loadDraft = () => {
     const draft = localStorage.getItem(draftId)
@@ -162,7 +162,7 @@ export default function Upsert(props: Entry) {
 
   function renderButtons() {
     if (as) {return null}
-    if (entriesUpsert?.submitting) {
+    if (entries_upsert_response?.submitting) {
       return <CircularProgress />
     }
 

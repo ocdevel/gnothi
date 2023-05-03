@@ -79,7 +79,7 @@ export interface EventsSlice {
   // set_users_profile_put: any
   // set_fields_field_entries_get: any
 
-  clearEvents: (events: Event[]) => void
+  clearEvents: (events: Events.Events[]) => void
 }
 
 export const eventsSlice: StateCreator<
@@ -197,7 +197,6 @@ export const eventsSlice: StateCreator<
       events.forEach(e => {
         state.res[e] = null
       })
-
     }))
   },
 

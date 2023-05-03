@@ -13,7 +13,7 @@ import {
 } from "react-icons/fa"
 
 import React, {useState, useEffect, useCallback} from "react"
-import {useStore} from "@gnothi/web/src/data/store"
+import {useStore} from "../../../../data/store"
 
 
 import BooksIcon from '@mui/icons-material/AutoStoriesOutlined';
@@ -30,6 +30,7 @@ import Card from '@mui/material/Card'
 import {Stack2, Alert2} from "../../../Components/Misc";
 import Stack from "@mui/material/Stack"
 import { Typography } from "@mui/material"
+import shallow from "zustand/shallow";
 
 // 62da7182: books attrs, popovers
 const iconProps = {
@@ -100,12 +101,28 @@ interface Insights {
   entry_ids: string[]
 }
 export default function Insights({entry_ids}: Insights) {
-  const search = useStore(s => s.filters.search)
+  const [
+    search,
+    entriesHash
+  ] = useStore(s => [
+    s.filters.search,
+    s.res.entries_list_response?.hash || {}
+  ], shallow)
   const send = useStore(useCallback(s => s.send, []))
   const view = entry_ids.length === 1 ? entry_ids[0] : "list"
 
+  // get a list of entries which have been processed with all AI tasks
+  // on the server, and sent back finalized to the client.
+  const entry_ids_indexed = entry_ids.filter((id) => {
+    return ~["done", "skip"].indexOf(entriesHash?.[id]?.ai_index_state)
+  })
+
   useEffect(() => {
-    if (!entry_ids?.length) {return}
+    // some entries are awaiting indexing. They'll come back in a few with ai_state
+    // updated (websocket), so hang tight for now.
+    if (!entry_ids_indexed.length) {
+      return
+    }
 
     // Logging each time this is called, since it's getting called a lot and I can't figure out why
     console.log('insights:useEffect', [search, entry_ids])
@@ -120,7 +137,7 @@ export default function Insights({entry_ids}: Insights) {
         prompt: undefined
       }
     })
-  }, [search, entry_ids])
+  }, [search, entry_ids_indexed])
 
   // FIXME handle on a per-insight basis
   // if (!entry_ids?.length) {

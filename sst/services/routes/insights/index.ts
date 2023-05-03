@@ -17,10 +17,12 @@ import {boolMapToKeys} from '@gnothi/schemas/utils'
 import {getParas, getSummary, getText, Insights} from '../../data/models/insights'
 import {Route} from '../types'
 import {ulid} from "ulid";
+import {inArray, eq, and} from "drizzle-orm/expressions";
 
 const r = S.Routes.routes
 
 export const insights_get_request = new Route(r.insights_get_request,async (req, context) => {
+  // TODO check if any entry_ids correspond to entries not yet indexed, and remove from entry_ids if so
   return [req]
 })
 

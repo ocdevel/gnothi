@@ -10,6 +10,7 @@ import {sql, SQL} from "drizzle-orm/sql"
 import {entries, Entry} from '../schemas/entries'
 import {entriesTags} from '../schemas/entriesTags'
 import {FnContext} from "../../routes/types";
+import _ from 'lodash'
 
 type Snoop = {
   sid: string
@@ -152,7 +153,12 @@ export class Entries extends Base {
     if (!tids.length) {
       throw new GnothiError({message: "Each entry must belong to at least one journal", key: "NO_TAGS"})
     }
-    const dbEntry = await upsertInner({...entry, user_id: uid})
+    const updates: Entry = {
+      ...entry,
+      ai_index_state: "todo",
+      user_id: uid
+    }
+    const dbEntry = await upsertInner(updates)
     const entry_id = dbEntry.id
 
     // FIXME
@@ -176,17 +182,29 @@ export class Entries extends Base {
 
   async put(req: S.Entries.entries_put_request) {
     const {id} = req
-    const {drizzle} = this.context.db
-    return this.upsertOuter(req, async ({title, text, user_id}) => {
-      await drizzle.delete(entriesTags)
-        .where(and(
-          eq(entriesTags.entry_id, id),
-          // FIXME insecure. x-ref user-id with inner join. Need a CTE for user_id
-          // eq(entriesTags.user_id, user_id)
-        ))
+    const {db, uid} = this.context
+    const {drizzle} = db
+    return this.upsertOuter(req, async (entry) => {
+      // TODO why am I not saving the whole PUT request?
+      const updates = _.pick(entry, ["title", "text", "created_at", "ai_index_state"])
+
+      // await drizzle.delete(entriesTags)
+      //   .where(and(
+      //     eq(entriesTags.entry_id, id),
+      //     // FIXME insecure. x-ref user-id with inner join. Need a CTE for user_id
+      //     // eq(entriesTags.user_id, user_id)
+      //   ))
+      await drizzle.execute(sql`
+        delete from ${entriesTags}
+        where ${entriesTags.entry_id} in (
+          select ${entries.id} from ${entries} 
+          where ${entries.id}=${id} and ${entries.user_id}=${uid}
+        )
+      `)
+
       const res = await drizzle.update(entries)
-        .set({title, text})
-        .where(and(eq(entries.id, id), eq(entries.user_id, user_id)))
+        .set(updates)
+        .where(and(eq(entries.id, id), eq(entries.user_id, uid)))
         .returning()
       return res[0]
     })

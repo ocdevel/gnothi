@@ -35,6 +35,7 @@ test.describe("Entries", () => {
       await expect.soft(page.locator(".entries.modal")).not.toBeVisible()
       await expect(page.locator(".entries .list .teaser")).toHaveCount(0)
     })
+    test.fixme("generates title and summary", () => {})
   })
   
   test.describe("edge cases", () => {
@@ -45,6 +46,8 @@ test.describe("Entries", () => {
   const ai_text_bug = "FIXME - ai_text is being set to entry plaintext, meaning I can't test if is-ai (for the mouse-hover about-summary)."
 
   test.fixme("search", () => {})
+
+  test.fixme("close modal shows insights afterwards", () => {})
   
   test.describe("summaries", () => {
     test("sum:1 index:1", async ({page}) => {

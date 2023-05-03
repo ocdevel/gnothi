@@ -11,6 +11,7 @@ import {preprocess} from "../../ml/node/preprocess";
 import {summarizeEntry} from "../../ml/node/summarize";
 import {upsert} from "../../ml/node/upsert";
 import {eq, and, inArray} from "drizzle-orm/expressions"
+import _ from 'lodash'
 import {containsListTokenElement} from "aws-cdk-lib/core/lib/private/encoding";
 
 const r = S.Routes.routes
@@ -39,6 +40,7 @@ export const entries_upsert_response = new Route(r.entries_upsert_response, asyn
   const tids = boolMapToKeys(entry.tags)
   const promises = []
   let updated = {...entry}
+  let updates: Partial<Entry> = {}
 
   const tags_ = await drizzle.select()
     .from(tags)
@@ -51,44 +53,30 @@ export const entries_upsert_response = new Route(r.entries_upsert_response, asyn
 
   const clean = await preprocess({text: entry.text, method: 'md2txt'})
 
-  // save clean/paras right away so they can be used by insights
-  updated = {
-    ...updated,
-    text_clean: clean.text,
-    text_paras: clean.paras
-  }
-  promises.push(drizzle.update(entries)
-    .set({
-      text_clean: updated.text_clean,
-      text_paras: updated.text_paras // varchar[]
-    })
-    .where(eq(entries.id, eid)))
-
   const summary = !skip_summarize ? await summarizeEntry(clean) : {
     title: "",
     paras: clean.paras,
     body: {text: clean.text, emotion: "", keywords: []}
   }
+  console.log({summary})
 
-  updated = {
-    ...updated,
+  updates = {
+    text_clean: clean.text,
+    text_paras: clean.paras,
     ai_title: summary.title,
     ai_text: summary.body.text,
     ai_sentiment: summary.body.emotion,
-    ai_keywords: summary.body.keywords
+    ai_keywords: summary.body.keywords,
+    ai_index_state: "done"
   }
+  updated = {...entry, ...updates}
 
   if (!skip_index) {
     promises.push(upsert({entry: updated}))
   }
 
   promises.push(drizzle.update(entries)
-    .set({
-      ai_keywords: updated.ai_keywords, // varchar[],
-      ai_title: updated.ai_title,
-      ai_text: updated.ai_text,
-      ai_sentiment: updated.ai_sentiment
-    })
+    .set(updates)
     .where(eq(entries.id, eid)))
 
   await Promise.all(promises)
