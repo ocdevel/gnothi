@@ -15,13 +15,14 @@ interface ListOld {
 /**
  * To be removed, after assessing if containing useful code
  */
-export function ListOld({entry_id}: ListOld) {
+export function Entry({entry_id}: ListOld) {
   const [send, notes] = useStore(s => [
     s.send,
     s.res.entries_notes_list_response?.hash?.[entry_id] // {rows, (ids, hash), first}
   ], shallow)
 
   useEffect(() => {
+    if (!entry_id) {return}
     send('entries_notes_list_request', {entry_id})
   }, [entry_id])
 
@@ -78,4 +79,4 @@ export function All() {
   </>
 }
 
-export const Entry = EntriesMessages
+// export const Entry = EntriesMessages

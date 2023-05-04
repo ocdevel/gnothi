@@ -17,8 +17,6 @@ export const users_everything_request = new Route(r.users_everything_request, as
     'notifs_notes_list_request',
     'shares_ingress_list_request',
     'shares_egress_list_request',
-
-    'entries_notes_list_request' // TODO investigate
   ] as const).map(async (event) => {
     await context.handleReq({event, data: {}}, context)
   }))
