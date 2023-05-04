@@ -155,26 +155,26 @@ export default function Insights({entry_ids}: Insights) {
       >
         <Prompt entry_ids={entry_ids} view={view} />
       </Insight>*/}
-      <Stack>
-        <Typography
-          variant="h2"
-          color="primary.main"
-          mb={1}
-          mt={0}
-          textAlign='center'
-        >
-          Insights
-        </Typography>
-        {/*<Typography*/}
-        {/*  color="primary.main"*/}
-        {/*  variant="body1"*/}
-        {/*  fontWeight={300}*/}
-        {/*  mb={2}*/}
-        {/*>*/}
-        {/*  These are the results based on your search and the entries you’ve selected. You can adjust filters to see different insights.*/}
-        {/*</Typography>*/}
-        <Divider/>
-      </Stack>
+      {/*<Stack>*/}
+      {/*  <Typography*/}
+      {/*    variant="h4"*/}
+      {/*    color="primary.main"*/}
+      {/*    fontWeight={500}*/}
+      {/*    mb={1}*/}
+      {/*    mt={0}*/}
+      {/*    textAlign='right'*/}
+      {/*  >*/}
+      {/*    AI Insights*/}
+      {/*  </Typography>*/}
+      {/*  /!*<Typography*!/*/}
+      {/*  /!*  color="primary.main"*!/*/}
+      {/*  /!*  variant="body1"*!/*/}
+      {/*  /!*  fontWeight={300}*!/*/}
+      {/*  /!*  mb={2}*!/*/}
+      {/*  /!*>*!/*/}
+      {/*  /!*  These are the results based on your search and the entries you’ve selected. You can adjust filters to see different insights.*!/*/}
+      {/*  /!*</Typography>*!/*/}
+      {/*</Stack>*/}
 
       <Insight
         label="Themes"

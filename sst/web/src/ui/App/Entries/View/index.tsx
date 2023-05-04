@@ -1,5 +1,5 @@
 import {useNavigate, useParams, Navigate} from "react-router-dom"
-import React, {useEffect, useState, useContext, useCallback} from "react"
+import React, {useEffect, useState, useContext, useCallback, useMemo} from "react"
 import {fmtDate} from "../../../../utils/utils"
 import ReactMarkdown from "react-markdown"
 import {FaPen} from "react-icons/fa"
@@ -33,6 +33,7 @@ import {zodResolver} from "@hookform/resolvers/zod";
 import * as S from '@gnothi/schemas'
 import * as Link from '../../../Components/Link'
 import Insights from '../../Insights/Insights'
+import dayjs from "dayjs";
 
 
 interface Entry {
@@ -53,6 +54,7 @@ export default function View({entry, onClose}: Entry) {
       <Button
         className="btn-edit"
         variant='outlined'
+        size='small'
         color='primary'
         onClick={() => setEntryModal({mode: "edit", entry})}
         startIcon={<FaPen />}
@@ -61,6 +63,21 @@ export default function View({entry, onClose}: Entry) {
       </Button>
     </>
   }
+
+
+  const date = useMemo(() => {
+    return <Typography
+      variant='h4'
+      fontWeight={500}
+      marginTop={2}
+      marginRight={3}
+      className='date'
+      color='primary'
+    >
+      {fmtDate(entry.created_at)}
+    </Typography>
+  }, [entry.created_at])
+
 
   function renderEntry() {
     return <Box>
@@ -76,7 +93,7 @@ export default function View({entry, onClose}: Entry) {
         codeRange={[400, 500]}
       />
 
-      <Box display='flex' justifyContent='space-between' direction='row' alignItems='center'>
+      <Box display='flex' justifyContent='space-between' direction='row' alignItems='center' marginTop={3} marginBottom={3}>
         <Tags
           selected={tags}
           setSelected={setTags}
@@ -98,24 +115,33 @@ export default function View({entry, onClose}: Entry) {
   }
 
   function renderSidebar() {
-    return <Card>
-      <Insights entry_ids={[id]} key={id} />
-    </Card>
+    return <Insights entry_ids={[id]} key={id} />
+
   }
 
   return <Grid container className="view">
-    <Grid item xs={12} lg={8}>
-      <DialogContent>
-        {renderEntry()}
-      </DialogContent>
-      <DialogActions>
+    <Grid item xs={12} lg={7}>
+
+
+       <DialogActions>
         {/*viewing && <Box sx={{marginRight: 'auto'}}>
           <AddNotes eid={eid} />
         </Box>*/}
-        {renderButtons()}
+         <Box
+         alignItems={'center'}
+         justifyItems={'center'}
+         display='flex'
+         >
+        {date} {renderButtons()}
+           </Box>
       </DialogActions>
+      <DialogContent>
+        {renderEntry()}
+      </DialogContent>
+
+
     </Grid>
-    <Grid item xs={12} lg={4}>
+    <Grid item xs={12} lg={5}>
       <DialogContent>
         {renderSidebar()}
       </DialogContent>

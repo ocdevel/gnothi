@@ -9,6 +9,11 @@ import NoteCreate from '../Notes/Create'
 import {Entry as NotesList} from '../Notes/List'
 import _ from 'lodash'
 import {FullScreenDialog} from "../../../Components/Dialog";
+import { Dayjs } from 'dayjs';
+import TextField from '@mui/material/TextField';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 
 import {useStore} from "../../../../data/store"
 import Error from "../../../Components/Error";
@@ -194,9 +199,30 @@ export default function Upsert(props: Entry) {
     </>
   }
 
+function BasicDatePicker() {
+  const [value, setValue] = React.useState<Dayjs>(dayjs(entry.created_at || new Date()));
+
+  return (
+    <LocalizationProvider dateAdapter={AdapterDayjs}>
+      <DatePicker
+        label="Date"
+        value={value}
+        inputFormat="YYYY-MM-DD"
+        onChange={(newValue) => {
+          setValue(newValue);
+        }}
+        renderInput={(params) => <TextField {...params} />}
+      />
+    </LocalizationProvider>
+  );
+}
+
   function renderForm() {
-    return <Box className="entries-upsert-form">
-      <Box>
+    return <Stack className="entries-upsert-form"
+      spacing={2}
+      direction='column'>
+
+        <BasicDatePicker/>
         <TextField2
           name='title'
           label='Title'
@@ -211,17 +237,17 @@ export default function Upsert(props: Entry) {
           onChange={changeText}
         />
 
-        {advanced && <div>
-          <TextField2
-            name='created_at'
-            label='Date'
-            form={form}
-            placeholder="YYYY-MM-DD"
-            helperText="Manually enter this entry's date (otherwise it's set to time of submission)."
-          />
-        </div>}
-        <br/>
-      </Box>
+        {/*<div>*/}
+        {/*  <TextField2*/}
+        {/*    name='created_at'*/}
+        {/*    label='Date'*/}
+        {/*    form={form}*/}
+        {/*    placeholder="YYYY-MM-DD"*/}
+        {/*    helperText="Manually enter this entry's date (otherwise it's set to time of submission)."*/}
+        {/*  />*/}
+        {/*</div>*/}
+        {/*<br/>*/}
+
       <Error
         event={/entries\/entr(ies|y).*/g}
         codeRange={[400,500]}
@@ -236,7 +262,7 @@ export default function Upsert(props: Entry) {
           preSelectMain={isNew}
         />
       </Stack>
-    </Box>
+    </Stack>
   }
 
   return <Grid container className="upsert">
