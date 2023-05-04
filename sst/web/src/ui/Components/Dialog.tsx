@@ -10,6 +10,7 @@ import DialogTitle from "@mui/material/DialogTitle";
 import AppBar, {CTA} from './AppBar'
 import IconButton from "@mui/material/IconButton";
 import {green} from "@mui/material/colors";
+import DialogContent from "@mui/material/DialogContent";
 
 const Transition = React.forwardRef(function Transition(
   props: TransitionProps & {
@@ -46,7 +47,11 @@ export function FullScreenDialog({
       onClose={onClose}
       TransitionComponent={Transition}
     >
-      <AppBar
+
+      <DialogContent
+      sx={{backgroundColor: '#fafafa', p: 0, m: 0}}
+      >
+        <AppBar
         onClose={onClose}
         backButton={backButton}
         title={title}
@@ -54,6 +59,7 @@ export function FullScreenDialog({
         clearBottom={true}
       />
       {children}
+        </DialogContent>
     </Dialog>
   );
 }
