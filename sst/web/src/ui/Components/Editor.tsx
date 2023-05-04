@@ -16,7 +16,7 @@ const plugins = [
   'list-unordered',
   'list-ordered',
   'block-quote',
-  'image',
+  // 'image',
   'link',
   'mode-toggle',
   'full-screen',
