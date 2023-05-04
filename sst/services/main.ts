@@ -64,7 +64,8 @@ export async function main({req, context}: ReqParsed): Promise<RecordResult> {
   const fnContext = new FnContext({
     db,
     user,
-    vid: req.as_user,
+    // TODO later when we add sharing, use `req.as_user`. Currently forcing it off by using uid
+    vid: user.id,
     connectionId,
     // TODO handle this later instead, set toUids or something which pulls from DB
     handleReq,
