@@ -161,17 +161,8 @@ export class Entries extends Base {
     const dbEntry = await upsertInner(updates)
     const entry_id = dbEntry.id
 
-    // FIXME
-    // manual created-at override
-    // iso_fmt = r"^\d{4}-([0]\d|1[0-2])-([0-2]\d|3[01])$"
-    // created_at = data.get('created_at', None)
-    // if created_at and re.match(iso_fmt, created_at):
-    //     tz = M.User.tz(db, vid)
-    //     db.execute(text("""
-    //     update entries set created_at=(:day ::timestamp at time zone :tz)
-    //     where id=:id
-    //     """), dict(day=created_at, tz=tz, id=entry.id))
-    //     db.commit()
+    // custom created_at override is handled on the client-side with dirty-field checking against
+    // the datePicker & dateTextField (submit undefined if not dirty)
 
     await db.drizzle.insert(entriesTags)
       .values(tids.map(tag_id => ({tag_id, entry_id})))

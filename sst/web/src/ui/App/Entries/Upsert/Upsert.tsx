@@ -32,7 +32,7 @@ import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import CardHeader from "@mui/material/CardHeader";
 import Stack from "@mui/material/Stack";
-import {useForm} from "react-hook-form";
+import {Controller, useForm} from "react-hook-form";
 import {zodResolver} from "@hookform/resolvers/zod";
 import {Entries} from '@gnothi/schemas'
 import dayjs from 'dayjs'
@@ -59,11 +59,18 @@ export default function Upsert(props: Entry) {
     props.entry!, props.entry!.tags
   ]
 
+
+
+
+
   const defaults = isEdit ? {defaultValues: entry} : {}
   const form = useForm({
     resolver: zodResolver(Entries.entries_post_request.omit({tags: true})),
     ...defaults
   })
+
+
+
   const navigate = useNavigate()
   const as = useStore(s => s.user.as)
   const send = useStore(s => s.send)
@@ -73,6 +80,7 @@ export default function Upsert(props: Entry) {
   const entries_upsert_response = useStore(s => s.res.entries_upsert_response?.res)
   const entries_delete_response = useStore(s => s.res.entries_delete_response?.res)
   const clear = useStore(a => a.clearEvents)
+  const [changedDate, setChangedDate] = useState(false)
 
   const id = entry?.id
   const draftId = `draft-${id || "new"}`
@@ -135,8 +143,17 @@ export default function Upsert(props: Entry) {
     navigate(to)
   }
 
-  function submit(entry: Entries.entries_post_request) {
-    const data = {...entry, tags}
+  function submit(formData: Entries.entries_post_request) {
+    const data = {
+      ...formData,
+      tags: tags,
+    }
+    // set created_at to undefined, which the server will (a) use now() as default for new
+    // entries; or (b) skip with updates for existing entries
+    if (!changedDate && data.created_at) {
+      delete data.created_at
+    }
+
     console.log(data)
     if (isNew) {
       send('entries_post_request', data)
@@ -199,30 +216,36 @@ export default function Upsert(props: Entry) {
     </>
   }
 
-function BasicDatePicker() {
-  const [value, setValue] = React.useState<Dayjs>(dayjs(entry.created_at || new Date()));
+  function datePicker() {
+    // const [value, setValue] = React.useState<Dayjs>(dayjs(entry.created_at || new Date()));
 
-  return (
-    <LocalizationProvider dateAdapter={AdapterDayjs}>
-      <DatePicker
-        label="Date"
-        value={value}
-        inputFormat="YYYY-MM-DD"
-        onChange={(newValue) => {
-          setValue(newValue);
-        }}
-        renderInput={(params) => <TextField {...params} />}
-      />
-    </LocalizationProvider>
-  );
-}
+    return (
+      <LocalizationProvider dateAdapter={AdapterDayjs}>
+        <Controller
+          control={form.control}
+          name="created_at"
+          render={ obj => <DatePicker
+            label="Date"
+            value={obj.field.value}
+            inputFormat="YYYY-MM-DD"
+            onChange={(newVal) => {
+              setChangedDate(true)
+              obj.field.onChange(newVal)
+            }}
+            disableFuture
+            renderInput={(params) => <TextField {...params} />}
+          />}
+        />
+      </LocalizationProvider>
+    );
+  }
 
   function renderForm() {
     return <Stack className="entries-upsert-form"
       spacing={2}
       direction='column'>
 
-        <BasicDatePicker/>
+        {datePicker()}
         <TextField2
           name='title'
           label='Title'

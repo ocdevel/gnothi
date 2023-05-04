@@ -28,7 +28,6 @@ export const entries_post_request = new Route(r.entries_post_request, async (req
   return context.m.entries.post(req)
 })
 
-
 export const entries_put_request = new Route(r.entries_put_request, async (req, context) => {
   return context.m.entries.put(req)
 })
