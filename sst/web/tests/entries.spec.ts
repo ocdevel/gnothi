@@ -89,15 +89,3 @@ test.describe("Entries", () => {
     test.fixme("no-index, no-summarize shouldn't show anything in sidebar, nor generate summary for entry", () => {})
   })
 })
-
-
-
-test.describe("Notes", () => {
-  test.fixme("Crud", () => {})
-  test.fixme("Shows up under entry.view", () => {})
-  test.fixme("Other use can view, if shared", () => {})
-  test.describe("multiple notes", () => {
-    test.fixme("listed in chronological order", () => {})
-
-  })
-})

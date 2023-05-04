@@ -18,7 +18,7 @@ import ListItemText from "@mui/material/ListItemText";
 import CommentIcon from '@mui/icons-material/Comment';
 import Tabs from "@gnothi/web/src/ui/Components/Tabs"
 import {makeForm, yup, Checkbox2, TextField2} from "@gnothi/web/src/ui/Components/Form";
-import {EntriesMessages} from "../Chat/Messages";
+import {EntriesMessages} from "../../Chat/Messages";
 
 const schema = yup.object({
   // type: yup.string().required(),  // TODO this comes from `adding`, which is weird
@@ -31,35 +31,6 @@ const defaults = {
   private: false
 }
 const useForm = makeForm(schema, defaults)
-
-export function NotesAll() {
-  return null
-  const as = useStore(state => state.as)
-const send = useStore(s => s.send)
-  const notes = useStore(s => s.res.entries_notes_list_response)
-
-  useEffect(() => {
-    send('entries_notes_list_request', {})
-  }, [as])
-
-  if (!notes?.ids?.length) {return null}
-  const {ids, hash} = notes
-
-  function renderNote(id: string) {
-    const n = hash[id]
-    return <>
-      <Chip variant="primary" label={n.type} />
-      {n.private ? "[private] " : null}
-      {n.text}
-      <hr/>
-    </>
-  }
-
-  return <>
-    <h5>Notes</h5>
-    {ids.map(renderNote)}
-  </>
-}
 
 const noteTypes = [{
   key: 'label',
@@ -98,7 +69,11 @@ const noteTypes = [{
   ]
 }]
 
-export function AddNotes({entry_id, onSubmit}) {
+interface Create {
+  entry_id: string
+  onSubmit: (data: any) => void
+}
+export default function Create({entry_id, onSubmit}: Create) {
   const as = useStore(state => state.as)
   const send = useStore(s => s.send)
 
@@ -241,46 +216,3 @@ export function AddNotes({entry_id, onSubmit}) {
   </>
 }
 
-export function NotesNotifs({entry_id}) {
-  const notes = useStore(s => s.res.entries_notes_list_response?.hash?.[entry_id])
-  const notifs = useStore(s => s.res.notifs_notes_list_response?.hash?.[entry_id])
-
-  const nNotes = notes?.length || 0
-  const nNotifs = notifs?.length || 0
-  if (!(nNotes || nNotifs)) {return null}
-
-  return <>
-    <Button
-      color={nNotifs ? "primary" : "inherit"}
-      startIcon={<Badge badgeContent={nNotifs} color="primary">
-        <CommentIcon />
-      </Badge>}
-    >
-      {nNotes}
-    </Button>
-  </>
-}
-
-export const NotesList = EntriesMessages
-
-export function NotesListOld({entry_id}) {
-const send = useStore(s => s.send)
-  const notes = useStore(s => s.res.entries_notes_list_response?.hash?.[entry_id])
-
-  useEffect(() => {
-    send('entries_notes_list_request', {entry_id})
-  }, [entry_id])
-
-  if (!notes?.length) {return null}
-
-  return <div style={{marginTop: '1rem'}}>
-    <NotesNotifs entry_id={entry_id} />
-    {notes.map(n => <Card className='mb-3' key={n.id}>
-      <CardContent>
-        <Chip variant="outlined" label={n.type} />{' '}
-        {n.private ? "[private] " : null}
-        {n.text}
-      </CardContent>
-    </Card>)}
-  </div>
-}

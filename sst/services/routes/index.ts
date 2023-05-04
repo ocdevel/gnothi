@@ -6,6 +6,7 @@ import * as groups from './groups'
 import * as notifs from './notifs'
 import * as shares from './shares'
 import * as insights from './insights'
+import * as notes from './notes'
 
 export default {
   ...entries,
@@ -15,5 +16,6 @@ export default {
   ...groups,
   ...notifs,
   ...shares,
-  ...insights
+  ...insights,
+  ...notes
 }

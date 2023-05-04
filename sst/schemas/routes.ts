@@ -8,6 +8,7 @@ import {Notifs} from './notifs'
 import {Ws} from './ws'
 import {Auth} from './auth'
 import {Insights} from './insights'
+import {Notes} from './notes'
 
 export * as Routes from './routes'
 
@@ -21,5 +22,6 @@ export const routes = {
   ...Notifs.routes,
   ...Ws.routes,
   ...Auth.routes,
-  ...Insights.routes
+  ...Insights.routes,
+  ...Notes.routes
 }

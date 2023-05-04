@@ -15,7 +15,8 @@ import {
   Insights,
   Groups,
   Shares,
-  Auth
+  Auth,
+  Notes
 } from '@gnothi/schemas'
 import produce from 'immer'
 import {Res, ResUnwrap} from "@gnothi/schemas/api";
@@ -44,7 +45,9 @@ export interface EventsSlice {
     fields_list_response?: Api.ResUnwrap<z.infer<typeof r.fields_list_request.o.s>>
     fields_entries_list_response?: Api.ResUnwrap<z.infer<typeof r.fields_entries_list_request.o.s>>
     entries_upsert_response?: Api.ResUnwrap<Entries.entries_upsert_response>
-    // entries_delete_response?: Api.ResUnwrap<Entries.Entry>
+    entries_delete_response?: Api.ResUnwrap<Entries.entries_delete_response>
+    entries_notes_list_response?: Api.ResUnwrap<Notes.entries_notes_list_response>
+    entries_notes_post_response?: Api.ResUnwrap<Notes.entries_notes_post_response>
 
     insights_get_response?: Api.ResUnwrap<Insights.insights_get_response>
     insights_summarize_response?: Api.ResUnwrap<Insights.insights_summarize_response>
@@ -170,6 +173,7 @@ export const eventsSlice: StateCreator<
       if (op === "update") {
         updates.ids = current.ids
       } else if (op === 'prepend') {
+        if (!current?.ids) {debugger}
         updates.ids = [...updates.ids, ...current.ids]
       } else if (op === 'append') {
         updates.ids = [...current.ids, ...updates.ids]

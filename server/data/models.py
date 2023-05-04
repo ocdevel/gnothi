@@ -166,26 +166,7 @@ class Entry(Base):
         Job.create_job(db, user_id=entry.user_id, method='entries', data_in=data_in)
 
 
-class NoteTypes(enum.Enum):
-    label = "label"
-    note = "note"
-    resource = "resource"
-    comment = "comment"
-
-
 class Note(Base):
-    __tablename__ = 'notes'
-    id = IDCol()
-    created_at = DateCol()
-    entry_id = FKCol('entries.id', index=True)
-    user_id = FKCol('users.id', index=True)
-    type = sa.Column(sa.Enum(NoteTypes), nullable=False, default=NoteTypes.comment.value)
-    text = Encrypt(sa.Unicode, nullable=False)
-    private = sa.Column(sa.Boolean, server_default='false')
-
-    user = orm.relationship("User")
-    entry = orm.relationship("Entry")
-
     @staticmethod
     def add_note(db, vid, data):
         eid = data.entry_id

@@ -5,7 +5,8 @@ import ReactMarkdown from "react-markdown"
 import {FaPen} from "react-icons/fa"
 import Tags from "../../Tags/Tags"
 import 'react-markdown-editor-lite/lib/index.css'
-import {AddNotes, NotesList} from '../Notes'
+import {Entry as NotesList} from '../Notes/List'
+import AddNotes from '../Notes/Create'
 import _ from 'lodash'
 import {FullScreenDialog} from "../../../Components/Dialog";
 

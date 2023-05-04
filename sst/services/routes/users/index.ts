@@ -11,11 +11,14 @@ export const users_everything_request = new Route(r.users_everything_request, as
     // 'entries_list_request', // now this is kicked off client-side with filters
     'fields_list_request',
     'fields_entries_list_request',
+    'entries_notes_list_request',
     'groups_mine_list_request',
     'notifs_groups_list_request',
     'notifs_notes_list_request',
     'shares_ingress_list_request',
     'shares_egress_list_request',
+
+    'entries_notes_list_request' // TODO investigate
   ] as const).map(async (event) => {
     await context.handleReq({event, data: {}}, context)
   }))

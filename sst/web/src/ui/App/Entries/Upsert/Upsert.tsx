@@ -4,7 +4,9 @@ import {fmtDate} from "../../../../utils/utils"
 import {FaPen} from "react-icons/fa"
 import Tags from "../../Tags/Tags"
 import 'react-markdown-editor-lite/lib/index.css'
-import {AddNotes, NotesList} from '../Notes'
+import NoteCreate from '../Notes/Create'
+
+import {Entry as NotesList} from '../Notes/List'
 import _ from 'lodash'
 import {FullScreenDialog} from "../../../Components/Dialog";
 
@@ -244,7 +246,7 @@ export default function Upsert(props: Entry) {
       </DialogContent>
       <DialogActions>
         {/*viewing && <Box sx={{marginRight: 'auto'}}>
-          <AddNotes id={id} />
+          <NoteCreate id={id} />
         </Box>*/}
         {renderButtons()}
       </DialogActions>

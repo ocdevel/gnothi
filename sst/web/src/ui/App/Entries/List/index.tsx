@@ -1,7 +1,7 @@
 import React, {useCallback, useEffect, useState} from "react"
 import {Helmet} from 'react-helmet-async'
 
-import {NotesAll, NotesNotifs} from "../Notes";
+import {All as NotesAll} from "../Notes/List";
 
 import Grid from '@mui/material/Grid'
 import Filters from '../../Insights/Filters'
