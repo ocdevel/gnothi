@@ -32,7 +32,7 @@ export const routes = {
     o: {
       e: 'entries_notes_list_response',
       s: entries_notes_list_response,
-      keyby: "entry_id"
+      keyby: "id"
     }
   },
   entries_notes_post_request: {
@@ -45,7 +45,7 @@ export const routes = {
       s: entries_notes_post_response,
       event_as: "entries_notes_list_response",
       op: "append",
-      keyby: 'entry_id'
+      keyby: 'id'
     }
   },
 }

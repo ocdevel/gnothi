@@ -44,11 +44,12 @@ Separate multiple concepts by hitting ENTER twice (two new lines). So if you're 
 After you have one or two entries, head to the Insights and Resources links at the website top to play with the AI.     
 `
 
-interface Entry {
+interface Upsert {
   entry?: Entries.entries_list_response
   onClose?: Function
+  onSubmit?: Function
 }
-export default function Upsert(props: Entry) {
+export default function Upsert(props: Upsert) {
   const entryModal = useStore(s => s.entryModal!)
   const setEntryModal = useStore(s => s.setEntryModal)
 
@@ -111,9 +112,11 @@ export default function Upsert(props: Entry) {
 
   useEffect(() => {
     if (entries_upsert_response?.code !== 200) { return }
+    const response = entries_upsert_response.data[0]
     clearDraft()
     clear(["entries_upsert_response"])
-    props.onClose?.()
+    // props.onClose?.()
+    setEntryModal({mode: "view", entry: response})
   }, [entries_upsert_response])
 
   useEffect(() => {
@@ -148,13 +151,13 @@ export default function Upsert(props: Entry) {
       ...formData,
       tags: tags,
     }
+
     // set created_at to undefined, which the server will (a) use now() as default for new
     // entries; or (b) skip with updates for existing entries
     if (!changedDate && data.created_at) {
       delete data.created_at
     }
 
-    console.log(data)
     if (isNew) {
       send('entries_post_request', data)
     } else {
@@ -241,7 +244,7 @@ export default function Upsert(props: Entry) {
   }
 
   function renderForm() {
-    return <Stack className="entries-upsert-form"
+    return <Stack className="form-upsert"
       spacing={2}
       direction='column'>
 

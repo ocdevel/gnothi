@@ -49,7 +49,7 @@ export default function Create() {
         type='submit'
         color="primary"
         variant='contained'
-        className="button-tags-post"
+        className="btn-tags-post"
         disabled={waiting}
       >Add</Button>
     </Paper>

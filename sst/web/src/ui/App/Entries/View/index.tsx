@@ -45,8 +45,7 @@ export default function View({entry, onClose}: Entry) {
   const as = useStore(s => s.user.as)
   const [tags, setTags] = useState(entry.tags)
 
-  const {id} = entry
-
+  const id = entry.id!
 
   function renderButtons() {
     if (as) {return null}
@@ -82,18 +81,27 @@ export default function View({entry, onClose}: Entry) {
   function renderEntry() {
     return <Box>
       <Typography variant='h2' className='title'>{entry.title}</Typography>
-      <ReactMarkdown
-        linkTarget='_blank'
-      >
-        {entry.text}
-      </ReactMarkdown>
+      <div className='text'>
+        <ReactMarkdown
+          linkTarget='_blank'
+        >
+          {entry.text}
+        </ReactMarkdown>
+      </div>
 
       <Error
         event={/entries\/entr(ies|y).*/g}
         codeRange={[400, 500]}
       />
 
-      <Box display='flex' justifyContent='space-between' direction='row' alignItems='center' marginTop={3} marginBottom={3}>
+      <Box
+        display='flex'
+        justifyContent='space-between'
+        direction='row'
+        alignItems='center'
+        marginTop={3}
+        marginBottom={3}
+      >
         <Tags
           selected={tags}
           setSelected={setTags}
@@ -128,15 +136,16 @@ export default function View({entry, onClose}: Entry) {
           <AddNotes eid={eid} />
         </Box>*/}
          <Box
-         alignItems={'center'}
-         justifyItems={'center'}
-         display='flex'
+           alignItems={'center'}
+           justifyItems={'center'}
+           display='flex'
          >
-        {date} {renderButtons()}
-           </Box>
+           {date} {renderButtons()}
+         </Box>
       </DialogActions>
       <DialogContent>
         {renderEntry()}
+        {renderNotes()}
       </DialogContent>
 
 

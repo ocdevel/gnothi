@@ -5,7 +5,9 @@ import Chip from "@mui/material/Chip";
 import NotesNotifs from "./Notifs";
 import {useStore} from "../../../../data/store";
 import shallow from "zustand/shallow";
+import NotesCreate from './Create'
 import {EntriesMessages} from "../../Chat/Messages";
+import * as S from '@gnothi/schemas'
 
 interface ListOld {
   entry_id: string
@@ -16,9 +18,12 @@ interface ListOld {
  * To be removed, after assessing if containing useful code
  */
 export function Entry({entry_id}: ListOld) {
-  const [send, notes] = useStore(s => [
+  const [
+    send,
+    notes,
+  ] = useStore(s => [
     s.send,
-    s.res.entries_notes_list_response?.hash?.[entry_id] // {rows, (ids, hash), first}
+    s.res.entries_notes_list_response?.rows // {rows, (ids, hash), first},
   ], shallow)
 
   useEffect(() => {
@@ -26,17 +31,20 @@ export function Entry({entry_id}: ListOld) {
     send('entries_notes_list_request', {entry_id})
   }, [entry_id])
 
-  if (!notes?.length) {return null}
-
-  return <div style={{marginTop: '1rem'}}>
-    <NotesNotifs entry_id={entry_id} />
-    {notes.map(n => <Card className='mb-3' key={n.id}>
+  function renderNote(n: S.Notes.entries_notes_list_response) {
+    return <Card className='note' key={n.id}>
       <CardContent>
         <Chip variant="outlined" label={n.type} />{' '}
         {n.private ? "[private] " : null}
         {n.text}
       </CardContent>
-    </Card>)}
+    </Card>
+  }
+
+  return <div style={{marginTop: '1rem'}} className="notes list">
+    <NotesNotifs entry_id={entry_id} />
+    {notes?.map(renderNote)}
+    <NotesCreate entry_id={entry_id} />
   </div>
 }
 
@@ -66,17 +74,17 @@ export function All() {
   function renderNote(id: string) {
     const n = hash[id]
     return <>
-      <Chip variant="primary" label={n.type} />
+      <Chip color="primary" label={n.type} />
       {n.private ? "[private] " : null}
       {n.text}
       <hr/>
     </>
   }
 
-  return <>
+  return <div className="notes list">
     <h5>Notes</h5>
     {ids.map(renderNote)}
-  </>
+  </div>
 }
 
 // export const Entry = EntriesMessages

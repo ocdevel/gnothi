@@ -71,13 +71,13 @@ export class Utils {
     const page = this.page
     await page.locator(".entries .tags .btn-edit").click()
     await page.locator(".textfield-tags-post input").fill("No AI")
-    await page.locator(".button-tags-post").click()
+    await page.locator(".btn-tags-post").click()
     this.tags["noai"] = (await tagsPostP).data[0].id
     const tagRow = await page.locator(".form-tags-put").nth(1)
     await tagRow.locator(".checkbox-tags-ai-summarize").click()
     // Actually let's keep indexing enabled for tests, it's fast. It's summarize that's slow
     // await tagRow.locator(".checkbox-tags-ai-index").click()
-    await page.locator(".button-dialog-close").click()
+    await page.locator(".btn-dialog-close").click()
   }
 
   async _addEntry(title, text, noai=false) {
@@ -87,8 +87,8 @@ export class Utils {
     await page.locator(".rc-md-editor textarea").fill(text)
     if (noai) {
       // Swap tags
-      await page.locator(".entries-upsert-form .tags .btn-select").nth(0).click()
-      await page.locator(".entries-upsert-form .tags .btn-select").nth(1).click()
+      await page.locator(".entries.modal .upsert .form-upsert .tags .btn-select").nth(0).click()
+      await page.locator(".entries.modal .upsert .form-upsert .tags .btn-select").nth(1).click()
     }
     await page.locator(".entries.modal .upsert .btn-submit").click()
   }

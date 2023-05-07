@@ -13,13 +13,11 @@ test.describe("Entries", () => {
     // create accounted for everywhere
     test("view", async ({page}) => {
       await (new Utils(page)).addEntries({n_summarize: 0, n_index: 1})
-      await page.locator(".entries .list .teaser").nth(0).click()
-      await expect(page.locator(".entries.modal .view .title")).toHaveCount(1)
+      await expect(page.locator(".entries.modal .view .text")).not.toBeEmpty()
     })
     test("update", async ({page}) => {
       const utils = new Utils(page)
       await utils.addEntries({n_summarize: 0, n_index: 1})
-      await page.locator(".entries .list .teaser").nth(0).click()
       await page.locator(".entries.modal .view .btn-edit").click()
       await page.locator(".entries.modal .upsert .editor textarea").fill("Updated content")
       await page.locator(".entries.modal .upsert .btn-submit").click()
@@ -28,7 +26,7 @@ test.describe("Entries", () => {
     test("delete", async ({page}) => {
       const utils = new Utils(page)
       await utils.addEntries({n_summarize: 0, n_index: 1})
-      await page.locator(".entries .list .teaser").nth(0).click()
+      
       await page.locator(".entries.modal .view .btn-edit").click()
       page.on('dialog', dialog => dialog.accept());
       await page.locator(".entries.modal .upsert .btn-delete").click()
@@ -68,7 +66,7 @@ test.describe("Entries", () => {
         "Sidebar summary has a result (from the entry with summary enabled)"
       ).toHaveCount(1)
   
-      await page.locator(".entries .list .teaser").nth(0).click()
+      
       await expect(page.locator(".entries .view .insights .summarize .result")).toHaveCount(1)
     })
     test("sum:0 index:1", async ({page}) => {

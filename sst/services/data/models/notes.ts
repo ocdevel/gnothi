@@ -18,7 +18,7 @@ export class Notes extends Base {
     const {uid, db} = this.context
     const {drizzle} = db
     const eid = req.entry_id
-    const note = await drizzle
+    const res = await drizzle
       .insert(notes)
       .values({...req, user_id: uid})
       .returning()
@@ -26,7 +26,7 @@ export class Notes extends Base {
       update entries e set n_notes=(select count(*) from notes where entry_id=${eid})
       where e.id=${eid}
     `)
-    return [note]
+    return res
   }
 
   async list(req: S.Notes.entries_notes_list_request) {

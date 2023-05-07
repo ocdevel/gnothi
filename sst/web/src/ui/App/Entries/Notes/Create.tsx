@@ -19,18 +19,10 @@ import CommentIcon from '@mui/icons-material/Comment';
 import Tabs from "@gnothi/web/src/ui/Components/Tabs"
 import {makeForm, yup, Checkbox2, TextField2} from "@gnothi/web/src/ui/Components/Form";
 import {EntriesMessages} from "../../Chat/Messages";
+import {useForm} from "react-hook-form";
+import {zodResolver} from "@hookform/resolvers/zod";
+import {Notes} from '@gnothi/schemas'
 
-const schema = yup.object({
-  // type: yup.string().required(),  // TODO this comes from `adding`, which is weird
-  text: yup.string().min(1),
-  private: yup.boolean()
-});
-const defaults = {
-  // type: 'note',
-  text: '',
-  private: false
-}
-const useForm = makeForm(schema, defaults)
 
 const noteTypes = [{
   key: 'label',
@@ -69,19 +61,29 @@ const noteTypes = [{
   ]
 }]
 
+type NoteType = "label" | "note" | "resource"
+
 interface Create {
   entry_id: string
   onSubmit: (data: any) => void
 }
 export default function Create({entry_id, onSubmit}: Create) {
-  const as = useStore(state => state.as)
+  const as = useStore(state => state.user.as)
   const send = useStore(s => s.send)
+  const user_id = useStore(s => s.user.me!.id)
 
-  const [adding, setAdding] = useState(null)
+  const [adding, setAdding] = useState<NoteType | null>(null)
   const [showHelp, setShowHelp] = useState(false)
   const [qmarkHover, setQmarkHover] = useState(false)
 
-  const form = useForm()
+  const form = useForm({
+    resolver: zodResolver(Notes.entries_notes_post_request),
+    defaultValues: Notes.entries_notes_post_request.parse({
+      user_id, // this will be set manually to the submitter's user_id on the server regardless, for security
+      entry_id,
+      text: ""
+    })
+  })
 
   const tabs = [
     {value: 'user', label: 'As Journal Owner', render: () => renderTab('user')},
@@ -158,9 +160,8 @@ export default function Create({entry_id, onSubmit}: Create) {
     setAdding(null)
   }
 
-  function submit(data) {
-    const body = {...data, entry_id, type: adding}
-    send('entries_notes_post_request', body)
+  function submit(data: Notes.entries_notes_post_request) {
+    send('entries_notes_post_request', {...data, type: adding})
     clear()
   }
 
@@ -178,10 +179,12 @@ export default function Create({entry_id, onSubmit}: Create) {
         helperText: "Enter URL to a resource (a web article, Amazon book link, etc)."
       }
     }[adding]
+
+    const handleSubmit = form.handleSubmit(submit)
     return <>
       <BasicDialog open={true} size='lg' onClose={clear} title={`Add a ${adding}`}>
         <DialogContent>
-          <form onSubmit={form.handleSubmit(submit)}>
+          <form onSubmit={handleSubmit}>
             <TextField2
               name='text'
               label="Entry"
@@ -197,13 +200,14 @@ export default function Create({entry_id, onSubmit}: Create) {
           </form>
         </DialogContent>
         <DialogActions>
-          <Button size="small" variant={false} onClick={clear}>
+          <Button size="small" onClick={clear}>
             Cancel
           </Button>
           <Button
+            className='btn-submit'
             variant='contained'
             color="primary"
-            onClick={submit}
+            onClick={handleSubmit}
           >Submit</Button>
         </DialogActions>
       </BasicDialog>

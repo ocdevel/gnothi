@@ -30,6 +30,7 @@ const AiState = z.enum(['todo', 'skip', 'running', 'done']).optional()
 const Entry = createInsertSchema(entries, {
   created_at: dateCol(),
   updated_at: dateCol(),
+  //text: z.string().min(3) TODO revisit
 })
 export type Entry = z.infer<typeof Entry>
 export const EntryWithTags = Entry.extend({

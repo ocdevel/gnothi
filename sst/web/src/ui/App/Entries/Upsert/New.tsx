@@ -6,7 +6,7 @@ import Behaviors from "../../Behaviors/List"
 
 export default function New() {
   const setEntryModal = useStore(s => s.setEntryModal)
-  function onCreate() {
+  function onClose() {
     // if (window.localStorage.getItem("testing")) { return }
     setEntryModal(null)
   }
@@ -14,7 +14,7 @@ export default function New() {
   return  <>
     <Grid container spacing={2}>
       <Grid item sm={12} md={7} lg={8}>
-        <Upsert onClose={onCreate}/>
+        <Upsert onClose={onClose} />
 
       </Grid>
       <Grid item sm={12} lg={4} md={5}>

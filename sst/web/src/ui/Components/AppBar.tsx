@@ -147,7 +147,7 @@ export default function ResponsiveAppBar({
         <IconButton
           onClick={onClose}
           aria-label="close"
-          className='button-dialog-close'
+          className='btn-dialog-close'
         >
           {backButton ? <BackIcon /> : <CloseIcon />}
         </IconButton>
