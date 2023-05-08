@@ -43,15 +43,15 @@ export function Entry({entry_id}: ListOld) {
   function renderNote(n: S.Notes.entries_notes_list_response) {
     return <Box className='note' key={n.id}>
         <Stack direction="row" spacing={1}>
-          <Typography color="secondary">{_.startCase(n.type)}</Typography>
+          <Typography color="secondary" className='type'>{_.startCase(n.type)}</Typography>
           {divider}
-          <Typography color="secondary">{fmtDate(n.created_at)}</Typography>
+          <Typography color="secondary" className='created_at'>{fmtDate(n.created_at)}</Typography>
           {n.private && <>
             {divider}
-            <Typography color="secondary">Private</Typography>
+            <Typography color="secondary" className='private'>Private</Typography>
           </>}
         </Stack>
-        {n.text}
+      <div className='text'>{n.text}</div>
     </Box>
   }
 

@@ -9,11 +9,12 @@ import InputLabel from "@mui/material/InputLabel";
 import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
 import Button from "@mui/material/Button";
-import {Controller} from "react-hook-form";
+import {Controller, ControllerProps} from "react-hook-form";
 import React, {useState} from "react";
 import {useForm} from "react-hook-form";
 import {yupResolver} from "@hookform/resolvers/yup";
 export * as yup from 'yup';
+
 
 export function makeForm(schema, defaults=null, opts={}) {
   return (overrides=null) => useForm({
@@ -71,6 +72,12 @@ export function Menu2(props) {
   );
 }
 
+
+// type TextField2 = ControllerProps & {
+//   form: any
+//   value?: string
+//   onChange?: (value: string) => void
+// }
 export function TextField2(props) {
   const {name, form, onChange, ...rest} = props
 
@@ -78,20 +85,8 @@ export function TextField2(props) {
     throw `{form} or {onChange} required for TextField.${name}`
   }
 
-  function renderField({ field, fieldState: {error} }) {
-    function change(e) {
-      onChange?.(e)
-      field.onChange(e)
-    }
-    return <TextField
-      fullWidth
-      id={`textfield-${name}`}
-      value={field.value}
-      onChange={change}
-      error={!!error}
-      {...rest}
-      helperText={error?.message || rest.helperText}
-    />
+  const inputProps = {
+    sx: {borderRadius: 2},
   }
 
   if (!form) {
@@ -105,7 +100,22 @@ export function TextField2(props) {
   return <Controller
     name={name}
     control={form.control}
-    render={renderField}
+    render={({ field, fieldState: {error} }) => {
+      function change(e: React.FormEvent<HTMLInputElement>) {
+        onChange?.(e)
+        field.onChange(e)
+      }
+      return <TextField
+        fullWidth
+        InputProps={inputProps}
+        id={`textfield-${name}`}
+        value={field.value}
+        onChange={change}
+        error={!!error}
+        {...rest}
+        helperText={error?.message || rest.helperText}
+      />
+    }}
   />
 }
 

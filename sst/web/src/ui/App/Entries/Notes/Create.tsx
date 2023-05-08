@@ -17,14 +17,22 @@ import ListItem from "@mui/material/ListItem";
 import ListItemText from "@mui/material/ListItemText";
 import CommentIcon from '@mui/icons-material/Comment';
 import Tabs from "@gnothi/web/src/ui/Components/Tabs"
-import {makeForm, yup, Checkbox2, TextField2} from "@gnothi/web/src/ui/Components/Form";
+import {Checkbox2, TextField2} from "../../../Components/Form";
 import {EntriesMessages} from "../../Chat/Messages";
 import {useForm} from "react-hook-form";
 import {zodResolver} from "@hookform/resolvers/zod";
 import {Notes} from '@gnothi/schemas'
+import Alert from "@mui/material/Alert";
+import Box from "@mui/material/Box";
 
 
-const noteTypes = [{
+type NoteType = {
+  key: "label" | "note" | "resource"
+  name: string
+  user: string[]
+  therapist: string[]
+}
+const noteTypes: NoteType[] = [{
   key: 'label',
   name: "Label",
   user: [
@@ -61,7 +69,7 @@ const noteTypes = [{
   ]
 }]
 
-type NoteType = "label" | "note" | "resource"
+type As_A = "user" | "therapist"
 
 interface Create {
   entry_id: string
@@ -72,7 +80,7 @@ export default function Create({entry_id, onSubmit}: Create) {
   const send = useStore(s => s.send)
   const user_id = useStore(s => s.user.me!.id)
 
-  const [adding, setAdding] = useState<NoteType | null>(null)
+  const [adding, setAdding] = useState<NoteType['key'] | null>(null)
   const [showHelp, setShowHelp] = useState(false)
   const [qmarkHover, setQmarkHover] = useState(false)
 
@@ -92,8 +100,11 @@ export default function Create({entry_id, onSubmit}: Create) {
 
   function close() {setShowHelp(false)}
 
-  function renderTab(k) {
+  function renderTab(k: As_A) {
     return <Grid container spacing={2}>
+      {k === 'therapist' && <Grid item xs={12}>
+        <Alert severity="info">The sharing feature is coming back soon.</Alert>
+      </Grid>}
       {noteTypes.map(obj => <React.Fragment key={k}>
         <Grid item xs>
           <Typography variant='button'>{obj.name}s</Typography>
@@ -130,13 +141,14 @@ export default function Create({entry_id, onSubmit}: Create) {
     </>
   }
 
-  const renderSection = (obj) => {
+  const renderSection = (obj: NoteType) => {
     return (
       <Button
         sx={{mr: 1}}
         variant='outlined'
         color='primary'
         size='small'
+        className={`btn-add-${obj.key}`}
         onClick={() => setAdding(obj.key)}
       >+ {obj.name}</Button>
     )
@@ -145,7 +157,7 @@ export default function Create({entry_id, onSubmit}: Create) {
   const renderButtons = () => <>
     {noteTypes.map(renderSection)}
     <span
-      className='cursor-pointer mr-2'
+      className='btn-show-help'
       onClick={() => setShowHelp(true)}
       onMouseEnter={() => setQmarkHover(true)}
       onMouseLeave={() => setQmarkHover(false)}
@@ -181,40 +193,38 @@ export default function Create({entry_id, onSubmit}: Create) {
     }[adding]
 
     const handleSubmit = form.handleSubmit(submit)
-    return <>
-      <BasicDialog open={true} size='lg' onClose={clear} title={`Add a ${adding}`}>
-        <DialogContent>
-          <form onSubmit={handleSubmit}>
-            <TextField2
-              name='text'
-              label="Entry"
-              form={form}
-              {...opts}
-            />
-            <Checkbox2
-              name='private'
-              label='Private'
-              form={form}
-              helperText={`This ${adding} will be visible only to you.`}
-            />
-          </form>
-        </DialogContent>
-        <DialogActions>
-          <Button size="small" onClick={clear}>
-            Cancel
-          </Button>
-          <Button
-            className='btn-submit'
-            variant='contained'
-            color="primary"
-            onClick={handleSubmit}
-          >Submit</Button>
-        </DialogActions>
-      </BasicDialog>
-    </>
+    return <Box>
+      <DialogContent>
+        <form onSubmit={handleSubmit}>
+          <TextField2
+            name='text'
+            label={`Add ${adding} here`}
+            form={form}
+            {...opts}
+          />
+          <Checkbox2
+            name='private'
+            label='Private'
+            form={form}
+            helperText={`This ${adding} will be visible only to you.`}
+          />
+        </form>
+      </DialogContent>
+      <DialogActions>
+        <Button size="small" onClick={clear}>
+          Cancel
+        </Button>
+        <Button
+          className='btn-submit'
+          variant='contained'
+          color="primary"
+          onClick={handleSubmit}
+        >Submit</Button>
+      </DialogActions>
+    </Box>
   }
 
-  return <div>
+  return <div className="create">
     {showHelp && renderHelpModal()}
     {adding ? renderForm() : renderButtons()}
   </div>
