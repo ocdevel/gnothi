@@ -114,12 +114,10 @@ export default function View({entry, onClose}: Entry) {
   }
 
   function renderNotes() {
-    return <Card>
-      <CardHeader title='Notes' />
-      <CardContent>
-        <NotesList entry_id={id} />
-      </CardContent>
-    </Card>
+    return <div>
+      <hr />
+      <NotesList entry_id={id} />
+    </div>
   }
 
   function renderSidebar() {

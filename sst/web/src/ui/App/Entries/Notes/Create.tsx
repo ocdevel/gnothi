@@ -214,9 +214,9 @@ export default function Create({entry_id, onSubmit}: Create) {
     </>
   }
 
-  return <>
+  return <div>
     {showHelp && renderHelpModal()}
     {adding ? renderForm() : renderButtons()}
-  </>
+  </div>
 }
 

@@ -8,6 +8,12 @@ import shallow from "zustand/shallow";
 import NotesCreate from './Create'
 import {EntriesMessages} from "../../Chat/Messages";
 import * as S from '@gnothi/schemas'
+import Typography from "@mui/material/Typography";
+import Stack from "@mui/material/Stack";
+import {fmtDate} from "../../../../utils/utils";
+import Box from "@mui/material/Box";
+import _ from 'lodash'
+import Divider from "@mui/material/Divider";
 
 interface ListOld {
   entry_id: string
@@ -31,21 +37,30 @@ export function Entry({entry_id}: ListOld) {
     send('entries_notes_list_request', {entry_id})
   }, [entry_id])
 
+  const divider = <Divider orientation="vertical" variant="middle" flexItem />
+
+
   function renderNote(n: S.Notes.entries_notes_list_response) {
-    return <Card className='note' key={n.id}>
-      <CardContent>
-        <Chip variant="outlined" label={n.type} />{' '}
-        {n.private ? "[private] " : null}
+    return <Box className='note' key={n.id}>
+        <Stack direction="row" spacing={1}>
+          <Typography color="secondary">{_.startCase(n.type)}</Typography>
+          {divider}
+          <Typography color="secondary">{fmtDate(n.created_at)}</Typography>
+          {n.private && <>
+            {divider}
+            <Typography color="secondary">Private</Typography>
+          </>}
+        </Stack>
         {n.text}
-      </CardContent>
-    </Card>
+    </Box>
   }
 
-  return <div style={{marginTop: '1rem'}} className="notes list">
+  return <Stack style={{marginTop: '1rem'}} className="notes list" spacing={2}>
     <NotesNotifs entry_id={entry_id} />
+    <Typography variant="subtitle1">Notes</Typography>
     {notes?.map(renderNote)}
     <NotesCreate entry_id={entry_id} />
-  </div>
+  </Stack>
 }
 
 /**
