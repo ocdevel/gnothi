@@ -291,8 +291,15 @@ export default function Upsert(props: Upsert) {
     </Stack>
   }
 
+  // TODO
+  const BEHAVIORS_IMPLEMENTED = false
+  function renderBehaviors() {
+    // TODO
+    return null
+  }
+
   return <Grid container className="upsert">
-    <Grid item xs={12} lg={id ? 8 : 12}>
+    <Grid item xs={12} lg={BEHAVIORS_IMPLEMENTED ? (id ? 8 : 12) : 12}>
       <DialogContent>
         {renderForm()}
       </DialogContent>
@@ -303,14 +310,9 @@ export default function Upsert(props: Upsert) {
         {renderButtons()}
       </DialogActions>
     </Grid>
-    {id && <Grid item xs={12} lg={4}>
+    {BEHAVIORS_IMPLEMENTED && id && <Grid item xs={12} lg={4}>
       <DialogContent>
-        <Card>
-          <CardHeader title='Notes' />
-          <CardContent>
-            <NotesList entry_id={id} />
-          </CardContent>
-        </Card>
+        {renderBehaviors()}
       </DialogContent>
     </Grid>}
   </Grid>

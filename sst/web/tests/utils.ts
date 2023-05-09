@@ -27,6 +27,19 @@ export class Utils {
   tags: Record<string, string> = {} // {noai: <uuid>}
   wsListeners: {[k in Events]?: (v: unknown) => void} // resolvers
 
+  sel = {
+    appbar: {
+      close: '.btn-dialog-close',
+      cta: '.appbar .cta-primary',
+    },
+    entries: {
+      create: {
+        title: '.upsert .textfield-title input',
+        text: '.rc-md-editor textarea',
+      }
+    }
+  }
+
   constructor(page: Page) {
     this.page = page
     this.entries = []
@@ -34,10 +47,11 @@ export class Utils {
     this.listenWebsockets()
   }
 
-  async navigate(url: string) {
-    await this.page.evaluate(() => {
-      window.history.pushState('', '', url);
-    });
+  async navigate(path: string) {
+    await this.page.goto(`${URL}${path}`)
+    // await this.page.evaluate(() => {
+    //   window.history.pushState('', '', url);
+    // });
   }
 
   async signup() {
@@ -80,17 +94,22 @@ export class Utils {
     await page.locator(".btn-dialog-close").click()
   }
 
-  async _addEntry(title, text, noai=false) {
+  async _addEntry({title, text, noai=false, submit=true}: {title: string, text: string, noai?: boolean, submit?: boolean}) {
     const page = this.page
     await page.locator(".appbar .cta-primary").click()
-    await page.getByLabel("Title").fill(title)
+    await page.locator(".textfield-title input").fill(title)
     await page.locator(".rc-md-editor textarea").fill(text)
     if (noai) {
       // Swap tags
       await page.locator(".entries.modal .upsert .form-upsert .tags .btn-select").nth(0).click()
       await page.locator(".entries.modal .upsert .form-upsert .tags .btn-select").nth(1).click()
     }
-    await page.locator(".entries.modal .upsert .btn-submit").click()
+    if (submit) {
+      await page.locator(".entries.modal .upsert .btn-submit").click()
+    } else {
+      // intended as a draft. Give it a moment to save to localStorage
+      await page.waitForTimeout(1000)
+    }
   }
 
   async addEntries({n_summarize=0, n_index=0}: {n_summarize: number, n_index: number}) {
@@ -108,7 +127,7 @@ export class Utils {
       const entry = buffer[0]
       buffer = buffer.slice(1)
       this.entries.push(entry)
-      await this._addEntry(entry.title, entry.text)
+      await this._addEntry({title: entry.title, text: entry.text})
       await page.waitForTimeout(5000) // summary takes a while
     }
 
@@ -122,7 +141,7 @@ export class Utils {
       const entry = buffer[0]
       buffer = buffer.slice(1)
       this.entries.push(entry)
-      await this._addEntry(entry.title, entry.text, true)
+      await this._addEntry({title: entry.title, text: entry.text, noai: true})
       await page.waitForTimeout(500) // indexing is faster
     }
   }

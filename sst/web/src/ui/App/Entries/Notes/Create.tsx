@@ -73,9 +73,8 @@ type As_A = "user" | "therapist"
 
 interface Create {
   entry_id: string
-  onSubmit: (data: any) => void
 }
-export default function Create({entry_id, onSubmit}: Create) {
+export default function Create({entry_id}: Create) {
   const as = useStore(state => state.user.as)
   const send = useStore(s => s.send)
   const user_id = useStore(s => s.user.me!.id)

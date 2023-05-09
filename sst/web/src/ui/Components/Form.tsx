@@ -80,6 +80,8 @@ export function Menu2(props) {
 // }
 export function TextField2(props) {
   const {name, form, onChange, ...rest} = props
+  const className = `textfield-${name}`
+  rest.className = rest.className ? `${rest.className} ${className}` : className
 
   if (!(form || onChange)) {
     throw `{form} or {onChange} required for TextField.${name}`

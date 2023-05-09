@@ -44,12 +44,10 @@ test.describe("Notes", () => {
 
     })
     test.fixme("Update", ({page}) => {})
-    test("Delete", async ({page}) => {})
+    test.fixme("Delete", async ({page}) => {})
   })
-  test.fixme("Shows up under entry.view", () => {})
-  test.fixme("Other use can view, if shared", () => {})
-  test.describe("multiple notes", () => {})
-  test.fixme("listed in chronological order", () => {})
+  
+  test.fixme("Other user can view, if shared", () => {})
 
 })
   
