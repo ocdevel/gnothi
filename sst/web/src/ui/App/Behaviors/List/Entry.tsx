@@ -100,6 +100,7 @@ export default function Entry({f}: Entry) {
     <TextField
       disabled={!!f.service && isToday}
       type='number'
+      sx={{maxWidth: 120}}
       size="small"
       value={v || 0}
       onChange={changeFieldVal}

@@ -46,10 +46,17 @@ export default function Modal() {
 
 
   const onCta = useCallback(() => setView({view: "new", fid: null}), [])
-  const ctas = as ? [] : [{
-    name: "Create",
-    onClick: onCta,
-  }]
+  const ctas = as ? [] : [
+    // {
+    //   name: "Top Influencers",
+    //   secondary: true,
+    //   onClick: () => setView({view: "overall"}),
+    // },
+    {
+      name: "Add Behavior",
+      onClick: onCta,
+    }
+  ]
 
   const onClose = useCallback(() => setView({page: view.lastPage}), [])
 

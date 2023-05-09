@@ -13,6 +13,8 @@ import {zodResolver} from "@hookform/resolvers/zod"
 import * as S from "@gnothi/schemas"
 import {fields_post_request} from "@gnothi/schemas/fields";
 import shallow from "zustand/shallow";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
 
 
 export function Update() {
@@ -116,7 +118,8 @@ function Form({field, submit}: Form) {
   }
   defValHelp = defValHelp[default_value]
 
-  return <div className="upsert">
+  return <Card  className="upsert" sx={{backgroundColor: "#ffffff", borderRadius: 2}}>
+    <CardContent>
     <Grid
       container
       spacing={2}
@@ -231,5 +234,6 @@ function Form({field, submit}: Form) {
     >
       Save
     </Button>
-  </div>
+      </CardContent>
+  </Card>
 }

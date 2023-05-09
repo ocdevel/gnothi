@@ -23,6 +23,9 @@ import DayChanger from '../Modal/DayChanger'
 import * as S from '@gnothi/schemas'
 import shallow from 'zustand/shallow'
 import Behavior from './Item'
+import ManageBehaviorsIcon from '@mui/icons-material/SettingsOutlined';
+import IconButton from "@mui/material/IconButton";
+
 
 interface FieldGroup {
   service: string
@@ -156,14 +159,7 @@ export default function Behaviors({advanced}: Behaviors) {
           size="small"
           onClick={showOverall}
         >Top Influencers</Button>}
-        {!advanced && <Button
-          variant="outlined"
-          color="primary"
-          size="small"
-          onClick={() => setView({page: "modal", view: "new"})}
-        >
-          Manage
-        </Button>}
+
       </Grid>
     }
     if (g.service === 'habitica' && !as) {
@@ -176,8 +172,15 @@ export default function Behaviors({advanced}: Behaviors) {
     return <Behavior key={f.id} fid={f.id} advanced={advanced} />
   }
 
-  const renderGroup = (g: FieldGroup) => (
-    <Accordion key={g.service} defaultExpanded={g.service === "custom"}>
+  function renderGroup(g: FieldGroup) {
+    return <>
+      {!g.fields.length ? g.emptyText() : g.fields.map(renderBehavior)}
+      {renderSyncButton(g.service)}
+      {renderButtons(g)}
+    </>
+  }
+  function renderGroupAccordion(g: FieldGroup) {
+    return <Accordion sx={{backgroundColor: '#ffffff', borderRadius: 2}} key={g.service} defaultExpanded={g.service === "custom"}>
       <AccordionSummary
         expandIcon={<ExpandMore />}
         aria-controls="panel1a-content"
@@ -186,27 +189,58 @@ export default function Behaviors({advanced}: Behaviors) {
         <Typography>{g.name}</Typography>
       </AccordionSummary>
       <AccordionDetails>
-        {!g.fields.length ? g.emptyText() : g.fields.map(renderBehavior)}
-        {renderSyncButton(g.service)}
-        {renderButtons(g)}
+        {renderGroup(g)}
       </AccordionDetails>
     </Accordion>
-  )
+  }
 
-  return <div className="list">
-    <Card>
-      <Grid container justifyContent='space-between'>
-        <Grid item>
-          {advanced ? <>
+  if (advanced) {
+    return <div className="list">
+      <Card
+        sx={{backgroundColor: '#ffffff', borderRadius: 2}}
+      >
+        <CardContent>
             <DayChanger />
-          </> : <>
-            <CardHeader title="Behaviors" />
-          </>}
-        </Grid>
+         <AccordionDetails> {renderGroup(groups[0])} </AccordionDetails>
+          {groups.slice(1).map(renderGroupAccordion)}
+        </CardContent>
+      </Card>
+    </div>
+  }
+  return <Card
+      sx={{backgroundColor: '#ffffff', borderRadius: 2}}>
+    <CardContent>
+    <Grid container
+          sx={{mb:2}}
+      justifyContent="space-between"
+          alignItems='center'
+
+    >
+      <Grid item>
+        <Typography
+          sx={{m:0,p:0}}
+          variant='h4'
+          fontWeight={500}
+          color='primary'
+        >
+          Behaviors
+        </Typography>
       </Grid>
-      <CardContent>
-        {groups.map(renderGroup)}
-      </CardContent>
-    </Card>
-  </div>
+      <Grid item>
+        <IconButton
+          color='primary'
+          onClick={() => setView({page: "modal", view: "new"})}
+        >
+        <ManageBehaviorsIcon/>
+        </IconButton>
+      </Grid>
+    </Grid>
+       {renderGroup(groups[0])}
+    </CardContent>
+
+  </Card>
+
+
 }
+
+
