@@ -22,11 +22,6 @@ type Snoop = {
   for_ai?: boolean
 }
 
-type EntriesListSQL = Omit<entries_list_response, 'tags'> & {
-  // comes as json string
-  tags: string // Array<S.Tags.Tag>
-}
-
 function tagsToBoolMap(tags: any): Record<string, boolean> {
   // comes in from json_agg, field returned as JSON string
   return Object.fromEntries(tags.map(({tag_id}) => [tag_id, true]))
@@ -38,6 +33,7 @@ export class Entries extends Base {
     if (!ids.length) return []
     return db.drizzle.select().from(entries)
       .where(and(inArray(entries.id, ids), eq(entries.user_id, vid)))
+      .orderBy(asc(entries.created_at))
   }
 
   async filter(req: S.Entries.entries_list_request): Promise<entries_list_response[]> {
@@ -56,7 +52,8 @@ export class Entries extends Base {
       ? dayjs().add(2, "day").format('YYYY-MM-DD')
       : endDate
 
-    const rows = await db.query<EntriesListSQL>(sql`
+    type EntriesSQL = Entry & { tags: string[] }
+    const rows = await db.query<EntriesSQL>(sql`
       select e.*,
           json_agg(et.*) as tags
       from ${entries} e

@@ -11,7 +11,7 @@ import {preprocess} from "../../ml/node/preprocess";
 import {summarizeEntry} from "../../ml/node/summarize";
 import {upsert} from "../../ml/node/upsert";
 import {eq, and, inArray} from "drizzle-orm/expressions"
-import _ from 'lodash'
+import * as _ from 'lodash'
 import {containsListTokenElement} from "aws-cdk-lib/core/lib/private/encoding";
 
 const r = S.Routes.routes
