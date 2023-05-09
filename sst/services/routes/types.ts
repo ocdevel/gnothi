@@ -146,11 +146,11 @@ type Fn<
   O extends z.ZodTypeAny
 > = (req: z.TypeOf<I>, context: FnContext) => Promise<Array<z.TypeOf<O>>>
 
-export class Route<I extends z.ZodTypeAny, O extends z.ZodTypeAny> {
-  i: DefI<I>
-  o: DefO<O>
+export class Route<I extends z.ZodTypeAny, O extends z.ZodTypeAny, EI extends Events, EO extends Events> {
+  i: DefI<I, EI>
+  o: DefO<O, EO>
   fn: Fn<I, O>
-  constructor(defs: Route_<I, O>, fn: Fn<I, O>) {
+  constructor(defs: Route_<I, O, EI, EO>, fn: Fn<I, O>) {
     const {i, o} = defs
     this.i = {
       ...i,

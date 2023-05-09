@@ -19,20 +19,20 @@ export type ResOverrides = {
   // uids?: string[] ???
 }
 
-export type Def<T extends z.ZodTypeAny> = {
+export type Def<T extends z.ZodTypeAny, E extends Events> = {
   s: T
-  e: Events
+  e: E
   t?: Trigger
 }
-export type DefI<T extends z.ZodTypeAny> = Def<T> & {
+export type DefI<T extends z.ZodTypeAny, E extends Events> = Def<T, E> & {
   snoopable?: boolean
 }
 
-export type DefO<T extends z.ZodTypeAny> = Def<T> & ResOverrides
+export type DefO<T extends z.ZodTypeAny, E extends Events> = Def<T, E> & ResOverrides
 
-export type Route<I extends z.ZodTypeAny, O extends z.ZodTypeAny> = {
-  i: DefI<I>
-  o: DefO<O>
+export type Route<I extends z.ZodTypeAny, O extends z.ZodTypeAny, EI extends Events, EO extends Events> = {
+  i: DefI<I, EI>
+  o: DefO<O, EO>
 }
 
 export const AnyToObj = z.preprocess(
@@ -53,6 +53,7 @@ export const Req = z.object({
 })
 export type Req = z.infer<typeof Req>
 
+// FIXME follow the `E extends Events` pattern from above. See bottom of this file for larger explaination
 type Res_ = {
   event: Events
   code: number
