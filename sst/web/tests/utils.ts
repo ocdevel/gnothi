@@ -36,6 +36,7 @@ export class Utils {
       create: {
         title: '.upsert .textfield-title input',
         text: '.rc-md-editor textarea',
+        btnSubmit: ".entries.modal .upsert .btn-submit"
       }
     }
   }
@@ -91,21 +92,21 @@ export class Utils {
     await tagRow.locator(".checkbox-tags-ai-summarize").click()
     // Actually let's keep indexing enabled for tests, it's fast. It's summarize that's slow
     // await tagRow.locator(".checkbox-tags-ai-index").click()
-    await page.locator(".btn-dialog-close").click()
+    await page.locator(this.sel.appbar.close).click()
   }
 
   async _addEntry({title, text, noai=false, submit=true}: {title: string, text: string, noai?: boolean, submit?: boolean}) {
     const page = this.page
-    await page.locator(".appbar .cta-primary").click()
-    await page.locator(".textfield-title input").fill(title)
-    await page.locator(".rc-md-editor textarea").fill(text)
+    await page.locator(this.sel.appbar.cta).click()
+    await page.locator(this.sel.entries.create.title).fill(title)
+    await page.locator(this.sel.entries.create.text).fill(text)
     if (noai) {
       // Swap tags
       await page.locator(".entries.modal .upsert .form-upsert .tags .btn-select").nth(0).click()
       await page.locator(".entries.modal .upsert .form-upsert .tags .btn-select").nth(1).click()
     }
     if (submit) {
-      await page.locator(".entries.modal .upsert .btn-submit").click()
+      await page.locator(this.sel.entries.create.btnSubmit).click()
     } else {
       // intended as a draft. Give it a moment to save to localStorage
       await page.waitForTimeout(1000)
@@ -128,7 +129,11 @@ export class Utils {
       buffer = buffer.slice(1)
       this.entries.push(entry)
       await this._addEntry({title: entry.title, text: entry.text})
-      await page.waitForTimeout(5000) // summary takes a while
+      // since we're redirection to view-modal, close it between addEntry
+      // previously waiting for 5sec for summary to finish genearting. TODO not sure why?
+      // Now waiting for 1 sec for entry_post_response to trigger view-modal, before we can close it
+      await page.waitForTimeout(2000) 
+      await page.locator(this.sel.appbar.close).click()
     }
 
     // then index the rest
@@ -142,6 +147,7 @@ export class Utils {
       buffer = buffer.slice(1)
       this.entries.push(entry)
       await this._addEntry({title: entry.title, text: entry.text, noai: true})
+      await page.locator(this.sel.appbar.close).click()
       await page.waitForTimeout(500) // indexing is faster
     }
   }

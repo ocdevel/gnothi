@@ -32,7 +32,7 @@ async function theme(texts: string[]): Promise<insights_themes_response['themes'
     summarize({
       texts,
       params: [{
-        summarize: {min_length: 30, max_length: 90},
+        summarize: {min_length: 10, max_length: 15},
         emotion: true,
         keywords: keywordsDefaults
       }]

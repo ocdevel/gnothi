@@ -150,7 +150,7 @@ export async function summarizeInsights({context, entries}: SummarizeInsights): 
       // summarize summaries, NOT full originals (to reduce token max)
       texts: [entries.map(getSummary).join('\n')],
       params: [{
-        summarize: {min_length: 40, max_length: 120},
+        summarize: {min_length: 10, max_length: 60},
         keywords: keywordsDefaults,
         emotion: true
       }]
@@ -186,8 +186,8 @@ export interface SummarizeEntryOut {
 const paramsExtra = {keywords: keywordsDefaults, emotion: true}
 const params = {
   title: {summarize: {min_length: 3, max_length: 15}},
-  para: {summarize: {min_length: 15, max_length: 60}},
-  text: {summarize: {min_length: 40, max_length: 150}, ...paramsExtra},
+  para: {summarize: {min_length: 15, max_length: 50}},
+  text: {summarize: {min_length: 40, max_length: 120}, ...paramsExtra},
   extra: paramsExtra
 }
 
