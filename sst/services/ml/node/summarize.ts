@@ -8,6 +8,8 @@ import {sendInsight} from "./utils";
 import {completion} from "./openai";
 import {getSummary} from '@gnothi/schemas/entries'
 
+const USE_OPENAI = false
+
 interface Params {
   summarize?: {
     min_length: number
@@ -56,7 +58,6 @@ type FnOut = LambdaOut
  * the training data, and everything sounds like news. I've played with hyperparameters
  * till I'm blue in the face, and I'm giving up for now and using OpenAI TLDR instead.
  */
-const USE_OPENAI = true
 async function summarizeOpenai(data: LambdaIn[0]): Promise<SummarizeOut> {
   const {params, text} = data
 

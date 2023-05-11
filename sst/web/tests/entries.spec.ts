@@ -104,3 +104,4 @@ test.describe("Entries", () => {
   test.fixme("search", () => {})
 
   test.fixme("close modal shows insights afterwards", () => {})
+})

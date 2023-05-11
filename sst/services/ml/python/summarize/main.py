@@ -8,28 +8,41 @@ from pprint import pprint
 
 class Summarize(object):
     def __init__(self):
-        # name_or_path = "ccdv/lsg-bart-base-16384"
-        name_or_path = "ccdv/lsg-bart-base-4096-wcep"
-        # sshleifer/distilbart-xsum-12-6 | ccdv/lsg-bart-base-4096 | sshleifer/distill-pegasus-(cnn|xsum)-16-4
-        self.tokenizer = AutoTokenizer.from_pretrained(name_or_path, trust_remote_code=True)
-        model = AutoModelForSeq2SeqLM.from_pretrained(name_or_path, trust_remote_code=True)
+        # I've tried the following models:
+        # ccdv/lsg-bart-base-4096-wcep, ccdv/lsg-bart-base-16384, sshleifer/distilbart-xsum-12-6 | ccdv/lsg-bart-base-4096 | sshleifer/distill-pegasus-(cnn|xsum)-16-4
+        # We need something that doesn't sound like the data it was trained on. Namely news (CNN), Books (booksum), etc.
+        # My thinking is that multi-datasource -trained models smooth out any one dataset's "vibe". If I use booksum
+        # alone, things sound like "in this chapter, the author discusses ...". For now I'm just gonna roll with that,
+        # but need to revisit
+        # TODO try:
+        # - pszemraj/textsum pip package
+        # - pszemraj/long-t5-tglobal-xl-16384-book-summary-8bit (might requre GPU)
 
-        self.pipe = pipeline(
-            "summarization",
-            model=model,
-            tokenizer=self.tokenizer,
-            no_repeat_ngram_size=2,
-            truncation=True,
-            repetition_penalty=1.0,
-            early_stopping=True,
-            # num_beams=4,
+        # This seems to work a bit better tha LED-booksum, etc. All of them are relatively sensitive on the
+        # min/max_length, so make sure the tokens passed in are >max
+        name_or_path = "pszemraj/long-t5-tglobal-base-16384-book-summary"
+        self.tokenizer = AutoTokenizer.from_pretrained(name_or_path)
+        model = AutoModelForSeq2SeqLM.from_pretrained(name_or_path)
 
-            # When trying num_beam_groups I get: Passing `max_length` to BeamSearchScorer is deprecated and has no effect. `max_length` should be passed directly to `beam_search(...)`, `beam_sample(...)`, or `group_beam_search(...)`.
-            num_beams=6,
-            num_beam_groups=3,
-            diversity_penalty=2.0,
-            #temperature=1.5,
-        )
+        # Removing custom hyperparamters for now, since each model manages its own hypers which work best for it.
+        self.pipe = pipeline("summarization", model=model, tokenizer=self.tokenizer)
+
+        # self.pipe = pipeline(
+        #     "summarization",
+        #     model=model,
+        #     tokenizer=self.tokenizer,
+        #     no_repeat_ngram_size=2,
+        #     truncation=True,
+        #     repetition_penalty=1.0,
+        #     early_stopping=True,
+        #     # num_beams=4,
+        #
+        #     # When trying num_beam_groups I get: Passing `max_length` to BeamSearchScorer is deprecated and has no effect. `max_length` should be passed directly to `beam_search(...)`, `beam_sample(...)`, or `group_beam_search(...)`.
+        #     num_beams=6,
+        #     num_beam_groups=3,
+        #     diversity_penalty=2.0,
+        #     # temperature=1.5,
+        # )
 
     def predict(self, text, params):
         """
