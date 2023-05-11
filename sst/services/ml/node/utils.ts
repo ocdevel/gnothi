@@ -17,3 +17,6 @@ export async function sendInsight<T extends z.ZodTypeAny, Route extends DefO<T>>
     context
   )
 }
+
+ // Later this will be a flag on the user's account (privacy vs quality toggle).
+export const USE_OPENAI = false

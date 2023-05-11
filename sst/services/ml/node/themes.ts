@@ -4,7 +4,7 @@ import {keyBy} from 'lodash'
 import * as S from '@gnothi/schemas'
 import {insights_themes_response, insights_summarize_response} from '@gnothi/schemas/insights'
 import {ulid} from 'ulid'
-import {sendInsight} from "./utils";
+import {sendInsight, USE_OPENAI} from "./utils";
 import {completion} from './openai'
 import {getSummary} from "@gnothi/schemas/entries";
 
@@ -18,6 +18,8 @@ type LambdaOut = never
 type FnOut = insights_themes_response['themes']
 
 async function oneWord(text: string): Promise<string | undefined> {
+  // TODO figure out how to use this without OpenAI. I'm thinking t5-flan?
+  if (!USE_OPENAI) { return undefined }
   try {
     return completion({prompt: `What one word describes the following content: ${text}`})
   } catch (e) {

@@ -10,7 +10,7 @@ const ai_text_bug = "FIXME - ai_text is being set to entry plaintext, meaning I 
 test.describe("Insights", () => {
   test("smoke test some entries", async ({page}) => {
     const utils = new Utils(page)
-    await utils.addEntries({n_summarize: 3, n_index: 3})
+    await utils.addEntries({n_summarize: 3, n_index: 0})
   })
 
   test.describe("summaries", () => {

@@ -4,11 +4,13 @@ import * as S from '@gnothi/schemas'
 import {TextsParamsMatch} from "./errors";
 import {Config} from '@serverless-stack/node/config'
 import {v4 as uuid} from 'uuid'
-import {sendInsight} from "./utils";
+import {sendInsight, USE_OPENAI} from "./utils";
 import {completion} from "./openai";
 import {getSummary} from '@gnothi/schemas/entries'
 
-const USE_OPENAI = false
+// set this if using a model that can handle long text, like LongT5. When using long models, we don't necessarily
+// need to split text into chunks, and in the accuracy is better when we don't.
+const COMBINE_PARAS = true
 
 interface Params {
   summarize?: {
@@ -198,10 +200,7 @@ export async function summarizeEntry(clean: SummarizeEntryIn): Promise<Summarize
     throw "paras.length === 0, investigate"
   }
 
-  if (clean.paras.length === 1) {
-  // Currently using 16384 model, so we can summarize the whole thing. Revert
-  // to "sumParas vs full" version if back to 4096 models
-  // if (true) {
+  if (COMBINE_PARAS || clean.paras.length === 1) {
     // The entry was a single paragraph. Don't bother with paragraph magic, just summarize wam-bam
     const joined = clean.paras.join('\n')
     const [title, body] = await summarize({

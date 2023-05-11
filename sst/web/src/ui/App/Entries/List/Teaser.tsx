@@ -79,7 +79,7 @@ function Teaser({entry, goToForm}: Teaser) {
   const text = useMemo(() => {
     // debugger
     return <span className={isSummary ? "text ai" : "text"}>
-      {S.Entries.getText(entry)}
+      {S.Entries.getSummary(entry)}
     </span>
   }, [entry.ai_text, entry.text])
 
