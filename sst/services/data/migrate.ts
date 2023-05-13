@@ -2,7 +2,7 @@ import { APIGatewayEvent, APIGatewayProxyResult, Context } from 'aws-lambda'
 import {readFileSync, existsSync, readdirSync} from "fs";
 import {sql} from "drizzle-orm/sql";
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
-import {sharedStage, DB} from "./db";
+import {sharedStage, DB} from "./db"
 
 export async function main(event: APIGatewayEvent, context: Context): Promise<APIGatewayProxyResult> {
   DB.prepLambda(context)

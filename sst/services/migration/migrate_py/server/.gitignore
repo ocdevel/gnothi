@@ -1,0 +1,6 @@
+data.db
+tmp/
+mallet-2.0.8/
+__pycache__
+wiki/
+

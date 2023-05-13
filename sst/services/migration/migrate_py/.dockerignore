@@ -1,0 +1,17 @@
+# handled separately
+storage
+ml-tools
+
+# bloat
+**/.git
+**/.idea
+**/.pytest_cache
+**/__pycache__
+**/tmp
+
+# sensitive
+**/config.yml
+**/config.json
+**/.aws
+**/*.sql
+**/*.csv
