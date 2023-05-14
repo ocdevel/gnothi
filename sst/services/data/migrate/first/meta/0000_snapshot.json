@@ -4,53 +4,6 @@
   "version": "5",
   "dialect": "pg",
   "tables": {
-    "cache_entries": {
-      "name": "cache_entries",
-      "schema": "",
-      "columns": {
-        "entry_id": {
-          "name": "entry_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "paras": {
-          "name": "paras",
-          "type": "varchar[]",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "clean": {
-          "name": "clean",
-          "type": "varchar[]",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "vectors": {
-          "name": "vectors",
-          "type": "double precision[]",
-          "primaryKey": false,
-          "notNull": false
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "cache_entries_entry_id_fkey": {
-          "name": "cache_entries_entry_id_fkey",
-          "tableFrom": "cache_entries",
-          "tableTo": "entries",
-          "columnsFrom": [
-            "entry_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {}
-    },
     "books": {
       "name": "books",
       "schema": "",
@@ -101,6 +54,252 @@
       },
       "indexes": {},
       "foreignKeys": {},
+      "compositePrimaryKeys": {}
+    },
+    "entries": {
+      "name": "entries",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "uuid_generate_v4()"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
+        "title": {
+          "name": "title",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "text": {
+          "name": "text",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "no_ai": {
+          "name": "no_ai",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": false
+        },
+        "ai_ran": {
+          "name": "ai_ran",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": false
+        },
+        "title_summary": {
+          "name": "title_summary",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "text_summary": {
+          "name": "text_summary",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sentiment": {
+          "name": "sentiment",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "ix_entries_created_at": {
+          "name": "ix_entries_created_at",
+          "columns": [
+            "created_at"
+          ],
+          "isUnique": false
+        },
+        "ix_entries_updated_at": {
+          "name": "ix_entries_updated_at",
+          "columns": [
+            "updated_at"
+          ],
+          "isUnique": false
+        },
+        "ix_entries_user_id": {
+          "name": "ix_entries_user_id",
+          "columns": [
+            "user_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "entries_user_id_fkey": {
+          "name": "entries_user_id_fkey",
+          "tableFrom": "entries",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {}
+    },
+    "cache_entries": {
+      "name": "cache_entries",
+      "schema": "",
+      "columns": {
+        "entry_id": {
+          "name": "entry_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "paras": {
+          "name": "paras",
+          "type": "varchar[]",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "clean": {
+          "name": "clean",
+          "type": "varchar[]",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "vectors": {
+          "name": "vectors",
+          "type": "double precision[]",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "cache_entries_entry_id_fkey": {
+          "name": "cache_entries_entry_id_fkey",
+          "tableFrom": "cache_entries",
+          "tableTo": "entries",
+          "columnsFrom": [
+            "entry_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {}
+    },
+    "field_entries": {
+      "name": "field_entries",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "uuid_generate_v4()"
+        },
+        "value": {
+          "name": "value",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "field_id": {
+          "name": "field_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "ix_field_entries_created_at": {
+          "name": "ix_field_entries_created_at",
+          "columns": [
+            "created_at"
+          ],
+          "isUnique": false
+        },
+        "ix_field_entries_user_id": {
+          "name": "ix_field_entries_user_id",
+          "columns": [
+            "user_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "field_entries_user_id_fkey": {
+          "name": "field_entries_user_id_fkey",
+          "tableFrom": "field_entries",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "field_entries_field_id_fkey": {
+          "name": "field_entries_field_id_fkey",
+          "tableFrom": "field_entries",
+          "tableTo": "fields",
+          "columnsFrom": [
+            "field_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {}
     },
     "tags": {
@@ -179,6 +378,56 @@
           "onUpdate": "no action"
         }
       },
+      "compositePrimaryKeys": {}
+    },
+    "machines": {
+      "name": "machines",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "ix_machines_created_at": {
+          "name": "ix_machines_created_at",
+          "columns": [
+            "created_at"
+          ],
+          "isUnique": false
+        },
+        "ix_machines_updated_at": {
+          "name": "ix_machines_updated_at",
+          "columns": [
+            "updated_at"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {}
     },
     "cache_users": {
@@ -294,6 +543,117 @@
           "onUpdate": "no action"
         }
       },
+      "compositePrimaryKeys": {}
+    },
+    "jobs": {
+      "name": "jobs",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "uuid_generate_v4()"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
+        "method": {
+          "name": "method",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "state": {
+          "name": "state",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'new'"
+        },
+        "run_on": {
+          "name": "run_on",
+          "type": "machinetypes",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'gpu'"
+        },
+        "machine_id": {
+          "name": "machine_id",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "data_in": {
+          "name": "data_in",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "data_out": {
+          "name": "data_out",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "ix_jobs_created_at": {
+          "name": "ix_jobs_created_at",
+          "columns": [
+            "created_at"
+          ],
+          "isUnique": false
+        },
+        "ix_jobs_machine_id": {
+          "name": "ix_jobs_machine_id",
+          "columns": [
+            "machine_id"
+          ],
+          "isUnique": false
+        },
+        "ix_jobs_method": {
+          "name": "ix_jobs_method",
+          "columns": [
+            "method"
+          ],
+          "isUnique": false
+        },
+        "ix_jobs_run_on": {
+          "name": "ix_jobs_run_on",
+          "columns": [
+            "run_on"
+          ],
+          "isUnique": false
+        },
+        "ix_jobs_state": {
+          "name": "ix_jobs_state",
+          "columns": [
+            "state"
+          ],
+          "isUnique": false
+        },
+        "ix_jobs_updated_at": {
+          "name": "ix_jobs_updated_at",
+          "columns": [
+            "updated_at"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {}
     },
     "fields": {
@@ -432,255 +792,6 @@
       },
       "compositePrimaryKeys": {}
     },
-    "machines": {
-      "name": "machines",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "varchar",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "status": {
-          "name": "status",
-          "type": "varchar",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "ix_machines_created_at": {
-          "name": "ix_machines_created_at",
-          "columns": [
-            "created_at"
-          ],
-          "isUnique": false
-        },
-        "ix_machines_updated_at": {
-          "name": "ix_machines_updated_at",
-          "columns": [
-            "updated_at"
-          ],
-          "isUnique": false
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {}
-    },
-    "field_entries": {
-      "name": "field_entries",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "uuid_generate_v4()"
-        },
-        "value": {
-          "name": "value",
-          "type": "double precision",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "now()"
-        },
-        "user_id": {
-          "name": "user_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "field_id": {
-          "name": "field_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        }
-      },
-      "indexes": {
-        "ix_field_entries_created_at": {
-          "name": "ix_field_entries_created_at",
-          "columns": [
-            "created_at"
-          ],
-          "isUnique": false
-        },
-        "ix_field_entries_user_id": {
-          "name": "ix_field_entries_user_id",
-          "columns": [
-            "user_id"
-          ],
-          "isUnique": false
-        }
-      },
-      "foreignKeys": {
-        "field_entries_user_id_fkey": {
-          "name": "field_entries_user_id_fkey",
-          "tableFrom": "field_entries",
-          "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "field_entries_field_id_fkey": {
-          "name": "field_entries_field_id_fkey",
-          "tableFrom": "field_entries",
-          "tableTo": "fields",
-          "columnsFrom": [
-            "field_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {}
-    },
-    "entries": {
-      "name": "entries",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "uuid_generate_v4()"
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "now()"
-        },
-        "title": {
-          "name": "title",
-          "type": "varchar",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "text": {
-          "name": "text",
-          "type": "varchar",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "no_ai": {
-          "name": "no_ai",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": false,
-          "default": false
-        },
-        "ai_ran": {
-          "name": "ai_ran",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": false,
-          "default": false
-        },
-        "title_summary": {
-          "name": "title_summary",
-          "type": "varchar",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "text_summary": {
-          "name": "text_summary",
-          "type": "varchar",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "sentiment": {
-          "name": "sentiment",
-          "type": "varchar",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "user_id": {
-          "name": "user_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        }
-      },
-      "indexes": {
-        "ix_entries_created_at": {
-          "name": "ix_entries_created_at",
-          "columns": [
-            "created_at"
-          ],
-          "isUnique": false
-        },
-        "ix_entries_updated_at": {
-          "name": "ix_entries_updated_at",
-          "columns": [
-            "updated_at"
-          ],
-          "isUnique": false
-        },
-        "ix_entries_user_id": {
-          "name": "ix_entries_user_id",
-          "columns": [
-            "user_id"
-          ],
-          "isUnique": false
-        }
-      },
-      "foreignKeys": {
-        "entries_user_id_fkey": {
-          "name": "entries_user_id_fkey",
-          "tableFrom": "entries",
-          "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {}
-    },
     "notes": {
       "name": "notes",
       "schema": "",
@@ -782,117 +893,6 @@
           "onUpdate": "no action"
         }
       },
-      "compositePrimaryKeys": {}
-    },
-    "jobs": {
-      "name": "jobs",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "uuid_generate_v4()"
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "now()"
-        },
-        "method": {
-          "name": "method",
-          "type": "varchar",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "state": {
-          "name": "state",
-          "type": "varchar",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "'new'"
-        },
-        "run_on": {
-          "name": "run_on",
-          "type": "machinetypes",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "'gpu'"
-        },
-        "machine_id": {
-          "name": "machine_id",
-          "type": "varchar",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "data_in": {
-          "name": "data_in",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "data_out": {
-          "name": "data_out",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        }
-      },
-      "indexes": {
-        "ix_jobs_created_at": {
-          "name": "ix_jobs_created_at",
-          "columns": [
-            "created_at"
-          ],
-          "isUnique": false
-        },
-        "ix_jobs_machine_id": {
-          "name": "ix_jobs_machine_id",
-          "columns": [
-            "machine_id"
-          ],
-          "isUnique": false
-        },
-        "ix_jobs_method": {
-          "name": "ix_jobs_method",
-          "columns": [
-            "method"
-          ],
-          "isUnique": false
-        },
-        "ix_jobs_run_on": {
-          "name": "ix_jobs_run_on",
-          "columns": [
-            "run_on"
-          ],
-          "isUnique": false
-        },
-        "ix_jobs_state": {
-          "name": "ix_jobs_state",
-          "columns": [
-            "state"
-          ],
-          "isUnique": false
-        },
-        "ix_jobs_updated_at": {
-          "name": "ix_jobs_updated_at",
-          "columns": [
-            "updated_at"
-          ],
-          "isUnique": false
-        }
-      },
-      "foreignKeys": {},
       "compositePrimaryKeys": {}
     },
     "shares": {
@@ -1333,68 +1333,6 @@
         }
       }
     },
-    "profile_matches": {
-      "name": "profile_matches",
-      "schema": "",
-      "columns": {
-        "user_id": {
-          "name": "user_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "match_id": {
-          "name": "match_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "score": {
-          "name": "score",
-          "type": "double precision",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "profile_matches_user_id_fkey": {
-          "name": "profile_matches_user_id_fkey",
-          "tableFrom": "profile_matches",
-          "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "profile_matches_match_id_fkey": {
-          "name": "profile_matches_match_id_fkey",
-          "tableFrom": "profile_matches",
-          "tableTo": "users",
-          "columnsFrom": [
-            "match_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {
-        "profile_matches_user_id_match_id": {
-          "name": "profile_matches_pkey",
-          "columns": [
-            "user_id",
-            "match_id"
-          ]
-        }
-      }
-    },
     "influencers": {
       "name": "influencers",
       "schema": "",
@@ -1453,6 +1391,68 @@
           "columns": [
             "field_id",
             "influencer_id"
+          ]
+        }
+      }
+    },
+    "profile_matches": {
+      "name": "profile_matches",
+      "schema": "",
+      "columns": {
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "match_id": {
+          "name": "match_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "score": {
+          "name": "score",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "profile_matches_user_id_fkey": {
+          "name": "profile_matches_user_id_fkey",
+          "tableFrom": "profile_matches",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "profile_matches_match_id_fkey": {
+          "name": "profile_matches_match_id_fkey",
+          "tableFrom": "profile_matches",
+          "tableTo": "users",
+          "columnsFrom": [
+            "match_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "profile_matches_user_id_match_id": {
+          "name": "profile_matches_pkey",
+          "columns": [
+            "user_id",
+            "match_id"
           ]
         }
       }

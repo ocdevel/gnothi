@@ -1,6 +1,5 @@
 -- Current sql file was generated after introspecting the database
 -- If you want to run this migration please uncomment this code before executing migraitons
-/*
 DO $$ BEGIN
  CREATE TYPE "defaultvaluetypes" AS ENUM('value', 'average', 'ffill');
 EXCEPTION
@@ -31,13 +30,6 @@ EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;
 
-CREATE TABLE IF NOT EXISTS "cache_entries" (
-	"entry_id" uuid NOT NULL,
-	"paras" varchar[],
-	"clean" varchar[],
-	"vectors" double precision[]
-);
-
 CREATE TABLE IF NOT EXISTS "books" (
 	"id" serial NOT NULL,
 	"title" varchar NOT NULL,
@@ -48,6 +40,35 @@ CREATE TABLE IF NOT EXISTS "books" (
 	"amazon" varchar
 );
 
+CREATE TABLE IF NOT EXISTS "entries" (
+	"id" uuid DEFAULT uuid_generate_v4() NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now(),
+	"updated_at" timestamp with time zone DEFAULT now(),
+	"title" varchar,
+	"text" varchar NOT NULL,
+	"no_ai" boolean DEFAULT false,
+	"ai_ran" boolean DEFAULT false,
+	"title_summary" varchar,
+	"text_summary" varchar,
+	"sentiment" varchar,
+	"user_id" uuid
+);
+
+CREATE TABLE IF NOT EXISTS "cache_entries" (
+	"entry_id" uuid NOT NULL,
+	"paras" varchar[],
+	"clean" varchar[],
+	"vectors" double precision[]
+);
+
+CREATE TABLE IF NOT EXISTS "field_entries" (
+	"id" uuid DEFAULT uuid_generate_v4() NOT NULL,
+	"value" double precision,
+	"created_at" timestamp with time zone DEFAULT now(),
+	"user_id" uuid,
+	"field_id" uuid
+);
+
 CREATE TABLE IF NOT EXISTS "tags" (
 	"id" uuid DEFAULT uuid_generate_v4() NOT NULL,
 	"user_id" uuid,
@@ -55,6 +76,13 @@ CREATE TABLE IF NOT EXISTS "tags" (
 	"created_at" timestamp with time zone DEFAULT now(),
 	"selected" boolean DEFAULT true,
 	"main" boolean DEFAULT false
+);
+
+CREATE TABLE IF NOT EXISTS "machines" (
+	"id" varchar NOT NULL,
+	"status" varchar,
+	"created_at" timestamp with time zone DEFAULT now(),
+	"updated_at" timestamp with time zone DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS "cache_users" (
@@ -71,6 +99,18 @@ CREATE TABLE IF NOT EXISTS "people" (
 	"issues" varchar,
 	"bio" varchar,
 	"user_id" uuid
+);
+
+CREATE TABLE IF NOT EXISTS "jobs" (
+	"id" uuid DEFAULT uuid_generate_v4() NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now(),
+	"updated_at" timestamp with time zone DEFAULT now(),
+	"method" varchar NOT NULL,
+	"state" varchar DEFAULT 'new',
+	"run_on" machinetypes DEFAULT 'gpu',
+	"machine_id" varchar,
+	"data_in" jsonb,
+	"data_out" jsonb
 );
 
 CREATE TABLE IF NOT EXISTS "fields" (
@@ -90,35 +130,6 @@ CREATE TABLE IF NOT EXISTS "fields" (
 	"avg" double precision DEFAULT 0
 );
 
-CREATE TABLE IF NOT EXISTS "machines" (
-	"id" varchar NOT NULL,
-	"status" varchar,
-	"created_at" timestamp with time zone DEFAULT now(),
-	"updated_at" timestamp with time zone DEFAULT now()
-);
-
-CREATE TABLE IF NOT EXISTS "field_entries" (
-	"id" uuid DEFAULT uuid_generate_v4() NOT NULL,
-	"value" double precision,
-	"created_at" timestamp with time zone DEFAULT now(),
-	"user_id" uuid,
-	"field_id" uuid
-);
-
-CREATE TABLE IF NOT EXISTS "entries" (
-	"id" uuid DEFAULT uuid_generate_v4() NOT NULL,
-	"created_at" timestamp with time zone DEFAULT now(),
-	"updated_at" timestamp with time zone DEFAULT now(),
-	"title" varchar,
-	"text" varchar NOT NULL,
-	"no_ai" boolean DEFAULT false,
-	"ai_ran" boolean DEFAULT false,
-	"title_summary" varchar,
-	"text_summary" varchar,
-	"sentiment" varchar,
-	"user_id" uuid
-);
-
 CREATE TABLE IF NOT EXISTS "notes" (
 	"id" uuid DEFAULT uuid_generate_v4() NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now(),
@@ -127,18 +138,6 @@ CREATE TABLE IF NOT EXISTS "notes" (
 	"type" notetypes NOT NULL,
 	"text" varchar NOT NULL,
 	"private" boolean DEFAULT false
-);
-
-CREATE TABLE IF NOT EXISTS "jobs" (
-	"id" uuid DEFAULT uuid_generate_v4() NOT NULL,
-	"created_at" timestamp with time zone DEFAULT now(),
-	"updated_at" timestamp with time zone DEFAULT now(),
-	"method" varchar NOT NULL,
-	"state" varchar DEFAULT 'new',
-	"run_on" machinetypes DEFAULT 'gpu',
-	"machine_id" varchar,
-	"data_in" jsonb,
-	"data_out" jsonb
 );
 
 CREATE TABLE IF NOT EXISTS "shares" (
@@ -196,14 +195,6 @@ CREATE TABLE IF NOT EXISTS "entries_tags" (
 --> statement-breakpoint
 ALTER TABLE "entries_tags" ADD CONSTRAINT "entries_tags_pkey" PRIMARY KEY("entry_id","tag_id");
 
-CREATE TABLE IF NOT EXISTS "profile_matches" (
-	"user_id" uuid NOT NULL,
-	"match_id" uuid NOT NULL,
-	"score" double precision NOT NULL
-);
---> statement-breakpoint
-ALTER TABLE "profile_matches" ADD CONSTRAINT "profile_matches_pkey" PRIMARY KEY("user_id","match_id");
-
 CREATE TABLE IF NOT EXISTS "influencers" (
 	"field_id" uuid NOT NULL,
 	"influencer_id" uuid NOT NULL,
@@ -211,6 +202,14 @@ CREATE TABLE IF NOT EXISTS "influencers" (
 );
 --> statement-breakpoint
 ALTER TABLE "influencers" ADD CONSTRAINT "influencers_pkey" PRIMARY KEY("field_id","influencer_id");
+
+CREATE TABLE IF NOT EXISTS "profile_matches" (
+	"user_id" uuid NOT NULL,
+	"match_id" uuid NOT NULL,
+	"score" double precision NOT NULL
+);
+--> statement-breakpoint
+ALTER TABLE "profile_matches" ADD CONSTRAINT "profile_matches_pkey" PRIMARY KEY("user_id","match_id");
 
 CREATE TABLE IF NOT EXISTS "shares_tags" (
 	"share_id" uuid NOT NULL,
@@ -244,7 +243,25 @@ CREATE TABLE IF NOT EXISTS "field_entries2" (
 ALTER TABLE "field_entries2" ADD CONSTRAINT "field_entries2_pkey" PRIMARY KEY("field_id","day");
 
 DO $$ BEGIN
+ ALTER TABLE "entries" ADD CONSTRAINT "entries_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION
+ WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
  ALTER TABLE "cache_entries" ADD CONSTRAINT "cache_entries_entry_id_fkey" FOREIGN KEY ("entry_id") REFERENCES "entries"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION
+ WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+ ALTER TABLE "field_entries" ADD CONSTRAINT "field_entries_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION
+ WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+ ALTER TABLE "field_entries" ADD CONSTRAINT "field_entries_field_id_fkey" FOREIGN KEY ("field_id") REFERENCES "fields"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;
@@ -269,24 +286,6 @@ END $$;
 
 DO $$ BEGIN
  ALTER TABLE "fields" ADD CONSTRAINT "fields_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE cascade ON UPDATE no action;
-EXCEPTION
- WHEN duplicate_object THEN null;
-END $$;
-
-DO $$ BEGIN
- ALTER TABLE "field_entries" ADD CONSTRAINT "field_entries_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE cascade ON UPDATE no action;
-EXCEPTION
- WHEN duplicate_object THEN null;
-END $$;
-
-DO $$ BEGIN
- ALTER TABLE "field_entries" ADD CONSTRAINT "field_entries_field_id_fkey" FOREIGN KEY ("field_id") REFERENCES "fields"("id") ON DELETE cascade ON UPDATE no action;
-EXCEPTION
- WHEN duplicate_object THEN null;
-END $$;
-
-DO $$ BEGIN
- ALTER TABLE "entries" ADD CONSTRAINT "entries_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;
@@ -328,18 +327,6 @@ EXCEPTION
 END $$;
 
 DO $$ BEGIN
- ALTER TABLE "profile_matches" ADD CONSTRAINT "profile_matches_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE cascade ON UPDATE no action;
-EXCEPTION
- WHEN duplicate_object THEN null;
-END $$;
-
-DO $$ BEGIN
- ALTER TABLE "profile_matches" ADD CONSTRAINT "profile_matches_match_id_fkey" FOREIGN KEY ("match_id") REFERENCES "users"("id") ON DELETE cascade ON UPDATE no action;
-EXCEPTION
- WHEN duplicate_object THEN null;
-END $$;
-
-DO $$ BEGIN
  ALTER TABLE "influencers" ADD CONSTRAINT "influencers_influencer_id_fkey" FOREIGN KEY ("influencer_id") REFERENCES "fields"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
@@ -347,6 +334,18 @@ END $$;
 
 DO $$ BEGIN
  ALTER TABLE "influencers" ADD CONSTRAINT "influencers_field_id_fkey" FOREIGN KEY ("field_id") REFERENCES "fields"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION
+ WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+ ALTER TABLE "profile_matches" ADD CONSTRAINT "profile_matches_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION
+ WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+ ALTER TABLE "profile_matches" ADD CONSTRAINT "profile_matches_match_id_fkey" FOREIGN KEY ("match_id") REFERENCES "users"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;
@@ -381,28 +380,28 @@ EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;
 
-CREATE INDEX IF NOT EXISTS "ix_tags_created_at" ON "tags" ("created_at");
-CREATE INDEX IF NOT EXISTS "ix_tags_user_id" ON "tags" ("user_id");
-CREATE INDEX IF NOT EXISTS "ix_people_user_id" ON "people" ("user_id");
-CREATE INDEX IF NOT EXISTS "ix_fields_created_at" ON "fields" ("created_at");
-CREATE INDEX IF NOT EXISTS "ix_fields_excluded_at" ON "fields" ("excluded_at");
-CREATE INDEX IF NOT EXISTS "ix_fields_user_id" ON "fields" ("user_id");
-CREATE INDEX IF NOT EXISTS "ix_machines_created_at" ON "machines" ("created_at");
-CREATE INDEX IF NOT EXISTS "ix_machines_updated_at" ON "machines" ("updated_at");
-CREATE INDEX IF NOT EXISTS "ix_field_entries_created_at" ON "field_entries" ("created_at");
-CREATE INDEX IF NOT EXISTS "ix_field_entries_user_id" ON "field_entries" ("user_id");
 CREATE INDEX IF NOT EXISTS "ix_entries_created_at" ON "entries" ("created_at");
 CREATE INDEX IF NOT EXISTS "ix_entries_updated_at" ON "entries" ("updated_at");
 CREATE INDEX IF NOT EXISTS "ix_entries_user_id" ON "entries" ("user_id");
-CREATE INDEX IF NOT EXISTS "ix_notes_created_at" ON "notes" ("created_at");
-CREATE INDEX IF NOT EXISTS "ix_notes_entry_id" ON "notes" ("entry_id");
-CREATE INDEX IF NOT EXISTS "ix_notes_user_id" ON "notes" ("user_id");
+CREATE INDEX IF NOT EXISTS "ix_field_entries_created_at" ON "field_entries" ("created_at");
+CREATE INDEX IF NOT EXISTS "ix_field_entries_user_id" ON "field_entries" ("user_id");
+CREATE INDEX IF NOT EXISTS "ix_tags_created_at" ON "tags" ("created_at");
+CREATE INDEX IF NOT EXISTS "ix_tags_user_id" ON "tags" ("user_id");
+CREATE INDEX IF NOT EXISTS "ix_machines_created_at" ON "machines" ("created_at");
+CREATE INDEX IF NOT EXISTS "ix_machines_updated_at" ON "machines" ("updated_at");
+CREATE INDEX IF NOT EXISTS "ix_people_user_id" ON "people" ("user_id");
 CREATE INDEX IF NOT EXISTS "ix_jobs_created_at" ON "jobs" ("created_at");
 CREATE INDEX IF NOT EXISTS "ix_jobs_machine_id" ON "jobs" ("machine_id");
 CREATE INDEX IF NOT EXISTS "ix_jobs_method" ON "jobs" ("method");
 CREATE INDEX IF NOT EXISTS "ix_jobs_run_on" ON "jobs" ("run_on");
 CREATE INDEX IF NOT EXISTS "ix_jobs_state" ON "jobs" ("state");
 CREATE INDEX IF NOT EXISTS "ix_jobs_updated_at" ON "jobs" ("updated_at");
+CREATE INDEX IF NOT EXISTS "ix_fields_created_at" ON "fields" ("created_at");
+CREATE INDEX IF NOT EXISTS "ix_fields_excluded_at" ON "fields" ("excluded_at");
+CREATE INDEX IF NOT EXISTS "ix_fields_user_id" ON "fields" ("user_id");
+CREATE INDEX IF NOT EXISTS "ix_notes_created_at" ON "notes" ("created_at");
+CREATE INDEX IF NOT EXISTS "ix_notes_entry_id" ON "notes" ("entry_id");
+CREATE INDEX IF NOT EXISTS "ix_notes_user_id" ON "notes" ("user_id");
 CREATE INDEX IF NOT EXISTS "ix_shares_email" ON "shares" ("email");
 CREATE INDEX IF NOT EXISTS "ix_shares_last_seen" ON "shares" ("last_seen");
 CREATE INDEX IF NOT EXISTS "ix_shares_user_id" ON "shares" ("user_id");
@@ -420,4 +419,3 @@ CREATE INDEX IF NOT EXISTS "ix_field_entries2_created_at" ON "field_entries2" ("
 CREATE INDEX IF NOT EXISTS "ix_field_entries2_day" ON "field_entries2" ("day");
 CREATE INDEX IF NOT EXISTS "ix_field_entries2_field_id" ON "field_entries2" ("field_id");
 CREATE INDEX IF NOT EXISTS "ix_field_entries2_user_id" ON "field_entries2" ("user_id");
-*/

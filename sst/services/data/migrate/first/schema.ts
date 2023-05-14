@@ -1,4 +1,4 @@
-import { pgTable, pgEnum, pgSchema, AnyPgColumn, foreignKey, uuid, serial, varchar, integer, index, timestamp, boolean, doublePrecision, json, jsonb, uniqueIndex, date, primaryKey } from "drizzle-orm/pg-core"
+import { pgTable, pgEnum, pgSchema, AnyPgColumn, serial, varchar, integer, index, foreignKey, uuid, timestamp, boolean, doublePrecision, jsonb, json, uniqueIndex, date, primaryKey } from "drizzle-orm/pg-core"
 
 export const defaultvaluetypes = pgEnum("defaultvaluetypes", ['value', 'average', 'ffill'])
 export const fieldtype = pgEnum("fieldtype", ['number', 'fivestar', 'check', 'option'])
@@ -8,13 +8,6 @@ export const shelves = pgEnum("shelves", ['ai', 'like', 'already_read', 'dislike
 
 import { sql } from "drizzle-orm"
 
-export const cacheEntries = pgTable("cache_entries", {
-	entryId: uuid("entry_id").notNull().references(() => entries.id, { onDelete: "cascade" } ),
-	paras: varchar("paras", { length:  }).array(),
-	clean: varchar("clean", { length:  }).array(),
-	vectors: doublePrecision("vectors").array(),
-});
-
 export const books = pgTable("books", {
 	id: serial("id").notNull(),
 	title: varchar("title").notNull(),
@@ -23,6 +16,48 @@ export const books = pgTable("books", {
 	topic: varchar("topic"),
 	thumbs: integer("thumbs"),
 	amazon: varchar("amazon"),
+});
+
+export const entries = pgTable("entries", {
+	id: uuid("id").default(sql`uuid_generate_v4()`).notNull(),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow(),
+	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow(),
+	title: varchar("title"),
+	text: varchar("text").notNull(),
+	noAi: boolean("no_ai"),
+	aiRan: boolean("ai_ran"),
+	titleSummary: varchar("title_summary"),
+	textSummary: varchar("text_summary"),
+	sentiment: varchar("sentiment"),
+	userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" } ),
+},
+(table) => {
+	return {
+		ixEntriesCreatedAt: index("ix_entries_created_at").on(table.createdAt),
+		ixEntriesUpdatedAt: index("ix_entries_updated_at").on(table.updatedAt),
+		ixEntriesUserId: index("ix_entries_user_id").on(table.userId),
+	}
+});
+
+export const cacheEntries = pgTable("cache_entries", {
+	entryId: uuid("entry_id").notNull().references(() => entries.id, { onDelete: "cascade" } ),
+	paras: varchar("paras", { length:  }).array(),
+	clean: varchar("clean", { length:  }).array(),
+	vectors: doublePrecision("vectors").array(),
+});
+
+export const fieldEntries = pgTable("field_entries", {
+	id: uuid("id").default(sql`uuid_generate_v4()`).notNull(),
+	value: doublePrecision("value"),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow(),
+	userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" } ),
+	fieldId: uuid("field_id").references(() => fields.id, { onDelete: "cascade" } ),
+},
+(table) => {
+	return {
+		ixFieldEntriesCreatedAt: index("ix_field_entries_created_at").on(table.createdAt),
+		ixFieldEntriesUserId: index("ix_field_entries_user_id").on(table.userId),
+	}
 });
 
 export const tags = pgTable("tags", {
@@ -37,6 +72,19 @@ export const tags = pgTable("tags", {
 	return {
 		ixTagsCreatedAt: index("ix_tags_created_at").on(table.createdAt),
 		ixTagsUserId: index("ix_tags_user_id").on(table.userId),
+	}
+});
+
+export const machines = pgTable("machines", {
+	id: varchar("id").notNull(),
+	status: varchar("status"),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow(),
+	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow(),
+},
+(table) => {
+	return {
+		ixMachinesCreatedAt: index("ix_machines_created_at").on(table.createdAt),
+		ixMachinesUpdatedAt: index("ix_machines_updated_at").on(table.updatedAt),
 	}
 });
 
@@ -58,6 +106,28 @@ export const people = pgTable("people", {
 (table) => {
 	return {
 		ixPeopleUserId: index("ix_people_user_id").on(table.userId),
+	}
+});
+
+export const jobs = pgTable("jobs", {
+	id: uuid("id").default(sql`uuid_generate_v4()`).notNull(),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow(),
+	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow(),
+	method: varchar("method").notNull(),
+	state: varchar("state").default('new'),
+	runOn: machinetypes("run_on").default('gpu'),
+	machineId: varchar("machine_id"),
+	dataIn: jsonb("data_in"),
+	dataOut: jsonb("data_out"),
+},
+(table) => {
+	return {
+		ixJobsCreatedAt: index("ix_jobs_created_at").on(table.createdAt),
+		ixJobsMachineId: index("ix_jobs_machine_id").on(table.machineId),
+		ixJobsMethod: index("ix_jobs_method").on(table.method),
+		ixJobsRunOn: index("ix_jobs_run_on").on(table.runOn),
+		ixJobsState: index("ix_jobs_state").on(table.state),
+		ixJobsUpdatedAt: index("ix_jobs_updated_at").on(table.updatedAt),
 	}
 });
 
@@ -85,54 +155,6 @@ export const fields = pgTable("fields", {
 	}
 });
 
-export const machines = pgTable("machines", {
-	id: varchar("id").notNull(),
-	status: varchar("status"),
-	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow(),
-	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow(),
-},
-(table) => {
-	return {
-		ixMachinesCreatedAt: index("ix_machines_created_at").on(table.createdAt),
-		ixMachinesUpdatedAt: index("ix_machines_updated_at").on(table.updatedAt),
-	}
-});
-
-export const fieldEntries = pgTable("field_entries", {
-	id: uuid("id").default(sql`uuid_generate_v4()`).notNull(),
-	value: doublePrecision("value"),
-	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow(),
-	userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" } ),
-	fieldId: uuid("field_id").references(() => fields.id, { onDelete: "cascade" } ),
-},
-(table) => {
-	return {
-		ixFieldEntriesCreatedAt: index("ix_field_entries_created_at").on(table.createdAt),
-		ixFieldEntriesUserId: index("ix_field_entries_user_id").on(table.userId),
-	}
-});
-
-export const entries = pgTable("entries", {
-	id: uuid("id").default(sql`uuid_generate_v4()`).notNull(),
-	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow(),
-	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow(),
-	title: varchar("title"),
-	text: varchar("text").notNull(),
-	noAi: boolean("no_ai"),
-	aiRan: boolean("ai_ran"),
-	titleSummary: varchar("title_summary"),
-	textSummary: varchar("text_summary"),
-	sentiment: varchar("sentiment"),
-	userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" } ),
-},
-(table) => {
-	return {
-		ixEntriesCreatedAt: index("ix_entries_created_at").on(table.createdAt),
-		ixEntriesUpdatedAt: index("ix_entries_updated_at").on(table.updatedAt),
-		ixEntriesUserId: index("ix_entries_user_id").on(table.userId),
-	}
-});
-
 export const notes = pgTable("notes", {
 	id: uuid("id").default(sql`uuid_generate_v4()`).notNull(),
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow(),
@@ -147,28 +169,6 @@ export const notes = pgTable("notes", {
 		ixNotesCreatedAt: index("ix_notes_created_at").on(table.createdAt),
 		ixNotesEntryId: index("ix_notes_entry_id").on(table.entryId),
 		ixNotesUserId: index("ix_notes_user_id").on(table.userId),
-	}
-});
-
-export const jobs = pgTable("jobs", {
-	id: uuid("id").default(sql`uuid_generate_v4()`).notNull(),
-	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow(),
-	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow(),
-	method: varchar("method").notNull(),
-	state: varchar("state").default('new'),
-	runOn: machinetypes("run_on").default('gpu'),
-	machineId: varchar("machine_id"),
-	dataIn: jsonb("data_in"),
-	dataOut: jsonb("data_out"),
-},
-(table) => {
-	return {
-		ixJobsCreatedAt: index("ix_jobs_created_at").on(table.createdAt),
-		ixJobsMachineId: index("ix_jobs_machine_id").on(table.machineId),
-		ixJobsMethod: index("ix_jobs_method").on(table.method),
-		ixJobsRunOn: index("ix_jobs_run_on").on(table.runOn),
-		ixJobsState: index("ix_jobs_state").on(table.state),
-		ixJobsUpdatedAt: index("ix_jobs_updated_at").on(table.updatedAt),
 	}
 });
 
@@ -253,17 +253,6 @@ export const entriesTags = pgTable("entries_tags", {
 	}
 });
 
-export const profileMatches = pgTable("profile_matches", {
-	userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" } ),
-	matchId: uuid("match_id").notNull().references(() => users.id, { onDelete: "cascade" } ),
-	score: doublePrecision("score").notNull(),
-},
-(table) => {
-	return {
-		profileMatchesPkey: primaryKey(table.userId, table.matchId)
-	}
-});
-
 export const influencers = pgTable("influencers", {
 	fieldId: uuid("field_id").notNull().references(() => fields.id, { onDelete: "cascade" } ),
 	influencerId: uuid("influencer_id").notNull().references(() => fields.id, { onDelete: "cascade" } ),
@@ -272,6 +261,17 @@ export const influencers = pgTable("influencers", {
 (table) => {
 	return {
 		influencersPkey: primaryKey(table.fieldId, table.influencerId)
+	}
+});
+
+export const profileMatches = pgTable("profile_matches", {
+	userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" } ),
+	matchId: uuid("match_id").notNull().references(() => users.id, { onDelete: "cascade" } ),
+	score: doublePrecision("score").notNull(),
+},
+(table) => {
+	return {
+		profileMatchesPkey: primaryKey(table.userId, table.matchId)
 	}
 });
 
