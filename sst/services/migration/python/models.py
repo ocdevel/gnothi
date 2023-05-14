@@ -8,8 +8,8 @@ import pandas as pd
 import logging
 logger = logging.getLogger(__name__)
 
-from common.database import Base, fa_users_db, session
-from common.utils import vars
+from database import Base, fa_users_db, session
+from utils import vars
 
 from sqlalchemy import text as satext, Column, Integer, Enum, Float, ForeignKey, Boolean, JSON, Date, Unicode, \
     func, TIMESTAMP, select, or_, and_

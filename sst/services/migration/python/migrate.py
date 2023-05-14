@@ -1,10 +1,10 @@
 import os, sys, pdb
 from datetime import datetime
 from sqlalchemy import create_engine
-from common.utils import vars, DROP_SQL
-from common.database import init_db, shutdown_db
+from utils import vars, DROP_SQL
+from database import init_db, shutdown_db
 from sqlalchemy_utils.functions import drop_database, create_database, database_exists
-from scripts.migrate import migrate_before, migrate_after
+# from migrate import migrate_before, migrate_after
 import argparse
 
 parser = argparse.ArgumentParser()
@@ -71,10 +71,10 @@ if args.migrate:
         drop_database(tmp_url)
     create_database(tmp_url)
     os.system(f"{cmd} {from_url} | psql {tmp_url}")
-    migrate_before(engine(tmp_url))
+    # migrate_before(engine(tmp_url))
     wipe(to_url, and_init=True)
     os.system(f"{cmd} {tmp_url} --data-only | psql {to_url}")
-    migrate_after(engine(to_url))
+    # migrate_after(engine(to_url))
 else:
     wipe(to_url, and_init=False)
     os.system(f"{cmd} {from_url} | psql {to_url}")

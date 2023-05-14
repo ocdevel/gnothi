@@ -5,6 +5,10 @@ import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import {sharedStage, DB} from "./db"
 
 export async function main(event: APIGatewayEvent, context: Context): Promise<APIGatewayProxyResult> {
+
+  // export the datbase
+  // PGPASSWORD='password' pg_dump --no-owner --no-acl -h host.rds.amazonaws.com -U postgres -d prod > prod.sql
+
   DB.prepLambda(context)
 
   const dbPostgres = new DB('postgres')

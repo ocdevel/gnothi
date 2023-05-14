@@ -4,6 +4,8 @@ services:
   db:
     image: postgres
     restart: always
+    volumes:
+      - ./pg_tmp:/home
     environment:
       POSTGRES_PASSWORD: password
     ports:

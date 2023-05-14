@@ -1,6 +1,6 @@
 import os, sys
 from sqlalchemy import create_engine
-from common.utils import vars
+from utils import vars
 import pandas as pd
 
 run = sys.argv[-1] == 'run'
