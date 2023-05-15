@@ -7,14 +7,20 @@ import {users} from '../schemas/users'
 import { exec } from 'child_process';
 import { Config } from "@serverless-stack/node/config"
 import {import_v0} from "./migrate_v0";
+import {Bucket} from "@serverless-stack/node/bucket";
+
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+
 
 type MigrateEvent = {
   wipe?: boolean
-  import_v0?: boolean
+  migrate_v0?: boolean
 }
 
 export async function main(event: MigrateEvent, context: Context): Promise<APIGatewayProxyResult> {
   DB.prepLambda(context)
+
+  console.log({event})
 
   // console.log(readdirSync(".")) //  helper to find path. TODO figure out proper relative path code
   let migrationsRoot: string
@@ -51,7 +57,7 @@ export async function main(event: MigrateEvent, context: Context): Promise<APIGa
   await migrate(dbTarget.drizzle, {migrationsFolder: migrationsFirst})
 
   // import the old database, if requested
-  if (event.import_v0) {
+  if (event.migrate_v0) {
     await import_v0(dbTarget)
   }
 
@@ -60,10 +66,11 @@ export async function main(event: MigrateEvent, context: Context): Promise<APIGa
   // tell drizzle in code-form (here) to migrate step1, then do stuff, then migrate 1-on.
   await migrate(dbTarget.drizzle, {migrationsFolder: migrationsRest})
 
-  const versions = await dbTarget.queryFirst(sql`select value from keyvalues where key='version'`)
+  // TODO something smarter, like drizzle table version number
+  const sanityCheck = (await dbTarget.drizzle.execute(sql`select 1`))[0]
 
   console.log('responding')
-  const message = `DB Response: ${JSON.stringify(versions)}`
+  const message = `DB Response: ${JSON.stringify(sanityCheck)}`
   console.log({message})
   return {
     body: JSON.stringify({message}),

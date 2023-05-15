@@ -5,12 +5,14 @@ import * as iam from "aws-cdk-lib/aws-iam"
 import * as cdk from "aws-cdk-lib";
 import {rams, timeouts} from './util'
 import {SharedImport} from "./Shared";
+import {Misc} from "./Misc";
 
 export function Api({ app, stack }: sst.StackContext) {
   const {vpc, rdsSecret, readSecretPolicy, withRds} = sst.use(SharedImport);
   const ml = sst.use(Ml);
   const {auth, authFn} = sst.use(Auth);
-  const APP_REGION = new sst.Config.Parameter(stack, "APP_REGION", {value: app.region})
+  const {APP_REGION} = sst.use(Misc)
+
 
   const http = new sst.Api(stack, "api_http", {
     authorizers: {

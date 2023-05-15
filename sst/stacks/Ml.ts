@@ -5,6 +5,7 @@ import * as efs from "aws-cdk-lib/aws-efs";
 import * as cdk from "aws-cdk-lib";
 import {rams} from "./util";
 import {SharedImport} from "./Shared";
+import {Misc} from "./Misc";
 
 // Getting a cyclical deps error when I have these all as different stacks, per
 // sst recommended usage. Just calling them as functions for now
@@ -125,13 +126,9 @@ export function Ml(context: sst.StackContext) {
   const { app, stack } = context
   const {vpc} = sst.use(SharedImport);
 
-
   // Will put some assets in here like books.feather, and may move some EFS
   // use-cases towards S3 + PyArrow
-  const bucket = new sst.Bucket(stack, "MlBucket")
-  stack.addOutputs({
-    mlBucket_: bucket.bucketName
-  })
+  const {bucket} = sst.use(Misc)
 
   // creates a file system in EFS to store cache models, weaviate data, etc
   const fs = new efs.FileSystem(stack, 'Efs', {

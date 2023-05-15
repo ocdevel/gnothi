@@ -9,11 +9,14 @@ import {tags, Tag} from '../schemas/tags'
 import {eq, and, or, sql} from "drizzle-orm";
 import { Config } from "@serverless-stack/node/config"
 import {URL} from 'url'
-
-
-import { Fernet } from 'fernet-nodejs';
-import {exec} from "child_process";
+import {exec as execCallback} from "child_process";
+import {promisify} from "util";
 import {readFileSync} from "fs";
+import { Fernet } from 'fernet-nodejs';
+import {s3GetObjectContents} from "../../aws/handlers";
+
+const exec = promisify(execCallback);
+
 
 let decrypt = (token: string): string => {
   throw new Error("FLASK_KEY not imported correctly for migrate_v0 decryption")
@@ -29,22 +32,25 @@ if (Config.FLASK_KEY_V0) {
 export async function import_v0(db: DB) {
   const dbUrl = Config.DB_URL_V0
   if (!dbUrl) { throw new Error("DB_URL_V0 not imported correctly for migrate_v0") }
-  const dbv0 = new URL(dbUrl);
-  // no rhyme to me using sometimes spaces, sometimes join(); just need something I can see easily
-  const cmd = [
-    `PGPASSWORD='${dbv0.password}`,
-    "pg_dump --data-only --exclude-table=cache_users --exclude-table=cache_entries",
-    `-U ${dbv0.username}`,
-    `-h ${dbv0.hostname}`,
-    `-d ${dbv0.pathname.slice(1)}`,
-    "> /tmp/data_v0.sql"
-  ].join(' ')
+
+  // const dbv0 = new URL(dbUrl);
+  // const fname = "/tmp/data_v0.sql"
+  // // no rhyme to me using sometimes spaces, sometimes join(); just need something I can see easily
+  // const cmd = [
+  //   `PGPASSWORD='${dbv0.password}'`,
+  //   "pg_dump --data-only --exclude-table=cache_users --exclude-table=cache_entries",
+  //   "-U", dbv0.username,
+  //   "-h", dbv0.hostname,
+  //   "-d", dbv0.pathname.slice(1),
+  //   ">", fname
+  // ].join(' ')
 
   // Execute CLI command to dump postgres database from old server to /tmp/data_v0.sql
-  await exec(cmd)
+  // await exec(cmd)
   // Read that file to a string
-  const oldSql = readFileSync("/tmp/data_v0sql", "utf8")
-  await db.pg.query(`${oldSql}`)
+  // const oldSql = readFileSync(fname, "utf8")
+  const oldSql = await s3GetObjectContents({Key: "data_v0.sql"})
+  await db.pg.query(oldSql)
   await addUsersToCognito(db)
 }
 
@@ -52,6 +58,7 @@ export async function import_v0(db: DB) {
 // and need the RAM wiggle-room
 
 export async function addUsersToCognito(db: DB) {
+  return null
   const users_ = await db.drizzle.select({
     id: users.id,
     email: users.email,
@@ -164,7 +171,7 @@ async function batchUpdate(db: DB, tableName: string, updates: any[]) {
 
   // Build the SET clause
   const setClause = columnNames.map(col =>
-    sql`${col} = new_values.${col}`
+    `${col} = new_values.${col}`
   ).join(', ');
 
   // Build and execute the UPDATE query

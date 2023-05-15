@@ -12,7 +12,11 @@ import * as aws_ec2 from "aws-cdk-lib/aws-ec2";
 
 export function Misc(context: sst.StackContext) {
   const { app, stack } = context
-  const {withRds} = sst.use(SharedImport);
+  const {withRds} = sst.use(SharedImport)
+  const APP_REGION = new sst.Config.Parameter(stack, "APP_REGION", {value: app.region})
+
+  // Common / misc bucket. Used for ML, file-uploads, etc
+  const bucket = new sst.Bucket(stack, "Bucket")
 
   const DB_URL_V0 = new sst.Config.Secret(stack, "DB_URL_V0")
   const FLASK_KEY_V0 = new sst.Config.Secret(stack, "FLASK_KEY_V0")
@@ -27,10 +31,17 @@ export function Misc(context: sst.StackContext) {
     bundle: {
       copyFiles: [{from: "data/migrate"}]
     },
-    bind: [DB_URL_V0, FLASK_KEY_V0],
+    bind: [
+      DB_URL_V0,
+      FLASK_KEY_V0,
+      APP_REGION,
+      // used to read the old SQL script or main migration
+      bucket,
+    ],
   })
 
   stack.addOutputs({
+    bucket: bucket.bucketName,
     dbMigrate: dbMigrate.functionArn,
   })
 
@@ -40,4 +51,6 @@ export function Misc(context: sst.StackContext) {
   //     enableLiveDev: false,
   //   }
   // })
+
+  return {bucket, APP_REGION}
 }

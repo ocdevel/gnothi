@@ -20,8 +20,11 @@ import {clients} from './clients'
 import {SNSEvent} from "aws-lambda";
 import {APIGatewayProxyWebsocketEventV2} from "aws-lambda/trigger/api-gateway-proxy";
 import {fromUtf8, toUtf8} from "@aws-sdk/util-utf8-node";
+import {Bucket} from '@serverless-stack/node/bucket'
 
 export * as Handlers from './handlers'
+
+const defaultBucket = Bucket.Bucket.bucketName
 
 type HandlerKey = "http" | "s3" | "sns" | "lambda" | "ws"
 export function whichHandler(event: any, context: Context): HandlerKey {
@@ -95,6 +98,20 @@ class Buff {
   static toObj(buff: Uint8Array): unknown {
     return JSON.parse(toUtf8(buff))
   }
+}
+
+type S3GetObjectContents = { Bucket?: string, Key: string }
+export async function s3GetObjectContents({Bucket, Key}: S3GetObjectContents): Promise<string> {
+  const {Body} = await clients.s3.send(new GetObjectCommand({
+    Bucket: Bucket || defaultBucket,
+    Key
+  }))
+  let str = '';
+  // @ts-ignore Convert the ReadableStream to a Node.js readable stream and read the data
+  for await (const chunk of Readable.from(Body)) {
+    str += chunk.toString('utf-8');
+  }
+  return str
 }
 
 type InvokeCommandOutput_<O> = Omit<InvokeCommandOutput, 'Payload'> & {
