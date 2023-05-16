@@ -2,11 +2,11 @@
  * Misc helper Lambda functions, like migrations, etc
  */
 import {rams, timeouts} from "./util";
-import * as sst from "@serverless-stack/resources";
+import * as sst from "sst/constructs";
 import {SharedImport, sharedStage} from "./Shared";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as cdk from "aws-cdk-lib";
-import {StackContext} from "@serverless-stack/resources";
+import {StackContext} from "sst/constructs";
 import * as aws_ec2 from "aws-cdk-lib/aws-ec2";
 
 
@@ -27,10 +27,9 @@ export function Misc(context: sst.StackContext) {
     // memorySize: rams.sm,
     memorySize: 512, // due to pg migration from old site to new. DB size was ~250MB last I dumped
     timeout: "10 minutes", // old->new migration can take a while. I can reduce this later
-    handler: "data/migrate/migrate.main",
-    bundle: {
-      copyFiles: [{from: "data/migrate"}]
-    },
+    handler: "services/data/migrate/migrate.main",
+    // copyFiles: [{from: "data/migrate"}],
+    copyFiles: [{from: "services/data/migrate"}],
     bind: [
       DB_URL_V0,
       FLASK_KEY_V0,

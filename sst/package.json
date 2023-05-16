@@ -3,28 +3,26 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "AWS_PROFILE=gnothiadmin sst start",
+    "start": "AWS_PROFILE=gnothiadmin sst dev",
     "build": "AWS_PROFILE=gnothiadmin sst build",
     "deploy:staging": "AWS_PROFILE=gnothiadmin sst deploy --stage=staging",
+    "deploy:shared-dev": "AWS_PROFILE=gnothiadmin sst deploy --stage=shared-dev",
     "remove": "AWS_PROFILE=gnothiadmin sst remove",
     "console": "AWS_PROFILE=gnothiadmin sst console",
     "typecheck": "tsc --noEmit",
     "test": "AWS_REGION=us-east-1 AWS_PROFILE=gnothiadmin sst bind -- vitest run",
-    "test:gendata": "AWS_REGION=us-east-1 AWS_PROFILE=gnothiadmin sst bind -- vitest run services/tests/setup_mock.spec.ts",
-    "gen": "hygen"
+    "test:gendata": "AWS_REGION=us-east-1 AWS_PROFILE=gnothiadmin sst bind -- vitest run services/tests/setup_mock.spec.ts"
   },
   "devDependencies": {
-    "@serverless-stack/cli": "^1.18.4",
-    "@serverless-stack/resources": "^1.18.4",
-    "@tsconfig/node16": "^1.0.3",
-    "@types/lodash": "^4.14.188",
-    "aws-cdk-lib": "2.50.0",
-    "hygen": "^6.2.11",
-    "typescript": "^4.8.4",
-    "vitest": "^0.25.1"
+    "sst": "^2.8.22",
+    "constructs": "^10.2.25",
+    "@tsconfig/node18": "^2.0.1",
+    "@types/lodash": "^4.14.194",
+    "aws-cdk-lib": "2.72.1",
+    "typescript": "^5.0.4",
+    "vitest": "^0.31.0"
   },
   "dependencies": {
-    "@serverless-stack/node": "^1.18.4",
     "drizzle-zod": "^0.4.1",
     "openai": "^3.2.1"
   },

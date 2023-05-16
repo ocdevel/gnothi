@@ -1,8 +1,8 @@
 import {lambdaSend} from "../../aws/handlers"
-import {Function} from "@serverless-stack/node/function";
+import {Function} from "sst/node/function";
 import * as S from '@gnothi/schemas'
 import {TextsParamsMatch} from "./errors";
-import {Config} from '@serverless-stack/node/config'
+import {Config} from 'sst/node/config'
 import {v4 as uuid} from 'uuid'
 import {sendInsight, USE_OPENAI} from "./utils";
 import {completion} from "./openai";

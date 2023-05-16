@@ -9,13 +9,13 @@
  * - pass env to stack: https://stackoverflow.com/a/71737152 (TODO try this)
  */
 
-import * as sst from "@serverless-stack/resources";
+import * as sst from "sst/constructs";
 import * as aws_ec2 from "aws-cdk-lib/aws-ec2";
 import * as aws_rds from "aws-cdk-lib/aws-rds";
 import * as aws_ssm from "aws-cdk-lib/aws-ssm";
 import * as aws_secretsmanager from "aws-cdk-lib/aws-secretsmanager";
 import * as cdk from "aws-cdk-lib";
-import {RDS, RDSProps, StackContext} from "@serverless-stack/resources";
+import {RDS, RDSProps, StackContext} from "sst/constructs";
 import { Construct } from "constructs";
 import * as iam from "aws-cdk-lib/aws-iam";
 
@@ -139,7 +139,8 @@ export function SharedCreate(context: StackContext) {
 
 
 export function SharedImport(context: StackContext) {
-  const {app: {stage}, stack} = context
+  const {app, stack} = context
+  const {stage} = app
   const sharedStage_ = sharedStage(stage)
 
   function fromSsm(k: string, lazy=false) {
@@ -179,21 +180,26 @@ export function SharedImport(context: StackContext) {
   })
 
   function withRds(stack: StackContext['stack'], id: string, props: sst.FunctionProps): sst.Function {
-    let bundle: sst.FunctionProps['bundle'] = {
-      externalModules: ['pg-native'],
+    let nodejs: sst.FunctionProps['nodejs'] = {
+      install: ['pg-native'], // pg ?
       format: "esm" // bundle overrides the bundle-defaults from stacks/index.ts
     }
-    if (props.bundle) {
+    if (props.nodejs) {
       // @ts-ignore
-      bundle = {...bundle, ...props.bundle}
-      console.error("Merging functionProps.bundle will likely cause problems. Result:", bundle)
+      nodejs = {...nodejs, ...props.nodejs}
+      console.error("Merging functionProps.bundle will likely cause problems. Result:", nodejs)
     }
+    // TODO SST removed IS_LOCAL default env-var, I'm adding it back in here, but I'm likely
+    // not thinking of other locations it's needed (besides functions which depend on RDS, that's a hack)
+    const isLocal = app.mode === "dev" ? {IS_LOCAL: "true"} : {}
+
     const fn = new sst.Function(stack, id, sst.Function.mergeProps(props, {
       vpc,
       vpcSubnets: {subnetType: aws_ec2.SubnetType.PRIVATE_WITH_EGRESS},
       // architecture: Architecture.ARM_64, // TODO try this, might be faster
-      bundle,
+      nodejs,
       environment: {
+        ...isLocal,
         rdsSecretArn: rdsSecret.secretArn,
         stage,
         sharedStage: sharedStage_,

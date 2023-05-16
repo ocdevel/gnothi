@@ -1,4 +1,4 @@
-import * as sst from "@serverless-stack/resources";
+import * as sst from "sst/constructs";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as ec2 from "aws-cdk-lib/aws-ec2";
 import * as efs from "aws-cdk-lib/aws-efs";
@@ -38,13 +38,15 @@ type MLService = {
   bucket: sst.Bucket
 }
 
-function lambdas({context: {app, stack}, vpc, fs, bucket}: MLService) {
+function lambdas({context, vpc, fs, bucket}: MLService) {
   // Our ML functions need HF models (large files) cached. Two options:
   // 1. Save HF model into docker image (see git-lfs sample)
   // 2. Save HF models in EFS mount, cache folder
   // - https://aws.amazon.com/blogs/compute/hosting-hugging-face-models-on-aws-lambda/
   // - https://github.com/cdk-patterns/serverless/blob/main/the-efs-lambda/typescript/lib/the-efs-lambda-stack.ts
   // Going with option 2 to save on lambda-start & CDK deployment times
+
+  const {app, stack} = context
 
   const openAiKey = new sst.Config.Secret(stack, "openai_key")
 

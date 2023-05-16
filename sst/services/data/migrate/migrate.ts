@@ -5,9 +5,9 @@ import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import {sharedStage, DB} from "../db"
 import {users} from '../schemas/users'
 import { exec } from 'child_process';
-import { Config } from "@serverless-stack/node/config"
+import { Config } from "sst/node/config"
 import {import_v0} from "./migrate_v0";
-import {Bucket} from "@serverless-stack/node/bucket";
+import {Bucket} from "sst/node/bucket";
 
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 

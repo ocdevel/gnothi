@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "type": "module",
   "dependencies": {
-    "zod": "^3.19.1",
-    "dayjs": "^1.11.6"
+    "zod": "^3.21.4",
+    "dayjs": "^1.11.7"
   }
 }

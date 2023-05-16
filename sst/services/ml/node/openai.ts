@@ -1,4 +1,4 @@
-import {Config} from '@serverless-stack/node/config'
+import {Config} from 'sst/node/config'
 import {
   Configuration,
   OpenAIApi,

@@ -1,7 +1,7 @@
 import {lambdaSend} from "../../aws/handlers"
 import * as S from '@gnothi/schemas'
 import {insights_books_response} from '@gnothi/schemas/insights'
-import {Config} from '@serverless-stack/node/config'
+import {Config} from 'sst/node/config'
 import {sendInsight} from "./utils";
 
 const r = S.Routes.routes

@@ -15,12 +15,12 @@ import {
   APIGatewayEvent,
 } from "aws-lambda";
 import {Api, Events} from '@gnothi/schemas';
-import {Function} from '@serverless-stack/node/function'
+import {Function} from 'sst/node/function'
 import {clients} from './clients'
 import {SNSEvent} from "aws-lambda";
 import {APIGatewayProxyWebsocketEventV2} from "aws-lambda/trigger/api-gateway-proxy";
 import {fromUtf8, toUtf8} from "@aws-sdk/util-utf8-node";
-import {Bucket} from '@serverless-stack/node/bucket'
+import {Bucket} from 'sst/node/bucket'
 
 export * as Handlers from './handlers'
 

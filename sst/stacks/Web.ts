@@ -1,4 +1,4 @@
-import { use, StackContext, ViteStaticSite } from "@serverless-stack/resources";
+import { use, StackContext, StaticSite } from "sst/constructs";
 import { Api } from "./Api";
 import { Auth } from "./Auth";
 
@@ -14,10 +14,13 @@ export function Web({ app, stack }: StackContext) {
     VITE_USER_POOL_ID: auth.userPoolId,
     VITE_USER_POOL_CLIENT_ID: auth.userPoolClientId,
   }
-  const site = new ViteStaticSite(stack, "site", {
+  const site = new StaticSite(stack, "site", {
     path: "web",
     buildCommand: "npm run build",
-    environment
+    environment,
+    vite: {
+      types: "types/my-env.d.ts"
+    }
   })
 
   stack.addOutputs({

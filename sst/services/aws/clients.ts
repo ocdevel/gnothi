@@ -8,7 +8,7 @@ import {ApiGatewayManagementApiClient} from "@aws-sdk/client-apigatewaymanagemen
 import {S3Client} from "@aws-sdk/client-s3";
 import {SecretsManagerClient} from "@aws-sdk/client-secrets-manager";
 
-import {Config} from "@serverless-stack/node/config";
+import {Config} from "sst/node/config";
 
 const config = {region: Config.APP_REGION}
 

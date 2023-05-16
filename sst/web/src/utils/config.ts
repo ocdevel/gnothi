@@ -3,7 +3,7 @@ export const STAGE = import.meta.env.VITE_STAGE
 const env = (
   // Using manually-entered values for staging env vars so we can develop localhost
   // against staging backend. Edge-case, won't use for production or other
-  STAGE === "staging" ? {"VITE_API_WS":"wss://arkbead294.execute-api.us-east-1.amazonaws.com/staging","VITE_API_HTTP":"https://5meeddk8n5.execute-api.us-east-1.amazonaws.com","VITE_REGION":"us-east-1","VITE_USER_POOL_ID":"us-east-1_cI61ODnqv","VITE_USER_POOL_CLIENT_ID":"3eimk0p4blb9ch5lbilf2bh5dg"}
+  STAGE === "staging" ? {"VITE_API_WS":"wss://6u5g5mj6y7.execute-api.us-east-1.amazonaws.com/legion4","VITE_API_HTTP":"https://5lqu03ifbi.execute-api.us-east-1.amazonaws.com","VITE_REGION":"us-east-1","VITE_USER_POOL_ID":"us-east-1_U06UneNyQ","VITE_USER_POOL_CLIENT_ID":"1lj520j4kek7md0ev1g5ags05g"}
   // Allow editing static pages without need for a backend
   : STAGE === "offline" ? {
     "VITE_API_WS": "",

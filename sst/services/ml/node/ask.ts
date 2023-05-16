@@ -1,5 +1,5 @@
 import {lambdaSend} from "../../aws/handlers"
-import {Config} from '@serverless-stack/node/config'
+import {Config} from 'sst/node/config'
 import * as S from '@gnothi/schemas'
 import {v4 as uuid} from 'uuid'
 import {sendInsight} from "./utils";

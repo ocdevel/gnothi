@@ -1,5 +1,5 @@
 import {lambdaSend} from "../../aws/handlers"
-import {Config} from '@serverless-stack/node/config'
+import {Config} from 'sst/node/config'
 
 interface FnIn {
   text: string

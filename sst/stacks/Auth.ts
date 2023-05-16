@@ -1,4 +1,4 @@
-import * as sst from "@serverless-stack/resources";
+import * as sst from "sst/constructs";
 import { SharedImport } from './Shared'
 import {StringAttribute} from 'aws-cdk-lib/aws-cognito'
 import {aws_ec2, RemovalPolicy} from 'aws-cdk-lib'
@@ -18,12 +18,12 @@ export function Auth({ app, stack }: sst.StackContext) {
   const preSignUp = withRds(stack, "PreSignUp", {
     memorySize: rams.sm,
     timeout: timeouts.md,
-    handler: "auth/preSignup.handler",
+    handler: "services/auth/preSignup.handler",
   })
   const postConfirmation = withRds(stack, "PostConfirmation", {
     memorySize: rams.sm,
     timeout: timeouts.md,
-    handler: "auth/postConfirmation.handler",
+    handler: "services/auth/postConfirmation.handler",
   })
 
 
@@ -70,7 +70,7 @@ export function Auth({ app, stack }: sst.StackContext) {
   })
 
   const authFn = withRds(stack, "fn_authorizer", {
-    handler: "auth/wsAuthorizer.handler",
+    handler: "services/auth/wsAuthorizer.handler",
     memorySize: rams.sm,
     timeout: timeouts.md,
     environment: {

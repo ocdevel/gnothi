@@ -7,7 +7,7 @@ import {fields, Field} from '../schemas/fields'
 import {people, Person} from '../schemas/people'
 import {tags, Tag} from '../schemas/tags'
 import {eq, and, or, sql} from "drizzle-orm";
-import { Config } from "@serverless-stack/node/config"
+import { Config } from "sst/node/config"
 import {URL} from 'url'
 import {exec as execCallback} from "child_process";
 import {promisify} from "util";

@@ -1,6 +1,6 @@
 import {lambdaSend} from "../../aws/handlers"
 import {insights_books_response} from '@gnothi/schemas/insights'
-import {Config} from '@serverless-stack/node/config'
+import {Config} from 'sst/node/config'
 import * as S from "@gnothi/schemas"
 import {sendInsight} from "./utils";
 

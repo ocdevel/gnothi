@@ -1,6 +1,6 @@
 import {Entry} from '@gnothi/schemas/entries'
 import {lambdaSend} from "../../aws/handlers";
-import {Config} from '@serverless-stack/node/config'
+import {Config} from 'sst/node/config'
 
 type FnIn = {
   entry: Entry

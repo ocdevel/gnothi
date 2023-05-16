@@ -1,4 +1,4 @@
-import * as sst from "@serverless-stack/resources";
+import * as sst from "sst/constructs";
 import { Ml } from "./Ml";
 import { Auth } from './Auth'
 import * as iam from "aws-cdk-lib/aws-iam"
@@ -43,7 +43,7 @@ export function Api({ app, stack }: sst.StackContext) {
   const fnPreprocessName = new sst.Config.Parameter(stack, "fn_preprocess_name", {value: ml.fnPreprocess.functionName})
 
   const fnBackground = withRds(stack, "fn_background", {
-    handler: "main.main",
+    handler: "services/main.main",
     timeout: "3 minutes",
     memorySize: rams.sm,
     permissions: [
@@ -62,6 +62,7 @@ export function Api({ app, stack }: sst.StackContext) {
       API_WS,
     ]
   })
+
   fnBackground.addToRolePolicy(new iam.PolicyStatement({
      actions: ["lambda:InvokeFunction"],
      effect: iam.Effect.ALLOW,
@@ -77,7 +78,7 @@ export function Api({ app, stack }: sst.StackContext) {
   const fnMain = withRds(stack, "fn_main", {
     memorySize: rams.sm,
     timeout: timeouts.md,
-    handler: "main.proxy",
+    handler: "services/main.proxy",
     bind: [
       ml.openAiKey,
       APP_REGION,
