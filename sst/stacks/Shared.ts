@@ -14,6 +14,8 @@ import * as aws_ec2 from "aws-cdk-lib/aws-ec2";
 import * as aws_rds from "aws-cdk-lib/aws-rds";
 import * as aws_ssm from "aws-cdk-lib/aws-ssm";
 import * as aws_secretsmanager from "aws-cdk-lib/aws-secretsmanager";
+import * as aws_acm from 'aws-cdk-lib/aws-certificatemanager';
+import * as aws_route53 from 'aws-cdk-lib/aws-route53';
 import * as cdk from "aws-cdk-lib";
 import {RDS, RDSProps, StackContext} from "sst/constructs";
 import { Construct } from "constructs";
@@ -31,6 +33,23 @@ export function SharedCreate(context: StackContext) {
   const {stack, app} = context
   const {stage} = app
   const sharedStage_ = sharedStage(stage)
+
+  const domainName = "gnothiai.com"
+  // TODO not sure how I'll handle shared database, VPC, etc for now; so hard-code the subdomain to make sure I don't mess up on launch
+  const subdomain = `staging.${domainName}` // `${sharedStage_}.gnothiai.com`
+
+  function createHostedZone() {
+    // const hostedZone = aws_route53.HostedZone.fromLookup(stack, 'HostedZone', { domainName });
+    const hostedZone = new aws_route53.HostedZone(stack, 'HostedZone', {
+      zoneName: subdomain,
+    })
+    // Error: Found an encoded list token string in a scalar string context. Use 'Fn.select(0, list)' (not 'list[0]') to extract elements from token lists.
+    // That's fine, I'll look up the NS records in console since I'm delegating from gnothiai.com (parent) manually anyway
+    // stack.addOutputs({
+    //   hostedZoneNsRecords: hostedZone.hostedZoneNameServers!.join(','),
+    // })
+    return hostedZone
+  }
 
   function createVpc(): aws_ec2.Vpc {
     // Private subnet setup: https://adrianhesketh.com/2022/05/31/create-vpc-with-cdk/,
@@ -58,6 +77,60 @@ export function SharedCreate(context: StackContext) {
         },
       ]
     })
+  }
+
+  function createClientVpn(vpc: aws_ec2.Vpc, hostedZone: aws_route53.HostedZone): aws_ec2.ClientVpnEndpoint {
+    const certificate = new aws_acm.Certificate(stack, 'Certificate', {
+      domainName: subdomain,
+      validation: aws_acm.CertificateValidation.fromDns(hostedZone),
+    });
+
+
+    // You need to create or import a certificate to use with the VPN.
+    // Here's how to import an existing certificate from ACM.
+    // Make sure to replace 'certificateArn' with the actual ARN of your certificate.
+    // const certificateArn = 'certificateArn'
+    // const certificate = aws_acm.Certificate.fromCertificateArn(stack, 'ClientVpnCertificate', certificateArn)
+
+    const clientCertificateArn = `arn:aws:iam::${app.account}:server-certificate/ClientCertificate`
+
+    const clientVpn = new aws_ec2.ClientVpnEndpoint(stack, 'ClientVpn', {
+      vpc,
+      cidr: '10.100.0.0/16',
+      serverCertificateArn: certificate.certificateArn,
+      // TODO am I sure I don't use certificate.certificateArn?
+      clientCertificateArn: certificate.certificateArn,
+      // clientCertificateArn: clientCertificateArn,
+      // try to find fix to this at https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_ec2.ClientVpnEndpointProps.html
+      // authenticationOptions: [{
+      //   type: aws_ec2.ClientVpnAuthenticationType.CERTIFICATE,  // Add this line
+      // }],
+    })
+
+    const clientVpnTargetNetworkAssociation = new aws_ec2.CfnClientVpnTargetNetworkAssociation(stack, 'ClientVpnAssociation', {
+      clientVpnEndpointId: clientVpn.endpointId, // use the ref attribute to get the client VPN endpoint ID
+      subnetId: vpc.privateSubnets[0].subnetId, // assuming you want to associate the first private subnet
+    });
+
+    stack.addOutputs({
+      clientVpnEndpointId: clientVpn.endpointId,
+    })
+    // Then run the following:
+    /*
+    openssl genrsa -out client.key 2048
+    openssl req -new -key client.key -out client.csr
+    openssl genrsa -out ca.key 2048
+    openssl req -x509 -new -nodes -key ca.key -sha256 -days 3650 -out ca.crt
+    openssl x509 -req -in client.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out client.crt -days 3650
+    aws iam upload-server-certificate --server-certificate-name ClientCertificate --certificate-body file://client.crt --private-key file://client.key
+    # TODO: replace ClientCertificate above with something specific to the SharedStage?
+    aws iam get-server-certificate --server-certificate-name ClientCertificate
+    # Then replace the ARN into the above
+    aws ec2 export-client-vpn-client-configuration --client-vpn-endpoint-id <ClientVpnEndpointID> --output text > client-config.ovpn
+    */
+
+
+    return clientVpn
   }
 
   function createRdsV2(vpc: aws_ec2.Vpc): aws_rds.DatabaseCluster {
@@ -132,6 +205,8 @@ export function SharedCreate(context: StackContext) {
   }
 
   const vpc = createVpc()
+  const hostedZone = createHostedZone()
+  const clientVpn = createClientVpn(vpc, hostedZone)
   const rds = createRdsV2(vpc)
   const exported = exportVars(vpc, rds)
   return {vpc, rds, exported}
