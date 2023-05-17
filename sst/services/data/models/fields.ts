@@ -1,11 +1,10 @@
 import {Base} from './base'
 import {db} from '../dbSingleton'
 import * as S from '@gnothi/schemas'
-import {sql} from "drizzle-orm/sql"
 import {users} from '../schemas/users'
 import {fields} from '../schemas/fields'
 import {fieldEntries} from '../schemas/fieldEntries'
-import { and, asc, desc, eq, or } from 'drizzle-orm/expressions';
+import { and, asc, desc, eq, or, sql } from 'drizzle-orm';
 
 export class Fields extends Base {
   async list() {

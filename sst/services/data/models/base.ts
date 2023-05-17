@@ -1,4 +1,4 @@
-import {sql} from "drizzle-orm/sql"
+import {sql} from "drizzle-orm"
 import {Users} from './users'
 import {users, User} from '../schemas/users'
 import {FnContext} from "../../routes/types";

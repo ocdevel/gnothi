@@ -6,8 +6,8 @@ import {boolMapToKeys} from '@gnothi/schemas/utils'
 import dayjs from "dayjs";
 import {db} from "../dbSingleton";
 import {entries_list_response} from '@gnothi/schemas/entries'
-import {sql} from "drizzle-orm/sql"
-import { and, asc, desc, eq, or } from 'drizzle-orm/expressions';
+import {sql} from "drizzle-orm"
+import { and, asc, desc, eq, or } from 'drizzle-orm';
 import {users, User} from '../schemas/users'
 import {people, Person} from '../schemas/people'
 import {shares, sharesUsers, Share} from '../schemas/shares'

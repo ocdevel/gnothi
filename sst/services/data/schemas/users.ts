@@ -8,8 +8,8 @@ import {
   boolean,
   integer,
   uniqueIndex,
-  InferModel
 } from 'drizzle-orm/pg-core';
+import {InferModel} from 'drizzle-orm'
 
 import {idCol, tsCol} from './utils'
 

@@ -11,8 +11,7 @@ import {
 } from "aws-lambda";
 import {User, users} from '../data/schemas/users'
 import {wsConnections} from "../data/schemas/wsConnections";
-import {sql} from "drizzle-orm/sql"
-import {eq} from "drizzle-orm/expressions"
+import {sql, eq} from "drizzle-orm"
 import {FnContext} from "../routes/types";
 import {DB} from "../data/db";
 

@@ -4,8 +4,7 @@ import {GnothiError} from "../../routes/errors";
 import {boolMapToKeys} from '@gnothi/schemas/utils'
 import * as dayjs from "dayjs";
 import {entries, Entry} from '../schemas/entries'
-import {sql} from "drizzle-orm/sql"
-import {and, asc, eq, inArray} from "drizzle-orm/pg-core/expressions";
+import {and, asc, eq, inArray} from "drizzle-orm";
 
 export class Insights extends Base {
   async entriesByIds(entry_ids: string[]) {

@@ -1,19 +1,13 @@
 import {
-  pgTable,
-  index,
-  text,
   integer,
-  date,
   varchar,
   uuid,
   pgEnum,
-  doublePrecision,
-  timestamp,
-  json,
-  primaryKey,
-} from 'drizzle-orm/pg-core';
+  pgTable,
+  index,
+} from 'drizzle-orm/pg-core'
 import {InferModel} from "drizzle-orm"
-import {users, userId} from './users'
+import {users} from './users'
 import {idCol, tsCol} from './utils'
 
 export const aistate = pgEnum('aistate', ['todo', 'skip', 'running', 'done'])

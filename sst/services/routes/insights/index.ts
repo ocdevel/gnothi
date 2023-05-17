@@ -18,7 +18,7 @@ import {getParas, getSummary, getText} from '@gnothi/schemas/entries'
 import {Insights} from '../../data/models/insights'
 import {Route} from '../types'
 import {ulid} from "ulid";
-import {inArray, eq, and} from "drizzle-orm/expressions";
+import {inArray, eq, and} from "drizzle-orm";
 
 const r = S.Routes.routes
 

@@ -1,7 +1,7 @@
 import {db} from '../data/dbSingleton'
 import * as S from "@gnothi/schemas"
 const testing = process.env.IS_LOCAL
-import {sql} from 'drizzle-orm/sql'
+import {sql} from 'drizzle-orm'
 import {users} from '../data/schemas/users'
 import {tags} from '../data/schemas/tags'
 

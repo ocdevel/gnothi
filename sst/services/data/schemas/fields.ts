@@ -1,6 +1,7 @@
 import {users, userId} from './users'
 
-import {pgTable, index, varchar, uuid, pgEnum, doublePrecision, timestamp, json, InferModel} from 'drizzle-orm/pg-core';
+import {InferModel} from 'drizzle-orm'
+import {pgTable, index, varchar, uuid, pgEnum, doublePrecision, timestamp, json} from 'drizzle-orm/pg-core';
 import {idCol, tsCol} from './utils'
 
 export const fieldTypes = pgEnum('field_type', [

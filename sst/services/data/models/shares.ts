@@ -1,12 +1,12 @@
 import {Base} from './base'
 import {db} from '../dbSingleton'
 import * as S from '@gnothi/schemas'
-import {sql} from "drizzle-orm/sql"
+import {sql} from "drizzle-orm"
 import {users} from '../schemas/users'
 import {shares, sharesTags, sharesUsers, Share} from '../schemas/shares'
 import {fields} from '../schemas/fields'
 import {fieldEntries} from '../schemas/fieldEntries'
-import { and, asc, desc, eq, or, inArray } from 'drizzle-orm/expressions';
+import { and, asc, desc, eq, or, inArray } from 'drizzle-orm';
 import {boolMapToKeys} from '@gnothi/schemas/utils'
 
 export class Shares extends Base {

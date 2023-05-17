@@ -3,7 +3,7 @@ import {APIGatewayEvent, APIGatewayProxyResult, Context} from 'aws-lambda'
 import { Client as PgClient, Pool, QueryResult } from 'pg'
 import { pgTable, serial, text, varchar } from 'drizzle-orm/pg-core';
 import { drizzle, NodePgDatabase } from 'drizzle-orm/node-postgres'
-import { sql, SQL } from 'drizzle-orm/sql'
+import { sql, SQL } from 'drizzle-orm'
 
  // TODO why was I using the sharedStage for the DB? shouldn't it stage-specific?
 // export const sharedStage = `gnothi${process.env.sharedStage}`

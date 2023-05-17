@@ -3,8 +3,8 @@ import {tags, Tag} from '../../data/schemas/tags'
 import {entriesTags, EntryTag} from '../../data/schemas/tags'
 import {GnothiError} from "../errors";
 import {Route} from '../types'
-import {asc, eq, and} from 'drizzle-orm/expressions'
-import {sql} from 'drizzle-orm/sql'
+import {asc, eq, and} from 'drizzle-orm'
+import {sql} from 'drizzle-orm'
 
 const r = Routes.routes
 

@@ -1,4 +1,5 @@
-import {boolean, index, pgTable, varchar, uuid, primaryKey, InferModel} from "drizzle-orm/pg-core";
+import {boolean, index, pgTable, varchar, uuid, primaryKey} from "drizzle-orm/pg-core";
+import {InferModel} from 'drizzle-orm'
 import {idCol, tsCol} from "./utils";
 import {userId, users} from "./users";
 import {tags} from './tags'

@@ -7,8 +7,9 @@ import {
   date,
   boolean,
   integer,
-  primaryKey, InferModel
+  primaryKey
 } from 'drizzle-orm/pg-core';
+import {InferModel} from 'drizzle-orm'
 import {users} from './users'
 
 export const wsConnections = pgTable('ws_connections', {

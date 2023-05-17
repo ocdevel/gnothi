@@ -1,7 +1,7 @@
 import {Base} from './base'
 import {db} from '../dbSingleton'
 import * as S from '@gnothi/schemas'
-import {sql} from "drizzle-orm/sql"
+import {sql} from "drizzle-orm"
 
 export class FieldEntries extends Base {
   table

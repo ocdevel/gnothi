@@ -6,11 +6,11 @@ import {db} from "../../data/dbSingleton";
 import {entriesTags} from "../../data/schemas/entriesTags";
 import {entries, Entry} from "../../data/schemas/entries";
 import {tags, Tag} from "../../data/schemas/tags";
-import {sql} from "drizzle-orm/sql";
+import {sql} from "drizzle-orm";
 import {preprocess} from "../../ml/node/preprocess";
 import {summarizeEntry} from "../../ml/node/summarize";
 import {upsert} from "../../ml/node/upsert";
-import {eq, and, inArray} from "drizzle-orm/expressions"
+import {eq, and, inArray} from "drizzle-orm"
 import * as _ from 'lodash'
 import {containsListTokenElement} from "aws-cdk-lib/core/lib/private/encoding";
 

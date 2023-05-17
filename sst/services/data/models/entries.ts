@@ -5,8 +5,8 @@ import {boolMapToKeys} from '@gnothi/schemas/utils'
 // @ts-ignore
 import dayjs from "dayjs";
 import {entries_list_response} from '@gnothi/schemas/entries'
-import {eq, and, or, not, inArray, lt, asc, desc} from 'drizzle-orm/pg-core/expressions'
-import {sql, SQL} from "drizzle-orm/sql"
+import {eq, and, or, not, inArray, lt, asc, desc} from 'drizzle-orm'
+import {sql, SQL} from "drizzle-orm"
 import {entries, Entry} from '../schemas/entries'
 import {entriesTags} from '../schemas/entriesTags'
 import {FnContext} from "../../routes/types";

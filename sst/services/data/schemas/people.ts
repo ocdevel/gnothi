@@ -1,6 +1,7 @@
   import {userId} from './users'
 
-import {pgTable, index, varchar, InferModel} from 'drizzle-orm/pg-core';
+  import {InferModel} from 'drizzle-orm'
+import {pgTable, index, varchar} from 'drizzle-orm/pg-core';
 import {idCol} from './utils'
 
 export const people = pgTable('people', {

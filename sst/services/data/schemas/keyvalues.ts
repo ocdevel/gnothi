@@ -1,8 +1,8 @@
 import {
-  InferModel,
   pgTable,
   varchar,
 } from 'drizzle-orm/pg-core';
+import {InferModel} from 'drizzle-orm'
 
 export const keyvalues = pgTable('keyvalues', {
   key: varchar("key").notNull().primaryKey(),
