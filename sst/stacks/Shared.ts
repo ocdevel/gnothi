@@ -75,7 +75,7 @@ export function SharedCreate(context: StackContext) {
 
     const rds = new aws_rds.DatabaseCluster(stack, "Rds", {
       engine: aws_rds.DatabaseClusterEngine.auroraPostgres({
-        version: aws_rds.AuroraPostgresEngineVersion.VER_14_4,
+        version: aws_rds.AuroraPostgresEngineVersion.VER_14_6,
       }),
       instances: 1,
       instanceProps: {

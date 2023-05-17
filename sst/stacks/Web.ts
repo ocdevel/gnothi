@@ -1,4 +1,4 @@
-import { use, StackContext, StaticSite } from "sst/constructs";
+import { use, StackContext, StaticSite, Job } from "sst/constructs";
 import { Api } from "./Api";
 import { Auth } from "./Auth";
 
@@ -17,6 +17,7 @@ export function Web({ app, stack }: StackContext) {
   const site = new StaticSite(stack, "site", {
     path: "web",
     buildCommand: "npm run build",
+    buildOutput: "dist",
     environment,
     vite: {
       types: "types/my-env.d.ts"

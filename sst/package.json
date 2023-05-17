@@ -14,8 +14,8 @@
     "test:gendata": "AWS_REGION=us-east-1 AWS_PROFILE=gnothiadmin sst bind -- vitest run services/tests/setup_mock.spec.ts"
   },
   "devDependencies": {
-    "sst": "^2.8.22",
-    "constructs": "^10.2.25",
+    "sst": "^2.8.23",
+    "constructs": "^10.2.26",
     "@tsconfig/node18": "^2.0.1",
     "@types/lodash": "^4.14.194",
     "aws-cdk-lib": "2.72.1",

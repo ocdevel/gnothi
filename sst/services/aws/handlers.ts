@@ -102,16 +102,17 @@ class Buff {
 
 type S3GetObjectContents = { Bucket?: string, Key: string }
 export async function s3GetObjectContents({Bucket, Key}: S3GetObjectContents): Promise<string> {
-  const {Body} = await clients.s3.send(new GetObjectCommand({
+  const response = await clients.s3.send(new GetObjectCommand({
     Bucket: Bucket || defaultBucket,
     Key
   }))
-  let str = '';
-  // @ts-ignore Convert the ReadableStream to a Node.js readable stream and read the data
-  for await (const chunk of Readable.from(Body)) {
-    str += chunk.toString('utf-8');
-  }
-  return str
+  const Body = response.Body as Readable
+  return new Promise<string>((resolve, reject) => {
+    const chunks: Uint8Array[] = [];
+    Body.on("data", (chunk: Uint8Array) => chunks.push(chunk));
+    Body.on("end", () => resolve(Buffer.concat(chunks).toString("utf8")));
+    Body.on("error", reject);
+  });
 }
 
 type InvokeCommandOutput_<O> = Omit<InvokeCommandOutput, 'Payload'> & {
