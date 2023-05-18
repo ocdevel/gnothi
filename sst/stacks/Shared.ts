@@ -79,32 +79,31 @@ export function SharedCreate(context: StackContext) {
     })
   }
 
-  function createClientVpn(vpc: aws_ec2.Vpc, hostedZone: aws_route53.HostedZone): aws_ec2.ClientVpnEndpoint {
+  function createClientVpn(vpc: aws_ec2.Vpc, hostedZone: aws_route53.HostedZone): aws_ec2.ClientVpnEndpoint | null {
+    // IMPORTANT: read ./clientVpnSetup.md to set this up! Required for RDS / EFS access from localhost
+
+    const clientCertificateArn = process.env.CLIENT_CERTIFICATE_ARN
+    if (!clientCertificateArn?.length) {
+      return null
+    }
+
+    stack.addOutputs({
+      clientCertificateArn,
+    })
+
     const certificate = new aws_acm.Certificate(stack, 'Certificate', {
       domainName: subdomain,
       validation: aws_acm.CertificateValidation.fromDns(hostedZone),
-    });
-
-
-    // You need to create or import a certificate to use with the VPN.
-    // Here's how to import an existing certificate from ACM.
-    // Make sure to replace 'certificateArn' with the actual ARN of your certificate.
-    // const certificateArn = 'certificateArn'
-    // const certificate = aws_acm.Certificate.fromCertificateArn(stack, 'ClientVpnCertificate', certificateArn)
-
-    const clientCertificateArn = `arn:aws:iam::${app.account}:server-certificate/ClientCertificate`
+    })
 
     const clientVpn = new aws_ec2.ClientVpnEndpoint(stack, 'ClientVpn', {
       vpc,
       cidr: '10.100.0.0/16',
       serverCertificateArn: certificate.certificateArn,
-      // TODO am I sure I don't use certificate.certificateArn?
-      clientCertificateArn: certificate.certificateArn,
-      // clientCertificateArn: clientCertificateArn,
-      // try to find fix to this at https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_ec2.ClientVpnEndpointProps.html
-      // authenticationOptions: [{
-      //   type: aws_ec2.ClientVpnAuthenticationType.CERTIFICATE,  // Add this line
-      // }],
+      // this allows you to have normal internet access as well, so not all traffic goes through the VPN. Essential,
+      // since we're in an isolated subnet.
+      splitTunnel: true,
+      clientCertificateArn: clientCertificateArn,
     })
 
     const clientVpnTargetNetworkAssociation = new aws_ec2.CfnClientVpnTargetNetworkAssociation(stack, 'ClientVpnAssociation', {
@@ -115,20 +114,6 @@ export function SharedCreate(context: StackContext) {
     stack.addOutputs({
       clientVpnEndpointId: clientVpn.endpointId,
     })
-    // Then run the following:
-    /*
-    openssl genrsa -out client.key 2048
-    openssl req -new -key client.key -out client.csr
-    openssl genrsa -out ca.key 2048
-    openssl req -x509 -new -nodes -key ca.key -sha256 -days 3650 -out ca.crt
-    openssl x509 -req -in client.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out client.crt -days 3650
-    aws iam upload-server-certificate --server-certificate-name ClientCertificate --certificate-body file://client.crt --private-key file://client.key
-    # TODO: replace ClientCertificate above with something specific to the SharedStage?
-    aws iam get-server-certificate --server-certificate-name ClientCertificate
-    # Then replace the ARN into the above
-    aws ec2 export-client-vpn-client-configuration --client-vpn-endpoint-id <ClientVpnEndpointID> --output text > client-config.ovpn
-    */
-
 
     return clientVpn
   }
