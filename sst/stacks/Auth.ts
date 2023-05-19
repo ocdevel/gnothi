@@ -68,7 +68,7 @@ export function Auth({ app, stack }: sst.StackContext) {
     }
   })
 
-  const USER_POOL_ID = new sst.Config.Parameter(stack, "UserPoolId", {
+  const USER_POOL_ID = new sst.Config.Parameter(stack, "USER_POOL_ID", {
     value: auth.userPoolId,
   })
 

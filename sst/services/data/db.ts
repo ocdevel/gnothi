@@ -5,10 +5,11 @@ import { pgTable, serial, text, varchar } from 'drizzle-orm/pg-core';
 import { drizzle, NodePgDatabase } from 'drizzle-orm/node-postgres'
 import { sql, SQL } from 'drizzle-orm'
 import { URL } from 'url'
+import { Config } from 'sst/node/config'
 
  // TODO why was I using the sharedStage for the DB? shouldn't it stage-specific?
 // export const sharedStage = `gnothi${process.env.sharedStage}`
-export const sharedStage = `gnothi${process.env.stage}`
+export const sharedStage = `gnothi${process.env.SST_STAGE}`
 
 class MyLogger implements Logger {
   logQuery(query: string, params: unknown[]): void {
@@ -79,7 +80,7 @@ export class DB {
         // get the secret from secrets manager.
         const secretsClient = new SecretsManagerClient({})
         const secret = await secretsClient.send(new GetSecretValueCommand({
-          SecretId: process.env.rdsSecretArn,
+          SecretId: Config.RDS_SECRET_ARN,
         }))
         i.host = JSON.parse(secret.SecretString ?? '{}') as Host
       }

@@ -1,4 +1,2 @@
-.env.local
-.env.staging
-.env.prod
+.env.*
 *.sql

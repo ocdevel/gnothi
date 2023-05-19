@@ -10,7 +10,6 @@ import {randomInt} from 'crypto';
 import {Config} from "sst/node/config";
 import {AdminCreateUserCommandOutput} from "@aws-sdk/client-cognito-identity-provider/dist-types/commands";
 const config = {region: "us-east-1"}
-const UserPoolId = "us-east-1_4hM7QhkGe"// Config.USER_POOL_ID
 const client = new CognitoIdentityProviderClient(config);
 
 
@@ -27,11 +26,14 @@ function randomPassword(length=32): string {
 // https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/preview/client/cognito-identity-provider/command/AdminCreateUserCommand/
 // https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_AdminCreateUser.html
 
-export async function addUserToCognito(user: Partial<User>): Promise<string> {
-  const createCommand = new AdminCreateUserCommand({ // AdminCreateUserRequest
+export async function addUserToCognito(user: Partial<User>, UserPoolId: string): Promise<string> {
+  if (user.email !== "tylerrenelle@gmail.com" && user.email !== "wilding34@gmail.com") {
+    return 'xyz'
+  }
+  const createCommand = new AdminCreateUserCommand({
     UserPoolId, // required
     Username: user.email, // required
-    UserAttributes: [ // AttributeListType
+    UserAttributes: [
       // Use this to skip Triggers if needed (preSignUp, postConfirmation, etc)
       {
         Name: "custom:adminCreated", // required
@@ -57,11 +59,11 @@ export async function addUserToCognito(user: Partial<User>): Promise<string> {
     //   },
 
     // ],
-    // TemporaryPassword: randomPassword(),
+    TemporaryPassword: randomPassword(),
     ForceAliasCreation: false, // true || false,
     MessageAction: "SUPPRESS", //"RESEND" || "SUPPRESS",
-    DesiredDeliveryMediums: [], // ["SMS" || "EMAIL"] // DeliveryMediumListType
-    // ClientMetadata: { // ClientMetadataType
+    // DesiredDeliveryMediums: ["EMAIL"], // ["SMS" || "EMAIL"]
+    // ClientMetadata: {
     //   "<keys>": "STRING_VALUE",
     // },
   })

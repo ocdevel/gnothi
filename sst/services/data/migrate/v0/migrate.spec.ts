@@ -1,8 +1,9 @@
+import {GetSecretValueCommand, SecretsManagerClient} from "@aws-sdk/client-secrets-manager";
+
 const JUST_TYLER = true
 // Don't download every time during development
 const SKIP_DUMP = true
 const DUMP_PATH = "./services/data/migrate/v0/dump.sql"
-const STAGE = 'staging'
 
 import {sharedStage, DB, urlToInfo} from "../../db"
 import {Config} from 'sst/node/config'
@@ -25,7 +26,7 @@ import * as dotenv from 'dotenv'
 import * as _ from 'lodash'
 import {addUserToCognito} from './cognito'
 
-dotenv.config({ path: `services/data/migrate/v0/.env.${STAGE}` })
+dotenv.config({ path: `services/data/migrate/v0/.env.${process.env.SST_STAGE}` })
 
 
 const exec = promisify(execCallback);
@@ -81,7 +82,7 @@ export async function decryptUsers(db: DB) {
     const decrypted = decryptRow(rest) || {}
     // if (!decrypted) {return} // DON'T do this, we need at least to conver them to cognito
     if (~["tylerrenelle@gmail.com", "wilding34@gmail.com"].indexOf(email)) {
-      decrypted.cognito_id = await addUserToCognito(row, process.env.USER_POOL_ID)
+      decrypted.cognito_id = await addUserToCognito(row, Config.USER_POOL_ID)
     } else {
       decrypted.cognito_id = "xyz"
     }
@@ -193,7 +194,10 @@ it("v0:migrate", async () => {
   await db1.pg.query("CREATE INDEX ix_users_cognito_id ON users (cognito_id);")
   await decryptColumns(db1)
 
-  const db2i = urlToInfo(process.env.DB_NEW_URL as any)
+  // no arguments means it will use our target database, from logic inisde DB.connect()
+  const db2 = new DB({})
+  await db2.connect()
+  const db2i = db2.info
   const db2_pg = new DB({connectionUrl: `postgresql://${db2i.host.username}:${db2i.host.password}@${db2i.host.host}:${db2i.host.port}/postgres`})
   await db2_pg.connect()
   await db2_pg.pg.query(`drop database if exists ${db2i.database}`)

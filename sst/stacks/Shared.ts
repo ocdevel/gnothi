@@ -225,6 +225,10 @@ export function SharedImport(context: StackContext) {
     secretPartialArn: fromSsm("RdsSecretArn", true)
   })
 
+  const RDS_SECRET_ARN = new sst.Config.Parameter(stack, "RDS_SECRET_ARN", {
+    value: rdsSecret.secretArn
+  })
+
   // stack.addOutputs({
   //   vpcId: vpc.vpcId,
   //   rdsSecretArn: rdsSecret.secretArn,
@@ -249,18 +253,22 @@ export function SharedImport(context: StackContext) {
       nodejs = {...nodejs, ...props.nodejs}
       console.error("Merging functionProps.bundle will likely cause problems. Result:", nodejs)
     }
-    // TODO SST removed IS_LOCAL default env-var, I'm adding it back in here, but I'm likely
-    // not thinking of other locations it's needed (besides functions which depend on RDS, that's a hack)
-    const isLocal = app.mode === "dev" ? {IS_LOCAL: "true"} : {}
+    let bind: sst.FunctionProps['bind'] = [ RDS_SECRET_ARN ]
+    if (props.bind?.length) {
+      bind = [...bind, ...props.bind]
+    }
 
     const fn = new sst.Function(stack, id, sst.Function.mergeProps(props, {
       vpc,
       vpcSubnets: {subnetType: aws_ec2.SubnetType.PRIVATE_WITH_EGRESS},
       // architecture: Architecture.ARM_64, // TODO try this, might be faster
       nodejs,
+      bind,
       environment: {
-        ...isLocal,
-        rdsSecretArn: rdsSecret.secretArn,
+        // TODO SST removed IS_LOCAL default env-var, I'm adding it back in here, but I'm likely
+        // not thinking of other locations it's needed (besides functions which depend on RDS, that's a hack)
+        ...(app.mode === "dev" ? {IS_LOCAL: "true"} : {}),
+
         stage,
         sharedStage: sharedStage_,
       }
