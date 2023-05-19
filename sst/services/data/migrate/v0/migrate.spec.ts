@@ -1,4 +1,10 @@
-import {sharedStage, DB} from "../../db"
+const JUST_TYLER = true
+// Don't download every time during development
+const SKIP_DUMP = true
+const DUMP_PATH = "./services/data/migrate/v0/dump.sql"
+const STAGE = 'staging'
+
+import {sharedStage, DB, urlToInfo} from "../../db"
 import {Config} from 'sst/node/config'
 
 import {users as user_v0, entries as entries_v0} from "../first/schema";
@@ -16,8 +22,11 @@ import {readFileSync} from "fs";
 import { Fernet } from 'fernet-nodejs';
 import {expect, it} from "vitest"
 import * as dotenv from 'dotenv'
+import * as _ from 'lodash'
+import {addUserToCognito} from './cognito'
 
-dotenv.config({ path: 'services/data/migrate/v0/.env.local' })
+dotenv.config({ path: `services/data/migrate/v0/.env.${STAGE}` })
+
 
 const exec = promisify(execCallback);
 
@@ -28,27 +37,12 @@ if (!(process.env.FLASK_KEY && process.env.DB_URL_PROD)) {
 const fernetKey = Fernet.deriveKey(process.env.FLASK_KEY)
 const fernet = new Fernet(fernetKey)
 function decrypt (token: string): string {
-  if (!token?.length) {
-    console.log("skipping token")
-    return token
-  }
-  console.log({token, fernetKey, origKey: process.env.FLASK_KEY})
-  console.log({fernetKey})
+  if (!token?.length) { return token }
   return fernet.decrypt(token)
 }
 
 // Note: when working with old DB, only pull columns needed (don't `select *`) since we'll be streaming all the data
 // and need the RAM wiggle-room
-
-export async function addUsersToCognito(db: DB) {
-  return null
-  const users_ = await db.drizzle.select({
-    id: users.id,
-    email: users.email,
-  }).from(users)
-  // FIXME this is pseudocode
-  await Promise.all(users_.map(async (u) => cognito.addUser({email: u.email, id: u.id})))
-}
 
 export async function decryptColumns(db: DB) {
   // Have as separate functions so we can reclaim the RAM in between without getting funky with TypeScript
@@ -64,13 +58,16 @@ function decryptRow(row: object & {id: string}) {
   // NOTE this will only work if rows are keyed by id (not double-primarykey, no id, etc).
   const {id, ...rest} = row
   // decrypt every value in this object
-  const decrypted = Object.entries(rest).map(([k, v]) => [k, decrypt(v)])
-  return {...decrypted, id}
+  const decrypted = _.mapValues(rest, decrypt)
+  const clean = DB.removeNull(decrypted)
+  if (_.isEmpty(clean)) {return null}
+  return clean
 }
 
 export async function decryptUsers(db: DB) {
   const rows = await db.drizzle.select({
     id: users.id,
+    email: users.email,
     first_name: users.first_name,
     last_name: users.last_name,
     gender: users.gender,
@@ -79,7 +76,17 @@ export async function decryptUsers(db: DB) {
     habitica_user_id: users.habitica_user_id,
     habitica_api_token: users.habitica_api_token
   }).from(users)
-  await batchUpdate(db, "users", rows.map(decryptRow))
+  for (let row of rows) {
+    const {email, ...rest} = row
+    const decrypted = decryptRow(rest) || {}
+    // if (!decrypted) {return} // DON'T do this, we need at least to conver them to cognito
+    if (~["tylerrenelle@gmail.com", "wilding34@gmail.com"].indexOf(email)) {
+      decrypted.cognito_id = await addUserToCognito(row, process.env.USER_POOL_ID)
+    } else {
+      decrypted.cognito_id = "xyz"
+    }
+    await db.drizzle.update(users).set(decrypted).where(eq(users.id, row.id))
+  }
 }
 
 export async function decryptEntries(db: DB) {
@@ -88,7 +95,11 @@ export async function decryptEntries(db: DB) {
     title: entries.title,
     text: entries.text,
   }).from(entries)
-  await batchUpdate(db, "entries", rows.map(decryptRow))
+  for (let row of rows) {
+    const decrypted = decryptRow(row)
+    if (!decrypted) {continue}
+    await db.drizzle.update(entries).set(decrypted).where(eq(entries.id, row.id))
+  }
 }
 
 export async function decryptNotes(db: DB) {
@@ -96,7 +107,11 @@ export async function decryptNotes(db: DB) {
     id: notes.id,
     text: notes.text,
   }).from(notes)
-  await batchUpdate(db, "notes", rows.map(decryptRow))
+  for (let row of rows) {
+    const decrypted = decryptRow(row)
+    if (!decrypted) {continue}
+    await db.drizzle.update(notes).set(decrypted).where(eq(notes.id, row.id))
+  }
 }
 
 // FIXME fields2?
@@ -106,7 +121,11 @@ export async function decryptFields(db: DB) {
     id: fields.id,
     name: fields.name,
   }).from(fields)
-  await batchUpdate(db, "fields", rows.map(decryptRow))
+  for (let row of rows) {
+    const decrypted = decryptRow(row)
+    if (!decrypted) {continue}
+    await db.drizzle.update(fields).set(decrypted).where(eq(fields.id, row.id))
+  }
 }
 
 export async function decryptPeople(db: DB) {
@@ -117,7 +136,11 @@ export async function decryptPeople(db: DB) {
     issues: people.issues,
     bio: people.bio,
   }).from(people)
-  await batchUpdate(db, "people", rows.map(decryptRow))
+  for (let row of rows) {
+    const decrypted = decryptRow(row)
+    if (!decrypted) {continue}
+    await db.drizzle.update(people).set(decrypted).where(eq(people.id, row.id))
+  }
 }
 
 export async function decryptTags(db: DB) {
@@ -125,65 +148,24 @@ export async function decryptTags(db: DB) {
     id: tags.id,
     name: tags.name,
   }).from(tags)
-  await batchUpdate(db, "tags", rows.map(decryptRow))
-}
-
-
-// Can probably clean this up, came from ChatGPT
-async function batchUpdate(db: DB, tableName: string, updates: any[]) {
-  // Ensure updates are provided
-  if (!updates || updates.length === 0) {
-    throw new Error('No updates provided');
+  for (let row of rows) {
+    const decrypted = decryptRow(row)
+    if (!decrypted) {continue}
+    await db.drizzle.update(tags).set(decrypted).where(eq(tags.id, row.id))
   }
-
-  // Get column names from the first update object
-  const columnNames = Object.keys(updates[0]);
-
-  // Ensure each update has the same structure
-  updates.forEach(update => {
-    const updateColumns = Object.keys(update);
-    if (updateColumns.length !== columnNames.length || !updateColumns.every((col, index) => col === columnNames[index])) {
-      throw new Error('Inconsistent update structure');
-    }
-  });
-
-  // Build the VALUES clause
-  const valuesClause = updates.map(update =>
-    `(${columnNames.map(col => `'${update[col]}'`).join(', ')})`
-  ).join(', ');
-
-  // Build the SET clause
-  const setClause = columnNames.map(col =>
-    `${col} = new_values.${col}`
-  ).join(', ');
-
-  // Build and execute the UPDATE query
-  const query = sql`
-    UPDATE ${tableName}
-    SET ${setClause}
-    FROM (VALUES ${valuesClause}) AS new_values (${columnNames.join(', ')})
-    WHERE ${tableName}.id = new_values.id;
-  `;
-
-  return db.drizzle.execute(query);
 }
 
-it("run", async () => {
-
-  // Don't download every time during development
-  const SKIP_DUMP = true
-
-  const fname = "./services/data/migrate/v0/dump.sql"
+it("v0:migrate", async () => {
 
   if (!SKIP_DUMP) {
-    const dbv0 = new URL(process.env.DB_URL_PROD);
+    const db0i = urlToInfo(process.env.DB_URL_PROD as any);
     await exec([
-      `PGPASSWORD='${dbv0.password}'`,
+      `PGPASSWORD='${db0i.host.password}'`,
       "pg_dump --data-only --exclude-table=cache_users --exclude-table=cache_entries",
-      "-U", dbv0.username,
-      "-h", dbv0.hostname,
-      "-d", dbv0.pathname.slice(1),
-      ">", fname
+      "-U", db0i.host.username,
+      "-h", db0i.host.host,
+      "-d", db0i.database,
+      ">", DUMP_PATH
     ].join(' '))
   }
 
@@ -192,22 +174,45 @@ it("run", async () => {
   const intermediate = "intermediate"
 
   // Delete / re-create intermediate database
-  const db1 = new DB({connectionUrl: `${localhost}/postgres`})
-  await db1.connect()
-  await db1.pg.query(`drop database if exists ${intermediate}`)
-  await db1.pg.query(`create database ${intermediate}`)
+  const db1_pg = new DB({connectionUrl: `${localhost}/postgres`})
+  await db1_pg.connect()
+  await db1_pg.pg.query(`drop database if exists ${intermediate}`)
+  await db1_pg.pg.query(`create database ${intermediate}`)
 
-  const db2 = new DB({connectionUrl: `${localhost}/${intermediate}`})
-  await db2.connect()
-  const db2i = db2.info
+  const db1 = new DB({connectionUrl: `${localhost}/${intermediate}`})
+  await db1.connect()
+  const db1i = db1.info
   await exec([
-    `PGPASSWORD='${db2i.host.password}' psql`,
+    `PGPASSWORD='${db1i.host.password}' psql`,
+    "-U", db1i.host.username,
+    "-h", db1i.host.host,
+    "-d", db1i.database,
+    "<", DUMP_PATH
+  ].join(' '))
+  await db1.pg.query("ALTER TABLE users ADD COLUMN cognito_id VARCHAR;")
+  await db1.pg.query("CREATE INDEX ix_users_cognito_id ON users (cognito_id);")
+  await decryptColumns(db1)
+
+  const db2i = urlToInfo(process.env.DB_NEW_URL as any)
+  const db2_pg = new DB({connectionUrl: `postgresql://${db2i.host.username}:${db2i.host.password}@${db2i.host.host}:${db2i.host.port}/postgres`})
+  await db2_pg.connect()
+  await db2_pg.pg.query(`drop database if exists ${db2i.database}`)
+  await db2_pg.pg.query(`create database ${db2i.database}`)
+
+  await exec([
+    `PGPASSWORD='${db1i.host.password}'`,
+    "pg_dump",
+    "-U", db1i.host.username,
+    "-h", db1i.host.host,
+    "-d", db1i.database,
+    "|", // pipe directly to new database. No intermediate file
+    `PGPASSWORD='${db2i.host.password}'`,
+    'psql',
     "-U", db2i.host.username,
     "-h", db2i.host.host,
     "-d", db2i.database,
-    "<", fname
   ].join(' '))
-  await decryptColumns(db2)
+
 
   // await db.pg.query(oldSql)
   // await addUsersToCognito(db)
@@ -216,4 +221,6 @@ it("run", async () => {
   // const db = new DB()
   // await db.connect()
 
-})
+  // Set the timeout to really high (can't disable timeouts unfortunately)
+  // 10 minutes in milliseconds
+}, 10 * 60 * 1000)

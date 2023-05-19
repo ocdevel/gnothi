@@ -6,7 +6,8 @@ export default defineConfig({
   test: {
     testTimeout: 30000,
     // include: ['**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'] // default
-    include: ['services/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}']
+    include: ['services/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
+    threads: false
   },
   logLevel: "info",
   esbuild: {

@@ -23,10 +23,25 @@ type Host = {
   password: string
 }
 
-type ConnectionInfo = {
+export type ConnectionInfo = {
   database?: string
   host?: Host
   connectionUrl?: `postgresql://${string}:${string}@${string}:${string}/${string}`
+}
+
+export function urlToInfo(url: ConnectionInfo['connectionUrl']): ConnectionInfo {
+  const parts = new URL(url)
+  return {
+    database: parts.pathname.slice(1),
+    host: {
+      host: parts.hostname,
+      port: parseInt(parts.port),
+      username: parts.username,
+      // The password specifically might have special characters in it, which gets URL-encoded
+      // and will cause connection errors. Decode it back.
+      password: decodeURIComponent(parts.password),
+    }
+  }
 }
 
 export class DB {
@@ -48,9 +63,9 @@ export class DB {
 
     const i = this.info
     if (i.connectionUrl) {
-      const url = new URL(i.connectionUrl)
-      i.host = {username: url.username, password: url.password, host: url.hostname, port: parseInt(url.port)}
-      i.database = url.pathname.slice(1)
+      const parsed = urlToInfo(i.connectionUrl)
+      i.host = parsed.host
+      i.database = parsed.database
     } else if (!i.host) {
       // set localhost defaults, override if deployed
       if (process.env.IS_LOCAL || process.env.MODE === "test") {
@@ -84,7 +99,8 @@ export class DB {
       database: i.database
     })
     // await pgClient.connect()
-    const drizzleClient = drizzle(pgClient, {logger: new MyLogger()})
+    // const drizzleClient = drizzle(pgClient, {logger: new MyLogger()})
+    const drizzleClient = drizzle(pgClient)
 
     // await pgClient.connect()
 
@@ -104,14 +120,14 @@ export class DB {
     context.callbackWaitsForEmptyEventLoop = false; // !important to reuse pool
   }
 
-  removeNull(obj: object) {
+  static removeNull(obj: object) {
     // Returned zod objects with optional fields only allow `null` if `.nullable()`
     // is used. This strips nulls from the object. Keep an eye on this, there may
     // be a future situation in which null is a meaningful value over undefined.
     return Object.fromEntries(Object.entries(obj).filter(([_, v]) => v !== null));
   }
 
-  removeUndefined(obj: object) {
+  static removeUndefined(obj: object) {
     return Object.fromEntries(Object.entries(obj).filter(([_, v]) => v !== undefined));
   }
 

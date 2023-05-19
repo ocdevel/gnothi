@@ -15,6 +15,7 @@
     "v0:migrate": "AWS_REGION=us-east-1 AWS_PROFILE=gnothiadmin sst bind vitest run services/data/migrate/v0/migrate.spec.ts"
   },
   "devDependencies": {
+    "@aws-sdk/client-cognito-identity-provider": "^3.335.0",
     "@tsconfig/node18": "^2.0.1",
     "@types/lodash": "^4.14.194",
     "aws-cdk-lib": "2.72.1",

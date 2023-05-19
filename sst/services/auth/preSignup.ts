@@ -3,6 +3,14 @@ import * as S from "@gnothi/schemas"
 const testing = process.env.IS_LOCAL
 
 export const handler = async (event, context, callback) => {
+
+  // When importing v0 database, can skip here; but nothing happens in this function, so
+  // I'm excluding it.
+  // if (event.request.userAttributes['custom:adminCreated'] === 'true') {
+  //   return
+  // }
+
+
   // Set the user pool autoConfirmUser flag after validating the email domain
   event.response.autoConfirmUser = true
   // event.response.autoVerifyPhone = true

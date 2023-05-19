@@ -51,9 +51,8 @@ export function Auth({ app, stack }: sst.StackContext) {
         autoVerify: {email: true},
         removalPolicy: RemovalPolicy.DESTROY,
         customAttributes: {
-          // TODO remove these next fresh start (can't remove on existing stack), I couldn't get them working
-          // 'gnothiId': new StringAttribute({ minLen: 5, maxLen: 15, mutable: false }),
           'gnothiId': new StringAttribute({ mutable: true }),
+          'adminCreated': new StringAttribute({ mutable: true }),
         },
       }
     },
@@ -67,6 +66,10 @@ export function Auth({ app, stack }: sst.StackContext) {
       preSignUp,
       postConfirmation
     }
+  })
+
+  const USER_POOL_ID = new sst.Config.Parameter(stack, "UserPoolId", {
+    value: auth.userPoolId,
   })
 
   const authFn = withRds(stack, "fn_authorizer", {
