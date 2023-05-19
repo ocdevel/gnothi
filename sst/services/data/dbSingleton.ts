@@ -1,6 +1,6 @@
 import {DB} from './db'
 
-const db_ = new DB()
+const db_ = new DB({})
 // @ts-ignore - initialize top-level
-await db_.init()
+await db_.connect()
 export const db = db_

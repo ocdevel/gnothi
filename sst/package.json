@@ -11,16 +11,18 @@
     "console": "AWS_PROFILE=gnothiadmin sst console",
     "typecheck": "tsc --noEmit",
     "test": "AWS_REGION=us-east-1 AWS_PROFILE=gnothiadmin sst bind -- vitest run",
-    "test:gendata": "AWS_REGION=us-east-1 AWS_PROFILE=gnothiadmin sst bind -- vitest run services/tests/setup_mock.spec.ts"
+    "test:gendata": "AWS_REGION=us-east-1 AWS_PROFILE=gnothiadmin sst bind -- vitest run services/tests/setup_mock.spec.ts",
+    "v0:migrate": "AWS_REGION=us-east-1 AWS_PROFILE=gnothiadmin sst bind vitest run services/data/migrate/v0/migrate.spec.ts"
   },
   "devDependencies": {
-    "sst": "^2.8.23",
-    "constructs": "^10.2.26",
     "@tsconfig/node18": "^2.0.1",
     "@types/lodash": "^4.14.194",
     "aws-cdk-lib": "2.72.1",
+    "constructs": "^10.2.26",
+    "dotenv": "^16.0.3",
+    "sst": "^2.8.23",
     "typescript": "^5.0.4",
-    "vitest": "^0.31.0"
+    "vitest": "^0.31.1"
   },
   "dependencies": {
     "drizzle-zod": "^0.4.1",

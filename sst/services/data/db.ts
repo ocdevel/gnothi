@@ -4,6 +4,7 @@ import { Client as PgClient, Pool, QueryResult } from 'pg'
 import { pgTable, serial, text, varchar } from 'drizzle-orm/pg-core';
 import { drizzle, NodePgDatabase } from 'drizzle-orm/node-postgres'
 import { sql, SQL } from 'drizzle-orm'
+import { URL } from 'url'
 
  // TODO why was I using the sharedStage for the DB? shouldn't it stage-specific?
 // export const sharedStage = `gnothi${process.env.sharedStage}`
@@ -15,57 +16,72 @@ class MyLogger implements Logger {
   }
 }
 
-type ConnectionArgs = {
+type Host = {
   host: string
   port: number
   username: string
   password: string
 }
 
+type ConnectionInfo = {
+  database?: string
+  host?: Host
+  connectionUrl?: `postgresql://${string}:${string}@${string}:${string}/${string}`
+}
+
 export class DB {
   // private variable which will be singleton-initialized for running lambda (for all
   // future invocations). Note use of this class exported as an instance (bottom of file),
   // not instantiated by callers
-  private inited = false
+  public info: ConnectionInfo
+  private connected = false
   public pg: Pool
   public drizzle: NodePgDatabase
-  public dbName: string
 
-  constructor(dbName?: string) {
-    this.dbName = dbName || sharedStage
+  constructor(info: ConnectionInfo = {}) {
+    this.info = info
   }
 
-  async getConnectionArgs(): Promise<ConnectionArgs> {
-    // set localhost defaults, override if deployed
-    if (process.env.IS_LOCAL) {
-      return {
-        host: "localhost",
-        port: 5432,
-        username: "postgres",
-        password: "password"
+  async connect() {
+    if (this.connected) { return }
+    this.connected = true
+
+    const i = this.info
+    if (i.connectionUrl) {
+      const url = new URL(i.connectionUrl)
+      i.host = {username: url.username, password: url.password, host: url.hostname, port: parseInt(url.port)}
+      i.database = url.pathname.slice(1)
+    } else if (!i.host) {
+      // set localhost defaults, override if deployed
+      if (process.env.IS_LOCAL || process.env.MODE === "test") {
+        i.host = {
+          host: "localhost",
+          port: 5432,
+          username: "postgres",
+          password: "password"
+        }
+      } else {
+        // get the secret from secrets manager.
+        const secretsClient = new SecretsManagerClient({})
+        const secret = await secretsClient.send(new GetSecretValueCommand({
+          SecretId: process.env.rdsSecretArn,
+        }))
+        i.host = JSON.parse(secret.SecretString ?? '{}') as Host
       }
     }
-    // get the secret from secrets manager.
-    const secretsClient = new SecretsManagerClient({})
-    const secret = await secretsClient.send(new GetSecretValueCommand({
-      SecretId: process.env.rdsSecretArn,
-    }))
-    const obj = JSON.parse(secret.SecretString ?? '{}')
-    return obj as ConnectionArgs
-  }
+    i.database = i.database || sharedStage
 
-  async init() {
-    if (this.inited) { return }
-    this.inited = true
-    const connectionArgs = await this.getConnectionArgs()
+    console.log("pre-client")
+    console.log({host: i.host, database: i.database})
+
     // const pgClient = new PgClient({
     const pgClient = new Pool({
       max: 1, min: 0, // single connection for singleton Lambda
-      host: connectionArgs.host, // host is the endpoint of the db cluster
-      port: connectionArgs.port, // port is 5432
-      user: connectionArgs.username, // username is the same as the secret name
-      password: connectionArgs.password, // this is the password for the default database in the db cluster
-      database: this.dbName
+      host: i.host.host, // host is the endpoint of the db cluster
+      port: i.host.port, // port is 5432
+      user: i.host.username, // username is the same as the secret name
+      password: i.host.password, // this is the password for the default database in the db cluster
+      database: i.database
     })
     // await pgClient.connect()
     const drizzleClient = drizzle(pgClient, {logger: new MyLogger()})
@@ -100,8 +116,8 @@ export class DB {
   }
 
   async query<O = any>(sql_: SQL): Promise<O[]> {
-    if (!this.inited) {
-      await this.init()
+    if (!this.connected) {
+      await this.connect()
     }
     try {
       const queryResult: QueryResult<O> = await this.drizzle.execute<O>(sql_)

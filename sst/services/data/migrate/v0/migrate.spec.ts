@@ -1,57 +1,40 @@
-import {DB} from "../db";
-import {users as user_v0, entries as entries_v0} from "./first/schema";
-import {users} from '../schemas/users'
-import {entries, Entry} from '../schemas/entries'
-import {notes, Note} from '../schemas/notes'
-import {fields, Field} from '../schemas/fields'
-import {people, Person} from '../schemas/people'
-import {tags, Tag} from '../schemas/tags'
+import {sharedStage, DB} from "../../db"
+import {Config} from 'sst/node/config'
+
+import {users as user_v0, entries as entries_v0} from "../first/schema";
+import {users} from '../../schemas/users'
+import {entries, Entry} from '../../schemas/entries'
+import {notes, Note} from '../../schemas/notes'
+import {fields, Field} from '../../schemas/fields'
+import {people, Person} from '../../schemas/people'
+import {tags, Tag} from '../../schemas/tags'
 import {eq, and, or, sql} from "drizzle-orm";
-import { Config } from "sst/node/config"
 import {URL} from 'url'
 import {exec as execCallback} from "child_process";
 import {promisify} from "util";
 import {readFileSync} from "fs";
 import { Fernet } from 'fernet-nodejs';
-import {s3GetObjectContents} from "../../aws/handlers";
+import {expect, it} from "vitest"
+import * as dotenv from 'dotenv'
+
+dotenv.config({ path: 'services/data/migrate/v0/.env.local' })
 
 const exec = promisify(execCallback);
 
-
-let decrypt = (token: string): string => {
-  throw new Error("FLASK_KEY not imported correctly for migrate_v0 decryption")
-  return token
-}
-if (Config.FLASK_KEY_V0) {
-  // const flaskKey = awsSecrets.getItem("v0_flask_key")
-  const fernetKey = Fernet.deriveKey(Config.FLASK_KEY_V0)
-  const f = new Fernet(fernetKey)
-  decrypt = (token: string) => f.decrypt(token)
+if (!(process.env.FLASK_KEY && process.env.DB_URL_PROD)) {
+  throw new Error("FLASK_KEY or DB_URL_PROD not imported correctly for migrate_v0")
 }
 
-export async function import_v0(db: DB) {
-  const dbUrl = Config.DB_URL_V0
-  if (!dbUrl) { throw new Error("DB_URL_V0 not imported correctly for migrate_v0") }
-
-  // const dbv0 = new URL(dbUrl);
-  // const fname = "/tmp/data_v0.sql"
-  // // no rhyme to me using sometimes spaces, sometimes join(); just need something I can see easily
-  // const cmd = [
-  //   `PGPASSWORD='${dbv0.password}'`,
-  //   "pg_dump --data-only --exclude-table=cache_users --exclude-table=cache_entries",
-  //   "-U", dbv0.username,
-  //   "-h", dbv0.hostname,
-  //   "-d", dbv0.pathname.slice(1),
-  //   ">", fname
-  // ].join(' ')
-
-  // Execute CLI command to dump postgres database from old server to /tmp/data_v0.sql
-  // await exec(cmd)
-  // Read that file to a string
-  // const oldSql = readFileSync(fname, "utf8")
-  const oldSql = await s3GetObjectContents({Key: "data_v0.sql"})
-  await db.pg.query(oldSql)
-  await addUsersToCognito(db)
+const fernetKey = Fernet.deriveKey(process.env.FLASK_KEY)
+const fernet = new Fernet(fernetKey)
+function decrypt (token: string): string {
+  if (!token?.length) {
+    console.log("skipping token")
+    return token
+  }
+  console.log({token, fernetKey, origKey: process.env.FLASK_KEY})
+  console.log({fernetKey})
+  return fernet.decrypt(token)
 }
 
 // Note: when working with old DB, only pull columns needed (don't `select *`) since we'll be streaming all the data
@@ -184,3 +167,53 @@ async function batchUpdate(db: DB, tableName: string, updates: any[]) {
 
   return db.drizzle.execute(query);
 }
+
+it("run", async () => {
+
+  // Don't download every time during development
+  const SKIP_DUMP = true
+
+  const fname = "./services/data/migrate/v0/dump.sql"
+
+  if (!SKIP_DUMP) {
+    const dbv0 = new URL(process.env.DB_URL_PROD);
+    await exec([
+      `PGPASSWORD='${dbv0.password}'`,
+      "pg_dump --data-only --exclude-table=cache_users --exclude-table=cache_entries",
+      "-U", dbv0.username,
+      "-h", dbv0.hostname,
+      "-d", dbv0.pathname.slice(1),
+      ">", fname
+    ].join(' '))
+  }
+
+  // @ts-ignore
+  const localhost = "postgresql://postgres:password@localhost:5432"
+  const intermediate = "intermediate"
+
+  // Delete / re-create intermediate database
+  const db1 = new DB({connectionUrl: `${localhost}/postgres`})
+  await db1.connect()
+  await db1.pg.query(`drop database if exists ${intermediate}`)
+  await db1.pg.query(`create database ${intermediate}`)
+
+  const db2 = new DB({connectionUrl: `${localhost}/${intermediate}`})
+  await db2.connect()
+  const db2i = db2.info
+  await exec([
+    `PGPASSWORD='${db2i.host.password}' psql`,
+    "-U", db2i.host.username,
+    "-h", db2i.host.host,
+    "-d", db2i.database,
+    "<", fname
+  ].join(' '))
+  await decryptColumns(db2)
+
+  // await db.pg.query(oldSql)
+  // await addUsersToCognito(db)
+
+  // await dbPostgres.pg.query(`drop database if exists ${sharedStage};create database ${Config.DB_NAME}`)
+  // const db = new DB()
+  // await db.connect()
+
+})
