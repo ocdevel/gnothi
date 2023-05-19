@@ -24,7 +24,7 @@ import {Bucket} from 'sst/node/bucket'
 
 export * as Handlers from './handlers'
 
-const defaultBucket = Bucket.Bucket.bucketName
+//const defaultBucket = Bucket.Bucket.bucketName
 
 type HandlerKey = "http" | "s3" | "sns" | "lambda" | "ws"
 export function whichHandler(event: any, context: Context): HandlerKey {
@@ -100,10 +100,10 @@ class Buff {
   }
 }
 
-type S3GetObjectContents = { Bucket?: string, Key: string }
+type S3GetObjectContents = { Bucket: string, Key: string }
 export async function s3GetObjectContents({Bucket, Key}: S3GetObjectContents): Promise<string> {
   const response = await clients.s3.send(new GetObjectCommand({
-    Bucket: Bucket || defaultBucket,
+    Bucket,
     Key
   }))
   const Body = response.Body as Readable

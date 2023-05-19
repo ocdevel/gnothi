@@ -82,7 +82,7 @@ export async function decryptUsers(db: DB) {
     const decrypted = decryptRow(rest) || {}
     // if (!decrypted) {return} // DON'T do this, we need at least to conver them to cognito
     if (~["tylerrenelle@gmail.com", "wilding34@gmail.com"].indexOf(email)) {
-      decrypted.cognito_id = await addUserToCognito(row, Config.USER_POOL_ID)
+      decrypted.cognito_id = await addUserToCognito(row)
     } else {
       decrypted.cognito_id = "xyz"
     }
@@ -190,8 +190,10 @@ it("v0:migrate", async () => {
     "-d", db1i.database,
     "<", DUMP_PATH
   ].join(' '))
-  await db1.pg.query("ALTER TABLE users ADD COLUMN cognito_id VARCHAR;")
-  await db1.pg.query("CREATE INDEX ix_users_cognito_id ON users (cognito_id);")
+  // These two were performed on the live database 5/19/2023. Needed there so I can run drizzle-kit generate
+  // for original database structure, in order ot create a diff for new schemas
+  // await db1.pg.query("ALTER TABLE users ADD COLUMN cognito_id VARCHAR;")
+  // await db1.pg.query("CREATE INDEX ix_users_cognito_id ON users (cognito_id);")
   await decryptColumns(db1)
 
   // no arguments means it will use our target database, from logic inisde DB.connect()

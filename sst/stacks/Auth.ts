@@ -71,6 +71,9 @@ export function Auth({ app, stack }: sst.StackContext) {
   const USER_POOL_ID = new sst.Config.Parameter(stack, "USER_POOL_ID", {
     value: auth.userPoolId,
   })
+  const USER_POOL_CLIENT_ID = new sst.Config.Parameter(stack, "USER_POOL_CLIENT_ID", {
+    value: auth.userPoolClientId,
+  })
 
   const authFn = withRds(stack, "fn_authorizer", {
     handler: "services/auth/wsAuthorizer.handler",

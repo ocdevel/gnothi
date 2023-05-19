@@ -87,9 +87,6 @@ export class DB {
     }
     i.database = i.database || sharedStage
 
-    console.log("pre-client")
-    console.log({host: i.host, database: i.database})
-
     // const pgClient = new PgClient({
     const pgClient = new Pool({
       max: 1, min: 0, // single connection for singleton Lambda
