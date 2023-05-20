@@ -3,12 +3,11 @@ import {GetSecretValueCommand, SecretsManagerClient} from "@aws-sdk/client-secre
 const JUST_TYLER = true
 // Don't download every time during development
 const SKIP_DUMP = true
-const DUMP_PATH = "./services/data/migrate/v0/dump.sql"
+const DUMP_PATH = "/tmp/dump.sql"
 
 import {sharedStage, DB, urlToInfo} from "../../db"
 import {Config} from 'sst/node/config'
 
-import {users as user_v0, entries as entries_v0} from "../first/schema";
 import {users} from '../../schemas/users'
 import {entries, Entry} from '../../schemas/entries'
 import {notes, Note} from '../../schemas/notes'
@@ -162,7 +161,8 @@ it("v0:migrate", async () => {
     const db0i = urlToInfo(process.env.DB_URL_PROD as any);
     await exec([
       `PGPASSWORD='${db0i.host.password}'`,
-      "pg_dump --data-only --exclude-table=cache_users --exclude-table=cache_entries",
+      // TODO I removed --data-only, will need it back if migrate:first/ is used
+      "pg_dump  --exclude-table=cache_users --exclude-table=cache_entries",
       "-U", db0i.host.username,
       "-h", db0i.host.host,
       "-d", db0i.database,
@@ -219,6 +219,7 @@ it("v0:migrate", async () => {
     "-d", db2i.database,
   ].join(' '))
 
+  await exec(`aws lambda invoke --function-name ${Config.FN_DB_MIGRATE} /dev/null`)
 
   // await db.pg.query(oldSql)
   // await addUsersToCognito(db)

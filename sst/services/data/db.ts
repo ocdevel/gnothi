@@ -135,7 +135,7 @@ export class DB {
     }
     try {
       const queryResult: QueryResult<O> = await this.drizzle.execute<O>(sql_)
-      return queryResult.rows.map(this.removeNull)
+      return queryResult.rows.map(DB.removeNull)
     } catch (error) {
       // (await this.client()).release(true)
       console.error({error, sql_})
@@ -153,7 +153,7 @@ export class DB {
   }
 
   async insert<O = object>(table: string, obj: object): Promise<O> {
-    const clean = this.removeUndefined(obj)
+    const clean = DB.removeUndefined(obj)
     const keys = Object.keys(clean)
     const values = keys.map(k => clean[k])
     const sql = `insert into ${table} (${keys.join(', ')}) values (${keys.map((_, i) => `$${i+1}`).join(', ')}) returning *`

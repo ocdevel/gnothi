@@ -23,7 +23,7 @@ export function Misc(context: sst.StackContext) {
 
   // This the typical migration function, the below migration functions will be run once
   // to move the server over from old gnothi to new, then I'll delete those functions
-  const dbMigrate = withRds(stack, "DbMigrate2", {
+  const fnMigrate = withRds(stack, "FnMigrate", {
     // memorySize: rams.sm,
     memorySize: 512, // due to pg migration from old site to new. DB size was ~250MB last I dumped
     timeout: "10 minutes", // old->new migration can take a while. I can reduce this later
@@ -38,10 +38,11 @@ export function Misc(context: sst.StackContext) {
       bucket,
     ],
   })
+  const FN_DB_MIGRATE = new sst.Config.Parameter(stack, "FN_DB_MIGRATE", {value: fnMigrate.functionArn})
 
   stack.addOutputs({
     bucket: bucket.bucketName,
-    dbMigrate: dbMigrate.functionArn,
+    fnMigrate: fnMigrate.functionArn,
   })
 
   // const initScript = new sst.Script(stack, "script_init", {

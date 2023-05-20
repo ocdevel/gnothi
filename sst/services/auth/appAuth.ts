@@ -32,6 +32,7 @@ export async function getUser(
   context: Context,
   db: DB
 ) : Promise<GetUser> {
+  const {drizzle} = db
   // Check if exists from custom websocket authorizer
   const cognitoId = event.requestContext?.authorizer?.userId ||
     // or from outa-the-box HTTP jwt authorizer
@@ -46,16 +47,10 @@ export async function getUser(
   if (connection_id) {
     if (routeKey == "$connect") {
       const user = await getFromCognito(db, cognitoId)
-      await db.query(sql`
-        insert into ${wsConnections} (user_id, connection_id) 
-        values (${user.id}, ${connection_id}) 
-        on conflict do nothing
-      `)
+      await drizzle.insert(wsConnections).values({user_id: user.id, connection_id}).onConflictDoNothing()
       return handled
     } else if (routeKey === "$disconnect") {
-      await db.query(
-        sql`delete from ${wsConnections} where connection_id=${connection_id}`
-      )
+      await drizzle.delete(wsConnections).where(eq(wsConnections.connection_id, connection_id))
       return handled
     }
     const user = await db.queryFirst(sql`

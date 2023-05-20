@@ -1,5 +1,5 @@
 import {Base} from './base'
-import {db} from '../dbSingleton'
+import {DB} from '../db'
 import * as S from '@gnothi/schemas'
 import {sql} from "drizzle-orm"
 import {users} from '../schemas/users'
@@ -31,7 +31,7 @@ export class Shares extends Base {
       .leftJoin(sharesTags, eq(sharesTags.share_id, shares.id))
       .leftJoin(usersSq, eq(usersSq.share_id, shares.id))
       .groupBy(shares.id)
-    return res.map(db.removeNull)
+    return res.map(DB.removeNull)
   }
 
   async post(req: S.Shares.shares_post_request): Promise<Share> {

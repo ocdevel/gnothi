@@ -48,7 +48,9 @@ export function Auth({ app, stack }: sst.StackContext) {
           requireUppercase: false
         },
         selfSignUpEnabled: true,
-        autoVerify: {email: true},
+
+        // autoVerify=false means don't send an email
+        autoVerify: {email: false},
         removalPolicy: RemovalPolicy.DESTROY,
         customAttributes: {
           'gnothiId': new StringAttribute({ mutable: true }),

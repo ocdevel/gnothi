@@ -1,4 +1,5 @@
 import {Base} from './base'
+import {DB} from '../db'
 import {db} from '../dbSingleton'
 import * as S from '@gnothi/schemas'
 import {users} from '../schemas/users'
@@ -11,7 +12,7 @@ export class Fields extends Base {
     const {uid, db} = this.context
     const {drizzle} = db
     const res = await drizzle.select().from(fields).where(eq(fields.user_id, uid)).orderBy(desc(fields.created_at))
-    return res.map(db.removeNull)
+    return res.map(DB.removeNull)
   }
 
 
@@ -25,7 +26,7 @@ export class Fields extends Base {
       default_value_value: req.default_value_value,
       user_id: uid
     }).returning()
-    return res.map(db.removeNull)
+    return res.map(DB.removeNull)
   }
 
   async put(req: S.Fields.fields_put_request) {
@@ -39,7 +40,7 @@ export class Fields extends Base {
         eq(fields.user_id, uid)
       ))
       .returning()
-    return res.map(db.removeNull)
+    return res.map(DB.removeNull)
   }
 
   async delete(req: S.Fields.fields_delete_request) {
@@ -51,7 +52,7 @@ export class Fields extends Base {
         eq(fields.user_id, uid)
       ))
       .returning()
-    return res.map(db.removeNull)
+    return res.map(DB.removeNull)
   }
 
 

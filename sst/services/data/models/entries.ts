@@ -1,3 +1,4 @@
+import {DB} from '../db'
 import {Base} from './base'
 import {GnothiError} from "../../routes/errors";
 import * as S from '@gnothi/schemas'
@@ -164,7 +165,7 @@ export class Entries extends Base {
     await db.drizzle.insert(entriesTags)
       .values(tids.map(tag_id => ({tag_id, entry_id})))
     // fixme gotta find a way to not need removeNull everywhere
-    const ret = db.removeNull({...dbEntry, tags})
+    const ret = DB.removeNull({...dbEntry, tags})
     return [ret]
   }
 
