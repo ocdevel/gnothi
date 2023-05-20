@@ -68,21 +68,23 @@ export class DB {
       i.host = parsed.host
       i.database = parsed.database
     } else if (!i.host) {
-      // set localhost defaults, override if deployed
-      if (process.env.IS_LOCAL || process.env.MODE === "test") {
-        i.host = {
-          host: "localhost",
-          port: 5432,
-          username: "postgres",
-          password: "password"
-        }
-      } else {
+      if (~["staging", "production"].indexOf(process.env.SST_STAGE)) {
+        console.log("Using RDS database")
         // get the secret from secrets manager.
         const secretsClient = new SecretsManagerClient({})
         const secret = await secretsClient.send(new GetSecretValueCommand({
           SecretId: Config.RDS_SECRET_ARN,
         }))
         i.host = JSON.parse(secret.SecretString ?? '{}') as Host
+      } else {
+        // set localhost defaults, override if deployed
+        console.log("Using localhost (Docker) database")
+        i.host = {
+          host: "localhost",
+          port: 5432,
+          username: "postgres",
+          password: "password"
+        }
       }
     }
     i.database = i.database || sharedStage

@@ -2,26 +2,11 @@ import {z} from 'zod'
 import {Route} from './api'
 import {Passthrough, dateCol, IdCol, BoolMap} from './utils'
 export * as Shares from './shares'
-import {v4 as uuid} from 'uuid'
+import {shares} from '../services/data/schemas/shares'
+import {createInsertSchema} from "drizzle-zod"
 
-export const Share = z.object({
-  id: IdCol,
-  user_id: IdCol,
+export const Share = createInsertSchema(shares, {
   created_at: dateCol(),
-
-  email: z.boolean().default(false),
-  username: z.boolean().default(true),
-  first_name: z.boolean().default(false),
-  last_name: z.boolean().default(false),
-  gender: z.boolean().default(false),
-  orientation: z.boolean().default(false),
-  birthday: z.boolean().default(false),
-  timezone: z.boolean().default(false),
-  bio: z.boolean().default(false),
-  people: z.boolean().default(false),
-
-  fields: z.boolean().default(false),
-  books: z.boolean().default(false),
 })
 export type Share = z.infer<typeof Share>
 

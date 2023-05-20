@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "pg",
-  "id": "30e64bc6-2bf1-4eca-86e8-a214df67e0a8",
+  "id": "149ce09e-53ed-479a-a57c-dd4a11f8caa6",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "books": {

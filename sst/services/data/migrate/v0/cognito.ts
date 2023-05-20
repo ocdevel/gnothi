@@ -19,7 +19,7 @@ type User_ = Partial<User>
 
 export async function addUserToCognito(user: User_): Promise<string> {
   if (user.email !== "tylerrenelle@gmail.com" && user.email !== "wilding34@gmail.com") {
-    return 'xyz'
+    return randomPassword()
   }
   return viaSignup(user)
 }
@@ -117,7 +117,7 @@ function userAttributes(user: User_) {
   ]
 }
 
-function randomPassword(length=32): string {
+export function randomPassword(length=32): string {
   const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+~`|}{[]:;?><,./-=";
   let password = "";
   for (let i = 0; i < length; i++) {

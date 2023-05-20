@@ -1,8 +1,8 @@
 {
   "version": "5",
   "dialect": "pg",
-  "id": "f915646d-8a5c-4696-bb1f-cbecb46231d8",
-  "prevId": "30e64bc6-2bf1-4eca-86e8-a214df67e0a8",
+  "id": "51daf7aa-572d-4da2-8fa9-e95e43c67465",
+  "prevId": "149ce09e-53ed-479a-a57c-dd4a11f8caa6",
   "tables": {
     "entries": {
       "name": "entries",
@@ -318,7 +318,7 @@
         },
         "type": {
           "name": "type",
-          "type": "field_type",
+          "type": "fieldtype",
           "primaryKey": false,
           "notNull": false,
           "default": "'fivestar'"
@@ -344,7 +344,7 @@
         },
         "default_value": {
           "name": "default_value",
-          "type": "default_value_type",
+          "type": "defaultvaluetypes",
           "primaryKey": false,
           "notNull": false,
           "default": "'value'"
@@ -439,27 +439,6 @@
           "onUpdate": "no action"
         }
       },
-      "compositePrimaryKeys": {}
-    },
-    "keyvalues": {
-      "name": "keyvalues",
-      "schema": "",
-      "columns": {
-        "key": {
-          "name": "key",
-          "type": "varchar",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "value": {
-          "name": "value",
-          "type": "varchar",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {},
       "compositePrimaryKeys": {}
     },
     "notes": {
@@ -651,110 +630,64 @@
           "primaryKey": false,
           "notNull": true
         },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "now()"
-        },
         "email": {
           "name": "email",
-          "type": "boolean",
+          "type": "varchar(255)",
           "primaryKey": false,
-          "notNull": false,
-          "default": false
-        },
-        "username": {
-          "name": "username",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": false,
-          "default": true
-        },
-        "first_name": {
-          "name": "first_name",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": false,
-          "default": false
-        },
-        "last_name": {
-          "name": "last_name",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": false,
-          "default": false
-        },
-        "gender": {
-          "name": "gender",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": false,
-          "default": false
-        },
-        "orientation": {
-          "name": "orientation",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": false,
-          "default": false
-        },
-        "birthday": {
-          "name": "birthday",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": false,
-          "default": false
-        },
-        "timezone": {
-          "name": "timezone",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": false,
-          "default": false
-        },
-        "bio": {
-          "name": "bio",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": false,
-          "default": false
-        },
-        "people": {
-          "name": "people",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": false,
-          "default": false
+          "notNull": false
         },
         "fields": {
           "name": "fields",
           "type": "boolean",
           "primaryKey": false,
-          "notNull": false,
-          "default": false
+          "notNull": false
         },
         "books": {
           "name": "books",
           "type": "boolean",
           "primaryKey": false,
+          "notNull": false
+        },
+        "profile": {
+          "name": "profile",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "last_seen": {
+          "name": "last_seen",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
           "notNull": false,
-          "default": false
+          "default": "now()"
+        },
+        "new_entries": {
+          "name": "new_entries",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "default": 0
         }
       },
       "indexes": {
+        "ix_shares_email": {
+          "name": "ix_shares_email",
+          "columns": [
+            "email"
+          ],
+          "isUnique": false
+        },
+        "ix_shares_last_seen": {
+          "name": "ix_shares_last_seen",
+          "columns": [
+            "last_seen"
+          ],
+          "isUnique": false
+        },
         "ix_shares_user_id": {
           "name": "ix_shares_user_id",
           "columns": [
             "user_id"
-          ],
-          "isUnique": false
-        },
-        "ix_shares_created_at": {
-          "name": "ix_shares_created_at",
-          "columns": [
-            "created_at"
           ],
           "isUnique": false
         }
@@ -1253,16 +1186,16 @@
         "done": "done"
       }
     },
-    "default_value_type": {
-      "name": "default_value_type",
+    "defaultvaluetypes": {
+      "name": "defaultvaluetypes",
       "values": {
         "value": "value",
         "average": "average",
         "ffill": "ffill"
       }
     },
-    "field_type": {
-      "name": "field_type",
+    "fieldtype": {
+      "name": "fieldtype",
       "values": {
         "number": "number",
         "fivestar": "fivestar",

@@ -18,9 +18,6 @@ export function Misc(context: sst.StackContext) {
   // Common / misc bucket. Used for ML, file-uploads, etc
   const bucket = new sst.Bucket(stack, "Bucket")
 
-  const DB_URL_V0 = new sst.Config.Secret(stack, "DB_URL_V0")
-  const FLASK_KEY_V0 = new sst.Config.Secret(stack, "FLASK_KEY_V0")
-
   // This the typical migration function, the below migration functions will be run once
   // to move the server over from old gnothi to new, then I'll delete those functions
   const fnMigrate = withRds(stack, "FnMigrate", {
@@ -31,8 +28,6 @@ export function Misc(context: sst.StackContext) {
     // copyFiles: [{from: "data/migrate"}],
     copyFiles: [{from: "services/data/migrate"}],
     bind: [
-      DB_URL_V0,
-      FLASK_KEY_V0,
       APP_REGION,
       // used to read the old SQL script or main migration
       bucket,

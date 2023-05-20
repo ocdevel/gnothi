@@ -4,7 +4,7 @@ import {InferModel} from 'drizzle-orm'
 import {pgTable, index, varchar, uuid, pgEnum, doublePrecision, timestamp, json} from 'drizzle-orm/pg-core';
 import {idCol, tsCol} from './utils'
 
-export const fieldTypes = pgEnum('field_type', [
+export const fieldTypes = pgEnum('fieldtype', [
   // medication changes / substance intake
   // sleep, diet, weight
   "number",
@@ -18,7 +18,7 @@ export const fieldTypes = pgEnum('field_type', [
   // weather_api?
   // text entries?
 ])
-export const defaultValTypes = pgEnum('default_value_type', [
+export const defaultValTypes = pgEnum('defaultvaluetypes', [
   "value",  // which includes None
   "average",
   "ffill"

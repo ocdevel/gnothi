@@ -25,8 +25,6 @@ export function getParas(e: Entry): string[] {
   return getText(e).split(/\n+/)
 }
 
-const AiState = z.enum(['todo', 'skip', 'running', 'done']).optional()
-
 const Entry = createInsertSchema(entries, {
   created_at: dateCol(),
   updated_at: dateCol(),

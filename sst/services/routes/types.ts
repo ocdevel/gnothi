@@ -5,7 +5,6 @@ import {Entry, entries} from '../data/schemas/entries'
 import {EntryTag, entriesTags} from '../data/schemas/entriesTags'
 import {FieldEntry, fieldEntries} from '../data/schemas/fieldEntries'
 import {Field, fields} from '../data/schemas/fields'
-import {Keyvalue, keyvalues} from '../data/schemas/keyvalues'
 import {Person, people} from '../data/schemas/people'
 import {Share, shares, sharesTags, ShareTag, sharesUsers, ShareUser} from '../data/schemas/shares'
 import {Tag, tags} from '../data/schemas/tags'
@@ -72,7 +71,6 @@ export class FnContext {
     entriesTags,
     fieldEntries,
     fields,
-    keyvalues,
     people,
     shares,
     sharesTags,

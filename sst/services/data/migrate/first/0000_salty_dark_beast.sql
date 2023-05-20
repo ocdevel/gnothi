@@ -1,6 +1,4 @@
-SET client_encoding = 'UTF8';
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA public;
-
 
 DO $$ BEGIN
  CREATE TYPE "defaultvaluetypes" AS ENUM('value', 'average', 'ffill');

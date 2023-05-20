@@ -23,9 +23,10 @@ import { Fernet } from 'fernet-nodejs';
 import {expect, it} from "vitest"
 import * as dotenv from 'dotenv'
 import * as _ from 'lodash'
-import {addUserToCognito} from './cognito'
+import {addUserToCognito, randomPassword} from './cognito'
 
 dotenv.config({ path: `services/data/migrate/v0/.env.${process.env.SST_STAGE}` })
+console.log(`Migrating for ${process.env.SST_STAGE}`)
 
 
 const exec = promisify(execCallback);
@@ -83,7 +84,7 @@ export async function decryptUsers(db: DB) {
     if (~["tylerrenelle@gmail.com", "wilding34@gmail.com"].indexOf(email)) {
       decrypted.cognito_id = await addUserToCognito(row)
     } else {
-      decrypted.cognito_id = "xyz"
+      decrypted.cognito_id = randomPassword()
     }
     await db.drizzle.update(users).set(decrypted).where(eq(users.id, row.id))
   }
@@ -155,6 +156,13 @@ export async function decryptTags(db: DB) {
   }
 }
 
+function killConnections(dbname: string) {
+  return `SELECT pg_terminate_backend(pg_stat_activity.pid)
+    FROM pg_stat_activity
+    WHERE pg_stat_activity.datname='${dbname}'
+      AND pid <> pg_backend_pid();`
+}
+
 it("v0:migrate", async () => {
 
   if (!SKIP_DUMP) {
@@ -177,12 +185,14 @@ it("v0:migrate", async () => {
   // Delete / re-create intermediate database
   const db1_pg = new DB({connectionUrl: `${localhost}/postgres`})
   await db1_pg.connect()
+  await db1_pg.pg.query(killConnections(intermediate))
   await db1_pg.pg.query(`drop database if exists ${intermediate}`)
   await db1_pg.pg.query(`create database ${intermediate}`)
 
   const db1 = new DB({connectionUrl: `${localhost}/${intermediate}`})
   await db1.connect()
   const db1i = db1.info
+  console.log({db1i})
   await exec([
     `PGPASSWORD='${db1i.host.password}' psql`,
     "-U", db1i.host.username,
@@ -200,8 +210,10 @@ it("v0:migrate", async () => {
   const db2 = new DB({})
   await db2.connect()
   const db2i = db2.info
+  console.log({db2i})
   const db2_pg = new DB({connectionUrl: `postgresql://${db2i.host.username}:${db2i.host.password}@${db2i.host.host}:${db2i.host.port}/postgres`})
   await db2_pg.connect()
+  await db2_pg.pg.query(killConnections(db2i.database))
   await db2_pg.pg.query(`drop database if exists ${db2i.database}`)
   await db2_pg.pg.query(`create database ${db2i.database}`)
 
@@ -219,7 +231,9 @@ it("v0:migrate", async () => {
     "-d", db2i.database,
   ].join(' '))
 
-  await exec(`aws lambda invoke --function-name ${Config.FN_DB_MIGRATE} /dev/null`)
+  const invokeCmd = `aws lambda invoke --function-name ${Config.FN_DB_MIGRATE} /dev/null`
+  console.log({invokeCmd})
+  await exec(invokeCmd)
 
   // await db.pg.query(oldSql)
   // await addUsersToCognito(db)
