@@ -55,6 +55,8 @@ export function Auth({ app, stack }: sst.StackContext) {
         customAttributes: {
           'gnothiId': new StringAttribute({ mutable: true }),
           'adminCreated': new StringAttribute({ mutable: true }),
+          // 'yesTerms_Disclaimer': new String({ mutable: true }),
+          // 'yesPrivacyPolicy': new String({ mutable: true }),
         },
       }
     },
