@@ -27,7 +27,7 @@ export interface ApiSlice {
   setSendJsonMessage: (sendJsonMessage: WebSocketHook<Api.Res>["sendJsonMessage"]) => void
 
   jwt: string | undefined
-  setJwt: (jwt: string | undefined) => Promise<void>
+  setJwt: (jwt: string | undefined) => void
   logout: () => Promise<void>
   // AmplifyUser, not the user from database
   // user: any
@@ -63,7 +63,7 @@ export const apiSlice: StateCreator<
   setSendJsonMessage: (sendJsonMessage) => set({sendJsonMessage}),
 
   jwt: undefined,
-  setJwt: async (jwt) => {
+  setJwt: (jwt) => {
     if (get().jwt === jwt) {return}
     if (!jwt) {
       set({jwt, wsUrl: API_WS, user: {as: null, me: null, viewer: null}})

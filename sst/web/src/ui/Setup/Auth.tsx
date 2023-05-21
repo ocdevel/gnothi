@@ -10,29 +10,95 @@ import Stack from "@mui/material/Stack";
 import Box from "@mui/material/Box";
 import "@aws-amplify/ui-react/styles.css";
 import './hide-signup-button.css'
-import {Helmet} from "react-helmet-async";
+import {create} from "zustand";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import Checkbox from "@mui/material/Checkbox";
+import {shallow} from "zustand/shallow";
 
 Amplify.configure(awsConfig);
 
-interface AuthComponentOld {
-  tab: "signIn" | "signUp" | undefined
+// Create a Zustand store local to this file to track just the two acknowledgement checkboxes.
+type AcksObj = {
+  acceptTermsConditionsDisclaimer: Date | null
+  acceptPrivacyPolicy: Date | null
 }
-export function AuthComponentOld({tab}: AuthComponent) {
-  // https://ui.docs.amplify.aws/react/connected-components/authenticator/customization
-  // https://ui.docs.amplify.aws/react/theming#design-tokens
-  // TODO customize colors / fonts
-  // 177a5482 - sample theme
+type AcksKeys = keyof AcksObj
+const useLocalStore = create<{
+  acks: AcksObj
+  setAcks: (acks: Partial<AcksObj>) => void
+  done: boolean
+  setDone: (done: boolean) => void
+}>((set, get) => ({
+  acks: {
+    acceptTermsConditionsDisclaimer: null,
+    acceptPrivacyPolicy: null,
+  },
+  setAcks: (acks: Partial<AcksObj>) => set({acks: {...get().acks, ...acks}}),
+  done: false,
+  setDone: (done: boolean) => set({done}),
+}))
 
-  // return <ThemeProvider theme={theme}>
-  return <Authenticator
-    loginMechanisms={["email"]}
-    initialState={tab}
-  />
-  // return <Authenticator loginMechanisms={loginMechanisms}>
-  //     {({ signOut, user }) => {
-  //       return <Typography>Welcome ${user.username}</Typography>
-  //     }}
-  // </Authenticator>
+
+function Acknowledgements() {
+  const [
+    acks,
+    setAcks,
+    done,
+    setDone
+  ] = useLocalStore(s => [
+    s.acks,
+    s.setAcks,
+    s.done,
+    s.setDone
+  ], shallow)
+  const [step, setStep] = useState<number>(1);
+
+  function nextStep() {
+    const newStep = step + 1
+    setStep(newStep)
+    if (newStep === 3 && acks.acceptPrivacyPolicy && acks.acceptTermsConditionsDisclaimer) {
+      setDone(true)
+    }
+  }
+
+  function renderAcknowledge(name: AcksKeys, label: string) {
+    return <>
+      <FormControlLabel
+        control={<Checkbox
+          checked={!!acks[name]}
+          onChange={(e) => setAcks({
+            ...acks,
+            [name]: acks[name] ? null : new Date()
+          })}
+        />}
+        label={label}
+      />
+      <Button
+        variant="contained"
+        fullWidth
+        disabled={!acks[name]}
+        onClick={nextStep}
+      >Next</Button>
+    </>
+  }
+
+  if (step === 1) {
+    return <Stack spacing={2}>
+      {/* TODO: Insert your disclaimer here */}
+      <Typography variant='h4'>Disclaimer</Typography>
+      <Typography>Gnothi is not a substitute for professional medical advice, diagnosis, or treatment. If you have a medical or mental health emergency, immediately contact a healthcare professional or dial 911. Use of our services is at your own risk. Our platform doesn't provide medical care, and health advice should be sought from licensed professionals. You are solely responsible for seeking appropriate treatment.</Typography>
+      {renderAcknowledge("acceptTermsConditionsDisclaimer", "I agree with the Terms & Conditions")}
+    </Stack>
+  }
+  if (step === 2) {
+    return <Stack spacing={2}>
+      {/* TODO: Insert your disclaimer here */}
+      <Typography variant='h4'>Privacy</Typography>
+      <Typography>Privacy policy stuff</Typography>
+      {renderAcknowledge("acceptPrivacyPolicy", "I agree with the Privacy Policy")}
+    </Stack>
+  }
+  return null
 }
 
 
@@ -46,79 +112,28 @@ export const AuthComponent: FC<AuthComponentProps> = ({tab}) => {
   // for every step/route change. But I tried handling it all within FormFields() and just setting hideButton,
   // couldn't get it working
   const {route} = useAuthenticator((context) => [context.route]);
-  const [step, setStep] = useState(1);
-  const hideButton = route === "signUp" && step !== 3
+  const done = useLocalStore(s => s.done)
+  const hideButton = route === "signUp" && !done
 
   return <Authenticator
     className={hideButton ? 'hide-signup-button' : ''}
     loginMechanisms={["email"]}
     initialState={tab}
     components={{
+      // Customize registration to add acknowledgement checkboxes. These are then saved to the Cognito user for compliance.
       SignUp: {
         FormFields() {
-          const [checked, setChecked] = useState<Record<Checked, boolean>>({
-            'custom:yesTerms_Disclaimer': false,
-            'custom:yesPrivacyPolicy': false,
-          })
-
-          function nextStep() {
-            setStep(step + 1)
-          }
-
-          // const { validationErrors } = useAuthenticator();
-          function renderAcknowledge(name: Checked, label: string) {
-            // errorMessage={validationErrors[name] as string}
-            // hasError={!!validationErrors[name]}
-            return <CheckboxField
-              checked={checked[name]}
-              onChange={(e) => setChecked({...checked, [name]: e.target.checked})}
-              isRequired
-              name={name}
-              value="yes"
-              label={label}
-            />
-          }
-
-          if (step === 1) {
-            return <Stack spacing={2}>
-              {/* TODO: Insert your disclaimer here */}
-              <Typography variant='h4'>Disclaimer</Typography>
-              <Typography>Gnothi is not a substitute for professional medical advice, diagnosis, or treatment. If you have a medical or mental health emergency, immediately contact a healthcare professional or dial 911. Use of our services is at your own risk. Our platform doesn't provide medical care, and health advice should be sought from licensed professionals. You are solely responsible for seeking appropriate treatment.</Typography>
-              {renderAcknowledge("custom:yesTerms_Disclaimer", "I agree with the Terms & Conditions")}
-              <Button
-                variant="contained"
-                fullWidth
-                disabled={!checked['custom:yesTerms_Disclaimer']}
-                onClick={nextStep}
-              >Next</Button>
-            </Stack>
-          }
-          if (step === 2) {
-            return <Stack spacing={2}>
-              {/* TODO: Insert your disclaimer here */}
-              <Typography variant='h4'>Privacy</Typography>
-              <Typography>Privacy policy stuff</Typography>
-              {renderAcknowledge("custom:yesPrivacyPolicy", "I agree with the Privacy Policy")}
-              <Button
-                variant="contained"
-                fullWidth
-                disabled={!checked['custom:yesPrivacyPolicy']}
-                onClick={nextStep}
-              >Next</Button>
-            </Stack>
-          }
-          return <Authenticator.SignUp.FormFields/>
+          return done ? <Authenticator.SignUp.FormFields /> : <Acknowledgements />
         }
       },
     }}
     services={{
       async validateCustomSignUp(formData) {
         let errors: [string, string][] = []
-        if (!formData['custom:yesTerms_Disclaimer']) {
-          errors = [...errors, ['custom:yesTerms_Disclaimer', 'You must agree to the Terms & Conditions']]
-        }
-        if (!formData['custom:yesPrivacyPolicy']) {
-          errors = [...errors, ['custom:yesPrivacyPolicy', 'You must agree to the Privacy Policy']]
+        // For some reason, `done` in scope isn't updating here. But the validate function is indeed being called
+        // repeatedly. So I'm just grabbing it off the state manually.
+        if (!useLocalStore.getState().done) {
+          errors = [...errors, ['username', 'You must agree to the terms & conditions, disclaimer, and privacy policy']]
         }
         return errors.length ? Object.fromEntries(errors) : null
       },
@@ -151,9 +166,18 @@ export function AuthChecker() {
   return null
 }
 
+export function AcknowledgeChecker() {
+  const user = useStore(s => s.user?.me)
+  if (!user) {return null}
+  if (user && !user.acceptPrivacy && !user.acceptTerms) {
+    // alert("not accepted yet")
+  }
+}
+
 export function AuthProvider({children}: React.PropsWithChildren) {
   return <Authenticator.Provider>
     <AuthChecker />
+    <AcknowledgeChecker />
     {children}
   </Authenticator.Provider>
 }
