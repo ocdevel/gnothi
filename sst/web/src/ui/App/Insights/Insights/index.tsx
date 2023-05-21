@@ -30,7 +30,7 @@ import Card from '@mui/material/Card'
 import {Stack2, Alert2} from "../../../Components/Misc";
 import Stack from "@mui/material/Stack"
 import { Typography } from "@mui/material"
-import shallow from "zustand/shallow";
+import {shallow} from "zustand/shallow";
 
 // 62da7182: books attrs, popovers
 const iconProps = {

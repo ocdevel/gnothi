@@ -1,7 +1,7 @@
 import React, {useCallback, useEffect, useState} from "react"
 import Form from './Form/Form'
 import {useStore} from "@gnothi/web/src/data/store"
-import shallow from "zustand/shallow";
+import {shallow} from "zustand/shallow";
 import Grid from "@mui/material/Grid";
 import List from './List'
 

@@ -12,7 +12,7 @@ import {useForm, Controller} from "react-hook-form"
 import {zodResolver} from "@hookform/resolvers/zod"
 import * as S from "@gnothi/schemas"
 import {fields_post_request} from "@gnothi/schemas/fields";
-import shallow from "zustand/shallow";
+import {shallow} from "zustand/shallow";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 

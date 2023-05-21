@@ -55,11 +55,6 @@ export function Auth({ app, stack }: sst.StackContext) {
         customAttributes: {
           'gnothiId': new StringAttribute({ mutable: true }),
           'adminCreated': new StringAttribute({ mutable: true }),
-          'yesTerms_Disclaimer': new StringAttribute({ mutable: true }),
-          'yesPrivacyPolicy': new StringAttribute({ mutable: true }),
-
-          // FIXME remove before launch, was a test
-          'yesPrivacyPolicy1': new BooleanAttribute({ mutable: true }),
         },
       }
     },

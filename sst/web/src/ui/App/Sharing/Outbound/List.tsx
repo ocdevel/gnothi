@@ -1,6 +1,6 @@
 import React from "react";
 import Item from './Item'
-import shallow from "zustand/shallow";
+import {shallow} from "zustand/shallow";
 import {useStore} from "../../../../data/store";
 
 export default function List() {

@@ -14,6 +14,8 @@ import {create} from "zustand";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Checkbox from "@mui/material/Checkbox";
 import {shallow} from "zustand/shallow";
+import {BasicDialog} from "../Components/Dialog.tsx";
+import DialogContent from "@mui/material/DialogContent";
 
 Amplify.configure(awsConfig);
 
@@ -106,7 +108,6 @@ interface AuthComponentProps {
   tab: "signIn" | "signUp" | undefined;
 }
 
-type Checked = 'custom:yesTerms_Disclaimer' | 'custom:yesPrivacyPolicy'
 export const AuthComponent: FC<AuthComponentProps> = ({tab}) => {
   // It's bad performance that I'm computing hideButton here, since it will trigger re-render of Authenticator
   // for every step/route change. But I tried handling it all within FormFields() and just setting hideButton,
@@ -167,11 +168,36 @@ export function AuthChecker() {
 }
 
 export function AcknowledgeChecker() {
-  const user = useStore(s => s.user?.me)
-  if (!user) {return null}
-  if (user && !user.acceptPrivacy && !user.acceptTerms) {
-    // alert("not accepted yet")
-  }
+  const [user, send] = useStore(s => [
+    s.user?.me,
+    s.send
+  ], shallow)
+  const [done, acks] = useLocalStore(s => [s.done, s.acks], shallow)
+
+  useEffect(() => {
+    // Once they've completed the steps, send the acceptance to the server. This will only happen if they go through
+    // the process, since done stays false otherwise. Meaning, if they already accepted, `hide` prevents the flow
+    if (done) {
+      send("users_acknowledge_request", {})
+    }
+  }, [done])
+
+  const hide = (
+    !user
+    || done
+    || (user.accept_terms_conditions && user.accept_privacy_policy && user.accept_disclaimer)
+  )
+  if (hide) {return null}
+
+  return <BasicDialog
+    open={true}
+    onClose={() => {}}
+    size="md"
+  >
+    <DialogContent>
+      <Acknowledgements />
+    </DialogContent>
+  </BasicDialog>
 }
 
 export function AuthProvider({children}: React.PropsWithChildren) {

@@ -1,5 +1,5 @@
 import {useLocation} from "react-router-dom";
-import shallow from "zustand/shallow";
+import {shallow} from "zustand/shallow";
 import {useCallback} from "react";
 import AppBar, {CTA, Link} from "../../Components/AppBar";
 import * as React from "react";

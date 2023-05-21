@@ -21,7 +21,7 @@ import Box from "@mui/material/Box";
 import Advanced from "../Modal/Advanced";
 import DayChanger from '../Modal/DayChanger'
 import * as S from '@gnothi/schemas'
-import shallow from 'zustand/shallow'
+import {shallow} from 'zustand/shallow'
 import Behavior from './Item'
 import ManageBehaviorsIcon from '@mui/icons-material/SettingsOutlined';
 import IconButton from "@mui/material/IconButton";

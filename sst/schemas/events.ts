@@ -26,6 +26,7 @@ export const Events = z.enum([
   'users_therapists_list_response',
   'users_checkusername_request',
   'users_checkusername_response',
+  'users_acknowledge_request',
 
   'entries_list_request',
   'entries_list_response',

@@ -18,7 +18,7 @@ import TableHead from "@mui/material/TableHead";
 import TableBody from "@mui/material/TableBody";
 import Paper from "@mui/material/Paper";
 import {fields_list_response} from '@gnothi/schemas/fields'
-import shallow from "zustand/shallow";
+import {shallow} from "zustand/shallow";
 
 const round_ = (v: number | null) => v ? v.toFixed(2) : null
 

@@ -45,7 +45,12 @@ export const users = pgTable('users', {
 
   // habitica
   habitica_user_id: varchar("habitica_user_id"),
-  habitica_api_token: varchar("habitica_api_token")
+  habitica_api_token: varchar("habitica_api_token"),
+
+  // compliance
+  accept_terms_conditions: timestamp("accept_terms_conditions"),
+  accept_disclaimer: timestamp("accept_disclaimer"),
+  accept_privacy_policy: timestamp("accept_privacy_policy"),
 
   // ws_id = sa.Column(sa.Unicode, index=True)
   // as = FKCol('users.id')

@@ -4,7 +4,7 @@ import CardContent from "@mui/material/CardContent";
 import Chip from "@mui/material/Chip";
 import NotesNotifs from "./Notifs";
 import {useStore} from "../../../../data/store";
-import shallow from "zustand/shallow";
+import {shallow} from "zustand/shallow";
 import NotesCreate from './Create'
 import {EntriesMessages} from "../../Chat/Messages";
 import * as S from '@gnothi/schemas'

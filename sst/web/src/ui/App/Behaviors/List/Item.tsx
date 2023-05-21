@@ -3,7 +3,7 @@ import ButtonBase from "@mui/material/ButtonBase";
 import {FieldName} from "../utils";
 import Badge from "@mui/material/Badge";
 import {useStore} from "../../../../data/store";
-import shallow from "zustand/shallow";
+import {shallow} from "zustand/shallow";
 import React, {useCallback} from "react";
 import IconButton from "@mui/material/IconButton";
 import SortIcon from "@mui/icons-material/DragIndicatorOutlined";

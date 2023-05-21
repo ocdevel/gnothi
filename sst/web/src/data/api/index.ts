@@ -1,4 +1,4 @@
-import shallow from "zustand/shallow";
+import {shallow} from "zustand/shallow";
 import useWebSocket from "react-use-websocket";
 import {Api} from "@gnothi/schemas";
 import {useCallback, useEffect} from "react";

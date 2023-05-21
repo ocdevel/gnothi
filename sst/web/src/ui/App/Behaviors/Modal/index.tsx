@@ -4,7 +4,7 @@ import {BasicDialog} from "@gnothi/web/src/ui/Components/Dialog";
 
 import {useStore} from "@gnothi/web/src/data/store"
 import {Create, Update} from "./Upsert"
-import shallow from "zustand/shallow";
+import {shallow} from "zustand/shallow";
 import Grid from "@mui/material/Grid";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";

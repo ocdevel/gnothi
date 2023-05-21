@@ -3,7 +3,7 @@ import {FullScreenDialog} from "../../Components/Dialog";
 import Tabs from "../../Components/Tabs";
 import {useCallback, useEffect} from "react";
 import {CTA} from "../../Components/AppBar";
-import shallow from "zustand/shallow";
+import {shallow} from "zustand/shallow";
 import {useStore} from "../../../data/store";
 import Inbound from "./Inbound";
 import Outbound from './Outbound'

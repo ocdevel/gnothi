@@ -1,4 +1,4 @@
-import create from 'zustand'
+import {create} from 'zustand'
 import * as S from "@gnothi/schemas"
 import {StateCreator} from "zustand/esm";
 import {EventsSlice} from "./events";

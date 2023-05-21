@@ -15,11 +15,14 @@ export const handler = async (event: PostConfirmationTriggerEvent, context, call
     return event
   }
 
-
   // create user in database. maybe add its uid to cognito
   const dbUser = await db.drizzle.insert(users).values({
     email: event.request.userAttributes.email,
     cognito_id: event.userName,
+    // These were accepted client-side in registration form
+    accept_terms_conditions: new Date(),
+    accept_privacy_policy: new Date(),
+    accept_disclaimer: new Date()
   }).returning()
   const uid = dbUser[0].id
   event.request.userAttributes['custom:gnothiId'] = uid

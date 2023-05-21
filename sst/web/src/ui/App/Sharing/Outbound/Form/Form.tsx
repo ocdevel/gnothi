@@ -21,7 +21,7 @@ import FormControlLabel from '@mui/material/FormControlLabel'
 import Box from '@mui/material/Box'
 import Divider from '@mui/material/Divider'
 import Typography from '@mui/material/Typography'
-import shallow from "zustand/shallow";
+import {shallow} from "zustand/shallow";
 import * as S from '@gnothi/schemas'
 
 const profile_fields = {

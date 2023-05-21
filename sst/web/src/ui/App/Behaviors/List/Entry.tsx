@@ -1,5 +1,5 @@
 import {useStore} from "../../../../data/store";
-import shallow from "zustand/shallow";
+import {shallow} from "zustand/shallow";
 import React, {useCallback, useEffect} from "react";
 import _ from "lodash";
 import FormControlLabel from "@mui/material/FormControlLabel";

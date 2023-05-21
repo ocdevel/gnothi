@@ -1,6 +1,6 @@
-import create from 'zustand'
+import {create} from 'zustand'
 import {subscribeWithSelector} from 'zustand/middleware'
-import shallow from 'zustand/shallow'
+import {shallow} from 'zustand/shallow'
 import {appSlice, AppSlice} from './app'
 import {ApiSlice, apiSlice} from './api'
 import {behaviorsSlice, BehaviorsSlice} from './behaviors'

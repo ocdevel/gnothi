@@ -17,7 +17,7 @@ import GroupToolbar from "../Groups/View/Toolbar"
 import SharingModal from "../Sharing"
 import EntryModal from "../Entries/Modal"
 import BehaviorsModal from "../Behaviors/Modal"
-import shallow from "zustand/shallow";
+import {shallow} from "zustand/shallow";
 import AppBar from './AppBar'
 
 

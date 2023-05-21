@@ -3,55 +3,32 @@ import {Passthrough, dateCol} from './utils'
 import {Route} from './api'
 import {Events} from './events'
 import {v4 as uuid} from "uuid";
+import {users} from '../services/data/schemas/users'
+import {createInsertSchema} from "drizzle-zod";
 export * as Users from './users'
 
-export const Profile = z.object({
-  // TODO this will be overridden on server, doubling as display_name
-  // from previous version
-  username: z.string().optional(),
+// Note: I had separate schemas for the Profile fields from a user, and User=Profile+Everything. Revisit if needed.
+// The fields were: `username, first_name, last_name, birthday, gender, orientation, timezone, bio`
+// username will be overridden on server, doubling as display_name from previous version
 
-  first_name: z.string().optional(),
-  last_name: z.string().optional(),
-  gender: z.string().optional(),
-  orientation: z.string().optional(),
-  birthday: dateCol().optional(),
-  timezone: z.string().optional(),
-  bio: z.string().optional()
-})
-export type Profile = z.infer<typeof Profile>
-
-export const User = Profile.extend({
-  // Core
-  id: z.string().uuid(),
-  email: z.string().email(),
-  cognito_id: z.string().optional(),
+export const User = createInsertSchema(users, {
   created_at: dateCol(),
   updated_at: dateCol(),
-
-  // Administrative
-  is_superuser: z.boolean().default(false),
-  is_cool: z.boolean().default(false),
-  therapist: z.boolean().default(false),
-  n_tokens: z.number().default(0),
-  affiliate: z.string().optional(), // FK codes.code
-
-  // ML
-  ai_ran: z.boolean().default(false),
+  birthday: dateCol().optional(),
   last_books: dateCol().optional(),
   last_influencers: dateCol().optional(),
+  accept_terms_conditions: dateCol().optional(),
+  accept_disclaimer: dateCol().optional(),
+  accept_privacy_policy: dateCol().optional(),
 
-  // Habitica
-  habitica_user_id: z.string().optional(),
-  habitica_api_token: z.string().optional(),
-
-  // Relationships (FKs) TODO
 })
 export type User = z.infer<typeof User>
 
 export const users_list_response = User.pick({
   id: true, email: true, timezone: true,
   habitica_user_id: true, habitica_api_token: true,
-  is_cool: true, paid: true, affiliate: true
+  is_cool: true, paid: true, affiliate: true,
+  accept_terms_conditions: true, accept_disclaimer: true, accept_privacy_policy: true
 })
 export type users_list_response = z.infer<typeof users_list_response>
 
@@ -77,6 +54,19 @@ export const routes = {
       s: users_list_response,
     }
   },
+
+  // custom handling of acknowledging privacy/terms/disclaimer for users migrated from v0
+  users_acknowledge_request:{
+    i: {
+      e: 'users_acknowledge_request',
+      s: Passthrough,
+      t: {ws: true},
+    },
+    o: {
+      e: 'void',
+      s: z.void()
+    }
+  }
 }
 
 

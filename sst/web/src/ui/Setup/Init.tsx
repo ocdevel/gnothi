@@ -1,7 +1,7 @@
 import React, {useEffect, useCallback} from "react";
 import {useLocation, useSearchParams} from "react-router-dom";
 import {useStore} from "../../data/store";
-import shallow from "zustand/shallow";
+import {shallow} from "zustand/shallow";
 
 export default function Init() {
   const [searchParams, setSearchParams] = useSearchParams()
