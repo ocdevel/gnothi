@@ -1,5 +1,59 @@
 import { Box, Grid, Stack, Typography } from "@mui/material"
 
+type FeatureIntro2 = {
+  icon?: React.ReactNode
+  title: string
+  children: React.ReactNode
+  color: string
+}
+
+
+
+export function FeatureIntro2({
+  icon,
+  title,
+  children,
+  color
+}: FeatureIntro2) {
+  return <Grid container
+      xs={12} md={4}
+      px={4}
+      py={8}
+      alignItems="center"
+      justifyContent="center"
+      spacing={2}
+      direction='column'
+      >
+      <Grid item
+        alignContent="center"
+      >
+        {icon}
+      </Grid>
+      <Grid item
+        alignContent="center"
+      >
+        <Typography
+          variant='h6'
+          textAlign="center"
+          color={color}
+          marginBottom={1}
+        >
+          {title}
+        </Typography>
+        <Typography
+          variant="body1"
+          textAlign="center"
+          maxWidth={450}
+
+        >
+          {children}
+        </Typography>
+        </Grid>
+  </Grid>
+
+
+                              }
+
 type FeatureIntro = {
   icon?: React.ReactNode
   title: string

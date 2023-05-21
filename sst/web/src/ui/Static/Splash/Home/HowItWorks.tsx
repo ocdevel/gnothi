@@ -6,6 +6,7 @@ import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import { styles } from '../../../Setup/Mui'
 import Box from "@mui/material/Box";
+import Divider from "@mui/material/Divider";
 const { spacing, colors, sx } = styles
 
 

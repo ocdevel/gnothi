@@ -1,14 +1,25 @@
-# Gnōthi Seauton: Know Thyself
-A journal that uses AI to help you introspect and find resources.
+# Welcome to Gnothi on GitHub!
+
+Hello there, seekers of self-knowledge! We're excited to introduce Gnothi, a journal and toolkit that uses AI to help you introspect and find resources.
+
+Gnothi, rooted in the ancient aphorism "Know thyself", is an open-source project designed to guide your self-discovery journey. As an AI-assisted journal and toolkit, Gnothi helps you identify patterns and themes in your life, analyze your dreams, track habits, and even connect you with resources such as book recommendations. It also allows you to share entries with friends or therapists, fostering a supportive environment for growth and change.
+
+Our approach blends traditional practices like journaling and behavior tracking with AI-driven insights to highlight areas of opportunity for learning and personal growth. While we don't claim to replace therapy or offer medical advice, thousands of individuals have found value in using Gnothi as part of their self-improvement journey.
+
+We're passionate about the potential of AI to enrich our understanding of ourselves and our lives, and we believe in the power of open-source to make this technology accessible and evolving. That's where you come in! We invite you to contribute to Gnothi's codebase, helping us refine our tools and broaden the impact of this project.
+
+Whether you're a seasoned developer or just getting started, we welcome your input. So, come join us on this exciting journey of self-discovery and tech innovation. Let's work together to make Gnothi the best it can be!
+
+The journey of a thousand miles begins with a single commit. Happy coding!
+
 
 * Summaries: AI summarizes your entries, your week, your year.
 * Themes: AI shows your recurring themes & issues. Also valuable for dream themes.
-* Questions: Ask AI anything about yourself. The answers and insights may surprise you.
 * Books: AI recommends self-help books based on your entries.
-* Field Tracking: Track fields (mood, sleep, substance intake, etc). AI shows you how they interact and which ones to focus on.
-* Share: Share journals with therapists, who can use all these tools to catch up since your last session.
 * Security: All text is industry-standard encrypted.
-* Future: The sky's the limit with BERT language models! Astrology? Dream analysis?
+* Field Tracking (lots to be done here): Track fields (mood, sleep, substance intake, etc). AI shows you how they interact and which ones to focus on.
+* Share (coming soon): Share journals with therapists, who can use all these tools to catch up since your last session.
+* Questions (coming soon): Ask AI anything about yourself. The answers and insights may surprise you.
 
 # Setup
 Currently very hairy, will clean this up soon.

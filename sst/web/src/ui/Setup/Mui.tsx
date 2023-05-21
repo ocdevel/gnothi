@@ -24,7 +24,8 @@ export const styles = {
     //'#3A4784',
     button2: {backgroundColor: "secondary.main", color: colors.black, fontFamily: "Poppins", fontWeight: '500'},
     
-    featureIcon: {fontSize: 40, color: "#50577a"},
+    featureIcon: {fontSize: 60, color: "#50577a"},
+
     behaviorIcon: {fontSize: 40, color: "#507a6f"},
     bookIcon: {fontSize: 40, color: "#553840"},
 
@@ -74,7 +75,7 @@ export const theme = createTheme({
     h1: {
       fontWeight: 400,
       fontFamily: 'Antic Didone',
-      fontSize: '4.8rem', 
+      fontSize: '5rem',
       lineHeight: '1.1',
       marginBottom: '1rem'
      

@@ -1,0 +1,18 @@
+.hide-signup-button .amplify-button {
+  display: none;
+}
+.amplify-button--primary {
+  background-color: #50577A;
+  border-radius: 12px;
+}
+
+.amplify-button:hover {
+  background-color: #A7ABBC;
+  color: #000000;
+  border-color: #000000;
+}
+
+//.amplify-icon.amplify-checkbox__icon.amplify-checkbox__icon--checked {
+//  background-color: #50577A;
+//  border-color: #50577A;
+//}

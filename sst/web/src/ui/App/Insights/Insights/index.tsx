@@ -44,26 +44,8 @@ interface Insight {
   description?: string
   children: React.ReactNode
 }
-function InsightCardHeader({label, icon, description, children}: Insight) {
-  const title = <Stack
-    alignItems="center"
-    direction="row"
-    spacing={2}
-  >
-    {icon}
-    <Typography variant="inherit" >{label}</Typography>
-  </Stack>
-  return <Card className='mb-3' >
-    <CardHeader
-      title={title}
-      subheader={description}
-    />
-    <CardContent>
-      {children}
-    </CardContent>
-  </Card>
-}
-function InsightRaw({label, icon, description, children}: Insight) {
+
+function Insight({label, icon, description, children}: Insight) {
   return <Card
     sx={{ backgroundColor:'white', borderRadius: 2, boxShadow: 1}}
   >
@@ -93,20 +75,18 @@ function InsightRaw({label, icon, description, children}: Insight) {
   </Card>
 }
 
-// const Insight = InsightCardHeader
-const Insight = InsightRaw
-
-
 interface Insights {
   entry_ids: string[]
 }
 export default function Insights({entry_ids}: Insights) {
   const [
     search,
-    entriesHash
+    entriesHash,
+    entryModal
   ] = useStore(s => [
     s.filters.search,
-    s.res.entries_list_response?.hash || {}
+    s.res.entries_list_response?.hash || {},
+    s.entryModal
   ], shallow)
   const send = useStore(useCallback(s => s.send, []))
   const view = entry_ids.length === 1 ? entry_ids[0] : "list"
@@ -193,6 +173,7 @@ export default function Insights({entry_ids}: Insights) {
         <Summarize view={view} />
       </Insight>
 
+      {entryModal?.mode==="view" &&
       <Insight
         label="Behavior Tracking"
         icon={<BehaviorsIcon {...iconProps} />}
@@ -200,7 +181,7 @@ export default function Insights({entry_ids}: Insights) {
       >
         <Behaviors/>
       </Insight>
-      
+      }
       <Insight
         label="Top Books"
         icon={<BooksIcon {...iconProps} />}

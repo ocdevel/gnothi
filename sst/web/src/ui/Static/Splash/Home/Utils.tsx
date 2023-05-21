@@ -115,7 +115,7 @@ export function Section({ children, color = 'light' }: React.PropsWithChildren<S
       sx={{
         mt: 10,
         mb: 15,
-        mx: {xs: 2, sm: 5, md: 8, lg: 12}
+        mx: 4
       }}
     >
       {children}

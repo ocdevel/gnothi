@@ -9,13 +9,13 @@ import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 import Box from "@mui/material/Box";
 import "@aws-amplify/ui-react/styles.css";
-import './hide-signup-button.css'
 import {create} from "zustand";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Checkbox from "@mui/material/Checkbox";
 import {shallow} from "zustand/shallow";
 import {BasicDialog} from "../Components/Dialog.tsx";
 import DialogContent from "@mui/material/DialogContent";
+import "./Auth.scss"
 
 Amplify.configure(awsConfig);
 
@@ -116,30 +116,91 @@ export const AuthComponent: FC<AuthComponentProps> = ({tab}) => {
   const done = useLocalStore(s => s.done)
   const hideButton = route === "signUp" && !done
 
-  return <Authenticator
-    className={hideButton ? 'hide-signup-button' : ''}
-    loginMechanisms={["email"]}
-    initialState={tab}
-    components={{
-      // Customize registration to add acknowledgement checkboxes. These are then saved to the Cognito user for compliance.
-      SignUp: {
-        FormFields() {
-          return done ? <Authenticator.SignUp.FormFields /> : <Acknowledgements />
-        }
+  // https://ui.docs.amplify.aws/react/connected-components/authenticator/customization
+  // https://ui.docs.amplify.aws/react/theming#design-tokens
+  // TODO customize colors / fonts
+  // 177a5482 - sample theme
+
+  // return <Authenticator loginMechanisms={loginMechanisms}>
+  //     {({ signOut, user }) => {
+  //       return <Typography>Welcome ${user.username}</Typography>
+  //     }}
+  // </Authenticator>
+
+  const { tokens } = useTheme();
+  const theme: Theme = {
+    name: 'Auth Example Theme',
+    tokens: {
+      colors: {
+        background: {
+          primary: {
+            value: "#ffffff",
+          },
+          secondary: {
+            value: "#ffffff",
+          },
+        },
+        font: {
+          interactive: {
+            value: "#50577a",
+          },
+        },
+        brand: {
+          primary: {
+            value: "#000000",
+          },
+        },
       },
-    }}
-    services={{
-      async validateCustomSignUp(formData) {
-        let errors: [string, string][] = []
-        // For some reason, `done` in scope isn't updating here. But the validate function is indeed being called
-        // repeatedly. So I'm just grabbing it off the state manually.
-        if (!useLocalStore.getState().done) {
-          errors = [...errors, ['username', 'You must agree to the terms & conditions, disclaimer, and privacy policy']]
-        }
-        return errors.length ? Object.fromEntries(errors) : null
+      components: {
+        tabs: {
+          item: {
+            _focus: {
+              color: {
+                value: "#000000",
+              },
+            },
+            _hover: {
+              color: {
+                value: "#000000",
+              },
+            },
+            _active: {
+              color: {
+                value: "#000000",
+              },
+            },
+          },
+        },
       },
-    }}
-  />
+    },
+  };
+
+  return <ThemeProvider theme={theme}>
+    <Authenticator
+      className={hideButton ? 'hide-signup-button' : ''}
+      loginMechanisms={["email"]}
+      initialState={tab}
+      components={{
+        // Customize registration to add acknowledgement checkboxes. These are then saved to the Cognito user for compliance.
+        SignUp: {
+          FormFields() {
+            return done ? <Authenticator.SignUp.FormFields /> : <Acknowledgements />
+          }
+        },
+      }}
+      services={{
+        async validateCustomSignUp(formData) {
+          let errors: [string, string][] = []
+          // For some reason, `done` in scope isn't updating here. But the validate function is indeed being called
+          // repeatedly. So I'm just grabbing it off the state manually.
+          if (!useLocalStore.getState().done) {
+            errors = [...errors, ['username', 'You must agree to the terms & conditions, disclaimer, and privacy policy']]
+          }
+          return errors.length ? Object.fromEntries(errors) : null
+        },
+      }}
+    />
+  </ThemeProvider>
 }
 
 

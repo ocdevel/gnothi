@@ -1,39 +1,33 @@
 import {Section} from "./Utils";
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import {styles} from '../../../Setup/Mui'
+import Grid from '@mui/material/Grid';
+import {styles} from '../../../Setup/Mui';
+import Divider from '@mui/material/Divider';
+import Box from '@mui/material/Box';
 const {spacing, colors, sx} = styles
 
 export default   function Hero() {
   return <Section color="dark">
-      <Stack
-        spacing={2}
-        sx={{
-          display: "flex",
-          direction: "column",
-          alignItems: "center",
-        }}>
+    <Grid mt={5}>
         <Typography
           variant="h1"
-          maxWidth={500}
+          textAlign={'center'}
           sx={{
-            textAlign: "center", 
-            color: colors.white, 
-            mt: { xs: 4, sm: 10 }}}
+            color: colors.white,
+            }}
           >
           Know thyself with Gnothi
         </Typography>
-
         <Typography
           variant="h4"
-          maxWidth= {500}
+          textAlign={'center'}
           sx={{
-            textAlign: "center", 
             color: colors.white}}
         >
           An AI-powered journal and toolkit for a healthy and happy life
         </Typography>
-      </Stack>
+    </Grid>
 
   </Section>
 }

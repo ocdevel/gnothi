@@ -85,27 +85,27 @@ export function BasicTabs() {
     <Box sx={{ width: '100%' }}>
       <Box sx={{ width: '100%', bgcolor: 'transparent' }}>
       <Tabs value={value} onChange={handleChange} centered>
+        <Tab label="Free" />
         <Tab label="Premium" />
-        <Tab label="Basic" />
-        <Tab label="Pricing" />
+        {/*<Tab label="Pricing" />*/}
       </Tabs>
 
     </Box>
       <TabPanel value={value} index={0}>
+        <Books/>
+        <BehaviorTracking/>
+        <ThemesSummaries/>
+        <OrganizationBasicPlan/>
+        <PremPricingCTA/>
+      </TabPanel>
+
+      <TabPanel value={value} index={1}>
         {/* <FreeVsPremium/> */}
         <Prompt/>
         <BehaviorTracking/>
         <ThemesSummaries/>
         <Organization/>
         <Books/>
-        <PremPricingCTA/>
-      </TabPanel>
-
-      <TabPanel value={value} index={1}>
-        <Books/>
-        <BehaviorTracking/>
-        <ThemesSummaries/>
-        <OrganizationBasicPlan/>
         <PremPricingCTA/>
       </TabPanel>
 

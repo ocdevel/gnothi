@@ -4,13 +4,11 @@ import Error from '../../../../ui/Components/Error'
 import Stack from "@mui/material/Stack";
 
 import {styles} from '../../../Setup/Mui'
-const {spacing, colors, sx} = styles
+const {colors} = styles
 
 import DiscoverAI from './DiscoverAI';
-import NewJournal from "../Old/NewJournal";
+import Discover_Simple from './Discover_Simple';
 import Hero from './Hero'
-import Demo from './Demo'
-import WhatsNext from '../Old/WhatsNext'
 import SignUp from "./SignUp";
 import HowItWorks from "./HowItWorks";
 
@@ -24,8 +22,8 @@ export default function Layout() {
   >
     <Error message={error} />
     <Hero />
-    <DiscoverAI />
-    <Demo />
+    <Discover_Simple />
+    {/*<Demo />*/}
     <HowItWorks />
     <SignUp />
   </Stack>
