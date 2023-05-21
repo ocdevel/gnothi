@@ -16,6 +16,7 @@ import {shallow} from "zustand/shallow";
 import {BasicDialog} from "../Components/Dialog.tsx";
 import DialogContent from "@mui/material/DialogContent";
 import "./Auth.scss"
+import Alert from "@mui/material/Alert";
 
 Amplify.configure(awsConfig);
 
@@ -41,66 +42,86 @@ const useLocalStore = create<{
 }))
 
 
-function Acknowledgements() {
+interface Acknowledgements {
+  existingUser?: boolean
+}
+function Acknowledgements({existingUser}: Acknowledgements) {
   const [
     acks,
     setAcks,
-    done,
     setDone
   ] = useLocalStore(s => [
     s.acks,
     s.setAcks,
-    s.done,
     s.setDone
   ], shallow)
-  const [step, setStep] = useState<number>(1);
+  const [step, setStep] = useState<number>(0)
+
+  const btnProps = {
+    variant: "contained",
+    fullWidth: true
+  } as const
+
+  const steps = [
+    ...(existingUser ? [
+      <Stack spacing={2}>
+        <Typography variant='h4'>Welcome back!</Typography>
+        <Typography>Hello existing user</Typography>
+        <Button
+          {...btnProps}
+          onClick={nextStep}
+        >Next</Button>
+      </Stack>,
+    ] : []),
+
+    <Stack spacing={2}>
+      <Typography variant='h4'>Disclaimer</Typography>
+      <Typography>Gnothi is not a substitute for professional medical advice, diagnosis, or treatment. If you have a medical or mental health emergency, immediately contact a healthcare professional or dial 911. Use of our services is at your own risk. Our platform doesn't provide medical care, and health advice should be sought from licensed professionals. You are solely responsible for seeking appropriate treatment.</Typography>
+      {renderAcknowledge("acceptTermsConditionsDisclaimer", "I agree with the Terms & Conditions")}
+      <Button
+        {...btnProps}
+        disabled={!acks.acceptTermsConditionsDisclaimer}
+        onClick={nextStep}
+      >Next</Button>
+    </Stack>,
+
+    <Stack spacing={2}>
+      {/* TODO: Insert your disclaimer here */}
+      <Typography variant='h4'>Privacy</Typography>
+      <Typography>Privacy policy stuff</Typography>
+      {renderAcknowledge("acceptPrivacyPolicy", "I agree with the Privacy Policy")}
+      <Button
+        {...btnProps}
+        disabled={!acks.acceptPrivacyPolicy}
+        onClick={nextStep}
+      >Next</Button>
+    </Stack>
+  ]
 
   function nextStep() {
     const newStep = step + 1
     setStep(newStep)
-    if (newStep === 3 && acks.acceptPrivacyPolicy && acks.acceptTermsConditionsDisclaimer) {
+    const isEnd = newStep === steps.length
+    console.log({isEnd, newStep, stepsLength: steps.length})
+    if (isEnd && acks.acceptPrivacyPolicy && acks.acceptTermsConditionsDisclaimer) {
       setDone(true)
     }
   }
 
   function renderAcknowledge(name: AcksKeys, label: string) {
-    return <>
-      <FormControlLabel
-        control={<Checkbox
-          checked={!!acks[name]}
-          onChange={(e) => setAcks({
-            ...acks,
-            [name]: acks[name] ? null : new Date()
-          })}
-        />}
-        label={label}
-      />
-      <Button
-        variant="contained"
-        fullWidth
-        disabled={!acks[name]}
-        onClick={nextStep}
-      >Next</Button>
-    </>
+    return <FormControlLabel
+      control={<Checkbox
+        checked={!!acks[name]}
+        onChange={() => setAcks({
+          ...acks,
+          [name]: acks[name] ? null : new Date()
+        })}
+      />}
+      label={label}
+    />
   }
 
-  if (step === 1) {
-    return <Stack spacing={2}>
-      {/* TODO: Insert your disclaimer here */}
-      <Typography variant='h4'>Disclaimer</Typography>
-      <Typography>Gnothi is not a substitute for professional medical advice, diagnosis, or treatment. If you have a medical or mental health emergency, immediately contact a healthcare professional or dial 911. Use of our services is at your own risk. Our platform doesn't provide medical care, and health advice should be sought from licensed professionals. You are solely responsible for seeking appropriate treatment.</Typography>
-      {renderAcknowledge("acceptTermsConditionsDisclaimer", "I agree with the Terms & Conditions")}
-    </Stack>
-  }
-  if (step === 2) {
-    return <Stack spacing={2}>
-      {/* TODO: Insert your disclaimer here */}
-      <Typography variant='h4'>Privacy</Typography>
-      <Typography>Privacy policy stuff</Typography>
-      {renderAcknowledge("acceptPrivacyPolicy", "I agree with the Privacy Policy")}
-    </Stack>
-  }
-  return null
+  return steps[step] || null
 }
 
 
@@ -187,6 +208,14 @@ export const AuthComponent: FC<AuthComponentProps> = ({tab}) => {
             return done ? <Authenticator.SignUp.FormFields /> : <Acknowledgements />
           }
         },
+        SignIn: {
+          Footer() {
+            return <Alert severity="warning">
+              Gnothi has been upgraded to v1. Included in the upgrade is a new authentication system, so if you're a
+              returning user and haven't yet, you'll need to reset your password.
+            </Alert>
+          }
+        }
       }}
       services={{
         async validateCustomSignUp(formData) {
@@ -256,7 +285,7 @@ export function AcknowledgeChecker() {
     size="md"
   >
     <DialogContent>
-      <Acknowledgements />
+      <Acknowledgements existingUser={true} />
     </DialogContent>
   </BasicDialog>
 }
