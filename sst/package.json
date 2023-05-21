@@ -23,7 +23,8 @@
     "dotenv": "^16.0.3",
     "sst": "^2.8.23",
     "typescript": "^5.0.4",
-    "vitest": "^0.31.1"
+    "vitest": "^0.31.1",
+    "drizzle-kit": "^0.17.6"
   },
   "dependencies": {
     "drizzle-zod": "^0.4.1",
