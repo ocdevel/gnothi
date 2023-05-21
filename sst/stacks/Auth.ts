@@ -1,6 +1,6 @@
 import * as sst from "sst/constructs";
 import { SharedImport } from './Shared'
-import {StringAttribute} from 'aws-cdk-lib/aws-cognito'
+import {StringAttribute, BooleanAttribute} from 'aws-cdk-lib/aws-cognito'
 import {aws_ec2, RemovalPolicy} from 'aws-cdk-lib'
 import {rams, timeouts} from "./util";
 import * as iam from "aws-cdk-lib/aws-iam";
@@ -55,8 +55,8 @@ export function Auth({ app, stack }: sst.StackContext) {
         customAttributes: {
           'gnothiId': new StringAttribute({ mutable: true }),
           'adminCreated': new StringAttribute({ mutable: true }),
-          // 'yesTerms_Disclaimer': new String({ mutable: true }),
-          // 'yesPrivacyPolicy': new String({ mutable: true }),
+          'yesTerms_Disclaimer': new StringAttribute({ mutable: true }),
+          'yesPrivacyPolicy': new StringAttribute({ mutable: true }),
         },
       }
     },

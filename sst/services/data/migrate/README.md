@@ -6,9 +6,9 @@ v0 of Gnothi's database was handled via SQLAlchemy, and is so technologically di
 1. Generate first migration (schema setup) from the same. `npx drizzle-kit introspect:pg --out=services/data/migrate/first --host=host --port=5432 --user=user --password=password --database=prod --ssl`
 1. The generated schema was imperfect, so I manually cleaned up the `schema.ts` and copied it to `servicse/data/migrate/v0/schema.ts`. Now, instead of the above, `first/` schema will be generated via `npx drizzle-kit generate:pg --out services/data/migrate/first --schema services/data/migrate/v0/schema.ts`.
 1. Copy `first/` to `rest/` via `cp -r services/data/migrate/first services/data/migrate/rest`. Reason is that the "real" migration from v0 prod DB to the new system will be skipping the `first/` migration. That will be used only for new-machine setups (localhost). The prod database will come in wholesale, structure and data, and so won't need the `first/` migration. 
-2. For the same reason, we need to clear out the SQL file from the first migration in `rest/`. So `echo "" > services/data/migrate/rest/0000_<FILENAME>.sql`
-3. Now, for the whole point of `rest/` - bring the DB structure up-to-date by generating a migration. `npx drizzle-kit migrate:pg --out services/data/migrate/rest --schema services/data/schemas`. 
-4. There are some errors in the generated migration. Look out for `"varchar[]"` (remove the quotes). I'll update here if others come up.  
+1. For the same reason, we need to clear out the SQL file from the first migration in `rest/`. So `echo "" > services/data/migrate/rest/0000_<FILENAME>.sql`
+1. Now, for the whole point of `rest/` - bring the DB structure up-to-date by generating a migration. `npx drizzle-kit migrate:pg --out services/data/migrate/rest --schema services/data/schemas`. 
+1. There are some errors in the generated migration. Look out for `"varchar[]"` (remove the quotes). I'll update here if others come up.  
 
 ## 2. Run the migration scripts (as a developer / user)
 The migration can't be run on localhost, but instead is a lambda function. Find that function ARN in the CLI output, then run it with:
