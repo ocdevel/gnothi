@@ -15,7 +15,7 @@
     "test:specific": "playwright test --project=chromium tests/tags.spec.ts"
   },
   "dependencies": {
-    "@aws-amplify/ui-react": "^4.6.1",
+    "@aws-amplify/ui-react": "^4.6.2",
     "@emotion/react": "^11.11.0",
     "@emotion/styled": "^11.11.0",
     "@hookform/resolvers": "^3.1.0",
@@ -25,7 +25,7 @@
     "@mui/x-date-pickers": "^5.0.20",
     "@stripe/react-stripe-js": "^2.1.0",
     "@stripe/stripe-js": "^1.53.0",
-    "aws-amplify": "^5.2.1",
+    "aws-amplify": "^5.2.2",
     "axios": "^1.4.0",
     "clsx": "^1.2.1",
     "eventemitter3": "^5.0.1",
