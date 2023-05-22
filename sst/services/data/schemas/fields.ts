@@ -63,3 +63,5 @@ export const fields = pgTable('fields', {
 })
 
 export type Field = InferModel<typeof fields>
+
+export const fieldId = () => uuid('field_id').notNull().references(() => fields.id, {onDelete: 'cascade'})

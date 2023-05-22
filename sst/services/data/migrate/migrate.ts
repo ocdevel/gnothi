@@ -11,6 +11,16 @@ import {Bucket} from "sst/node/bucket";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 
 
+// TODO copy/pasted from v0/migrate.spec.ts; refactor to shared file
+function killConnections(dbname: string) {
+  return `SELECT pg_terminate_backend(pg_stat_activity.pid)
+    FROM pg_stat_activity
+    WHERE pg_stat_activity.datname='${dbname}'
+      AND pid <> pg_backend_pid();`
+  // await dbPostgres.query(`select pg_terminate_backend(pg_stat_activity.pid) from pg_stat_activity where pg_stat_activity.datname = '${dbTargetName}';`, [])
+}
+
+
 type MigrateEvent = {
   wipe?: boolean
 }
@@ -31,34 +41,24 @@ export async function main(event: MigrateEvent, context: Context): Promise<APIGa
   const dbPostgres = new DB({database: 'postgres'})
   await dbPostgres.connect()
 
-  // if (event?.wipe) {
-  //   await dbPostgres.pg.query(`drop database if exists ${sharedStage}`)
-  //   await wipeCognito()
-  // }
+  if (event?.wipe) {
+    await dbPostgres.pg.query(killConnections(sharedStage))
+    await dbPostgres.pg.query(`drop database if exists ${sharedStage}`)
+    await dbPostgres.pg.query(`create database ${sharedStage}`)
+    // TODO
+    // await wipeCognito()
+  }
 
-  //const exists = await dbPostgres.query(sql`SELECT datname FROM pg_database WHERE datistemplate = false;`)
-  // const exists = await dbPostgres.query(sql`SELECT datname FROM pg_database WHERE datname = ${sharedStage}`)
-  // if (exists.length === 0) {
-  //   console.log("db didn't exist, creating")
-  //   await dbPostgres.pg.query(`create database ${sharedStage}`)
-  // }
+  // git-blame for auto-check if db exists, create if not
 
   const dbTarget = new DB({database: sharedStage})
   await dbTarget.connect()
 
-  // kill all connections to dbTarget
-  // await dbPostgres.query(`select pg_terminate_backend(pg_stat_activity.pid) from pg_stat_activity where pg_stat_activity.datname = '${dbTargetName}';`, [])
-
   console.log("migrating", sharedStage, migrationsRoot)
 
-  // if (event.migrate_v0) {
-  //   // import the old database. Note this creates the database structure, so it's mutually exclusive to migrateFirst
-  //   // await import_v0(dbTarget)
-  // } else {
-  //   // Create the original (v0) database structure. Needed for the big v0->v1 migration.
-  //   await migrate(dbTarget.drizzle, {migrationsFolder: migrationsFirst})
-  // }
+  // git-blame for v0 migration
 
+  await migrate(dbTarget.drizzle, {migrationsFolder: migrationsFirst})
   // then do the rest of the (modern / current) migrations; post v0. Note, v0 db schema was generated as a migration
   // for drizzle, then the folder was copy/pasted into the rest/ folder on which to build. This because I can't
   // tell drizzle in code-form (here) to migrate step1, then do stuff, then migrate 1-on.

@@ -1,9 +1,145 @@
 {
   "version": "5",
   "dialect": "pg",
-  "id": "51daf7aa-572d-4da2-8fa9-e95e43c67465",
+  "id": "a3da6eeb-9327-48f6-8d79-8a77ef5c7ae4",
   "prevId": "149ce09e-53ed-479a-a57c-dd4a11f8caa6",
   "tables": {
+    "books": {
+      "name": "books",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "title": {
+          "name": "title",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "text": {
+          "name": "text",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "author": {
+          "name": "author",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "topic": {
+          "name": "topic",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "thumbs": {
+          "name": "thumbs",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "default": 0
+        },
+        "amazon": {
+          "name": "amazon",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {}
+    },
+    "bookshelf": {
+      "name": "bookshelf",
+      "schema": "",
+      "columns": {
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
+        "book_id": {
+          "name": "book_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "shelf": {
+          "name": "shelf",
+          "type": "shelves",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "score": {
+          "name": "score",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "ix_bookshelf_created_at": {
+          "name": "ix_bookshelf_created_at",
+          "columns": [
+            "created_at"
+          ],
+          "isUnique": false
+        },
+        "ix_bookshelf_updated_at": {
+          "name": "ix_bookshelf_updated_at",
+          "columns": [
+            "updated_at"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "bookshelf_user_id_users_id_fk": {
+          "name": "bookshelf_user_id_users_id_fk",
+          "tableFrom": "bookshelf",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "bookshelf_book_id_user_id": {
+          "name": "bookshelf_book_id_user_id",
+          "columns": [
+            "book_id",
+            "user_id"
+          ]
+        }
+      }
+    },
     "entries": {
       "name": "entries",
       "schema": "",
@@ -126,6 +262,20 @@
             "updated_at"
           ],
           "isUnique": false
+        },
+        "ix_entries_ai_index_state": {
+          "name": "ix_entries_ai_index_state",
+          "columns": [
+            "ai_index_state"
+          ],
+          "isUnique": false
+        },
+        "ix_entries_ai_summarize_state": {
+          "name": "ix_entries_ai_summarize_state",
+          "columns": [
+            "ai_summarize_state"
+          ],
+          "isUnique": false
         }
       },
       "foreignKeys": {
@@ -235,6 +385,19 @@
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
+        },
+        "dupes": {
+          "name": "dupes",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "dupe": {
+          "name": "dupe",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "default": 0
         }
       },
       "indexes": {
@@ -304,6 +467,89 @@
           ]
         }
       }
+    },
+    "field_entries": {
+      "name": "field_entries",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "value": {
+          "name": "value",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "field_id": {
+          "name": "field_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "ix_field_entries_created_at": {
+          "name": "ix_field_entries_created_at",
+          "columns": [
+            "created_at"
+          ],
+          "isUnique": false
+        },
+        "ix_field_entries_user_id": {
+          "name": "ix_field_entries_user_id",
+          "columns": [
+            "user_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "field_entries_user_id_users_id_fk": {
+          "name": "field_entries_user_id_users_id_fk",
+          "tableFrom": "field_entries",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "field_entries_field_id_fields_id_fk": {
+          "name": "field_entries_field_id_fields_id_fk",
+          "tableFrom": "field_entries",
+          "tableTo": "fields",
+          "columnsFrom": [
+            "field_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {}
     },
     "fields": {
       "name": "fields",
@@ -1076,6 +1322,24 @@
           "type": "varchar",
           "primaryKey": false,
           "notNull": false
+        },
+        "accept_terms_conditions": {
+          "name": "accept_terms_conditions",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "accept_disclaimer": {
+          "name": "accept_disclaimer",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "accept_privacy_policy": {
+          "name": "accept_privacy_policy",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {
@@ -1217,6 +1481,10 @@
   "_meta": {
     "schemas": {},
     "tables": {},
-    "columns": {}
+    "columns": {
+      "\"entries\".\"title_summary\"": "\"entries\".\"ai_title\"",
+      "\"entries\".\"text_summary\"": "\"entries\".\"ai_text\"",
+      "\"entries\".\"sentiment\"": "\"entries\".\"ai_sentiment\""
+    }
   }
 }

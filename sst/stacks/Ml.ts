@@ -70,7 +70,7 @@ function lambdas({context, vpc, fs, bucket}: MLService) {
   const fnPreprocess = new lambda.DockerImageFunction(stack, "fn_preprocess", {
     ...mlFunctionProps,
     memorySize: 512,
-    timeout: cdk.Duration.minutes(1),
+    timeout: cdk.Duration.minutes(3),
     code: lambda.DockerImageCode.fromImageAsset("services/ml/python", {
       file: "preprocess.dockerfile"
     }),
