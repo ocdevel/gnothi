@@ -7,6 +7,7 @@ import Prompt from "./Prompt"
 import Books from "./Books"
 import Behaviors from "./Behaviors"
 import Divider from "@mui/material/Divider";
+import * as dayjs from 'dayjs'
 
 import {
   FaLock
@@ -75,6 +76,7 @@ function Insight({label, icon, description, children}: Insight) {
   </Card>
 }
 
+
 interface Insights {
   entry_ids: string[]
 }
@@ -91,10 +93,26 @@ export default function Insights({entry_ids}: Insights) {
   const send = useStore(useCallback(s => s.send, []))
   const view = entry_ids.length === 1 ? entry_ids[0] : "list"
 
-  // get a list of entries which have been processed with all AI tasks
-  // on the server, and sent back finalized to the client.
+  // We don't want to send insights_get too frequently. It's expensive, but more importantly a lot can happen between
+  // what might trigger it initially, and entries actually being ready for insights. The easiest check is to make
+  // sure nothing's currently processing. That will get updated via Websockets when each entry is ready, making
+  // this a safe check. However, it's unsafe if for whatever reason the entry got stuck in processing-limbo. For that
+  // reason, I have bandaid Lambda logic to unstuck entries, and the code here will just carry forward if an
+  // entry is stuck (determined by updated_at being too old, while ai_state=='running').
+  // I could just debounce this function, say for 3 seconds, but that's dirty here.
   const entry_ids_indexed = entry_ids.filter((id) => {
-    return ~["done", "skip"].indexOf(entriesHash?.[id]?.ai_index_state)
+    const entry = entriesHash?.[id]
+    if (!entry) { return false } // this should never happen, but just in case
+    // This one is ready to go. "running" is obviously filter-out, but "todo" is filter-in
+    // since it means we'll fix it later. The Lambda will decide if it should actually be removed from the AI
+    if (entry.ai_index_state !== "running") { return true }
+
+    // NOTE I'm only accounting for ai_index_state, not ai_summarize_state. Bother are updated together, so it
+    // should be safe - but revisit if needs be.
+
+    // So not we know it's "running". ML jobs should take no longer than a few minutes, most of which is Lambda
+    // cold-start. If it's been longer than that, this entry is stuck; we're ok to just move forward with the request.
+    return dayjs().diff(entry.updated_at, "minutes") > 3
   })
 
   useEffect(() => {
@@ -104,7 +122,7 @@ export default function Insights({entry_ids}: Insights) {
       return
     }
 
-    // Logging each time this is called, since it's getting called a lot and I can't figure out why
+    // Logging each time this is called, until I'm sure our logic above is solid.
     console.log('insights:useEffect', [search, entry_ids])
 
     send("insights_get_request", {

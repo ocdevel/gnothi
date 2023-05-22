@@ -66,7 +66,9 @@ export const entries_upsert_response = new Route(r.entries_upsert_response, asyn
     ai_text: summary.body.text,
     ai_sentiment: summary.body.emotion,
     ai_keywords: summary.body.keywords,
-    ai_index_state: "done"
+    ai_index_state: skip_index ? "skip" : "done",
+    ai_summarize_state: skip_summarize ? "skip" : "done",
+    updated_at: new Date()
   }
   updated = {...entry, ...updates}
 

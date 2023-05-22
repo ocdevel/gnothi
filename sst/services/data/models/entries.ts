@@ -146,6 +146,7 @@ export class Entries extends Base {
     upsertInner: (entry: Entry) => Promise<Entry>
   ): Promise<S.Entries.entries_upsert_response[]> {
     const {db, uid} = this.context
+    const driz = db.drizzle
     const {tags, ...entry} = req
     const tids = boolMapToKeys(tags)
     if (!tids.length) {
@@ -153,7 +154,8 @@ export class Entries extends Base {
     }
     const updates: Entry = {
       ...entry,
-      ai_index_state: "todo",
+      ai_index_state: "running",
+      updated_at: new Date(),
       user_id: uid
     }
     const dbEntry = await upsertInner(updates)
@@ -162,8 +164,20 @@ export class Entries extends Base {
     // custom created_at override is handled on the client-side with dirty-field checking against
     // the datePicker & dateTextField (submit undefined if not dirty)
 
-    await db.drizzle.insert(entriesTags)
-      .values(tids.map(tag_id => ({tag_id, entry_id})))
+    await Promise.all([
+      driz.insert(entriesTags)
+        .values(tids.map(tag_id => ({tag_id, entry_id}))),
+
+      // re-set any entries whose ML got stuck in limbo. Do so for all users (pay it forward), so we can avoid a cron job.
+      // This assumes some other script will pick up entries in the TODO state.
+      // For some reason, using `${entries.column} in this query fails (column "entries" of relation "entries"). Just
+      // string columns (eg ai_index_state instead of entries.ai_index_state) for now.
+      await driz.execute(sql`update ${entries} set ai_index_state='todo'
+        where ai_index_state='running' and now() - updated_at > interval '5 minutes';
+      update ${entries} set ai_summarize_state='todo'
+        where ai_summarize_state='running' and now() - updated_at > interval '5 minutes';`)
+    ])
+
     // fixme gotta find a way to not need removeNull everywhere
     const ret = DB.removeNull({...dbEntry, tags})
     return [ret]
@@ -173,10 +187,8 @@ export class Entries extends Base {
     const {id} = req
     const {db, uid} = this.context
     const {drizzle} = db
-    return this.upsertOuter(req, async (entry) => {
-      // TODO why am I not saving the whole PUT request?
-      const updates = _.pick(entry, ["title", "text", "created_at", "ai_index_state"])
-
+    // Note: removal of non-editable fields handled via Zod beforehand
+    return this.upsertOuter(req, async (updates) => {
       // await drizzle.delete(entriesTags)
       //   .where(and(
       //     eq(entriesTags.entry_id, id),
