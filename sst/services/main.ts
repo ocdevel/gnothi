@@ -15,6 +15,10 @@ import {z} from 'zod'
 import {db} from './data/dbSingleton'
 import {User, users} from './data/schemas/users'
 
+// only log requests and responses in dev/staging/test. Prod would otherwise collect into CloudWatch Logs, which
+// is bad privacy. Means harder to debug prod issues, but I'll figure something out.
+const LOG_REQ_RES = !~['prod', 'production'].indexOf(process.env.SST_STAGE)
+
 const defaultResponse: APIGatewayProxyResultV2 = {statusCode: 200, body: "{}"}
 type RecordResult = APIGatewayProxyResultV2 | null
 
@@ -84,7 +88,7 @@ const handleReq: FnContext['handleReq'] = async (req, fnContext) => {
   // handling was skipped, eg OPTIONS or favicon
   if (!req) {return null}
 
-  console.log("handleReq", req)
+  if (LOG_REQ_RES) { console.log("handleReq", req) }
   const route = routes[req.event]
   if (!route) {
     throw new GnothiError({message: `No route found for ${req.event}`})
@@ -122,7 +126,7 @@ const handleReq: FnContext['handleReq'] = async (req, fnContext) => {
 // ------- Step 4: Send the final result -------
 const handleRes: FnContext['handleRes'] = async (def, res, fnContext) => {
   let final: RecordResult = null
-  console.log("handleRes", def.e, res)
+  if (LOG_REQ_RES) { console.log("handleRes", def.e, res) }
   const resFull = {
     error: res.error || false,
     code: res.code || 200,
@@ -138,7 +142,7 @@ const handleRes: FnContext['handleRes'] = async (def, res, fnContext) => {
       const handler = Handlers.handlers[trigger]
       const handlerRes = await handler.respond(resFull, fnContext)
       if (trigger === "http") {
-        console.log("final=handlerRes", handlerRes)
+        if (LOG_REQ_RES) { console.log("final=handlerRes", handlerRes) }
         final = handlerRes
       }
   }))

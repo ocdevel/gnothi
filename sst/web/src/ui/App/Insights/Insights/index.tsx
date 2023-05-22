@@ -7,7 +7,9 @@ import Prompt from "./Prompt"
 import Books from "./Books"
 import Behaviors from "./Behaviors"
 import Divider from "@mui/material/Divider";
-import * as dayjs from 'dayjs'
+import dayjs from 'dayjs'
+
+const ENABLE_PROMPT = true
 
 import {
   FaLock
@@ -146,13 +148,6 @@ export default function Insights({entry_ids}: Insights) {
 
   return <div className="insights">
     <Stack2>
-      {/*<Insight
-        label="Prompt"
-        icon={<PromptIcon {...iconProps} />}
-        description="Ask Gnothi anything about an entry or set of entries. Choose a topic and question, or create a custom prompt."
-      >
-        <Prompt entry_ids={entry_ids} view={view} />
-      </Insight>*/}
       {/*<Stack>*/}
       {/*  <Typography*/}
       {/*    variant="h4"*/}
@@ -173,6 +168,14 @@ export default function Insights({entry_ids}: Insights) {
       {/*  /!*  These are the results based on your search and the entries you’ve selected. You can adjust filters to see different insights.*!/*/}
       {/*  /!*</Typography>*!/*/}
       {/*</Stack>*/}
+
+      {ENABLE_PROMPT && <Insight
+        label="Prompt"
+        icon={<PromptIcon {...iconProps} />}
+        description="Ask Gnothi anything about an entry or set of entries. Choose a topic and question, or create a custom prompt."
+      >
+        <Prompt entry_ids={entry_ids} view={view} />
+      </Insight>}
 
       <Insight
         label="Themes"
