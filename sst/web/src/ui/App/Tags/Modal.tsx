@@ -14,7 +14,7 @@ import {FullScreenDialog} from "../../Components/Dialog";
 import DialogContent from "@mui/material/DialogContent";
 import Grid from "@mui/material/Grid";
 import Sortable from "../../Components/Sortable";
-import {create} from "./Create";
+import Create from "./Create";
 import Form from './Form'
 import {Tags} from '@gnothi/schemas/tags'
 import Stack from "@mui/material/Stack";

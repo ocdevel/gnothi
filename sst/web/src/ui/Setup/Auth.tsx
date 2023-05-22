@@ -59,7 +59,8 @@ function Acknowledgements({existingUser}: Acknowledgements) {
 
   const btnProps = {
     variant: "contained",
-    fullWidth: true
+    fullWidth: true,
+    className: 'btn-next'
   } as const
 
   const steps = [
@@ -110,6 +111,7 @@ function Acknowledgements({existingUser}: Acknowledgements) {
 
   function renderAcknowledge(name: AcksKeys, label: string) {
     return <FormControlLabel
+      className={`checkbox-${name}`}
       control={<Checkbox
         checked={!!acks[name]}
         onChange={() => setAcks({

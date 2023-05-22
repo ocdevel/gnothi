@@ -5,7 +5,7 @@ import InputBase from "@mui/material/InputBase";
 import Button from "@mui/material/Button";
 import React, {useState, useEffect, useCallback, useMemo} from "react";
 import {styles} from './utils'
-import {zodResolver} from "@hookform/resolvers/zod/dist/zod";
+import {zodResolver} from "@hookform/resolvers/zod";
 import {Tags} from "@gnothi/schemas/tags";
 
 export default function Create() {
