@@ -17,13 +17,16 @@ import {BasicDialog} from "../Components/Dialog.tsx";
 import DialogContent from "@mui/material/DialogContent";
 import "./Auth.scss"
 import Alert from "@mui/material/Alert";
+import MUILink from '@mui/material/Link';
+import IconButton from "@mui/material/IconButton";
+import {IconBase} from "react-icons";
+import ArrowBackOutlinedIcon from '@mui/icons-material/ArrowBackOutlined';
 
 Amplify.configure(awsConfig);
 
 // Create a Zustand store local to this file to track just the two acknowledgement checkboxes.
 type AcksObj = {
-  acceptTermsConditionsDisclaimer: Date | null
-  acceptPrivacyPolicy: Date | null
+  acceptTermsConditionsDisclaimerPrivacyPolicy: Date | null
 }
 type AcksKeys = keyof AcksObj
 const useLocalStore = create<{
@@ -33,8 +36,7 @@ const useLocalStore = create<{
   setDone: (done: boolean) => void
 }>((set, get) => ({
   acks: {
-    acceptTermsConditionsDisclaimer: null,
-    acceptPrivacyPolicy: null,
+    acceptTermsConditionsDisclaimerPrivacyPolicy: null,
   },
   setAcks: (acks: Partial<AcksObj>) => set({acks: {...get().acks, ...acks}}),
   done: false,
@@ -63,52 +65,60 @@ function Acknowledgements({existingUser}: Acknowledgements) {
     className: 'btn-next'
   } as const
 
+  const titleProps = {variant:'h4', mb: 0} as const
+  const subtitleProps = {variant:'body1', fontWeight: 400} as const
+  const body1Props = {variant:'body1', fontWeight: 300} as const
+  const body2Props = {variant: 'body2', fontWeight: 300} as const
+
   const steps = [
-    <Stack spacing={2}>
-      <Typography variant='h4'>{existingUser ? "Welcome back!" : "Welcome to gnothi"}</Typography>
-      <Typography>{existingUser ? "Hello existing user" : "We're glad you're here"}</Typography>
+    ...(!existingUser ? [] : [<Stack spacing={2}>
+      <Typography {...titleProps}>Welcome back!</Typography>
+        <Typography {...subtitleProps}>We're thrilled to announce the launch of Gnothi v1!</Typography>
+        <Typography>Keep in mind that we'll be releasing more features very shortly, as well as bringing back "sharing" and optimizing "behaviors." If you have any questions, please <a href="mailto:gnothi@gnothiai.com">email us</a> or reach out on <a href="https://discord.gg/TNEvx2YR">Discord</a> to connect.</Typography>
       <Button
         {...btnProps}
         onClick={nextStep}
       >Next</Button>
-    </Stack>,
+    </Stack>]),
 
     <Stack spacing={2}>
-      <Typography variant='h4'>Disclaimer</Typography>
-      <Typography>Gnothi is not a substitute for professional medical advice, diagnosis, or treatment. If you have a medical or mental health emergency, immediately contact a healthcare professional or dial 911. Use of our services is at your own risk. Our platform doesn't provide medical care, and health advice should be sought from licensed professionals. You are solely responsible for seeking appropriate treatment.</Typography>
-      {renderAcknowledge("acceptTermsConditionsDisclaimer", "I agree with the Terms & Conditions")}
-      <Button
-        {...btnProps}
-        disabled={!acks.acceptTermsConditionsDisclaimer}
-        onClick={nextStep}
-      >Next</Button>
-    </Stack>,
+      <Typography {...titleProps}>{existingUser ? "Updated Privacy Policy and Terms & Conditions" : "Welcome to Gnothi!"}</Typography>
+      <Typography {...subtitleProps}>Please take a moment to review the following disclaimer, as well as Gnothi's <a href="/terms" target="_blank"> Terms & Conditions</a> and <a href="/privacy" target="_blank">Privacy Policy</a></Typography>
+      <Typography {...body2Props}><u>Disclaimer</u>: Gnothi is not a substitute for professional medical advice, diagnosis, or treatment. If you have a medical or mental health emergency, immediately contact a healthcare professional or dial 911. You are solely responsible for seeking appropriate treatment.
+      </Typography>
+      {renderAcknowledge("acceptTermsConditionsDisclaimerPrivacyPolicy", "I confirm that I am 18 or older and accept Gnothi's Terms & Conditions and Privacy Policy")}
 
-    <Stack spacing={2}>
-      {/* TODO: Insert your disclaimer here */}
-      <Typography variant='h4'>Privacy</Typography>
-      <Typography>Privacy policy stuff</Typography>
-      {renderAcknowledge("acceptPrivacyPolicy", "I agree with the Privacy Policy")}
-      <Button
-        {...btnProps}
-        disabled={!acks.acceptPrivacyPolicy}
-        onClick={nextStep}
-      >Next</Button>
+      <Stack direction="row" spacing={1}>
+        {existingUser && <IconButton color="primary" onClick={goBack}>
+          <ArrowBackOutlinedIcon />
+        </IconButton>}
+        <Button
+          {...btnProps}
+          disabled={!acks.acceptTermsConditionsDisclaimerPrivacyPolicy}
+          onClick={nextStep}
+        >Next</Button>
     </Stack>
+    </Stack>,
   ]
+
+  function goBack() {
+    if (step === 0) { return }
+    setStep(step-1)
+  }
 
   function nextStep() {
     const newStep = step + 1
     setStep(newStep)
     const isEnd = newStep === steps.length
     console.log({isEnd, newStep, stepsLength: steps.length})
-    if (isEnd && acks.acceptPrivacyPolicy && acks.acceptTermsConditionsDisclaimer) {
+    if (isEnd && acks.acceptTermsConditionsDisclaimerPrivacyPolicy) {
       setDone(true)
     }
   }
 
   function renderAcknowledge(name: AcksKeys, label: string) {
     return <FormControlLabel
+      alignItems="flex-start"
       className={`checkbox-${name}`}
       control={<Checkbox
         checked={!!acks[name]}
@@ -209,10 +219,15 @@ export const AuthComponent: FC<AuthComponentProps> = ({tab}) => {
           }
         },
         SignIn: {
-          Footer() {
-            return <Alert severity="warning">
-              Gnothi has been upgraded to v1. Included in the upgrade is a new authentication system, so if you're a
-              returning user and haven't yet, you'll need to reset your password.
+          Header() {
+            return <Alert sx={{fontWeight: 500}} severity="info">
+              <Box mb={2}>
+                We've made some exciting changes, including a new authentication system. If you're a
+                returning user, you'll need to <strong><u>click "forgot password" below</u></strong> to reset it and sign in.
+              </Box>
+              <Box>
+                Have questions? Get in touch at <a href="mailto:gnothi@gnothai.com">gnothi@gnothiai.com</a>
+              </Box>
             </Alert>
           }
         }
