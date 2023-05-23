@@ -25,6 +25,7 @@ export const styles = {
     button2: {backgroundColor: "secondary.main", color: colors.black, fontFamily: "Poppins", fontWeight: '500'},
     
     featureIcon: {fontSize: 60, color: "#50577a"},
+    footerIcon: {fontSize: 20, color: "#50577a"},
 
     behaviorIcon: {fontSize: 40, color: "#507a6f"},
     bookIcon: {fontSize: 40, color: "#553840"},
