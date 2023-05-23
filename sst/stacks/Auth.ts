@@ -27,7 +27,7 @@ export function Auth({ app, stack }: sst.StackContext) {
   })
 
 
-  const auth = new sst.Cognito(stack, "Auth2", {
+  const auth = new sst.Cognito(stack, "Auth", {
     login: ["email"],
 
     cdk: {

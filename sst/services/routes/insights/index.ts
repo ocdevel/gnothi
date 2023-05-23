@@ -35,26 +35,17 @@ export const insights_get_response = new Route(r.insights_get_response,async (re
   // will be used to pair to which page called the insights client-side (eg list vs view)
   context.requestId = view
 
-  const idsAll = entry_ids
-  const entriesAll = await m.entries.getByIds(idsAll)
-
-  // only do vector-search (search, books, etc) against entries which are definitely "done"
-  const idsIndexed = entriesAll.filter(e => e.ai_index_state === 'done').map(e => e.id)
+  const entriesAll = await m.entries.getByIds(entry_ids)
+  const entriesHash = Object.fromEntries(entriesAll.map(e => [e.id, e]))
 
   // Then run search, which will further filter the results
-  const {ids: idsFiltered, search_mean, clusters} = await search({
+  const {idsFiltered, idsFromVectorSearch, search_mean, clusters} = await search({
     context,
     user_id,
-    entry_ids: idsIndexed,
+    entries: entriesAll,
     query
   })
-
-  // Unlike idsIndexed, we can work with summarize features (summarize, themes, etc) for all entries, even if
-  // they haven't already been summarized - just use the full body. It reduces capacity due to context-length
-  // limitations, but it will work. But do remove any entries which have been legitimately removed from via search.
-  const entriesForSummarize = entriesAll.filter(e => {
-    return !idsIndexed.includes(e.id) || idsFiltered.includes(e.id)
-  })
+  const entriesFiltered = idsFiltered.map(id => entriesHash[id])
 
   if (query?.length) {
     promises.push(ask({
@@ -63,7 +54,7 @@ export const insights_get_response = new Route(r.insights_get_response,async (re
       user_id,
       // only send the top few matching documents. Ease the burden on QA ML, and
       // ensure best relevance from embedding-match
-      entry_ids: idsFiltered.slice(0, 1)
+      entry_ids: idsFromVectorSearch.slice(0, 1)
     }))
   }
 
@@ -77,14 +68,14 @@ export const insights_get_response = new Route(r.insights_get_response,async (re
   if (insights.summarize) {
     promises.push(summarizeInsights({
       context,
-      entries: entriesForSummarize
+      entries: entriesFiltered
     }))
 
     // Themes
     promises.push(themes({
       context,
       clusters,
-      entries: entriesForSummarize
+      entries: entriesFiltered
     }))
 
   }
