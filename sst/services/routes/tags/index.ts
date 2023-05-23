@@ -1,6 +1,6 @@
 import {Routes} from '@gnothi/schemas'
 import {tags, Tag} from '../../data/schemas/tags'
-import {entriesTags, EntryTag} from '../../data/schemas/tags'
+import {entriesTags, EntryTag} from '../../data/schemas/entriesTags'
 import {GnothiError} from "../errors";
 import {Route} from '../types'
 import {asc, eq, and} from 'drizzle-orm'
@@ -45,7 +45,7 @@ export const tags_delete_request = new Route(r.tags_delete_request, async (req, 
   const params = []
   const [tag, entries] = await Promise.all([
     db.query<Tag>(sql`select * from ${tags} where id=${req.id}`),
-    db.query<any>(sql`select * from ${entries_tags} where tag_id=${req.id}`)
+    db.query<any>(sql`select * from ${entriesTags} where tag_id=${req.id}`)
   ])
   if (tag[0].main) {
     throw new GnothiError({message: "Can't delete your main tag"})
@@ -56,7 +56,7 @@ export const tags_delete_request = new Route(r.tags_delete_request, async (req, 
   }
   await db.query(sql`delete from ${tags} where id=${req.id}`)
   await context.handleReq({event: "tags_list_request", data: {}}, context)
-  return null
+  return []
 })
 
 export const tags_toggle_request = new Route(r.tags_toggle_request, async (req, context) => {

@@ -53,6 +53,7 @@
     "remark-emoji": "^3.1.1",
     "sass": "^1.62.1",
     "strip-markdown": "^5.0.0",
+    "use-debounce": "^9.0.4",
     "yup": "^0.32.11",
     "zustand": "^4.3.8"
   },

@@ -164,19 +164,8 @@ export class Entries extends Base {
     // custom created_at override is handled on the client-side with dirty-field checking against
     // the datePicker & dateTextField (submit undefined if not dirty)
 
-    await Promise.all([
-      driz.insert(entriesTags)
-        .values(tids.map(tag_id => ({tag_id, entry_id}))),
-
-      // re-set any entries whose ML got stuck in limbo. Do so for all users (pay it forward), so we can avoid a cron job.
-      // This assumes some other script will pick up entries in the TODO state.
-      // For some reason, using `${entries.column} in this query fails (column "entries" of relation "entries"). Just
-      // string columns (eg ai_index_state instead of entries.ai_index_state) for now.
-      await driz.execute(sql`update ${entries} set ai_index_state='todo'
-        where ai_index_state='running' and now() - updated_at > interval '5 minutes';
-      update ${entries} set ai_summarize_state='todo'
-        where ai_summarize_state='running' and now() - updated_at > interval '5 minutes';`)
-    ])
+    await driz.insert(entriesTags)
+        .values(tids.map(tag_id => ({tag_id, entry_id})))
 
     // fixme gotta find a way to not need removeNull everywhere
     const ret = DB.removeNull({...dbEntry, tags})
@@ -212,10 +201,40 @@ export class Entries extends Base {
   }
 
   async post(req: S.Entries.entries_post_request) {
-    const {drizzle} = this.context.db
+    const {db} = this.context
+    const {drizzle} = db
     return this.upsertOuter(req, async (entry) => {
       const res = await drizzle.insert(entries).values(entry).returning()
       return res[0]
     })
+  }
+
+  async getStuckEntry(): Promise<S.Entries.entries_upsert_response> {
+    const {db} = this.context
+    const res = await db.drizzle.execute<S.Entries.entries_upsert_response>(sql`
+      WITH updated AS (
+        UPDATE entries
+        SET 
+          ai_index_state = CASE WHEN ai_index_state = 'todo' THEN 'running' ELSE ai_index_state END,
+          ai_summarize_state = CASE WHEN ai_summarize_state = 'todo' THEN 'running' ELSE ai_summarize_state END
+        WHERE 
+          id = (
+            SELECT id FROM entries
+            WHERE
+              (ai_index_state = 'todo' OR ai_summarize_state = 'todo')
+              OR (
+                (ai_index_state = 'running' OR ai_summarize_state = 'running') 
+                AND updated_at < (NOW() - INTERVAL '5 minutes')
+              )
+            ORDER BY RANDOM()
+            LIMIT 1
+          )
+        RETURNING *
+      )
+      SELECT e.*, (SELECT json_agg(et.*) FROM entries_tags et WHERE e.id = et.entry_id) as tags
+      FROM updated e;
+    `)
+    const row = DB.removeNull(res.rows[0]) as S.Entries.entries_upsert_response
+    return {...row, tags: tagsToBoolMap(row.tags)}
   }
 }
