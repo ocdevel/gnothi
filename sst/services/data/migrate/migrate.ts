@@ -23,6 +23,8 @@ function killConnections(dbname: string) {
 
 type MigrateEvent = {
   wipe?: boolean
+  first?: boolean
+  rest?: boolean
 }
 
 export async function main(event: MigrateEvent, context: Context): Promise<APIGatewayProxyResult> {
@@ -45,8 +47,7 @@ export async function main(event: MigrateEvent, context: Context): Promise<APIGa
     await dbPostgres.pg.query(killConnections(sharedStage))
     await dbPostgres.pg.query(`drop database if exists ${sharedStage}`)
     await dbPostgres.pg.query(`create database ${sharedStage}`)
-    // TODO
-    // await wipeCognito()
+    await wipeCognito()
   }
 
   // git-blame for auto-check if db exists, create if not
@@ -58,11 +59,17 @@ export async function main(event: MigrateEvent, context: Context): Promise<APIGa
 
   // git-blame for v0 migration
 
-  await migrate(dbTarget.drizzle, {migrationsFolder: migrationsFirst})
-  // then do the rest of the (modern / current) migrations; post v0. Note, v0 db schema was generated as a migration
-  // for drizzle, then the folder was copy/pasted into the rest/ folder on which to build. This because I can't
-  // tell drizzle in code-form (here) to migrate step1, then do stuff, then migrate 1-on.
-  await migrate(dbTarget.drizzle, {migrationsFolder: migrationsRest})
+  if (event?.first) {
+    // Having it manually specified since the v0 -> v1 migration will run this first, then import data,
+    // then run the rest
+    await migrate(dbTarget.drizzle, {migrationsFolder: migrationsFirst})
+  }
+  if (event.rest) {
+    // then do the rest of the (modern / current) migrations; post v0. Note, v0 db schema was generated as a migration
+    // for drizzle, then the folder was copy/pasted into the rest/ folder on which to build. This because I can't
+    // tell drizzle in code-form (here) to migrate step1, then do stuff, then migrate 1-on.
+    await migrate(dbTarget.drizzle, {migrationsFolder: migrationsRest})
+  }
 
   // TODO something smarter, like drizzle table version number
   const sanityCheck = (await dbTarget.drizzle.execute(sql`select 1`))[0]

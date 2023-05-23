@@ -164,12 +164,22 @@ function killConnections(dbname: string) {
 }
 
 it("v0:migrate", async () => {
+  async function migrateFn(args: {wipe?: boolean, first?: boolean, rest?: boolean}) {
+    const args_ = JSON.stringify(args)
+    await exec([
+      `aws lambda invoke --function-name ${Config.FN_DB_MIGRATE}`,
+      `--cli-binary-format raw-in-base64-out`,
+      `--payload '${args_}'`,
+      `/dev/null`
+    ].join(" "))
+  }
+
+  await migrateFn({wipe: true, first: true})
 
   if (!SKIP_DUMP) {
     const db0i = urlToInfo(process.env.DB_URL_PROD as any);
     await exec([
       `PGPASSWORD='${db0i.host.password}'`,
-      // TODO I removed --data-only, will need it back if migrate:first/ is used
       "pg_dump  --exclude-table=cache_users --exclude-table=cache_entries",
       "-U", db0i.host.username,
       "-h", db0i.host.host,
@@ -206,20 +216,20 @@ it("v0:migrate", async () => {
   // await db1.pg.query("CREATE INDEX ix_users_cognito_id ON users (cognito_id);")
   await decryptColumns(db1)
 
+  // Prepare the new database
+  await migrateFn({wipe: true, first: true})
+
   // no arguments means it will use our target database, from logic inisde DB.connect()
   const db2 = new DB({})
   await db2.connect()
   const db2i = db2.info
   console.log({db2i})
-  const db2_pg = new DB({connectionUrl: `postgresql://${db2i.host.username}:${db2i.host.password}@${db2i.host.host}:${db2i.host.port}/postgres`})
-  await db2_pg.connect()
-  await db2_pg.pg.query(killConnections(db2i.database))
-  await db2_pg.pg.query(`drop database if exists ${db2i.database}`)
-  await db2_pg.pg.query(`create database ${db2i.database}`)
 
   await exec([
     `PGPASSWORD='${db1i.host.password}'`,
     "pg_dump",
+    // the migrateFn(first) above creates the structure, in a controlled & clean way (no extra postgres flags)
+    "--data-only",
     "-U", db1i.host.username,
     "-h", db1i.host.host,
     "-d", db1i.database,
@@ -231,9 +241,8 @@ it("v0:migrate", async () => {
     "-d", db2i.database,
   ].join(' '))
 
-  const invokeCmd = `aws lambda invoke --function-name ${Config.FN_DB_MIGRATE} /dev/null`
-  console.log({invokeCmd})
-  await exec(invokeCmd)
+  // Then run post-migration data transformations
+  await migrateFn({rest: true})
 
   // await db.pg.query(oldSql)
   // await addUsersToCognito(db)
