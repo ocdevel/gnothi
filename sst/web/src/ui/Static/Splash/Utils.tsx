@@ -23,6 +23,7 @@ export function FeatureIntro2({
     justifyContent="center"
     spacing={2}
     direction='column'
+    mb={3}
   >
       <Grid item
         alignContent="center"

@@ -105,7 +105,7 @@ export default function DiscoverAI() {
           <FeatureIntro2
             {...featureProps}
             icon={<FolderOpenOutlinedIcon {...iconProps} />}
-            title={"Organize entries with tags"}
+            title={"Organize your entries"}
           >
             <Typography>
               Sort your thoughts with custom tags to group entries and streamline your reflections

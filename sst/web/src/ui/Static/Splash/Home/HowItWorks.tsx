@@ -58,9 +58,8 @@ export default function HowItWorks() {
               mb={2}
               maxWidth={{lg: 900}}
             >
-              Nearly everyone would agree that practices like meditation, journaling, and self-reflection are
-              associated with incredible health benefits. Similarly, we all know the importance of eating well,
-              exercising, and meeting our needs in healthy ways.
+              Practices like meditation, journaling, and self-reflection, along with healthy living, are proven beneficial for our well-being.
+
             </Typography>
             <Typography
               variant="body1"
@@ -68,8 +67,8 @@ export default function HowItWorks() {
               mb={2}
               maxWidth={{lg: 900}}
             >
-              Gnothi was designed to combine journaling and behavior tracking with AI-powered insights that help you narrow your focus. They highlight the aspects
-              of your life where there are opportunities for learning and growth, and then you decide where to go from there.
+              Gnothi integrates these practices with AI-generated insights to highlight areas for learning and growth. It's your journey; Gnothi is just along for the ride.
+
             </Typography>
             <Typography
               variant="body1"
@@ -77,9 +76,7 @@ export default function HowItWorks() {
               mb={2}
               maxWidth={{lg: 900}}
             >
-              It’s not a replacement for therapy or medical advice by any means, as experts agree that AI isn’t quite
-              ready for that. Still, there are thousands of individuals that have found value in it, and we hope you
-              do too.
+             While Gnothi isn't a replacement for therapy or professional medical advice, many have found immense value in it. We invite you to try it out and see the difference yourself.
             </Typography>
           </Grid>
         </Grid>
@@ -96,3 +93,13 @@ export default function HowItWorks() {
     </Box>
   </Section>
 }
+
+// Nearly everyone would agree that practices like meditation, journaling, and self-reflection are
+// associated with incredible health benefits. Similarly, we all know the importance of eating well,
+// exercising, and meeting our needs in healthy ways.
+//
+// Gnothi was designed to combine journaling and behavior tracking with AI-powered insights that help you narrow your focus. They highlight the aspects
+// of your life where there are opportunities for learning and growth, and then you decide where to go from there.
+//
+// It’s not a replacement for therapy or medical advice by any means, as experts agree that AI isn’t quite
+// ready for that. Still, there are thousands of individuals that have found value in it, and we hope yo do too.
