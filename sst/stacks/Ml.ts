@@ -78,6 +78,9 @@ function lambdas({context, vpc, fs, bucket}: MLService) {
   const fnBooks = new lambda.DockerImageFunction(stack, "fn_books", {
     ...mlFunctionProps,
     memorySize: 4459,
+    // TODO This one can take forever on initial download of feather to EFS. For that reason I'm upping
+    // it to 15 minutes for fail-safe on the first run, but this should be mitigated then lowered later.
+    timeout: cdk.Duration.minutes(15),
     code: lambda.DockerImageCode.fromImageAsset("services/ml/python", {
       file: "books.dockerfile"
     }),
