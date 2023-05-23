@@ -1,5 +1,5 @@
-import {tags} from './tags'
-import {entries} from './entries'
+import {tagId, tags} from './tags'
+import {entries, entryId} from './entries'
 import {InferModel} from 'drizzle-orm'
 import {
   pgTable,
@@ -9,8 +9,8 @@ import {
 
 
 export const entriesTags = pgTable('entries_tags', {
-  entry_id: uuid('entry_id').notNull().references(() => entries.id, {onDelete: 'cascade'}),
-  tag_id: uuid('tag_id').notNull().references(() => tags.id, {onDelete: 'cascade'}),
+  entry_id: entryId(),
+  tag_id: tagId(),
 
 }, (t) => {
   return {

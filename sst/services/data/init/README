@@ -1,1 +1,0 @@
-Initiate database before running migrations. Needed just for full database setup, migration from old system. Eventually remove this file and use Kysely migrations

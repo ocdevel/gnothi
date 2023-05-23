@@ -2,7 +2,7 @@ import {boolean, index, pgTable, varchar, uuid, primaryKey, timestamp, integer} 
 import {InferModel, sql} from 'drizzle-orm'
 import {idCol, tsCol} from "./utils";
 import {userId, users} from "./users";
-import {tags} from './tags'
+import {tagId, tags} from './tags'
 
 // TODO currently using the old shares system until after a few releases, prompt, etc - then we'll get the new shares
 // system working.
@@ -56,9 +56,11 @@ export const shares = pgTable("shares", {
 
 export type Share = InferModel<typeof shares>
 
+export const shareId = (col="share_id") => uuid(col).notNull().references(() => shares.id, {onDelete: 'cascade'})
+
 export const sharesTags = pgTable('shares_tags', {
-  share_id: uuid("share_id").notNull().references(() => shares.id, {onDelete: 'cascade'}),
-  tag_id: uuid("tag_id").notNull().references(() => tags.id, {onDelete: 'cascade'}),
+  share_id: shareId(),
+  tag_id: tagId(),
   selected: boolean("selected").default(true),
 }, (table) => {
   return {

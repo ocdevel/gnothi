@@ -7,7 +7,7 @@ import {
   pgEnum,
   boolean,
 } from 'drizzle-orm/pg-core';
-import {entries} from './entries'
+import {entries, entryId} from './entries'
 import {InferModel} from 'drizzle-orm'
 import {idCol, tsCol} from "./utils";
 
@@ -23,7 +23,7 @@ export const notetypes = pgEnum('notetypes', [
 export const notes = pgTable('notes', {
   id: idCol(),
   created_at: tsCol("created_at"),
-  entry_id: uuid('entry_id').notNull().references(() => entries.id, {onDelete: 'cascade'}),
+  entry_id: entryId(),
   user_id: userId(),
   type: notetypes('type').notNull().default("note"),
   text: varchar('text').notNull(),

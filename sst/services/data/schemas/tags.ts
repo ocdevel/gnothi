@@ -33,3 +33,5 @@ export const tags = pgTable('tags', {
 })
 
 export type Tag = InferModel<typeof tags>
+
+export const tagId = (col="tag_id") => uuid(col).notNull().references(() => tags.id, {onDelete: 'cascade'})

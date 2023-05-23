@@ -15,7 +15,7 @@ export const aistate = pgEnum('aistate', ['todo', 'skip', 'running', 'done'])
 export const entries = pgTable('entries', {
   id: idCol(),
   created_at: tsCol('created_at'),
-  updated_at: tsCol('updated_at'), // TODO
+  updated_at: tsCol('updated_at'),
   n_notes: integer("n_notes").default(0),
   // Title optional, otherwise generated from text. topic-modeled, or BERT summary, etc?
   title: varchar("title"),
@@ -45,3 +45,5 @@ export const entries = pgTable('entries', {
 })
 
 export type Entry = InferModel<typeof entries>
+
+export const entryId = (col="entry_id") => uuid(col).notNull().references(() => entries.id, {onDelete: 'cascade'})

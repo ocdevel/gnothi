@@ -12,6 +12,7 @@ create type shelves as enum ('ai', 'cosine', 'like', 'already_read', 'dislike', 
 
 create type groupprivacy as enum ('public', 'matchable', 'private');
 
+-- NEW
 create type grouproles as enum ('member', 'owner', 'admin', 'banned');
 
 create type aistate as enum ('todo', 'skip', 'running', 'done');

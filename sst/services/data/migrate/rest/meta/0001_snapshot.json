@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "pg",
-  "id": "a3da6eeb-9327-48f6-8d79-8a77ef5c7ae4",
+  "id": "c9d08883-69d8-4d13-ba0e-88aff60e6a3d",
   "prevId": "149ce09e-53ed-479a-a57c-dd4a11f8caa6",
   "tables": {
     "books": {
@@ -687,6 +687,163 @@
       },
       "compositePrimaryKeys": {}
     },
+    "influencers": {
+      "name": "influencers",
+      "schema": "",
+      "columns": {
+        "field_id": {
+          "name": "field_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "influencer_id": {
+          "name": "influencer_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "score": {
+          "name": "score",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "influencers_field_id_fields_id_fk": {
+          "name": "influencers_field_id_fields_id_fk",
+          "tableFrom": "influencers",
+          "tableTo": "fields",
+          "columnsFrom": [
+            "field_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "influencers_influencer_id_fields_id_fk": {
+          "name": "influencers_influencer_id_fields_id_fk",
+          "tableFrom": "influencers",
+          "tableTo": "fields",
+          "columnsFrom": [
+            "influencer_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "influencers_field_id_influencer_id": {
+          "name": "influencers_field_id_influencer_id",
+          "columns": [
+            "field_id",
+            "influencer_id"
+          ]
+        }
+      }
+    },
+    "model_hypers": {
+      "name": "model_hypers",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "model": {
+          "name": "model",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "model_version": {
+          "name": "model_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
+        "score": {
+          "name": "score",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "hypers": {
+          "name": "hypers",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "meta": {
+          "name": "meta",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "ix_model_hypers_model_version": {
+          "name": "ix_model_hypers_model_version",
+          "columns": [
+            "model_version"
+          ],
+          "isUnique": false
+        },
+        "ix_model_hypers_created_at": {
+          "name": "ix_model_hypers_created_at",
+          "columns": [
+            "created_at"
+          ],
+          "isUnique": false
+        },
+        "ix_model_hypers_model": {
+          "name": "ix_model_hypers_model",
+          "columns": [
+            "model"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "model_hypers_user_id_users_id_fk": {
+          "name": "model_hypers_user_id_users_id_fk",
+          "tableFrom": "model_hypers",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {}
+    },
     "notes": {
       "name": "notes",
       "schema": "",
@@ -1173,6 +1330,69 @@
       },
       "compositePrimaryKeys": {}
     },
+    "auth_old": {
+      "name": "auth_old",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "varchar(320)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "hashed_password": {
+          "name": "hashed_password",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "ix_auth_old_email": {
+          "name": "ix_auth_old_email",
+          "columns": [
+            "email"
+          ],
+          "isUnique": true
+        },
+        "ix_auth_old_updated_at": {
+          "name": "ix_auth_old_updated_at",
+          "columns": [
+            "updated_at"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "auth_old_id_users_id_fk": {
+          "name": "auth_old_id_users_id_fk",
+          "tableFrom": "auth_old",
+          "tableTo": "users",
+          "columnsFrom": [
+            "id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {}
+    },
     "users": {
       "name": "users",
       "schema": "",
@@ -1481,10 +1701,6 @@
   "_meta": {
     "schemas": {},
     "tables": {},
-    "columns": {
-      "\"entries\".\"title_summary\"": "\"entries\".\"ai_title\"",
-      "\"entries\".\"text_summary\"": "\"entries\".\"ai_text\"",
-      "\"entries\".\"sentiment\"": "\"entries\".\"ai_sentiment\""
-    }
+    "columns": {}
   }
 }
