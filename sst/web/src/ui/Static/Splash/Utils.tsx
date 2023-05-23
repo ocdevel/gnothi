@@ -15,15 +15,15 @@ export function FeatureIntro2({
   children,
   color
 }: FeatureIntro2) {
-  return <Grid container
-      xs={12} md={4}
-      px={4}
-      py={8}
-      alignItems="center"
-      justifyContent="center"
-      spacing={2}
-      direction='column'
-      >
+  return <Grid
+    container
+    xs={12}
+    md={3}
+    alignItems="center"
+    justifyContent="center"
+    spacing={2}
+    direction='column'
+  >
       <Grid item
         alignContent="center"
       >
@@ -43,7 +43,7 @@ export function FeatureIntro2({
         <Typography
           variant="body1"
           textAlign="center"
-          maxWidth={450}
+          maxWidth={400}
 
         >
           {children}
@@ -62,10 +62,10 @@ type FeatureIntro = {
 }
 
 export function FeatureIntro({
-  icon, 
-  title, 
-  children, 
-  color 
+  icon,
+  title,
+  children,
+  color
 }: FeatureIntro){
   return <Grid item xs={12} md={6}>
     <Stack
@@ -75,17 +75,17 @@ export function FeatureIntro({
       justifyContent="center"
       spacing={2}
     >
-      {icon}  
+      {icon}
       <Box maxWidth={450}>
-        <Typography 
-          variant='h6' 
+        <Typography
+          variant='h6'
           color={color}
           marginBottom={1}
         >
           {title}
         </Typography>
 
-        <Typography 
+        <Typography
         variant="body1"
         >{children}</Typography>
       </Box>
