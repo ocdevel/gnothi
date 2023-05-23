@@ -9,7 +9,7 @@ const {spacing, colors, sx} = styles
 
 export default   function Hero() {
   return <Section color="dark">
-    <Grid mt={5}>
+    <Grid mt={5} mb={5}>
         <Typography
           variant="h1"
           textAlign={'center'}

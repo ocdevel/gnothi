@@ -64,16 +64,14 @@ function Acknowledgements({existingUser}: Acknowledgements) {
   } as const
 
   const steps = [
-    ...(existingUser ? [
-      <Stack spacing={2}>
-        <Typography variant='h4'>Welcome back!</Typography>
-        <Typography>Hello existing user</Typography>
-        <Button
-          {...btnProps}
-          onClick={nextStep}
-        >Next</Button>
-      </Stack>,
-    ] : []),
+    <Stack spacing={2}>
+      <Typography variant='h4'>{existingUser ? "Welcome back!" : "Welcome to gnothi"}</Typography>
+      <Typography>{existingUser ? "Hello existing user" : "We're glad you're here"}</Typography>
+      <Button
+        {...btnProps}
+        onClick={nextStep}
+      >Next</Button>
+    </Stack>,
 
     <Stack spacing={2}>
       <Typography variant='h4'>Disclaimer</Typography>

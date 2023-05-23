@@ -1,16 +1,19 @@
 import React from "react";
 import { Section } from "./Utils";
 import Grid from '@mui/material/Grid';
+import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 // import Button from '@mui/material/Button';
 import { styles } from '../../../Setup/Mui'
 import InsightsOutlinedIcon from '@mui/icons-material/InsightsOutlined';
+import SummaryIcon from '@mui/icons-material/SummarizeOutlined';
 import BedtimeOutlinedIcon from '@mui/icons-material/BedtimeOutlined';
 import ShareIcon from '@mui/icons-material/Share';
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 import AutoStoriesOutlinedIcon from '@mui/icons-material/AutoStoriesOutlined';
 import ChatOutlinedIcon from '@mui/icons-material/ChatOutlined';
 import FolderOpenOutlinedIcon from '@mui/icons-material/FolderOpenOutlined';
+import Divider from '@mui/material/Divider';
 
 // import {Link} from "../../../Components/Link"
 import { FeatureIntro2 } from "../Utils";
@@ -22,18 +25,16 @@ export default function DiscoverAI() {
   const featureProps = {color: sx.featureIcon.color}
 
   return <Section color="grey">
+    <Box>
     <Grid
       container
-      mb={4}
       flexDirection='row'
       justifyContent='center'
       alignItems='flex-start'
       spacing={4}
       maxWidth={2000}
-
     >
-      <Grid item xs={12} pb={4}
-        alignItems="center">
+      <Grid item xs={12}>
         <Typography
           variant="h2"
           textAlign='center'
@@ -63,11 +64,21 @@ export default function DiscoverAI() {
 
       <FeatureIntro2
         {...featureProps}
-        icon={<ShareIcon {...iconProps} />}
-        title={"Share entries for support"}
+        icon={<SummaryIcon {...iconProps} />}
+        title={"Get helpful snapshots"}
       >
         <Typography>
-        Create tags to share specific entries with therapists and friends to connect and exchange ideas.
+        Turn a long entry into a short snippet, or summarize a whole year of entries
+        </Typography>
+      </FeatureIntro2>
+
+      <FeatureIntro2
+        {...featureProps}
+        icon={<AutoStoriesOutlinedIcon {...iconProps} />}
+        title={"Get book recommendations"}
+      >
+        <Typography>
+        Deepen your understanding with books suggested by AI based on your entries
         </Typography>
       </FeatureIntro2>
 
@@ -77,27 +88,17 @@ export default function DiscoverAI() {
         title={"Focus on habits and behaviors"}
       >
         <Typography>
-        Track things like mood, sleep, exercise, etc. Then, use data from AI to make changes that have you feeling your best.
+        Track things like mood, sleep, exercise, and all the other behaviors that impact you
         </Typography>
       </FeatureIntro2>
 
       <FeatureIntro2
         {...featureProps}
         icon={<FolderOpenOutlinedIcon {...iconProps} />}
-        title={"Chat with Gnothi"}
+        title={"Organize entries with tags"}
       >
         <Typography>
-        Interactive prompting can also be used to ask questions and get more out of your journaling experience.
-        </Typography>
-      </FeatureIntro2>
-
-      <FeatureIntro2
-        {...featureProps}
-        icon={<AutoStoriesOutlinedIcon {...iconProps} />}
-        title={"Get connected to resources"}
-      >
-        <Typography>
-        Gnothi gives you book recommendations based on your writing. You can also interact with AI to get more tools.
+        Sort your thoughts with custom tags to group entries and streamline your reflections
         </Typography>
       </FeatureIntro2>
     </Grid>
@@ -112,6 +113,8 @@ export default function DiscoverAI() {
    {/* </Link.Button>*/}
    {/* </Grid>*/}
 
-
+</Box>
   </Section>
+
+
 }

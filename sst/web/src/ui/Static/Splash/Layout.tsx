@@ -17,12 +17,14 @@ import Button from "@mui/material/Button";
 import {AuthComponent} from "../../Setup/Auth";
 import AppBar from "../../Components/AppBar";
 import {styles} from "../../Setup/Mui"
+import {useLocalStore} from './store'
+import {shallow} from "zustand/shallow";
 
 const {sx, colors, spacing} = styles
 import Footer from '../../Footer'
 
 export default function Layout() {
-  const [authTab, setAuthTab] = useState<"signIn"|"signUp"|undefined>(undefined)
+  const [authTab, setAuthTab] = useLocalStore(s => [s.authTab, s.setAuthTab], shallow)
   const error = useStore(state => state.apiError)
   const jwt = useStore(state => state.jwt)
 

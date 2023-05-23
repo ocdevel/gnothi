@@ -114,8 +114,8 @@ export function Section({ children, color = 'light' }: React.PropsWithChildren<S
       alignItems="center"
       sx={{
         mt: 10,
-        mb: 15,
-        mx: 4
+        mb: 8,
+        mx: 15
       }}
     >
       {children}
