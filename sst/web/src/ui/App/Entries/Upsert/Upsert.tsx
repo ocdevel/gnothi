@@ -9,11 +9,10 @@ import NoteCreate from '../Notes/Create'
 import {Entry as NotesList} from '../Notes/List'
 import _ from 'lodash'
 import {FullScreenDialog} from "../../../Components/Dialog";
-import { Dayjs } from 'dayjs';
 import TextField from '@mui/material/TextField';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import {AdapterDayjs} from '@mui/x-date-pickers/AdapterDayjs';
+import {LocalizationProvider} from '@mui/x-date-pickers/LocalizationProvider';
+import {DatePicker} from '@mui/x-date-pickers/DatePicker';
 
 import {useStore} from "../../../../data/store"
 import Error from "../../../Components/Error";
@@ -27,28 +26,29 @@ import Typography from "@mui/material/Typography"
 import {TextField2, Checkbox2} from "../../../Components/Form";
 import Editor from "../../../Components/Editor";
 import {Alert2} from "../../../Components/Misc";
-import Divider from "@mui/material/Divider";
-import Card from "@mui/material/Card";
-import CardContent from "@mui/material/CardContent";
-import CardHeader from "@mui/material/CardHeader";
+
 import Stack from "@mui/material/Stack";
 import {Controller, useForm} from "react-hook-form";
 import {zodResolver} from "@hookform/resolvers/zod";
 import {Entries} from '@gnothi/schemas'
-import dayjs from 'dayjs'
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
+import CardActions from "@mui/material/CardActions";
 
-const placeholder = `Write a journal entry, whatever's on your mind. Hard times you're going through, politics, philosophy, the weather. Be verbose, AI works best with long-form content - a paragraph or more is ideal, less might result in poor insights or resource-recommendations.
- 
-Separate multiple concepts by hitting ENTER twice (two new lines). So if you're chatting weather, then want to chat relationships - two ENTERs. See the toolbar at the top for formatting help, this editor uses Markdown. The square icon (right-side toolbar) lets you go into full-screen mode, easier for typing long entries. 
+const placeholder = `Welcome to your journal! This is the perfect place to reflect, express yourself, and capture your thoughts. Take a moment to think about your day, your experiences, or anything that's been on your mind. Use this space to write freely and let your thoughts flow. 
 
-After you have one or two entries, head to the Insights and Resources links at the website top to play with the AI.     
+Enjoy the process and happy journaling!     
 `
+
+// Be verbose. AI works best with long-form content, so a paragraph or more is ideal for enhanced insights, like themes, book recommendations, summaries, and more.
+
 
 interface Upsert {
   entry?: Entries.entries_list_response
   onClose?: Function
   onSubmit?: Function
 }
+
 export default function Upsert(props: Upsert) {
   const entryModal = useStore(s => s.entryModal!)
   const setEntryModal = useStore(s => s.setEntryModal)
@@ -61,15 +61,11 @@ export default function Upsert(props: Upsert) {
   ]
 
 
-
-
-
   const defaults = isEdit ? {defaultValues: entry} : {}
   const form = useForm({
     resolver: zodResolver(Entries.entries_post_request.omit({tags: true})),
     ...defaults
   })
-
 
 
   const navigate = useNavigate()
@@ -220,6 +216,7 @@ export default function Upsert(props: Upsert) {
         type="submit"
         className="btn-submit"
         disabled={submitting}
+        size="small"
         onClick={form.handleSubmit(submit)}
       >Submit
       </Button>
@@ -234,7 +231,7 @@ export default function Upsert(props: Upsert) {
         <Controller
           control={form.control}
           name="created_at"
-          render={ obj => <DatePicker
+          render={obj => <DatePicker
             label="Date"
             value={obj.field.value}
             inputFormat="YYYY-MM-DD"
@@ -252,38 +249,38 @@ export default function Upsert(props: Upsert) {
 
   function renderForm() {
     return <Stack className="form-upsert"
-      spacing={2}
-      direction='column'>
+                  spacing={2}
+                  direction='column'>
 
-        {datePicker()}
-        <TextField2
-          name='title'
-          label='Title'
-          helperText='Leave blank to use a machine-generated title based on your entry.'
-          form={form}
-        />
+      {datePicker()}
+      <TextField2
+        name='title'
+        label='Title'
+        helperText='Leave blank if you want AI to generate a title based on your entry'
+        form={form}
+      />
 
-        <Editor
-          name='text'
-          placeholder={placeholder}
-          form={form}
-          onChange={changeText}
-        />
+      <Editor
+        name='text'
+        placeholder={placeholder}
+        form={form}
+        onChange={changeText}
+      />
 
-        {/*<div>*/}
-        {/*  <TextField2*/}
-        {/*    name='created_at'*/}
-        {/*    label='Date'*/}
-        {/*    form={form}*/}
-        {/*    placeholder="YYYY-MM-DD"*/}
-        {/*    helperText="Manually enter this entry's date (otherwise it's set to time of submission)."*/}
-        {/*  />*/}
-        {/*</div>*/}
-        {/*<br/>*/}
+      {/*<div>*/}
+      {/*  <TextField2*/}
+      {/*    name='created_at'*/}
+      {/*    label='Date'*/}
+      {/*    form={form}*/}
+      {/*    placeholder="YYYY-MM-DD"*/}
+      {/*    helperText="Manually enter this entry's date (otherwise it's set to time of submission)."*/}
+      {/*  />*/}
+      {/*</div>*/}
+      {/*<br/>*/}
 
       <Error
         event={/entries\/entr(ies|y).*/g}
-        codeRange={[400,500]}
+        codeRange={[400, 500]}
       />
 
       <Stack justifyContent='space-between' direction='row' alignItems='center'>
@@ -298,29 +295,15 @@ export default function Upsert(props: Upsert) {
     </Stack>
   }
 
-  // TODO
-  const BEHAVIORS_IMPLEMENTED = false
-  function renderBehaviors() {
-    // TODO
-    return null
-  }
-
-  return <Grid container className="upsert">
-    <Grid item xs={12} lg={BEHAVIORS_IMPLEMENTED ? (id ? 8 : 12) : 12}>
-      <DialogContent>
-        {renderForm()}
-      </DialogContent>
-      <DialogActions>
+  return <Card sx={{borderRadius: 2}}>
+    <CardContent sx={{backgroundColor: "white"}}>
+      {renderForm()}
+      <CardActions sx={{backgroundColor: "white", justifyContent: "flex-end"}}>
         {/*viewing && <Box sx={{marginRight: 'auto'}}>
-          <NoteCreate id={id} />
-        </Box>*/}
+        <NoteCreate id={id} />
+      </Box>*/}
         {renderButtons()}
-      </DialogActions>
-    </Grid>
-    {BEHAVIORS_IMPLEMENTED && id && <Grid item xs={12} lg={4}>
-      <DialogContent>
-        {renderBehaviors()}
-      </DialogContent>
-    </Grid>}
-  </Grid>
+      </CardActions>
+    </CardContent>
+  </Card>
 }

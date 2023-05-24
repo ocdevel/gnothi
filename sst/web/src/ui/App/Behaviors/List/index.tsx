@@ -32,6 +32,7 @@ import CardActions from "@mui/material/CardActions";
 import iconProps from "../../../Components/Icon";
 import {FaPlus as AddIcon} from "react-icons/fa";
 import BehaviorsIcon from "@mui/icons-material/InsertChartOutlinedRounded";
+import SettingsIcon from "@mui/icons-material/SettingsOutlined";
 
 
 interface FieldGroup {
@@ -165,7 +166,8 @@ export default function Behaviors({advanced}: Behaviors) {
       .sortBy('id')
       .value(),
     emptyText: () => <small className='text-muted'>
-      <p>For habit-tracking (exercise, substance, productivity, etc) I recommend <a href='https://habitica.com/' target='_blank'>Habitica</a>. Gnothi
+      <p>For habit-tracking (exercise, substance, productivity, etc) I recommend <a href='https://habitica.com/'
+                                                                                    target='_blank'>Habitica</a>. Gnothi
         will sync Habitica habits & dailies.</p>
       <p>Use Gnothi fields for qualitative data (mood, sleep-quality, decisions) and Habitica for habits. Habitica
         doesn't support arbitrary number entries.</p>
@@ -243,14 +245,14 @@ export default function Behaviors({advanced}: Behaviors) {
         sx={{backgroundColor: '#ffffff', borderRadius: 2}}
       >
         <CardContent>
-             <DayChanger/>
+          <DayChanger/>
           <AccordionDetails>
             {renderGroup(groups[0])}
           </AccordionDetails>
-          <CardActions sx={{justifyContent:'flex-end', mb: 2}}>
+          <CardActions sx={{justifyContent: 'flex-end', mb: 2}}>
             <Button
-              variant="outlined"
-              borderWidth={2}
+              variant="contained"
+              color="secondary"
               size="small"
               onClick={() => setView({view: "new"})}
             >
@@ -258,7 +260,7 @@ export default function Behaviors({advanced}: Behaviors) {
             </Button>
             {/*<Button variant="contained" color="secondary" onClick={() => setView({view: "overall"})}>Top Influencers</Button>*/}
           </CardActions>
-            <Stack spacing={1}>
+          <Stack spacing={1}>
             {groups.slice(1).map(renderGroupAccordion)}
           </Stack>
         </CardContent>
@@ -300,13 +302,15 @@ export default function Behaviors({advanced}: Behaviors) {
           </IconButton>
         </Grid>
       </Grid>
-       {renderGroup(groups[0])}
+
+      {renderGroup(groups[0])}
 
 
       <CardActions sx={{justifyContent: "flex-end", mt: 3}}>
         <Button
           onClick={toggleShowAbout}
-          variant="outlined"
+          variant="contained"
+          color="secondary"
           size={"small"}
         >
           {showAbout ? "Hide" : "About Behaviors"}
@@ -314,51 +318,25 @@ export default function Behaviors({advanced}: Behaviors) {
       </CardActions>
       {showAbout && <Box>
         <Box mb={2}>
-          <Typography color="primary" variant="h4" mt={3} fontWeight={500}>Tag Setting Suggestions</Typography>
-          <Typography color="primary" variant={"body1"} fontWeight={600}>Main:</Typography>
-          <Typography mb={.5} variant="body1">This is our standard tag. The majority of entries fall under this
-            category.</Typography>
-          <Typography variant="body2"><u>Index</u>: Enabled, to help AI to understand you better.</Typography>
-          <Typography variant="body2"><u>Summarize</u>: Enabled, to capture snapshots of your entries in
-            aggregate.</Typography>
+          <Typography mb={0} color="primary" variant="h4" mt={3} fontWeight={500}>Using Behaviors</Typography>
+          <Typography mb={2} color="primary" variant={"body1"} fontWeight={600}>Set the stage for personalized AI
+            insights</Typography>
+          <Typography mb={1} variant="body1">Whether it's exercise, mood, sleep, or anything in between, log it here.
+            The AI will then review your data to identify patterns, correlations, and even predicts future entries.
+          </Typography>
+          <Typography mb={.5} variant="body1">Click on the “<SettingsIcon sx={{fontSize: 15}}/>” icon above for pro
+            tips, settings, and more.</Typography>
         </Box>
         <Box mb={2}>
-          <Typography color="primary" variant={"body1"} fontWeight={600}>Dreams:</Typography>
-          <Typography mb={.5} variant="body1">Ideal for logging dreams. Plus, we'll be launching a Dream Analysis
-            feature very shortly!</Typography>
-          <Typography variant="body2"><u>Index</u>: Disabled, to prevent dream-based suggestions.</Typography>
-          <Typography variant="body2"><u>Summarize</u>: Enabled, for quick dream recollection.</Typography>
+          <Typography mb={0} color="primary" variant="h4" mt={3} fontWeight={500}>About the Tech</Typography>
+          <Typography mb={2} color="primary" variant={"body1"} fontWeight={600}>An exciting update is around the
+            corner</Typography>
+          <Typography mb={1} variant="body1">While we’ve temporarily removed its machine learning capabilities, we're
+            developing an upgrade that will offer the latest in AI technology.
+          </Typography>
+          <Typography mb={.5} variant="body1">For now, keep tracking your behaviors. Your data will seamlessly integrate
+            into the new system once it's launched.</Typography>
         </Box>
-        <Box mb={2}>
-          <Typography color="primary" variant={"body1"} fontWeight={600}>Songs:</Typography>
-          <Typography mb={.5} variant="body1">Use this tag for songs or poems that resonate with you.</Typography>
-          <Typography variant="body2"><u>Index</u>: Enabled, to help AI to understand you better.</Typography>
-          <Typography variant="body2"><u>Summarize</u>: Disabled, to preserve the original essence of the
-            content.</Typography>
-        </Box>
-        <Box mb={2}>
-          <Typography color="primary" variant={"body1"} fontWeight={600}>Therapy:</Typography>
-          <Typography mb={.5} variant="body1">Use may decide to create this tag to to share specific entries with your
-            therapist.</Typography>
-          <Typography variant="body2"><u>Index</u>: Enabled, get AI insights like recurring themes, books,
-            etc.</Typography>
-          <Typography variant="body2"><u>Summarize</u>: Enabled, to summarize your progress and
-            experiences.</Typography>
-        </Box>
-        <Box mb={2}>
-          <Typography color="primary" variant="h4" mt={3} fontWeight={500}>Pro Tips:</Typography>
-          <Typography color="primary" variant={"body1"} fontWeight={600}>Multi-Tagging:</Typography>
-          <Typography variant="body1">Assign multiple tags to an entry, when it makes sense, to capture it in different
-            contexts.</Typography>
-        </Box>
-        <Box mb={2}>
-          <Typography color="primary" variant={"body1"} fontWeight={600}>Consistency:</Typography>
-          <Typography variant="body1">Stick to the same tags for similar entries to simplify searching and stay
-            organized.</Typography>
-        </Box>
-        <Typography color="primary" variant={"body1"} fontWeight={600}>Balanced Tagging:</Typography>
-        <Typography variant="body1">Opt for tags that are precise, yet inclusive enough to group related
-          entries.</Typography>
       </Box>}
 
     </CardContent>
@@ -367,6 +345,21 @@ export default function Behaviors({advanced}: Behaviors) {
   </Card>
 
 
+}
+// To use for later to provide ideas for behaviors and optimal settings
+{/*<Box mb={2}>*/
+}
+{/*  <Typography color="primary" variant={"body1"} fontWeight={600}>Songs:</Typography>*/
+}
+{/*  <Typography mb={.5} variant="body1">Use this tag for songs or poems that resonate with you.</Typography>*/
+}
+{/*  <Typography variant="body2"><u>Index</u>: Enabled, to help AI to understand you better.</Typography>*/
+}
+{/*  <Typography variant="body2"><u>Summarize</u>: Disabled, to preserve the original essence of the*/
+}
+{/*    content.</Typography>*/
+}
+{/*</Box>*/
 }
 
 

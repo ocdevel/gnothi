@@ -3,6 +3,7 @@ import Grid from '@mui/material/Grid'
 import {useStore} from "../../../../data/store";
 import Upsert from "./Upsert"
 import Behaviors from "../../Behaviors/List"
+import DialogContent from "@mui/material/DialogContent";
 
 export default function New() {
   const setEntryModal = useStore(s => s.setEntryModal)
@@ -12,12 +13,11 @@ export default function New() {
   }
 
   return  <div>
-    <Grid container>
-      <Grid item sm={12} md={7} lg={8}>
+    <Grid container spacing={2}>
+      <Grid item sm={12} lg={7}>
         <Upsert onClose={onClose} />
-
       </Grid>
-      <Grid item sm={12} md={5} lg={4} >
+      <Grid item sm={12} lg={5} >
         <Behaviors advanced={false}/>
       </Grid>
     </Grid>

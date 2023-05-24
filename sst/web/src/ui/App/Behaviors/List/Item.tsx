@@ -43,10 +43,6 @@ export default function Item({fid, advanced}: Item) {
 
   const sizes = advanced ? [5, 5, 2] : [6, 6]
 
-  function renderControls() {
-
-  }
-
   return (
     <Grid
       className={`behavior behavior-${f.type}`}
@@ -71,7 +67,7 @@ export default function Item({fid, advanced}: Item) {
         </ButtonBase>
       </Grid>
 
-      <Grid item xs={sizes[1]}>
+      <Grid item xs={sizes[1]} sx={{justifyContent:"flex-end"}}>
         <BehaviorEntry f={f} />
       </Grid>
 

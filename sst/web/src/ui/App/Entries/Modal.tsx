@@ -7,6 +7,7 @@ import {Loading} from "../../Components/Routing";
 import View from "./View"
 import New from "./Upsert/New"
 import Upsert from './Upsert/Upsert'
+import DialogContent from "@mui/material/DialogContent";
 
 
 export default function Modal() {
@@ -40,6 +41,8 @@ export default function Modal() {
     onClose={onClose}
     title={title}
   >
-    {renderContent()}
+    <DialogContent>
+      {renderContent()}
+    </DialogContent>
   </FullScreenDialog>
 }
