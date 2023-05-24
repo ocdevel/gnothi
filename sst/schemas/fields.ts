@@ -250,6 +250,18 @@ export const routes = {
       s: z.void(),
       t: {ws: true},
     }
+  },
+  habitica_sync_cron: {
+    i: {
+      e: 'void',
+      s: Passthrough,
+      t: {cron: true},
+    },
+    o: {
+      e: 'void',
+      s: z.void(),
+      t: {cron: true},
+    }
   }
 
 }

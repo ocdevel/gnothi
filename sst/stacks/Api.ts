@@ -93,6 +93,11 @@ export function Api({ app, stack }: sst.StackContext) {
     ]
   })
 
+  const habiticaCron = new sst.Cron(stack, "FnHabiticaCron", {
+    schedule: "rate(1 minute)",
+    job: fnMain
+  })
+
   http.addRoutes(stack, {
     "POST /": {
       function: fnMain,

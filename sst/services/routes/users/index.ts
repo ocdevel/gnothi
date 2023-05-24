@@ -20,6 +20,8 @@ export const users_everything_request = new Route(r.users_everything_request, as
   ] as const).map(async (event) => {
     await context.handleReq({event, data: {}}, context)
   }))
+  // mark as logged in
+  await context.db.drizzle.update(users).set({updated_at: new Date()}).where(eq(users.id, context.uid))
   return []
 })
 

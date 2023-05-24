@@ -163,6 +163,7 @@ export const Events = z.enum([
   'habitica_post_request',
   'habitica_sync_request',
   'habitica_delete_request',
+  'habitica_sync_cron',
 
   'payments_publickey_request',
   'payments_publickey_response',

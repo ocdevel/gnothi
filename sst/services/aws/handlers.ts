@@ -12,7 +12,7 @@ import {
   Context,
   APIGatewayProxyResultV2,
   APIGatewayProxyEventV2,
-  APIGatewayEvent,
+  APIGatewayEvent, ScheduledEvent,
 } from "aws-lambda";
 import {Api, Events} from '@gnothi/schemas';
 import {Function} from 'sst/node/function'
@@ -26,12 +26,13 @@ export * as Handlers from './handlers'
 
 //const defaultBucket = Bucket.Bucket.bucketName
 
-type HandlerKey = "http" | "s3" | "sns" | "lambda" | "ws"
+type HandlerKey = "http" | "s3" | "sns" | "lambda" | "ws" | "cron"
 export function whichHandler(event: any, context: Context): HandlerKey {
   // TODO would multiple triggers ever hit the same Lambda at once?
   if (sns.match(event)) {return "sns"}
   if (ws.match(event)) {return "ws"}
   if (http.match(event)) {return "http"}
+  if (cron.match(event)) {return "cron"}
   // if (S3.match(event)) {return new S3()}
   return "lambda"
 }
@@ -245,10 +246,28 @@ export const http: Handler<APIGatewayProxyEventV2> = {
   }
 }
 
+export const cron: Handler<ScheduledEvent> = {
+  match: (event) => event.source === "aws.events",
+  // match: (event) => event['detail-type'] === "Scheduled Event",
+
+  parse: async (event) => {
+    // FIXME no easy way to inform the CDK construct to pass something along. A tag? for now, I'll just match-make
+    // based on the rule which triggered this function
+    const eventKey = event.resources[0].toLowerCase().includes("habitica") ? "habitica_sync_cron"
+      : undefined // will need this error as I flesh out more crons
+    return [{data: event, event: eventKey, trigger: "cron"}]
+  },
+
+  async respond(res: any): Promise<APIGatewayProxyResultV2> {
+    return proxyRes(res)
+  }
+}
+
 export const handlers: Record<keyof Api.Trigger, Handler> = {
   ws,
   http,
   // sns,
   // s3,
+  cron,
   background: lambda
 }

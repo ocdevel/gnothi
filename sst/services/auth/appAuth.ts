@@ -65,3 +65,12 @@ export async function getUser(
   const user = await getFromCognito(db, cognitoId)
   return {handled: false, user}
 }
+
+export function noUser() {
+  return {
+    handled: false,
+    user: {
+      id:  "00000000-00000000-00000000-00000000",
+    } as unknown as User
+  }
+}

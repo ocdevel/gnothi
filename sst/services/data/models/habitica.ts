@@ -141,4 +141,32 @@ export class Habitica extends Base {
       }
     }
   }
+
+  async cron() {
+    const {db} = this.context
+    const driz = db.drizzle
+    const k = 'habitica'
+    console.log(`Running ${k}`)
+    const users = await driz.execute<User>(sql`
+      select id, habitica_user_id, habitica_api_token
+      from users
+      where char_length(habitica_user_id) > 0
+        and char_length(habitica_api_token) > 0
+        -- stop tracking inactive users
+        and updated_at > now() - interval '4 days'
+    `)
+
+    let errs = []
+    for (const u of users.rows) {
+      try {
+        await this.syncFor(u)
+      } catch (err) {
+        errs.push(err)
+      }
+    }
+    if (errs.length) {
+      console.error(errs)
+    }
+    return {}
+  }
 }

@@ -32,10 +32,15 @@ export async function proxy(
   event: APIGatewayProxyWebsocketEventV2WithRequestContext<any>,
   context
 ): Promise<APIGatewayProxyResultV2> {
-  const {user, handled} = await auth.getUser(event, context, db)
+  const triggerIn = Handlers.whichHandler(event, context)
+
+  // TODO need to have a better system for non-user routes (cron, lambda, sns, etc)
+  const {user, handled} = (triggerIn === 'cron')
+    ? auth.noUser()
+    : await auth.getUser(event, context, db)
 
   if (handled) { return defaultResponse }
-  const triggerIn = Handlers.whichHandler(event, context)
+
   const handler = Handlers.handlers[triggerIn]
   const records = await handler.parse(event)
   const responses = await Promise.all(records.map(async req => {
@@ -155,5 +160,3 @@ const handleRes: FnContext['handleRes'] = async (def, res, fnContext) => {
 
   return final
 }
-
-
