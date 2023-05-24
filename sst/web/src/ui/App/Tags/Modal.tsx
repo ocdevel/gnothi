@@ -44,7 +44,7 @@ export default function Modal({close}: Modal) {
           <Typography color="primary" mb={2} variant={"body1"} fontWeight={500}>
             Streamline the organization of entries by topic</Typography>
           <Typography>
-          Some apps do this via <em>multiple journals</em>, like folders on a computer. Gnothi uses tags instead, adding more flexibility for entry-sharing & AI.
+          Some apps do this via multiple journals, like folders on a computer. Gnothi uses tags instead, adding more flexibility for entry-sharing and AI.
           </Typography>
         </Box>
 
@@ -54,15 +54,7 @@ export default function Modal({close}: Modal) {
           <Typography color="primary" mb={2} variant={"body1"} fontWeight={500}>
             Choose which tags do or don't use AI</Typography>
           <Typography>
-            AI summarization condenses longer entries into short summaries, while indexing uses AI to tailor personalized suggestions based on your entries.          </Typography>
-          <Typography mt={2} color="primary" fontWeight={600} variant="body1">When to turn off indexing?</Typography>
-          <Typography variant="body2" >
-            Indexing a dream, with its unusual language, could lead to offbeat suggestions, so you may want to disable indexing for dreams.
-          </Typography>
-          <Typography mt={2} color="primary" fontWeight={600} variant="body1">When to not use summarize?</Typography>
-          <Typography variant="body2" >
-            When AI summarizes, the unique essence of a poem or song lyric might be lost in the process, so you may want to disable summarize for those tags.
-          </Typography>
+            AI summarization condenses longer entries into short summaries, while indexing uses AI to provide personalized insights.          </Typography>
         </Box>
         <Button
           sx={{my: 2}}
