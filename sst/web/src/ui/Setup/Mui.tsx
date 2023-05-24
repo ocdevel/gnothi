@@ -133,7 +133,7 @@ export const theme = createTheme({
     },
     body2: {
       fontFamily: 'Poppins',
-      fontWeight: '200',
+      fontWeight: '300',
       fontSize: "0.8rem",
       lineHeight: '1.7',
     },

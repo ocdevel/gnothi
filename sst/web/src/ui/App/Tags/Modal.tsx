@@ -30,47 +30,84 @@ export default function Modal({close}: Modal) {
   function toggleMore() {setShowMore(!showMore)}
 
   function renderHelp() {
-    return <Card>
-      <CardHeader title='About Tags' />
+    return <Card
+      sx={{
+        display: 'inline-block',
+        backgroundColor: '#ffffff',
+        borderRadius: 3
+      }}>
       <CardContent>
-        <Typography component="div">
-          Tags organize your journal entries by topic (eg personal, work, dreams). Some apps do this via <em>multiple journals</em>, like folders on a computer. Gnothi uses tags instead, adding more flexibility for entry-sharing & AI.
-        </Typography>
-      </CardContent>
-      <CardHeader
-        title={
-          <Stack alignItems="center" direction="row" spacing={2}>
-            <Box>About</Box>
-            <FaRobot />
-          </Stack>
-        }
-      />
-      <CardContent>
-        <Typography component="div">
-          Gnothi applies AI to your journal, which may be unwanted for certain entries. You can disable AI features for those entries via tags.
-        </Typography>
-        <Typography variant="h6">Index</Typography>
-        <Typography component="div">
-        When <em>enabled</em>, these entries "represent you" - this is called "indexing". They will be used for recommending books, groups, therapists, etc. A scenario you'd likely disable this is <strong>Dreams</strong>.
-        </Typography>
-        <Typography variant="h6">Summarize</Typography>
-        <Typography component="div">
-        When <em>enabled</em>, these entries will be auto-summarized, which makes browsing old entries a breeze. A scenario you'd likely disable this is <strong>Songs</strong> or <strong>Poetry</strong>.
-        </Typography>
+        <Box mb={3}>
+          <Typography color="primary" variant="h4" mb={0} fontWeight={500}>
+            Using Tags
+          </Typography>
+          <Typography color="primary" mb={2} variant={"body1"} fontWeight={500}>
+            Streamline the organization of entries by topic</Typography>
+          <Typography>
+          Some apps do this via <em>multiple journals</em>, like folders on a computer. Gnothi uses tags instead, adding more flexibility for entry-sharing & AI.
+          </Typography>
+        </Box>
+
+        <Box>
+            <Typography marginRight={1} color="primary" variant="h4" mb={0} fontWeight={500}>About Index and Summarize</Typography>
+
+          <Typography color="primary" mb={2} variant={"body1"} fontWeight={500}>
+            Choose which tags do or don't use AI</Typography>
+          <Typography>
+            AI summarization condenses longer entries into short summaries, while indexing uses AI to tailor personalized suggestions based on your entries.          </Typography>
+          <Typography mt={2} color="primary" fontWeight={600} variant="body1">When to turn off indexing?</Typography>
+          <Typography variant="body2" >
+            Indexing a dream, with its unusual language, could lead to offbeat suggestions, so you may want to disable indexing for dreams.
+          </Typography>
+          <Typography mt={2} color="primary" fontWeight={600} variant="body1">When to not use summarize?</Typography>
+          <Typography variant="body2" >
+            When AI summarizes, the unique essence of a poem or song lyric might be lost in the process, so you may want to disable summarize for those tags.
+          </Typography>
+        </Box>
         <Button
           sx={{my: 2}}
           onClick={toggleMore}
           variant="outlined"
         >
-          {showMore ? "Hide examples" : "Show example use-cases"}
+          {showMore ? "Hide" : "Tag Settings and Pro Tips"}
         </Button>
           {showMore && <Box>
-            Here's how Gnothi's creator uses tags:<ul>
-            <li><b>Main</b>: My default. Most things go here.</li>
-            <li><b>Dreams</b>: I record my dreams, as I'll be building some cool dream-analysis tooling into Gnothi. I disable <b>Index</b> on this tag, since I don't want Gnothi matching-making me to books or groups based on my dreams - that would be weird. But I keep <b>Summarize</b> enabled because I'd like to quick-scan through old dreams.</li>
-            <li><b>Songs</b>: When a song or poem resonates with me, I copy/paste it as an entry. I keep <b>Index</b> enabled because I feel the song represents me in some way; I'd like AI to try to get at my core with that information. But I disable <b>Summarize</b> because - well how would you summarize a poem or song? It just gives weird output.</li>
-            <li><b>Therapy</b>: I share this tag (see sidebar {'>'} Sharing) with my therapist. Before each session she can either read my entries, or run some AI reports (summarization, question-answering) for a quick update. That way we hit the ground running in our session. This is an example of the value of multiple tags per entry; I'll tag most things Main, and I'll <em>also</em> tag an entry Therapy if it's something I'm comfortable with my therapist reading.</li>
-          </ul>
+            <Box mb={2}>
+              <Typography color="primary" variant="h4" mt={3} fontWeight={500}>Tag Setting Suggestions</Typography>
+              <Typography color="primary" variant={"body1"} fontWeight={600}>Main:</Typography>
+              <Typography mb={.5} variant="body1">This is our standard tag. The majority of entries fall under this category.</Typography>
+              <Typography variant="body2"><u>Index</u>: Enabled, to help AI to understand you better.</Typography>
+              <Typography variant="body2"><u>Summarize</u>: Enabled, to capture snapshots of your entries in aggregate.</Typography>
+            </Box>
+            <Box mb={2}>
+              <Typography color="primary" variant={"body1"} fontWeight={600}>Dreams:</Typography>
+              <Typography mb={.5} variant="body1">Ideal for logging dreams. Plus, we'll be launching a Dream Analysis feature very shortly!</Typography>
+              <Typography variant="body2"><u>Index</u>: Disabled, to prevent dream-based suggestions.</Typography>
+              <Typography variant="body2"><u>Summarize</u>: Enabled, for quick dream recollection.</Typography>
+            </Box>
+            <Box mb={2}>
+              <Typography color="primary" variant={"body1"} fontWeight={600}>Songs:</Typography>
+              <Typography mb={.5} variant="body1">Use this tag for songs or poems that resonate with you.</Typography>
+              <Typography variant="body2"><u>Index</u>: Enabled, to help AI to understand you better.</Typography>
+              <Typography variant="body2"><u>Summarize</u>: Disabled, to preserve the original essence of the content.</Typography>
+            </Box>
+            <Box mb={2}>
+              <Typography color="primary" variant={"body1"} fontWeight={600}>Therapy:</Typography>
+              <Typography mb={.5} variant="body1">Use may decide to create this tag to to share specific entries with your therapist.</Typography>
+              <Typography variant="body2"><u>Index</u>: Enabled, get AI insights like recurring themes, books, etc.</Typography>
+              <Typography variant="body2"><u>Summarize</u>: Enabled, to summarize your progress and experiences.</Typography>
+            </Box>
+            <Box mb={2}>
+              <Typography color="primary" variant="h4" mt={3} fontWeight={500}>Pro Tips:</Typography>
+              <Typography color="primary" variant={"body1"} fontWeight={600}>Multi-Tagging:</Typography>
+              <Typography variant="body1">Assign multiple tags to an entry, when it makes sense, to capture it in different contexts.</Typography>
+            </Box>
+            <Box mb={2}>
+              <Typography color="primary" variant={"body1"} fontWeight={600}>Consistency:</Typography>
+              <Typography variant="body1">Stick to the same tags for similar entries to simplify searching and stay organized.</Typography>
+            </Box>
+              <Typography color="primary" variant={"body1"} fontWeight={600}>Balanced Tagging:</Typography>
+              <Typography variant="body1">Opt for tags that are precise, yet inclusive enough to group related entries.</Typography>
           </Box>}
       </CardContent>
     </Card>
@@ -92,7 +129,9 @@ export default function Modal({close}: Modal) {
       title="Tags"
     >
       <DialogContent>
-        <Grid justifyContent='space-between' container spacing={3}>
+        <Grid container
+        justifyItems="flex-start">
+        <Grid justifyContent='space-between' container item spacing={3}>
           <Grid item sm={12} md={7}>
             <Sortable items={tags} render={renderTag} onReorder={reorder} />
             <Create />
@@ -100,6 +139,7 @@ export default function Modal({close}: Modal) {
           <Grid item sm={12} md={5}>
             {renderHelp()}
           </Grid>
+        </Grid>
         </Grid>
       </DialogContent>
     </FullScreenDialog>

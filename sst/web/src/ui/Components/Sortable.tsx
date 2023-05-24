@@ -1,6 +1,8 @@
 import React, { useState, useMemo } from "react";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 
+
+
 const reorder = (list, startIndex, endIndex) => {
   const result = Array.from(list);
   const [removed] = result.splice(startIndex, 1);
@@ -17,6 +19,7 @@ function Item({item, index, keyBy, render}) {
           ref={provided.innerRef}
           {...provided.draggableProps}
           {...provided.dragHandleProps}
+
         >
           {render(item)}
         </div>
@@ -47,11 +50,12 @@ export default function Sortable({items, onReorder, render, keyBy='id'}) {
   }
 
   return (
-    <DragDropContext onDragEnd={onDragEnd}>
-      <Droppable droppableId="list">
+
+    <DragDropContext onDragEnd={onDragEnd} >
+      <Droppable droppableId="list" >
         {provided => (
           <div ref={provided.innerRef} {...provided.droppableProps}>
-            <List items={items} render={render} keyBy={keyBy}/>
+            <List items={items} render={render} keyBy={keyBy} />
             {provided.placeholder}
           </div>
         )}

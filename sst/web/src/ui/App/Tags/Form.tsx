@@ -42,7 +42,7 @@ export default function Form({tag}: Form) {
 
   return <Box className="form-tags-put">
     <Paper sx={styles.paper}>
-      <Reorder />
+      {/*<Reorder />*/}
       <Controller
         name="name"
         control={control}
@@ -89,7 +89,9 @@ export default function Form({tag}: Form) {
           />
         )}
       />
-      {tag.main ? <div /> : <IconButton onClick={destroyTag}>
+      {tag.main ? <IconButton sx={{color: 'white'}}>
+        <Delete />
+      </IconButton> : <IconButton onClick={destroyTag}>
         <Delete />
       </IconButton>}
     </Paper>

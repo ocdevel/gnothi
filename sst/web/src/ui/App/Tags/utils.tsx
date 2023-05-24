@@ -7,7 +7,14 @@ export const styles = {
     py: 1,
     px: 2,
     alignItems: 'center',
-    width: '100%'
+    width: '100%',
+    backgroundColor: "white",
+    borderRadius: 3
   },
-  inputBase: {ml: 1, flex: 1}
+  inputBase: {
+    fontWeight: 500,
+    color: "primary.main",
+    ml: 1,
+    flex: 1
+  }
 }
