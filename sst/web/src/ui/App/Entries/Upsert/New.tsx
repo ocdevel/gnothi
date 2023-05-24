@@ -11,15 +11,15 @@ export default function New() {
     setEntryModal(null)
   }
 
-  return  <>
-    <Grid container spacing={2}>
+  return  <div>
+    <Grid container>
       <Grid item sm={12} md={7} lg={8}>
         <Upsert onClose={onClose} />
 
       </Grid>
-      <Grid item sm={12} lg={4} md={5}>
+      <Grid item sm={12} md={5} lg={4} >
         <Behaviors advanced={false}/>
       </Grid>
     </Grid>
-  </>
+  </div>
 }

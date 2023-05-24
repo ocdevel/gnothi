@@ -200,7 +200,7 @@ export default function Insights({entry_ids}: Insights) {
         icon={<BehaviorsIcon {...iconProps} />}
       //   description="Here’s an overview of the daily habits and behaviors you’ve been tracking through Gnothi."//
       >
-        <Behaviors/>
+        <Behaviors />
       </Insight>
       }
       <Insight

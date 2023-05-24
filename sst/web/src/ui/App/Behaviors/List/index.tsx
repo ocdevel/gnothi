@@ -25,8 +25,13 @@ import {shallow} from 'zustand/shallow'
 import Behavior from './Item'
 import ManageBehaviorsIcon from '@mui/icons-material/SettingsOutlined';
 import IconButton from "@mui/material/IconButton";
+import AddCircleIcon from '@mui/icons-material/AddCircleOutline';
 import Accordions from '../../../Components/Accordions.tsx'
 import Stack from "@mui/material/Stack";
+import CardActions from "@mui/material/CardActions";
+import iconProps from "../../../Components/Icon";
+import {FaPlus as AddIcon} from "react-icons/fa";
+import BehaviorsIcon from "@mui/icons-material/InsertChartOutlinedRounded";
 
 
 interface FieldGroup {
@@ -160,8 +165,7 @@ export default function Behaviors({advanced}: Behaviors) {
       .sortBy('id')
       .value(),
     emptyText: () => <small className='text-muted'>
-      <p>For habit-tracking (exercise, substance, productivity, etc) I recommend <a href='FIXME'
-                                                                                    target='_blank'>Habitica</a>. Gnothi
+      <p>For habit-tracking (exercise, substance, productivity, etc) I recommend <a href='https://habitica.com/' target='_blank'>Habitica</a>. Gnothi
         will sync Habitica habits & dailies.</p>
       <p>Use Gnothi fields for qualitative data (mood, sleep-quality, decisions) and Habitica for habits. Habitica
         doesn't support arbitrary number entries.</p>
@@ -232,23 +236,37 @@ export default function Behaviors({advanced}: Behaviors) {
     />
   }
 
+  // This renders the main section, if we're inside the Modal (advanced view)
   if (advanced) {
     return <div className="list">
       <Card
         sx={{backgroundColor: '#ffffff', borderRadius: 2}}
       >
         <CardContent>
-          <DayChanger/>
+             <DayChanger/>
           <AccordionDetails>
             {renderGroup(groups[0])}
           </AccordionDetails>
-          <Stack spacing={1}>
+          <CardActions sx={{justifyContent:'flex-end', mb: 2}}>
+            <Button
+              variant="outlined"
+              borderWidth={2}
+              size="small"
+              onClick={() => setView({view: "new"})}
+            >
+              Add Behavior
+            </Button>
+            {/*<Button variant="contained" color="secondary" onClick={() => setView({view: "overall"})}>Top Influencers</Button>*/}
+          </CardActions>
+            <Stack spacing={1}>
             {groups.slice(1).map(renderGroupAccordion)}
           </Stack>
         </CardContent>
       </Card>
     </div>
   }
+
+  // This is what's seen if we're NOT in the Modal. For now, just what shows on Entry.View sidebar
   return <Card
     sx={{backgroundColor: '#ffffff', borderRadius: 2}}
   >
@@ -257,7 +275,7 @@ export default function Behaviors({advanced}: Behaviors) {
         container
         sx={{mb: 2}}
         justifyContent="space-between"
-        alignItems='center'
+        alignItems='flex-start'
 
       >
         <Grid item>
@@ -269,25 +287,31 @@ export default function Behaviors({advanced}: Behaviors) {
           >
             Behaviors
           </Typography>
+          <Typography color="primary" mb={2} variant={"body1"} fontWeight={500}>
+            Track behaviors to get AI insights</Typography>
         </Grid>
         <Grid item>
           <IconButton
             color='primary'
+            size="small"
             onClick={() => setView({page: "modal", view: "new"})}
           >
-            <ManageBehaviorsIcon/>
+            <ManageBehaviorsIcon sx={{fontSize: 25}}/>
           </IconButton>
         </Grid>
       </Grid>
-      {renderGroup(groups[0])}
+       {renderGroup(groups[0])}
 
-      <Button
-        sx={{my: 2}}
-        onClick={toggleShowAbout}
-        variant="outlined"
-      >
-        {showAbout ? "Hide" : "About Behaviors"}
-      </Button>
+
+      <CardActions sx={{justifyContent: "flex-end", mt: 3}}>
+        <Button
+          onClick={toggleShowAbout}
+          variant="outlined"
+          size={"small"}
+        >
+          {showAbout ? "Hide" : "About Behaviors"}
+        </Button>
+      </CardActions>
       {showAbout && <Box>
         <Box mb={2}>
           <Typography color="primary" variant="h4" mt={3} fontWeight={500}>Tag Setting Suggestions</Typography>

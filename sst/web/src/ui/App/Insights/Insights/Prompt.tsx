@@ -282,6 +282,7 @@ export default function Prompt({entry_ids, view}: Prompt) {
         <Button
           sx={{elevation: 12}}
           variant="contained"
+          size="small"
           color="secondary"
           disabled={trips.waiting}
           onClick={submit}
