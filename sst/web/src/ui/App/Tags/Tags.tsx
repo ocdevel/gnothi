@@ -12,10 +12,11 @@ import Modal from './Modal'
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Switch from "@mui/material/Switch";
 import LabelIcon from '@mui/icons-material/Label';
-import SettingsIcon from '@mui/icons-material/Settings';
+import SettingsIcon from '@mui/icons-material/SettingsOutlined';
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import Button from "@mui/material/Button";
+
 
 const colors = [
   '#1A3E59',
@@ -134,7 +135,7 @@ export default function Tags({
     return <Chip
       variant="outlined" 
       color="primary"
-      sx={{border: "none"}}
+      sx={{border: "none", fontWeight:500}}
       icon={<SettingsIcon /> }
       onClick={showEditTags}
       label="Manage tags"
@@ -151,6 +152,7 @@ export default function Tags({
       alignItems="left"
       justifyContent="left"
       flexWrap="wrap"
+      rowGap={1}
     >
       {ids.map(renderTag)}
       {renderEditTags()}

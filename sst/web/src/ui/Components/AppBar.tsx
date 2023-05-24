@@ -233,6 +233,7 @@ export default function ResponsiveAppBar({
           className={`cta-${cta.secondary ? 'secondary' : 'primary'}`}
           key={cta.name}
           variant="contained"
+          size="small"
           onClick={onClick(cta)}
           sx={cta.secondary ? styles.sx.button2 : styles.sx.button1}
         >
