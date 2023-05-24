@@ -159,11 +159,11 @@ export const Events = z.enum([
   'notifs_notes_list_request',
   'notifs_notes_list_response',
 
+  // responses will be deffered to other routes (fields_list_request, users_list_request)
+  'habitica_post_request',
   'habitica_sync_request',
-  'habitica_sync_response',
   'habitica_delete_request',
-  'habitica_delete_response',
-  
+
   'payments_publickey_request',
   'payments_publickey_response',
   'payments_products_request',

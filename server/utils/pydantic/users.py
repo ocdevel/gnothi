@@ -11,12 +11,6 @@ class TimezoneIn(BM):
 class AffiliateIn(BM):
     affiliate: Optional[str] = None
 
-
-class HabiticaIn(BM):
-    habitica_user_id: Optional[str] = None
-    habitica_api_token: Optional[str] = None
-
-
 class ProfileIn(TimezoneIn):
     username: Optional[str] = None
     first_name: Optional[str] = None

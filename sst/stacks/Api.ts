@@ -13,6 +13,9 @@ export function Api({ app, stack }: sst.StackContext) {
   const {auth, authFn} = sst.use(Auth);
   const {APP_REGION} = sst.use(Misc)
 
+  const HABITICA_USER = new sst.Config.Secret(stack, "HABITICA_USER")
+  const HABITICA_APP = new sst.Config.Secret(stack, "HABITICA_APP")
+
 
   const http = new sst.Api(stack, "api_http", {
     authorizers: {
@@ -85,6 +88,8 @@ export function Api({ app, stack }: sst.StackContext) {
       API_WS,
       auth,
       fnBackground,
+      HABITICA_USER,
+      HABITICA_APP
     ]
   })
 

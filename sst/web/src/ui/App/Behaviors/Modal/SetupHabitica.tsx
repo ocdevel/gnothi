@@ -8,6 +8,10 @@ import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
 import Box from "@mui/material/Box";
+import * as S from '@gnothi/schemas'
+import {useForm} from "react-hook-form";
+import {zodResolver} from "@hookform/resolvers/zod";
+import {TextField2} from "../../../Components/Form.tsx";
 
 interface DisconnectModal {
   show: boolean
@@ -37,43 +41,57 @@ const send = useStore(s => s.send)
   )
 }
 
+
 export default function Habitica() {
-const send = useStore(s => s.send)
-  const user = useStore(s => s.user.me)
+  const send = useStore(s => s.send)
 
-  const [habiticaUserId, setHabiticaUserId] = useState(user?.habitica_user_id)
-  const [habiticaApiToken, setHabiticaApiToken] = useState(user?.habitica_api_token)
+  // FIXME I need to capture user changse, which s.user.me doesn't change (even on users_list_response). this will
+  // break once we add sharing, so find a solution
+  // const user = useStore(s => s.user.me)
+  const user = useStore(s => s.res.users_list_response?.first)
+
   const [showModal, setShowModal] = useState(false)
-
-  const saveHabitica = async e => {
-    e.preventDefault()
-    const body = {
-      habitica_user_id: habiticaUserId,
-      habitica_api_token: habiticaApiToken
+  const form = useForm({
+    resolver: zodResolver(S.Fields.habitica_post_request),
+    defaultValues: {
+      habitica_user_id: user?.habitica_user_id,
+      habitica_api_token: user?.habitica_api_token
     }
-    send('habitica/post', body)
-  }
+  })
 
-  const changeHabiticaUserId = e => setHabiticaUserId(e.target.value)
-  const changeHabiticaApiToken = e => setHabiticaApiToken(e.target.value)
+  useEffect(() => {
+    debugger
+    form.reset({
+      habitica_user_id: user?.habitica_user_id || undefined,
+      habitica_api_token: user?.habitica_api_token || undefined
+    })
+  }, [`${user?.habitica_user_id}-${user?.habitica_api_token}`])
+
+  function submit(form: S.Fields.habtica_post_request){
+    send('habitica_post_request', form)
+  }
 
   return <>
     <DisconnectModal show={showModal} close={() => setShowModal(false)} />
-    <form onSubmit={saveHabitica}>
+    <form onSubmit={form.handleSubmit(submit)}>
       <Box display='flex' gap={2} flexDirection='column'>
-        <TextField
+        <TextField2
+          name={'habitica_user_id'}
+          form={form}
           label='User ID'
-          value={habiticaUserId}
-          onChange={changeHabiticaUserId}
         />
-        <TextField
+        <TextField2
           label='API Key'
-          value={habiticaApiToken}
-          onChange={changeHabiticaApiToken}
+          name='habitica_api_token'
+          form={form}
         />
 
         <Button type='submit' color='primary' variant="contained" size='small'>Save</Button>{' '}
-        {habiticaUserId && <Button size='small' color="secondary" onClick={() => setShowModal(true)}>Disconnect</Button>}
+        {user?.habitica_user_id && <Button
+          size='small'
+          color="secondary"
+          onClick={() => setShowModal(true)}
+        >Disconnect</Button>}
       </Box>
     </form>
   </>

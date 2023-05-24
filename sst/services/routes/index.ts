@@ -2,6 +2,7 @@ import * as entries from './entries'
 import * as users from './users'
 import * as tags from './tags'
 import * as fields from './fields'
+import * as habitica from './fields/habitica'
 import * as groups from './groups'
 import * as notifs from './notifs'
 import * as shares from './shares'
@@ -13,6 +14,7 @@ export default {
   ...users,
   ...tags,
   ...fields,
+  ...habitica,
   ...groups,
   ...notifs,
   ...shares,

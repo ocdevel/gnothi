@@ -111,6 +111,11 @@ export type fields_entries_post_request = z.infer<typeof fields_entries_post_req
 export const fields_entries_post_response = fields_entries_list_response
 export type fields_entries_post_response = z.infer<typeof fields_entries_post_response>
 
+export const habitica_post_request = z.object({
+  habitica_user_id: z.string().optional(),
+  habitica_api_token: z.string().optional(),
+})
+
 
 export const routes = {
   fields_list_request: {
@@ -206,5 +211,45 @@ export const routes = {
       event_as: 'fields_entries_list_response'
     }
   },
+
+  habitica_post_request: {
+    i: {
+      e: 'habitica_post_request',
+      s: habitica_post_request,
+      t: {ws: true},
+      snoopable: false
+    },
+    o: {
+      e: 'habitica_post_response',
+      s: z.void(),
+      t: {ws: true},
+    },
+  },
+  habitica_delete_request: {
+    i: {
+      e: 'habitica_delete_request',
+      s: Passthrough,
+      t: {ws: true},
+      snoopable: false
+    },
+    o: {
+      e: 'void',
+      s: z.void(),
+      t: {ws: true},
+    }
+  },
+  habitica_sync_request: {
+    i: {
+      e: 'void',
+      s: Passthrough,
+      t: {ws: true},
+      snoopable: false
+    },
+    o: {
+      e: 'void',
+      s: z.void(),
+      t: {ws: true},
+    }
+  }
 
 }

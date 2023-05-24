@@ -11,6 +11,7 @@ import {Tag, tags} from '../data/schemas/tags'
 import {User, users} from '../data/schemas/users'
 import {WsConnection, wsConnections} from '../data/schemas/wsConnections'
 
+import {Habitica} from '../data/models/habitica'
 import {Users} from '../data/models/users'
 import {Entries} from '../data/models/entries'
 import {Fields} from '../data/models/fields'
@@ -69,7 +70,6 @@ export class FnContext {
   s = {
     entries,
     entriesTags,
-    fieldEntries,
     fields,
     people,
     shares,
@@ -84,6 +84,7 @@ export class FnContext {
   // to things like user, viewer, snooping, etc - without having ot pass those properties into
   // every model method
   m: {
+    habitica: Habitica
     users: Users
     entries: Entries
     fields: Fields
@@ -112,6 +113,7 @@ export class FnContext {
     this.handleReq = handleReq
 
     this.m = {
+      habitica: new Habitica(this),
       users: new Users(this),
       entries: new Entries(this),
       fields: new Fields(this),
