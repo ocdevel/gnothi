@@ -15,7 +15,13 @@ import {fields_post_request} from "@gnothi/schemas/fields";
 import {shallow} from "zustand/shallow";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
-
+import Typography from "@mui/material/Typography";
+import TextField from "@mui/material/TextField";
+import CardActions from "@mui/material/CardActions";
+import Stack from "@mui/material/Stack";
+import Divider from "@mui/material/Divider";
+import Accordions from '../../../Components/Accordions'
+import {Stack2} from "../../../Components/Misc.tsx"
 
 export function Update() {
   const [send, fields, view, setView] = useStore(s => [
@@ -118,122 +124,116 @@ function Form({field, submit}: Form) {
   }
   defValHelp = defValHelp[default_value]
 
+  function renderDeleteButtons() {
+    if (!fid) {return null}
+    return  <Stack direction='row' spacing={2}>
+      <Stack alignItems='center' flex={1}>
+        <Button
+          className="btn-delete"
+          color='error'
+          disabled={!!field.service}
+          onClick={destroyField}
+          size='small'
+        >Delete</Button>
+        {field.service ? <Typography variant='body2'>
+          Delete this field at the source. To exclude from Gnothi, click "Remove".
+        </Typography> : <Typography variant='body2'>
+          Permanently delete this field and all its entries
+        </Typography>}
+      </Stack>
+      <Divider orientation='vertical' flexItem />
+      <Stack alignItems='center' flex={1}>
+        {field.excluded_at ? <>
+          <Button
+            color='info'
+            onClick={() => excludeField(false)}
+            size='small'
+          >Include</Button>
+          <Typography variant='body2'>Bring this field back</Typography>
+        </> : <>
+          <Button
+            className='btn-remove'
+            color='error'
+            onClick={() => excludeField(true)}
+            size='small'
+          >Exclude</Button>
+          <Typography variant='body2'>Don't delete this field, but exclude it from showing up starting now. Fewer fields means easier machine learning. Consider "Remove"-ing irrelevant imported fields.</Typography>
+        </>}
+      </Stack>
+    </Stack>
+  }
+
   return <Card  className="upsert" sx={{backgroundColor: "#ffffff", borderRadius: 2}}>
     <CardContent>
-    <Grid
-      container
+      <Stack direction='row' justifyContent='space-between' alignItems='center' mb={2}>
+        <Typography variant="h4" m={0}>{fid ? "Edit Behavior" : "New Behavior"}</Typography>
+        <CardActions sx={{justifyContent: 'flex-end'}}>
+          <Button size="small" onClick={close}>Cancel</Button>
+          <Button
+            color="primary"
+            variant="contained"
+            onClick={form.handleSubmit(submit)}
+            className="btn-save"
+            size="small"
+          >
+            Save
+          </Button>
+        </CardActions>
+      </Stack>
+    <Stack
       spacing={2}
-      direction='column'
       sx={{minWidth:400}}
     >
-      <Grid item>
-        <TextField2
-          name='name'
-          label="Name"
-          className='input-name'
-          form={form}
-        />
-      </Grid>
-      <Grid item>
-        <Select2
-          name='type'
-          label="Field Type"
-          form={form}
-          options={[
-            {value: 'number', label: "Number"},
-            {value: 'fivestar', label: "Fivestar"},
-            {value: 'check', label: "Check"},
-          ]}
-        />
-      </Grid>
-      <Grid item>
-        <Select2
-          name='default_value'
-          label="Field Default"
-          form={form}
-          options={[
-            {value: 'value', label: "Specific value (including empty)"},
-            {value: 'ffill', label: "Pull entry from yesterday"},
-            {value: 'average', label: "Average of your entries"},
-          ]}
-          helperText={defValHelp}
-        />
-      </Grid>
-      {default_value === 'value' && (
-        <Grid item>
-          <TextField2
-            name='default_value_value'
-            className="input-default_value_value"
-            label="Default Value"
-            type="number"
-            form={form}
-            min={type === 'check' ? 0 : null}
-            max={type === 'check' ? 1 : null}
-          />
-        </Grid>
-      )}
-    </Grid>
+      <TextField2
+        name='name'
+        label="Name"
+        placeholder="Add the behavior you'd like to track"
+        className='input-name'
+        form={form}
+      />
+      <Select2
+        name='type'
+        label="Type"
+        form={form}
+        options={[
+          {value: 'number', label: "Number"},
+          {value: 'fivestar', label: "Fivestar"},
+          {value: 'check', label: "Check"},
+        ]}
+      />
+      <Accordions accordions={[
+        {
+          title: "Advanced",
+          content: <Stack2>
+            <Select2
+              name='default_value'
+              label="Default"
+              form={form}
+              options={[
+                {value: 'value', label: "Specific value (including empty)"},
+                {value: 'ffill', label: "Pull entry from yesterday"},
+                {value: 'average', label: "Average of your entries"},
+              ]}
+              helperText={defValHelp}
+            />
+            {default_value === 'value' && <>
+              <TextField2
+                name='default_value_value'
+                className="input-default_value_value"
+                label="Default Value"
+                type="number"
+                form={form}
+                min={type === 'check' ? 0 : null}
+                max={type === 'check' ? 1 : null}
+              />
+            </>}
+            {renderDeleteButtons()}
+          </Stack2>
+        }
+      ]} />
+    </Stack>
 
-    {fid && (
-      <>
-        <hr/>
-        <div className='mb-3'>
-          <Button
-            className="btn-delete"
-            color='error'
-            disabled={field.service}
-            onClick={destroyField}
-            size='small'
-          >Delete</Button>
-          <br/>
-          <small
-            style={field.service ? {textDecoration: 'line-through'}: {}}
-            className='text-muted'
-          >
-            Permanently delete this field and all its entries
-          </small>
-          {field.service && <>
-            <br/>
-            <small className='text-muted'>Delete this field at the source. To exclude from Gnothi, click "Remove".</small>
-          </>}
 
-        </div>
-        <div>
-          {field.excluded_at ? (
-            <>
-            <Button
-              color='info'
-              onClick={() => excludeField(false)}
-              size='small'
-            >Include</Button>
-            <br/>
-            <small className='text-muted'>Bring this field back</small>
-            </>
-          ) : (
-            <>
-            <Button
-              className='btn-remove'
-              color='error'
-              onClick={() => excludeField(true)}
-              size='small'
-            >Remove</Button>
-            <br/>
-            <small className='text-muted'>Don't delete this field, but exclude it from showing up starting now. Fewer fields means easier machine learning. Consider "Remove"-ing irrelevant imported fields.</small>
-            </>
-          )}
-        </div>
-      </>
-    )}
-
-    <Button size="small" onClick={close}>Cancel</Button>
-    <Button
-      color="primary"
-      variant="contained"
-      onClick={form.handleSubmit(submit)}
-      className="btn-save"
-    >
-      Save
-    </Button>
-      </CardContent>
+    </CardContent>
   </Card>
 }

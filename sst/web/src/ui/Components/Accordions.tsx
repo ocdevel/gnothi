@@ -7,16 +7,17 @@ import React from "react";
 
 interface Accordion {
   title: string
-  subtitle: string
+  subtitle?: string
   content: React.ReactNode
 }
 
 interface Props {
+  defaultExpanded?: number
   accordions: Accordion[]
 }
 
-export default function Accordions({accordions}: Props) {
-  const [expanded, setExpanded] = React.useState<number>(-1);
+export default function Accordions({accordions, defaultExpanded=-1}: Props) {
+  const [expanded, setExpanded] = React.useState<number>(defaultExpanded);
 
   const handleChange =
     (panel: number) => (event: React.SyntheticEvent, isExpanded: boolean) => {
@@ -25,7 +26,11 @@ export default function Accordions({accordions}: Props) {
 
   function renderAccordion(accordion: Accordion, i: number) {
     const {title, subtitle, content} = accordion
-    return <Accordion expanded={expanded === i} onChange={handleChange(i)}>
+    return <Accordion
+      expanded={expanded === i}
+      onChange={handleChange(i)}
+      sx={{backgroundColor: "white", borderRadius: 3}}
+    >
       <AccordionSummary
         expandIcon={<ExpandMoreIcon/>}
         aria-controls={`panel${i}bh-content`}
@@ -34,11 +39,11 @@ export default function Accordions({accordions}: Props) {
         <Typography sx={{width: '33%', flexShrink: 0}}>
           {title}
         </Typography>
-        <Typography sx={{color: 'text.secondary'}}>
+        {subtitle && <Typography sx={{color: 'text.secondary'}}>
           {subtitle}
-        </Typography>
+        </Typography>}
       </AccordionSummary>
-      <AccordionDetails>
+      <AccordionDetails >
         {content}
       </AccordionDetails>
 

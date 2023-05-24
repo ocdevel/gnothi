@@ -43,6 +43,8 @@ export function FieldName({name, maxWidth}: FieldName) {
   // https://css-tricks.com/snippets/css/truncate-string-with-ellipsis/
   return <Box
     sx={{
+      fontWeight: 500,
+      color: "primary.main",
       whiteSpace: 'nowrap',
       overflow: 'hidden',
       textOverflow: 'ellipsis',

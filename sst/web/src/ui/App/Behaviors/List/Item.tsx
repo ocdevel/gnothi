@@ -34,11 +34,11 @@ export default function Item({fid, advanced}: Item) {
   }, [fid])
 
   const handleView = useCallback(() => {
-    setView({view: "view", fid})
+    setView({page: "modal", view: "view", fid})
   }, [fid])
 
     const handleEdit = useCallback(() => {
-    setView({view: "edit", fid})
+    setView({page: "modal", view: "edit", fid})
   }, [fid])
 
   const sizes = advanced ? [5, 5, 2] : [6, 6]
@@ -65,7 +65,7 @@ export default function Item({fid, advanced}: Item) {
       <Grid item xs={sizes[0]} className='field-name'>
         <ButtonBase
           sx={{width:'100%', justifyContent: 'flex-start'}}
-          onClick={() => setView({view: "edit", fid})}
+          onClick={handleEdit}
         >
           <FieldName name={f.name}/>
         </ButtonBase>

@@ -52,10 +52,10 @@ export default function Modal() {
     //   secondary: true,
     //   onClick: () => setView({view: "overall"}),
     // },
-    {
-      name: "Add Behavior",
-      onClick: onCta,
-    }
+    // {
+    //   name: "Add Behavior",
+    //   onClick: onCta,
+    // }
   ]
 
   const onClose = useCallback(() => setView({page: view.lastPage}), [])
