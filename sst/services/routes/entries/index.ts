@@ -86,12 +86,10 @@ async function entriesUpsertResponse(req: S.Entries.entries_upsert_response, con
     promises.push(upsert({entry: updated}))
   }
 
-  const updateEntry = async () => {
-    try {
-      return driz.update(entries)
-        .set(updates)
-        .where(eq(entries.id, eid))
-    } catch (e) {
+  const updateEntry = driz.update(entries)
+    .set(updates)
+    .where(eq(entries.id, eid))
+    .catch(e => {
       // FIXME some entries are having trouble saving to .text_paras, I think due to quotes in the paras? Like
       // drizzle / pg-node aren't handling those. For now mark these as skip, and deal with later.
       console.error("Error updating entry", e)
@@ -101,9 +99,8 @@ async function entriesUpsertResponse(req: S.Entries.entries_upsert_response, con
         ai_summarize_state: "skip",
         ai_index_state: "skip"
       }).where(eq(entries.id, eid))
-    }
-  }
-  promises.push(updateEntry())
+    })
+  promises.push(updateEntry)
 
   await Promise.all(promises)
 
