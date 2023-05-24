@@ -4,30 +4,42 @@ import {Api} from "@gnothi/schemas";
 import {useCallback, useEffect} from "react";
 import {useStore} from "../store";
 import {z} from 'zod'
+import type {WebSocketHook} from "react-use-websocket/dist/lib/types";
 
 
 export default function useApi(): void {
-  const wsUrl = useStore(state => state.wsUrl)
+  const [
+    wsUrl,
+    setReadyState,
+    setLastJsonMessage,
+    setSendJsonMessage,
+    logout,
+  ] = useStore(s => [
+    s.wsUrl,
+    s.setReadyState,
+    s.setLastJsonMessage,
+    s.setSendJsonMessage,
+    s.logout
+  ], shallow)
 
-  if (!wsUrl) {return}
-  const connection = wsUrl
-  // const connection = useCallback(() => new Promise<string>((resolve, reject) => {
-  //   if (wsUrl) {
-  //     resolve(wsUrl)
-  //   }
-  // }), [wsUrl])
+  // const wsUrlAsync = wsUrl
+  const wsUrlAsync = useCallback(() => new Promise<string>((resolve, reject) => {
+    if (wsUrl) { resolve(wsUrl) }
+  }), [wsUrl])
 
-  const [setReadyState, setLastJsonMessage, setSendJsonMessage] = useStore(state =>
-    [state.setReadyState, state.setLastJsonMessage, state.setSendJsonMessage],
-    shallow
-  )
   const {
     readyState,
     lastJsonMessage,
     sendJsonMessage,
-  } = useWebSocket<Api.Res<any>>(connection)
-
-  // TODO handle websocket errors (eg connection / 500, not server-sent errors)
+  } =useWebSocket<Api.Res<any>>(wsUrlAsync, {
+    onError: (e) => {
+      // FIXME this is the most likely location for a data error, migration, etc to be caught. I need to think of
+      // TODO handle websocket errors (eg connection / 500, not server-sent errors)
+      // something better, but for the v0->v1 migration, this will log a user out given there's now jwt
+      debugger
+      // logout()
+    }
+  })
 
   useEffect(() => {
     setSendJsonMessage(sendJsonMessage)
