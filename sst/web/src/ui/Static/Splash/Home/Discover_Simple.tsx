@@ -68,7 +68,7 @@ export default function DiscoverAI() {
             title={"Identify entry themes"}
           >
             <Typography>
-              Narrow your focus with the keywords and concepts that AI sees in your writing.
+              Narrow your focus with keywords and concepts that AI sees in your writing
             </Typography>
           </FeatureIntro2>
 
@@ -85,7 +85,7 @@ export default function DiscoverAI() {
           <FeatureIntro2
             {...featureProps}
             icon={<AutoStoriesOutlinedIcon {...iconProps} />}
-            title={"Get book recommendations"}
+            title={"Explore new books"}
           >
             <Typography>
               Deepen your understanding with books suggested by AI based on your entries

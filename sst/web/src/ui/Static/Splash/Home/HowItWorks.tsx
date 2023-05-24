@@ -58,7 +58,7 @@ export default function HowItWorks() {
               mb={2}
               maxWidth={{lg: 900}}
             >
-              Practices like meditation, journaling, and self-reflection, along with healthy living, are proven beneficial for our well-being.
+              Practices like meditation, journaling, and self-reflection, along with healthy living, are proven to be beneficial for our well-being.
 
             </Typography>
             <Typography
@@ -67,7 +67,7 @@ export default function HowItWorks() {
               mb={2}
               maxWidth={{lg: 900}}
             >
-              Gnothi integrates these practices with AI-generated insights to highlight areas for learning and growth. It's your journey; Gnothi is just along for the ride.
+              Gnothi integrates these practices with AI-generated insights to highlight areas for learning and growth, based on your entries and tracked behaviors. It's your journey—Gnothi is just along for the ride.
 
             </Typography>
             <Typography
@@ -76,7 +76,7 @@ export default function HowItWorks() {
               mb={2}
               maxWidth={{lg: 900}}
             >
-             While Gnothi isn't a replacement for therapy or professional medical advice, many have found immense value in it. We invite you to try it out and see the difference yourself.
+             While Gnothi isn't a replacement for therapy in any way, many have found immense value in it. We invite you to try it out and see the difference yourself.
             </Typography>
           </Grid>
         </Grid>
