@@ -21,6 +21,7 @@ import MUILink from '@mui/material/Link';
 import IconButton from "@mui/material/IconButton";
 import {IconBase} from "react-icons";
 import ArrowBackOutlinedIcon from '@mui/icons-material/ArrowBackOutlined';
+import CheckIcon from '@mui/icons-material/CheckCircleOutline';
 
 Amplify.configure(awsConfig);
 
@@ -65,17 +66,29 @@ function Acknowledgements({existingUser}: Acknowledgements) {
     className: 'btn-next'
   } as const
 
-  const titleProps = {variant:'h4', mb: 0} as const
-  const subtitleProps = {variant:'body1', fontWeight: 400} as const
+  const titleProps = {variant:'h4', fontWeight: 500, mb: 0} as const
+  const subtitleProps = {variant:'body1', fontWeight: 600} as const
   const body1Props = {variant:'body1', fontWeight: 300} as const
   const body2Props = {variant: 'body2', fontWeight: 300} as const
 
   const steps = [
-    ...(!existingUser ? [] : [<Stack spacing={2}>
+    ...(!existingUser ? [] : [<Stack mb={2}>
+      <Stack mb={2}>
       <Typography {...titleProps}>Welcome back!</Typography>
+      <Stack mb={2}>
         <Typography {...subtitleProps}>We're thrilled to announce the launch of Gnothi v1!</Typography>
-        <Typography>Keep in mind that we'll be releasing more features very shortly, as well as bringing back "sharing" and optimizing "behaviors." If you have any questions, please <a href="mailto:gnothi@gnothiai.com">email us</a> or reach out on <a href="https://discord.gg/TNEvx2YR">Discord</a> to connect.</Typography>
-      <Button
+        </Stack>
+        <Typography>If you have any questions, or need any help navigating the new updates, feel free to drop us an <a href="mailto:gnothi@gnothiai.com">email</a> or reach out on <a href="https://discord.gg/TNEvx2YR" target="_blank">Discord</a> to connect.</Typography>
+        </Stack>
+        <Stack mb={2} justifyItems="center">
+        <Typography><CheckIcon sx={{fontSize:15, mr:1}}/>New features coming soon</Typography>
+        <Typography><CheckIcon sx={{fontSize:15, mr:1}}/>Fields is getting a makeover</Typography>
+        <Typography><CheckIcon sx={{fontSize:15, mr:1}}/>Sharing will be back too</Typography>
+        </Stack>
+        <Stack mb={4}>
+        <Typography>Thanks for being part of the Gnothi community!</Typography>
+          </Stack>
+        <Button
         {...btnProps}
         onClick={nextStep}
       >Next</Button>
@@ -86,7 +99,7 @@ function Acknowledgements({existingUser}: Acknowledgements) {
       <Typography {...subtitleProps}>Please take a moment to review the following disclaimer, as well as Gnothi's <a href="/terms" target="_blank"> Terms & Conditions</a> and <a href="/privacy" target="_blank">Privacy Policy</a></Typography>
       <Typography {...body2Props}><u>Disclaimer</u>: Gnothi is not a substitute for professional medical advice, diagnosis, or treatment. If you have a medical or mental health emergency, immediately contact a healthcare professional or dial 911. You are solely responsible for seeking appropriate treatment.
       </Typography>
-      {renderAcknowledge("acceptTermsConditionsDisclaimerPrivacyPolicy", "I confirm that I am 18 or older and accept Gnothi's Terms & Conditions and Privacy Policy")}
+      {renderAcknowledge("acceptTermsConditionsDisclaimerPrivacyPolicy", "I confirm that I am 18 or older, and accept Gnothi's Terms & Conditions and Privacy Policy")}
 
       <Stack direction="row" spacing={1}>
         {existingUser && <IconButton color="primary" onClick={goBack}>
