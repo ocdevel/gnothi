@@ -6,7 +6,7 @@ import {and, eq} from 'drizzle-orm'
 const r = Routes.routes
 
 export const users_everything_request = new Route(r.users_everything_request, async (req, context) => {
-  await Promise.all(([
+  const promises: Promise<any>[] = [
     'users_list_request',
     'tags_list_request',
     // 'entries_list_request', // now this is kicked off client-side with filters
@@ -17,11 +17,14 @@ export const users_everything_request = new Route(r.users_everything_request, as
     'notifs_notes_list_request',
     'shares_ingress_list_request',
     'shares_egress_list_request',
-  ] as const).map(async (event) => {
+  ].map(async (event) => {
     await context.handleReq({event, data: {}}, context)
-  }))
+  })
   // mark as logged in
-  await context.db.drizzle.update(users).set({updated_at: new Date()}).where(eq(users.id, context.uid))
+  promises.push(context.db.drizzle.update(users)
+    .set({updated_at: new Date()})
+    .where(eq(users.id, context.uid)))
+  await Promise.all(promises)
   return []
 })
 

@@ -18,9 +18,6 @@ type User_ = Partial<User>
 // https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_AdminCreateUser.html
 
 export async function addUserToCognito(user: User_): Promise<string> {
-  if (user.email !== "tylerrenelle@gmail.com" && user.email !== "wilding34@gmail.com") {
-    return randomPassword()
-  }
   return viaSignup(user)
 }
 

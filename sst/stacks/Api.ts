@@ -94,7 +94,7 @@ export function Api({ app, stack }: sst.StackContext) {
   })
 
   const habiticaCron = new sst.Cron(stack, "FnHabiticaCron", {
-    schedule: "rate(2 hours)",
+    schedule: "rate(1 hour)",
     job: fnMain,
     enabled: ["prod", "production"].includes(app.stage)
   })

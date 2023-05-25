@@ -154,7 +154,7 @@ export function SharedCreate(context: StackContext) {
       rds.node.findChild("Resource") as aws_rds.CfnDBCluster
     ).serverlessV2ScalingConfiguration = {
       minCapacity: 0.5,
-      maxCapacity: 4,
+      maxCapacity: 8,
     }
 
     return rds

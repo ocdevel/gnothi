@@ -1,10 +1,5 @@
 import {GetSecretValueCommand, SecretsManagerClient} from "@aws-sdk/client-secrets-manager";
 
-const JUST_TYLER = true
-// Don't download every time during development
-const SKIP_DUMP = true
-const DUMP_PATH = "/tmp/dump.sql"
-
 import {sharedStage, DB, urlToInfo} from "../../db"
 import {Config} from 'sst/node/config'
 
@@ -27,6 +22,7 @@ import {addUserToCognito, randomPassword} from './cognito'
 
 dotenv.config({ path: `services/data/migrate/v0/.env.${process.env.SST_STAGE}` })
 console.log(`Migrating for ${process.env.SST_STAGE}`)
+const migrateOnlyTheseEmails = process.env.MIGRATE_EMAILS?.split(",") || []
 
 
 const exec = promisify(execCallback);
@@ -81,7 +77,10 @@ export async function decryptUsers(db: DB) {
     const {email, ...rest} = row
     const decrypted = decryptRow(rest) || {}
     // if (!decrypted) {return} // DON'T do this, we need at least to conver them to cognito
-    if (~["tylerrenelle@gmail.com", "wilding34@gmail.com"].indexOf(email)) {
+    if (migrateOnlyTheseEmails === "everyone-i-confirm") {
+      throw new Error("You are officially migrating everyone! Make sure you run through the checks, then come delete this error.")
+    }
+    if (migrateOnlyTheseEmails.includes(email)) {
       decrypted.cognito_id = await addUserToCognito(row)
     } else {
       decrypted.cognito_id = randomPassword()
@@ -176,7 +175,7 @@ it("v0:migrate", async () => {
 
   await migrateFn({wipe: true, first: true})
 
-  if (!SKIP_DUMP) {
+  if (process.env.SKIP_DUMP === "false") {
     const db0i = urlToInfo(process.env.DB_URL_PROD as any);
     await exec([
       `PGPASSWORD='${db0i.host.password}'`,
@@ -184,7 +183,7 @@ it("v0:migrate", async () => {
       "-U", db0i.host.username,
       "-h", db0i.host.host,
       "-d", db0i.database,
-      ">", DUMP_PATH
+      ">", process.env.DUMP_PATH
     ].join(' '))
   }
 
@@ -208,7 +207,7 @@ it("v0:migrate", async () => {
     "-U", db1i.host.username,
     "-h", db1i.host.host,
     "-d", db1i.database,
-    "<", DUMP_PATH
+    "<", process.env.DUMP_PATH
   ].join(' '))
   // These two were performed on the live database 5/19/2023. Needed there so I can run drizzle-kit generate
   // for original database structure, in order ot create a diff for new schemas
