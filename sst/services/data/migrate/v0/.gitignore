@@ -1,3 +1,5 @@
 .env.*
 *.sql
 !customMigration.sql
+ddl.sql
+ddl_dump.sh

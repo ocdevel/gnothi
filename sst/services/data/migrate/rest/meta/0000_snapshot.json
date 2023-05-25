@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "pg",
-  "id": "149ce09e-53ed-479a-a57c-dd4a11f8caa6",
+  "id": "1e94143b-250c-4828-9459-e9758932778a",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "books": {
@@ -139,6 +139,100 @@
           ]
         }
       }
+    },
+    "cache_entries": {
+      "name": "cache_entries",
+      "schema": "",
+      "columns": {
+        "entry_id": {
+          "name": "entry_id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "paras": {
+          "name": "paras",
+          "type": "varchar[]",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "clean": {
+          "name": "clean",
+          "type": "varchar[]",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "vectors": {
+          "name": "vectors",
+          "type": "double precision[]",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "cache_entries_entry_id_entries_id_fk": {
+          "name": "cache_entries_entry_id_entries_id_fk",
+          "tableFrom": "cache_entries",
+          "tableTo": "entries",
+          "columnsFrom": [
+            "entry_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {}
+    },
+    "cache_users": {
+      "name": "cache_users",
+      "schema": "",
+      "columns": {
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "paras": {
+          "name": "paras",
+          "type": "varchar[]",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "clean": {
+          "name": "clean",
+          "type": "varchar[]",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "vectors": {
+          "name": "vectors",
+          "type": "double precision[]",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "cache_users_user_id_users_id_fk": {
+          "name": "cache_users_user_id_users_id_fk",
+          "tableFrom": "cache_users",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {}
     },
     "entries": {
       "name": "entries",

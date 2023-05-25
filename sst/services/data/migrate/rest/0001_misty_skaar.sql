@@ -24,9 +24,14 @@ CREATE TABLE IF NOT EXISTS "ws_connections" (
 	"user_id" uuid NOT NULL
 );
 
+DROP TABLE cache_entries;
+DROP TABLE cache_users;
 DROP TABLE jobs;
 DROP TABLE machines;
 DROP TABLE profile_matches;
+ALTER TABLE "entries" RENAME COLUMN "title_summary" TO "ai_title";
+ALTER TABLE "entries" RENAME COLUMN "text_summary" TO "ai_text";
+ALTER TABLE "entries" RENAME COLUMN "sentiment" TO "ai_sentiment";
 ALTER TABLE "entries" ALTER COLUMN "id" SET DEFAULT gen_random_uuid();
 ALTER TABLE "entries" ALTER COLUMN "user_id" SET NOT NULL;
 ALTER TABLE "field_entries" ALTER COLUMN "id" SET DEFAULT gen_random_uuid();
@@ -64,9 +69,6 @@ ALTER TABLE "entries" ADD COLUMN "text_clean" varchar;
 ALTER TABLE "entries" ADD COLUMN "text_paras" varchar[];
 ALTER TABLE "entries" ADD COLUMN "ai_index_state" "aistate" DEFAULT 'todo';
 ALTER TABLE "entries" ADD COLUMN "ai_summarize_state" "aistate" DEFAULT 'todo';
-ALTER TABLE "entries" ADD COLUMN "ai_title" varchar;
-ALTER TABLE "entries" ADD COLUMN "ai_text" varchar;
-ALTER TABLE "entries" ADD COLUMN "ai_sentiment" varchar;
 ALTER TABLE "entries" ADD COLUMN "ai_keywords" varchar[];
 ALTER TABLE "tags" ADD COLUMN "sort" integer DEFAULT 0 NOT NULL;
 ALTER TABLE "tags" ADD COLUMN "ai_index" boolean DEFAULT true;
@@ -78,9 +80,8 @@ ALTER TABLE "users" ADD COLUMN "accept_disclaimer" timestamp;
 ALTER TABLE "users" ADD COLUMN "accept_privacy_policy" timestamp;
 ALTER TABLE "entries" DROP COLUMN IF EXISTS "no_ai";
 ALTER TABLE "entries" DROP COLUMN IF EXISTS "ai_ran";
-ALTER TABLE "entries" DROP COLUMN IF EXISTS "title_summary";
-ALTER TABLE "entries" DROP COLUMN IF EXISTS "text_summary";
-ALTER TABLE "entries" DROP COLUMN IF EXISTS "sentiment";
+-- *** ADD BEFORE DROPPING AUTH COLUMNS
+-- Keep old users-auth on-hand temporarily. Will delete afte some weeks
 insert into auth_old (id, email, hashed_password, updated_at)
     select id, email, hashed_password, updated_at from users;
 ALTER TABLE "users" DROP COLUMN IF EXISTS "hashed_password";

@@ -1,8 +1,8 @@
 {
   "version": "5",
   "dialect": "pg",
-  "id": "af7f7d3f-bd20-4a7b-b883-13926e950cee",
-  "prevId": "149ce09e-53ed-479a-a57c-dd4a11f8caa6",
+  "id": "494a3a91-ba52-488c-bb9a-df0223527fb8",
+  "prevId": "1e94143b-250c-4828-9459-e9758932778a",
   "tables": {
     "books": {
       "name": "books",
@@ -1695,6 +1695,10 @@
   "_meta": {
     "schemas": {},
     "tables": {},
-    "columns": {}
+    "columns": {
+      "\"entries\".\"title_summary\"": "\"entries\".\"ai_title\"",
+      "\"entries\".\"text_summary\"": "\"entries\".\"ai_text\"",
+      "\"entries\".\"sentiment\"": "\"entries\".\"ai_sentiment\""
+    }
   }
 }
