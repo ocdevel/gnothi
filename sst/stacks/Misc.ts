@@ -10,6 +10,8 @@ import {StackContext} from "sst/constructs";
 import * as aws_ec2 from "aws-cdk-lib/aws-ec2";
 
 
+const domain = "staging.gnothiai.com"
+
 export function Misc(context: sst.StackContext) {
   const { app, stack } = context
   const {withRds} = sst.use(SharedImport)
@@ -47,5 +49,5 @@ export function Misc(context: sst.StackContext) {
   //   }
   // })
 
-  return {bucket, APP_REGION}
+  return {bucket, APP_REGION, domain}
 }

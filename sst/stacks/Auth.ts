@@ -4,9 +4,19 @@ import {StringAttribute, BooleanAttribute} from 'aws-cdk-lib/aws-cognito'
 import {aws_ec2, RemovalPolicy} from 'aws-cdk-lib'
 import {rams, timeouts} from "./util";
 import * as iam from "aws-cdk-lib/aws-iam";
+import * as aws_cognito from "aws-cdk-lib/aws-cognito";
+import {Misc} from './Misc'
+
+import {SesConfigStack} from "./Ses";
 
 export function Auth({ app, stack }: sst.StackContext) {
-  const {vpc, rdsSecret, readSecretPolicy, withRds} = sst.use(SharedImport);
+  const {
+    vpc,
+    rdsSecret,
+    readSecretPolicy,
+    withRds
+  } = sst.use(SharedImport);
+  const {domain} = sst.use(Misc)
 
   // SST samples
   // Cognito JWT example from https://sst.dev/examples/how-to-add-jwt-authorization-with-cognito-user-pool-to-a-serverless-api.html
@@ -26,6 +36,29 @@ export function Auth({ app, stack }: sst.StackContext) {
     handler: "services/auth/postConfirmation.handler",
   })
 
+  const sesAttr = {
+    // Email addresses will be added to the verified list and will be sent a confirmation email
+    emailList: [
+        `gnothi@${domain}`, "tylerrenelle@gmail.com"
+    ],
+    // Email addresses to subscribe to SNS topic for delivery notifications
+    notifList: [
+        `gnothi@${domain}`, "tylerrenelle@gmail.com"
+    ],
+    // Notify on delivery status inc Send, Delivery, Open
+    sendDeliveryNotifications: true,
+  };
+
+  const domainAttr = {
+    // zoneName for the email domain is required. hostedZoneId for a Route53 domain is optional.
+    zoneName: domain,
+    hostedZoneId: '',
+  };
+  const ses = new SesConfigStack(stack, "SesConfig", {
+    env: app,
+    sesAttr,
+    domainAttr,
+  })
 
   const auth = new sst.Cognito(stack, "Auth", {
     login: ["email"],
@@ -56,8 +89,18 @@ export function Auth({ app, stack }: sst.StackContext) {
           'gnothiId': new StringAttribute({ mutable: true }),
           'adminCreated': new StringAttribute({ mutable: true }),
         },
+
+        // accountRecovery: aws_cognito.AccountRecovery.EMAIL_ONLY,
+        email: aws_cognito.UserPoolEmail.withSES({
+          sesRegion: app.region,
+          fromEmail: `noreply@${domain}`,
+          fromName: 'Gnothi',
+          replyTo: `gnothi@${domain}`,
+          sesVerifiedDomain: domain,
+        }),
       }
     },
+
     // defaults: {
     //   environment: { tableName: table.tableName },
     //   permissions: [table],

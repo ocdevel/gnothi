@@ -17,9 +17,15 @@ export function Api({ app, stack }: sst.StackContext) {
   const HABITICA_APP = new sst.Config.Secret(stack, "HABITICA_APP")
 
 
+  // For some reason, Cognito updates cause a full change here, and give error about authorizer
+  // non-unique name:
+  // CREATE_FAILED Resource handler returned message: "Authorizer name must be unique. Authorizer WebSocketAuthorizer already exists in this RestApi. (Service: AmazonApiGatewayV2; Status Code: 400; Error Code: BadRequestException; Request ID: ...; Proxy: null)" (RequestToken: ..., HandlerErrorCode: AlreadyExists)
+  // Resource handler returned message: "Authorizer name must be unique. Authorizer jwt already exists in this RestApi. (Service: AmazonApiGatewayV2; Status Code: 400; Error Code: BadRequestException; Request ID: ...; Proxy: null)" (RequestToken: ..., HandlerErrorCode: AlreadyExists)
+  // So you have to find-replace jwt -> jwt2, and back.
+
   const http = new sst.Api(stack, "api_http", {
     authorizers: {
-      jwt: {
+      httpjwt2: {
         type: "user_pool",
         userPool: {
           id: auth.userPoolId,
@@ -30,6 +36,7 @@ export function Api({ app, stack }: sst.StackContext) {
   })
   const ws = new sst.WebSocketApi(stack, "api_ws", {
     authorizer: {
+      name: 'wsjwt2',
       type: "lambda",
       identitySource: ["route.request.querystring.idToken"],
       function: authFn
@@ -102,7 +109,7 @@ export function Api({ app, stack }: sst.StackContext) {
   http.addRoutes(stack, {
     "POST /": {
       function: fnMain,
-      authorizer: "jwt"
+      authorizer: "httpjwt2"
     },
   })
   ws.addRoutes(stack, {
