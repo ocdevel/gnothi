@@ -30,3 +30,10 @@ export const fields_entries_post_request = new Route(r.fields_entries_post_reque
   return context.m.fields.entriesPost(req)
 })
 
+export const fields_exclude_request = new Route(r.fields_exclude_request, async (req, context) => {
+  return context.m.fields.put({
+    id: req.id,
+    excluded_at: req.exclude ? new Date() : null
+  })
+})
+

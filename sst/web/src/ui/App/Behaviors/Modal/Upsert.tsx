@@ -107,8 +107,7 @@ function Form({field, submit}: Form) {
   }
 
   const excludeField = async (exclude=true) => {
-    const body = {excluded_at: exclude ? new Date() : null}
-    send('fields_exclude_request', {id: fid, body})
+    send('fields_exclude_request', {id: fid, exclude})
     // close(false)
   }
 

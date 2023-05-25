@@ -111,6 +111,12 @@ export type fields_entries_post_request = z.infer<typeof fields_entries_post_req
 export const fields_entries_post_response = fields_entries_list_response
 export type fields_entries_post_response = z.infer<typeof fields_entries_post_response>
 
+export const fields_exclude_request = z.object({
+  id: IdCol,
+  exclude: z.boolean()
+})
+export type fields_exclude_request = z.infer<typeof fields_exclude_request>
+
 export const habitica_post_request = z.object({
   habitica_user_id: z.string().optional(),
   habitica_api_token: z.string().optional(),
@@ -192,6 +198,23 @@ export const routes = {
       s: fields_entries_list_response,
       t: {ws: true},
       keyby: 'field_id',
+    }
+  },
+
+  fields_exclude_request: {
+    i: {
+      e: "fields_exclude_request",
+      s: fields_exclude_request,
+      t: {ws: true},
+      snoopable: false,
+    },
+    o: {
+      e: 'fields_exclude_response',
+      s: fields_list_response,
+      t: {ws: true},
+      event_as: 'fields_list_response',
+      op: "update",
+      keyby: "id"
     }
   },
 
