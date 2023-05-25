@@ -27,7 +27,7 @@ export const DefaultValueTypes = z.enum([
   "value",  // which includes None
   "average",
   "ffill"
-]).default("ffill")
+]).default("value")
 
 export const Field = z.object({
   //Entries that change over time. Uses:
