@@ -36,8 +36,9 @@ export default function AppBar_() {
     }]
     : []
 
+  const clearBottom = !['/privacy', '/terms', '/disclaimer'].includes(location.pathname)
   return <AppBar
-    clearBottom={true}
+    clearBottom={clearBottom}
     links={links}
     ctas={ctas}
   />

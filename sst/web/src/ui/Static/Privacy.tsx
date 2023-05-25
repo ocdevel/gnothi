@@ -6,6 +6,7 @@ import { Section } from './Splash/Home/Utils';
 import {styles} from "../Setup/Mui";
 const {spacing, colors, sx} = styles
 import Stack from '@mui/material/Stack';
+import {useLocalStore} from "./Splash/store.ts";
 
 export default function Privacy() {
   useEffect(() => {

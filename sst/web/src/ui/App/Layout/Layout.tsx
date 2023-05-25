@@ -40,6 +40,11 @@ function Layout() {
   const user = useStore(state => state.user?.me)
 	const navigate = useNavigate()
 
+  // Disable left/right paddding for privacy, terms, disclaimer - since those pages add their own
+  const {pathname} = useLocation()
+  const disableGutters = ['/privacy', '/terms', '/disclaimre'].includes(pathname)
+  // const disableGutters = false
+
   useEffect(() => {
     // FIXME only do after first load
     if (as) {navigate('/j')}
@@ -53,7 +58,7 @@ function Layout() {
   return <Box>
     <SetupApi />
     <AppBar />
-    <Container maxWidth={false}>
+    <Container maxWidth={false} disableGutters={disableGutters}>
       <Outlet />
     </Container>
     <SharingModal />
