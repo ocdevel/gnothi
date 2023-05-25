@@ -20,6 +20,7 @@ import * as cdk from "aws-cdk-lib";
 import {RDS, RDSProps, StackContext} from "sst/constructs";
 import { Construct } from "constructs";
 import * as iam from "aws-cdk-lib/aws-iam";
+import {Duration} from "aws-cdk-lib";
 
 export function sharedStage(stage: string) {
   return stage === "prod" ? "prod" : "dev"
@@ -133,7 +134,7 @@ export function SharedCreate(context: StackContext) {
 
     const rds = new aws_rds.DatabaseCluster(stack, "Rds", {
       engine: aws_rds.DatabaseClusterEngine.auroraPostgres({
-        version: aws_rds.AuroraPostgresEngineVersion.VER_14_6,
+        version: aws_rds.AuroraPostgresEngineVersion.VER_14_7,
       }),
       instances: 1,
       instanceProps: {
@@ -146,8 +147,12 @@ export function SharedCreate(context: StackContext) {
         // https://github.com/schuettc/cdk-private-rds-with-lambda/blob/main/src/rds.ts
         // multiAz: false,
         // allowMajorVersionUpgrade: true,
-        // backupRetention: Duration.days(21),
+        enablePerformanceInsights: true,
+        performanceInsightRetention: 7,
       },
+      backup: {
+        retention: Duration.days(14),
+      }
     });
     // Edit the generated cloudformation construct directly:
     (
