@@ -50,9 +50,12 @@ function Layout() {
     if (as) {navigate('/j')}
   }, [as])
 
-  if (!user) {
-    return <Loading label="user" />
-  }
+  // Disabling this for now; should progressively load parts of the site. Make sure there's no hard dependencies
+  // use anywhere! Use `store.user?.me?.id` kind of stuff.
+  // if (!user) {
+  //   return <Loading label="user" />
+  // }
+
 
   // return <Box key={as}>
   return <Box>
