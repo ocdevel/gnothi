@@ -27,7 +27,7 @@ type View = {
 export interface BehaviorsSlice {
   behaviors: {
     values: {[k: string]: number | null}
-    setValue: (x: any) => void
+    setValues: (x: Record<string, any>) => void
 
     day: Dayjs
     dayStr: string
@@ -36,6 +36,8 @@ export interface BehaviorsSlice {
 
     view: View
     setView: (view: Partial<View>) => void
+
+    field_entries_list_response: (res: S.Fields.field_entries_list_response) => void
   }
 }
 
@@ -46,14 +48,20 @@ export const behaviorsSlice: StateCreator<
   BehaviorsSlice
 > = (set, get) => ({
   behaviors: {
+    // maintained here instead of useState in behaviors/list/entry.tsx, so that server response can modify this too.
     values: {},
-    setValue: (payload) => {
+    setValues: (payload) => {
       set(produce((state) => {
         state.behaviors.values = {
           ...state.behaviors.values,
           ...payload
         }
       }))
+    },
+    field_entries_list_response(res: S.Fields.field_entries_list_response) {
+      // on change, especially via the DayChanger, re-set the "form" values for behaviors/list/entry.tsx
+      const rows = res.rows?.map(r => [r.field_id, r.value]) || []
+      get().behaviors.setValues(Object.fromEntries(rows))
     },
 
     day: dayjs(),
@@ -66,6 +74,8 @@ export const behaviorsSlice: StateCreator<
           day,
           dayStr,
           isToday: iso() === dayStr,
+          // start it over, since hook->setValues will merge (not accounting for lacking FE on new day)
+          values: {}
         }
       }))
       get().send('fields_entries_list_request', {

@@ -5,12 +5,11 @@ import Button from "@mui/material/Button";
 import Box from "@mui/material/Box";
 
 export default function Dashboard() {
-  const [send, user, fields, entries, values, day, isToday, view, setView] = useStore(s => [
+  const [send, user, fields, entries, day, isToday, view, setView] = useStore(s => [
     s.send,
     s.user,
     s.res.fields_list_response,
     s.res.fields_entries_list_response?.hash,
-    s.behaviors.values,
     s.behaviors.day,
     s.behaviors.isToday,
     s.behaviors.view,

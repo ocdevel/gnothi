@@ -8,6 +8,7 @@ import Radio from "@mui/material/Radio";
 import TextField from "@mui/material/TextField";
 import * as S from "@gnothi/schemas";
 import Rating from '@mui/material/Rating';
+import {useDebouncedCallback} from 'use-debounce';
 
 interface Entry {
   f: S.Fields.fields_list_response
@@ -15,16 +16,16 @@ interface Entry {
 export default function Entry({f}: Entry) {
   const [
     send,
-    fieldEntries,
-    setFieldValues,
+    value,
+    setValues,
 
     day,
     dayStr,
     isToday,
   ] = useStore(s => [
     s.send,
-    s.res.fields_entries_list_response,
-    s.behaviors.setValue,
+    s.behaviors.values?.[f.id],
+    s.behaviors.setValues,
 
     s.behaviors.day,
     s.behaviors.dayStr,
@@ -32,46 +33,52 @@ export default function Entry({f}: Entry) {
   ], shallow)
 
   const fid = f.id
-  const v = fieldEntries?.hash?.[fid]?.value ?? undefined
 
   // manual (text) entry should wait a good while for them to finish typing. Otherwise, send immediately
   const waitFor = f.type === "number" ? 1000 : 0
 
   // Update field-entries as they type / click, but not too fast; can cause race-condition in DB
-  // https://www.freecodecamp.org/news/debounce-and-throttle-in-react-with-hooks/
-  // TODO should I be using useRef instead of useCallback? (see link)
-  const postFieldVal = React.useMemo(() =>
-    _.debounce(postFieldVal_, waitFor),
-    [day] // re-initialize with day-change
+  const postFieldVal = useDebouncedCallback(
+    (value: any) => {
+      // don't do value?.length, because 0 is a valid value. Later: account for null, which is Fivestar unset().
+      // Would need some unsetting logic server-side too
+      if (value === null || value === undefined || value === "") {return}
+      const req = {
+        field_id: fid,
+        value: parseFloat(value), // until we support strings,
+        day: isToday ? null : dayStr
+      }
+      console.log(req)
+      send(`fields_entries_post_request`, req)
+    }, 
+    waitFor
   )
 
-  async function postFieldVal_(value: string) {
-    if (value === "") {return}
-    send(`fields_entries_post_request`, {
-      field_id: fid,
-      value: parseFloat(value), // until we support strings,
-      day: isToday ? null : dayStr
-    })
-  }
+  // since we're debouncing, add a few flush() conditions for Number
+  // exit modal too fast
+  useEffect(() => {return () => postFieldVal.flush()}, [postFieldVal])
+  // change day too fast
+  useEffect(() => {postFieldVal.flush()}, [day])
 
-   const changeFieldVal = (e: any) => {
+  const setValue = useCallback((e: any) => {
     let value = e?.target?.value ?? e
-    setFieldValues({[fid]: value})
     postFieldVal(value)
-  }
+    setValues({[fid]: value})
+  }, [])
 
-  const changeStar = (event: any, newValue: number | null) => {
-    changeFieldVal(newValue)
-  }
+  const changeStar = useCallback((event: any, v: number | null) => {
+    setValue(v)
+  }, [])
 
-  const changeCheck = (v: number) => (e: React.SyntheticEvent<HTMLInputElement>) => {
-    changeFieldVal(v)
-  }
+  const changeCheck = useCallback((v: number) => (e: React.SyntheticEvent<HTMLInputElement>) => {
+    setValue(v)
+  }, [])
+
 
   if (f.type === 'fivestar') return <>
     <Rating
       className="fivestar"
-      value={v || 0}
+      value={value || null}
       precision={1 /*0.5*/}
       onChange={changeStar}
     />
@@ -82,7 +89,7 @@ export default function Entry({f}: Entry) {
       label={<Typography variant='body2'>Yes</Typography>}
       control={<Radio
         size='small'
-        checked={v === 1}
+        checked={value === 1}
         onChange={changeCheck(1)}
       />}
     />
@@ -90,7 +97,7 @@ export default function Entry({f}: Entry) {
       className="check-no"
       label={<Typography variant='body2'>No</Typography>}
       control={<Radio
-        checked={v === 0}
+        checked={value === 0}
         size='small'
         onChange={changeCheck(0)}
       />}
@@ -102,8 +109,8 @@ export default function Entry({f}: Entry) {
       type='number'
       sx={{maxWidth: 120}}
       size="small"
-      value={v || 0}
-      onChange={changeFieldVal}
+      value={value || 0}
+      onChange={setValue}
     />
   </>
 }

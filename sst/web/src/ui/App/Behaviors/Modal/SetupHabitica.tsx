@@ -60,7 +60,6 @@ export default function Habitica() {
   })
 
   useEffect(() => {
-    debugger
     form.reset({
       habitica_user_id: user?.habitica_user_id || undefined,
       habitica_api_token: user?.habitica_api_token || undefined

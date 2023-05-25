@@ -116,6 +116,9 @@ export const eventsSlice: StateCreator<
       set({selectedTags})
       console.log(selectedTags)
     },
+    fields_entries_list_response: (res) => {
+      get().behaviors.field_entries_list_response(res)
+    }
   },
 
   handleEvent: (res: Api.Res) => {

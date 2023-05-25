@@ -105,7 +105,7 @@ export default function Behaviors({advanced}: Behaviors) {
     if (as) {
       return null
     }
-    if (!me.habitica_user_id) {
+    if (!me?.habitica_user_id) {
       return null
     }
     if (syncRes?.sending) {
