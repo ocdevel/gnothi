@@ -43,7 +43,7 @@ export function Auth({ app, stack }: sst.StackContext) {
     ],
     // Email addresses to subscribe to SNS topic for delivery notifications
     notifList: [
-        `gnothi@${domain}`, "tylerrenelle@gmail.com"
+        "tylerrenelle@gmail.com"
     ],
     // Notify on delivery status inc Send, Delivery, Open
     sendDeliveryNotifications: true,
@@ -93,7 +93,7 @@ export function Auth({ app, stack }: sst.StackContext) {
         // accountRecovery: aws_cognito.AccountRecovery.EMAIL_ONLY,
         email: aws_cognito.UserPoolEmail.withSES({
           sesRegion: app.region,
-          fromEmail: `noreply@${domain}`,
+          fromEmail: `gnothi@${domain}`,
           fromName: 'Gnothi',
           replyTo: `gnothi@${domain}`,
           sesVerifiedDomain: domain,

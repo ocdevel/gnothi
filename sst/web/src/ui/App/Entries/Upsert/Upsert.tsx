@@ -82,6 +82,7 @@ export default function Upsert(props: Upsert) {
   const entries_delete_response = useStore(s => s.res.entries_delete_response?.res)
   const clear = useStore(a => a.clearEvents)
   const [changedDate, setChangedDate] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
 
   const id = entry?.id
   const draftId = `draft-${id || "new"}`
@@ -111,6 +112,7 @@ export default function Upsert(props: Upsert) {
   }, [])
 
   useEffect(() => {
+    setSubmitting(false)
     if (entries_upsert_response?.code !== 200) { return }
     const response = entries_upsert_response.data[0]
     clearDraft()
@@ -120,6 +122,7 @@ export default function Upsert(props: Upsert) {
   }, [entries_upsert_response])
 
   useEffect(() => {
+    setSubmitting(false)
     if (entries_delete_response?.code === 200) {go()}
   }, [entries_delete_response])
 
@@ -158,6 +161,7 @@ export default function Upsert(props: Upsert) {
       delete data.created_at
     }
 
+    setSubmitting(true)
     if (isNew) {
       send('entries_post_request', data)
     } else {
@@ -169,6 +173,7 @@ export default function Upsert(props: Upsert) {
     if (isNew) {return}
     const title = entry.title || entry.ai_title || entry.created_at
     if (window.confirm(`Delete entry: ${title}?`)) {
+      setSubmitting(true)
       send('entries_delete_request', {id: id})
     }
   }
@@ -200,6 +205,7 @@ export default function Upsert(props: Upsert) {
           className='btn-delete'
           sx={{marginRight: 'auto'}}
           size="small"
+          disabled={submitting}
           onClick={deleteEntry}
         >
           Delete
@@ -213,6 +219,7 @@ export default function Upsert(props: Upsert) {
         variant='contained'
         type="submit"
         className="btn-submit"
+        disabled={submitting}
         onClick={form.handleSubmit(submit)}
       >Submit
       </Button>
