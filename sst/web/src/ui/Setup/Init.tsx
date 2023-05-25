@@ -35,11 +35,7 @@ export default function Init() {
   }, [])
 
   useEffect(() => {
-    const code = searchParams.get("code") || ""
     const testing = searchParams.get("testing") || ""
-    if (code) {
-      window.localStorage.setItem("affiliate", code)
-    }
     if (testing) {
       window.localStorage.setItem("testing", testing)
     }

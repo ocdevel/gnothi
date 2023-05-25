@@ -36,7 +36,6 @@ create table users
     is_cool boolean default false,
     therapist boolean default false,
     n_tokens integer default 0,
-    affiliate varchar,
     ai_ran boolean default false,
     last_books timestamp with time zone,
     last_influencers timestamp with time zone,
@@ -84,21 +83,6 @@ create table misc
     val varchar
 );
 
-create table codes
-(
-    owner_id uuid
-        references users
-            on delete cascade,
-    code     varchar not null
-        primary key,
-    amount   double precision default '0'::double precision
-);
-
-alter table users
-    add foreign key (affiliate) references codes;
-
-create index ix_codes_owner_id
-    on codes (owner_id);
 
 create table auth_old
 (

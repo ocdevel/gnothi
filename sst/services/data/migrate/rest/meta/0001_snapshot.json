@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "pg",
-  "id": "c9d08883-69d8-4d13-ba0e-88aff60e6a3d",
+  "id": "af7f7d3f-bd20-4a7b-b883-13926e950cee",
   "prevId": "149ce09e-53ed-479a-a57c-dd4a11f8caa6",
   "tables": {
     "books": {
@@ -1505,12 +1505,6 @@
           "primaryKey": false,
           "notNull": false,
           "default": 0
-        },
-        "affiliate": {
-          "name": "affiliate",
-          "type": "varchar",
-          "primaryKey": false,
-          "notNull": false
         },
         "ai_ran": {
           "name": "ai_ran",

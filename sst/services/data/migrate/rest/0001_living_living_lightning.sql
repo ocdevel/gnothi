@@ -73,7 +73,6 @@ ALTER TABLE "tags" ADD COLUMN "ai_index" boolean DEFAULT true;
 ALTER TABLE "tags" ADD COLUMN "ai_summarize" boolean DEFAULT true;
 ALTER TABLE "users" ADD COLUMN "username" varchar;
 ALTER TABLE "users" ADD COLUMN "n_tokens" integer DEFAULT 0;
-ALTER TABLE "users" ADD COLUMN "affiliate" varchar;
 ALTER TABLE "users" ADD COLUMN "accept_terms_conditions" timestamp;
 ALTER TABLE "users" ADD COLUMN "accept_disclaimer" timestamp;
 ALTER TABLE "users" ADD COLUMN "accept_privacy_policy" timestamp;
@@ -82,8 +81,6 @@ ALTER TABLE "entries" DROP COLUMN IF EXISTS "ai_ran";
 ALTER TABLE "entries" DROP COLUMN IF EXISTS "title_summary";
 ALTER TABLE "entries" DROP COLUMN IF EXISTS "text_summary";
 ALTER TABLE "entries" DROP COLUMN IF EXISTS "sentiment";
--- *** ADD BEFORE DROPPING AUTH COLUMNS
--- Keep old users-auth on-hand temporarily. Will delete afte some weeks
 insert into auth_old (id, email, hashed_password, updated_at)
     select id, email, hashed_password, updated_at from users;
 ALTER TABLE "users" DROP COLUMN IF EXISTS "hashed_password";
@@ -120,8 +117,6 @@ CREATE INDEX IF NOT EXISTS "ix_ws_connections_user_id" ON "ws_connections" ("use
 CREATE INDEX IF NOT EXISTS "ix_entries_ai_index_state" ON "entries" ("ai_index_state");
 CREATE INDEX IF NOT EXISTS "ix_entries_ai_summarize_state" ON "entries" ("ai_summarize_state");
 CREATE UNIQUE INDEX IF NOT EXISTS "ix_users_username" ON "users" ("username");
-
--- *** ADD AT THE END OF MIGRATION
 
 -- Add sort ot tags
 with tags_ as (

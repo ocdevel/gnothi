@@ -36,7 +36,6 @@ export const users = pgTable('users', {
   is_cool: boolean("is_cool").default(false),
   therapist: boolean("therapist").default(false),
   n_tokens: integer("n_tokens").default(0),
-  affiliate: varchar("affiliate"), // TODO
 
   // ML
   ai_ran: boolean("ai_ran").default(false),

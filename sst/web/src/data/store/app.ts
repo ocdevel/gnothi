@@ -138,10 +138,6 @@ export const appSlice: StateCreator<
       const timezone = dayjs.tz.guess()
       emit(["users/timezone/put", {timezone}])
     }
-    const code = localStorage.getItem("code")
-    if (code && code !== user.affiliate) {
-      emit(["users/affiliate/put", {affiliate: code}])
-    }
   },
 
   // ----- Entry
