@@ -2,6 +2,7 @@ import {Routes} from '@gnothi/schemas'
 import {Route} from '../types'
 import {users} from '../../data/schemas/users'
 import {and, eq} from 'drizzle-orm'
+import {DB} from '../../data/db'
 
 const r = Routes.routes
 
@@ -37,6 +38,14 @@ export const users_list_request = new Route(r.users_list_request,async function(
   //   .where("id", "=", context.user.id)
   //   .executeTakeFirst()
   return users
+})
+
+export const users_timezone_put_request = new Route(r.users_timezone_put_request, async (req, context) => {
+  const res = await context.db.drizzle.update(users)
+    .set(req) // validated / limited via zod
+    .where(eq(users.id, context.uid))
+    .returning()
+  return res.map(DB.removeNull)
 })
 
 export const users_acknowledge_request = new Route(r.users_acknowledge_request, async function(req, context) {

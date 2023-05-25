@@ -76,6 +76,7 @@ export default function Behaviors({advanced}: Behaviors) {
   const showOverall = useCallback(() => setView({view: "overall"}), [])
 
   const [showAbout, setShowAbout] = useState(false)
+  const [syncing, setSyncing] = useState(false)
   const toggleShowAbout = useCallback(() => setShowAbout(!showAbout), [showAbout])
 
   // [day] dependency handled in store setter
@@ -95,8 +96,13 @@ export default function Behaviors({advanced}: Behaviors) {
   }
 
   const fetchService = async (service: string) => {
+    setSyncing(true)
     send('habitica_sync_request', {})
   }
+
+  useEffect(() => {
+    setSyncing(false)
+  }, [syncRes])
 
   const renderSyncButton = (service: string) => {
     if (!~['habitica'].indexOf(service)) {
@@ -108,7 +114,7 @@ export default function Behaviors({advanced}: Behaviors) {
     if (!me?.habitica_user_id) {
       return null
     }
-    if (syncRes?.sending) {
+    if (syncing) {
       return <CircularProgress/>
     }
     return <>

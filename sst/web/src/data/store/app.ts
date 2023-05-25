@@ -42,7 +42,6 @@ export interface AppSlice {
   // changeAs: (id: string) => Promise<void>
   profile: string | null
   setProfile: (profile: any) => void
-  onAny: (a:any, b:any, c:any) => Promise<void>
 
   // ----- Entry
   entryModal: EntryModal
@@ -128,17 +127,6 @@ export const appSlice: StateCreator<
 
   profile: null,
   setProfile: (profile) => set({profile}),
-
-  onAny: async (actions, res, helpers) => {
-    const {emit} = helpers.getStoreActions().ws
-    if (res.action !== 'users_get_response') {return}
-    const user = res.data
-    if (!user.timezone) {
-      // Guess their default timezone (TODO should call this out?)
-      const timezone = dayjs.tz.guess()
-      emit(["users/timezone/put", {timezone}])
-    }
-  },
 
   // ----- Entry
   entryModal: null,

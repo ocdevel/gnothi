@@ -32,6 +32,9 @@ export const users_list_response = User.pick({
 })
 export type users_list_response = z.infer<typeof users_list_response>
 
+export const users_timezone_put_request = User.pick({timezone: true})
+export type users_timezone_put_request = z.infer<typeof users_timezone_put_request>
+
 export const routes = {
   users_everything_request: {
     i: {
@@ -61,10 +64,26 @@ export const routes = {
       e: 'users_acknowledge_request',
       s: Passthrough,
       t: {ws: true},
+      snoopable: false
     },
     o: {
       e: 'void',
       s: z.void()
+    }
+  },
+
+  users_timezone_put_request: {
+    i: {
+      e: "users_timezone_put_request",
+      s: users_timezone_put_request,
+      t: {ws: true},
+      snoopable: false
+    },
+    o: {
+      e: 'users_timezone_put_response',
+      s: users_list_response,
+      t: {ws: true},
+      event_as: 'users_list_request'
     }
   }
 }

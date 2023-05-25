@@ -27,6 +27,8 @@ export const Events = z.enum([
   'users_checkusername_request',
   'users_checkusername_response',
   'users_acknowledge_request',
+  'users_timezone_put_request',
+  'users_timezone_put_response',
 
   'entries_list_request',
   'entries_list_response',
