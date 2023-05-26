@@ -1,5 +1,5 @@
 import * as sst from "sst/constructs";
-import { SharedImport } from './Shared'
+import { SharedImport, getDomains } from './Shared'
 import {StringAttribute, BooleanAttribute} from 'aws-cdk-lib/aws-cognito'
 import {aws_ec2, RemovalPolicy} from 'aws-cdk-lib'
 import {rams, timeouts} from "./util";
@@ -16,7 +16,7 @@ export function Auth({ app, stack }: sst.StackContext) {
     readSecretPolicy,
     withRds
   } = sst.use(SharedImport);
-  const {domain} = sst.use(Misc)
+  const {domain, subdomain} = sst.use(Misc)
 
   // SST samples
   // Cognito JWT example from https://sst.dev/examples/how-to-add-jwt-authorization-with-cognito-user-pool-to-a-serverless-api.html
@@ -36,29 +36,6 @@ export function Auth({ app, stack }: sst.StackContext) {
     handler: "services/auth/postConfirmation.handler",
   })
 
-  const sesAttr = {
-    // Email addresses will be added to the verified list and will be sent a confirmation email
-    emailList: [
-        `gnothi@${domain}`, "tylerrenelle@gmail.com"
-    ],
-    // Email addresses to subscribe to SNS topic for delivery notifications
-    notifList: [
-        "tylerrenelle@gmail.com"
-    ],
-    // Notify on delivery status inc Send, Delivery, Open
-    sendDeliveryNotifications: true,
-  };
-
-  const domainAttr = {
-    // zoneName for the email domain is required. hostedZoneId for a Route53 domain is optional.
-    zoneName: domain,
-    hostedZoneId: '',
-  };
-  const ses = new SesConfigStack(stack, "SesConfig", {
-    env: app,
-    sesAttr,
-    domainAttr,
-  })
 
   const auth = new sst.Cognito(stack, "Cognito", {
     login: ["email"],
@@ -93,10 +70,10 @@ export function Auth({ app, stack }: sst.StackContext) {
         // accountRecovery: aws_cognito.AccountRecovery.EMAIL_ONLY,
         email: aws_cognito.UserPoolEmail.withSES({
           sesRegion: app.region,
-          fromEmail: `gnothi@${domain}`,
+          fromEmail: `gnothi@${subdomain}`,
           fromName: 'Gnothi',
-          replyTo: `gnothi@${domain}`,
-          sesVerifiedDomain: domain,
+          replyTo: `gnothi@${subdomain}`,
+          sesVerifiedDomain: subdomain,
         }),
       }
     },

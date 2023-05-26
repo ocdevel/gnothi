@@ -21,13 +21,31 @@ import {RDS, RDSProps, StackContext} from "sst/constructs";
 import { Construct } from "constructs";
 import * as iam from "aws-cdk-lib/aws-iam";
 import {Duration} from "aws-cdk-lib";
+import {SesConfigStack} from "./Ses";
+
+
 
 export function sharedStage(stage: string) {
-  return stage === "prod" ? "prod" : "dev"
+  // For now, due to the cost of Nat Gateway, RDS cluster, etc; I'm using prod for all shared resources. The real
+  // thing to look out for is ensuring no use of same DB schema. Otherwise, much of the resources are safe-enough.
+  // If Gnothi grows, we'll switch to "prod" v "staging". staging because that'll verify the hosted DNS, but it
+  // will be shared for dev, test, etc.
+  // return "prod"
+  return stage === "prod" ? "prod" : "staging"
 }
 
 export function exportName(stage: string, name: string) {
   return `${sharedStage(stage)}${name}`
+}
+
+export function getDomains(stage: string) {
+  const domain = "gnothiai.com"
+  const sharedStage_ = sharedStage(stage)
+  return {
+    domain,
+    // revisit if I need multiple subdomains, curruntly only prod & staging
+    subdomain: sharedStage_ === "prod" ? domain : `${sharedStage_}.${domain}`
+  }
 }
 
 export function SharedCreate(context: StackContext) {
@@ -35,9 +53,8 @@ export function SharedCreate(context: StackContext) {
   const {stage} = app
   const sharedStage_ = sharedStage(stage)
 
-  const domainName = "gnothiai.com"
-  // TODO not sure how I'll handle shared database, VPC, etc for now; so hard-code the subdomain to make sure I don't mess up on launch
-  const subdomain = `staging.${domainName}` // `${sharedStage_}.gnothiai.com`
+  // subdomain is the registered {sharedStage}.gnothi, so "staging.gnothi" for dev/test/staging
+  const {domain, subdomain} = getDomains(sharedStage_)
 
   function createHostedZone() {
     // const hostedZone = aws_route53.HostedZone.fromLookup(stack, 'HostedZone', { domainName });
@@ -92,7 +109,7 @@ export function SharedCreate(context: StackContext) {
       clientCertificateArn,
     })
 
-    const certificate = new aws_acm.Certificate(stack, 'Certificate', {
+    const certificate = new aws_acm.Certificate(stack, 'DomainCertificate', {
       domainName: subdomain,
       validation: aws_acm.CertificateValidation.fromDns(hostedZone),
     })
@@ -165,6 +182,33 @@ export function SharedCreate(context: StackContext) {
     return rds
   }
 
+  // Have the SES configuration setup at the root level, and shared down to dev / staging. This so we can test
+  // email templates to send, etc.
+  function createSes() {
+    const {domain, subdomain} = getDomains(stage)
+    const subscribeEmail = process.env.SES_SUBSCRIBE_EMAIL ? [process.env.SES_SUBSCRIBE_EMAIL] : []
+    const sesAttr = {
+      // Email addresses will be added to the verified list and will be sent a confirmation email
+      // TOOD investigate these. May I should just add them afterwards via console.
+      emailList: [`gnothi@${subdomain}`, ...subscribeEmail],
+      // Email addresses to subscribe to SNS topic for delivery notifications
+      notifList: [...subscribeEmail],
+      // Notify on delivery status inc Send, Delivery, Open
+      sendDeliveryNotifications: true,
+    };
+
+    const domainAttr = {
+      // zoneName for the email domain is required. hostedZoneId for a Route53 domain is optional.
+      zoneName: subdomain,
+      hostedZoneId: '',
+    };
+    return new SesConfigStack(stack, "SesConfig", {
+      env: app,
+      sesAttr,
+      domainAttr,
+    })
+  }
+
   function exportVars(vpc: aws_ec2.Vpc, rds: aws_rds.DatabaseCluster) {
     // Doesn't work - can't resolve tokens later: "All arguments to Vpc.fromLookup() must be concrete (no Tokens)"
     // https://lzygo1995.medium.com/how-to-resolve-all-arguments-to-vpc-fromlookup-must-be-concrete-no-tokens-error-in-cdk-add1c2aba97b
@@ -198,6 +242,7 @@ export function SharedCreate(context: StackContext) {
   const hostedZone = createHostedZone()
   const clientVpn = createClientVpn(vpc, hostedZone)
   const rds = createRdsV2(vpc)
+  const ses = createSes()
   const exported = exportVars(vpc, rds)
   return {vpc, rds, exported}
 }

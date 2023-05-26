@@ -1,10 +1,12 @@
 import { use, StackContext, StaticSite, Job } from "sst/constructs";
 import { Api } from "./Api";
 import { Auth } from "./Auth";
+import { Misc } from "./Misc";
 
 export function Web({ app, stack }: StackContext) {
- const {http, ws} = use(Api);
- const {auth} = use(Auth)
+  const {http, ws} = use(Api);
+  const {auth} = use(Auth)
+  const {domain, subdomain} = use(Misc)
 
   const environment = {
     VITE_API_WS: ws.url,
@@ -19,6 +21,7 @@ export function Web({ app, stack }: StackContext) {
     buildCommand: "npm run build",
     buildOutput: "dist",
     environment,
+    customDomain: ["prod", "staging"].includes(app.stage) ? subdomain : undefined,
     vite: {
       types: "types/my-env.d.ts"
     }

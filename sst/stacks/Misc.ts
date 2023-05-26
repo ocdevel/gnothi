@@ -3,19 +3,18 @@
  */
 import {rams, timeouts} from "./util";
 import * as sst from "sst/constructs";
-import {SharedImport, sharedStage} from "./Shared";
+import {getDomains, SharedImport, sharedStage} from "./Shared";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as cdk from "aws-cdk-lib";
 import {StackContext} from "sst/constructs";
 import * as aws_ec2 from "aws-cdk-lib/aws-ec2";
 
 
-const domain = "staging.gnothiai.com"
-
 export function Misc(context: sst.StackContext) {
   const { app, stack } = context
   const {withRds} = sst.use(SharedImport)
   const APP_REGION = new sst.Config.Parameter(stack, "APP_REGION", {value: app.region})
+  const {domain, subdomain} = getDomains(app.stage)
 
   // Common / misc bucket. Used for ML, file-uploads, etc
   const bucket = new sst.Bucket(stack, "Bucket")
@@ -49,5 +48,5 @@ export function Misc(context: sst.StackContext) {
   //   }
   // })
 
-  return {bucket, APP_REGION, domain}
+  return {bucket, APP_REGION, domain, subdomain}
 }
