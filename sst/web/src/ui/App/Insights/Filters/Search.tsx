@@ -59,8 +59,8 @@ export default function Search() {
       value={search}
       onChange={changeSearch}
       sx={{ flex: 1 }}
-      placeholder="Search keywords and phrases, or ask a question"
-      inputProps={{ 'aria-label': 'Search keywords and phrases, or ask a question' }}
+      placeholder="Search keywords and phrases"
+      inputProps={{ 'aria-label': 'Search keywords and phrases' }}
     />
     {/*<IconButton type="button" sx={{ p: '10px' }} aria-label="search">
       <SearchIcon />

@@ -153,10 +153,22 @@ export default function Behaviors({advanced}: Behaviors) {
     </small>
   }, {
     service: "about",
-    name: "About",
+    name: "Getting Started",
     fields: [],
     emptyText: () => <Box>
-      About behaviors
+      <Typography mb={2}>Welcome to the Behaviors feature! Here's how you can start tracking and understanding your habits:</Typography>
+      <Stack marginLeft={2}>
+        <Typography color="primary" variant={"body1"} fontWeight={500}>Select a behavior</Typography>
+        <Typography variant="body2" mb={2} >Click "Add Behavior" and add a habit or behavior you want to track. This could be anything from sleep and exercise to mood or dietary habits.</Typography>
+        <Typography color="primary" variant={"body1"} fontWeight={500}>Choose a tracking type</Typography>
+        <Typography variant="body2" mb={2} >Decide how you want to track this behavior. The helper text in the form will help you decide which option to choose.</Typography>
+        <Typography color="primary" variant={"body1"} fontWeight={500}>Set a default value</Typography>
+        <Typography variant="body2" mb={2} >Don't worry if you miss a day of tracking. You can set a default value to auto-fill your fields on days you don't make an entry.</Typography>
+        <Typography color="primary" variant={"body1"} fontWeight={500}>Save and start tracking</Typography>
+        <Typography variant="body2" mb={2} >When you start a new journal entry, these behaviors will populate in the modal so you can track and journal at the same time.</Typography>
+        <Typography color="primary" variant={"body1"} fontWeight={500}>Pro Tip:</Typography>
+        <Typography variant="body2" mb={2} >Enabled, to help AI to understand you better.</Typography>
+      </Stack>
     </Box>
   }, {
     service: 'habitica',
@@ -251,8 +263,8 @@ export default function Behaviors({advanced}: Behaviors) {
           </AccordionDetails>
           <CardActions sx={{justifyContent: 'flex-end', mb: 2}}>
             <Button
-              variant="contained"
-              color="secondary"
+              variant="outlined"
+              color="primary"
               size="small"
               onClick={() => setView({view: "new"})}
             >
@@ -270,7 +282,7 @@ export default function Behaviors({advanced}: Behaviors) {
 
   // This is what's seen if we're NOT in the Modal. For now, just what shows on Entry.View sidebar
   return <Card
-    sx={{backgroundColor: '#ffffff', borderRadius: 2}}
+    sx={{backgroundColor: '#ffffff', borderRadius: 2, paddingLeft: 1.5}}
   >
     <CardContent>
       <Grid
@@ -293,6 +305,7 @@ export default function Behaviors({advanced}: Behaviors) {
             Track behaviors to get AI insights</Typography>
         </Grid>
         <Grid item>
+          <CardActions>
           <IconButton
             color='primary'
             size="small"
@@ -300,6 +313,7 @@ export default function Behaviors({advanced}: Behaviors) {
           >
             <ManageBehaviorsIcon sx={{fontSize: 25}}/>
           </IconButton>
+          </CardActions>
         </Grid>
       </Grid>
 
@@ -309,8 +323,8 @@ export default function Behaviors({advanced}: Behaviors) {
       <CardActions sx={{justifyContent: "flex-end", mt: 3}}>
         <Button
           onClick={toggleShowAbout}
-          variant="contained"
-          color="secondary"
+          variant="outlined"
+          color="primary"
           size={"small"}
         >
           {showAbout ? "Hide" : "About Behaviors"}

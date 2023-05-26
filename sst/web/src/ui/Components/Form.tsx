@@ -14,6 +14,8 @@ import React, {useState} from "react";
 import {useForm} from "react-hook-form";
 import {yupResolver} from "@hookform/resolvers/yup";
 export * as yup from 'yup';
+import InfoIcon from '@mui/icons-material/InfoOutlined';
+import TipsIcon from '@mui/icons-material/TipsAndUpdatesOutlined';
 
 
 export function makeForm(schema, defaults=null, opts={}) {
@@ -209,6 +211,10 @@ export function Select2({name, label, form, options, helperText, className}: Sel
         >
           {options.map(o => (
             <MenuItem
+              sx={{
+                backgroundColor: "#ffffff",
+
+            }}
               className={`${id}-${o.value}`}
               value={o.value}
             >
@@ -216,8 +222,13 @@ export function Select2({name, label, form, options, helperText, className}: Sel
             </MenuItem>
           ))}
         </Select>
-        {helperText && <FormHelperText>{helperText}</FormHelperText>}
+        <HelperText2 text={helperText} />
       </FormControl>
     }}
   />
+}
+
+function HelperText2({text}: { text?: string | null }) {
+  if (!text) {return null}
+  return <FormHelperText sx={{color: "#0077C2", fontWeight: 500, mt: 1.5 }}><TipsIcon sx={{fontSize: 18, marginRight: .5}}/>{text}</FormHelperText>
 }

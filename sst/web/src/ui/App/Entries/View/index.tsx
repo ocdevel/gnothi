@@ -34,6 +34,7 @@ import * as S from '@gnothi/schemas'
 import * as Link from '../../../Components/Link'
 import Insights from '../../Insights/Insights'
 import dayjs from "dayjs";
+import CardActions from "@mui/material/CardActions";
 
 
 interface Entry {
@@ -66,8 +67,8 @@ export default function View({entry, onClose}: Entry) {
 
   const date = useMemo(() => {
     return <Typography
-      variant='h4'
-      fontWeight={500}
+      variant='body1'
+      fontWeight={400}
       marginTop={2}
       marginRight={3}
       className='date'
@@ -79,8 +80,25 @@ export default function View({entry, onClose}: Entry) {
 
 
   function renderEntry() {
-    return <Box>
-      <Typography variant='h2' className='title'>{entry.title}</Typography>
+    return <Box px={4}>
+      {date}
+      <Typography variant='h4' mb={0} color="primary" fontWeight={500} className='title'>{entry.title}</Typography>
+      <Box
+        display='flex'
+        justifyContent='space-between'
+        direction='row'
+        alignItems='center'
+        marginTop={3}
+        marginBottom={4}
+        >
+        <Tags
+          selected={tags}
+          setSelected={setTags}
+          noClick={true}
+          noEdit={true}
+          preSelectMain={false}
+        />
+      </Box>
       <div className='text'>
         <ReactMarkdown
           linkTarget='_blank'
@@ -93,23 +111,6 @@ export default function View({entry, onClose}: Entry) {
         event={/entries\/entr(ies|y).*/g}
         codeRange={[400, 500]}
       />
-
-      <Box
-        display='flex'
-        justifyContent='space-between'
-        direction='row'
-        alignItems='center'
-        marginTop={3}
-        marginBottom={3}
-      >
-        <Tags
-          selected={tags}
-          setSelected={setTags}
-          noClick={true}
-          noEdit={true}
-          preSelectMain={false}
-        />
-      </Box>
     </Box>
   }
 
@@ -125,24 +126,20 @@ export default function View({entry, onClose}: Entry) {
 
   }
 
-  return <Grid container className="view">
+  return <Grid container
+           className="view"
+            alignItems="flex-start">
     <Grid item xs={12} lg={7}>
 
-
-       <DialogActions>
-        {/*viewing && <Box sx={{marginRight: 'auto'}}>
-          <AddNotes eid={eid} />
-        </Box>*/}
-         <Box
-           alignItems={'center'}
-           justifyItems={'center'}
-           display='flex'
-         >
-           {date} {renderButtons()}
-         </Box>
-      </DialogActions>
       <DialogContent>
-        {renderEntry()}
+        <Card sx={{borderRadius: 2}}>
+          <CardContent sx={{backgroundColor: "white"}}>
+            <CardActions sx={{backgroundColor: "white", justifyContent: "flex-end"}}>
+              {renderButtons()}
+            </CardActions>
+            {renderEntry()}
+          </CardContent>
+        </Card>
         {renderNotes()}
       </DialogContent>
 
@@ -155,3 +152,36 @@ export default function View({entry, onClose}: Entry) {
     </Grid>
   </Grid>
 }
+
+
+// return <Grid container className="view">
+//     <Grid item xs={12} lg={7}>
+//
+//
+//        <DialogActions>
+//         {/*viewing && <Box sx={{marginRight: 'auto'}}>
+//           <AddNotes eid={eid} />
+//         </Box>*/}
+//          <Box
+//            alignItems={'center'}
+//            justifyItems={'center'}
+//            display='flex'
+//          >
+//            {renderButtons()}
+//            {date}
+//          </Box>
+//       </DialogActions>
+//       <DialogContent>
+//         {renderEntry()}
+//         {renderNotes()}
+//       </DialogContent>
+//
+//
+//     </Grid>
+//     <Grid item xs={12} lg={5}>
+//       <DialogContent>
+//         {renderSidebar()}
+//       </DialogContent>
+//     </Grid>
+//   </Grid>
+// }

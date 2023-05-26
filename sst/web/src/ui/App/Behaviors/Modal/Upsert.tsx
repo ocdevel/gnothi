@@ -22,6 +22,7 @@ import Stack from "@mui/material/Stack";
 import Divider from "@mui/material/Divider";
 import Accordions from '../../../Components/Accordions'
 import {Stack2} from "../../../Components/Misc.tsx"
+import Box from "@mui/material/Box";
 
 export function Update() {
   const [send, fields, view, setView] = useStore(s => [
@@ -112,9 +113,9 @@ function Form({field, submit}: Form) {
   }
 
   let defValHelp = {
-    value: `Auto-populate this field with "Default Value". Leaving it empty is valid (blanks are considered by ML models)`,
-    ffill: `Pulls the value from your last entry for this field`,
-    average: `Uses your average accross entries for this field`
+    value: `Recommended if you don't plan on tracking behaviors daily`,
+    ffill: `Auto-populates with the value from your last entry for this field`,
+    average: `Defaults to the average across all your entries for this field`
   }
   const lastEntry = fid && _.last(field.history)
   if (lastEntry) { // only show if have values to work with
@@ -122,6 +123,12 @@ function Form({field, submit}: Form) {
     defValHelp.average += ` (currently ${field.avg})`
   }
   defValHelp = defValHelp[default_value]
+
+  const typeHelp = {
+    number: "Track quantities, like hours slept or glasses of water",
+    fivestar: "Rate aspects of your life. Perfect for things like mood, productivity, etc",
+    check: "Simple yes or no for daily habits, like exercise or meditation"
+  }[type]
 
   function renderDeleteButtons() {
     if (!fid) {return null}
@@ -165,7 +172,7 @@ function Form({field, submit}: Form) {
   return <Card  className="upsert" sx={{backgroundColor: "#ffffff", borderRadius: 2}}>
     <CardContent>
       <Stack direction='row' justifyContent='space-between' alignItems='center' mb={2}>
-        <Typography variant="h4" m={0}>{fid ? "Edit Behavior" : "New Behavior"}</Typography>
+        <Typography variant="h4" color="primary" fontWeight={500} m={0}>{fid ? "Edit Behavior" : "New Behavior"}</Typography>
         <CardActions sx={{justifyContent: 'flex-end'}}>
           <Button size="small" onClick={close}>Cancel</Button>
           <Button
@@ -186,32 +193,34 @@ function Form({field, submit}: Form) {
       <TextField2
         name='name'
         label="Name"
-        placeholder="Add the behavior you'd like to track"
+        placeholder="Add the behavior you want to track (you can use emojis too)"
         className='input-name'
         form={form}
       />
-      <Select2
-        name='type'
-        label="Type"
-        form={form}
-        options={[
-          {value: 'number', label: "Number"},
-          {value: 'fivestar', label: "Fivestar"},
-          {value: 'check', label: "Check"},
-        ]}
-      />
-      <Accordions accordions={[
+        <Select2
+          name='type'
+          label="Type"
+          form={form}
+          options={[
+            {value: 'number', label: "Number"},
+            {value: 'fivestar', label: "Five-Star"},
+            {value: 'check', label: "Check"},
+          ]}
+          helperText={typeHelp}
+        />
+      <Accordions sx={{mt: 2}} accordions={[
         {
           title: "Advanced",
           content: <Stack2>
+            <Typography mb={2}>Default values are automatically assigned to your fields on days you don't manually update them, based on the option you select here.</Typography>
             <Select2
               name='default_value'
               label="Default"
               form={form}
               options={[
-                {value: 'value', label: "Specific value (including empty)"},
-                {value: 'ffill', label: "Pull entry from yesterday"},
-                {value: 'average', label: "Average of your entries"},
+                {value: 'value', label: "Manual Default (Recommended)"},
+                {value: 'ffill', label: "Yesterday's value"},
+                {value: 'average', label: "Average Value"},
               ]}
               helperText={defValHelp}
             />
@@ -224,6 +233,7 @@ function Form({field, submit}: Form) {
                 form={form}
                 min={type === 'check' ? 0 : null}
                 max={type === 'check' ? 1 : null}
+                // helperText="Fill in the value which will be populated if you don't track for this day. Alternatively, you can leave it blank. If youdon't know, it's recommended alkfejkalseu rdfoiuase "
               />
             </>}
             {renderDeleteButtons()}

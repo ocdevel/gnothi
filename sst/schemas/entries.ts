@@ -41,7 +41,7 @@ export const Filters = z.object({
   startDate: JustDate
     .optional()
     .default(
-      dayjs().subtract(3, 'month').format("YYYY-MM-DD")
+      dayjs().subtract(3, 'years').format("YYYY-MM-DD")
     ),
   endDate: JustDate.or(z.literal("now")).default("now"),
   tags: BoolMap.default({}),

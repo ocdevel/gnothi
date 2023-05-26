@@ -33,7 +33,8 @@ export default function Modal() {
     return null
   }
 
-  const title = entry ? fmtDate(entry.created_at) : "New Entry";
+  // const title = entry ? fmtDate(entry.created_at) : "New Entry";
+  const title = ""
 
   return <FullScreenDialog
     className="entries modal"

@@ -36,7 +36,7 @@ export default function Accordions({accordions, defaultExpanded=-1}: Props) {
         aria-controls={`panel${i}bh-content`}
         id={`panel${i}bh-header`}
       >
-        <Typography sx={{flexShrink: 0}}>
+        <Typography variant="body1" fontWeight={600} color="primary" sx={{flexShrink: 0}}>
           {title}
         </Typography>
         {subtitle && <Typography sx={{color: 'text.secondary'}}>

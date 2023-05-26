@@ -280,10 +280,10 @@ export default function Prompt({entry_ids, view}: Prompt) {
 
       <Box>
         <Button
-          sx={{elevation: 12}}
-          variant="contained"
+          sx={{elevation: 12, fontWeight: 500}}
+          variant="outlined"
           size="small"
-          color="secondary"
+          color="primary"
           disabled={trips.waiting}
           onClick={submit}
         >
