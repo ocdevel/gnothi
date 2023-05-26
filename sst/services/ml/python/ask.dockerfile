@@ -5,7 +5,7 @@ RUN pip3 install --no-cache-dir \
     farm-haystack==1.11.0 \
     sentence-transformers==2.2.2 \
     pandas==1.5.2 \
-    pyarrow==10.0.1 \
+    pyarrow==12.0.0 \
     && pip3 install --no-cache-dir transformers==4.25.1
 
 COPY __init__.py ${LAMBDA_TASK_ROOT}/__init__.py

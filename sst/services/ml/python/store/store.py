@@ -14,6 +14,9 @@ import torch
 import logging
 from sentence_transformers.util import semantic_search
 from sentence_transformers import SentenceTransformer
+logger = logging.getLogger()
+import time
+
 
 bucket_name = os.environ['bucket_name']
 bucket_name = f"s3://{bucket_name}"
@@ -48,7 +51,17 @@ class EntryStore(object):
         self.user_global = f"{bucket_name}/vectors/users/{user_id}.{ext}"
 
     def load(self, path, filters=None):
-        return pq.read_table(path, filters=filters).to_pandas()
+        # There's a major issue, race-condition of writing to S3, then asking for it before it's ready (eventual
+        # consistency). Do a check first which files are ready
+        retry_attempts, wait_time = 3, 3
+        for attempt in range(retry_attempts):
+            try:
+                return pq.read_table(path, filters=filters).to_pandas()
+            except (FileNotFoundError, OSError) as e:
+                logger.error(e);logger.error(filters)
+                time.sleep(wait_time)
+        # Still no cigar (and it wasn't another kind of error)? Eh, come back later. store.load() is used frequent enough
+        return pd.DataFrame([])
 
     def write_df(self, df, path):
         table = pa.Table.from_pandas(df)
