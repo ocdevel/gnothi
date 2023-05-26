@@ -209,7 +209,7 @@ export class Entries extends Base {
     })
   }
 
-  async getStuckEntry(): Promise<S.Entries.entries_upsert_response> {
+  async getStuckEntry(): Promise<S.Entries.entries_upsert_response | null> {
     const {db} = this.context
     const res = await db.drizzle.execute<S.Entries.entries_upsert_response>(sql`
       WITH updated AS (
@@ -234,6 +234,7 @@ export class Entries extends Base {
       SELECT e.*, (SELECT json_agg(et.*) FROM entries_tags et WHERE e.id = et.entry_id) as tags
       FROM updated e;
     `)
+    if (res.rowCount === 0) {return null}
     const row = DB.removeNull(res.rows[0]) as S.Entries.entries_upsert_response
     return {...row, tags: tagsToBoolMap(row.tags)}
   }

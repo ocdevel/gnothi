@@ -35,8 +35,11 @@ export const entries_put_request = new Route(r.entries_put_request, async (req, 
 // Then, fix any stuck entries to pay it forward.
 export const entries_upsert_response = new Route(r.entries_upsert_response, async (req, context) => {
   const res = entriesUpsertResponse(req, context)
+  // send the actual response right away, we're gonna do some cleanup while we have this Lambda
+  await context.handleRes(r.entries_upsert_response.o, res, context)
   await fixStuckEntries(context)
-  return res
+  // At this point we don't have to send res again, we did before fixStuck
+  return []
 })
 
 // Separate this function out so that it can be called as the route, and as the job to update stuck entries.
@@ -116,42 +119,20 @@ async function fixStuckEntries(context: FnContext) {
   // Entries get stuck if (a) a lambda timeout never finishes indexing/summarizing an entry, (b) between migrations,
   // when I manually set all entries to TODO. That's my trick to re-run all entries, while keeping the same framework
 
-  // for (let i = 0; i < 10; i++) {
-  //   const stuckEntry = await context.m.entries.getStuckEntry()
-  //   // Detatch the context from whomever triggered this. That's because user.id might be referenced (eg, in fetching tags
-  //   // in entriesUpsertResponse) and we don't want to send anything via websocket.
-  //   const detachedContext = new FnContext({
-  //     db: context.db,
-  //     user: {id: stuckEntry.user_id},
-  //     handleRes: context.handleRes,
-  //     handleReq: context.handleReq
-  //   })
-  //   await entriesUpsertResponse(stuckEntry, detachedContext)
-  // }
+  for (let i = 0; i < 500; i++) {
+    const stuckEntry = await context.m.entries.getStuckEntry()
+    if (!stuckEntry) {break}
+    console.log(`Fixing: stuck ${i}`)
+    // Detatch the context from whomever triggered this. That's because user.id might be referenced (eg, in fetching tags
+    // in entriesUpsertResponse) and we don't want to send anything via websocket.
+    const detachedContext = new FnContext({
+      db: context.db,
+      user: {id: stuckEntry.user_id},
+      handleRes: context.handleRes,
+      handleReq: context.handleReq
+    });
 
-
-  // Processes stuck entries in batches. Ie, handle 2 at a time, until 10 are processed.
-  const batchSize = 3
-  const total = 10
-  for (let i = 0; i < total; i += batchSize) {
-    const promises = [];
-
-
-    for (let j = 0; j < batchSize; j++) {
-      console.log(`Fixing: ${i + j} of ${total} stuck entries`)
-      const promise = context.m.entries.getStuckEntry().then(stuckEntry => {
-        const detachedContext = new FnContext({
-          db: context.db,
-          user: {id: stuckEntry.user_id},
-          handleRes: context.handleRes,
-          handleReq: context.handleReq
-        });
-
-        return entriesUpsertResponse(stuckEntry, detachedContext);
-      })
-      promises.push(promise)
-    }
-    await Promise.all(promises)
+    await entriesUpsertResponse(stuckEntry, detachedContext);
   }
 
 

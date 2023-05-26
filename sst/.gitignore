@@ -21,4 +21,6 @@ tmp
 cdk.context.json
 
 pg_tmp/
+
+.env-shared-*
 /.sst.config.1684950561589.mjs

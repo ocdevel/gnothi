@@ -123,6 +123,12 @@ function lambdas({context, vpc, fs, bucket}: MLService) {
     fnSummarize_: fnSummarize.functionArn,
     fnStore_: fnStore.functionArn,
     fnPreprocess_: fnPreprocess.functionArn,
+
+    fnBooksLogs: `aws logs tail --follow ${fnBooks.logGroup.logGroupName}`,
+    fnAskLogs: `aws logs tail --follow ${fnAsk.logGroup.logGroupName}`,
+    fnSummarizeLogs: `aws logs tail --follow ${fnSummarize.logGroup.logGroupName}`,
+    fnStoreLogs: `aws logs tail --follow ${fnStore.logGroup.logGroupName}`,
+    fnPreprocessLogs: `aws logs tail --follow ${fnPreprocess.logGroup.logGroupName}`,
   })
   return {fnBooks, fnAsk, fnSummarize, fnStore, fnPreprocess, OPENAI_KEY}
 }
