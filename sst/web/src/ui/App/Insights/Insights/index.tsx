@@ -34,6 +34,7 @@ import {Stack2, Alert2} from "../../../Components/Misc";
 import Stack from "@mui/material/Stack"
 import { Typography } from "@mui/material"
 import {shallow} from "zustand/shallow";
+import {useDebouncedCallback} from "use-debounce";
 
 // 62da7182: books attrs, popovers
 const iconProps = {
@@ -95,35 +96,10 @@ export default function Insights({entry_ids}: Insights) {
   const send = useStore(useCallback(s => s.send, []))
   const view = entry_ids.length === 1 ? entry_ids[0] : "list"
 
-  // We don't want to send insights_get too frequently. It's expensive, but more importantly a lot can happen between
-  // what might trigger it initially, and entries actually being ready for insights. The easiest check is to make
-  // sure nothing's currently processing. That will get updated via Websockets when each entry is ready, making
-  // this a safe check. However, it's unsafe if for whatever reason the entry got stuck in processing-limbo. For that
-  // reason, I have bandaid Lambda logic to unstuck entries, and the code here will just carry forward if an
-  // entry is stuck (determined by updated_at being too old, while ai_state=='running').
-  // I could just debounce this function, say for 3 seconds, but that's dirty here.
-  const entry_ids_indexed = entry_ids.filter((id) => {
-    const entry = entriesHash?.[id]
-    if (!entry) { return false } // this should never happen, but just in case
-    // This one is ready to go. "running" is obviously filter-out, but "todo" is filter-in
-    // since it means we'll fix it later. The Lambda will decide if it should actually be removed from the AI
-    if (entry.ai_index_state !== "running") { return true }
+  // git-blame: checks here to prevent requesting insights if not ready. Now instead I'm debouncing, and
+  // letting the server decide.
 
-    // NOTE I'm only accounting for ai_index_state, not ai_summarize_state. Bother are updated together, so it
-    // should be safe - but revisit if needs be.
-
-    // So not we know it's "running". ML jobs should take no longer than a few minutes, most of which is Lambda
-    // cold-start. If it's been longer than that, this entry is stuck; we're ok to just move forward with the request.
-    return dayjs().diff(entry.updated_at, "minutes") > 3
-  })
-
-  useEffect(() => {
-    // some entries are awaiting indexing. They'll come back in a few with ai_state
-    // updated (websocket), so hang tight for now.
-    if (!entry_ids_indexed.length) {
-      return
-    }
-
+  const getInsights = useDebouncedCallback(() => {
     // Logging each time this is called, until I'm sure our logic above is solid.
     console.log('insights:useEffect', [search, entry_ids])
 
@@ -137,7 +113,12 @@ export default function Insights({entry_ids}: Insights) {
         prompt: undefined
       }
     })
-  }, [search, entry_ids_indexed])
+  }, 5000)
+
+  useEffect(() => {
+    if (!entry_ids.length) { return }
+    getInsights()
+  }, [search, entry_ids])
 
   // FIXME handle on a per-insight basis
   // if (!entry_ids?.length) {

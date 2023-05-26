@@ -21,6 +21,7 @@ import {SNSEvent} from "aws-lambda";
 import {APIGatewayProxyWebsocketEventV2} from "aws-lambda/trigger/api-gateway-proxy";
 import {fromUtf8, toUtf8} from "@aws-sdk/util-utf8-node";
 import {Bucket} from 'sst/node/bucket'
+import _ from "lodash";
 
 export * as Handlers from './handlers'
 
@@ -200,17 +201,45 @@ export const ws: Handler<APIGatewayProxyWebsocketEventV2> = {
       console.warn("Trying to to WS without connectionId")
     }
     try {
-      // try/catch because the connection may have gone away
-      await clients.apig.send(new PostToConnectionCommand({
-        ConnectionId: connectionId,
-        Data: Buff.fromObj(res),
-      }))
-    } catch (e) {
-      res.error = true
-      res.code = 500
-      // throw e
-      // todo handle just disconnection error below, throw others
-      console.error("WebSocketError: trying to send to disconnected client.")
+      // The maximum message payload size that an API Gateway WebSocket connection can send to a client is 128 KB.
+      // However, due to the WebSocket frame size quota of 32 KB, a message larger than 32 KB must be split into
+      // multiple frames, each 32 KB or smaller. If a larger message (or larger frame size) is received, the
+      // connection is closed with code 1009
+      // https://docs.aws.amazon.com/apigateway/latest/developerguide/limits.html
+
+      // We should really stop using it for the entire app's network backbone, and instead have it inform the client
+      // to re-fetch new data as needed (only sending notifications, pings). For now, if we're returning an array
+      // (which should always be true), and it's longer then CHUNK_SIZE, send in chunks. This is brittle since it
+      // assumes {op: "update"} was the original intent, and {op: "append"} is safe.
+      const CHUNK_SIZE = 25
+
+      // should always be an array, but you can never be too careful
+      const dataChunks = Array.isArray(res.data) ? _.chunk(res.data, CHUNK_SIZE) : res.data;
+      const isChunking = !!dataChunks && dataChunks.length > 1
+      const resChunks = !isChunking ? [res]
+        : dataChunks.map((chunk, i) => {
+          if (i === 0) {return {...res, data: chunk}}
+          return {...res, op: "append", data: chunk}
+        })
+      for (const chunk of resChunks) {
+        // The last chunk is sometimes empty. Don't send it. Only do that if we are indeed chunking
+        if (isChunking && !chunk.data?.length) {continue}
+
+        await clients.apig.send(new PostToConnectionCommand({
+          ConnectionId: connectionId,
+          Data: Buff.fromObj(chunk),
+        }))
+      }
+    } catch (error) {
+      if (error.name === 'GoneException') {
+        // They user may have closed the tab. Don't want to throw an error, but we do want to log it just in case
+        // there's more error here than meets the eye
+        res.error = true
+        res.code = 500
+        console.error("WebSocketError: trying to send to disconnected client.")
+      } else {
+        throw error // Re-throw the error if it's not a GoneException
+      }
     }
     return proxyRes(res)
   }

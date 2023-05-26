@@ -18,12 +18,12 @@ export default function Entries({group_id=null}) {
   const ids = entries?.ids || []
   const hash = entries?.hash || {}
 
-  const [page, setPage] = useState(0)
+  const [page, setPage] = useState(1)
 
   let navigate = useNavigate()
 
   useEffect(() => {
-    setPage(0)
+    setPage(1)
   }, [entries])
 
   if (entries?.res?.error && entries.res.code === 403) {
@@ -39,11 +39,16 @@ export default function Entries({group_id=null}) {
     return <Alert2 severity='info'>No entries. If you're a new user, click <Button color="primary" size='small' variant='contained' disabled>New Entry</Button> above. If you're a therapist, select a client in left-sidebar {'>'} Account {'>'} [email]. You'll then be in that client's shoes.</Alert2>
   }
 
-  const pageSize = 30
+  filtered = filtered.slice()
+    .filter(id => hash[id])
+    .sort((idA, idB) => new Date(hash[idB].created_at) - new Date(hash[idA].created_at))
+
+  const page0idx = page - 1
+  const pageSize = 10
   // const usePaging = !search.length && filtered.length > pageSize
   const usePaging = filtered.length > pageSize
   const filteredPage = !usePaging ? filtered :
-      filtered.slice(page*pageSize, page*pageSize + pageSize)
+      filtered.slice(page0idx*pageSize, page0idx*pageSize + pageSize)
   const nPages = _.ceil(filtered.length / pageSize)
   function changePage (e: React.ChangeEvent<unknown>, p: number) {
     setPage(p)
