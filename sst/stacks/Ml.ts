@@ -48,7 +48,7 @@ function lambdas({context, vpc, fs, bucket}: MLService) {
 
   const {app, stack} = context
 
-  const openAiKey = new sst.Config.Secret(stack, "openai_key")
+  const OPENAI_KEY = new sst.Config.Secret(stack, "OPENAI_KEY")
 
   const accessPoint = efsAccessPoint({
     fs,
@@ -67,7 +67,7 @@ function lambdas({context, vpc, fs, bucket}: MLService) {
     }
   } as const
 
-  const fnPreprocess = new lambda.DockerImageFunction(stack, "fn_preprocess", {
+  const fnPreprocess = new lambda.DockerImageFunction(stack, "FnPreprocess", {
     ...mlFunctionProps,
     memorySize: 512,
     timeout: cdk.Duration.minutes(3),
@@ -75,7 +75,7 @@ function lambdas({context, vpc, fs, bucket}: MLService) {
       file: "preprocess.dockerfile"
     }),
   })
-  const fnBooks = new lambda.DockerImageFunction(stack, "fn_books", {
+  const fnBooks = new lambda.DockerImageFunction(stack, "FnBooks", {
     ...mlFunctionProps,
     memorySize: 4459,
     // TODO This one can take forever on initial download of feather to EFS. For that reason I'm upping
@@ -85,7 +85,7 @@ function lambdas({context, vpc, fs, bucket}: MLService) {
       file: "books.dockerfile"
     }),
   })
-  const fnAsk = new lambda.DockerImageFunction(stack, "fn_ask", {
+  const fnAsk = new lambda.DockerImageFunction(stack, "FnAsk", {
     ...mlFunctionProps,
     // see utils.ts for how to determine optimal MB
     memorySize: 3446,
@@ -93,7 +93,7 @@ function lambdas({context, vpc, fs, bucket}: MLService) {
       file: "ask.dockerfile"
     }),
   })
-  const fnSummarize = new lambda.DockerImageFunction(stack, "fn_summarize", {
+  const fnSummarize = new lambda.DockerImageFunction(stack, "FnSummarize", {
     ...mlFunctionProps,
     memorySize: 4357,
     // TODO figure out why so long
@@ -102,7 +102,7 @@ function lambdas({context, vpc, fs, bucket}: MLService) {
       file: "summarize.dockerfile"
     }),
   })
-  const fnStore = new lambda.DockerImageFunction(stack, "fn_store", {
+  const fnStore = new lambda.DockerImageFunction(stack, "FnStore", {
     ...mlFunctionProps,
     memorySize: 1107,
     timeout: cdk.Duration.minutes(15),
@@ -124,7 +124,7 @@ function lambdas({context, vpc, fs, bucket}: MLService) {
     fnStore_: fnStore.functionArn,
     fnPreprocess_: fnPreprocess.functionArn,
   })
-  return {fnBooks, fnAsk, fnSummarize, fnStore, fnPreprocess, openAiKey}
+  return {fnBooks, fnAsk, fnSummarize, fnStore, fnPreprocess, OPENAI_KEY}
 }
 
 export function Ml(context: sst.StackContext) {

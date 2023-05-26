@@ -108,8 +108,8 @@ async function summarize_(data: LambdaIn): Promise<LambdaOut> {
   if (USE_OPENAI) {
     return Promise.all(data.map(summarizeOpenai))
   } else {
-    // Get fnName while inside function because will only be present for fn_background (not fn_main)
-    const fnName = Config.fn_summarize_name
+    // Get fnName while inside function because will only be present for FnBackground (not FnMain)
+    const fnName = Config.FN_SUMMARIZE_NAME
     const res = await lambdaSend<LambdaOut>(data, fnName, "RequestResponse")
     return res.Payload
   }

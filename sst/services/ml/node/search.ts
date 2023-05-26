@@ -34,8 +34,8 @@ type FnOut = Omit<LambdaOut, 'ids'> & {
 
 
 export async function search({user_id, entries, query, context}: FnIn): Promise<FnOut> {
-  // Get fnName while inside function because will only be present for fn_background (not fn_main)
-  const fnName = Config.fn_store_name
+  // Get fnName while inside function because will only be present for FnBackground (not FnMain)
+  const fnName = Config.FN_STORE_NAME
 
   // only do vector-search (search, books, etc) against entries which are definitely "done" indexing. We'll
   // account for the others a simple search, and merge them together at the end.

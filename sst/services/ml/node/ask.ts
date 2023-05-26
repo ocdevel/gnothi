@@ -17,8 +17,8 @@ type LambdaOut = {
 type FnOut = LambdaOut
 
 export async function ask({user_id, entry_ids, query, context}: FnIn): Promise<FnOut> {
-  // Get fnName while inside function because will only be present for fn_background (not fn_main)
-  const fnName = Config.fn_ask_name
+  // Get fnName while inside function because will only be present for FnBackground (not FnMain)
+  const fnName = Config.FN_ASK_NAME
   const {Payload} = await lambdaSend<LambdaOut>(
     {
       query,

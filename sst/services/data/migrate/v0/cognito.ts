@@ -1,7 +1,8 @@
 import {
   CognitoIdentityProviderClient,
   AdminCreateUserCommand,
-  AdminConfirmSignUpCommand, SignUpCommand
+  AdminConfirmSignUpCommand, SignUpCommand,
+  AttributeType
 } from "@aws-sdk/client-cognito-identity-provider"; // ES Modules import
 // const { CognitoIdentityProviderClient, AdminCreateUserCommand } = require("@aws-sdk/client-cognito-identity-provider"); // CommonJS import
 import {User} from '../../schemas/users'
@@ -9,10 +10,12 @@ import {randomInt} from 'crypto';
 
 import {Config} from "sst/node/config";
 import {AdminCreateUserCommandOutput} from "@aws-sdk/client-cognito-identity-provider/dist-types/commands";
+import {AttributeType} from "@aws-sdk/client-cognito-identity-provider/dist-types/models/models_0";
+import {aws_cognito} from "aws-cdk-lib";
 const config = {region: "us-east-1"}
 const client = new CognitoIdentityProviderClient(config);
 
-type User_ = Partial<User>
+type User_ = {id: string, email: string}
 
 // https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/preview/client/cognito-identity-provider/command/AdminCreateUserCommand/
 // https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_AdminCreateUser.html
@@ -23,9 +26,10 @@ export async function addUserToCognito(user: User_): Promise<string> {
 
 async function viaSignup(user: User_): Promise<string> {
   const signUpCommand = new SignUpCommand({
-    ClientId: Config.USER_POOL_CLIENT_ID,
+    ClientId: Config.USER_POOL_CLIENT_ID!,
     Username: user.email,
     Password: randomPassword(),
+
     UserAttributes: [
       ...userAttributes(user)
     ],
@@ -96,7 +100,7 @@ async function viaAdminCreateUser(user: User_): Promise<string> {
   return createResponse.User.Username
 }
 
-function userAttributes(user: User_) {
+function userAttributes(user: User_): AttributeType[] {
   return [
     // Use this to skip Triggers if needed (preSignUp, postConfirmation, etc)
     {

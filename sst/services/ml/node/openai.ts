@@ -9,7 +9,7 @@ import {
 } from "openai"
 
 const configuration = new Configuration({
-  apiKey: Config.openai_key,
+  apiKey: Config.OPENAI_KEY,
 })
 const openai = new OpenAIApi(configuration);
 

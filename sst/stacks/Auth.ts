@@ -60,7 +60,7 @@ export function Auth({ app, stack }: sst.StackContext) {
     domainAttr,
   })
 
-  const auth = new sst.Cognito(stack, "Auth", {
+  const auth = new sst.Cognito(stack, "Cognito", {
     login: ["email"],
 
     cdk: {
@@ -120,7 +120,7 @@ export function Auth({ app, stack }: sst.StackContext) {
     value: auth.userPoolClientId,
   })
 
-  const authFn = withRds(stack, "fn_authorizer", {
+  const fnAuth = withRds(stack, "FnAuthorizer", {
     handler: "services/auth/wsAuthorizer.handler",
     memorySize: rams.sm,
     timeout: timeouts.md,
@@ -179,5 +179,5 @@ export function Auth({ app, stack }: sst.StackContext) {
   //     body: `Hello ${event.requestContext.authorizer.jwt.claims.sub}!`,
   //   };
   // };
-  return {auth, authFn}
+  return {auth, fnAuth}
 }

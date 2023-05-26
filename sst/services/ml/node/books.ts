@@ -13,8 +13,8 @@ type LambdaOut = insights_books_response['books'][]
 type FnOut = LambdaOut
 
 export async function books({search_mean, context}: FnIn): Promise<FnOut> {
-  // Get fnName while inside function because will only be present for fn_background (not fn_main)
-  const fnName = Config.fn_books_name
+  // Get fnName while inside function because will only be present for FnBackground (not FnMain)
+  const fnName = Config.FN_BOOKS_NAME
   let res: LambdaOut
   if (search_mean?.length) {
     const {Payload} = await lambdaSend<LambdaOut>(

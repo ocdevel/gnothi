@@ -10,7 +10,7 @@ import {Misc} from "./Misc";
 export function Api({ app, stack }: sst.StackContext) {
   const {vpc, rdsSecret, readSecretPolicy, withRds} = sst.use(SharedImport);
   const ml = sst.use(Ml);
-  const {auth, authFn} = sst.use(Auth);
+  const {auth, fnAuth} = sst.use(Auth);
   const {APP_REGION} = sst.use(Misc)
 
   const HABITICA_USER = new sst.Config.Secret(stack, "HABITICA_USER")
@@ -23,7 +23,7 @@ export function Api({ app, stack }: sst.StackContext) {
   // Resource handler returned message: "Authorizer name must be unique. Authorizer jwt already exists in this RestApi. (Service: AmazonApiGatewayV2; Status Code: 400; Error Code: BadRequestException; Request ID: ...; Proxy: null)" (RequestToken: ..., HandlerErrorCode: AlreadyExists)
   // So you have to find-replace jwt -> jwt2, and back.
 
-  const http = new sst.Api(stack, "api_http", {
+  const http = new sst.Api(stack, "ApiHttp", {
     authorizers: {
       httpjwt2: {
         type: "user_pool",
@@ -34,25 +34,25 @@ export function Api({ app, stack }: sst.StackContext) {
       },
     },
   })
-  const ws = new sst.WebSocketApi(stack, "api_ws", {
+  const ws = new sst.WebSocketApi(stack, "ApiWs", {
     authorizer: {
       name: 'wsjwt2',
       type: "lambda",
       identitySource: ["route.request.querystring.idToken"],
-      function: authFn
+      function: fnAuth
     },
   })
   const API_WS = new sst.Config.Parameter(stack, "API_WS", {value: ws.cdk.webSocketStage.callbackUrl})
 
   // the ML functions based on Dockerfiles can't use .bind(), so add the permissions explicitly, and
   // the env-var as Config() + bind (latter needed for unit tests, which can't use env vars directly)
-  const fnBooksName = new sst.Config.Parameter(stack, "fn_books_name", {value: ml.fnBooks.functionName})
-  const fnAskName = new sst.Config.Parameter(stack, "fn_ask_name", {value: ml.fnAsk.functionName})
-  const fnSummarizeName = new sst.Config.Parameter(stack, "fn_summarize_name", {value: ml.fnSummarize.functionName})
-  const fnStoreName = new sst.Config.Parameter(stack, "fn_store_name", {value: ml.fnStore.functionName})
-  const fnPreprocessName = new sst.Config.Parameter(stack, "fn_preprocess_name", {value: ml.fnPreprocess.functionName})
+  const FN_BOOKS_NAME = new sst.Config.Parameter(stack, "FN_BOOKS_NAME", {value: ml.fnBooks.functionName})
+  const FN_ASK_NAME = new sst.Config.Parameter(stack, "FN_ASK_NAME", {value: ml.fnAsk.functionName})
+  const FN_SUMMARIZE_NAME = new sst.Config.Parameter(stack, "FN_SUMMARIZE_NAME", {value: ml.fnSummarize.functionName})
+  const FN_STORE_NAME = new sst.Config.Parameter(stack, "FN_STORE_NAME", {value: ml.fnStore.functionName})
+  const FN_PREPROCESS_NAME = new sst.Config.Parameter(stack, "FN_PREPROCESS_NAME", {value: ml.fnPreprocess.functionName})
 
-  const fnBackground = withRds(stack, "fn_background", {
+  const fnBackground = withRds(stack, "FnBackground", {
     handler: "services/main.main",
     timeout: "3 minutes",
     memorySize: rams.sm,
@@ -61,12 +61,12 @@ export function Api({ app, stack }: sst.StackContext) {
       ws,
     ],
     bind: [
-      ml.openAiKey,
-      fnBooksName,
-      fnAskName,
-      fnSummarizeName,
-      fnStoreName,
-      fnPreprocessName,
+      ml.OPENAI_KEY,
+      FN_BOOKS_NAME,
+      FN_ASK_NAME,
+      FN_SUMMARIZE_NAME,
+      FN_STORE_NAME,
+      FN_PREPROCESS_NAME,
 
       APP_REGION,
       API_WS,
@@ -85,12 +85,12 @@ export function Api({ app, stack }: sst.StackContext) {
      ],
    }))
 
-  const fnMain = withRds(stack, "fn_main", {
+  const fnMain = withRds(stack, "FnMain", {
     memorySize: rams.sm,
     timeout: timeouts.md,
     handler: "services/main.proxy",
     bind: [
-      ml.openAiKey,
+      ml.OPENAI_KEY,
       APP_REGION,
       API_WS,
       auth,
@@ -119,8 +119,8 @@ export function Api({ app, stack }: sst.StackContext) {
   })
 
   stack.addOutputs({
-    ApiHttp: http.url,
-    ApiWs: ws.url,
+    ApiHttpUrl: http.url,
+    ApiWsUrl: ws.url,
   });
 
   auth.attachPermissionsForAuthUsers(stack, [http, ws]);

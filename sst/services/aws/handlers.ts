@@ -170,7 +170,7 @@ export const lambda: Handler<any> = {
     }
     const response = await lambdaSend(
       backgroundReq,
-      Function.fn_background.functionName,
+      Function.FnBackground.functionName,
       "Event"
     )
     return {statusCode: response.StatusCode, data: response.Payload}
