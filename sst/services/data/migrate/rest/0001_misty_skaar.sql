@@ -29,9 +29,6 @@ DROP TABLE cache_users;
 DROP TABLE jobs;
 DROP TABLE machines;
 DROP TABLE profile_matches;
-ALTER TABLE "entries" RENAME COLUMN "title_summary" TO "ai_title";
-ALTER TABLE "entries" RENAME COLUMN "text_summary" TO "ai_text";
-ALTER TABLE "entries" RENAME COLUMN "sentiment" TO "ai_sentiment";
 ALTER TABLE "entries" ALTER COLUMN "id" SET DEFAULT gen_random_uuid();
 ALTER TABLE "entries" ALTER COLUMN "user_id" SET NOT NULL;
 ALTER TABLE "field_entries" ALTER COLUMN "id" SET DEFAULT gen_random_uuid();
@@ -70,6 +67,12 @@ ALTER TABLE "entries" ADD COLUMN "text_paras" varchar[];
 ALTER TABLE "entries" ADD COLUMN "ai_index_state" "aistate" DEFAULT 'todo';
 ALTER TABLE "entries" ADD COLUMN "ai_summarize_state" "aistate" DEFAULT 'todo';
 ALTER TABLE "entries" ADD COLUMN "ai_keywords" varchar[];
+ALTER TABLE "entries" DROP COLUMN IF EXISTS "title_summary";
+ALTER TABLE "entries" DROP COLUMN IF EXISTS "text_summary";
+ALTER TABLE "entries" DROP COLUMN IF EXISTS "sentiment";
+ALTER TABLE "entries" ADD COLUMN "ai_title" varchar;
+ALTER TABLE "entries" ADD COLUMN "ai_text" varchar;
+ALTER TABLE "entries" ADD COLUMN "ai_sentiment" varchar;
 ALTER TABLE "tags" ADD COLUMN "sort" integer DEFAULT 0 NOT NULL;
 ALTER TABLE "tags" ADD COLUMN "ai_index" boolean DEFAULT true;
 ALTER TABLE "tags" ADD COLUMN "ai_summarize" boolean DEFAULT true;
@@ -132,3 +135,5 @@ update tags set ai_index=true, ai_summarize=true;
 
 -- add n_notes to entries
 update entries e set n_notes=(select count(*) from notes where entry_id=e.id);
+
+update entries set ai_index_state='todo', ai_summarize_state='todo';
