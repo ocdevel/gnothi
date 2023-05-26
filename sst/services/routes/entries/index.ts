@@ -60,8 +60,14 @@ async function entriesUpsertResponse(req: S.Entries.entries_upsert_response, con
 
   // TODO how to handle multiple tags, where some are yes-ai and some are no-ai?
   // For now I'm assuming no.
-  const skip_summarize = tags_.some(t => t.ai_summarize === false)
-  const skip_index = tags_.some(t => t.ai_index === false)
+  let skip_summarize = tags_.some(t => t.ai_summarize === false)
+  let skip_index = tags_.some(t => t.ai_index === false)
+
+  if (entry.text.length < 100) {
+    // Too little to work with, even if they specify. Skip it to avoid ML issues (embedding, parquet, summary, etc).
+    skip_index = true
+    skip_summarize = true
+  }
 
   const clean = await preprocess({text: entry.text, method: 'md2txt'})
 
@@ -134,6 +140,5 @@ async function fixStuckEntries(context: FnContext) {
 
     await entriesUpsertResponse(stuckEntry, detachedContext);
   }
-
 
 }

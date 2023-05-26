@@ -1,4 +1,6 @@
 from preprocess.clean import CleanText
+import logging
+logger = logging.getLogger()
 
 def main(event, context):
     """
@@ -13,8 +15,11 @@ def main(event, context):
                  .markdown_split_paragraphs()
                  .value())
         if not paras:
-            raise "No paragraphs, fix this! See entries_profiles.py"
-        text = " ".join(paras)  # now clean of markdown, grouped cleanly
+            logger.warning("md2txt didn't split any paragraphs, fix this! See entries_profiles.py")
+            text = text.replace('\n', ' ')
+            paras = [text]
+        else:
+            text = " ".join(paras)  # now clean of markdown, grouped cleanly
     else:
         raise f"Preprocess method {method} not implemented"
     return {"text": text, "paras": paras}
