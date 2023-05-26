@@ -52,11 +52,10 @@ export default function Themes({view}: Insight) {
         color="primary">{theme.word}</Typography>
         <Typography
           variant="body2"
-          fontStyle="italic"
           color="primary"
           mt={-1}
           mb={1}>
-        Related summary from your entries:
+        AI took note of the following:
       </Typography>
 
       <Typography 
@@ -68,17 +67,17 @@ export default function Themes({view}: Insight) {
         alignContent="flex-start"
         justifyContent="flex-start"
         flexWrap='wrap'
-        direction="row" 
+        direction="row"
         >
         {theme.keywords.map((kw: string) => <Chip sx={{marginRight:1, marginBottom:2}} key={kw} label={kw} />)}
       </Stack>
 
-      <Divider sx={{marginTop: 2}} />
+      {/*<Divider sx={{marginTop: 2, marginBottom: 3}} />*/}
     </Box>
   }
 
   return <>
-    {themes.themes.map(renderTheme)}
+    {themes.themes.slice(0,1).map(renderTheme)}
   </>
 
   // const themes_ =_.sortBy(reply.themes, 'n_entries').slice().reverse()

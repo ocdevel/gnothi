@@ -91,6 +91,8 @@ export default function View({entry, onClose}: Entry) {
         marginTop={3}
         marginBottom={4}
         >
+        <Stack spacing={2} direction="column">
+          <Divider color="#50577a"/>
         <Tags
           selected={tags}
           setSelected={setTags}
@@ -98,6 +100,7 @@ export default function View({entry, onClose}: Entry) {
           noEdit={true}
           preSelectMain={false}
         />
+        </Stack>
       </Box>
       <div className='text'>
         <ReactMarkdown
@@ -116,7 +119,6 @@ export default function View({entry, onClose}: Entry) {
 
   function renderNotes() {
     return <div>
-      <hr />
       <NotesList entry_id={id} />
     </div>
   }
@@ -128,10 +130,11 @@ export default function View({entry, onClose}: Entry) {
 
   return <Grid container
            className="view"
-            alignItems="flex-start">
+            alignItems="flex-start"
+             spacing={2}
+  >
     <Grid item xs={12} lg={7}>
 
-      <DialogContent>
         <Card sx={{borderRadius: 2}}>
           <CardContent sx={{backgroundColor: "white"}}>
             <CardActions sx={{backgroundColor: "white", justifyContent: "flex-end"}}>
@@ -141,14 +144,11 @@ export default function View({entry, onClose}: Entry) {
           </CardContent>
         </Card>
         {renderNotes()}
-      </DialogContent>
 
 
     </Grid>
     <Grid item xs={12} lg={5}>
-      <DialogContent>
         {renderSidebar()}
-      </DialogContent>
     </Grid>
   </Grid>
 }

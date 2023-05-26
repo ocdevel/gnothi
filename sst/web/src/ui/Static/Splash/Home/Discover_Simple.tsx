@@ -64,7 +64,7 @@ export default function DiscoverAI() {
          >
           <FeatureIntro2
             {...featureProps}
-            icon={<InsightsOutlinedIcon {...iconProps} />}
+            icon={<InsightsOutlinedIcon sx={{color: "#005594", fontSize: 60}} />}
             title={"Identify entry themes"}
           >
             <Typography>
@@ -74,7 +74,7 @@ export default function DiscoverAI() {
 
           <FeatureIntro2
             {...featureProps}
-            icon={<SummaryIcon {...iconProps} />}
+            icon={<SummaryIcon sx={{color:   "#0077C2", fontSize: 60}} />}
             title={"Get helpful snapshots"}
           >
             <Typography>
@@ -84,7 +84,7 @@ export default function DiscoverAI() {
 
           <FeatureIntro2
             {...featureProps}
-            icon={<AutoStoriesOutlinedIcon {...iconProps} />}
+            icon={<AutoStoriesOutlinedIcon sx={{color: "#0066AD", fontSize: 60}} />}
             title={"Explore new books"}
           >
             <Typography>
@@ -94,7 +94,7 @@ export default function DiscoverAI() {
 
           <FeatureIntro2
             {...featureProps}
-            icon={<FitnessCenterIcon {...iconProps} />}
+            icon={<FitnessCenterIcon sx={{color: "#1B8BCB", fontSize: 60}} />}
             title={"Focus on habits and behaviors"}
           >
             <Typography>
@@ -104,7 +104,7 @@ export default function DiscoverAI() {
 
           <FeatureIntro2
             {...featureProps}
-            icon={<FolderOpenOutlinedIcon {...iconProps} />}
+            icon={<FolderOpenOutlinedIcon sx={{color: "#005594", fontSize: 60}} />}
             title={"Organize your entries"}
           >
             <Typography>

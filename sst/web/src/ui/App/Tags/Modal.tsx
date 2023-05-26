@@ -69,7 +69,7 @@ export default function Modal({close}: Modal) {
             sx={{my: 2}}
             onClick={toggleMore}
             variant="outlined"
-            color="primary"
+            color="secondary"
           >
             {showMore ? "Hide" : "Tag Settings and Pro Tips"}
           </Button>

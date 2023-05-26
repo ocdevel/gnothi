@@ -34,8 +34,8 @@ export default function Layout() {
   function renderAppbar() {
     return <AppBar
       ctas={[
-        {name: "Sign Up", onClick: () => setAuthTab("signUp")},
-        {name: "Log In", onClick: () => setAuthTab("signIn"), secondary: true}
+        {name: "Sign Up", onClick: () => setAuthTab("signUp"), secondary: true},
+        {name: "Log In", onClick: () => setAuthTab("signIn")}
       ]}
 
     />

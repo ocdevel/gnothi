@@ -29,7 +29,7 @@ export default function Accordions({accordions, defaultExpanded=-1}: Props) {
     return <Accordion
       expanded={expanded === i}
       onChange={handleChange(i)}
-      sx={{backgroundColor: "white", borderRadius: 3}}
+      sx={{backgroundColor: "white", borderRadius: 3,}}
     >
       <AccordionSummary
         expandIcon={<ExpandMoreIcon/>}
@@ -43,7 +43,7 @@ export default function Accordions({accordions, defaultExpanded=-1}: Props) {
           {subtitle}
         </Typography>}
       </AccordionSummary>
-      <AccordionDetails >
+      <AccordionDetails>
         {content}
       </AccordionDetails>
 

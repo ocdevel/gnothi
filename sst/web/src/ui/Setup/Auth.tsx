@@ -181,12 +181,12 @@ export const AuthComponent: FC<AuthComponentProps> = ({tab}) => {
             value: "#ffffff",
           },
           secondary: {
-            value: "#ffffff",
+            value: "##0077C2",
           },
         },
         font: {
           interactive: {
-            value: "#50577a",
+            value: "#0077C2",
           },
         },
         brand: {

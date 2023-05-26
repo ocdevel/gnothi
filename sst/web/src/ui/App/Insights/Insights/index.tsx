@@ -46,10 +46,11 @@ interface Insight {
   label: string
   icon: React.ReactNode
   description?: string
+  action?: string
   children: React.ReactNode
 }
 
-function Insight({label, icon, description, children}: Insight) {
+function Insight({label, icon, description, action, children}: Insight) {
   return <Card
     sx={{ backgroundColor:'white', borderRadius: 2, boxShadow: 1}}
   >
@@ -70,9 +71,14 @@ function Insight({label, icon, description, children}: Insight) {
       </Stack>
       {description && <Typography
         color="primary.main"
-        variant="body2"
-        fontWeight={300}
+        variant="body1"
+        fontWeight={500}
         >{description}
+        </Typography> }
+       {action && <Typography
+          mb={3}
+         variant="body2"
+        >{action}
         </Typography> }
       {children}
     </CardContent>
@@ -87,12 +93,15 @@ export default function Insights({entry_ids}: Insights) {
   const [
     search,
     entriesHash,
-    entryModal
+    entryModal,
+    me,
   ] = useStore(s => [
     s.filters.search,
     s.res.entries_list_response?.hash || {},
-    s.entryModal
+    s.entryModal,
+    s.user?.me
   ], shallow)
+
   const send = useStore(useCallback(s => s.send, []))
   const view = entry_ids.length === 1 ? entry_ids[0] : "list"
 
@@ -150,10 +159,11 @@ export default function Insights({entry_ids}: Insights) {
       {/*  /!*</Typography>*!/*/}
       {/*</Stack>*/}
 
-      {ENABLE_PROMPT && <Insight
+      {me?.is_cool && <Insight
         label="Prompt"
         icon={<PromptIcon {...iconProps} />}
-        description="Ask Gnothi anything about an entry or set of entries. Choose a topic and question, or create a custom prompt."
+        description="Ask Gnothi anything"
+        action="Choose a topic or create a custom prompt"
       >
         <Prompt entry_ids={entry_ids} view={view} />
       </Insight>}
@@ -161,7 +171,8 @@ export default function Insights({entry_ids}: Insights) {
       <Insight
         label="Themes"
         icon={<ThemesIcon {...iconProps} />}
-        // description="See the recurring themes across your entries that AI sees. Use these to identify patterns in your thoughts and feelings. "
+        description="Identify patterns across entries"
+        action="Adjust filters for different themes"
       >
         <Themes view={view}/>
       </Insight>
@@ -169,25 +180,26 @@ export default function Insights({entry_ids}: Insights) {
       <Insight
         label="Summary"
         icon={<SummaryIcon {...iconProps} />}
-        // description="This is an AI-generated summary based on your search results. You can adjust filters to see different summaries.
-        // "
+        description="AI-generated snapshot"
+        action="Adjust filters for different summaries"
       >
         <Summarize view={view} />
       </Insight>
 
-      {entryModal?.mode==="view" &&
-      <Insight
+      {me?.is_cool && <Insight
         label="Behavior Tracking"
         icon={<BehaviorsIcon {...iconProps} />}
-      //   description="Here’s an overview of the daily habits and behaviors you’ve been tracking through Gnothi."//
+        description="Here’s an overview of the daily habits and behaviors you’ve been tracking through Gnothi."//
       >
         <Behaviors />
-      </Insight>
-      }
+      </Insight>}
+
       <Insight
         label="Top Books"
         icon={<BooksIcon {...iconProps} />}
-        // description="Gnothi recommends the following books to you based on the entries in this search." //You can thumbs up or down books to train AI on your interests, or add titles you’re interested in to your bookshelf."
+        description="Titles recommended by AI"
+        action="Links and a bookshelf are coming soon!"
+        //You can thumbs up or down books to train AI on your interests, or add titles you’re interested in to your bookshelf."
       >
         <Books view={view}/>
       </Insight>

@@ -36,7 +36,7 @@ export default function Entries({group_id=null}) {
   }
 
   if (!filtered.length) {
-    return <Alert2 severity='info'>No entries. If you're a new user, click <Button color="primary" size='small' variant='contained' disabled>New Entry</Button> above. If you're a therapist, select a client in left-sidebar {'>'} Account {'>'} [email]. You'll then be in that client's shoes.</Alert2>
+    return <Alert2 severity='info'>Your entries are either still loading or there are no results based on your search. If you're a new user, click <Button color="primary" size='small' variant='contained' disabled>New Entry</Button> to get started.</Alert2>
   }
 
   filtered = filtered.slice()

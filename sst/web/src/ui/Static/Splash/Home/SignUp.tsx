@@ -45,9 +45,8 @@ export default function SignUp() {
 
       <Button
         variant="contained"
+        color="secondary"
         sx={{
-          backgroundColor: "white",
-          color: colors.black,
           marginTop: '2rem',
         }}
         onClick={() => setAuthTab("signUp")}

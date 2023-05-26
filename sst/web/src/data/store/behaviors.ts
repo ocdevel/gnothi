@@ -1,7 +1,7 @@
 import {create} from 'zustand'
 import * as S from "@gnothi/schemas"
 import dayjs, {Dayjs} from 'dayjs'
-import {StateCreator} from "zustand/esm";
+import {StateCreator} from "zustand";
 import {EventsSlice} from "./events";
 import {ApiSlice} from "./api";
 import {AppSlice} from "./app";

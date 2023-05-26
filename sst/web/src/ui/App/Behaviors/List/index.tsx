@@ -33,6 +33,12 @@ import iconProps from "../../../Components/Icon";
 import {FaPlus as AddIcon} from "react-icons/fa";
 import BehaviorsIcon from "@mui/icons-material/InsertChartOutlinedRounded";
 import SettingsIcon from "@mui/icons-material/SettingsOutlined";
+import StarIcon from '@mui/icons-material/StarBorder';
+import FitnessIcon from '@mui/icons-material/FitnessCenter';
+import DoneIcon from '@mui/icons-material/Done';
+import AutoGraphIcon from '@mui/icons-material/AutoGraphOutlined';
+import TipsIcon from '@mui/icons-material/TipsAndUpdatesOutlined';
+import NumbersIcon from '@mui/icons-material/NumbersOutlined';
 
 
 interface FieldGroup {
@@ -138,36 +144,39 @@ export default function Behaviors({advanced}: Behaviors) {
     fields: _(fields?.rows)
       .filter(v => !v.service && !v.excluded_at)
       .sortBy('id').value(),
-    emptyText: () => <small className='text-muted'>
-      <Box>Fields are activity & quality trackers. Mood, sleep, substance, habits, etc. They can be numbers, checkboxes,
-        or fivestar-ratings.
-        <ul>
-          <li>Track your mood, sleep patterns, substance intake, etc</li>
-          <li>See stats (average, graphs, predictions)</li>
-          <li>See how fields interact: correlation. Eg, "sleep most influenced by alcohol".</li>
-          <li>Help long-term decisions by tracking options (fivestar-rate different jobs or moving destinations).</li>
-          <li>Share fields, eg with a therapist who's interested in your mood or substances.</li>
-          <li>For habits specifically, I recommend Habitica (below).</li>
-        </ul>
-      </Box>
-    </small>
+    emptyText: () => <Box>
+      <Typography color="primary" textAlign="center" fontWeight={500} mb={1}>Welcome to the Behaviors
+        feature!</Typography>
+      <Typography textAlign="center" mb={1}>It’s here to help you track the activity or quality of the various behaviors
+        in your life—like mood, sleep, substance, habits, etc. </Typography>
+    </Box>
+
   }, {
     service: "about",
     name: "Getting Started",
     fields: [],
     emptyText: () => <Box>
-      <Typography mb={2}>Welcome to the Behaviors feature! Here's how you can start tracking and understanding your habits:</Typography>
       <Stack marginLeft={2}>
-        <Typography color="primary" variant={"body1"} fontWeight={500}>Select a behavior</Typography>
-        <Typography variant="body2" mb={2} >Click "Add Behavior" and add a habit or behavior you want to track. This could be anything from sleep and exercise to mood or dietary habits.</Typography>
-        <Typography color="primary" variant={"body1"} fontWeight={500}>Choose a tracking type</Typography>
-        <Typography variant="body2" mb={2} >Decide how you want to track this behavior. The helper text in the form will help you decide which option to choose.</Typography>
-        <Typography color="primary" variant={"body1"} fontWeight={500}>Set a default value</Typography>
-        <Typography variant="body2" mb={2} >Don't worry if you miss a day of tracking. You can set a default value to auto-fill your fields on days you don't make an entry.</Typography>
-        <Typography color="primary" variant={"body1"} fontWeight={500}>Save and start tracking</Typography>
-        <Typography variant="body2" mb={2} >When you start a new journal entry, these behaviors will populate in the modal so you can track and journal at the same time.</Typography>
-        <Typography color="primary" variant={"body1"} fontWeight={500}>Pro Tip:</Typography>
-        <Typography variant="body2" mb={2} >Enabled, to help AI to understand you better.</Typography>
+        <Typography mb={3} variant={"body1"}>Simply click <i>Add Behaviors</i> to fill out the form. Save, repeat for
+          other behaviors, and start tracking.</Typography>
+        <Typography color="#0077C2" variant={"body1"} fontWeight={500}><TipsIcon
+          sx={{color: "#0077C2", fontSize: 18, marginRight: 1}}/>Pro Tip</Typography>
+        <Typography variant="body2" mb={2}>Sync your Habitica account to Gnothi for advanced habit tracking and AI
+          insights. See the <i>Habitica</i> drop-down for more info.</Typography>
+        <Typography mb={1} color="primary" variant={"body1"} fontWeight={500}>Behavior Tracking Ideas</Typography>
+        <Typography color="primary" variant={"body2"} fontWeight={500}><StarIcon
+          sx={{color: "primary", fontSize: 15, marginRight: 1}}/>Five-Star Rating for Quality</Typography>
+        <Typography variant="body2" mb={2}> Intended for measuring the quality of your experiences in a day, such as
+          sleep, mood, energy, and productivity.</Typography>
+        <Typography color="primary" variant={"body2"} fontWeight={500}><DoneIcon
+          sx={{color: "primary", fontSize: 15, marginRight: 1}}/>Check for "Yes/No" Behaviors</Typography>
+        <Typography variant="body2" mb={2}>Ideal for tracking daily tasks. <i>Did I meditate, take medication, exercise,
+          journal, read, etc?</i></Typography>
+        <Typography color="primary" variant={"body2"} fontWeight={500}><NumbersIcon
+          sx={{color: "primary", fontSize: 15, marginRight: 1}}/>Numbers for Quantity</Typography>
+        <Typography variant="body2" mb={2}>Some ideas include hours slept, number of walks, alcohol/substance intake,
+          chapters read, and number of glasses of water.</Typography>
+
       </Stack>
     </Box>
   }, {
@@ -177,24 +186,65 @@ export default function Behaviors({advanced}: Behaviors) {
       .filter(v => v.service === 'habitica' && !v.excluded_at)
       .sortBy('id')
       .value(),
-    emptyText: () => <small className='text-muted'>
-      <p>For habit-tracking (exercise, substance, productivity, etc) I recommend <a href='https://habitica.com/'
-                                                                                    target='_blank'>Habitica</a>. Gnothi
-        will sync Habitica habits & dailies.</p>
-      <p>Use Gnothi fields for qualitative data (mood, sleep-quality, decisions) and Habitica for habits. Habitica
-        doesn't support arbitrary number entries.</p>
-      <p>Your UserID and API Token are database-encrypted. <em>All</em> sensitive data in Gnothi is encrypted.</p>
-    </small>
+    emptyText: () => <Box>
+      <Typography mb={3}>Combine the robust functionality of Habitica with Gnothi's AI-driven tools to gain deeper
+        self-understanding.</Typography>
+      <Typography color="primary" variant={"body1"} fontWeight={500}>What is Habitica?</Typography>
+      <Typography variant="body2" mb={2}>Created by one of the creators of Gnothi, Habitica is a gamified habit tracking
+        platform that empowers users to track behaviors, to-dos, and habits with its comprehensive
+        functionality.</Typography>
+      <Typography color="primary" variant={"body1"} fontWeight={500}>Why create a Habitica account to sync to
+        Gnothi?</Typography>
+      <Typography variant="body2" mb={2}>While Gnothi allows you to add and track custom behaviors directly, power-users
+        will appreciate the rich features offered by Habitica for habit-tracking and daily to-dos
+        specifically.</Typography>
+      <Typography variant="body2" mb={2}>To get the best of both worlds, use Gnothi for qualitative data (mood,
+        sleep-quality, decisions) and Habitica for habits and to-dos. Then supercharge your experience with AI insights
+        from Gnothi.</Typography>
+      <Typography mb={1} color="primary" variant={"body1"} fontWeight={500}>Syncing Habitica to Gnothi:</Typography>
+      <Typography mb={1} variant={"body2"}>1. Sign up for <a href='https://habitica.com/' target='_blank'>Habitica</a>
+        <i>(free)</i></Typography>
+      <Typography mb={1} variant={"body2"}>2. Go to settings in your Habitica account</Typography>
+      <Typography mb={1} variant={"body2"}>3. Select the "API" tab</Typography>
+      <Typography mb={1} mb={3} variant={"body2"}>4. Enter your User ID and API token <i>(below)</i></Typography>
+      <Typography color="#0077C2" variant={"body1"} fontWeight={500}>Have questions?</Typography>
+      <Typography mb={3} color="#0077C2" fontWeight={500} variant={"body2"}>Feel free to send an <a
+        href="mailto:gnothi@gnothiai.com">email</a> or reach out on <a href="https://discord.gg/TNEvx2YR"
+                                                                       target="_blank">Discord</a> to
+        connect.</Typography>
+      <Typography mb={3}>Your User ID and API Token are database-encrypted. <em>All</em> sensitive data in Gnothi is
+        encrypted.</Typography>
+    </Box>
+
   }, {
     service: 'excluded',
-    name: 'Excluded',
+    name: 'Excluded from AI',
     fields: _(fields?.rows)
       .filter(v => !!v.excluded_at)
       .sortBy('id')
       .value(),
-    emptyText: () => <small className='text-muted'>
-      <p>If you stop tracking a field, but keep it around just in case, click "Remove" and it will show up here.</p>
-    </small>
+    emptyText: () => <Box>
+      <Typography mb={3}>Customize your AI insights on Gnothi by excluding specific behaviors.</Typography>
+      <Typography color="primary" variant={"body1"} fontWeight={500}>What does it mean to <i>exclude</i> a
+        behavior?</Typography>
+      <Typography variant="body2" mb={2}>If you stop tracking a behavior but want to keep it for reference, you can
+        click "Exclude" to prevent it from appearing in your active tracking.</Typography>
+      <Typography variant="body2" mb={2}>For instance, if you have synced your Habitica account and imported a daily
+        "to-do," excluding it on Gnothi ensures that you won't receive AI insights and charts specifically related to
+        your progress with that behavior.</Typography>
+      <Typography mb={1} color="primary" variant={"body1"} fontWeight={500}>How to exclude a behavior:</Typography>
+      <Typography mb={1} variant={"body2"}>1. Click on the behavior you want to exclude</Typography>
+      <Typography mb={1} variant={"body2"}>2. Select the <i>Advanced</i> drop-down in the <i>Edit
+        Behavior</i> form</Typography>
+      <Typography mb={1} variant={"body2"}>3. Click on the <i>Exclude</i> button</Typography>
+      <Typography mb={3} variant={"body2"}>Note: If you decide to track the behavior again, it will be here in the
+        "Excluded" drop-down.</Typography>
+      <Typography color="#0077C2" variant={"body1"} fontWeight={500}>Have questions?</Typography>
+      <Typography mb={3} color="#0077C2" fontWeight={500} variant={"body2"}>Feel free to send an <a
+        href="mailto:gnothi@gnothiai.com">email</a> or reach out on <a href="https://discord.gg/TNEvx2YR"
+                                                                       target="_blank">Discord</a> to
+        connect.</Typography>
+    </Box>
   },
     // {
     //   service: 'advanced',
@@ -254,9 +304,9 @@ export default function Behaviors({advanced}: Behaviors) {
   if (advanced) {
     return <div className="list">
       <Card
-        sx={{backgroundColor: '#ffffff', borderRadius: 2}}
+        sx={{backgroundColor: '#ffffff', borderRadius: 2, height: "100%"}}
       >
-        <CardContent>
+        <CardContent sx={{mx: 1}}>
           <DayChanger/>
           <AccordionDetails>
             {renderGroup(groups[0])}
@@ -264,7 +314,7 @@ export default function Behaviors({advanced}: Behaviors) {
           <CardActions sx={{justifyContent: 'flex-end', mb: 2}}>
             <Button
               variant="outlined"
-              color="primary"
+              color="secondary"
               size="small"
               onClick={() => setView({view: "new"})}
             >
@@ -282,7 +332,7 @@ export default function Behaviors({advanced}: Behaviors) {
 
   // This is what's seen if we're NOT in the Modal. For now, just what shows on Entry.View sidebar
   return <Card
-    sx={{backgroundColor: '#ffffff', borderRadius: 2, paddingLeft: 1.5}}
+    sx={{backgroundColor: '#ffffff', borderRadius: 2, paddingLeft: 1.5, height: "100%"}}
   >
     <CardContent>
       <Grid
@@ -292,28 +342,32 @@ export default function Behaviors({advanced}: Behaviors) {
         alignItems='flex-start'
 
       >
-        <Grid item>
-          <Typography
-            sx={{m: 0, p: 0}}
-            variant='h4'
-            fontWeight={500}
-            color='primary'
-          >
-            Behaviors
-          </Typography>
-          <Typography color="primary" mb={2} variant={"body1"} fontWeight={500}>
-            Track behaviors to get AI insights</Typography>
-        </Grid>
-        <Grid item>
-          <CardActions>
-          <IconButton
-            color='primary'
-            size="small"
-            onClick={() => setView({page: "modal", view: "new"})}
-          >
-            <ManageBehaviorsIcon sx={{fontSize: 25}}/>
-          </IconButton>
-          </CardActions>
+        <Grid item container xs={12} justifyItems="center" alignItems="space-between">
+          <Grid item xs>
+            <Typography
+              sx={{m: 0, p: 0}}
+              variant='h4'
+              fontWeight={500}
+              color='primary'
+            >
+              Behaviors
+            </Typography>
+          </Grid>
+          <Grid item>
+            <IconButton
+              color='primary'
+              size="small"
+              onClick={() => setView({page: "modal", view: "overall"})}
+            >
+              <ManageBehaviorsIcon sx={{fontSize: 25}}/>
+            </IconButton>
+          </Grid>
+
+
+          <Grid item>
+            <Typography color="primary" mb={2} variant={"body1"} fontWeight={500}>
+              Track behaviors to get AI insights</Typography>
+          </Grid>
         </Grid>
       </Grid>
 
@@ -324,7 +378,7 @@ export default function Behaviors({advanced}: Behaviors) {
         <Button
           onClick={toggleShowAbout}
           variant="outlined"
-          color="primary"
+          color="secondary"
           size={"small"}
         >
           {showAbout ? "Hide" : "About Behaviors"}
@@ -338,8 +392,8 @@ export default function Behaviors({advanced}: Behaviors) {
           <Typography mb={1} variant="body1">Whether it's exercise, mood, sleep, or anything in between, log it here.
             The AI will then review your data to identify patterns, correlations, and even predicts future entries.
           </Typography>
-          <Typography mb={.5} variant="body1">Click on the “<SettingsIcon sx={{fontSize: 15}}/>” icon above for pro
-            tips, settings, and more.</Typography>
+          <Typography mb={.5} fontWeight={500} color="secondary" variant="body2">Click on the “<SettingsIcon
+            sx={{fontSize: 15, color: "secondary"}}/>” icon above to add behaviors and manage settings.</Typography>
         </Box>
         <Box mb={2}>
           <Typography mb={0} color="primary" variant="h4" mt={3} fontWeight={500}>About the Tech</Typography>

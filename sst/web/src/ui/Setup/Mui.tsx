@@ -23,7 +23,7 @@ export const styles = {
   sx: {
     button1: {backgroundColor: 'primary.main', color: colors.white, fontFamily: "Poppins", fontWeight: '500'},
     //'#3A4784',
-    button2: {backgroundColor: "secondary.main", color: colors.black, fontFamily: "Poppins", fontWeight: '500'},
+    button2: {backgroundColor: "secondary.main", color: colors.white, fontFamily: "Poppins", fontWeight: '500'},
     
     featureIcon: {fontSize: 60, color: "#50577a"},
     footerIcon: {fontSize: 20, color: "#50577a"},
@@ -47,8 +47,8 @@ export const theme = createTheme({
       contrastText: '#ffffff',
     },
     secondary: {
-      main: '#A7ABBC', // '#738fa7',
-      light: '#b8bbc9', // '#6ba9bb',
+      main: '#0077C2', // '#738fa7',
+      light: '#a7abbc', // '#6ba9bb',
     },
 
 

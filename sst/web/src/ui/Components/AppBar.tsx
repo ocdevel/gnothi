@@ -50,7 +50,7 @@ export function UserMenu() {
       logout()
     }},
   ]
-  return <Box sx={{ flexGrow: 0 }}>
+  return <Box sx={{ flexGrow: 0}}>
     <Tooltip title="Open settings">
       <IconButton
         onClick={handleOpenUserMenu}

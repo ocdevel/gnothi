@@ -58,21 +58,16 @@ export default function Item({fid, advanced}: Item) {
       }}
       key={f.id}
     >
-      <Grid item xs={sizes[0]} className='field-name'>
-        <ButtonBase
-          sx={{width:'100%', justifyContent: 'flex-start'}}
-          onClick={handleEdit}
-        >
-          <FieldName name={f.name}/>
-        </ButtonBase>
+      <Grid item xs className='field-name' sx={{cursor: "pointer"}} onClick={handleEdit}>
+        <FieldName name={f.name} />
       </Grid>
 
-      <Grid item xs={sizes[1]} sx={{justifyContent:"flex-end"}}>
+      <Grid item xs>
         <BehaviorEntry f={f} />
       </Grid>
 
-      {advanced && <Grid container item xs={sizes[2]} justifyContent='flex-end'>
-        <Stack direction="row" alignItems="center">
+      {advanced && <>
+        <Grid item>
           {/*<IconButton
             sx={{cursor: "grab"}}
             onClick={handleSort}
@@ -82,6 +77,8 @@ export default function Item({fid, advanced}: Item) {
           <IconButton onClick={handleEdit} className='btn-edit'>
             <EditIcon />
           </IconButton>
+        </Grid>
+        <Grid item>
           <Badge
             badgeContent={f.avg && f.avg.toFixed(1)}
             onClick={handleView}
@@ -90,8 +87,8 @@ export default function Item({fid, advanced}: Item) {
               <ViewIcon />
             </IconButton>
           </Badge>
-        </Stack>
-      </Grid>}
+        </Grid>
+      </>}
     </Grid>
   )
 }

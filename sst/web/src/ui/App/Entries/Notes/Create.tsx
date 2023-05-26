@@ -36,36 +36,35 @@ const noteTypes: NoteType[] = [{
   key: 'label',
   name: "Label",
   user: [
-    "CBT & Zen promote labeling your thoughts as an objective observer, called \"thought diffusion\". It gets you outside your emotions to analyze them, which has positive cognitive impact.",
-    "Helps AI recommend resources. Also helps AI recommend resources to other users with similar entries.",
-    "Might help therapists assess your entries."
+    "Labels help AI recommend resources to you.",
+    "CBT & Zen promote labeling your thoughts as an objective observer, called thought diffusion. It helps you analyze your emotions, which has a positive cognitive impact.",
+    "If you are sharing entries with a therapist, labels might be helpful for them as well."
   ],
   therapist: [
-    "Can serve as mini note-taking on entries.",
-    "Helps AI recommend resources to this client."
+    "Labels can serve as mini note-taking tools for entries.",
   ]
 }, {
   key: 'note',
   name: "Note",
   user: [
-    "CBT & Zen promote labeling your thoughts as an objective observer, called \"thought diffusion\". It gets you outside your emotions to analyze them, which has positive cognitive impact. The more dispassionate details, the better the effect.",
-    "Helps AI recommend resources. Also helps AI recommend resources to other users with similar entries.",
-    "Might help therapists assess your entries.",
+    "Notes also  help AI recommend resources to you.",
+    "CBT & Zen promote labeling your thoughts as an objective observer, called thought diffusion. It helps you analyze your emotions, which has a positive cognitive impact.",
+    "If you are sharing entries with a therapist, notes might be helpful for them as well."
   ],
   therapist: [
-    "For private notes, consider this an organized note-taking feature for your clients. Private notes will also appear in the sidebar, so you can recall your notes before your session.",
-    "Helps AI recommend resources. Also helps AI recommend resources to other users with similar entries.",
-    "Non-private notes can serve as communication with the client: advice, support, or helping them understand their entries from your perspective.",
+    "Private notes can be used by a therapist as an organized note-taking feature for clients. Private notes will also appear in the sidebar, so you can recall your notes before sessions.",
+    "Non-private notes are viewable by both the sharer and the therapist/friend, and can serve as a communication tool for advice, support, etc.",
   ]
 }, {
   key: 'resource',
   name: "Resource",
   user: [
-    "Books, web articles, etc you've found relevant and helpful will train AI to recommend such resources to future users with similar entries."
+    "This can be used for books, web articles, or anything else that you find relevant and helpful.",
+    "Resources pinned to entries will also train AI to recommend similar resources in the future."
   ],
   therapist: [
-    "Recommend resources to this client.",
-    "Books, web articles, etc you've found relevant and helpful will train AI to recommend such resources to future users with similar entries.",
+    "This is a great way to recommend books, web articles, etc to friends or clients.",
+    "Resources you've found relevant and helpful will train also AI to recommend such resources in the future.",
   ]
 }]
 

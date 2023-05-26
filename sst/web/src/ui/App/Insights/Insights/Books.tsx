@@ -60,6 +60,6 @@ export default function Books({view}: Insight) {
   const icons = {color: "secondary", fontSize: "large"} as const
   if (!books?.length) {return null}
   return <Box>
-    {books.slice(0,7).map(renderBook)}
+    {books.slice(0,6).map(renderBook)}
   </Box>
 }

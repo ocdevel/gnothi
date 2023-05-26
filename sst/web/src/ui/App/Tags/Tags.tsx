@@ -19,7 +19,7 @@ import Button from "@mui/material/Button";
 
 
 const colors = [
-  "#002B49",
+  // "#002B49",
   "#003962",
   "#00477B",
   "#005594",
@@ -28,7 +28,7 @@ const colors = [
   "#1B8BCB",
   "#4BA0D4",
   "#7CB6DD",
-  "#ACCCE6"
+  // "#ACCCE6"
 ]
 
  // '#1A3E59',
@@ -117,8 +117,7 @@ export default function Tags({
     return <Chip
       key={tid}
       variant={selected_? "filled" : "outlined"} 
-      disabled={noClick}
-      sx={sx}
+      sx={{...sx, cursor: noClick ? "not-allowed" : "pointer"}}
       size= "small" 
       onClick={() => selectTag(tid, !selected_)}
       className={className}

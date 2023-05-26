@@ -283,7 +283,7 @@ export default function Prompt({entry_ids, view}: Prompt) {
           sx={{elevation: 12, fontWeight: 500}}
           variant="outlined"
           size="small"
-          color="primary"
+          color="secondary"
           disabled={trips.waiting}
           onClick={submit}
         >

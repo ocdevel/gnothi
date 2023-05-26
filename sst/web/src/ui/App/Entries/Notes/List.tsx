@@ -14,6 +14,7 @@ import {fmtDate} from "../../../../utils/utils";
 import Box from "@mui/material/Box";
 import _ from 'lodash'
 import Divider from "@mui/material/Divider";
+import CardActions from "@mui/material/CardActions";
 
 interface ListOld {
   entry_id: string
@@ -55,13 +56,30 @@ export function Entry({entry_id}: ListOld) {
     </Box>
   }
 
-  return <Stack style={{marginTop: '1rem'}} className="notes list" spacing={2}>
-    <NotesNotifs entry_id={entry_id} />
-    <Typography variant="subtitle1">Notes</Typography>
+
+  return <Card className="notes list"
+               spacing={2}
+               sx={{
+                 borderRadius: 2,
+                 backgroundColor: "#ffffff",
+                 marginTop: 2,
+                 // borderStyle: "solid",
+                 // borderColor: "secondary.main",
+                 // borderWidth: 1.5,
+              }}
+              >
+    <CardContent sx={{backgroundColor: "white"}}>
+      <NotesNotifs entry_id={entry_id} />
+    <Typography color="primary" mb={2} variant="h4" fontWeight={500}>Notes</Typography>
     {notes?.map(renderNote)}
     <NotesCreate entry_id={entry_id} />
-  </Stack>
+      <CardActions sx={{backgroundColor: "white", justifyContent: "flex-end"}}>
+      </CardActions>
+    </CardContent>
+  </Card>
+
 }
+
 
 /**
  * Lists all notes, all together. Useful for dashboard view, or "view all notifications" modal.

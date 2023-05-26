@@ -6,7 +6,7 @@ const env = (
 
 
   //  STAGE === "staging" ?  {"VITE_API_WS":"wss://67jndf1ak4.execute-api.us-east-1.amazonaws.com/legion4","VITE_API_HTTP":"https://pmake3nzve.execute-api.us-east-1.amazonaws.com","VITE_REGION":"us-east-1","VITE_USER_POOL_ID":"us-east-1_A7IaNNEo9","VITE_USER_POOL_CLIENT_ID":"4dtc6lv06ick36klca0g7k5u8p"}
-   STAGE === "staging" ?  {"VITE_API_WS":"wss://5brd024aqi.execute-api.us-east-1.amazonaws.com/staging","VITE_API_HTTP":"https://ovhaaooqke.execute-api.us-east-1.amazonaws.com","VITE_REGION":"us-east-1","VITE_USER_POOL_ID":"us-east-1_yQ3nbk6Kd","VITE_USER_POOL_CLIENT_ID":"1vb430v97j8ic8d3iic4b1epd8"}
+   STAGE === "staging" ?  {"VITE_API_WS":"wss://j5u72t8pd0.execute-api.us-east-1.amazonaws.com/staging","VITE_API_HTTP":"https://d7mou9s4v0.execute-api.us-east-1.amazonaws.com","VITE_REGION":"us-east-1","VITE_USER_POOL_ID":"us-east-1_d9iRhEBui","VITE_USER_POOL_CLIENT_ID":"3npah3sqpbpbp3o8anv8tnhs7j"}
 
 
 

@@ -130,22 +130,22 @@ function Form({field, submit}: Form) {
     check: "Simple yes or no for daily habits, like exercise or meditation"
   }[type]
 
+
   function renderDeleteButtons() {
     if (!fid) {return null}
-    return  <Stack direction='row' spacing={2}>
+    return <Stack>
+       <Typography mt={3} color="primary" variant={"body1"} fontWeight={500}>Delete or exclude a behavior</Typography>
+      <Typography mb={3} variant="body2">Excluding a behavior temporarily removes it from showing up, optimizing machine learning with fewer fields, while <u><i>deleting permanently erases the behavior</i></u> and all associated values.</Typography>
+
+    <Stack direction='row'>
       <Stack alignItems='center' flex={1}>
-        <Button
+          <Button
           className="btn-delete"
           color='error'
           disabled={!!field.service}
           onClick={destroyField}
           size='small'
         >Delete</Button>
-        {field.service ? <Typography variant='body2'>
-          Delete this field at the source. To exclude from Gnothi, click "Remove".
-        </Typography> : <Typography variant='body2'>
-          Permanently delete this field and all its entries
-        </Typography>}
       </Stack>
       <Divider orientation='vertical' flexItem />
       <Stack alignItems='center' flex={1}>
@@ -163,13 +163,16 @@ function Form({field, submit}: Form) {
             onClick={() => excludeField(true)}
             size='small'
           >Exclude</Button>
-          <Typography variant='body2'>Don't delete this field, but exclude it from showing up starting now. Fewer fields means easier machine learning. Consider "Remove"-ing irrelevant imported fields.</Typography>
         </>}
+      </Stack>
       </Stack>
     </Stack>
   }
 
-  return <Card  className="upsert" sx={{backgroundColor: "#ffffff", borderRadius: 2}}>
+  return <Card  className="upsert"
+                sx={{backgroundColor: "#ffffff",
+                  borderRadius: 2,
+                  }}>
     <CardContent>
       <Stack direction='row' justifyContent='space-between' alignItems='center' mb={2}>
         <Typography variant="h4" color="primary" fontWeight={500} m={0}>{fid ? "Edit Behavior" : "New Behavior"}</Typography>
@@ -211,8 +214,9 @@ function Form({field, submit}: Form) {
       <Accordions sx={{mt: 2}} accordions={[
         {
           title: "Advanced",
-          content: <Stack2>
-            <Typography mb={2}>Default values are automatically assigned to your fields on days you don't manually update them, based on the option you select here.</Typography>
+          content: <Box mb={3}>
+            <Typography color="primary" variant={"body1"} fontWeight={500}>Setting a default value</Typography>
+            <Typography mb={3} variant="body2">Default values are automatically assigned to your fields on days you don't manually update them, based on the option you select here.</Typography>
             <Select2
               name='default_value'
               label="Default"
@@ -224,6 +228,7 @@ function Form({field, submit}: Form) {
               ]}
               helperText={defValHelp}
             />
+             <Box mt={2}>
             {default_value === 'value' && <>
               <TextField2
                 name='default_value_value'
@@ -236,8 +241,9 @@ function Form({field, submit}: Form) {
                 // helperText="Fill in the value which will be populated if you don't track for this day. Alternatively, you can leave it blank. If youdon't know, it's recommended alkfejkalseu rdfoiuase "
               />
             </>}
+               </Box>
             {renderDeleteButtons()}
-          </Stack2>
+          </Box>
         }
       ]} />
     </Stack>
