@@ -4,6 +4,7 @@
 import {rams, timeouts} from "./util";
 import * as sst from "sst/constructs";
 import {getDomains, SharedImport, sharedStage} from "./Shared";
+import {Logs} from "./Logs";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as cdk from "aws-cdk-lib";
 import {StackContext} from "sst/constructs";
@@ -13,6 +14,7 @@ import * as aws_ec2 from "aws-cdk-lib/aws-ec2";
 export function Misc(context: sst.StackContext) {
   const { app, stack } = context
   const {withRds} = sst.use(SharedImport)
+  const {addLogging} = sst.use(Logs)
   const APP_REGION = new sst.Config.Parameter(stack, "APP_REGION", {value: app.region})
   const {domain, subdomain} = getDomains(app.stage)
 
@@ -34,6 +36,8 @@ export function Misc(context: sst.StackContext) {
       bucket,
     ],
   })
+  addLogging(fnMigrate, "FnMigrate")
+
   const FN_DB_MIGRATE = new sst.Config.Parameter(stack, "FN_DB_MIGRATE", {value: fnMigrate.functionArn})
 
   stack.addOutputs({

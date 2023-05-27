@@ -11,6 +11,7 @@ import {
 } from 'aws-cdk-lib';
 import * as sst from "sst/constructs";
 
+
 export function Logs(context: sst.StackContext){
   const {app, stack} = context
 
@@ -20,72 +21,45 @@ export function Logs(context: sst.StackContext){
   console.log(process.env.SES_SUBSCRIBE_EMAIL)
   topic.addSubscription(new aws_sns_subscriptions.EmailSubscription(process.env.SES_SUBSCRIBE_EMAIL));
 
-  const combinedLogGroup = new aws_logs.LogGroup(stack, 'CombinedLogGroup', {
-    logGroupName: `/aws/lambda/${app.name}/${app.stage}/combined`,
-    // Optionally, you can set the retention period (default is never expire)
-    retention: aws_logs.RetentionDays.SIX_MONTHS,
-    removalPolicy: RemovalPolicy.DESTROY,
+  function addLogging(fn: sst.Function, id: string) {
+    // Need a unique ID for the Filter & Alarm, but fn.id / fn.functionName aren't working
+    // const id = fn.functionArn.replace(/[^A-Za-z0-9]/g, '');
 
-  })
-
-  const fnLogCombine = new sst.Function(stack, "FnLogsCombine", {
-    handler: "services/logs/combine.main",
-    environment: {
-      COMBINED_LOG_GROUP_NAME: combinedLogGroup.logGroupName,
-    }
-  })
-
-  // fnLogCombine.addToRolePolicy(new aws_iam.PolicyStatement({
-  //   actions: ['logs:CreateLogStream', 'logs:PutLogEvents'],
-  //   resources: [combinedLogGroup.logGroupArn],
-  //   effect: aws_iam.Effect.ALLOW,
-  // }))
-  combinedLogGroup.grantWrite(fnLogCombine)
-
-
-  // Create CloudWatch metric filter
-  const metricFilter = new aws_logs.MetricFilter(stack, `MetricFilter`, {
-    logGroup: combinedLogGroup,  // Your Lambda function's log group
-
-    // filterPattern: aws_logs.FilterPattern.literal('ERROR'),
-    filterPattern: aws_logs.FilterPattern.stringValue('$.level', '=', 'ERROR'),
-
-    metricName: 'ErrorCount',
-    metricNamespace: app.stage,
-    metricValue: '1', // optional?
-  });
-
-  // Create CloudWatch alarm
-  new aws_cloudwatch.Alarm(stack, `MetricAlarm`, {
-    metric: metricFilter.metric(), // metricFilter.metric({})
-    threshold: 1,
-    evaluationPeriods: 1,
-    actionsEnabled: true,
-
-    // treatMissingData: TreatMissingData.IGNORE,
-    // comparisonOperator: cloudwatch.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
-    // datapointsToAlarm: 1,
-
-    alarmActions: [topic],
-    // alarmActions: [new aws_sns.SnsAction(topic)],
-  });
-
-  // const createLogsPolicy = new aws_iam.PolicyStatement({
-  //   actions: ['logs:CreateLogStream', 'logs:PutLogEvents'],
-  //   resources: [combinedLogGroup.logGroupArn],
-  // })
-  function addLogging(fn: sst.Function) {
-    // fnLogCombine.addToRolePolicy(new aws_iam.PolicyStatement({
-    //   actions: ['logs:GetLogEvents'],
-    //   resources: [fn.logGroup.logGroupArn],
-    //   effect: aws_iam.Effect.ALLOW,
-    // }))
-    new aws_logs.SubscriptionFilter(stack, `SubscriptionFilter${fn.id}`, {
+    // Create CloudWatch metric filter
+    const metricFilter = new aws_logs.MetricFilter(stack, `MetricFilter${id}`, {
       logGroup: fn.logGroup,
-      destination: new aws_logs_destinations.LambdaDestination(fnLogCombine),
-      filterPattern: aws_logs.FilterPattern.allEvents() // TODO I could do the literal(error) here?
-    })
-    // combinedLogGroup.grantWrite(fn)
+
+      filterPattern: aws_logs.FilterPattern.anyTerm(
+        'ERROR', 'Error', 'error',
+        'EXCEPTION', 'Exception', 'exception',
+      ),
+      // filterPattern: aws_logs.FilterPattern.stringValue('$.level', '=', 'ERROR'),
+
+      metricName: 'ErrorCount',
+      metricNamespace: app.stage,
+      metricValue: '1', // optional?
+    });
+
+    // Create CloudWatch alarm
+    new aws_cloudwatch.Alarm(stack, `MetricAlarm${id}`, {
+      metric: metricFilter.metric(), // metricFilter.metric({})
+      threshold: 1,
+      evaluationPeriods: 1,
+      actionsEnabled: true,
+
+      // treatMissingData: TreatMissingData.IGNORE,
+      // comparisonOperator: cloudwatch.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
+      // datapointsToAlarm: 1,
+
+      alarmActions: [topic],
+      // alarmActions: [new aws_sns.SnsAction(topic)],
+    });
+
+    // Grant the function permissions to PutMetricData on CloudWatch
+    fn.addToRolePolicy(new aws_iam.PolicyStatement({
+      actions: ['cloudwatch:PutMetricData'],
+      resources: ['*'],
+    }))
   }
 
   return {addLogging}

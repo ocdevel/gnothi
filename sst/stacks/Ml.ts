@@ -6,6 +6,7 @@ import * as cdk from "aws-cdk-lib";
 import {rams} from "./util";
 import {SharedImport} from "./Shared";
 import {Misc} from "./Misc";
+import {Logs} from "./Logs";
 
 // Getting a cyclical deps error when I have these all as different stacks, per
 // sst recommended usage. Just calling them as functions for now
@@ -35,10 +36,11 @@ type MLService = {
   context: sst.StackContext,
   vpc: ec2.IVpc,
   fs: efs.FileSystem,
-  bucket: sst.Bucket
+  bucket: sst.Bucket,
+  addLogg: ReturnType<typeof Logs>["addLogging"]
 }
 
-function lambdas({context, vpc, fs, bucket}: MLService) {
+function lambdas({context, vpc, fs, bucket, addLogging}: MLService) {
   // Our ML functions need HF models (large files) cached. Two options:
   // 1. Save HF model into docker image (see git-lfs sample)
   // 2. Save HF models in EFS mount, cache folder
@@ -117,18 +119,18 @@ function lambdas({context, vpc, fs, bucket}: MLService) {
   bucket.cdk.bucket.grantReadWrite(fnAsk)
   bucket.cdk.bucket.grantReadWrite(fnStore)
 
+  addLogging(fnPreprocess, "FnPreprocess")
+  addLogging(fnBooks, "FnBooks")
+  addLogging(fnAsk, "FnAsk")
+  addLogging(fnSummarize, "FnSummarize")
+  addLogging(fnStore, "FnStore")
+
   stack.addOutputs({
     fnBooks_: fnBooks.functionArn,
     fnAsk_: fnAsk.functionArn,
     fnSummarize_: fnSummarize.functionArn,
     fnStore_: fnStore.functionArn,
     fnPreprocess_: fnPreprocess.functionArn,
-
-    fnBooksLogs: `aws logs tail --follow ${fnBooks.logGroup.logGroupName}`,
-    fnAskLogs: `aws logs tail --follow ${fnAsk.logGroup.logGroupName}`,
-    fnSummarizeLogs: `aws logs tail --follow ${fnSummarize.logGroup.logGroupName}`,
-    fnStoreLogs: `aws logs tail --follow ${fnStore.logGroup.logGroupName}`,
-    fnPreprocessLogs: `aws logs tail --follow ${fnPreprocess.logGroup.logGroupName}`,
   })
   return {fnBooks, fnAsk, fnSummarize, fnStore, fnPreprocess, OPENAI_KEY}
 }
@@ -136,6 +138,7 @@ function lambdas({context, vpc, fs, bucket}: MLService) {
 export function Ml(context: sst.StackContext) {
   const { app, stack } = context
   const {vpc} = sst.use(SharedImport);
+  const {addLogging} = sst.use(Logs)
 
   // Will put some assets in here like books.feather, and may move some EFS
   // use-cases towards S3 + PyArrow
@@ -151,7 +154,8 @@ export function Ml(context: sst.StackContext) {
     context,
     vpc,
     fs,
-    bucket
+    bucket,
+    addLogging
   })
 
   return fns

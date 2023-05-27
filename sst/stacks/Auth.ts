@@ -6,6 +6,7 @@ import {rams, timeouts} from "./util";
 import * as iam from "aws-cdk-lib/aws-iam";
 import * as aws_cognito from "aws-cdk-lib/aws-cognito";
 import {Misc} from './Misc'
+import {Logs} from './Logs'
 
 import {SesConfigStack} from "./Ses";
 
@@ -16,6 +17,7 @@ export function Auth({ app, stack }: sst.StackContext) {
     readSecretPolicy,
     withRds
   } = sst.use(SharedImport);
+  const {addLogging} = sst.use(Logs);
   const {domain, subdomain} = sst.use(Misc)
 
   // SST samples
@@ -30,11 +32,13 @@ export function Auth({ app, stack }: sst.StackContext) {
     timeout: timeouts.md,
     handler: "services/auth/preSignup.handler",
   })
+  addLogging(preSignUp, "PreSignUp")
   const postConfirmation = withRds(stack, "PostConfirmation", {
     memorySize: rams.sm,
     timeout: timeouts.md,
     handler: "services/auth/postConfirmation.handler",
   })
+  addLogging(postConfirmation, "PostConfirmation")
 
 
   const auth = new sst.Cognito(stack, "Cognito", {
@@ -106,6 +110,7 @@ export function Auth({ app, stack }: sst.StackContext) {
       USER_POOL_CLIENT_ID: auth.userPoolClientId
     }
   })
+  addLogging(fnAuth, "FnAuthorizer")
 
   stack.addOutputs({
     UserPoolId: auth.userPoolId,

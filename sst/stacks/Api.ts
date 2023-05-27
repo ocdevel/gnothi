@@ -73,7 +73,7 @@ export function Api({ app, stack }: sst.StackContext) {
       API_WS,
     ]
   })
-  addLogging(fnBackground)
+  addLogging(fnBackground, "FnBackground")
 
   fnBackground.addToRolePolicy(new iam.PolicyStatement({
      actions: ["lambda:InvokeFunction"],
@@ -101,7 +101,7 @@ export function Api({ app, stack }: sst.StackContext) {
       HABITICA_APP
     ]
   })
-  addLogging(fnMain)
+  addLogging(fnMain, "FnMain")
 
   const habiticaCron = new sst.Cron(stack, "FnHabiticaCron", {
     schedule: "rate(1 hour)",
