@@ -9,6 +9,7 @@ import { Config } from "sst/node/config"
 import {Bucket} from "sst/node/bucket";
 
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import {Logger} from "../../aws/logs";
 
 
 // TODO copy/pasted from v0/migrate.spec.ts; refactor to shared file
@@ -28,6 +29,15 @@ type MigrateEvent = {
 }
 
 export async function main(event: MigrateEvent, context: Context): Promise<APIGatewayProxyResult> {
+  try {
+    return await main_(event, context)
+  } catch (error) {
+    Logger.error({event: "data/migrate/migrate.ts#main", data: error.message})
+    throw error
+  }
+}
+
+async function main_(event: MigrateEvent, context: Context): Promise<APIGatewayProxyResult> {
   DB.prepLambda(context)
 
   console.log({event})
@@ -74,9 +84,7 @@ export async function main(event: MigrateEvent, context: Context): Promise<APIGa
   // TODO something smarter, like drizzle table version number
   const sanityCheck = (await dbTarget.drizzle.execute(sql`select 1`))[0]
 
-  console.log('responding')
   const message = `DB Response: ${JSON.stringify(sanityCheck)}`
-  console.log({message})
   return {
     body: JSON.stringify({message}),
     statusCode: 200,

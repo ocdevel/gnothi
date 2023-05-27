@@ -12,7 +12,7 @@
     "typecheck": "tsc --noEmit",
     "test": "AWS_REGION=us-east-1 AWS_PROFILE=gnothiadmin sst bind -- vitest run",
     "test:gendata": "AWS_REGION=us-east-1 AWS_PROFILE=gnothiadmin sst bind -- vitest run services/tests/setup_mock.spec.ts",
-    "v0:migrate": "AWS_REGION=us-east-1 AWS_PROFILE=gnothiadmin sst bind vitest run services/data/migrate/v0/migrate.spec.ts --stage=staging"
+    "v0:migrate": "AWS_REGION=us-east-1 AWS_PROFILE=gnothiadmin sst bind vitest run services/data/migrate/v0/migrate.spec.ts --stage=legion4"
   },
   "devDependencies": {
     "@aws-sdk/client-cognito-identity-provider": "^3.335.0",
@@ -21,7 +21,7 @@
     "aws-cdk-lib": "2.79.1",
     "constructs": "10.1.156",
     "dotenv": "^16.0.3",
-    "sst": "2.10.3",
+    "sst": "2.10.4",
     "typescript": "^5.0.4",
     "vitest": "^0.31.1",
     "drizzle-kit": "^0.17.6"

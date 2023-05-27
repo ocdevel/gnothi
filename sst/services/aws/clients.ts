@@ -3,6 +3,7 @@ import {ApplicationAutoScalingClient} from "@aws-sdk/client-application-auto-sca
 import {SageMakerRuntimeClient} from "@aws-sdk/client-sagemaker-runtime";
 import {SageMakerClient} from "@aws-sdk/client-sagemaker";
 import {CloudWatchLogsClient} from "@aws-sdk/client-cloudwatch-logs";
+import {CloudWatchClient} from "@aws-sdk/client-cloudwatch";
 import {LambdaClient} from "@aws-sdk/client-lambda";
 import {ApiGatewayManagementApiClient} from "@aws-sdk/client-apigatewaymanagementapi";
 import {S3Client} from "@aws-sdk/client-s3";
@@ -10,7 +11,7 @@ import {SecretsManagerClient} from "@aws-sdk/client-secrets-manager";
 
 import {Config} from "sst/node/config";
 
-const config = {region: Config.APP_REGION}
+const config = {region: process.env.AWS_REGION}
 
 class Clients {
   private _sns?: SNSClient
@@ -21,6 +22,7 @@ class Clients {
   private _sm?: SageMakerClient
   private _apig?: ApiGatewayManagementApiClient
   private _cwl?: CloudWatchLogsClient
+  private _cw?: CloudWatchClient
 
   public get sns(): SNSClient {
     if ( !this._sns ) { this._sns = new SNSClient(config) }
@@ -55,6 +57,11 @@ class Clients {
   public get cwl(): CloudWatchLogsClient {
     if ( !this._cwl ) { this._cwl = new CloudWatchLogsClient(config) }
     return this._cwl
+  }
+
+  public get cw(): CloudWatchClient {
+    if ( !this._cw ) { this._cw = new CloudWatchClient(config) }
+    return this._cw
   }
 
   public get apig(): ApiGatewayManagementApiClient {

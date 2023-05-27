@@ -2,6 +2,7 @@
 
 import {APIGatewayRequestAuthorizerHandler} from "aws-lambda";
 import {CognitoJwtVerifier} from "aws-jwt-verify";
+import {Logger} from "../aws/logs";
 
 const UserPoolId = process.env.USER_POOL_ID!;
 const AppClientId = process.env.USER_POOL_CLIENT_ID!;
@@ -20,7 +21,7 @@ export const handler: APIGatewayRequestAuthorizerHandler = async (event, context
 
     return allowPolicy(event.methodArn, payload);
   } catch (error: any) {
-    console.log(error.message);
+    Logger.error({message: error.message, event: "auth/wsAuthorizer#handler"});
     return denyAllPolicy();
   }
 };

@@ -66,14 +66,14 @@ export class Utils {
 
     const auth = {email: `${ulid()}@x.com`, pass: "MyPassword!1"}
     await page.locator(".appbar .cta-primary").click() // signup
-    await page.locator(".checkbox-acceptTermsConditionsDisclaimer").click()
-    await page.locator(".btn-next").click()
-    await page.locator(".checkbox-acceptPrivacyPolicy").click()
+    await page.locator(".checkbox-acceptTermsConditionsDisclaimerPrivacyPolicy").click()
     await page.locator(".btn-next").click()
     // await page.getByText("Create Account").click()
-    await page.getByText("Email").fill(auth.email)
-    await page.getByText("Password", {exact: true}).fill(auth.pass)
-    await page.getByText("Confirm Password", {exact: true}).fill(auth.pass)
+    
+    const selRegister = "form[data-amplify-authenticator-signup]"
+    await page.locator(`${selRegister} input[name="email"]`).fill(auth.email)
+    await page.locator("Password", {exact: true}).fill(auth.pass)
+    await page.locator("Confirm Password", {exact: true}).fill(auth.pass)
     await page.locator("button[type=submit]").click()
     // TODO catchWs("tags_list_response") to save Main UUID
     // await expect(page).toHaveTitle(/New Entry/)

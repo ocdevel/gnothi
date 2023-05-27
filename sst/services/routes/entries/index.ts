@@ -12,6 +12,7 @@ import {summarizeEntry} from "../../ml/node/summarize";
 import {upsert} from "../../ml/node/upsert";
 import {eq, and, inArray} from "drizzle-orm"
 import * as _ from 'lodash'
+import {Logger} from "../../aws/logs";
 
 const r = S.Routes.routes
 
@@ -101,7 +102,7 @@ async function entriesUpsertResponse(req: S.Entries.entries_upsert_response, con
     .catch(e => {
       // FIXME some entries are having trouble saving to .text_paras, I think due to quotes in the paras? Like
       // drizzle / pg-node aren't handling those. For now mark these as skip, and deal with later.
-      console.error("Error updating entry", e)
+      Logger.error({message: "Error updating entry", data: e, event: "entries_upsert_response"})
       const {text_paras, ...rest} = updates
       return driz.update(entries).set({
         ...rest,

@@ -4,6 +4,7 @@ import { Web } from "./stacks/Web";
 import { Auth } from "./stacks/Auth";
 import { Ml } from "./stacks/Ml";
 import { Misc } from "./stacks/Misc";
+import { Logs } from "./stacks/Logs";
 import { Tags } from 'aws-cdk-lib';
 import { SharedCreate, SharedImport, sharedStage } from './stacks/Shared'
 
@@ -33,6 +34,7 @@ export default {
       app.stack(SharedCreate)
     } else {
       app.stack(SharedImport)
+        .stack(Logs)
         .stack(Misc)
         .stack(Auth)
         .stack(Ml)

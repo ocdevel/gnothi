@@ -9,6 +9,7 @@ import {Config} from 'sst/node/config'
 import axios from 'axios';
 import _ from 'lodash'
 import {FnContext} from "../../routes/types";
+import {Logger} from '../../aws/logs'
 
 
 interface Task {
@@ -165,7 +166,7 @@ export class Habitica extends Base {
       }
     }
     if (errs.length) {
-      console.error(errs)
+      Logger.error({data: errs, event: "data/models/habitica#cron"})
     }
     return {}
   }

@@ -7,6 +7,7 @@ import {
   CreateChatCompletionRequest,
   CreateChatCompletionResponse
 } from "openai"
+import {Logger} from "../../aws/logs";
 
 const configuration = new Configuration({
   apiKey: Config.OPENAI_KEY,
@@ -38,10 +39,9 @@ export async function completion(
     return res.data.choices[0].message.content
   } catch (error) {
     if (error.response) {
-      console.error(error.response.status);
-      console.error(error.response.data);
+      Logger.error({message: error.response.status, data: error.response.data, event: "ml/node/openai#completion"})
     } else {
-      console.error(error.message);
+      Logger.error({message: error.message, event: "ml/node/openai#completion"})
     }
     throw error
   }

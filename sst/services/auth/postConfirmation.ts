@@ -5,6 +5,7 @@ import {sql} from 'drizzle-orm'
 import {users} from '../data/schemas/users'
 import {tags} from '../data/schemas/tags'
 import {PostConfirmationTriggerEvent} from "aws-lambda";
+import {Logger} from "../aws/logs";
 
 export const handler = async (event: PostConfirmationTriggerEvent, context, callback) => {
 
@@ -26,6 +27,8 @@ export const handler = async (event: PostConfirmationTriggerEvent, context, call
   }).returning()
   const uid = dbUser[0].id
   event.request.userAttributes['custom:gnothiId'] = uid
+
+  Logger.metric({event: "users_signup", data: {uid}})
 
   // All users need one immutable main tag
   const mainTag = await db.drizzle.insert(tags).values({

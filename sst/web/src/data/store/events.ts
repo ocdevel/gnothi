@@ -171,7 +171,7 @@ export const eventsSlice: StateCreator<
       rows: data,
       first: Array.isArray(data) ? data[0] : data,
       hash: !keyby ? {} : _.keyBy(data, keyby),
-      ids: !keyby ? [] : _.map(data, d => _.get(d, keyby))
+      ids: !keyby ? [] : data.map(d => _.get(d, keyby))
     }
     if (!keyby) {
       console.warn(`No keyby for ${event_}, ids[] and hash{} will be empty`)

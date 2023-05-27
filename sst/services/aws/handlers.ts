@@ -22,6 +22,7 @@ import {APIGatewayProxyWebsocketEventV2} from "aws-lambda/trigger/api-gateway-pr
 import {fromUtf8, toUtf8} from "@aws-sdk/util-utf8-node";
 import {Bucket} from 'sst/node/bucket'
 import _ from "lodash";
+import {Logger} from './logs'
 
 export * as Handlers from './handlers'
 
@@ -135,7 +136,7 @@ export async function lambdaSend<O = any>(
   if (response.FunctionError) {
     const Error = Payload as {errorType: string, errorMessage: string, stackTrace: string[]}
     const error = `${Error.errorType}: ${Error.errorMessage}`
-    console.error(error, Error.stackTrace)
+    Logger.error({message: error, data: Error.stackTrace, event: "aws/handlers#lambdaSend"})
     throw error
   }
   return {
@@ -236,7 +237,11 @@ export const ws: Handler<APIGatewayProxyWebsocketEventV2> = {
         // there's more error here than meets the eye
         res.error = true
         res.code = 500
-        console.error("WebSocketError: trying to send to disconnected client.")
+        Logger.warn({
+          message: "WebSocketError: trying to send to disconnected client.",
+          data: res,
+          event: res.event
+        })
       } else {
         throw error // Re-throw the error if it's not a GoneException
       }

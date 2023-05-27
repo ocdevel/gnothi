@@ -6,16 +6,17 @@ import * as cdk from "aws-cdk-lib";
 import {rams, timeouts} from './util'
 import {SharedImport} from "./Shared";
 import {Misc} from "./Misc";
+import {Logs} from "./Logs";
 
 export function Api({ app, stack }: sst.StackContext) {
   const {vpc, rdsSecret, readSecretPolicy, withRds} = sst.use(SharedImport);
   const ml = sst.use(Ml);
+  const {addLogging} = sst.use(Logs);
   const {auth, fnAuth} = sst.use(Auth);
   const {APP_REGION} = sst.use(Misc)
 
   const HABITICA_USER = new sst.Config.Secret(stack, "HABITICA_USER")
   const HABITICA_APP = new sst.Config.Secret(stack, "HABITICA_APP")
-
 
   // For some reason, Cognito updates cause a full change here, and give error about authorizer
   // non-unique name:
@@ -72,6 +73,7 @@ export function Api({ app, stack }: sst.StackContext) {
       API_WS,
     ]
   })
+  addLogging(fnBackground)
 
   fnBackground.addToRolePolicy(new iam.PolicyStatement({
      actions: ["lambda:InvokeFunction"],
@@ -99,6 +101,7 @@ export function Api({ app, stack }: sst.StackContext) {
       HABITICA_APP
     ]
   })
+  addLogging(fnMain)
 
   const habiticaCron = new sst.Cron(stack, "FnHabiticaCron", {
     schedule: "rate(1 hour)",

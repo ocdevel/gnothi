@@ -9,10 +9,8 @@ node_modules
 .DS_Store
 
 # local env files
-.env*.local
-.env.shared-dev
-.env.staging
-.env.prod
+.env.*
+!.env.local
 
 .idea
 
@@ -20,7 +18,6 @@ tmp
 
 cdk.context.json
 
-pg_tmp/
 
 .env-shared-*
 /.sst.config.1684950561589.mjs

@@ -6,6 +6,7 @@ import { drizzle, NodePgDatabase } from 'drizzle-orm/node-postgres'
 import { sql, SQL } from 'drizzle-orm'
 import { URL } from 'url'
 import { Config } from 'sst/node/config'
+import {Logger} from "../aws/logs";
 
  // TODO why was I using the sharedStage for the DB? shouldn't it stage-specific?
 // export const sharedStage = `gnothi${process.env.sharedStage}`
@@ -140,7 +141,7 @@ export class DB {
       return queryResult.rows.map(DB.removeNull)
     } catch (error) {
       // (await this.client()).release(true)
-      console.error({error, sql_})
+      Logger.error({message: error, data: sql_, event: "data/db#query"})
       debugger
       throw error
     // } finally {
