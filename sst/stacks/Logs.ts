@@ -6,6 +6,7 @@ import {
   aws_sns,
   aws_sns_subscriptions,
   custom_resources,
+  aws_logs_destinations,
   RemovalPolicy
 } from 'aws-cdk-lib';
 import * as sst from "sst/constructs";
@@ -15,6 +16,9 @@ export function Logs(context: sst.StackContext){
 
   // Create SNS topic
   const topic = new aws_sns.Topic(stack, 'TopicAlarms');
+  // Add email subscription to SNS topic
+  console.log(process.env.SES_SUBSCRIBE_EMAIL)
+  topic.addSubscription(new aws_sns_subscriptions.EmailSubscription(process.env.SES_SUBSCRIBE_EMAIL));
 
   const combinedLogGroup = new aws_logs.LogGroup(stack, 'CombinedLogGroup', {
     logGroupName: `/aws/lambda/${app.name}/${app.stage}/combined`,
@@ -24,27 +28,46 @@ export function Logs(context: sst.StackContext){
 
   })
 
-  // Add email subscription to SNS topic
-  console.log(process.env.SES_SUBSCRIBE_EMAIL)
-  topic.addSubscription(new aws_sns_subscriptions.EmailSubscription(process.env.SES_SUBSCRIBE_EMAIL));
+  const fnLogCombine = new sst.Function(stack, "FnLogsCombine", {
+    handler: "services/logs/combine.main",
+    environment: {
+      COMBINED_LOG_GROUP_NAME: combinedLogGroup.logGroupName,
+    }
+  })
+
+  // fnLogCombine.addToRolePolicy(new aws_iam.PolicyStatement({
+  //   actions: ['logs:CreateLogStream', 'logs:PutLogEvents'],
+  //   resources: [combinedLogGroup.logGroupArn],
+  //   effect: aws_iam.Effect.ALLOW,
+  // }))
+  combinedLogGroup.grantWrite(fnLogCombine)
 
 
   // Create CloudWatch metric filter
   const metricFilter = new aws_logs.MetricFilter(stack, `MetricFilter`, {
     logGroup: combinedLogGroup,  // Your Lambda function's log group
-    filterPattern: aws_logs.FilterPattern.literal('"gnothi:error:"'),
+
+    // filterPattern: aws_logs.FilterPattern.literal('ERROR'),
+    filterPattern: aws_logs.FilterPattern.stringValue('$.level', '=', 'ERROR'),
+
     metricName: 'ErrorCount',
     metricNamespace: app.stage,
-    metricValue: '1',
+    metricValue: '1', // optional?
   });
 
   // Create CloudWatch alarm
-  new aws_cloudwatch.Alarm(stack, `Alarm`, {
-    metric: metricFilter.metric({}),
+  new aws_cloudwatch.Alarm(stack, `MetricAlarm`, {
+    metric: metricFilter.metric(), // metricFilter.metric({})
     threshold: 1,
     evaluationPeriods: 1,
     actionsEnabled: true,
+
+    // treatMissingData: TreatMissingData.IGNORE,
+    // comparisonOperator: cloudwatch.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
+    // datapointsToAlarm: 1,
+
     alarmActions: [topic],
+    // alarmActions: [new aws_sns.SnsAction(topic)],
   });
 
   // const createLogsPolicy = new aws_iam.PolicyStatement({
@@ -52,7 +75,17 @@ export function Logs(context: sst.StackContext){
   //   resources: [combinedLogGroup.logGroupArn],
   // })
   function addLogging(fn: sst.Function) {
-    combinedLogGroup.grantWrite(fn)
+    // fnLogCombine.addToRolePolicy(new aws_iam.PolicyStatement({
+    //   actions: ['logs:GetLogEvents'],
+    //   resources: [fn.logGroup.logGroupArn],
+    //   effect: aws_iam.Effect.ALLOW,
+    // }))
+    new aws_logs.SubscriptionFilter(stack, `SubscriptionFilter${fn.id}`, {
+      logGroup: fn.logGroup,
+      destination: new aws_logs_destinations.LambdaDestination(fnLogCombine),
+      filterPattern: aws_logs.FilterPattern.allEvents() // TODO I could do the literal(error) here?
+    })
+    // combinedLogGroup.grantWrite(fn)
   }
 
   return {addLogging}
