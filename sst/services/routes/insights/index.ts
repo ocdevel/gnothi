@@ -34,6 +34,7 @@ export const insights_get_response = new Route(r.insights_get_response,async (re
   const promises = []
   // will be used to pair to which page called the insights client-side (eg list vs view)
   context.requestId = view
+  const usePrompt = Boolean(context.user.is_cool)
 
   const entriesAll = await m.entries.getByIds(entry_ids)
   const entriesHash = Object.fromEntries(entriesAll.map(e => [e.id, e]))
@@ -43,7 +44,8 @@ export const insights_get_response = new Route(r.insights_get_response,async (re
     context,
     user_id,
     entries: entriesAll,
-    query
+    query,
+    usePrompt
   })
   const entriesFiltered = idsFiltered.map(id => entriesHash[id])
 
@@ -52,6 +54,7 @@ export const insights_get_response = new Route(r.insights_get_response,async (re
       context,
       query,
       user_id,
+      usePrompt,
       // only send the top few matching documents. Ease the burden on QA ML, and
       // ensure best relevance from embedding-match
       entry_ids: idsFromVectorSearch.slice(0, 1)
@@ -61,6 +64,7 @@ export const insights_get_response = new Route(r.insights_get_response,async (re
   if (insights.books) {
     promises.push(books({
       context,
+      usePrompt,
       search_mean
     }))
   }
@@ -68,6 +72,7 @@ export const insights_get_response = new Route(r.insights_get_response,async (re
   if (insights.summarize) {
     promises.push(summarizeInsights({
       context,
+      usePrompt,
       entries: entriesFiltered
     }))
 
@@ -75,6 +80,7 @@ export const insights_get_response = new Route(r.insights_get_response,async (re
     promises.push(themes({
       context,
       clusters,
+      usePrompt,
       entries: entriesFiltered
     }))
 

@@ -9,6 +9,7 @@ type FnIn = {
   query: string
   user_id: string
   entry_ids: string[]
+  usePrompt: boolean
 }
 type LambdaIn = FnIn
 type LambdaOut = {

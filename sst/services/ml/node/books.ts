@@ -7,6 +7,7 @@ import {sendInsight} from "./utils";
 type FnIn = {
   context?: S.Api.FnContext
   search_mean: number[]
+  usePrompt: boolean
 }
 type LambdaIn = FnIn
 type LambdaOut = insights_books_response['books'][]

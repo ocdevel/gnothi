@@ -4,7 +4,7 @@ import * as S from '@gnothi/schemas'
 import {TextsParamsMatch} from "./errors";
 import {Config} from 'sst/node/config'
 import {v4 as uuid} from 'uuid'
-import {sendInsight, USE_OPENAI} from "./utils";
+import {sendInsight} from "./utils";
 import {completion} from "./openai";
 import {getSummary} from '@gnothi/schemas/entries'
 
@@ -42,11 +42,15 @@ export const keywordsDefaults: Params['keywords'] = {
 interface FnIn {
   texts: string[]
   params: Params[]
+  usePrompt: boolean
 }
-type LambdaIn = Array<{
-  text: string,
-  params: Params
-}>
+type LambdaIn = {
+  usePrompt: boolean
+  data: Array<{
+    text: string,
+    params: Params
+  }>
+}
 export type SummarizeOut = {
   summary: string
   keywords: string[]
@@ -60,7 +64,7 @@ type FnOut = LambdaOut
  * the training data, and everything sounds like news. I've played with hyperparameters
  * till I'm blue in the face, and I'm giving up for now and using OpenAI TLDR instead.
  */
-async function summarizeOpenai(data: LambdaIn[0]): Promise<SummarizeOut> {
+async function summarizeOpenai(data: LambdaIn['data'][0]): Promise<SummarizeOut> {
   const {params, text} = data
 
   const summaryPrompt = async () => {
@@ -104,8 +108,8 @@ async function summarizeOpenai(data: LambdaIn[0]): Promise<SummarizeOut> {
 }
 
 
-async function summarize_(data: LambdaIn): Promise<LambdaOut> {
-  if (USE_OPENAI) {
+async function summarize_({usePrompt, data}: LambdaIn): Promise<LambdaOut> {
+  if (usePrompt) {
     return Promise.all(data.map(summarizeOpenai))
   } else {
     // Get fnName while inside function because will only be present for FnBackground (not FnMain)
@@ -116,17 +120,21 @@ async function summarize_(data: LambdaIn): Promise<LambdaOut> {
 
 }
 
-export async function summarize({texts, params}: FnIn): Promise<FnOut> {
+export async function summarize({texts, params, usePrompt}: FnIn): Promise<FnOut> {
   if (params.length === 1) {
-    return summarize_([{
-      text: texts.join('\n'),
-      params: params[0]
-    }])
+    return summarize_({
+      usePrompt,
+      data: [{
+        text: texts.join('\n'),
+        params: params[0]
+      }]
+    })
   } else if (texts.length === params.length && params.length > 0) {
-    return summarize_(texts.map((text, i) => ({
+    const data = texts.map((text, i) => ({
       text,
       params: params[i]
-    })))
+    }))
+    return summarize_({usePrompt, data})
   }
 }
 
@@ -136,6 +144,7 @@ export async function summarize({texts, params}: FnIn): Promise<FnOut> {
 interface SummarizeInsights {
   entries: S.Entries.Entry[]
   context: S.Api.FnContext
+  usePrompt: boolean
 }
 export async function summarizeInsights({context, entries}: SummarizeInsights): Promise<FnOut> {
   let summaries: FnOut
@@ -156,7 +165,8 @@ export async function summarizeInsights({context, entries}: SummarizeInsights): 
         summarize: {min_length: 10, max_length: 60},
         keywords: keywordsDefaults,
         emotion: true
-      }]
+      }],
+      usePrompt: false
     })
   }
   await sendInsight(
@@ -175,6 +185,7 @@ export async function summarizeInsights({context, entries}: SummarizeInsights): 
 interface SummarizeEntryIn {
   text: string
   paras: string[]
+  usePrompt: boolean
 }
 export interface SummarizeEntryOut {
   title: string
@@ -194,18 +205,19 @@ const params = {
   extra: paramsExtra
 }
 
-export async function summarizeEntry(clean: SummarizeEntryIn): Promise<SummarizeEntryOut> {
+export async function summarizeEntry({text, paras, usePrompt}: SummarizeEntryIn): Promise<SummarizeEntryOut> {
   // This shouldn't happen, but I haven't tested to ensure
-  if (clean.paras.length === 0) {
+  if (paras.length === 0) {
     throw "paras.length === 0, investigate"
   }
 
-  if (COMBINE_PARAS || clean.paras.length === 1) {
+  if (COMBINE_PARAS || paras.length === 1) {
     // The entry was a single paragraph. Don't bother with paragraph magic, just summarize wam-bam
-    const joined = clean.paras.join('\n')
+    const joined = paras.join('\n')
     const [title, body] = await summarize({
       texts: [joined, joined],
-      params: [params.title, params.text]
+      params: [params.title, params.text],
+      usePrompt
     })
     return {
       title: title.summary,
@@ -221,13 +233,15 @@ export async function summarizeEntry(clean: SummarizeEntryIn): Promise<Summarize
   // Multiple paragraphs. Ideal scenario, we can summarize each paragraph then concatenate, which helps us
   // with the max-tokens for summarization thing
   const sumParas = (await summarize({
-    texts: clean.paras,
-    params: [params.para]
+    texts: paras,
+    params: [params.para],
+    usePrompt
   })).map(p => p.summary)
   const joined = sumParas.join(' ')
   const [title, body] = await summarize({
     texts: [joined, joined],
-    params: [params.title, params.text]
+    params: [params.title, params.text],
+    usePrompt
   })
   return {
     title: title.summary,
