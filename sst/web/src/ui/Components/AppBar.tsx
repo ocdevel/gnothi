@@ -135,10 +135,10 @@ export default function ResponsiveAppBar({
   }
 
   const logo = <Box
-      sx={{height: 45, mb: {md: .6}}}
+      sx={{height: 30, mb: {md: .6}}}
     >
     <Link.Anchor to="/">
-      <img src="/NewLogo.svg" height="100%" />
+      <img src="/Gnothi_ShortnoLamp.svg" height="100%" />
     </Link.Anchor>
   </Box>
 
