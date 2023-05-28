@@ -26,8 +26,12 @@ type Insight = "themes" | "summary" | "prompt" | "books" | "behaviors" | null
 
 
 export interface AppSlice {
-  // ----- Insights
+  // API response errors get handled a certain way. This is for manual error adding (eg client issues)
+  errors: string[]
+  setErrors: (error: string[]) => void
+  addError: (error: string) => void
 
+  // ----- Insights
   filters: Entries.Filters
   setFilters: (filters: Partial<Entries.Filters>) => void
   clearFilters: () => void
@@ -61,6 +65,10 @@ export const appSlice: StateCreator<
   [],
   AppSlice
 > = (set, get) => ({
+  // Errors
+  errors: [],
+  setErrors: (errors) => set(state => ({errors})),
+  addError: (error) => set(state => ({errors: [...state.errors, error]})),
 
   // ----- Insights
   filters: initialFilters,

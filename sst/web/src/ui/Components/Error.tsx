@@ -5,6 +5,7 @@ import {ResError} from "@gnothi/schemas/api";
 import Stack from "@mui/material/Stack";
 import Snackbar from "@mui/material/Snackbar";
 import Typography from "@mui/material/Typography";
+import {shallow} from "zustand/shallow";
 
 interface Error {
   message?: string // manual
@@ -13,13 +14,18 @@ interface Error {
 }
 
 export function ErrorSnack() {
-  const lastRes = useStore(state => state.lastRes)
-  const [errors, setErrors] = useState<ResError[]>([])
-  
+  const [lastRes, errors, setErrors, addError] = useStore(s => [
+    s.lastRes,
+    s.errors,
+    s.setErrors,
+    s.addError
+  ], shallow)
+
   useEffect(() => {
     if (lastRes?.error) {
-      setErrors([...errors, lastRes])
       console.error(lastRes)
+      const errStr = `${lastRes.data} | ${lastRes.code} | ${lastRes.event}`
+      addError(errStr)
     }
   }, [lastRes])
   
@@ -27,10 +33,10 @@ export function ErrorSnack() {
     setErrors(errors.filter((_, j) => j !== i))
   }
 
-  function renderError(e: ResError, i: number) {
+  function renderError(error: string, i: number) {
     const handleClose = () => closeError(i)
     return <Alert onClose={handleClose} severity="error">
-        <Typography>{e.data} | {e.code} | {e.event}</Typography>
+        <Typography>{error}</Typography>
       </Alert>
   }
 
