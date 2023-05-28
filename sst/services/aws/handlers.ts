@@ -12,8 +12,10 @@ import {
   Context,
   APIGatewayProxyResultV2,
   APIGatewayProxyEventV2,
-  APIGatewayEvent, ScheduledEvent,
+  APIGatewayEvent,
+  ScheduledEvent,
 } from "aws-lambda";
+import type {BaseTriggerEvent} from "aws-lambda/trigger/cognito-user-pool-trigger/_common";
 import {Api, Events} from '@gnothi/schemas';
 import {Function} from 'sst/node/function'
 import {clients} from './clients'
@@ -28,13 +30,14 @@ export * as Handlers from './handlers'
 
 //const defaultBucket = Bucket.Bucket.bucketName
 
-type HandlerKey = "http" | "s3" | "sns" | "lambda" | "ws" | "cron"
+type HandlerKey = "http" | "s3" | "sns" | "lambda" | "ws" | "cron" | "cognito"
 export function whichHandler(event: any, context: Context): HandlerKey {
   // TODO would multiple triggers ever hit the same Lambda at once?
   if (sns.match(event)) {return "sns"}
   if (ws.match(event)) {return "ws"}
   if (http.match(event)) {return "http"}
   if (cron.match(event)) {return "cron"}
+  if (cognito.match(event)) {return "cognito"}
   // if (S3.match(event)) {return new S3()}
   return "lambda"
 }
@@ -149,10 +152,7 @@ export async function lambdaSend<O = any>(
 export const lambda: Handler<any> = {
   match: (event) => true,
 
-  parse: async (event) => {
-    // FIXME
-    return [event]
-  },
+  parse: async (event) => [event],
 
   // If this is a response handler, it should kick off as a background job (InvocationType:Event).
   // If you want RequestResponse, call directly via above helper function
@@ -175,7 +175,7 @@ export const lambda: Handler<any> = {
       Function.FnBackground.functionName,
       "Event"
     )
-    return {statusCode: response.StatusCode, data: response.Payload}
+    return {statusCode: response.StatusCode, body: response.Payload}
   }
 }
 
@@ -297,11 +297,18 @@ export const cron: Handler<ScheduledEvent> = {
   }
 }
 
+export const cognito: Handler<BaseTriggerEvent<any>> = {
+  match: (event) => !!(event.userPoolId && event.triggerSource),
+  parse: async (event) => [event],
+  async respond(res: any) { return {statusCode: 200, body: "OK"} }
+}
+
 export const handlers: Record<keyof Api.Trigger, Handler> = {
+  // cognito,
   ws,
   http,
   // sns,
   // s3,
   cron,
-  background: lambda
+  background: lambda,
 }

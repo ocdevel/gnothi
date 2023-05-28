@@ -35,11 +35,15 @@ export const entries_put_request = new Route(r.entries_put_request, async (req, 
 // Handle the background-job after an entry has been upserted. That is, apply summarization, emotions, indexing, etc.
 // Then, fix any stuck entries to pay it forward.
 export const entries_upsert_response = new Route(r.entries_upsert_response, async (req, context) => {
-  const res = entriesUpsertResponse(req, context)
+  const res = await entriesUpsertResponse(req, context)
   // send the actual response right away, we're gonna do some cleanup while we have this Lambda
-  await context.handleRes(r.entries_upsert_response.o, res, context)
+  await context.handleRes(
+    r.entries_upsert_response.o,
+    {data: res},
+    context
+  )
   await fixStuckEntries(context)
-  // At this point we don't have to send res again, we did before fixStuck
+  // At this point we don't have to send res again, we did before fixStuck.
   return []
 })
 
