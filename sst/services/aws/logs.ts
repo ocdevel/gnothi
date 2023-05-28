@@ -52,7 +52,10 @@ export class Logger {
     try {
       let dimensions_: {Name: string, Value: string}[] = [{Name: "event", Value: event}]
       if (user) {
-        dimensions_.push({ Name: "v1", Value: String(Boolean(user.v1)) })
+        dimensions_.push({
+          Name: "v0",
+          Value: String(new Date(user.created_at as string) < new Date("2023-05-28"))
+        })
       }
       if (dimensions) {
         dimensions_.push(...dimensions)

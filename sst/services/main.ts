@@ -95,7 +95,7 @@ const handleReq: FnContext['handleReq'] = async (req, fnContext) => {
   if (!req) {return null}
 
   // Logger.info({event: req.event, data: req, message: "handleReq"} )
-  Logger.metric({event: req.event, data: req} )
+  Logger.metric({event: req.event, user: fnContext.user} )
   const route = routes[req.event]
   if (!route) {
     throw new GnothiError({message: `No route found for ${req.event}`})
