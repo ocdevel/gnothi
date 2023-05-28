@@ -27,18 +27,12 @@ export function Auth({ app, stack }: sst.StackContext) {
   // aws-samples/websockets
   // https://github.dev/aws-samples/websocket-api-cognito-auth-sample
 
-  const preSignUp = withRds(stack, "PreSignUp", {
+  const fnAuthTriggers = withRds(stack, "FnAuthTriggers", {
     memorySize: rams.sm,
     timeout: timeouts.md,
-    handler: "services/auth/preSignup.handler",
+    handler: "services/auth/triggers.main",
   })
-  addLogging(preSignUp, "PreSignUp")
-  const postConfirmation = withRds(stack, "PostConfirmation", {
-    memorySize: rams.sm,
-    timeout: timeouts.md,
-    handler: "services/auth/postConfirmation.handler",
-  })
-  addLogging(postConfirmation, "PostConfirmation")
+  addLogging(fnAuthTriggers, "FnAuthTriggers")
 
 
   const auth = new sst.Cognito(stack, "Cognito", {
@@ -89,8 +83,8 @@ export function Auth({ app, stack }: sst.StackContext) {
 
     // https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools-working-with-aws-lambda-triggers.html
     triggers: {
-      preSignUp,
-      postConfirmation
+      preSignUp: fnAuthTriggers,
+      postConfirmation: fnAuthTriggers,
     }
   })
 
@@ -118,48 +112,5 @@ export function Auth({ app, stack }: sst.StackContext) {
     UserPoolClientId: auth.userPoolClientId,
   })
 
-  // const api = new Api(stack, "Api", {
-  //   defaults: {
-  //     authorizer: "iam",
-  //   },
-  //   routes: {
-  //     "GET /private": "functions/private.handler",
-  //     "GET /public": {
-  //       function: "functions/public.handler",
-  //       authorizer: "none",
-  //     },
-  //   },
-  // });
-
-  // const api = new Api(stack, "Api", {
-  //   authorizers: {
-  //     jwt: {
-  //       type: "user_pool",
-  //       userPool: {
-  //         id: auth.userPoolId,
-  //         clientIds: [auth.userPoolClientId],
-  //       },
-  //     },
-  //   },
-  //   defaults: {
-  //     authorizer: "jwt",
-  //   },
-  //   routes: {
-  //     "GET /private": "functions/private.main",
-  //     "GET /public": {
-  //       function: "functions/public.main",
-  //       authorizer: "none",
-  //     },
-  //   },
-  // });
-
-  // export const main: APIGatewayProxyHandlerV2WithJWTAuthorizer = async (
-  //   event
-  // ) => {
-  //   return {
-  //     statusCode: 200,
-  //     body: `Hello ${event.requestContext.authorizer.jwt.claims.sub}!`,
-  //   };
-  // };
   return {auth, fnAuth}
 }

@@ -36,7 +36,7 @@ export function Logs(context: sst.StackContext){
       // filterPattern: aws_logs.FilterPattern.stringValue('$.level', '=', 'ERROR'),
 
       metricName: 'ErrorCount',
-      metricNamespace: app.stage,
+      metricNamespace: `${app.name}/${app.stage}`,
       metricValue: '1', // optional?
     });
 
@@ -48,7 +48,7 @@ export function Logs(context: sst.StackContext){
       actionsEnabled: true,
 
       // treatMissingData: TreatMissingData.IGNORE,
-      // comparisonOperator: cloudwatch.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
+      comparisonOperator: aws_cloudwatch.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
       // datapointsToAlarm: 1,
 
       alarmActions: [topic],

@@ -94,7 +94,7 @@ const handleReq: FnContext['handleReq'] = async (req, fnContext) => {
   // handling was skipped, eg OPTIONS or favicon
   if (!req) {return null}
 
-  Logger.info({event: req.event, data: req, message: "handleReq"} )
+  // Logger.info({event: req.event, data: req, message: "handleReq"} )
   Logger.metric({event: req.event, data: req} )
   const route = routes[req.event]
   if (!route) {
@@ -133,7 +133,7 @@ const handleReq: FnContext['handleReq'] = async (req, fnContext) => {
 // ------- Step 4: Send the final result -------
 const handleRes: FnContext['handleRes'] = async (def, res, fnContext) => {
   let final: RecordResult = null
-  Logger.info({data: res, event: def.e} )
+  // Logger.info({data: res, event: def.e} )
   const resFull = {
     error: res.error || false,
     code: res.code || 200,
@@ -149,7 +149,7 @@ const handleRes: FnContext['handleRes'] = async (def, res, fnContext) => {
       const handler = Handlers.handlers[trigger]
       const handlerRes = await handler.respond(resFull, fnContext)
       if (trigger === "http") {
-        Logger.info({data: handlerRes, event: def.e, message: "final=handlerRes"} )
+        // Logger.info({data: handlerRes, event: def.e, message: "final=handlerRes"} )
         final = handlerRes
       }
   }))

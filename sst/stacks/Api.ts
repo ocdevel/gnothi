@@ -24,6 +24,16 @@ export function Api({ app, stack }: sst.StackContext) {
   // Resource handler returned message: "Authorizer name must be unique. Authorizer jwt already exists in this RestApi. (Service: AmazonApiGatewayV2; Status Code: 400; Error Code: BadRequestException; Request ID: ...; Proxy: null)" (RequestToken: ..., HandlerErrorCode: AlreadyExists)
   // So you have to find-replace jwt -> jwt2, and back.
 
+  const ws = new sst.WebSocketApi(stack, "ApiWs", {
+    authorizer: {
+      name: 'wsjwt2',
+      type: "lambda",
+      identitySource: ["route.request.querystring.idToken"],
+      function: fnAuth
+    },
+  })
+  const API_WS = new sst.Config.Parameter(stack, "API_WS", {value: ws.cdk.webSocketStage.callbackUrl})
+
   const http = new sst.Api(stack, "ApiHttp", {
     authorizers: {
       httpjwt2: {
@@ -34,16 +44,38 @@ export function Api({ app, stack }: sst.StackContext) {
         },
       },
     },
+    //defaults: {
+    //  authorizer: "httpjwt2",
+    //},
+    //routes: {
+    //  "GET /private": "functions/private.main",
+    //  "GET /public": {
+    //    function: "functions/public.main",
+    //    authorizer: "none",
+    //  },
+    //},
   })
-  const ws = new sst.WebSocketApi(stack, "ApiWs", {
-    authorizer: {
-      name: 'wsjwt2',
-      type: "lambda",
-      identitySource: ["route.request.querystring.idToken"],
-      function: fnAuth
-    },
-  })
-  const API_WS = new sst.Config.Parameter(stack, "API_WS", {value: ws.cdk.webSocketStage.callbackUrl})
+  // const api = new Api(stack, "Api", {
+  //   defaults: {
+  //     authorizer: "iam",
+  //   },
+  //   routes: {
+  //     "GET /private": "functions/private.handler",
+  //     "GET /public": {
+  //       function: "functions/public.handler",
+  //       authorizer: "none",
+  //     },
+  //   },
+  // });
+
+  // export const main: APIGatewayProxyHandlerV2WithJWTAuthorizer = async (
+  //   event
+  // ) => {
+  //   return {
+  //     statusCode: 200,
+  //     body: `Hello ${event.requestContext.authorizer.jwt.claims.sub}!`,
+  //   };
+  // };
 
   // the ML functions based on Dockerfiles can't use .bind(), so add the permissions explicitly, and
   // the env-var as Config() + bind (latter needed for unit tests, which can't use env vars directly)
