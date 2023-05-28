@@ -215,8 +215,9 @@ export const ws: Handler<APIGatewayProxyWebsocketEventV2> = {
       const CHUNK_SIZE = 25
 
       // should always be an array, but you can never be too careful
-      const dataChunks = Array.isArray(res.data) ? _.chunk(res.data, CHUNK_SIZE) : res.data;
-      const isChunking = !!dataChunks && dataChunks.length > 1
+      const isArr = Array.isArray(res.data) // will be false if we have an error
+      const dataChunks = isArr ? _.chunk(res.data, CHUNK_SIZE) : res.data;
+      const isChunking = isArr && dataChunks.length > 1
       const resChunks = !isChunking ? [res]
         : dataChunks.map((chunk, i) => {
           if (i === 0) {return {...res, data: chunk}}

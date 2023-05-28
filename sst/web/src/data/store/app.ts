@@ -2,6 +2,7 @@ import create, {StateCreator} from 'zustand'
 import {ApiSlice} from './api'
 import {EventsSlice} from './events'
 import {BehaviorsSlice} from './behaviors'
+import React from 'react'
 import {Users, Entries, Insights} from "@gnothi/schemas"
 
 import dayjs from 'dayjs'
@@ -24,12 +25,11 @@ type EntryModal = null | {
 type Insight = "themes" | "summary" | "prompt" | "books" | "behaviors" | null
 
 
-
 export interface AppSlice {
   // API response errors get handled a certain way. This is for manual error adding (eg client issues)
   errors: string[]
-  setErrors: (error: string[]) => void
-  addError: (error: string) => void
+  setErrors: (error: React.FC[]) => void
+  addError: (error: React.FC) => void
 
   // ----- Insights
   filters: Entries.Filters

@@ -5,7 +5,7 @@ import {useCallback, useEffect, useRef} from "react";
 import {useStore} from "../store";
 import {z} from 'zod'
 import type {WebSocketHook} from "react-use-websocket/dist/lib/types";
-
+import Typography from "@mui/material/Typography";
 
 export default function useApi(): void {
   const [
@@ -45,15 +45,15 @@ export default function useApi(): void {
     reconnectInterval: (attemptNumber) =>
       Math.min(Math.pow(2, attemptNumber) * 1000, 10000),
 
-    onError: (e) => {
-      addError("Problem connecting. Try refreshing; or logging out/in; or contact gnothi@gnothiai.com")
+    onError: (event) => {
+      addError(<Typography>Oops! We've hit a small hiccup (it's not you, it's us). Try a quick refresh or re-login. Need a hand? Email us at <a href="mailto:gnothi@gnothiai.com">gnothi@gnothiai.com</a> or drop a message on <a href="https://discord.gg/TNEvx2YR" target="_blank">Discord</a> - your account is safe and sound.</Typography>)
 
       // trying to figure out how to get the message out of this Event. When I observe it in debugger, there's nothing
       // of value. e.toString() always gives "[object Object]". I'm just leaving this code here in case maybe
       // there's a situation in which this Event comes with a message; like the server provides an error?
-      const errStr = e.toString()
+      const errStr = event.toString()
       if (errStr !== "[object Event]") {
-        addError(errStr)
+        addError(<Typography>{errStr}</Typography>)
       }
     }
   })

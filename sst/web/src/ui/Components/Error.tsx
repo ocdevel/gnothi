@@ -6,6 +6,8 @@ import Stack from "@mui/material/Stack";
 import Snackbar from "@mui/material/Snackbar";
 import Typography from "@mui/material/Typography";
 import {shallow} from "zustand/shallow";
+import Badge from "@mui/material/Badge";
+import Chip from "@mui/material/Chip";
 
 interface Error {
   message?: string // manual
@@ -24,8 +26,7 @@ export function ErrorSnack() {
   useEffect(() => {
     if (lastRes?.error) {
       console.error(lastRes)
-      const errStr = `${lastRes.data} | ${lastRes.code} | ${lastRes.event}`
-      addError(errStr)
+      addError(<div><Typography>{lastRes.data}</Typography><Typography variant="caption">{lastRes.event}</Typography></div>)
     }
   }, [lastRes])
   
@@ -36,7 +37,7 @@ export function ErrorSnack() {
   function renderError(error: string, i: number) {
     const handleClose = () => closeError(i)
     return <Alert onClose={handleClose} severity="error">
-        <Typography>{error}</Typography>
+        {error}
       </Alert>
   }
 
@@ -59,6 +60,11 @@ export function ErrorSnack() {
    </Stack>
 }
 
+/**
+ * This is the old error component, which allowed for catching specific events and codes. Eg, if a snooper
+ * doesn't have access to a feature, it'd show this there, rather than a red mayday situation. I'm not using it
+ * anymore, and need to determine if it provides value anymore, or if I should scrub the codebase of its use
+ */
 export default function Error({message, event, codes}: Error) {
   const [details, setDetails] = useState<string[]>([])
   const lastRes = useStore(state => state.lastRes)
