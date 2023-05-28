@@ -42,7 +42,7 @@ export function Entry({entry_id}: ListOld) {
 
 
   function renderNote(n: S.Notes.entries_notes_list_response) {
-    return <Box className='note' key={n.id}>
+    return <Box className='note' key={n.id} >
         <Stack direction="row" spacing={1}>
           <Typography color="secondary" className='type'>{_.startCase(n.type)}</Typography>
           {divider}
@@ -52,31 +52,33 @@ export function Entry({entry_id}: ListOld) {
             <Typography color="secondary" className='private'>Private</Typography>
           </>}
         </Stack>
+      <Box marginBottom={3}>
       <div className='text'>{n.text}</div>
+        </Box>
     </Box>
   }
 
 
-  return <Card className="notes list"
+  return <Box className="notes list"
                spacing={2}
                sx={{
                  borderRadius: 2,
                  backgroundColor: "#ffffff",
-                 marginTop: 2,
+                 marginTop: 6,
+                 marginBottom: 6,
+                 px: 4,
                  // borderStyle: "solid",
                  // borderColor: "secondary.main",
                  // borderWidth: 1.5,
               }}
               >
-    <CardContent sx={{backgroundColor: "white"}}>
+    <Stack sx={{backgroundColor: "white"}}>
       <NotesNotifs entry_id={entry_id} />
     <Typography color="primary" mb={2} variant="h4" fontWeight={500}>Notes</Typography>
     {notes?.map(renderNote)}
     <NotesCreate entry_id={entry_id} />
-      <CardActions sx={{backgroundColor: "white", justifyContent: "flex-end"}}>
-      </CardActions>
-    </CardContent>
-  </Card>
+    </Stack>
+  </Box>
 
 }
 

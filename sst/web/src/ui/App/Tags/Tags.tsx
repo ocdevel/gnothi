@@ -107,17 +107,20 @@ export default function Tags({
     const sx = selected_ ? {
       border: 'none',
       color: "white",
+      fontWeight: 500,
       backgroundColor: colors[i % colors.length] 
     } : {
       borderColor: colors[i % colors.length],
       borderWidth: 2
     }
 
+
     const className = `btn-select ${selected_ ? "selected" : "unselected"}`
     return <Chip
       key={tid}
-      variant={selected_? "filled" : "outlined"} 
-      sx={{...sx, cursor: noClick ? "not-allowed" : "pointer"}}
+      variant={selected_? "filled" : "outlined"}
+      disabled={noClick}
+      sx={sx}
       size= "small" 
       onClick={() => selectTag(tid, !selected_)}
       className={className}

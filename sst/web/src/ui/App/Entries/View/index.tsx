@@ -92,7 +92,6 @@ export default function View({entry, onClose}: Entry) {
         marginBottom={4}
         >
         <Stack spacing={2} direction="column">
-          <Divider color="#50577a"/>
         <Tags
           selected={tags}
           setSelected={setTags}
@@ -135,17 +134,15 @@ export default function View({entry, onClose}: Entry) {
   >
     <Grid item xs={12} lg={7}>
 
-        <Card sx={{borderRadius: 2}}>
+        <Card sx={{borderRadius: 2, height: "100%"}}>
           <CardContent sx={{backgroundColor: "white"}}>
             <CardActions sx={{backgroundColor: "white", justifyContent: "flex-end"}}>
               {renderButtons()}
             </CardActions>
             {renderEntry()}
+            {renderNotes()}
           </CardContent>
         </Card>
-        {renderNotes()}
-
-
     </Grid>
     <Grid item xs={12} lg={5}>
         {renderSidebar()}

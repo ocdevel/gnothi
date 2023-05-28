@@ -200,13 +200,14 @@ export default function Upsert(props: Upsert) {
           color='secondary'
           className='btn-delete'
           sx={{marginRight: 'auto'}}
+          color="warning"
           size="small"
           disabled={submitting}
           onClick={deleteEntry}
         >
           Delete
         </Button>
-        <Button size="small" onClick={cancel}>
+        <Button size="small"  onClick={cancel}>
           Cancel
         </Button>
       </>}
@@ -298,7 +299,7 @@ export default function Upsert(props: Upsert) {
   return <Card sx={{borderRadius: 2, height: "100%", backgroundColor: "#ffffff"}}>
     <CardContent sx={{backgroundColor: "white"}}>
       {renderForm()}
-      <CardActions sx={{backgroundColor: "white", justifyContent: "flex-end"}}>
+      <CardActions sx={{backgroundColor: "white", justifyContent: "flex-end", mt:2}}>
         {/*viewing && <Box sx={{marginRight: 'auto'}}>
         <NoteCreate id={id} />
       </Box>*/}
