@@ -51,6 +51,11 @@ export const users = pgTable('users', {
   accept_disclaimer: timestamp("accept_disclaimer"),
   accept_privacy_policy: timestamp("accept_privacy_policy"),
 
+  // Start tracking new signups as v1, because we need to know if old users (v0) are getting in and
+  // accessing things without hitch. Have to do it this direction (rather than adding `v0 boolean default false`)
+  // for migration-order technical reasons. Will remove this column eventually
+  v1: boolean('v1').default(true),
+
   // ws_id = sa.Column(sa.Unicode, index=True)
   // as = FKCol('users.id')
 }, (t) => {

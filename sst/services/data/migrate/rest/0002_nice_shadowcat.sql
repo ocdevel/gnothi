@@ -1,0 +1,1 @@
+ALTER TABLE "users" ADD COLUMN "v1" boolean DEFAULT true;

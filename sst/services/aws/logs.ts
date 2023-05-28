@@ -1,7 +1,6 @@
 import {clients} from './clients'
-import { PutLogEventsCommand } from "@aws-sdk/client-cloudwatch-logs";
 import { PutMetricDataCommand} from "@aws-sdk/client-cloudwatch";
-import * as _ from 'lodash'
+import type {User} from '../data/schemas/users'
 
 interface Log {
   event: string
@@ -9,18 +8,25 @@ interface Log {
   message?: string
   data?: any
 }
+interface Metric {
+  event: string
+  user?: Partial<User>
+  dimensions?: {Name: string, Value: string}[]
+}
 export class Logger {
   static async log({event, level, message, data}: Log) {
-    let data_ = {...data}
+    let data_ = {...data} || {}
+
+    // Removing data.error if key present but value is undefined, to prevent filter on "error" catching
+    if (data_.data?.hasOwnProperty("error") && !data_.data.error) {
+      delete data_.data.error
+    }
+
     // scrub data of personal information in prod/production. This is (I think always) on data.data
     if (["prod", "production"].includes(process.env.SST_STAGE)) {
       delete data_.data
     }
-    // Removing data.error if key present but value is undefined, to prevent filter on "error" catching
-    if (data?.hasOwnProperty("error") && !data.error) {
-      delete data_.error
-    }
-    
+
     const obj = {
       event,
       level: level || "info",
@@ -42,14 +48,22 @@ export class Logger {
   static async error(log: Log) {
     return this.log({...log, level: "error"})
   }
-  static async metric({event}: Log) {
+  static async metric({event, user, dimensions}: Metric) {
     try {
+      let dimensions_: {Name: string, Value: string}[] = [{Name: "event", Value: event}]
+      if (user) {
+        dimensions_.push({ Name: "v1", Value: String(Boolean(user.v1)) })
+      }
+      if (dimensions) {
+        dimensions_.push(...dimensions)
+      }
       return clients.cw.send(new PutMetricDataCommand({
         MetricData: [
           {
-            MetricName: event,
+            MetricName: "UserEvent",
             Unit: 'Count',
             Value: 1,
+            Dimensions: dimensions_
           },
         ],
         Namespace: `gnothi/${process.env.SST_STAGE}`,

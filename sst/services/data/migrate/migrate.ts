@@ -29,15 +29,6 @@ type MigrateEvent = {
 }
 
 export async function main(event: MigrateEvent, context: Context): Promise<APIGatewayProxyResult> {
-  try {
-    return await main_(event, context)
-  } catch (error) {
-    Logger.error({event: "data/migrate/migrate.ts#main", data: error.message})
-    throw error
-  }
-}
-
-async function main_(event: MigrateEvent, context: Context): Promise<APIGatewayProxyResult> {
   DB.prepLambda(context)
 
   console.log({event})
