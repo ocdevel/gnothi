@@ -50,7 +50,7 @@ export default function Item({fid, advanced}: Item) {
       sx={{
         alignItems: 'center',
         justifyContent: 'space-between',
-        mb: 1,
+        mb: 2,
         ...(f.excluded_at ? {
           textDecoration: 'line-through',
           opacity: .5
@@ -58,15 +58,15 @@ export default function Item({fid, advanced}: Item) {
       }}
       key={f.id}
     >
-      <Grid item xs className='field-name' sx={{cursor: "pointer"}} onClick={handleEdit}>
+      <Grid item xs={sizes[0]} className='field-name' sx={{cursor: "pointer"}} onClick={handleEdit}>
         <FieldName name={f.name} />
       </Grid>
 
-      <Grid item xs>
+      <Grid item xs={sizes[1]}>
         <BehaviorEntry f={f} />
       </Grid>
 
-      {advanced && <>
+      {advanced && <Grid container item xs={sizes[2]}>
         <Grid item>
           {/*<IconButton
             sx={{cursor: "grab"}}
@@ -88,7 +88,7 @@ export default function Item({fid, advanced}: Item) {
             </IconButton>
           </Badge>
         </Grid>
-      </>}
+      </Grid>}
     </Grid>
   )
 }

@@ -62,7 +62,6 @@ export default function Modal() {
 
   return <FullScreenDialog
     className="behaviors modal"
-    title="Behaviors"
     ctas={ctas}
     open={view.page === "modal"}
     onClose={onClose}

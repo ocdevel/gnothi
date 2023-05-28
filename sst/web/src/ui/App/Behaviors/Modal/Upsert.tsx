@@ -175,7 +175,7 @@ function Form({field, submit}: Form) {
                   }}>
     <CardContent>
       <Stack direction='row' justifyContent='space-between' alignItems='center' mb={2}>
-        <Typography variant="h4" color="primary" fontWeight={500} m={0}>{fid ? "Edit Behavior" : "New Behavior"}</Typography>
+        <Typography variant="h4" color="primary" fontWeight={500} m={0}>{fid ? "Edit" : "Add New"}</Typography>
         <CardActions sx={{justifyContent: 'flex-end'}}>
           <Button size="small" onClick={close}>Cancel</Button>
           <Button
@@ -191,12 +191,11 @@ function Form({field, submit}: Form) {
       </Stack>
     <Stack
       spacing={2}
-      sx={{minWidth:400}}
     >
       <TextField2
         name='name'
         label="Name"
-        placeholder="Add the behavior you want to track (you can use emojis too)"
+        placeholder="Add the behavior you want to track (you can use emojis too). Keep names short and sweet."
         className='input-name'
         form={form}
       />

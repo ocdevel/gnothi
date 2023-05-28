@@ -307,7 +307,10 @@ export default function Behaviors({advanced}: Behaviors) {
         sx={{backgroundColor: '#ffffff', borderRadius: 2, height: "100%"}}
       >
         <CardContent sx={{mx: 1}}>
-          <DayChanger/>
+          <Typography variant="h4" color="primary" fontWeight={500} mt={1} mb={2}>Track Behaviors</Typography>
+          <Box mb={1}>
+            <DayChanger/>
+          </Box>
           <AccordionDetails>
             {renderGroup(groups[0])}
           </AccordionDetails>
@@ -338,10 +341,19 @@ export default function Behaviors({advanced}: Behaviors) {
       <Grid
         container
         sx={{mb: 2}}
-        justifyContent="space-between"
-        alignItems='flex-start'
-
+        alignItems="flex-end"
+        justifyContent="flex-end"
       >
+        <Grid item>
+            <IconButton
+              color='primary'
+              size="small"
+              onClick={() => setView({page: "modal", view: "overall"})}
+            >
+              <ManageBehaviorsIcon sx={{fontSize: 25}}/>
+            </IconButton>
+          </Grid>
+
         <Grid item container xs={12} justifyItems="center" alignItems="space-between">
           <Grid item xs>
             <Typography
@@ -352,22 +364,10 @@ export default function Behaviors({advanced}: Behaviors) {
             >
               Behaviors
             </Typography>
-          </Grid>
-          <Grid item>
-            <IconButton
-              color='primary'
-              size="small"
-              onClick={() => setView({page: "modal", view: "overall"})}
-            >
-              <ManageBehaviorsIcon sx={{fontSize: 25}}/>
-            </IconButton>
-          </Grid>
-
-
-          <Grid item>
             <Typography color="primary" mb={2} variant={"body1"} fontWeight={500}>
               Track behaviors to get AI insights</Typography>
           </Grid>
+
         </Grid>
       </Grid>
 
