@@ -8,6 +8,34 @@ import {styles} from '../../../Setup/Mui'
 import Box from "@mui/material/Box";
 import Divider from "@mui/material/Divider";
 
+const VideoComponent = () => {
+  const classes = {
+    videoContainer: {
+      position: 'relative',
+      width: "100%",
+      aspectRatio: "16/9",
+      overflow: 'hidden',
+      borderRadius: 3,
+    },
+    video: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      width: "100%",
+      height: "100%",
+      objectFit: 'cover',
+      playbackRate: 2,
+    },
+  }
+
+  return <Box sx={classes.videoContainer}>
+    <video style={classes.video} loop controls autoPlay controlsList="nodownload" plabackRate={2} muted={true} >
+      <source src="https://gnothi-public.s3.amazonaws.com/SplashVideo+(1).mp4" type="video/mp4" />
+    </video>
+  </Box>
+};
+
+
 const {spacing, colors, sx} = styles
 
 
@@ -18,21 +46,17 @@ export default function HowItWorks() {
         container
         flexDirection='row'
         alignItems="center"
-        justifyContent="flex-start"
-        spacing={10}
-        maxWidth={{md: 900, lg: 1200, xl: 2500}}
+        justifyContent="space-between"
+        spacing={5}
+        height="100%"
 
       >
-        <Grid
-          xs={12} md={7}
-          container item
+        <Grid item
+          xs={12} md={6}
           flexDirection='row'
-          alignItems="flex-start"
-          justifyContent="flex-start"
-          spacing={4}
         >
           <Grid item xs={12}
-                alignItems="center"
+                alignItems="flex-start"
           >
             <Typography
               variant="h2"
@@ -49,14 +73,11 @@ export default function HowItWorks() {
             >
               Journal. Track behavior. Explore AI insights.
             </Typography>
-          </Grid>
 
-          <Grid item xs={12}>
             <Typography
               variant="body1"
               textAlign='left'
               mb={2}
-              maxWidth={{lg: 900}}
             >
               Practices like meditation, journaling, and self-reflection, along with healthy living, are proven to be beneficial for our well-being.
 
@@ -65,7 +86,6 @@ export default function HowItWorks() {
               variant="body1"
               textAlign='left'
               mb={2}
-              maxWidth={{lg: 900}}
             >
               Gnothi integrates these practices with AI-generated insights to highlight areas for learning and growth, based on your entries and tracked behaviors. It's your journey—Gnothi is just along for the ride.
 
@@ -74,7 +94,6 @@ export default function HowItWorks() {
               variant="body1"
               textAlign='left'
               mb={2}
-              maxWidth={{lg: 900}}
             >
              While Gnothi isn't a replacement for therapy in any way, many have found immense value in it. We invite you to try it out and see the difference yourself.
             </Typography>
@@ -83,10 +102,9 @@ export default function HowItWorks() {
 
         <Grid
           item
-          xs={12} md={5}
-          sx={{width: '100%', height: '100%'}}
+          xs={12} md={6}
         >
-          <Typography sx={{backgroundColor: 'green'}}>asdflj</Typography>
+          <VideoComponent />
         </Grid>
       </Grid>
 
