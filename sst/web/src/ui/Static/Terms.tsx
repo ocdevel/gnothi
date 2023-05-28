@@ -27,26 +27,24 @@ export default function Terms() {
           sx={{
             textAlign: "center",
             color: colors.white,
-            mt: { xs: 4, sm: 10 },
             mb: 2
             }}>
           Terms & Conditions
         </Typography>
       </Stack>
-      </Section>
-      <AsHtml2/>
+    </Section>
+    <Section color="grey">
+      <Box sx={{
+        maxWidth: 800,
+      }}>
+        <AsHtml2/>
+      </Box>
+    </Section>
   </Stack>
 }
 
 function AsHtml2() {
-  return <Box
-    sx={{
-      marginX: 25,
-      marginY: 5,
-
-    }}>
-    <>
-
+  return <Box>
     <p><em><strong>Last modified: February 14, 2023</strong></em></p>
     <p className="c1"><span className="c2"></span></p>
     <p className="c4"><span
@@ -577,8 +575,5 @@ function AsHtml2() {
       email at </span><span className="c15 c3"><a className="c18"
                                                   href="mailto:gnothi@gnothiai.com">gnothi@gnothiai.com</a></span></p>
                                             <p className="c1"><span className="c2"></span></p>
-      </>
-
-
 </Box>
 }
