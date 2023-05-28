@@ -1,11 +1,14 @@
 import {shallow} from "zustand/shallow";
 import useWebSocket from "react-use-websocket";
 import {Api} from "@gnothi/schemas";
-import {useCallback, useEffect, useRef} from "react";
+import {useCallback, useEffect, useRef, useState} from "react";
 import {useStore} from "../store";
 import {z} from 'zod'
 import type {WebSocketHook} from "react-use-websocket/dist/lib/types";
 import Typography from "@mui/material/Typography";
+
+// no need to do useState, this is a global one-time deal
+let errorShown = false
 
 export default function useApi(): void {
   const [
@@ -46,7 +49,9 @@ export default function useApi(): void {
       Math.min(Math.pow(2, attemptNumber) * 1000, 10000),
 
     onError: (event) => {
+      if (errorShown) {return} // don't bombard them
       addError(<Typography>Oops! We've hit a small hiccup (it's not you, it's us). Try a quick refresh or re-login. Need a hand? Email us at <a href="mailto:gnothi@gnothiai.com">gnothi@gnothiai.com</a> or drop a message on <a href="https://discord.gg/TNEvx2YR" target="_blank">Discord</a> - your account is safe and sound.</Typography>)
+      errorShown = true
 
       // trying to figure out how to get the message out of this Event. When I observe it in debugger, there's nothing
       // of value. e.toString() always gives "[object Object]". I'm just leaving this code here in case maybe
