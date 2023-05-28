@@ -16,6 +16,7 @@ import SettingsIcon from '@mui/icons-material/SettingsOutlined';
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import Button from "@mui/material/Button";
+import {Loading} from '../../Components/Routing.tsx'
 
 
 const colors = [
@@ -77,6 +78,10 @@ export default function Tags({
       }
     }
   }, [hash])
+
+  if (!tags?.ids) {
+    return <Loading label="tags"/>
+  }
 
 
   const selectTag = async (id: string, v: boolean) => {

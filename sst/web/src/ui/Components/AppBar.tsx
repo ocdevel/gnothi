@@ -21,6 +21,7 @@ import {useStore} from "../../data/store";
 import {useNavigate} from "react-router-dom";
 import ProfileIcon from '@mui/icons-material/Person';
 import BackIcon from '@mui/icons-material/ArrowBackIosNewOutlined';
+import CircularProgress from "@mui/material/CircularProgress";
 
 const buttonSx = {
   fontWeight: 300,
@@ -56,7 +57,7 @@ export function UserMenu() {
         onClick={handleOpenUserMenu}
         sx={{ ...buttonSx, p: 0 }}>
         <Avatar alt={user?.email}>
-          <ProfileIcon />
+          {user?.id ? <ProfileIcon /> : <CircularProgress />}
         </Avatar>
       </IconButton>
     </Tooltip>

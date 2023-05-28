@@ -9,6 +9,7 @@ import Pagination from '@mui/material/Pagination'
 import Button from '@mui/material/Button'
 import {Alert2} from "../../../Components/Misc";
 import Box from "@mui/material/Box";
+import {Loading} from "../../../Components/Routing.tsx";
 
 
 export default function Entries({group_id=null}) {
@@ -25,6 +26,10 @@ export default function Entries({group_id=null}) {
   useEffect(() => {
     setPage(1)
   }, [entries])
+
+  if (!entries?.ids) {
+    return <Loading label="entries" />
+  }
 
   if (entries?.res?.error && entries.res.code === 403) {
     return <h5>{entries.res.data}</h5>
