@@ -138,7 +138,7 @@ export default function ResponsiveAppBar({
       sx={{height: 45, mb: {md: .6}}}
     >
     <Link.Anchor to="/">
-      <img src="/PurpleCouch15.svg" height="100%" />
+      <img src="/NewLogo.svg" height="100%" />
     </Link.Anchor>
   </Box>
 
