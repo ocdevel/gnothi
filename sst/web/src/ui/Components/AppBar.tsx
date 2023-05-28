@@ -134,10 +134,10 @@ export default function ResponsiveAppBar({
   }
 
   const logo = <Box
-      sx={{height: 40, mb: {md: .6}}}
+      sx={{height: 45, mb: {md: .6}}}
     >
     <Link.Anchor to="/">
-      <img src="/Gnothi-LOGO-G10.png" height="100%" />
+      <img src="/PurpleCouch15.svg" height="100%" />
     </Link.Anchor>
   </Box>
 
@@ -156,14 +156,14 @@ export default function ResponsiveAppBar({
     if (links?.length) {
       return  <Box sx={{ flexGrow: 1, display: { xs: 'flex', md: 'none' }, alignItems: "center" }}>
         <IconButton
-          size="large"
+          size="small"
           aria-label="account of current user"
           aria-controls="menu-appbar"
           aria-haspopup="true"
           onClick={handleOpenNavMenu}
           color='primary'
         >
-          <MenuIcon />
+          {/*<MenuIcon />*/}
         </IconButton>
         <Menu
           id="menu-appbar"
@@ -211,7 +211,7 @@ export default function ResponsiveAppBar({
       }}
     >
       {isModal ? <>
-        <Typography variant="h6" color="primary">{title}</Typography>
+        <Typography variant="h6"  color="primary">{title}</Typography>
       </> : <>
         {logo}
         {links?.map(link => <Button
@@ -227,7 +227,7 @@ export default function ResponsiveAppBar({
   }
 
   function renderRight() {
-    return <Stack spacing={2} direction="row" alignItems="center">
+    return <Stack spacing={{xs: 1, sm: 2}} direction="row" alignItems="center">
       {ctas?.map((cta, i) => (
         <Button
           className={`cta-${cta.secondary ? 'secondary' : 'primary'}`}
@@ -249,7 +249,7 @@ export default function ResponsiveAppBar({
       position="static"
       color='transparent'
       className='appbar'
-      sx={clearBottom ? {mb: 3} : {}}
+      sx= {clearBottom ? {mb: 3} : {}}
     >
       <Container maxWidth={false}>
         <Toolbar disableGutters sx={{display: "flex", justifyContent: "space-between", alignItems: "center"}}>

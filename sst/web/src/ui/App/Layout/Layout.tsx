@@ -19,6 +19,7 @@ import EntryModal from "../Entries/Modal"
 import BehaviorsModal from "../Behaviors/Modal"
 import {shallow} from "zustand/shallow";
 import AppBar from './AppBar'
+import Footer from '../../Footer'
 
 
 
@@ -64,10 +65,13 @@ function Layout() {
     <Container maxWidth={false} disableGutters={disableGutters}>
       <Outlet />
     </Container>
+    <Footer inApp={true} />
+
     <SharingModal />
     <EntryModal />
     <BehaviorsModal />
     <Errors />
+
   </Box>
 }
 

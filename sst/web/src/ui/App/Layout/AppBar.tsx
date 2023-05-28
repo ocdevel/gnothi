@@ -23,8 +23,8 @@ export default function AppBar_() {
   }, [])
 
   const links: Link[] = [
-    {name: "Journal", to: "/j", className: "btn-journal"},
-    {name: "Sharing", onClick: clickSharing, className: "btn-sharing"},
+    // {name: "Journal", to: "/j", className: "btn-journal"},
+    // {name: "Sharing", onClick: clickSharing, className: "btn-sharing"},
     // {name: "Groups", to: "/groups", className: "btn-groups},
     // {name: "Resources", to: "/", className: "btn-resources"}
   ]

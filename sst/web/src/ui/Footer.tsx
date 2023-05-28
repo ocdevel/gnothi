@@ -14,20 +14,28 @@ import Divider from "@mui/material/Divider";
 // import ForumIcon from '@mui/icons-material/ForumOutlined';
 import {FaGithub} from "react-icons/fa"
 import MUILink from '@mui/material/Link';
+import {FaDiscord as DiscordIcon} from "react-icons/fa"
 
-import {MdOutlineMailOutline as EmailIcon, MdOutlineForum as ForumIcon, MdLockOutline as PrivacyIcon, MdBalance as TermsIcon, MdOutlineBackHand as DisclaimerIcon} from "react-icons/md"
+import {
+  MdOutlineMailOutline as EmailIcon,
+  MdOutlineForum as ForumIcon,
+  MdLockOutline as PrivacyIcon,
+  MdBalance as TermsIcon,
+  MdOutlineBackHand as DisclaimerIcon
+} from "react-icons/md"
 import {styles} from "./Setup/Mui.tsx";
 
 interface FooterLink {
   icon?: React.FC
   to: string
   external?: boolean
+  color: string
 }
 
-function FooterLink({icon, to, external, children}: React.PropsWithChildren<FooterLink>) {
+function FooterLink({icon, to, external, children, color}: React.PropsWithChildren<FooterLink>) {
   const muiProps = {
     style: {textDecoration: "none"},
-    color: "black",
+    color,
     underline: 'hover',
     ...(external ? {target: "_blank", href: to} : {})
   }
@@ -42,22 +50,38 @@ function FooterLink({icon, to, external, children}: React.PropsWithChildren<Foot
   </Stack>
 }
 
-export default function Footer2() {
+interface Footer {
+  inApp?: boolean
+}
 
-
-  return <Box
-    sx={{
-      backgroundColor: '#fafafa',
-    }}
-  >
+export default function Footer({inApp}: Footer) {
+  const sx = inApp ? {
+    wrapper: { backgroundColor: '#50577a' },
+    container: { paddingTop: 5 },
+    font: { color: "white" },
+    icon: {
+      fontSize: 20,
+      color: "#ffffff"
+    }
+  } : {
+    wrapper: { backgroundColor: '#fafafa' },
+    container: {},
+    font: { color: 'black' },
+    icon: {
+      fontSize: 20,
+      color: "#50577a"
+    }
+  }
+  return <Box sx={sx.wrapper}>
     <Grid
       container
       sx={{
+        ...sx.container,
         flexDirection: 'row',
         alignItems: 'flex-start',   //align - vertical placement - top/bottom
         justifyItems: 'flex-start',
         marginTop: 10,
-        paddingX: {xs: 4, sm: 7, md: 10, lg: 14},
+        mx: {xs: 2, lg: 5},
         marginBottom: 3
       }}
     >
@@ -65,7 +89,7 @@ export default function Footer2() {
         <Typography
           variant="subtitle2"
           fontWeight="bold"
-          color='#50627A'
+          sx={sx.font}
           marginBottom='1rem'
         >
           Have questions or comments? Reach out to us!
@@ -81,7 +105,7 @@ export default function Footer2() {
           item
           xs={12}
           md={4}
-          lag={2}
+          lg={2}
           justifyItems='flex-start'
           alignItems='flex-start'
           spacing={4}
@@ -90,17 +114,20 @@ export default function Footer2() {
           }}
         >
           <FooterLink
-            icon={<FaGithub {...styles.sx.footerIcon} />}
+            color={sx.font.color}
+            icon={<FaGithub {...sx.icon} />}
             external
             to="https://github.com/lefnire/gnothi"
           >Code on Github</FooterLink>
           <FooterLink
-            icon={<ForumIcon {...styles.sx.footerIcon} />}
-            to="https://www.reddit.com/r/gnothi"
+            color={sx.font.color}
+            icon={<DiscordIcon {...sx.icon} />}
+            to="https://discord.gg/TNEvx2YR"
             external
-          >Discuss on Reddit</FooterLink>
+          >Chat on Discord</FooterLink>
           <FooterLink
-            icon={<EmailIcon {...styles.sx.footerIcon} />}
+            color={sx.font.color}
+            icon={<EmailIcon {...sx.icon} />}
             to="mailto:Gnothi@gnothiai.com"
             external
           >Message via Email</FooterLink>
@@ -120,39 +147,45 @@ export default function Footer2() {
         >
           <Box marginBottom='.5rem'>
             <FooterLink
-              icon={<PrivacyIcon {...styles.sx.footerIcon} />}
+              color={sx.font.color}
+              icon={<PrivacyIcon {...sx.icon} />}
               to='/privacy'>Privacy Policy</FooterLink>
           </Box>
           <Box marginBottom='.5rem'>
             <FooterLink
-              icon={<TermsIcon {...styles.sx.footerIcon} />}
-              to='/terms' >Terms & Conditions</FooterLink>
+              color={sx.font.color}
+              icon={<TermsIcon {...sx.icon} />}
+              to='/terms'>Terms & Conditions</FooterLink>
           </Box>
           <Box marginBottom='.5rem'>
             <FooterLink
-              icon={<DisclaimerIcon {...styles.sx.footerIcon} />}
+              color={sx.font.color}
+              icon={<DisclaimerIcon {...sx.icon} />}
               to='/disclaimer'>Disclaimer</FooterLink>
           </Box>
         </Grid>
       </Grid>
     </Grid>
 
-       <Box
-      sx={{
-        marginX: {xs: 2, sm: 5, md: 8, lg: 12},
-        marginBottom: 3,
-      }}
-    >
+    {!inApp && <Box>
       <Divider
-        color='#50577a' variant="middle" sx={{borderBottomWidth: 2}}
+        color='#50577a'
+        sx={{
+          borderBottomWidth: 2,
+          borderColor: '#50577a',
+          opacity: .5,
+          marginBottom: 2,
+          marginTop: 2,
+          mx: {xs: 2, lg: 5}
+        }}
       >
       </Divider>
-    </Box>
+    </Box>}
 
     <Box
       sx={{
-        marginX: {xs: 4, sm: 7, md: 10, lg: 14},
-        marginBottom: 4,
+        mx: {xs: 2, lg: 5},
+        paddingBottom: 2,
         display: 'flex',
         alignItems: {xs: 'center', md: "flex-end"},
         justifyContent: {xs: 'center', md: "flex-end"}
@@ -161,7 +194,9 @@ export default function Footer2() {
       <Typography
         variant='body2'
         sx={{
-          display: 'flex', fontWeight: 400
+          ...sx.font,
+          display: 'flex',
+          fontWeight: 400
         }}
       >
         Copyright © 2020 OCDevel, LLC
@@ -173,40 +208,6 @@ export default function Footer2() {
 }
 
 
-    function FooterOld() {
-  // TODO figure this out, https://www.freecodecamp.org/news/how-to-keep-your-footer-where-it-belongs-59c6aa05c59c/
-  return <Container maxWidth={false}>
-    <Box sx={{
-      alignItems: 'center',
-      justifyContent: 'space-around',
-      position: 'static',
-      my: 3,
-      mx: 3,
-      flexGrow: 1,
-      display: "flex"
-    }}>
-      <Typography
-        component='footer'
-        variant='body2'
-      >
-        <Box sx={{display: 'flex', my: 2, flexGrow: 1}}>
-          <Box>
-            <Link to='/about'>About</Link>{' '}&#183;{' '}
-            <a href="mailto:tylerrenelle@gmail.com">Contact</a>{' '}&#183;{' '}
-            <Link to='/privacy'>Privacy</Link>{' '}&#183;{' '}
-            <Link to='/terms'>Terms</Link>
-          </Box>
-        </Box>
-
-        <Box sx={{display: 'flex', justifyContent: 'center'}}>
-          <Box>© 2020 OCDevel, LLC</Box>
-        </Box>
-
-      </Typography>
-    </Box>
-  </Container>
-
-}
 
 
 
