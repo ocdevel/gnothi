@@ -6,19 +6,20 @@ import {useStore} from "../store";
 import {z} from 'zod'
 import type {WebSocketHook} from "react-use-websocket/dist/lib/types";
 import Typography from "@mui/material/Typography";
+import {API_WS} from '../..//utils/config'
 
 // no need to do useState, this is a global one-time deal
 let errorShown = false
 
 export default function useApi(): void {
   const [
-    wsUrl,
+    jwt,
     setReadyState,
     setLastJsonMessage,
     setSendJsonMessage,
     addError,
   ] = useStore(s => [
-    s.wsUrl,
+    s.jwt,
     s.setReadyState,
     s.setLastJsonMessage,
     s.setSendJsonMessage,
@@ -29,14 +30,19 @@ export default function useApi(): void {
 
   // const wsUrlAsync = wsUrl
   const wsUrlAsync = useCallback(() => new Promise<string>((resolve, reject) => {
-    if (wsUrl) { resolve(wsUrl) }
-  }), [wsUrl])
+    // can be null, if we're unsetting it
+    if (jwt === undefined) { return }
+    if (jwt) { resolve(API_WS) }
+  }), [jwt])
 
   const {
     readyState,
     lastJsonMessage,
     sendJsonMessage,
   } =useWebSocket<Api.Res<any>>(wsUrlAsync, {
+    queryParams: {
+      idToken: jwt as string
+    },
 
     shouldReconnect: (closeEvent) => {
       // useWebSocket will handle unmounting for you, but this is an example of a

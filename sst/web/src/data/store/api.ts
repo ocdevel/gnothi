@@ -15,9 +15,6 @@ import {BehaviorsSlice} from "./behaviors";
 import {SharingSlice} from "./sharing";
 
 export interface ApiSlice {
-  // Used to connect to the websocket
-  wsUrl?: string
-
   // useWebsocket just proxies everything into this store
   readyState: ReadyState
   setReadyState: (connectionState: ReadyState) => void
@@ -26,7 +23,8 @@ export interface ApiSlice {
   sendJsonMessage: WebSocketHook<Api.Res>["sendJsonMessage"]
   setSendJsonMessage: (sendJsonMessage: WebSocketHook<Api.Res>["sendJsonMessage"]) => void
 
-  jwt: string | undefined
+  // undefined before it's set. Null if we're unsetting it (eg, logging out)
+  jwt: string | undefined | null
   setJwt: (jwt: string | undefined) => void
   logout: () => Promise<void>
   // AmplifyUser, not the user from database
@@ -48,8 +46,6 @@ export const apiSlice: StateCreator<
   [],
   ApiSlice
 > = (set, get) => ({
-  wsUrl: undefined,
-
   readyState: ReadyState.UNINSTANTIATED,
   setReadyState: (readyState) => {
     if (readyState === ReadyState.OPEN) {
@@ -66,13 +62,10 @@ export const apiSlice: StateCreator<
   setJwt: (jwt) => {
     if (get().jwt === jwt) {return}
     if (!jwt) {
-      set({jwt, wsUrl: API_WS, user: {as: null, me: null, viewer: null}})
+      set({jwt, user: {as: null, me: null, viewer: null}})
       return
     }
-    set({
-      jwt,
-      wsUrl: `${API_WS}?idToken=${jwt}`
-    })
+    set({ jwt })
     // users_everything_request kicked off by wsUrl listener
   },
   logout: async () => {
