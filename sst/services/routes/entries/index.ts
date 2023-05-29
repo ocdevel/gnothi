@@ -76,9 +76,11 @@ async function entriesUpsertResponse(req: S.Entries.entries_upsert_response, con
 
   const clean = await preprocess({text: entry.text, method: 'md2txt'})
 
+  const usePrompt = false // Boolean(context.user.is_cool)
+
   const summary = !skip_summarize ? await summarizeEntry({
     ...clean,
-    usePrompt: Boolean(context.user.is_cool)
+    usePrompt
   }) : {
     title: "",
     paras: clean.paras,

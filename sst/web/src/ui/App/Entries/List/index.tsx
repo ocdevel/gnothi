@@ -38,7 +38,7 @@ export default function List({group_id=null}) {
 
   return <div className="list">
     <Helmet>
-      <title>Journal</title>
+      <title>Gnothi AI Journal</title>
     </Helmet>
     <Filters />
     <Grid container spacing={2}>

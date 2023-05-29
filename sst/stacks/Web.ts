@@ -21,7 +21,10 @@ export function Web({ app, stack }: StackContext) {
     buildCommand: "npm run build",
     buildOutput: "dist",
     environment,
-    customDomain: ["prod", "staging"].includes(app.stage) ? subdomain : undefined,
+    customDomain: ["prod", "staging"].includes(app.stage) ? {
+        domainName: subdomain,
+        domainAlias: `www.${subdomain}`,
+      } : undefined,
     vite: {
       types: "types/my-env.d.ts"
     }

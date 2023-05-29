@@ -23,7 +23,7 @@ export class Logger {
     }
 
     // scrub data of personal information in prod/production. This is (I think always) on data.data
-    if (["prod", "production"].includes(process.env.SST_STAGE)) {
+    if ("prod" === process.env.SST_STAGE) {
       delete data_.data
     }
 

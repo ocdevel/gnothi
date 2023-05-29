@@ -16,9 +16,6 @@ import {db} from './data/dbSingleton'
 import {User, users} from './data/schemas/users'
 import {Logger} from "./aws/logs";
 
-// only log requests and responses in dev/staging/test. Prod would otherwise collect into CloudWatch Logs, which
-// is bad privacy. Means harder to debug prod issues, but I'll figure something out.
-const LOG_REQ_RES = !~['prod', 'production'].indexOf(process.env.SST_STAGE)
 
 const defaultResponse: APIGatewayProxyResultV2 = {statusCode: 200, body: "{}"}
 type RecordResult = APIGatewayProxyResultV2 | null

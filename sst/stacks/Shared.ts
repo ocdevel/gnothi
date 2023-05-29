@@ -30,8 +30,8 @@ export function sharedStage(stage: string) {
   // thing to look out for is ensuring no use of same DB schema. Otherwise, much of the resources are safe-enough.
   // If Gnothi grows, we'll switch to "prod" v "staging". staging because that'll verify the hosted DNS, but it
   // will be shared for dev, test, etc.
-  // return "prod"
-  return stage === "prod" ? "prod" : "staging"
+  return "prod"
+  // return stage === "prod" ? "prod" : "staging"
 }
 
 export function exportName(stage: string, name: string) {
@@ -126,7 +126,7 @@ export function SharedCreate(context: StackContext) {
 
     const clientVpnTargetNetworkAssociation = new aws_ec2.CfnClientVpnTargetNetworkAssociation(stack, 'ClientVpnAssociation', {
       clientVpnEndpointId: clientVpn.endpointId, // use the ref attribute to get the client VPN endpoint ID
-      subnetId: vpc.privateSubnets[0].subnetId, // assuming you want to associate the first private subnet
+      subnetId: vpc.privateSubnets[1].subnetId, // assuming you want to associate the first private subnet
     });
 
     stack.addOutputs({
@@ -307,6 +307,7 @@ export function SharedImport(context: StackContext) {
     if (props.bind?.length) {
       bind = [...bind, ...props.bind]
     }
+
 
     const fn = new sst.Function(stack, id, sst.Function.mergeProps(props, {
       vpc,

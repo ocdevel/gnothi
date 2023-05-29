@@ -46,9 +46,7 @@ export function Auth({ app, stack }: sst.StackContext) {
       //   }
       // },
       userPool: {
-        // TODO change these for stage/prod
         passwordPolicy: {
-          // TODO removing all password requirements. Reconsider if we want to enforce this.
           requireDigits: false,
           minLength: 8,
           requireLowercase: false,

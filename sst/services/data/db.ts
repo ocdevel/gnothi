@@ -69,7 +69,7 @@ export class DB {
       i.host = parsed.host
       i.database = parsed.database
     } else if (!i.host) {
-      if (~["staging", "production"].indexOf(process.env.SST_STAGE)) {
+      if (~["staging", "prod"].indexOf(process.env.SST_STAGE)) {
         console.log("Using RDS database")
         // get the secret from secrets manager.
         const secretsClient = new SecretsManagerClient({})
