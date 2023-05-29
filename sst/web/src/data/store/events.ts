@@ -156,9 +156,6 @@ export const eventsSlice: StateCreator<
     // The rest only applies to successful responses
     if (error) {
       return;
-      // if (error == "INVALID_JWT") {
-      //   return Auth.signOut()
-      // }
     }
 
     const event_ = res.event_as || res.event

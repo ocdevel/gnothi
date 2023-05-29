@@ -26,10 +26,7 @@ import Footer from '../../Footer'
 export default function Layout() {
   const [authTab, setAuthTab] = useLocalStore(s => [s.authTab, s.setAuthTab], shallow)
   const error = useStore(state => state.apiError)
-  const jwt = useStore(state => state.jwt)
 
-  // Sign In button not in <Switch> because it uses the flex/center css from jumbotron, the auth routes use left-just
-  // const showSignin = !jwt && !~['/auth', '/reset-password'].indexOf(location.pathname)
 
   function renderAppbar() {
     return <AppBar

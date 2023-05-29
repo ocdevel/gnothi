@@ -118,14 +118,14 @@ export default function ResponsiveAppBar({
   backButton,
 }: ResponsiveAppBar) {
   const navigate = useNavigate()
-  const jwt = useStore(s => s.jwt)
+  const authenticated = useStore(s => s.authenticated)
 
   const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(null)
   const handleOpenNavMenu = (event: React.MouseEvent<HTMLElement>) => setAnchorElNav(event.currentTarget)
   const handleCloseNavMenu = () => setAnchorElNav(null)
 
   const isModal = !!onClose
-  const isSplash = !jwt && !isModal
+  const isSplash = !authenticated && !isModal
   const isApp = !isSplash && !isModal
 
   const onClick = (item: Clickable) => (e: React.SyntheticEvent<HTMLElement>) => {

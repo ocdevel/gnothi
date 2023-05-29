@@ -10,8 +10,13 @@ import {HelmetProvider} from 'react-helmet-async'
 import utc from 'dayjs/plugin/utc'
 import timezone from 'dayjs/plugin/timezone'
 import dayjs from 'dayjs'
+import {Amplify} from "aws-amplify";
+import {awsConfig} from "../../utils/config.ts";
 dayjs.extend(utc)
 dayjs.extend(timezone)
+import "@aws-amplify/ui-react/styles.css";
+import "./Auth.scss"
+Amplify.configure(awsConfig);
 
 // moved to inside SetupRouter, since it needs RouterProvider which can't take children
 // import SetupInit from "./SetupInit";

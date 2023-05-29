@@ -12,28 +12,39 @@ import {WebSocketEvents} from "vitest";
 
 export default function useApi(): void {
   const [
-    jwt,
-    setJwt,
+    authenticated,
     setReadyState,
     setLastJsonMessage,
     setSendJsonMessage,
     addError,
   ] = useStore(s => [
-    s.jwt,
-    s.setJwt,
+    s.authenticated,
     s.setReadyState,
     s.setLastJsonMessage,
     s.setSendJsonMessage,
     s.addError
   ], shallow)
+  // For http, we manually get the jwt before each request, just to keep it fresh. websockets needs it for conneciton,
+  // so we invalidate it here on error
+  const [jwt, setJwt] = useState<string | null>(null)
 
   const didUnmount = useRef(false);
 
+  async function getJwt() {
+    const sess = await Auth.currentSession()
+    return sess.getIdToken().getJwtToken()
+  }
+
+  useEffect(() => {
+    if (!authenticated) {return}
+    (async () => {
+      setJwt(await getJwt())
+    })()
+  }, [authenticated])
+
   // const wsUrlAsync = wsUrl
   const wsUrlAsync = useCallback(() => new Promise<string>((resolve, reject) => {
-    // Authenticator hasn't authenticated yet, hang tight.
-    if (!jwt === undefined) { return }
-    resolve(API_WS)
+    if (jwt) { resolve(API_WS) }
   }), [jwt])
 
   const {
@@ -42,35 +53,29 @@ export default function useApi(): void {
     sendJsonMessage,
   } = useWebSocket<Api.Res<any>>(wsUrlAsync, {
     queryParams: {
-      idToken: jwt as string
+      idToken: jwt!
     },
     share: true,
 
-    shouldReconnect: (closeEvent) => {
-      // useWebSocket will handle unmounting for you, but this is an example of a
-      // case in which you would not want it to automatically reconnect
-      return didUnmount.current === false;
-    },
+    shouldReconnect: (closeEvent) => true,
     reconnectAttempts: 20,
     // Exponential back-off
     reconnectInterval: (attemptNumber) =>
       Math.min(Math.pow(2, attemptNumber) * 1000, 10000),
 
-    onError: (event) => {
       // onError prop isn't async, so pass it on
-      onError(event)
-    }
+    onError: (event) => { onError(event) }
   })
 
   async function onError(event: WebSocketEventMap['Error']) {
     // most likely cause is a refreshToken (stale jwt).
-    const sess = await Auth.currentSession()
-    const newJwt = sess.getIdToken().getJwtToken()
+    const newJwt = await getJwt()
     if (newJwt !== jwt) {
       // easy peasy. Set it, which triggers a new websocket connection
       setJwt(newJwt)
     }
     // wasn't that. Something terrible.
+    console.log(event)
     addError(<Typography>Oops! We've hit a hiccup (it's not you, it's us). Try a quick refresh or re-login. Need a hand? Email us at <a href="mailto:gnothi@gnothiai.com">gnothi@gnothiai.com</a> or drop a message on <a href="https://discord.gg/TNEvx2YR" target="_blank">Discord</a> - your account is safe and sound.</Typography>)
   }
 

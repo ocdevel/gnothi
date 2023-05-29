@@ -5,18 +5,20 @@ import Button, {ButtonProps} from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
 import TextField from "@mui/material/TextField";
 import {useStore} from '../../../../data/store'
+import {Auth} from "aws-amplify";
 
 interface Advanced {
   fetchFieldEntries: Function
 }
 export default function Advanced({fetchFieldEntries}: Advanced) {
   const send = useStore(s => s.send)
-  const jwt = useStore(s => s.jwt)
+  const authenticated = useStore(s => s.authenticated)
   const setServerError = useStore(s => s.apiError)
   const [confirmWipe, setConfirmWipe] = useState('')
 
   async function downloadCsv(version: string) {
     return alert("Download csv not implemented")
+    const jwt = (await Auth.getSession()).getIdToken().getJwtToken()
     // TODO refactor this into actions.js/fetch_
     const obj = {
       method: 'get',

@@ -45,8 +45,8 @@ const routerAnon = createBrowserRouter([{
   ]
 }])
 
-export default function Routing() {
-  const jwt = useStore(state => state.jwt);
-  const router = jwt ? routerAuthed : routerAnon
+export default function Routing({children}: React.PropsWithChildren) {
+  const authenticated = useStore(state => state.authenticated);
+  const router = authenticated ? routerAuthed : routerAnon
   return <RouterProvider router={router} />
 }

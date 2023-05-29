@@ -2,9 +2,9 @@ import React, {useEffect, useCallback} from "react";
 import {useLocation, useSearchParams} from "react-router-dom";
 import {useStore} from "../../data/store";
 import {shallow} from "zustand/shallow";
+import {AcknowledgeChecker} from "./Acknowledge";
 
 export default function Init() {
-  const [searchParams, setSearchParams] = useSearchParams()
   const setUser = useStore(useCallback(state => state.setUser, []))
 
   // listen to changes across, me, as, and users-list. Only set the viewer
@@ -34,12 +34,8 @@ export default function Init() {
     )
   }, [])
 
-  useEffect(() => {
-    const testing = searchParams.get("testing") || ""
-    if (testing) {
-      window.localStorage.setItem("testing", testing)
-    }
-  }, [])
-
-  return null
+  return <>
+    <AcknowledgeChecker />
+    {/* And anything else that's Router-dependent which handles initialization */}
+  </>
 }

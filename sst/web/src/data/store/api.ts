@@ -23,9 +23,8 @@ export interface ApiSlice {
   sendJsonMessage: WebSocketHook<Api.Res>["sendJsonMessage"]
   setSendJsonMessage: (sendJsonMessage: WebSocketHook<Api.Res>["sendJsonMessage"]) => void
 
-  // undefined before it's set. Null if we're unsetting it (eg, logging out)
-  jwt: string | undefined | null
-  setJwt: (jwt: string | undefined) => void
+  authenticated: boolean
+  setAuthenticated: (authenticated: boolean) => void
   logout: () => Promise<void>
   // AmplifyUser, not the user from database
   // user: any
@@ -58,14 +57,13 @@ export const apiSlice: StateCreator<
   sendJsonMessage: () => {}, // noop
   setSendJsonMessage: (sendJsonMessage) => set({sendJsonMessage}),
 
-  jwt: undefined,
-  setJwt: (jwt) => {
-    if (get().jwt === jwt) {return}
-    if (!jwt) {
-      set({jwt, user: {as: null, me: null, viewer: null}})
+  authenticated: false,
+  setAuthenticated: (authenticated) => {
+    if (!authenticated) {
+      set({authenticated, user: {as: null, me: null, viewer: null}})
       return
     }
-    set({ jwt })
+    set({ authenticated })
     // users_everything_request kicked off by wsUrl listener
   },
   logout: async () => {
