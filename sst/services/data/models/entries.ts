@@ -209,7 +209,7 @@ export class Entries extends Base {
     })
   }
 
-  async getStuckEntry(): Promise<S.Entries.entries_upsert_response | null> {
+  async getStuckEntry(user_id: string): Promise<S.Entries.entries_upsert_response | null> {
     const {db} = this.context
     const res = await db.drizzle.execute<S.Entries.entries_upsert_response>(sql`
       WITH updated AS (
@@ -221,12 +221,15 @@ export class Entries extends Base {
           id = (
             SELECT id FROM entries
             WHERE
-              (ai_index_state = 'todo' OR ai_summarize_state = 'todo')
-              OR (
-                (ai_index_state = 'running' OR ai_summarize_state = 'running') 
-                AND updated_at < (NOW() - INTERVAL '5 minutes')
+              user_id = ${user_id} 
+              AND (
+                (ai_index_state = 'todo' OR ai_summarize_state = 'todo')
+                OR (
+                  (ai_index_state = 'running' OR ai_summarize_state = 'running')
+                  AND updated_at < (NOW() - INTERVAL '5 minutes')
+                )
               )
-            ORDER BY RANDOM()
+            ORDER BY created_at DESC
             LIMIT 1
           )
         RETURNING *

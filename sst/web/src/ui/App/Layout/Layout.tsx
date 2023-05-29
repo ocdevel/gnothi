@@ -32,33 +32,28 @@ function SetupApi() {
 
 function UserListener() {
   const setUser = useStore(useCallback(state => state.setUser, []))
+  const [me, users_list_response_first] = useStore(state => [
+    state.user?.me,
+    state.res.users_list_response?.first,
+  ], shallow)
 
   // listen to changes across, me, as, and users-list. Only set the viewer
   // when things needed are present.
   useEffect(() => {
-    return useStore.subscribe(
-      (state) => [
-        state.user,
-        state.res.users_list_response,
-      ],
-      ((state, prevState) => {
-        // Note: editor having trouble with subscribeWithSelector typing, ignore errors
-        const [user, users] = state
-        // users list not available to set the viewer. Loading indicator elsewhere
-        if (!users?.ids?.length) {return}
-        if (!user.me) {
-          const me = users.hash[users.ids[0]]
-          setUser({me, viewer: me, as: null})
-          return
-        }
-        // TODO handle as switch
-        // if (viewer.asId && hash[viewer.asId]) {
-        //   get().send('users_everything_request', {})
-        // }
-      }),
-      // {equalityFn: shallow, fireImmediately: false}
-    )
-  }, [])
+    if (!users_list_response_first) {return}
+    if (!me) {
+      setUser({
+        me: users_list_response_first,
+        viewer: users_list_response_first,
+        as: null
+      })
+      return
+    }
+    // TODO handle as switch
+    // if (viewer.asId && hash[viewer.asId]) {
+    //   get().send('users_everything_request', {})
+    // }
+  }, [me, users_list_response_first])
   return null
 }
 

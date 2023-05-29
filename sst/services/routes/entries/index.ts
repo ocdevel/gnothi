@@ -33,24 +33,15 @@ export const entries_put_request = new Route(r.entries_put_request, async (req, 
 })
 
 // Handle the background-job after an entry has been upserted. That is, apply summarization, emotions, indexing, etc.
-// Then, fix any stuck entries to pay it forward.
+// Separate function like this because users_everything_response needs entriesUpsertResponse() exported below too.
 export const entries_upsert_response = new Route(r.entries_upsert_response, async (req, context) => {
-  const res = await entriesUpsertResponse(req, context)
-  // send the actual response right away, we're gonna do some cleanup while we have this Lambda
-  await context.handleRes(
-    r.entries_upsert_response.o,
-    {data: res},
-    context
-  )
-  await fixStuckEntries(context)
-  // At this point we don't have to send res again, we did before fixStuck.
-  return []
+  return entriesUpsertResponse(req, context)
 })
 
 // Separate this function out so that it can be called as the route, and as the job to update stuck entries.
 // Both for the flexiblity to handle it differently, and because working with it directly wrapped as a Route causes
 // all sorts of Zod woes.
-async function entriesUpsertResponse(req: S.Entries.entries_upsert_response, context: FnContext) {
+export async function entriesUpsertResponse(req: S.Entries.entries_upsert_response, context: FnContext) {
   const driz = context.db.drizzle
   const entry = req
   const eid = entry.id
@@ -127,28 +118,4 @@ async function entriesUpsertResponse(req: S.Entries.entries_upsert_response, con
   // entry.update_snoopers(d.db)
 
   return [{...updated, tags: req.tags}]
-}
-
-async function fixStuckEntries(context: FnContext) {
-  // re-set any entries whose ML got stuck in limbo. Do so for all users (pay it forward), so we can avoid a cron job.
-  // This assumes some other script will pick up entries in the TODO state.
-  // Entries get stuck if (a) a lambda timeout never finishes indexing/summarizing an entry, (b) between migrations,
-  // when I manually set all entries to TODO. That's my trick to re-run all entries, while keeping the same framework
-
-  for (let i = 0; i < 500; i++) {
-    const stuckEntry = await context.m.entries.getStuckEntry()
-    if (!stuckEntry) {break}
-    console.log(`Fixing: stuck ${i}`)
-    // Detatch the context from whomever triggered this. That's because user.id might be referenced (eg, in fetching tags
-    // in entriesUpsertResponse) and we don't want to send anything via websocket.
-    const detachedContext = new FnContext({
-      db: context.db,
-      user: {id: stuckEntry.user_id},
-      handleRes: context.handleRes,
-      handleReq: context.handleReq
-    });
-
-    await entriesUpsertResponse(stuckEntry, detachedContext);
-  }
-
 }

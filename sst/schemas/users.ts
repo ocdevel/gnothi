@@ -43,10 +43,26 @@ export const routes = {
       t: {ws: true},
     },
     o: {
-      e: 'void',
-      s: z.void(),
+      e: 'users_everything_response',
+      s: users_list_response,
+      // removing {ws:true} because it's handled in function body. Bring back when I have "uid vs vid" setup,
+      // needed for determining "me"
+      t: {background: true},
     }
   },
+  users_everything_response: {
+    i: {
+      e: 'users_everything_response',
+      s: users_list_response,
+      t: {background: true}
+    },
+    o: {
+      e: 'void',
+      s: z.void(),
+      t: {}
+    }
+  },
+
   users_list_request: {
     i: {
       e: 'users_list_request',
