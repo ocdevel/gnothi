@@ -46,12 +46,7 @@ export const apiSlice: StateCreator<
   ApiSlice
 > = (set, get) => ({
   readyState: ReadyState.UNINSTANTIATED,
-  setReadyState: (readyState) => {
-    if (readyState === ReadyState.OPEN) {
-      get().send('users_everything_request', {})
-    }
-    set({readyState})
-  },
+  setReadyState: (readyState) => set({readyState}),
   lastJsonMessage: null,
   setLastJsonMessage: (lastJsonMessage) => get().handleEvent(lastJsonMessage),
   sendJsonMessage: () => {}, // noop
@@ -77,7 +72,7 @@ export const apiSlice: StateCreator<
   send: async (event, data, extra) => {
     const protocol = extra?.protocol || "ws"
 
-    // Check if last-sent was very recently, if so bail
+    // Check if last-sent (for the exact same event key) was very recently, if so bail
     if (lastSent[event]) {
       if (Math.abs(Date.now() - lastSent[event]) < 200) { return }
     }

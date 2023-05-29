@@ -10,21 +10,19 @@ import React, {useEffect} from "react";
 import {useStore} from "../../data/store";
 
 import {S, Error} from '../Components/Routing'
-import Init from './Init'
 import * as StaticRoutes from '../Static/Routes'
 import appRoutes from '../App/Routes'
 
 const SplashLayout = React.lazy( () => import("../Static/Splash/Layout"))
 const AppLayout = React.lazy(() => import("../App/Layout/Layout"))
 
-const common = {errorElement: <Error />}
+const common = {
+  errorElement: <Error />,
+}
 
 const routerAuthed = createBrowserRouter([{
   path: "/",
-  element: <S>
-    <Init />
-    <AppLayout />
-  </S>,
+  element: <S><AppLayout /></S>,
   ...common,
   children: [
     ...StaticRoutes.staticRoutes,
@@ -34,10 +32,7 @@ const routerAuthed = createBrowserRouter([{
 
 const routerAnon = createBrowserRouter([{
   path: "/",
-  element: <S>
-    <Init />
-    <SplashLayout />
-  </S>,
+  element: <S><SplashLayout /></S>,
   ...common,
   children: [
     ...StaticRoutes.staticRoutes,

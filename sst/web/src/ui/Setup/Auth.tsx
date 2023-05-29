@@ -127,8 +127,6 @@ export function AuthStatusListener() {
   return null
 }
 
-
-
 export function AuthProvider({children}: React.PropsWithChildren) {
   return <Authenticator.Provider>
     <AuthStatusListener />
