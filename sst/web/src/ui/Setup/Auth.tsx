@@ -22,6 +22,7 @@ import IconButton from "@mui/material/IconButton";
 import {IconBase} from "react-icons";
 import ArrowBackOutlinedIcon from '@mui/icons-material/ArrowBackOutlined';
 import CheckIcon from '@mui/icons-material/CheckCircleOutline';
+import {useLocation} from "react-router-dom";
 
 Amplify.configure(awsConfig);
 
@@ -260,7 +261,9 @@ export const AuthComponent: FC<AuthComponentProps> = ({tab}) => {
   </ThemeProvider>
 }
 
-
+// TODO this component should be scrapped altogether. I thought I was listening for
+// jwt refreshes here, not just user auth/not. We need to send fresh
+// Auth.currentSession().getIdToken().getJwtTokens() with every API call.
 export function AuthChecker() {
   // const authenticator = useAuthenticator((context) => [context.user, context.authStatus]);
   const {authStatus} = useAuthenticator((context) => [context.authStatus])
@@ -286,6 +289,7 @@ export function AuthChecker() {
 }
 
 export function AcknowledgeChecker() {
+  //const {pathname} = useLocation()
   const [user, send] = useStore(s => [
     s.user?.me,
     s.send
@@ -304,6 +308,7 @@ export function AcknowledgeChecker() {
     !user
     || done
     || (user.accept_terms_conditions && user.accept_privacy_policy && user.accept_disclaimer)
+    //|| ['/privacy', '/terms', '/disclaimer'].includes(pathname)
   )
   if (hide) {return null}
 

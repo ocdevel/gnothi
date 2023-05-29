@@ -51,10 +51,10 @@ async function preSignUp(event: PreSignUpTriggerEvent, context) {
 }
 
 async function postConfirmationConfirmForgotPassword(event: PostConfirmationTriggerEvent, context) {
-  const user = await db.drizzle.select({created_at: users.created_at})
+  const res = await db.drizzle.select({created_at: users.created_at})
     .from(users).where(eq(users.cognito_id, event.userName))
-  if (user.length) {
-    Logger.metric({event: "users_confirmforgotpassword", user: users[0]})
+  if (res.length) {
+    Logger.metric({event: "users_confirmforgotpassword", user: res[0]})
   }
   return event
 }
@@ -69,7 +69,7 @@ async function postConfirmationConfirmSignUp(event: PostConfirmationTriggerEvent
   }
 
   // create user in database. maybe add its uid to cognito
-  const dbUser = await db.drizzle.insert(users).values({
+  const res = await db.drizzle.insert(users).values({
     email: event.request.userAttributes.email,
     cognito_id: event.userName,
     // These were accepted client-side in registration form
@@ -77,10 +77,11 @@ async function postConfirmationConfirmSignUp(event: PostConfirmationTriggerEvent
     accept_privacy_policy: new Date(),
     accept_disclaimer: new Date()
   }).returning()
-  const uid = dbUser[0].id
-  event.request.userAttributes['custom:gnothiId'] = uid
+  const user = res[0]
+  const uid = user.id
+  event.request.userAttributes['custom:gnothiId'] = uid as string
 
-  Logger.metric({event: "users_signup", user: dbUser})
+  Logger.metric({event: "users_signup", user})
 
   // All users need one immutable main tag
   const mainTag = await db.drizzle.insert(tags).values({
