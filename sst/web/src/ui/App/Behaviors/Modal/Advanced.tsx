@@ -13,7 +13,7 @@ interface Advanced {
 export default function Advanced({fetchFieldEntries}: Advanced) {
   const send = useStore(s => s.send)
   const authenticated = useStore(s => s.authenticated)
-  const setServerError = useStore(s => s.apiError)
+  const addError = useStore(s => s.addError)
   const [confirmWipe, setConfirmWipe] = useState('')
 
   async function downloadCsv(version: string) {
@@ -34,7 +34,7 @@ export default function Advanced({fetchFieldEntries}: Advanced) {
     } catch (error) {
       let {statusText: message, data} = error.response
       message = data.detail || message || "There was an error"
-      setServerError(message)
+      addError(<Typography>{message}</Typography>)
     }
   }
 

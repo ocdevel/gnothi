@@ -54,9 +54,6 @@ export interface AppSlice {
   // ----- Other
   selectedTags: {[k: string]: boolean}
 
-  // ----- EE
-  ee: { [k: string]: any }
-  setEe: (k: string, v: any) => void
 }
 
 export const appSlice: StateCreator<
@@ -144,8 +141,7 @@ export const appSlice: StateCreator<
   selectedTags: {},
 
   // ----- EE
-  ee: {
-    toolbar_groups_create: false
-  },
-  setEe: (k, v) => set({ee: {...get().ee, [k]: v}}),
+  // ee: {
+  //   toolbar_groups_create: false
+  // },
 })

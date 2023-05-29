@@ -28,7 +28,6 @@
     "aws-amplify": "^5.2.2",
     "axios": "^1.4.0",
     "clsx": "^1.2.1",
-    "eventemitter3": "^5.0.1",
     "js-file-download": "^0.4.12",
     "lodash": "^4.17.21",
     "markdown-it": "^13.0.1",

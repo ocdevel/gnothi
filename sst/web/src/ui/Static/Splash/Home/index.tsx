@@ -15,14 +15,12 @@ import SignUp from "./SignUp";
 import HowItWorks from "./HowItWorks";
 
 export default function Home() {
-  const error = useStore(state => state.apiError)
 
   return <Stack
     sx={{
       backgroundColor: colors.grey
     }}
   >
-    <Error message={error} />
     <Hero />
     {/*<Demo />*/}
     <HowItWorks />

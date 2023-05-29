@@ -1,5 +1,4 @@
 import {StateCreator} from 'zustand'
-import EventEmitter from 'eventemitter3'
 import axios from "axios";
 import _ from "lodash";
 import {WebSocketHook} from "react-use-websocket/dist/lib/types"
@@ -30,9 +29,6 @@ export interface ApiSlice {
   // user: any
 
   send: (event: Events.Events, body: object, extra?: {protocol?: "ws" | "http"}) => void
-
-  apiError?: string,
-  setApiError: (error: string) => void
 }
 
 // TODO hack to prevent fetching too many times, due to React re-renders.
@@ -65,9 +61,6 @@ export const apiSlice: StateCreator<
     await Auth.signOut()
     window.location.href = "/"
   },
-
-  apiError: undefined,
-  setApiError: (apiError) => set({apiError}),
 
   send: async (event, data, extra) => {
     const protocol = extra?.protocol || "ws"
@@ -157,6 +150,3 @@ export const apiSlice: StateCreator<
     // }
   },
 })
-
-
-export const EE = new EventEmitter()

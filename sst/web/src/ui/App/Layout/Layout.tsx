@@ -63,9 +63,9 @@ function UserListener() {
 }
 
 function Errors() {
-  const error = useStore(state => state.apiError);
-  {/*<Error message={error} />*/}
-  {/*<Error codes={[422,401,500]} />*/}
+  // const error = useStore(state => state.apiError);
+  // <Error message={error} />
+  // <Error codes={[422,401,500]} />
   return <ErrorSnack />
 }
 

@@ -25,7 +25,6 @@ import Footer from '../../Footer'
 
 export default function Layout() {
   const [authTab, setAuthTab] = useLocalStore(s => [s.authTab, s.setAuthTab], shallow)
-  const error = useStore(state => state.apiError)
 
 
   function renderAppbar() {
@@ -58,7 +57,6 @@ export default function Layout() {
       backgroundColor: colors.grey
     }}
   >
-    <Error message={error} />
     {renderAppbar()}
     {renderAuthModal()}
     <Outlet />
