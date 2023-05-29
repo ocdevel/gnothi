@@ -25,27 +25,18 @@ import {fromUtf8, toUtf8} from "@aws-sdk/util-utf8-node";
 import {Bucket} from 'sst/node/bucket'
 import _ from "lodash";
 import {Logger} from './logs'
+import {wsConnections} from "../data/schemas/wsConnections";
+import {FnContext} from "../routes/types";
+import {eq} from "drizzle-orm";
 
 export * as Handlers from './handlers'
 
 //const defaultBucket = Bucket.Bucket.bucketName
 
-type HandlerKey = "http" | "s3" | "sns" | "lambda" | "ws" | "cron" | "cognito"
-export function whichHandler(event: any, context: Context): HandlerKey {
-  // TODO would multiple triggers ever hit the same Lambda at once?
-  if (sns.match(event)) {return "sns"}
-  if (ws.match(event)) {return "ws"}
-  if (http.match(event)) {return "http"}
-  if (cron.match(event)) {return "cron"}
-  if (cognito.match(event)) {return "cognito"}
-  // if (S3.match(event)) {return new S3()}
-  return "lambda"
-}
-
-interface Handler<E = any> {
-  match: (req: E) => boolean
-  parse: (event: E) => Promise<Array<null | Api.Req>>
-  respond: (res: Api.Res, context: Api.FnContext) => Promise<APIGatewayProxyResultV2>
+abstract class Handler<E = any> {
+  abstract match(req: E): boolean
+  abstract parse(event: E): Promise<Array<null | Api.Req>>
+  abstract respond(res: Api.Res, context: Api.FnContext): Promise<APIGatewayProxyResultV2>
 }
 
 function proxyRes(res: Api.Res): APIGatewayProxyResultV2 {
@@ -57,13 +48,13 @@ function proxyRes(res: Api.Res): APIGatewayProxyResultV2 {
 
 // TODO revisit, I can't figure this out
 // export class SNS<E extends SNSEvent> extends Handler<E> {
-export const sns: Handler<SNSEvent> = {
-  match: (req) => {
+class SnsHandler extends Handler<SNSEvent> {
+  match(req) {
     // return req.Records?.[0]?.EventSource === 'aws:sns'
     return !!req.Records?.[0]?.Sns?.Message
-  },
+  }
 
-  parse: async (event) => {
+  async parse(event) {
     const parsed = z.object({
       Records: z.array(
         z.object({
@@ -87,13 +78,14 @@ export const sns: Handler<SNSEvent> = {
         data: Sns.Message
       }
     })
-  },
+  }
 
   // https://docs.aws.amazon.com/lambda/latest/dg/with-sns.html
-  respond: async (res) => {
+  async respond(res) {
     return proxyRes(res)
   }
 }
+const sns = new SnsHandler()
 
 class Buff {
   static fromObj(obj: unknown): Uint8Array {
@@ -149,14 +141,14 @@ export async function lambdaSend<O = any>(
   }
 }
 
-export const lambda: Handler<any> = {
-  match: (event) => true,
+class LambdaHandler extends Handler<any> {
+  match(event) {return true}
 
-  parse: async (event) => [event],
+  async parse(event) {return [event]}
 
   // If this is a response handler, it should kick off as a background job (InvocationType:Event).
   // If you want RequestResponse, call directly via above helper function
-  respond: async (res, context) => {
+  async respond(res, context) {
     const req = {
       ...res,
       // responses are sent to http/ws as a list (always). If sending to Lambda,
@@ -178,11 +170,14 @@ export const lambda: Handler<any> = {
     return {statusCode: response.StatusCode, body: response.Payload}
   }
 }
+const lambda = new LambdaHandler()
 
-export const ws: Handler<APIGatewayProxyWebsocketEventV2> = {
-  match: (event) => !!event.requestContext?.connectionId,
+class WsHandler extends Handler<APIGatewayProxyWebsocketEventV2> {
+  match(event) {
+    return !!event.requestContext?.connectionId
+  }
 
-  parse: async (event) => {
+  async parse(event){
     const parsed = z.object({
       requestContext: z.object({
         connectionId: z.string(),
@@ -195,11 +190,12 @@ export const ws: Handler<APIGatewayProxyWebsocketEventV2> = {
       // connectionId: val.requestContext.connectionId,
       ...parsed.body
     }]
-  },
+  }
 
-  async respond(res, {connectionId}): Promise<APIGatewayProxyResultV2> {
-    if (!connectionId) {
-      console.warn("Trying to to WS without connectionId")
+  async respondOne(res: Api.Res, {connectionId}: Partial<FnContext>) {
+   if (!connectionId) {
+     console.warn("Trying to to WS without connectionId")
+     return
     }
     try {
       // The maximum message payload size that an API Gateway WebSocket connection can send to a client is 128 KB.
@@ -247,14 +243,29 @@ export const ws: Handler<APIGatewayProxyWebsocketEventV2> = {
         throw error // Re-throw the error if it's not a GoneException
       }
     }
+  }
+
+  async respond(res, context): Promise<APIGatewayProxyResultV2> {
+    // At this point we have context.connection, but it may have been lost depending on how long the function took.
+    // Also, the user may be connected on multiple devices.
+    const connections = await context.db.drizzle
+      .select({connectionId: wsConnections.connection_id})
+      .from(wsConnections)
+      .where(eq(wsConnections.user_id, context.uid))
+    await Promise.all(connections.map(async ({connectionId}) => {
+      return this.respondOne(res, {connectionId})
+    }))
     return proxyRes(res)
   }
 }
+const ws = new WsHandler()
 
-export const http: Handler<APIGatewayProxyEventV2> = {
-  match: (event) => !!event?.requestContext?.http?.method,
+class HttpHandler extends Handler<APIGatewayProxyEventV2> {
+  match(event) {
+    return !!event?.requestContext?.http?.method
+  }
 
-  parse: async (event) => {
+  async parse(event) {
     if (event.rawPath === '/favicon.ico'
       || event.requestContext.http.method === "OPTIONS") {
       return [null]
@@ -274,34 +285,50 @@ export const http: Handler<APIGatewayProxyEventV2> = {
       trigger: 'http',
       ...parsed.body
     }]
-  },
+  }
 
   async respond(res): Promise<APIGatewayProxyResultV2> {
     return proxyRes(res)
   }
 }
+const http = new HttpHandler()
 
-export const cron: Handler<ScheduledEvent> = {
-  match: (event) => event.source === "aws.events",
+class CronHandler extends Handler<ScheduledEvent> {
+  match (event) {
+    return event.source === "aws.events"
+  }
   // match: (event) => event['detail-type'] === "Scheduled Event",
 
-  parse: async (event) => {
+  async parse(event) {
     // FIXME no easy way to inform the CDK construct to pass something along. A tag? for now, I'll just match-make
     // based on the rule which triggered this function
     const eventKey = event.resources[0].toLowerCase().includes("habitica") ? "habitica_sync_cron"
       : undefined // will need this error as I flesh out more crons
     return [{data: event, event: eventKey, trigger: "cron"}]
-  },
+  }
 
   async respond(res: any): Promise<APIGatewayProxyResultV2> {
     return proxyRes(res)
   }
 }
+const cron = new CronHandler()
 
 export const cognito: Handler<BaseTriggerEvent<any>> = {
   match: (event) => !!(event.userPoolId && event.triggerSource),
   parse: async (event) => [event],
   async respond(res: any) { return {statusCode: 200, body: "OK"} }
+}
+
+type HandlerKey = "http" | "s3" | "sns" | "lambda" | "ws" | "cron" | "cognito"
+export function whichHandler(event: any, context: Context): HandlerKey {
+  // TODO would multiple triggers ever hit the same Lambda at once?
+  if (sns.match(event)) {return "sns"}
+  if (ws.match(event)) {return "ws"}
+  if (http.match(event)) {return "http"}
+  if (cron.match(event)) {return "cron"}
+  if (cognito.match(event)) {return "cognito"}
+  // if (S3.match(event)) {return new S3()}
+  return "lambda"
 }
 
 export const handlers: Record<keyof Api.Trigger, Handler> = {

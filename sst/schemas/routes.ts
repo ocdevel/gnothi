@@ -5,7 +5,6 @@ import {Fields} from './fields'
 import {Groups} from './groups'
 import {Shares} from './shares'
 import {Notifs} from './notifs'
-import {Ws} from './ws'
 import {Auth} from './auth'
 import {Insights} from './insights'
 import {Notes} from './notes'
@@ -20,7 +19,6 @@ export const routes = {
   ...Groups.routes,
   ...Shares.routes,
   ...Notifs.routes,
-  ...Ws.routes,
   ...Auth.routes,
   ...Insights.routes,
   ...Notes.routes

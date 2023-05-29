@@ -47,7 +47,15 @@ export async function getUser(
   if (connection_id) {
     if (routeKey == "$connect") {
       const user = await getFromCognito(db, cognitoId)
-      await drizzle.insert(wsConnections).values({user_id: user.id, connection_id}).onConflictDoNothing()
+      await Promise.all([
+        // create this connection
+        drizzle.insert(wsConnections).values({user_id: user.id, connection_id}).onConflictDoNothing(),
+
+        // and delete any stale connections. Users with a long-running tab won't be disconnected, their jwt is
+        // refreshed by Amplify, causing a re-connection via useWebsocket(). So connections should only ever be about
+        // 5 minutes old or so.
+        drizzle.execute(sql`delete from ${wsConnections} where created_at < now() - interval '30 minutes'`)
+      ])
       return handled
     } else if (routeKey === "$disconnect") {
       await drizzle.delete(wsConnections).where(eq(wsConnections.connection_id, connection_id))
