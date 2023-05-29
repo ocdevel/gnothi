@@ -64,13 +64,13 @@ export function Auth({ app, stack }: sst.StackContext) {
         },
 
         // accountRecovery: aws_cognito.AccountRecovery.EMAIL_ONLY,
-        email: aws_cognito.UserPoolEmail.withSES({
-          sesRegion: app.region,
-          fromEmail: `gnothi@${subdomain}`,
-          fromName: 'Gnothi',
-          replyTo: `gnothi@${subdomain}`,
-          sesVerifiedDomain: subdomain,
-        }),
+        // email: aws_cognito.UserPoolEmail.withSES({
+        //   sesRegion: app.region,
+        //   fromEmail: `gnothi@${subdomain}`,
+        //   fromName: 'Gnothi',
+        //   replyTo: `gnothi@${subdomain}`,
+        //   sesVerifiedDomain: subdomain,
+        // }),
       }
     },
 
