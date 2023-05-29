@@ -41,7 +41,6 @@ export const users_everything_request = new Route(r.users_everything_request, as
 export const users_everything_response = new Route(r.users_everything_response, async (req, context) => {
   for (let i = 0; i < 500; i++) {
     const stuckEntry = await context.m.entries.getStuckEntry(req.id)
-    console.log("No stuck entries")
     if (!stuckEntry) {break}
     console.log(`Fixing: stuck ${i}`)
     // Detatch the context from whomever triggered this. That's because user.id might be referenced (eg, in fetching tags

@@ -49,17 +49,16 @@ export class Logger {
     return this.log({...log, level: "error"})
   }
   static async metric({event, user, dimensions}: Metric) {
+    if (user.is_cool) {return}
     try {
-      let dimensions_: {Name: string, Value: string}[] = [{Name: "event", Value: event}]
-      if (user) {
-        dimensions_.push({
+      const dimensions_: {Name: string, Value: string}[] = [
+        {Name: "event", Value: event},
+        {
           Name: "v0",
           Value: String(new Date(user.created_at as string) < new Date("2023-05-28"))
-        })
-      }
-      if (dimensions) {
-        dimensions_.push(...dimensions)
-      }
+        },
+        ...(dimensions || [])
+      ]
       return clients.cw.send(new PutMetricDataCommand({
         MetricData: [
           {
