@@ -21,38 +21,21 @@ import CircularProgress from "@mui/material/CircularProgress";
 import keyBy from 'lodash/keyBy'
 import * as S from '@gnothi/schemas'
 import Divider from "@mui/material/Divider";
-import {Insight} from './Utils'
+import {Insight} from '../Utils'
 import Grow from '@mui/material/Grow';
 
-import Tabs from "../../../Components/Tabs"
-import Accordions from "../../../Components/Accordions"
+import Tabs from "../../../../Components/Tabs"
+import Accordions from "../../../../Components/Accordions"
 import Container from "@mui/material/Container";
-import {FullScreenDialog} from "../../../Components/Dialog";
-import presets from '../../../../data/prompts.large.yml'
-import Autocomplete from "@mui/material/Autocomplete";
-console.log(presets)
-
-const presetsFlat = presets
-  .map(category => category.prompts.map(prompt => ({ ...prompt, category: category.category })))
-  .flat();
-const presetsObj = keyBy(presetsFlat, 'key')
-
-
-// type Preset = keyof typeof promptsObj
-type Preset = {
-  key: string
-  label: string
-  prompt: string
-}
+import {FullScreenDialog} from "../../../../Components/Dialog";
+import PromptSelector from './Selector.tsx'
 
 
 type Prompt = Insight & {
   entry_ids: string[]
 }
 
-const SHOW_SAMPLE = true
 type Trips = {
-  isSample: boolean
   waiting: boolean
   responses: S.Insights.insights_prompt_response[]
   prompts: string[]
@@ -60,17 +43,7 @@ type Trips = {
 
 export default function Prompt({entry_ids, view}: Prompt) {
   const [modal, setModal] = useState(false)
-  const [trips, setTrips] = useState<Trips>(SHOW_SAMPLE ? {
-    isSample: true,
-    waiting: false,
-    prompts: ["I have a lot to say so I'm going to say it here and see how it all goes."],
-    responses: [{
-      view: "list",
-      id: "123",
-      response: "I have a lot to say so I'm going to say it here and see how it all goes."
-    }]
-  } : {
-    isSample: false,
+  const [trips, setTrips] = useState<Trips>({
     waiting: false,
     prompts: [],
     responses: []
@@ -80,10 +53,10 @@ export default function Prompt({entry_ids, view}: Prompt) {
   const send = useStore(useCallback(s => s.send, []))
   const promptResponse = useStore(s => s.res.insights_prompt_response?.hash?.[view])
   // start with just blank prompt, will populate other prompts via HTTP -> Gist
-  const [preset, setPreset] = useState<number>()
+
   const [prompt, setPrompt] = useState<string>("")
   const [showHelp, setShowHelp] = useState<boolean>(false)
-
+  const btnDisabled = trips.waiting || prompt.length < 3
 
   useEffect(() => {
     if (!promptResponse) {
@@ -100,21 +73,11 @@ export default function Prompt({entry_ids, view}: Prompt) {
     // They didn't enter anything
     if (!prompt?.length) {return}
 
-    // Remove the sample on first submit
-    if (trips.isSample) {
-      setTrips({
-        isSample: false,
-        waiting: true,
-        prompts: [prompt],
-        responses: []
-      })
-    } else {
-      setTrips({
-        ...trips,
-        waiting: true,
-        prompts: [...trips.prompts, prompt]
-      })
-    }
+    setTrips({
+      ...trips,
+      waiting: true,
+      prompts: [...trips.prompts, prompt]
+    })
     send("insights_prompt_request", {
       view,
       entry_ids,
@@ -124,7 +87,6 @@ export default function Prompt({entry_ids, view}: Prompt) {
       setModal(true)
     }
   }
-
 
   const renderResponse = (
     _: any,
@@ -217,54 +179,7 @@ export default function Prompt({entry_ids, view}: Prompt) {
       alignItems='flex-end'>
 
 
-       <Autocomplete
-         fullWidth
-         options={presetsFlat}
-         groupBy={(option) => option.category}
-         getOptionLabel={(option) => option.label}
-         // value={preset}
-         onChange={(e, preset) => {
-           setPreset(preset.key)
-           setPrompt(preset.prompt)
-         }}
-         renderInput={(params) => (
-           <TextField {...params} label="Journal prompts" />
-         )}
-      />
-
-      {/*<FormControl fullWidth>*/}
-      {/*  <InputLabel*/}
-      {/*    id="demo-simple-select-label">Presets</InputLabel>*/}
-      {/*  <Select*/}
-      {/*    sx={{borderRadius}}*/}
-      {/*    labelId="demo-simple-select-label"*/}
-      {/*    id="demo-simple-select"*/}
-      {/*    value={preset}*/}
-      {/*    label="Presets"*/}
-      {/*    onChange={changePreset as any}*/}
-      {/*  >*/}
-      {/*    {presets.map(({key, label}) => (*/}
-      {/*      <MenuItem*/}
-      {/*        key={key} value={key}>{label}</MenuItem>*/}
-      {/*    ))}*/}
-      {/*  </Select>*/}
-      {/*</FormControl>*/}
-
-      <TextField
-        fullWidth={true}
-        sx={{
-          '& fieldset': {
-            borderRadius,
-          },
-        }}
-        id="outlined-multiline-flexible"
-        label="Prompt"
-        multiline
-        value={prompt}
-        onChange={e => setPrompt(e.target.value)}
-        maxRows={4}
-        // helperText="Enter a prompt, with <placeholder> values like so: Interpret the following dream <paragraphs>"
-      />
+      <PromptSelector prompt={prompt} setPrompt={setPrompt} />
 
       {/*<Button onClick={() => setShowHelp(!showHelp)}>{showHelp ? "Hide help" : "Show Help"}</Button>
       {showHelp && <Typography>
@@ -286,7 +201,7 @@ export default function Prompt({entry_ids, view}: Prompt) {
           variant="outlined"
           size="small"
           color="secondary"
-          disabled={trips.waiting}
+          disabled={btnDisabled}
           onClick={submit}
         >
           {trips.waiting ? <CircularProgress/> : "Submit"}
@@ -300,45 +215,13 @@ export default function Prompt({entry_ids, view}: Prompt) {
 
     function tab0() {
       return <Stack spacing={2} component="form">
-        <FormControl fullWidth>
-          <InputLabel
-            id="demo-simple-select-label">Presets</InputLabel>
-          <Select
-            sx={{borderRadius}}
-            labelId="demo-simple-select-label"
-            id="demo-simple-select"
-            value={preset}
-            label="Presets"
-            onChange={changePreset as any}
-          >
-            {presets.map(({key, label}) => (
-              <MenuItem
-                key={key} value={key}>{label}</MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-
-        <TextField
-          sx={{
-            '& fieldset': {
-              borderRadius,
-            },
-          }}
-          id="outlined-multiline-flexible"
-          label="Prompt"
-          multiline
-          value={prompt}
-          onChange={e => setPrompt(e.target.value)}
-          maxRows={4}
-          // helperText="Enter a prompt, with <placeholder> values like so: Interpret the following dream <paragraphs>"
-        />
-
+        <PromptSelector prompt={prompt} setPrompt={setPrompt} />
 
         <Button
           sx={{elevation: 12}}
           variant="contained"
           color="secondary"
-          disabled={trips.waiting}
+          disabled={btnDisabled}
           onClick={submit}
         >
           {trips.waiting ? <CircularProgress/> : "Submit"}
