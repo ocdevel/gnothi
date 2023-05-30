@@ -117,7 +117,7 @@ export default function Prompt({entry_ids, view}: Prompt) {
           <Card
             sx={{
               display: 'inline-block',
-              transform: 'scale(0.8)',
+              // transform: 'scale(0.8)',
               backgroundColor: '#C3C7CC',
               borderRadius: 3
             }}
@@ -145,7 +145,7 @@ export default function Prompt({entry_ids, view}: Prompt) {
           <Card
             sx={{
               display: 'inline-block',
-              transform: 'scale(0.8)',
+              // transform: 'scale(0.8)',
               mt: 8,
               backgroundColor: '#ffffff',
               borderRadius: 3
@@ -284,7 +284,7 @@ export default function Prompt({entry_ids, view}: Prompt) {
           tabs={[
             {value: "0", label: "Prompt", render: tab0},
             {value: "1", label: "Info", render: tab1},
-            {value: "2", label: "History", render: tab2},
+            // {value: "2", label: "History", render: tab2},
 
           ]}
           defaultTab="0"

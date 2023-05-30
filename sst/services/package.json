@@ -8,8 +8,8 @@
   "dependencies": {
     "@aws-sdk/client-apigatewaymanagementapi": "^3.341.0",
     "@aws-sdk/client-application-auto-scaling": "^3.341.0",
-    "@aws-sdk/client-cloudwatch-logs": "^3.341.0",
     "@aws-sdk/client-cloudwatch": "^3.341.0",
+    "@aws-sdk/client-cloudwatch-logs": "^3.341.0",
     "@aws-sdk/client-lambda": "^3.341.0",
     "@aws-sdk/client-s3": "^3.341.0",
     "@aws-sdk/client-sagemaker": "^3.341.0",
@@ -21,6 +21,7 @@
     "aws-sdk": "^2.1378.0",
     "drizzle-orm": "^0.25.4",
     "fernet-nodejs": "^1.0.6",
+    "gpt-tokenizer": "^2.0.0",
     "openai": "^3.2.1",
     "pg": "^8.11.0",
     "pg-native": "^3.0.1",

@@ -1,6 +1,6 @@
 import TextField from "@mui/material/TextField";
 import React, {useState} from "react";
-import presets from '../../../../../data/prompts.large.yml'
+import presets from '../../../../../data/prompts.yml'
 import keyBy from "lodash/keyBy";
 import Autocomplete from "@mui/material/Autocomplete";
 import Stack from "@mui/material/Stack";
