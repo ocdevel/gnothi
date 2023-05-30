@@ -49,6 +49,8 @@ export class Logger {
     return this.log({...log, level: "error"})
   }
   static async metric({event, user, dimensions}: Metric) {
+    // this isn't "we give certain users no-tracking", it's: users with admin privs are spamming the app, and are
+    // skewing the metrics
     if (user.is_cool) {return}
     try {
       const dimensions_: {Name: string, Value: string}[] = [

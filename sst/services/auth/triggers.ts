@@ -55,7 +55,7 @@ async function postConfirmationConfirmForgotPassword(event: PostConfirmationTrig
     .select({created_at: users.created_at, is_cool: users.is_cool})
     .from(users).where(eq(users.cognito_id, event.userName))
   if (res.length) {
-    Logger.metric({event: "users_confirmforgotpassword", user: res[0]})
+    await Logger.metric({event: "users_confirmforgotpassword", user: res[0]})
   }
   return event
 }
@@ -82,14 +82,16 @@ async function postConfirmationConfirmSignUp(event: PostConfirmationTriggerEvent
   const uid = user.id
   event.request.userAttributes['custom:gnothiId'] = uid as string
 
-  Logger.metric({event: "users_signup", user})
+  await Promise.all([
+    Logger.metric({event: "users_signup", user}),
 
-  // All users need one immutable main tag
-  const mainTag = await db.drizzle.insert(tags).values({
-    user_id: uid,
-    name: "Main",
-    main: true
-  })
+    // All users need one immutable main tag
+    db.drizzle.insert(tags).values({
+      user_id: uid,
+      name: "Main",
+      main: true
+    })
+  ])
 
   // TODO send email
 

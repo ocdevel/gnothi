@@ -208,7 +208,7 @@ class WsHandler extends Handler<APIGatewayProxyWebsocketEventV2> {
       // to re-fetch new data as needed (only sending notifications, pings). For now, if we're returning an array
       // (which should always be true), and it's longer then CHUNK_SIZE, send in chunks. This is brittle since it
       // assumes {op: "update"} was the original intent, and {op: "append"} is safe.
-      const CHUNK_SIZE = 25
+      const CHUNK_SIZE = 20
 
       // should always be an array, but you can never be too careful
       const isArr = Array.isArray(res.data) // will be false if we have an error
