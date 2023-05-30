@@ -11,7 +11,9 @@ import {
   encode,
   decode,
   isWithinTokenLimit,
-} from 'gpt-tokenizer/model/text-davinci-003';import {Logger} from "../../aws/logs";
+} from 'gpt-tokenizer/model/text-davinci-003';
+import {Logger} from "../../aws/logs";
+
 
 const TOKEN_LIMIT = 4096
 const RESPONSE_LIMIT = 256
@@ -41,7 +43,6 @@ export async function completion(
   try {
     const {prompt, ...rest} = opts
     const res = await openai.createChatCompletion({
-      // model: 'gpt-3.5-turbo',
       model: 'gpt-3.5-turbo',
       temperature: 0.2, // 0.5
       max_tokens: 256, // 4096 - prompt.len - 256 = 0

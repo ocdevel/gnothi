@@ -17,6 +17,8 @@ export function Api({ app, stack }: sst.StackContext) {
 
   const HABITICA_USER = new sst.Config.Secret(stack, "HABITICA_USER")
   const HABITICA_APP = new sst.Config.Secret(stack, "HABITICA_APP")
+  const STRIPE_SK = new sst.Config.Secret(stack, "STRIPE_SK")
+  const STRIPE_WHSEC = new sst.Config.Secret(stack, "STRIPE_WHSEC")
 
   // For some reason, Cognito updates cause a full change here, and give error about authorizer
   // non-unique name:
@@ -44,16 +46,9 @@ export function Api({ app, stack }: sst.StackContext) {
         },
       },
     },
-    //defaults: {
-    //  authorizer: "httpjwt2",
-    //},
-    //routes: {
-    //  "GET /private": "functions/private.main",
-    //  "GET /public": {
-    //    function: "functions/public.main",
-    //    authorizer: "none",
-    //  },
-    //},
+    defaults: {
+      authorizer: "httpjwt2",
+    },
   })
   // const api = new Api(stack, "Api", {
   //   defaults: {
@@ -130,7 +125,9 @@ export function Api({ app, stack }: sst.StackContext) {
       auth,
       fnBackground,
       HABITICA_USER,
-      HABITICA_APP
+      HABITICA_APP,
+      STRIPE_SK,
+      STRIPE_WHSEC
     ]
   })
   addLogging(fnMain, "FnMain")
@@ -146,6 +143,10 @@ export function Api({ app, stack }: sst.StackContext) {
       function: fnMain,
       authorizer: "httpjwt2"
     },
+    "POST /stripe/webhook": {
+       function: fnMain,
+       authorizer: "none",
+     },
   })
   ws.addRoutes(stack, {
     "$default": fnMain,

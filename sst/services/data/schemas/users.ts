@@ -51,6 +51,8 @@ export const users = pgTable('users', {
   accept_disclaimer: timestamp("accept_disclaimer"),
   accept_privacy_policy: timestamp("accept_privacy_policy"),
 
+  premium: boolean("premium").default(false),
+
   // ws_id = sa.Column(sa.Unicode, index=True)
   // as = FKCol('users.id')
 }, (t) => {

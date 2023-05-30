@@ -1,8 +1,5 @@
-// @ts-ignore
-
 import React, {useState, useEffect, useCallback} from 'react'
-
-import {useStore} from "@gnothi/web/src/data/store"
+import {useStore} from "../../../../../data/store"
 import axios from "axios"
 import Typography from "@mui/material/Typography";
 import {LinearProgress} from "@mui/material";
@@ -31,7 +28,7 @@ import {FullScreenDialog} from "../../../../Components/Dialog";
 import PromptSelector from './Selector.tsx'
 
 
-type Prompt = Insight & {
+export type UnlockedProps = Insight & {
   entry_ids: string[]
 }
 
@@ -41,7 +38,7 @@ type Trips = {
   prompts: string[]
 }
 
-export default function Prompt({entry_ids, view}: Prompt) {
+export default function Unlocked({entry_ids, view}: UnlockedProps) {
   const [modal, setModal] = useState(false)
   const [trips, setTrips] = useState<Trips>({
     waiting: false,

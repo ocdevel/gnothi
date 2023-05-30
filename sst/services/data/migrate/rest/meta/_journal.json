@@ -22,6 +22,13 @@
       "when": 1685375251203,
       "tag": "0002_flowery_kabuki",
       "breakpoints": false
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1685485512225,
+      "tag": "0003_red_starjammers",
+      "breakpoints": false
     }
   ]
 }

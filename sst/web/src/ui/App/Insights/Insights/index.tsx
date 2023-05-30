@@ -3,7 +3,7 @@ import Box from "@mui/material/Box"
 import Summarize from "./Summarize"
 // import Ask from "./Ask"
 import Themes from "./Themes"
-import Prompt from "./Prompt"
+import Prompt from "./Prompt/Prompt"
 import Books from "./Books"
 import Behaviors from "./Behaviors"
 import Divider from "@mui/material/Divider";
@@ -159,14 +159,14 @@ export default function Insights({entry_ids}: Insights) {
       {/*  /!*</Typography>*!/*/}
       {/*</Stack>*/}
 
-      {me?.is_cool && <Insight
+      <Insight
         label="Prompt"
         icon={<PromptIcon {...iconProps} />}
         description="Ask Gnothi anything"
         action="Choose a topic or create a custom prompt"
       >
         <Prompt entry_ids={entry_ids} view={view} />
-      </Insight>}
+      </Insight>
 
       <Insight
         label="Themes"
