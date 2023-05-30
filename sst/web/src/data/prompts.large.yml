@@ -1,0 +1,125 @@
+- category: Custom
+  prompts:
+    - key: custom
+      label: Enter your own prompt
+      type: entry
+      prompt: ""
+- category: Reflection
+  prompts:
+    - key: daily_reflection
+      label: Daily Reflection
+      type: entry
+      prompt: "Reflect on the emotions and thoughts expressed in the following entry: <entry>"
+    - key: life_lesson
+      label: Life Lesson
+      type: entry
+      prompt: "What life lesson can be drawn from the following experience: <entry>"
+    - key: gratitude
+      label: Gratitude
+      type: entry
+      prompt: "Identify elements of gratitude from the following entry: <entry>"
+    - key: growth
+      label: Personal Growth
+      type: summary
+      prompt: "Identify areas of personal growth evident in the following summary of entries: <summary>"
+    - key: breakthrough
+      label: Breakthrough Moments
+      type: summary
+      prompt: "Identify breakthrough moments in the following summary of entries: <summary>"
+
+- category: Dreams
+  prompts:
+    - key: dream
+      label: Dream Interpretation - Detailed
+      type: entry
+      prompt: "Interpret the following dream in detail: <entry>"
+    - key: dream_simple
+      label: Dream Interpretation - Simple
+      type: entry
+      prompt: "Provide a simple interpretation of the following dream: <entry>"
+    - key: recurring_dreams
+      label: Recurring Dreams
+      type: summary
+      prompt: "Analyze the pattern and meaning of these recurring dreams: <summary>"
+
+- category: Goals and Aspirations
+  prompts:
+    - key: goal_setting
+      label: Goal Setting
+      type: entry
+      prompt: "Based on the following entry, what goals could be set for future growth: <entry>"
+    - key: aspiration_reflection
+      label: Aspiration Reflection
+      type: entry
+      prompt: "Reflect on the aspirations mentioned in the following entry: <entry>"
+    - key: aspiration_progress
+      label: Aspiration Progress
+      type: summary
+      prompt: "Evaluate the progress towards aspirations based on the following summary of entries: <summary>"
+
+- category: Resources
+  prompts:
+    - key: books
+      label: Book Recommendations
+      type: summary
+      prompt: "What books would you recommend for someone who wrote the following: <summary>"
+    - key: podcasts
+      label: Podcast Recommendations
+      type: summary
+      prompt: "What podcasts would you recommend for someone who wrote the following: <summary>"
+    - key: mindfulness_practices
+      label: Mindfulness Practices
+      type: summary
+      prompt: "What mindfulness practices would you suggest to someone who wrote the following: <summary>"
+    - key: inspiring_quotes
+      label: Inspiring Quotes
+      type: entry
+      prompt: "Can you provide an inspiring quote related to the thoughts or feelings expressed in the following entry: <entry>"
+
+- category: Emotional Wellness
+  prompts:
+    - key: emotion_identification
+      label: Emotion Identification
+      type: entry
+      prompt: "Identify the emotions expressed in the following entry: <entry>"
+    - key: emotional_coping
+      label: Emotional Coping Strategies
+      type: entry
+      prompt: "Based on the emotions expressed in the following entry, suggest some coping strategies: <entry>"
+    - key: self_compassion
+      label: Self Compassion
+      type: entry
+      prompt: "Provide a self-compassionate response to# It seems that the message got cut off. Let's complete the last prompt."
+- category: Emotional Wellness
+  prompts:
+    - key: emotion_identification
+      label: Emotion Identification
+      type: entry
+      prompt: "Identify the emotions expressed in the following entry: <entry>"
+    - key: emotional_coping
+      label: Emotional Coping Strategies
+      type: entry
+      prompt: "Based on the emotions expressed in the following entry, suggest some coping strategies: <entry>"
+    - key: self_compassion
+      label: Self Compassion
+      type: entry
+      prompt: "Provide a self-compassionate response to the feelings and experiences expressed in the following entry: <entry>"
+    - key: emotional_growth
+      label: Emotional Growth
+      type: summary
+      prompt: "Identify areas of emotional growth and progress in the following summary of entries: <summary>"
+
+- category: Deep Reflection
+  prompts:
+    - key: pivotal_moments
+      label: Pivotal Moments
+      type: summary
+      prompt: "Reflect on the pivotal moments represented in the following summary of entries: <summary>"
+    - key: deep_insight
+      label: Deep Insight
+      type: summary
+      prompt: "Provide a deep insight or perspective on the thoughts and experiences summarized in the following: <summary>"
+    - key: existential_reflection
+      label: Existential Reflection
+      type: entry
+      prompt: "Reflect on the existential thoughts and feelings expressed in the following entry: <entry>"

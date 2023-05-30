@@ -28,11 +28,14 @@ import Tabs from "../../../Components/Tabs"
 import Accordions from "../../../Components/Accordions"
 import Container from "@mui/material/Container";
 import {FullScreenDialog} from "../../../Components/Dialog";
-import presets from '../../../../data/prompts.yaml'
+import presets from '../../../../data/prompts.large.yml'
+import Autocomplete from "@mui/material/Autocomplete";
 console.log(presets)
 
-const presetsObj = keyBy(presets, 'key')
-
+const presetsFlat = presets
+  .map(category => category.prompts.map(prompt => ({ ...prompt, category: category.category })))
+  .flat();
+const presetsObj = keyBy(presetsFlat, 'key')
 
 
 // type Preset = keyof typeof promptsObj
@@ -77,7 +80,7 @@ export default function Prompt({entry_ids, view}: Prompt) {
   const send = useStore(useCallback(s => s.send, []))
   const promptResponse = useStore(s => s.res.insights_prompt_response?.hash?.[view])
   // start with just blank prompt, will populate other prompts via HTTP -> Gist
-  const [preset, setPreset] = useState<string>("")
+  const [preset, setPreset] = useState<number>()
   const [prompt, setPrompt] = useState<string>("")
   const [showHelp, setShowHelp] = useState<boolean>(false)
 
@@ -92,12 +95,6 @@ export default function Prompt({entry_ids, view}: Prompt) {
       responses: [...trips.responses, promptResponse]
     })
   }, [promptResponse])
-
-  const changePreset: React.ChangeEventHandler<HTMLInputElement> = (e) => {
-    const preset = e.target.value
-    setPreset(preset)
-    setPrompt(presetsObj[preset].prompt)
-  }
 
   const submit = () => {
     // They didn't enter anything
@@ -219,23 +216,39 @@ export default function Prompt({entry_ids, view}: Prompt) {
       component="form"
       alignItems='flex-end'>
 
-      <FormControl fullWidth>
-        <InputLabel
-          id="demo-simple-select-label">Presets</InputLabel>
-        <Select
-          sx={{borderRadius}}
-          labelId="demo-simple-select-label"
-          id="demo-simple-select"
-          value={preset}
-          label="Presets"
-          onChange={changePreset as any}
-        >
-          {presets.map(({key, label}) => (
-            <MenuItem
-              key={key} value={key}>{label}</MenuItem>
-          ))}
-        </Select>
-      </FormControl>
+
+       <Autocomplete
+         fullWidth
+         options={presetsFlat}
+         groupBy={(option) => option.category}
+         getOptionLabel={(option) => option.label}
+         // value={preset}
+         onChange={(e, preset) => {
+           setPreset(preset.key)
+           setPrompt(preset.prompt)
+         }}
+         renderInput={(params) => (
+           <TextField {...params} label="Journal prompts" />
+         )}
+      />
+
+      {/*<FormControl fullWidth>*/}
+      {/*  <InputLabel*/}
+      {/*    id="demo-simple-select-label">Presets</InputLabel>*/}
+      {/*  <Select*/}
+      {/*    sx={{borderRadius}}*/}
+      {/*    labelId="demo-simple-select-label"*/}
+      {/*    id="demo-simple-select"*/}
+      {/*    value={preset}*/}
+      {/*    label="Presets"*/}
+      {/*    onChange={changePreset as any}*/}
+      {/*  >*/}
+      {/*    {presets.map(({key, label}) => (*/}
+      {/*      <MenuItem*/}
+      {/*        key={key} value={key}>{label}</MenuItem>*/}
+      {/*    ))}*/}
+      {/*  </Select>*/}
+      {/*</FormControl>*/}
 
       <TextField
         fullWidth={true}
