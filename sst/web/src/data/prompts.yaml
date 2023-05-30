@@ -1,0 +1,44 @@
+- key: blank
+  label: Blank
+  prompt: ""
+- key: dream
+  label: Dream interpretation - simple
+  prompt: "Interpret the following dreams: <paragraphs>"
+- key: dream_example
+  label: Dream interpretation - by example, long
+  prompt: |
+    Dream: I am walking down a long, winding path in a dense forest. The number '3' is prominently visible, carved into various tree trunks along the path. Suddenly, a black crow flies overhead and lands on the path in front of you.
+    
+    Interpretation: The path symbolizes your life journey. Its winding nature suggests that your life has been full of twists and turns, and you may be going through a time of uncertainty or change. The dense forest can be seen as a symbol of the unconscious mind, indicating that you're navigating through deep, internal thoughts and feelings.
+    
+    The number '3' in dreams often symbolizes balance and harmony, and it's also considered a number of creativity. Seeing '3' repeatedly could suggest that you're in a phase of your life where you're seeking balance, and it may also hint at a need to express your creativity or to take a creative approach to your current situation.
+    
+    The black crow is a potent symbol in dream interpretation. Crows are often seen as messengers or bearers of transformation. In this context, the crow may be a sign that you're about to undergo a significant transformation or change. Given its color, this change may involve delving into the depths of your unconscious or shadow self.
+    
+    In summary, this dream suggests that you're in a period of transition and change, seeking balance in your life. It may also indicate that you need to embrace your creativity or approach your situation creatively. Lastly, the crow suggests that this journey involves a deep dive into your unconscious thoughts and feelings, possibly leading to transformative growth.
+
+    Dream: <entry>
+
+    Interpretation:
+- key: dream_example_short
+  lable: Dream interpretation - by example, short
+  prompt: |
+    Dream: I am walking down a long, winding path in a dense forest. The number '3' is prominently visible, carved into various tree trunks along the path. Suddenly, a black crow flies overhead and lands on the path in front of you.
+    
+    Interpretation: Navigating a winding forest path dotted with the number '3' signifies your journey through life's uncertainties, a search for balance, and a creative awakening, while the black crow heralds a transformative dive into your unconscious, propelling personal growth.
+
+    Dream: <entry>
+    
+    Interpretation:
+- key: advice
+  label: Life Advice
+  prompt: "What advice would you have for someone who wrote the following: <summary>"
+- key: books
+  label: Book recommends
+  prompt: "What books would you recommend for someone who wrote the following: <summary>"
+- key: podcasts
+  label: Podcast recommends
+  prompt: "What podcasts would you recommend for someone who wrote the following: <summary>"
+- key: fakeentry
+  label: Fake journal entry
+  prompt: "Write a fake journal entry, 3 paragraphs in length, written by someone experiencing difficulty at work. The journaler is just starting to experience frustration, but is hopeful."

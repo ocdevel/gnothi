@@ -28,6 +28,10 @@ import Tabs from "../../../Components/Tabs"
 import Accordions from "../../../Components/Accordions"
 import Container from "@mui/material/Container";
 import {FullScreenDialog} from "../../../Components/Dialog";
+import presets from '../../../../data/prompts.yaml'
+console.log(presets)
+
+const presetsObj = keyBy(presets, 'key')
 
 
 
@@ -73,25 +77,10 @@ export default function Prompt({entry_ids, view}: Prompt) {
   const send = useStore(useCallback(s => s.send, []))
   const promptResponse = useStore(s => s.res.insights_prompt_response?.hash?.[view])
   // start with just blank prompt, will populate other prompts via HTTP -> Gist
-  const [presets, setPresets] = useState<Preset[]>([{
-    "key": "blank",
-    "label": "Blank",
-    "prompt": ""
-  }])
   const [preset, setPreset] = useState<string>("")
   const [prompt, setPrompt] = useState<string>("")
   const [showHelp, setShowHelp] = useState<boolean>(false)
-  const presetsObj = keyBy(presets, 'key')
 
-  async function fetchPresets() {
-    const presetsUrl = "https://gist.githubusercontent.com/lefnire/57023741c902627064e7d24302aa402f/raw/prompts.json"
-    const {data} = await axios.get(presetsUrl)
-    setPresets(data as Preset[])
-  }
-
-  useEffect(() => {
-    fetchPresets()
-  }, [])
 
   useEffect(() => {
     if (!promptResponse) {
