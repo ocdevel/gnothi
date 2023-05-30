@@ -1,0 +1,87 @@
+- category: Custom
+  prompts:
+    - key: custom
+      label: Enter your own prompt
+      prompt: ""
+- category: Reflection
+  prompts:
+    - key: daily_reflection
+      label: Daily Reflection
+      prompt: "Reflect on the emotions and thoughts expressed in the following entry: <journal>"
+    - key: life_lesson
+      label: Life Lesson
+      prompt: "What life lesson can be drawn from the following experience: <journal>"
+    - key: gratitude
+      label: Gratitude
+      prompt: "Identify elements of gratitude from the following entry: <journal>"
+    - key: growth
+      label: Personal Growth
+      prompt: "Identify areas of personal growth evident in the following entry: <journal>"
+    - key: breakthrough
+      label: Breakthrough Moments
+      prompt: "Identify breakthrough moments in the following entry: <journal>"
+
+- category: Dreams
+  prompts:
+    - key: dream
+      label: Dream Interpretation - Detailed
+      prompt: "Interpret the following dream in detail: <journal>"
+    - key: dream_simple
+      label: Dream Interpretation - Simple
+      prompt: "Provide a simple interpretation of the following dream: <journal>"
+    - key: recurring_dreams
+      label: Recurring Dreams
+      prompt: "Analyze the pattern and meaning of these recurring dreams: <journal>"
+
+- category: Goals and Aspirations
+  prompts:
+    - key: goal_setting
+      label: Goal Setting
+      prompt: "Based on the following entry, what goals could be set for future growth: <journal>"
+    - key: aspiration_reflection
+      label: Aspiration Reflection
+      prompt: "Reflect on the aspirations mentioned in the following entry: <journal>"
+    - key: aspiration_progress
+      label: Aspiration Progress
+      prompt: "Evaluate the progress towards aspirations based on the following entry: <journal>"
+
+- category: Resources
+  prompts:
+    - key: books
+      label: Book Recommendations
+      prompt: "What books would you recommend for someone who wrote the following: <journal>"
+    - key: podcasts
+      label: Podcast Recommendations
+      prompt: "What podcasts would you recommend for someone who wrote the following: <journal>"
+    - key: mindfulness_practices
+      label: Mindfulness Practices
+      prompt: "What mindfulness practices would you suggest to someone who wrote the following: <journal>"
+    - key: inspiring_quotes
+      label: Inspiring Quotes
+      prompt: "Can you provide an inspiring quote related to the thoughts or feelings expressed in the following entry: <journal>"
+- category: Emotional Wellness
+  prompts:
+    - key: emotion_identification
+      label: Emotion Identification
+      prompt: "Identify the emotions expressed in the following entry: <journal>"
+    - key: emotional_coping
+      label: Emotional Coping Strategies
+      prompt: "Based on the emotions expressed in the following entry, suggest some coping strategies: <journal>"
+    - key: self_compassion
+      label: Self Compassion
+      prompt: "Provide a self-compassionate response to the feelings and experiences expressed in the following entry: <journal>"
+    - key: emotional_growth
+      label: Emotional Growth
+      prompt: "Identify areas of emotional growth and progress in the following entry: <journal>"
+
+- category: Deep Reflection
+  prompts:
+    - key: pivotal_moments
+      label: Pivotal Moments
+      prompt: "Reflect on the pivotal moments represented in the following entry: <journal>"
+    - key: deep_insight
+      label: Deep Insight
+      prompt: "Provide a deep insight or perspective on the thoughts and experiences summarized in the following: <journal>"
+    - key: existential_reflection
+      label: Existential Reflection
+      prompt: "Reflect on the existential thoughts and feelings expressed in the following entry: <journal>"
