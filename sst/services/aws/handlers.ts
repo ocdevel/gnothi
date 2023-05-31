@@ -313,15 +313,37 @@ class CronHandler extends Handler<ScheduledEvent> {
 }
 const cron = new CronHandler()
 
-export const cognito: Handler<BaseTriggerEvent<any>> = {
-  match: (event) => !!(event.userPoolId && event.triggerSource),
-  parse: async (event) => [event],
+export class Cognito extends Handler<BaseTriggerEvent<any>> {
+  match(event) {
+    return !!(event.userPoolId && event.triggerSource)
+  }
+  async parse(event) { return [event] }
   async respond(res: any) { return {statusCode: 200, body: "OK"} }
 }
+const cognito = new Cognito()
 
-type HandlerKey = "http" | "s3" | "sns" | "lambda" | "ws" | "cron" | "cognito"
+// Edge-case. Make sure this goes before HTTP, since that will match first
+export class Stripe extends Handler<APIGatewayProxyEventV2> {
+  match(event) {
+    return event.routeKey === "POST /stripe/webhook"
+  }
+  async parse(event) {
+    return [{
+      trigger: 'stripe',
+      event: "stripe_webhook_request",
+      data: event
+    }]
+  }
+  async respond(res: any) {
+    return proxyRes(res)
+  }
+}
+const stripe = new Stripe()
+
+type HandlerKey = "http" | "s3" | "sns" | "lambda" | "ws" | "cron" | "cognito" | "stripe"
 export function whichHandler(event: any, context: Context): HandlerKey {
   // TODO would multiple triggers ever hit the same Lambda at once?
+  if (stripe.match(event)) {return "stripe"}
   if (sns.match(event)) {return "sns"}
   if (ws.match(event)) {return "ws"}
   if (http.match(event)) {return "http"}
@@ -333,6 +355,7 @@ export function whichHandler(event: any, context: Context): HandlerKey {
 
 export const handlers: Record<keyof Api.Trigger, Handler> = {
   // cognito,
+  stripe,
   ws,
   http,
   // sns,

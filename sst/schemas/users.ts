@@ -68,10 +68,13 @@ export const routes = {
     i: {
       e: 'users_list_request',
       s: Passthrough,
+      t: {ws: true},
     },
     o: {
       e: 'users_list_response',
       s: users_list_response,
+      t: {ws: true},
+      keyby: 'id'
     }
   },
 
@@ -101,6 +104,20 @@ export const routes = {
       s: users_list_response,
       t: {ws: true},
       event_as: 'users_list_response'
+    }
+  },
+
+  // this is made an exception for as a Handler type
+  stripe_webhook_request: {
+    i: {
+      e: "stripe_webhook_request",
+      s: Passthrough,
+      t: {stripe: true},
+    },
+    o: {
+      e: 'void',
+      s: Passthrough,
+      t: {stripe: true},
     }
   },
 

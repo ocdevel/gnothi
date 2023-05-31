@@ -15,7 +15,6 @@ import {z} from 'zod'
 import {db} from './data/dbSingleton'
 import {User, users} from './data/schemas/users'
 import {Logger} from "./aws/logs";
-import {main as stripeWebHook} from "./routes/stripe/webhook";
 
 
 const defaultResponse: APIGatewayProxyResultV2 = {statusCode: 200, body: "{}"}
@@ -31,17 +30,9 @@ export async function proxy(
   event: APIGatewayProxyWebsocketEventV2WithRequestContext<any>,
   context
 ): Promise<APIGatewayProxyResultV2> {
-  if (event.routeKey=== "POST /stripe/webhook" ) {
-    // TODO need better handling of one-offs like this
-    return stripeWebHook(event, context)
-  }
   const triggerIn = Handlers.whichHandler(event, context)
 
-  // TODO need to have a better system for non-user routes (cron, lambda, sns, etc)
-  const {user, handled} = (triggerIn === 'cron')
-    ? auth.noUser()
-    : await auth.getUser(event, context, db)
-
+  const {user, handled} = await auth.getUser(event, context, db, triggerIn)
   if (handled) { return defaultResponse }
 
   const handler = Handlers.handlers[triggerIn]
@@ -150,7 +141,7 @@ const handleRes: FnContext['handleRes'] = async (def, res, fnContext) => {
       if (!triggerValue) {return}
       const handler = Handlers.handlers[trigger]
       const handlerRes = await handler.respond(resFull, fnContext)
-      if (trigger === "http") {
+      if (["stripe", "http"].includes(trigger)) {
         // Logger.info({data: handlerRes, event: def.e, message: "final=handlerRes"} )
         final = handlerRes
       }

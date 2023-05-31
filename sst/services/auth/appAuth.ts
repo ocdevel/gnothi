@@ -30,8 +30,14 @@ type GetUser = {
 export async function getUser(
   event: APIGatewayProxyWebsocketEventV2WithRequestContext<any>,
   context: Context,
-  db: DB
+  db: DB,
+  triggerIn: string
 ) : Promise<GetUser> {
+  // Some edge-cases
+  if (["cron", "stripe"].includes(triggerIn)) {
+    return noUser()
+  }
+
   const {drizzle} = db
   // Check if exists from custom websocket authorizer
   const cognitoId = event.requestContext?.authorizer?.userId ||
