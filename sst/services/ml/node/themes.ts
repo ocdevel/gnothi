@@ -43,7 +43,7 @@ async function theme({texts, usePrompt}: Theme): Promise<insights_themes_respons
     summarize({
       texts,
       params: [{
-        summarize: {min_length: 10, max_length: 15},
+        summarize: {min_length: 10, max_length: 140},
         emotion: true,
         keywords: keywordsDefaults
       }],
