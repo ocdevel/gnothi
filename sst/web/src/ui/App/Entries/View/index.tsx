@@ -32,7 +32,7 @@ import {useForm} from "react-hook-form";
 import {zodResolver} from "@hookform/resolvers/zod";
 import * as S from '@gnothi/schemas'
 import * as Link from '../../../Components/Link'
-import Insights from '../../Insights/Insights'
+import Insights from '../../Insights/Insights/Insights.tsx'
 import dayjs from "dayjs";
 import CardActions from "@mui/material/CardActions";
 

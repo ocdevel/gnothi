@@ -122,7 +122,7 @@ export default function Insights({entry_ids}: Insights) {
         prompt: undefined
       }
     })
-  }, 5000)
+  }, 4000)
 
   useEffect(() => {
     if (!entry_ids.length) { return }

@@ -17,6 +17,7 @@ import {Insight} from "./Utils";
 import Divider from "@mui/material/Divider";
 
 export default function Themes({view}: Insight) {
+  const me = useStore(s => s.user?.me)
   const submitted = useStore(useCallback(s => !!s.res.insights_get_response?.hash?.[view], [view]))
   const themes = useStore(useCallback(s => s.res.insights_themes_response?.hash?.[view], [view]))
   const filters = useStore(s => s.filters)
@@ -43,7 +44,7 @@ export default function Themes({view}: Insight) {
   // }
 
   function renderTheme(theme: insights_themes_response['themes'][number], i: number) {
-    return <Box key={theme.id} sx={{my:1}}>
+    return <Box key={i} sx={{my:1}}>
       
       <Typography 
         marginBottom={1}
@@ -69,15 +70,23 @@ export default function Themes({view}: Insight) {
         flexWrap='wrap'
         direction="row"
         >
-        {theme.keywords.map((kw: string) => <Chip sx={{marginRight:1, marginBottom:2}} key={kw} label={kw} />)}
+        {theme.keywords.map((kw: string, i) => <Chip
+          sx={{marginRight:1, marginBottom:2}}
+          key={i}
+          label={kw}
+        />)}
       </Stack>
 
       {/*<Divider sx={{marginTop: 2, marginBottom: 3}} />*/}
     </Box>
   }
 
+  // FIXME openai geneartes good themes. There's a bug with the old theme system that basically duplicates
+  // the same theme multiple times. Showing only 1 for now
+  const themes_ = me.premium ? themes.themes : themes.themes.slice(0,1)
+
   return <>
-    {themes.themes.slice(0,1).map(renderTheme)}
+    {themes_.map(renderTheme)}
   </>
 
   // const themes_ =_.sortBy(reply.themes, 'n_entries').slice().reverse()

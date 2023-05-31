@@ -1,5 +1,5 @@
 import {Entry} from '@gnothi/schemas/entries'
-import {summarize, SummarizeOut, keywordsDefaults} from "./summarize"
+import {summarize, SummarizeOut, keywordsDefaults} from "./summarize/summarizer"
 import {keyBy} from 'lodash'
 import * as S from '@gnothi/schemas'
 import {insights_themes_response, insights_summarize_response} from '@gnothi/schemas/insights'

@@ -5,7 +5,7 @@ import {All as NotesAll} from "../Notes/List";
 
 import Grid from '@mui/material/Grid'
 import Filters from '../../Insights/Filters'
-import Insights from '../../Insights/Insights'
+import Insights from '../../Insights/Insights/Insights.tsx'
 import Entries from "./Entries"
 import Ask from '../../Insights/Insights/Ask'
 import {useStore} from "../../../../data/store";
