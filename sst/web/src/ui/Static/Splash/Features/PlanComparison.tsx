@@ -1,6 +1,6 @@
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
+import Button, {ButtonProps} from '@mui/material/Button';
 import {styles} from '../../../Setup/Mui'
 import * as React from 'react';
 import {Section, Skeleton2} from "../Home/Utils";
@@ -8,8 +8,8 @@ import Grid from '@mui/material/Grid';
 import Stack from '@mui/material/Stack';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
-import { FeatureIntro } from "../Utils";
-import { useTheme } from '@mui/material/styles';
+import {FeatureIntro} from "../Utils";
+import {useTheme} from '@mui/material/styles';
 import {Link} from "../../../Components/Link"
 import List from "@mui/material/List";
 import ListItem_ from "@mui/material/ListItem";
@@ -17,23 +17,50 @@ import CardActions from "@mui/material/CardActions";
 import CheckIcon from '@mui/icons-material/TaskAlt';
 import StarIcon from '@mui/icons-material/StarBorder';
 
+export const buttonDefaults = {
+  sx: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    marginBottom: 2
+  },
+  variant: 'contained',
+  size: 'small'
+} as unknown as ButtonProps
 
-
-export default function PlanComparison() {
+interface PlanComparison {
+  premiumFooter?: any
+  basicfooter?: any
+}
+export default function PlanComparison({
+  premiumFooter,
+  basicFooter,
+}: PlanComparison) {
   const checkIcon = <CheckIcon
     fontSize='inherit'
     color='secondary'
   />
-  return <Box
-    sx={{ mt: 10}}>
 
-    <Grid container
+  function renderDefaultFooter() {
+     return <Button
+        {...buttonDefaults}
+     >
+       Sign up
+     </Button>
+  }
+
+  return <Box
+    sx={{mt: 10}}>
+
+    <Grid
+      container
       direction='row'
       spacing={8}
       justifyContent='center'
-      >
+    >
 
-      <Grid item
+      <Grid
+        item
         xs={12} md={4}
       >
 
@@ -48,8 +75,8 @@ export default function PlanComparison() {
             borderColor: '#50577A',
             borderStyle: 'solid',
             borderWidth: '1px',
-        }}
-          >
+          }}
+        >
           <CardContent>
             <Typography
               variant="subtitle2"
@@ -110,7 +137,7 @@ export default function PlanComparison() {
               textAlign="left"
               color='black'
             >
-            Run dream interpretations, get feedback on entries, and create custom prompts to ask AI anything
+              Run dream interpretations, get feedback on entries, and create custom prompts to ask AI anything
             </Typography>
 
             <Typography
@@ -127,7 +154,7 @@ export default function PlanComparison() {
               textAlign="left"
               color='black'
             >
-            Use Magic Search to find anything from past entries in a flash, or ask your journal questions
+              Use Magic Search to find anything from past entries in a flash, or ask your journal questions
             </Typography>
 
 
@@ -138,7 +165,7 @@ export default function PlanComparison() {
               textAlign="left"
               color='#50627a'
             >
-            Personalized Support
+              Personalized Support
             </Typography>
 
             <Typography
@@ -146,19 +173,13 @@ export default function PlanComparison() {
               textAlign="left"
               color='black'
             >
-            Request a consultation to get help with onboarding so you can get the most out of Gnothi
+              Request a consultation to get help with onboarding so you can get the most out of Gnothi
             </Typography>
-             </CardContent>
+          </CardContent>
 
 
           <CardActions>
-              <Button
-                sx={{alignItems:'center', justifyContent:'center', width: '100%', marginBottom: 2}}
-                variant='contained'
-                size='small'
-                >
-                Sign up
-              </Button>
+            {premiumFooter? premiumFooter() : renderDefaultFooter()}
           </CardActions>
 
 
@@ -166,7 +187,7 @@ export default function PlanComparison() {
       </Grid>
 
       <Grid item
-        xs={12} md={4}
+            xs={12} md={4}
       >
         <Card
           sx={{
@@ -179,8 +200,8 @@ export default function PlanComparison() {
             borderColor: '#50577A',
             borderStyle: 'solid',
             borderWidth: '1px',
-        }}
-          >
+          }}
+        >
           <CardContent>
             <Typography
               variant="subtitle2"
@@ -213,7 +234,7 @@ export default function PlanComparison() {
               textAlign="left"
               color='#50627a'
             >
-            Unlimited journal essentials
+              Unlimited journal essentials
             </Typography>
 
             <Typography
@@ -284,7 +305,7 @@ export default function PlanComparison() {
               textAlign="left"
               color='#50627a'
             >
-            Community Support
+              Community Support
             </Typography>
 
             <Typography
@@ -293,19 +314,13 @@ export default function PlanComparison() {
               color='black'
               //marginBottom={2.5}
             >
-            Get access to videos, tutorials, and other information to learn how to take advantage of all the features
+              Get access to videos, tutorials, and other information to learn how to take advantage of all the features
             </Typography>
 
           </CardContent>
 
           <CardActions>
-              <Button
-                sx={{alignItems:'center', justifyContent:'center', width: '100%', marginBottom: 2}}
-                variant='contained'
-                size='small'
-                >
-                Sign up
-              </Button>
+            {basicFooter ? basicFooter() : renderDefaultFooter()}
           </CardActions>
         </Card>
       </Grid>

@@ -17,7 +17,7 @@ import GroupToolbar from "../Groups/View/Toolbar"
 import SharingModal from "../Sharing"
 import EntryModal from "../Entries/Modal"
 import BehaviorsModal from "../Behaviors/Modal"
-import AccountModal from '../Account/Modal'
+import PremiumModal from '../Account/PremiumModal.tsx'
 import AppBar from './AppBar'
 import Footer from '../../Footer'
 import {AcknowledgeChecker} from "../../Setup/Acknowledge.tsx";
@@ -59,16 +59,15 @@ export default function Layout() {
   //   return <Loading label="user" />
   // }
 
-
   // return <Box key={as}>
   return <>
-    <Box>
+    {/*<Box>*/}
       <AppBar />
       <Container maxWidth={false} disableGutters={disableGutters}>
         <Outlet />
       </Container>
       <Footer inApp={true} />
-    </Box>
+    {/*</Box>*/}
 
 
     <UserListener />
@@ -76,7 +75,7 @@ export default function Layout() {
     <SharingModal />
     <EntryModal />
     <BehaviorsModal />
-    <AccountModal />
+    <PremiumModal />
     <AcknowledgeChecker />
     <Errors />
   </>

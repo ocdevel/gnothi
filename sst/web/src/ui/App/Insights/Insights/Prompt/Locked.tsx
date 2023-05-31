@@ -5,26 +5,24 @@ import Box from "@mui/material/Box";
 import * as Link from "../../../../Components/Link.tsx"
 import {useStore} from "../../../../../data/store"
 import axios from "axios"
+import {useCallback} from "react";
+import {shallow} from "zustand/shallow";
 
-const PAYMENT_LINK = "https://buy.stripe.com/test_dR68wJ2kj6lc4es3cc"
+
 
 export default function Locked() {
-  const me = useStore(s => s.user?.me)
+  const [me, setPremiumModal] = useStore(s => [
+    s.user?.me,
+    s.setPremiumModal
+  ], shallow)
   if (!me?.id || me.premium) { return null }
-  const paymentLink = `${PAYMENT_LINK}?client_reference_id=${me.id}`
 
-  async function test() {
-    await axios.post(import.meta.env.VITE_API_HTTP  + "/stripe/webhook", {})
-  }
+  const openModal = useCallback(() => {setPremiumModal(true)}, [])
 
   return <Box>
     <Typography>This is a premium feature</Typography>
-    <Button variant="contained" color="primary" href={paymentLink} target="_blank">
+    <Button variant="contained" color="primary" onClick={openModal}>
       Upgrade
-    </Button>
-
-    <Button onClick={test}>
-      test
     </Button>
   </Box>
 }

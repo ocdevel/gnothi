@@ -32,9 +32,9 @@ const buttonSx = {
 }
 
 export function UserMenu() {
-  const [user, setAccountModal] = useStore(s => [
+  const [user, setPremiumModal] = useStore(s => [
     s.user?.viewer,
-    s.setAccountModal
+    s.setPremiumModal
   ], shallow)
   const logout = useStore(s => s.logout)
   const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(null);
@@ -44,9 +44,9 @@ export function UserMenu() {
     // {name: 'Profile', onClick: () => {
     //   handleCloseUserMenu()
     // }},
-    {name: 'Account', onClick: () => {
+    {name: 'Premium', onClick: () => {
       handleCloseUserMenu()
-      setAccountModal(true)
+      setPremiumModal(true)
     }},
     // {name: 'Settings', onClick: () => {
     //   handleCloseUserMenu()

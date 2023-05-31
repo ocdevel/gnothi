@@ -65,9 +65,9 @@ export const users_whoami_request = new Route(r.users_whoami_request, async (req
   }]
 })
 
-// list_response will be sent manually for all users we care about,
-// when we care about them. Group members when entring a group, etc. When called
-// directly via list_request, just returning [user, viewer]
+// list_response will be sent manually for all users we care about, when we care about them. Group members when
+// entering a group, etc. When called directly via list_request, just returning [user, viewer].
+// NOTE: whever list_response manually sent, be sure to run through S.Users.SantizeUser() to scrub
 export const users_list_request = new Route(r.users_list_request,async function(req, context) {
   const users =  [context.user]
 

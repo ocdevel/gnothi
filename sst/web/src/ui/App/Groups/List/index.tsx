@@ -10,7 +10,7 @@ import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import CardHeader from "@mui/material/CardHeader";
 import Modal from './Modal'
-import Pay from './Pay'
+// import Pay from './Pay'
 import {theme} from '../../../Setup/Mui'
 
 export default function List() {
