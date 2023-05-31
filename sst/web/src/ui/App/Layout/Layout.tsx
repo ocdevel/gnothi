@@ -12,8 +12,8 @@ import {styles} from '../../Setup/Mui'
 
 import Container from "@mui/material/Container";
 import {ErrorSnack} from "../../Components/Error";
-import GroupsToolbar from "../Groups/List/Toolbar"
-import GroupToolbar from "../Groups/View/Toolbar"
+// import GroupsToolbar from "../Groups/List/Toolbar"
+// import GroupToolbar from "../Groups/View/Toolbar"
 import SharingModal from "../Sharing"
 import EntryModal from "../Entries/Modal"
 import BehaviorsModal from "../Behaviors/Modal"
@@ -61,13 +61,13 @@ export default function Layout() {
 
   // return <Box key={as}>
   return <>
-    {/*<Box>*/}
+    <Box>
       <AppBar />
       <Container maxWidth={false} disableGutters={disableGutters}>
         <Outlet />
       </Container>
       <Footer inApp={true} />
-    {/*</Box>*/}
+    </Box>
 
 
     <UserListener />

@@ -10,6 +10,7 @@ import {Loading} from "../../Components/Routing.tsx";
 import Stack from "@mui/material/Stack";
 import Alert from "@mui/material/Alert";
 import * as dayjs from 'dayjs'
+import FeatureLayout from '../../Static/Splash/Features/FeatureLayout'
 
 const PAYMENT_LINK = "https://buy.stripe.com/test_dR68wJ2kj6lc4es3cc"
 
@@ -49,6 +50,7 @@ export default function PremiumModal() {
 
   function premiumActiveFooter() {
     const s = stripe_list_response
+    if (!s) {return null}
     const fmt = (x) => dayjs.unix(x).format('YYYY-MM-DD')
     debugger
     return <Alert severity="success" sx={{width:"100%"}}>
@@ -95,6 +97,7 @@ export default function PremiumModal() {
         premiumFooter={me.premium ? premiumActiveFooter : premiumInactiveFooter}
         basicFooter={me.premium ? basicInactiveFooter : basicActiveFooter}
       />
+      <FeatureLayout />
     </DialogContent>
   </FullScreenDialog>
 }

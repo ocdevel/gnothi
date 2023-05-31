@@ -23,6 +23,8 @@ import ProfileIcon from '@mui/icons-material/Person';
 import BackIcon from '@mui/icons-material/ArrowBackIosNewOutlined';
 import CircularProgress from "@mui/material/CircularProgress";
 import {shallow} from "zustand/shallow";
+import Switch from "@mui/material/Switch";
+import FormControlLabel from "@mui/material/FormControlLabel";
 
 const buttonSx = {
   fontWeight: 300,

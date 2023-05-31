@@ -34,7 +34,7 @@ export const insights_get_response = new Route(r.insights_get_response,async (re
   const promises = []
   // will be used to pair to which page called the insights client-side (eg list vs view)
   context.requestId = view
-  const usePrompt = false // Boolean(context.user.is_cool)
+  const usePrompt = Boolean(context.user.premium)
 
   const entriesAll = await m.entries.getByIds(entry_ids)
   const entriesHash = Object.fromEntries(entriesAll.map(e => [e.id, e]))

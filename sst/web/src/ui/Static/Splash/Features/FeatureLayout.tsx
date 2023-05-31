@@ -6,8 +6,6 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import {styles} from '../../../Setup/Mui'
 import * as React from 'react';
-import Tabs from '@mui/material/Tabs';
-import Tab from '@mui/material/Tab';
 import Prompt from "./Prompt"
 import BehaviorTracking from "./BehaviorTracking";
 import Organization from "./Organization";
@@ -17,104 +15,69 @@ import ThemesSummaries from "./ThemesSummaries";
 import PremPricingCTA from "./PremPricingCTA";
 import OrganizationBasicPlan from "./OrganizationBasicPlan";
 import PlanComparison from "./PlanComparison";
+import {useStore} from '../../../../data/store'
+import Tabs from '../../../Components/Tabs'
+import {shallow} from "zustand/shallow";
+
 
 const {spacing, colors, sx} = styles
 
-interface TabPanelProps {
-  children?: React.ReactNode;
-  index: number;
-  value: number;
-}
-
-
-
-
 
 export default function FeatureLayout() {
-    return <Box
-      sx={{ mt: 10}}>
-      <Typography
-          variant="h2"
-          textAlign='center'
-          sx={{mb:2}}
-      >
-        Explore the features and compare plans
-      </Typography>
-
-      <BasicTabs/>
-
-
-    </Box>
-}
-
-function TabPanel(props: TabPanelProps) {
-  const { children, value, index, ...other } = props;
-
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`simple-tabpanel-${index}`}
-      aria-labelledby={`simple-tab-${index}`}
-      {...other}
+  return <Box
+    sx={{mt: 10}}>
+    <Typography
+      variant="h2"
+      textAlign='center'
+      sx={{mb: 2}}
     >
-      {value === index && (
-        <Box sx={{ p: 3 }}>
-          <Typography>{children}</Typography>
-        </Box>
-      )}
-    </div>
-  );
-}
-
-function a11yProps(index: number) {
-  return {
-    id: `simple-tab-${index}`,
-    'aria-controls': `simple-tabpanel-${index}`,
-  };
+      Explore the features and compare plans
+    </Typography>
+    <BasicTabs/>
+  </Box>
 }
 
 export function BasicTabs() {
-  const [value, setValue] = React.useState(0);
+  const [me] = useStore(s => [s.user?.me], shallow)
+  const extraTabs = me ? [] : [{
+    value: "pricing",
+    label: "Pricing",
+    render: () => <>
+      <PlanComparison/>
+    </>
+  }]
 
-  const handleChange = (event: React.SyntheticEvent, newValue: number) => {
-    setValue(newValue);
-  };
-
-  return (
-    <Box sx={{ width: '100%' }}>
-      <Box sx={{ width: '100%', bgcolor: 'transparent' }}>
-      <Tabs value={value} onChange={handleChange} centered>
-        <Tab label="Free" />
-        <Tab label="Premium" />
-        {/*<Tab label="Pricing" />*/}
-      </Tabs>
-
+  return <Box sx={{width: '100%'}}>
+    <Box sx={{width: '100%', backgroundColor: 'transparent'}}>
+      <Tabs
+        defaultTab="premium"
+        tabs={[{
+          value: "free",
+          label: "Free",
+          render: () => <>
+            <Books/>
+            <BehaviorTracking/>
+            <ThemesSummaries/>
+            <OrganizationBasicPlan/>
+            <PremPricingCTA/>
+          </>
+        }, {
+          value: "premium",
+          label: "Premium",
+          render: () => <>
+            <Prompt/>
+            <BehaviorTracking/>
+            <ThemesSummaries/>
+            <Organization/>
+            <Books/>
+            <PremPricingCTA/>
+          </>
+        },
+        ...extraTabs
+        ]}
+      />
     </Box>
-      <TabPanel value={value} index={0}>
-        <Books/>
-        <BehaviorTracking/>
-        <ThemesSummaries/>
-        <OrganizationBasicPlan/>
-        <PremPricingCTA/>
-      </TabPanel>
-
-      <TabPanel value={value} index={1}>
-        {/* <FreeVsPremium/> */}
-        <Prompt/>
-        <BehaviorTracking/>
-        <ThemesSummaries/>
-        <Organization/>
-        <Books/>
-        <PremPricingCTA/>
-      </TabPanel>
-
-      <TabPanel value={value} index={2}>
-        <PlanComparison/>
-      </TabPanel>
-
-    </Box>
-  );
+  </Box>
 }
 
 
