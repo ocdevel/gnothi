@@ -22,6 +22,7 @@ import {useNavigate} from "react-router-dom";
 import ProfileIcon from '@mui/icons-material/Person';
 import BackIcon from '@mui/icons-material/ArrowBackIosNewOutlined';
 import CircularProgress from "@mui/material/CircularProgress";
+import {shallow} from "zustand/shallow";
 
 const buttonSx = {
   fontWeight: 300,
@@ -31,7 +32,10 @@ const buttonSx = {
 }
 
 export function UserMenu() {
-  const user = useStore(s => s.user.viewer)
+  const [user, setAccountModal] = useStore(s => [
+    s.user?.viewer,
+    s.setAccountModal
+  ], shallow)
   const logout = useStore(s => s.logout)
   const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(null);
   const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) => setAnchorElUser(event.currentTarget);
@@ -40,9 +44,10 @@ export function UserMenu() {
     // {name: 'Profile', onClick: () => {
     //   handleCloseUserMenu()
     // }},
-    // {name: 'Account', onClick: () => {
-    //   handleCloseUserMenu()
-    // }},
+    {name: 'Account', onClick: () => {
+      handleCloseUserMenu()
+      setAccountModal(true)
+    }},
     // {name: 'Settings', onClick: () => {
     //   handleCloseUserMenu()
     // }},

@@ -100,7 +100,33 @@ export const routes = {
       e: 'users_timezone_put_response',
       s: users_list_response,
       t: {ws: true},
-      event_as: 'users_list_request'
+      event_as: 'users_list_response'
+    }
+  },
+
+  stripe_cancel_request: {
+    i: {
+      e: "stripe_cancel_request",
+      s: Passthrough,
+      t: {ws: true},
+      snoopable: false
+    },
+    o: {
+      e: 'void',
+      s: z.void(),
+    }
+  },
+  stripe_list_request: {
+    i: {
+      e: "stripe_list_request",
+      s: Passthrough,
+      t: {ws: true},
+      snoopable: false
+    },
+    o: {
+      e: 'stripe_list_response',
+      s: Passthrough,
+      t: {ws: true},
     }
   }
 }

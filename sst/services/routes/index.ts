@@ -8,6 +8,7 @@ import * as notifs from './notifs'
 import * as shares from './shares'
 import * as insights from './insights'
 import * as notes from './notes'
+import * as stripe from './stripe'
 
 export default {
   ...entries,
@@ -19,5 +20,6 @@ export default {
   ...notifs,
   ...shares,
   ...insights,
-  ...notes
+  ...notes,
+  ...stripe,
 }

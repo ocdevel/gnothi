@@ -46,10 +46,13 @@ export interface AppSlice {
   // changeAs: (id: string) => Promise<void>
   profile: string | null
   setProfile: (profile: any) => void
+  accountModal: boolean
+  setAccountModal: (accountModal: boolean) => void
 
   // ----- Entry
   entryModal: EntryModal
   setEntryModal: (entryModal: EntryModal) => void
+
 
   // ----- Other
   selectedTags: {[k: string]: boolean}
@@ -132,6 +135,8 @@ export const appSlice: StateCreator<
 
   profile: null,
   setProfile: (profile) => set({profile}),
+  accountModal: false,
+  setAccountModal: (accountModal) => set({accountModal}),
 
   // ----- Entry
   entryModal: null,

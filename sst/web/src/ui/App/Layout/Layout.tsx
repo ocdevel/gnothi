@@ -17,11 +17,11 @@ import GroupToolbar from "../Groups/View/Toolbar"
 import SharingModal from "../Sharing"
 import EntryModal from "../Entries/Modal"
 import BehaviorsModal from "../Behaviors/Modal"
+import AccountModal from '../Account/Modal'
 import {shallow} from "zustand/shallow";
 import AppBar from './AppBar'
 import Footer from '../../Footer'
 import {AcknowledgeChecker} from "../../Setup/Acknowledge.tsx";
-
 
 
 // Have this separate since it'd otherwise cause a re-render after every lastJsonMessage, etc.
@@ -102,6 +102,7 @@ export default function Layout() {
     <SharingModal />
     <EntryModal />
     <BehaviorsModal />
+    <AccountModal />
     <AcknowledgeChecker />
     <Errors />
   </>
