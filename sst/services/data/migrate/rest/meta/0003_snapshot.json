@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "pg",
-  "id": "78d80da4-a857-4278-9521-ebac30b9fb80",
+  "id": "87d5cd30-29b5-468d-a26e-246c1b7239e9",
   "prevId": "31f77927-9392-4f9f-a8a0-70f3b1782f18",
   "tables": {
     "books": {
@@ -1561,6 +1561,12 @@
           "primaryKey": false,
           "notNull": false,
           "default": false
+        },
+        "stripe_id": {
+          "name": "stripe_id",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {
@@ -1610,6 +1616,13 @@
           "name": "ix_users_email",
           "columns": [
             "email"
+          ],
+          "isUnique": true
+        },
+        "ix_users_stripe_id": {
+          "name": "ix_users_stripe_id",
+          "columns": [
+            "stripe_id"
           ],
           "isUnique": true
         }

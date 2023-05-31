@@ -15,44 +15,40 @@ export const main: APIGatewayProxyHandlerV2 = async (request, context: any) => {
   const endpointSecret = Config.STRIPE_WHSEC
 
   const sig = request.headers['stripe-signature'];
-
   let event
-
   try {
     event = stripe.webhooks.constructEvent(request.body, sig, endpointSecret)
   } catch (err) {
     return {statusCode: 400, body: JSON.stringify({message: `Webhook Error: ${err.message}`})}
   }
 
-  const user_id = event.data.object.client_reference_id
   console.log(event)
 
+  function getStripeId() {
+    // const stripe_id = event.data.object.customer
+    const stripe_id = event.data.object.subscription
+    if (!stripe_id) { throw new Error(`Stripe: missing unique id attr to manage subscription. Tried event.data.object.subscription. ${JSON.stringify(event)}`) }
+    return stripe_id
+  }
+
   // See ./README.md for comments on which events we should be listening for
-  // IMPORTANT: if I change this, also change the webhook's events in Stripe dashboard!
-  const eventTypes = {
-    activate: ['customer.subscription.created'],
-    deactivate: ['customer.subscription.deleted'],
-    other: ['customer.subscription.updated', 'invoice.payment_succeeded']
-  }
-  const type_ = event.type
-
-   if (!(eventTypes.activate.includes(type_) || eventTypes.deactivate.includes(type_))) {
-    return {statusCode: 200, body: JSON.stringify({message: 'Event type not considered'})}
-  }
-
-  // // Using both variables here, just to be DOUBLE sure
-  // const activate = eventTypes.activate.includes(type_)
-  // const deactivate = eventTypes.deactivate.includes(type_)
-  // if (activate && deactivate || !(activate || deactivate)) {
-  //   throw new Error(`Stripe: conflict determining subscription status ${event.type}`)
-  // }
-  // const premium = activate && !deactivate
-  const premium = eventTypes.activate.includes(type_)
-
-  if (eventTypes.activate.includes(type_)) {
+  if (event.type === "checkout.session.completed") {
+    const user_id = event.data.object.client_reference_id
+    const stripe_id = getStripeId()
+    if (!user_id && stripe_id) { throw new Error(`Stripe: error on completion ${JSON.stringify(event)}`) }
     await db.drizzle.update(users)
-      .set({premium})
-      .where(eq(users.id, user_id)).returning()
+      .set({stripe_id, premium: true})
+      .where(eq(users.id, user_id))
+  } else if (event.type === "customer.subscription.completed") {
+    // This is really where their subscription is activated, but we don't have client_reference_id here,
+    // so doing it in the above step
+  } else if (event.type === "customer.subscription.deleted") {
+    const stripe_id = getStripeId()
+    await db.drizzle.update(users)
+      .set({premium: false}) // don't delete stripe_id from user, might need for cancellation issues
+      .where(eq(users.stripe_id, stripe_id))
+  } else {
+    console.log("Stripe: Unhandled event type", event.type)
   }
 
   // Return a 200 response to acknowledge receipt of the event

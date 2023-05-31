@@ -45,10 +45,20 @@ export function Misc(context: sst.StackContext) {
     fnMigrate: fnMigrate.functionArn,
   })
 
-  // const initScript = new sst.Script(stack, "script_init", {
-  //   onCreate: {
-  //     ...initProps,
-  //     enableLiveDev: false,
+  // Need to duplicate the migrate function unfortunately, since the one above is `enableLiveDev: true`.
+  // Ideally let's have an `onCreate` with `params: {wipe:true,first:true}` and this onUpdate; then
+  // remove the above function. I'm hanging tight on that until I trust the idea a bit more.
+  // Edit: actually, I can't even get this working. Revisit later, I'll just run migrations manually for now
+  // const fnMigrateScript = withRds(stack, "FnMigrateScript2", {
+  //   handler: "services/data/migrate/migrate.main",
+  //   copyFiles: [{from: "services/data/migrate"}],
+  //   bind: [APP_REGION],
+  //   enableLiveDev: false
+  // })
+  // const migrateScript = new sst.Script(stack, "MigrateScript", {
+  //   onUpdate: fnMigrateScript,
+  //   params: {
+  //     rest: true
   //   }
   // })
 

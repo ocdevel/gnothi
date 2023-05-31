@@ -28,7 +28,8 @@ export const users_list_response = User.pick({
   id: true, email: true, timezone: true,
   habitica_user_id: true, habitica_api_token: true,
   is_cool: true, paid: true,
-  accept_terms_conditions: true, accept_disclaimer: true, accept_privacy_policy: true
+  accept_terms_conditions: true, accept_disclaimer: true, accept_privacy_policy: true,
+  premium: true
 })
 export type users_list_response = z.infer<typeof users_list_response>
 

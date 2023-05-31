@@ -52,6 +52,7 @@ export const users = pgTable('users', {
   accept_privacy_policy: timestamp("accept_privacy_policy"),
 
   premium: boolean("premium").default(false),
+  stripe_id: varchar("stripe_id")
 
   // ws_id = sa.Column(sa.Unicode, index=True)
   // as = FKCol('users.id')
@@ -64,6 +65,7 @@ export const users = pgTable('users', {
     ix_users_updated_at: index("ix_users_updated_at").on(t.updated_at),
     ix_users_username: uniqueIndex("ix_users_username").on(t.username),
     ix_users_email: uniqueIndex("ix_users_email").on(t.email),
+    ix_users_stripe_id: uniqueIndex("ix_users_stripe_id").on(t.stripe_id),
   }
 })
 
