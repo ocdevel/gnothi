@@ -9,6 +9,7 @@ const r = Routes.routes
 
 export const users_everything_request = new Route(r.users_everything_request, async (req, context) => {
   const promises: Promise<any>[] = [
+    'users_whoami_request',
     'users_list_request',
 
     'tags_list_request',
@@ -57,14 +58,20 @@ export const users_everything_response = new Route(r.users_everything_response, 
   return []
 })
 
+export const users_whoami_request = new Route(r.users_whoami_request, async (req, context) => {
+  return [{
+    uid: context.uid,
+    vid: context.vid,
+  }]
+})
+
+// list_response will be sent manually for all users we care about,
+// when we care about them. Group members when entring a group, etc. When called
+// directly via list_request, just returning [user, viewer]
 export const users_list_request = new Route(r.users_list_request,async function(req, context) {
-  // main user always comes first
   const users =  [context.user]
 
   // TODO fetch shares
-  // const users = await DB.selectFrom("users")
-  //   .where("id", "=", context.user.id)
-  //   .executeTakeFirst()
   return users
 })
 

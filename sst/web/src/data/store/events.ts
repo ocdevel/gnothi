@@ -23,9 +23,6 @@ import {Res, ResUnwrap} from "@gnothi/schemas/api";
 import {z} from 'zod'
 import {behaviorsSlice, BehaviorsSlice} from "./behaviors";
 import {SharingSlice} from "./sharing";
-import dayjs from "dayjs";
-import {tz as momentTz} from 'moment-timezone'
-const tznames = momentTz.names()
 
 const r = Routes.routes
 // const responses = Object.fromEntries(
@@ -40,8 +37,8 @@ export interface EventsSlice {
   }
   lastRes?: Api.Res,
   res: {
-    auth_register_response?: Api.ResUnwrap<Auth.auth_register_response>
     users_list_response?: Api.ResUnwrap<Users.users_list_response>
+    users_whoami_response?: Api.ResUnwrap<Users.users_whoami_response>
     tags_list_response?: Api.ResUnwrap<z.infer<typeof r.tags_list_request.o.s>>
     tags_post_response?: Api.ResUnwrap<Tags.tags_post_response>
     entries_list_response?: Api.ResUnwrap<Entries.entries_list_response>
@@ -76,7 +73,6 @@ export interface EventsSlice {
   hooks: {
     tags_list_response: (res: Api.ResUnwrap<z.infer<typeof r.tags_list_request.o.s>>) => void
     fields_entries_list_response: BehaviorsSlice['behaviors']['fields_entries_list_response']
-    users_list_response: (res: Api.ResUnwrap<Users.users_list_response>) => void
   }
   handleEvent: (response: Api.Res) => void
 
@@ -121,21 +117,6 @@ export const eventsSlice: StateCreator<
     },
     fields_entries_list_response: (res) => {
       get().behaviors.field_entries_list_response(res)
-    },
-    users_list_response: (res) => {
-      // if user has no timezone, set it. Vital for behaviors especially. They can manually set it in profile
-
-      // check if coming from a put_response (event, rather than event_as). Don't have access at this point, downside
-      // is it will keep trying (infinite loop)
-      // if (res.action !== 'users_get_response') {return}
-
-      const user = res.first
-      // account for null, "null" (bug I can't find), and anything else.
-      if (!tznames.includes(user.timezone)) {
-        // Guess their default timezone (TODO should call this out?)
-        const timezone = dayjs.tz.guess()
-        get().send("users_timezone_put_request", {timezone})
-      }
     }
   },
 

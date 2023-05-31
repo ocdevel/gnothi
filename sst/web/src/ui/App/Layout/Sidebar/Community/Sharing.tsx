@@ -9,7 +9,7 @@ interface UserSwitcher {
   nShares?: number
 }
 export function UserSwitcher({userId, nShares=0}: UserSwitcher) {
-  const {me, as} = useStore(s => s.user)
+  const {me, as} = useStore(s => s.user?.me)
   const users = useStore(s => s.res.users_list_response?.hash)
   const setAs = useStore(a => a.setAs)
   const notifs = useStore(s => s.res.notifs_notes_list_response?.hash)

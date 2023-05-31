@@ -2,14 +2,11 @@ import {z} from 'zod'
 
 export const Events = z.enum([
   'void',
-  'wipe_request',
-  'auth_login_request',
-  'auth_login_response',
-  'auth_register_request',
-  'auth_register_response',
 
   'users_everything_request',
   'users_everything_response',
+  'users_whoami_request',
+  'users_whoami_response',
   'users_list_request',
   'users_list_response',
   'users_people_list_request',

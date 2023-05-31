@@ -20,21 +20,26 @@ export const User = createInsertSchema(users, {
   accept_terms_conditions: dateCol().optional(),
   accept_disclaimer: dateCol().optional(),
   accept_privacy_policy: dateCol().optional(),
-
 })
 export type User = z.infer<typeof User>
 
-export const users_list_response = User.pick({
-  id: true, email: true, timezone: true,
-  habitica_user_id: true, habitica_api_token: true,
-  is_cool: true, paid: true,
-  accept_terms_conditions: true, accept_disclaimer: true, accept_privacy_policy: true,
-  premium: true
+export const UserSanitized = User.pick({
+  id: true, email: true, timzeone: true
 })
+export type UserSanitized = z.infer<typeof UserSanitized>
+
+export const users_list_response = User.or(UserSanitized)
 export type users_list_response = z.infer<typeof users_list_response>
+
+export const users_whoami_response = z.object({
+  uid: z.string(),
+  vid: z.string()
+})
+export type users_whoami_response = z.infer<typeof users_whoami_response>
 
 export const users_timezone_put_request = User.pick({timezone: true})
 export type users_timezone_put_request = z.infer<typeof users_timezone_put_request>
+
 
 export const routes = {
   users_everything_request: {
@@ -61,6 +66,19 @@ export const routes = {
       e: 'void',
       s: z.void(),
       t: {}
+    }
+  },
+
+  users_whoami_request: {
+    i: {
+      e: 'users_whoami_request',
+      s: Passthrough,
+      t: {ws: true},
+    },
+    o: {
+      e: 'users_whoami_response',
+      s: users_whoami_response,
+      t: {ws: true},
     }
   },
 

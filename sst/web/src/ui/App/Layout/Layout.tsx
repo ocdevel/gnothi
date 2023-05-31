@@ -18,10 +18,10 @@ import SharingModal from "../Sharing"
 import EntryModal from "../Entries/Modal"
 import BehaviorsModal from "../Behaviors/Modal"
 import AccountModal from '../Account/Modal'
-import {shallow} from "zustand/shallow";
 import AppBar from './AppBar'
 import Footer from '../../Footer'
 import {AcknowledgeChecker} from "../../Setup/Acknowledge.tsx";
+import UserListener from './UserListener.tsx'
 
 
 // Have this separate since it'd otherwise cause a re-render after every lastJsonMessage, etc.
@@ -30,32 +30,6 @@ function SetupApi() {
   return null
 }
 
-function UserListener() {
-  const setUser = useStore(useCallback(state => state.setUser, []))
-  const [me, users_list_response_first] = useStore(state => [
-    state.user?.me,
-    state.res.users_list_response?.first,
-  ], shallow)
-
-  // listen to changes across, me, as, and users-list. Only set the viewer
-  // when things needed are present.
-  useEffect(() => {
-    if (!users_list_response_first) {return}
-    if (!me) {
-      setUser({
-        me: users_list_response_first,
-        viewer: users_list_response_first,
-        as: null
-      })
-      return
-    }
-    // TODO handle as switch
-    // if (viewer.asId && hash[viewer.asId]) {
-    //   get().send('users_everything_request', {})
-    // }
-  }, [me, users_list_response_first])
-  return null
-}
 
 function Errors() {
   // const error = useStore(state => state.apiError);

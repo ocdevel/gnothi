@@ -44,11 +44,7 @@ const send = useStore(s => s.send)
 
 export default function Habitica() {
   const send = useStore(s => s.send)
-
-  // FIXME I need to capture user changse, which s.user.me doesn't change (even on users_list_response). this will
-  // break once we add sharing, so find a solution
-  // const user = useStore(s => s.user.me)
-  const user = useStore(s => s.res.users_list_response?.first)
+  const user = useStore(s => s.user?.me)
 
   const [showModal, setShowModal] = useState(false)
   const form = useForm({
