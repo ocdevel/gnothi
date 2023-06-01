@@ -46,6 +46,7 @@ export const stripe_list_request = new Route(r.stripe_list_request, async (req, 
 export const stripe_webhook_request = new Route(r.stripe_webhook_request, async (req, context) => {
   const stripe = getStripe()
   const endpointSecret = Config.STRIPE_WHSEC
+  const {drizzle} = context.db
 
   const sig = req.headers['stripe-signature'];
   let event
@@ -57,14 +58,14 @@ export const stripe_webhook_request = new Route(r.stripe_webhook_request, async 
 
   console.log(event)
 
-  let rows: User[] = []
+  let rows: User[]
   // See ./README.md for comments on which events we should be listening for
   if (event.type === "checkout.session.completed") {
     const user_id = event.data.object.client_reference_id
     const stripe_id = event.data.object.subscription
     if (!stripe_id) { throw new Error(`Stripe: missing id attr to create subscription. Tried event.data.object.subscription. ${JSON.stringify(event)}`) }
     if (!user_id && stripe_id) { throw new Error(`Stripe: error on completion ${JSON.stringify(event)}`) }
-    rows = await db.drizzle.update(users)
+    rows = await drizzle.update(users)
       .set({stripe_id, premium: true})
       .where(eq(users.id, user_id))
       .returning()
@@ -74,7 +75,7 @@ export const stripe_webhook_request = new Route(r.stripe_webhook_request, async 
   } else if (event.type === "customer.subscription.deleted") {
     const stripe_id = event.data.object.id
     if (!stripe_id) { throw new Error(`Stripe: missing id attr to create subscription. Tried event.data.object.subscription. ${JSON.stringify(event)}`) }
-    rows = await db.drizzle.update(users)
+    rows = await drizzle.update(users)
       .set({premium: false}) // don't delete stripe_id from user, might need for cancellation issues
       .where(eq(users.stripe_id, stripe_id))
       .returning()
@@ -82,20 +83,18 @@ export const stripe_webhook_request = new Route(r.stripe_webhook_request, async 
     console.log("Stripe: Unhandled event type", event.type)
   }
 
-  // TODO this should be users_me_response
   // update the user of new subscription
-  if (rows.length) {
-    // At this point the user was Stripe, not our user here. Set the context from fake to real
+  if (rows?.length) {
     const user = rows[0]
-    const context_ = {...context, user, uid: user.id}
-    await context.handleRes(r.users_list_request.o, {data: rows}, context_)
+    // At this point the user was Stripe, not our user here. Set the context from fake to real
+    const context_ = await context.clone({user, vid: null})
     if (user.premium) {
       // mark entries for re-evaluation via OpenAI (MUCH higher quality output)
-      await db.drizzle.update(entries).set({ai_summarize_state: "todo"})
+      await drizzle.update(entries).set({ai_summarize_state: "todo"})
         .where(eq(entries.user_id, user.id))
-      // Then do the recalculation
-      await context.handleReq({event: "users_everything_request", data: {}}, context_)
     }
+
+    await context_.handleReq({event: 'users_everything_request', data: {}}, context_)
   }
 
   // Send acknowledgement receipt to stripe

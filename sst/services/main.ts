@@ -113,7 +113,7 @@ const handleReq: FnContext['handleReq'] = async (req, fnContext) => {
         data: e.toString()
       })
     }
-    Logger.error({message: e.toString(), data: e.stackTrace, event: req.event})
+    Logger.error({message: e.toString(), data: {stack: e.stack}, event: req.event})
     debugger
   }
   return await handleRes(

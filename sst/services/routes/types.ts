@@ -52,6 +52,9 @@ type ContextArgs = {
   handleReq: HandleReq
 }
 export class FnContext {
+  // kept around for cloning
+  args: ContextArgs
+
   everyone?: false
 
   requestId?: string
@@ -99,18 +102,20 @@ export class FnContext {
   vid: string
   snooping: boolean
 
-  constructor({db, user, vid, everyone, requestId, finalRes, connectionId, handleRes, handleReq}: ContextArgs) {
-    this.db = db
-    this.uid = user.id
-    this.user = user
-    this.vid = vid || user.id
+  constructor(args: ContextArgs) {
+    this.args = args
 
-    this.everyone = everyone
-    this.requestId = requestId
-    this.finalRes = finalRes
-    this.connectionId = connectionId
-    this.handleRes = handleRes
-    this.handleReq = handleReq
+    this.db = args.db
+    this.uid = args.user.id as string
+    this.user = args.user
+    this.vid = args.vid || this.uid
+
+    this.everyone = args.everyone
+    this.requestId = args.requestId
+    this.finalRes = args.finalRes
+    this.connectionId = args.connectionId
+    this.handleRes = args.handleRes
+    this.handleReq = args.handleReq
 
     this.m = {
       habitica: new Habitica(this),
@@ -129,8 +134,13 @@ export class FnContext {
     this.viewer = viewer
   }
 
-  clone() {
-    // TODO clone properties necessary to propagate, but not those which should be different
+  async clone(newContext: Partial<ContextArgs>) {
+    const c = new FnContext({
+      ...this.args,
+      ...newContext,
+    })
+    await c.init()
+    return c
   }
 }
 

@@ -1,6 +1,6 @@
 import {Routes} from '@gnothi/schemas'
 import {FnContext, Route} from '../types'
-import {users} from '../../data/schemas/users'
+import {users, User} from '../../data/schemas/users'
 import {and, eq} from 'drizzle-orm'
 import {DB} from '../../data/db'
 import {entriesUpsertResponse} from '../entries'
@@ -46,11 +46,8 @@ export const users_everything_response = new Route(r.users_everything_response, 
     console.log(`Fixing: stuck ${i}`)
     // Detatch the context from whomever triggered this. That's because user.id might be referenced (eg, in fetching tags
     // in entriesUpsertResponse) and we don't want to send anything via websocket.
-    const detachedContext = new FnContext({
-      db: context.db,
-      user: {id: stuckEntry.user_id},
-      handleRes: context.handleRes,
-      handleReq: context.handleReq
+    const detachedContext = await context.clone({
+      user: {id: stuckEntry.user_id} as User,
     });
 
     await entriesUpsertResponse(stuckEntry, detachedContext);

@@ -52,7 +52,6 @@ export default function PremiumModal() {
     const s = stripe_list_response
     if (!s) {return null}
     const fmt = (x) => dayjs.unix(x).format('YYYY-MM-DD')
-    debugger
     return <Alert severity="success" sx={{width:"100%"}}>
       <Stack spacing={1}>
         <Typography>Premium is Active</Typography>
