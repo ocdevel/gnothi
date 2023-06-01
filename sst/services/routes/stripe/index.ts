@@ -1,6 +1,7 @@
 import {Routes} from '@gnothi/schemas'
 import {FnContext, Route} from '../types'
 import {users, User} from '../../data/schemas/users'
+import {entries, Entry} from '../../data/schemas/entries'
 import {and, eq} from 'drizzle-orm'
 import {DB} from '../../data/db'
 import Stripe from 'stripe'
@@ -88,6 +89,13 @@ export const stripe_webhook_request = new Route(r.stripe_webhook_request, async 
     const user = rows[0]
     const context_ = {...context, user, uid: user.id}
     await context.handleRes(r.users_list_request.o, {data: rows}, context_)
+    if (user.premium) {
+      // mark entries for re-evaluation via OpenAI (MUCH higher quality output)
+      await db.drizzle.update(entries).set({ai_summarize_state: "todo"})
+        .where(eq(entries.user_id, user.id))
+      // Then do the recalculation
+      await context.handleReq({event: "users_everything_request", data: {}}, context_)
+    }
   }
 
   // Send acknowledgement receipt to stripe
