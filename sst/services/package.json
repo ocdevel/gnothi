@@ -19,7 +19,7 @@
     "@aws-sdk/util-utf8-node": "^3.259.0",
     "aws-jwt-verify": "^4.0.0",
     "aws-sdk": "^2.1378.0",
-    "drizzle-orm": "^0.25.4",
+    "drizzle-orm": "^0.26.4",
     "fernet-nodejs": "^1.0.6",
     "gpt-tokenizer": "^2.0.0",
     "openai": "^3.2.1",
