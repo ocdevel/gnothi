@@ -7,6 +7,7 @@ import {useStore} from "@gnothi/web/src/data/store";
 import {useEffect, useCallback} from "react";
 import Error from '@gnothi/web/src/ui/Components/Error'
 import {Loading} from '@gnothi/web/src/ui/Components/Routing'
+import Banner from '../../Components/Banner.tsx'
 
 import {styles} from '../../Setup/Mui'
 
@@ -63,6 +64,7 @@ export default function Layout() {
   return <>
     <Box>
       <AppBar />
+      <Banner />
       <Container maxWidth={false} disableGutters={disableGutters}>
         <Outlet />
       </Container>

@@ -124,46 +124,6 @@ export const routes = {
       event_as: 'users_list_response'
     }
   },
-
-  // this is made an exception for as a Handler type
-  stripe_webhook_request: {
-    i: {
-      e: "stripe_webhook_request",
-      s: Passthrough,
-      t: {stripe: true},
-    },
-    o: {
-      e: 'void',
-      s: Passthrough,
-      t: {stripe: true},
-    }
-  },
-
-  stripe_cancel_request: {
-    i: {
-      e: "stripe_cancel_request",
-      s: Passthrough,
-      t: {ws: true},
-      snoopable: false
-    },
-    o: {
-      e: 'void',
-      s: z.void(),
-    }
-  },
-  stripe_list_request: {
-    i: {
-      e: "stripe_list_request",
-      s: Passthrough,
-      t: {ws: true},
-      snoopable: false
-    },
-    o: {
-      e: 'stripe_list_response',
-      s: Passthrough,
-      t: {ws: true},
-    }
-  }
 }
 
 

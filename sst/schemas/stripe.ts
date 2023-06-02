@@ -19,6 +19,18 @@ export const routes = {
     }
   },
 
+  stripe_webhook_success: {
+    // no input triggers on this; it's sent manually inside the webhook handler.
+    // Just make sure not to create a route off in routes/*
+    i: {},
+    o: {
+      e: "stripe_webhook_success",
+      s: Passthrough,
+      t: {ws: true},
+      keyby: "id"
+    }
+  },
+
   // The cancel request submits cancellation to stripe API, and the webhook above actually updates the user, so
   // don't return anything
   stripe_cancel_request: {

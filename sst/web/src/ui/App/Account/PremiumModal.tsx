@@ -9,6 +9,7 @@ import PlanComparison, {buttonDefaults} from '../../Static/Splash/Features/PlanC
 import {Loading} from "../../Components/Routing.tsx";
 import Stack from "@mui/material/Stack";
 import Alert from "@mui/material/Alert";
+import Banner from "../../Components/Banner"
 import * as dayjs from 'dayjs'
 import FeatureLayout from '../../Static/Splash/Features/FeatureLayout'
 
@@ -92,6 +93,7 @@ export default function PremiumModal() {
 
   return <FullScreenDialog title={"Premium"} open={premiumModal} onClose={close}>
     <DialogContent>
+      <Banner />
       <PlanComparison
         premiumFooter={me.premium ? premiumActiveFooter : premiumInactiveFooter}
         basicFooter={me.premium ? basicInactiveFooter : basicActiveFooter}

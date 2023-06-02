@@ -8,6 +8,7 @@ import {Notifs} from './notifs'
 import {Auth} from './auth'
 import {Insights} from './insights'
 import {Notes} from './notes'
+import {Stripe} from './stripe'
 
 export * as Routes from './routes'
 
@@ -21,5 +22,6 @@ export const routes = {
   ...Notifs.routes,
   ...Auth.routes,
   ...Insights.routes,
-  ...Notes.routes
+  ...Notes.routes,
+  ...Stripe.routes
 }

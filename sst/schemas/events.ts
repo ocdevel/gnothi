@@ -28,9 +28,10 @@ export const Events = z.enum([
   'users_timezone_put_response',
 
   'stripe_cancel_request',
-  'stripe_cancel_response',
   'stripe_list_request',
   'stripe_list_response',
+  'stripe_webhook_request',
+  'stripe_webhook_success',
 
   'entries_list_request',
   'entries_list_response',

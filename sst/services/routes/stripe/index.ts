@@ -8,6 +8,7 @@ import Stripe from 'stripe'
 import {Config} from 'sst/node/config'
 import {db} from "../../data/dbSingleton";
 import {GnothiError} from "../errors";
+import {z} from 'zod'
 
 const r = Routes.routes
 
@@ -89,14 +90,27 @@ export const stripe_webhook_request = new Route(r.stripe_webhook_request, async 
     // At this point the user was Stripe, not our user here. Set the context from fake to real
     const context_ = await context.clone({user, vid: null})
     if (user.premium) {
-      // mark entries for re-evaluation via OpenAI (MUCH higher quality output)
-      await drizzle.update(entries).set({ai_summarize_state: "todo"})
-        .where(eq(entries.user_id, user.id))
+      await upgradeAccount(context_, event)
     }
-
     await context_.handleReq({event: 'users_everything_request', data: {}}, context_)
   }
 
   // Send acknowledgement receipt to stripe
   return [{message: 'Success'}]
 })
+
+
+async function upgradeAccount(context: FnContext, data: object) {
+  const {user, db: {drizzle}} = context
+  await Promise.all([
+    // Mark entries for re-evaluation via OpenAI (MUCH higher quality output)
+    drizzle.update(entries).set({ai_summarize_state: "todo"})
+      .where(eq(entries.user_id, user.id)),
+
+    // And notify the user that this upgrade is happening (could take a while)
+    // Note we're creating a one-off route definition just for this, since it's output-only
+    context.handleRes(r.stripe_webhook_success.o, {
+      data: [data.data.object]
+    }, context)
+  ])
+}
