@@ -21,6 +21,9 @@ const useLocalStore = create<LocalStore>((set, get) => ({
   }))
 }))
 
+// FIXME bug where it adds the banner twice. The fix will be tracking these by id anyway
+let didPremium = false
+
 /**
  * Any sort of banner notifications we want to show the user. New stuff, premium-upgraded account, etc.
  * TODO: we'll want to persist closed notifications to user
@@ -35,8 +38,10 @@ export default function Banner() {
     s.closeBanner
   ], shallow)
 
+
   useEffect(() => {
-    if (stripe_webhook_success) {
+    if (stripe_webhook_success && !didPremium) {
+      didPremium = true
       addBanner(<Typography>Your account has been upgraded to premium! Your entries are being re-generated with higher-quality AI. It takes about 2 seconds per entry.</Typography>)
     }
     // add any alerts to banner we listen to here.

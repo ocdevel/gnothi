@@ -32,13 +32,13 @@ export default function PremiumModal() {
   const [canceling, setCanceling] = useState(false)
 
   async function fetchStripeDetails() {
-    if (!(me?.stripe_id && premiumModal)) {return}
+    if (!(me?.payment_id && premiumModal)) {return}
     send("stripe_list_request", {})
   }
 
   useEffect(() => {
     fetchStripeDetails()
-  }, [me?.stripe_id, premiumModal])
+  }, [me?.payment_id, premiumModal])
 
 
   const close = useCallback(() => {setPremiumModal(false)}, [])
