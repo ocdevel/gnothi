@@ -45,22 +45,18 @@ export function Misc(context: sst.StackContext) {
     fnMigrate: fnMigrate.functionArn,
   })
 
-  // Need to duplicate the migrate function unfortunately, since the one above is `enableLiveDev: true`.
-  // Ideally let's have an `onCreate` with `params: {wipe:true,first:true}` and this onUpdate; then
-  // remove the above function. I'm hanging tight on that until I trust the idea a bit more.
-  // Edit: actually, I can't even get this working. Revisit later, I'll just run migrations manually for now
-  // const fnMigrateScript = withRds(stack, "FnMigrateScript2", {
-  //   handler: "services/data/migrate/migrate.main",
-  //   copyFiles: [{from: "services/data/migrate"}],
-  //   bind: [APP_REGION],
-  //   enableLiveDev: false
-  // })
-  // const migrateScript = new sst.Script(stack, "MigrateScript", {
-  //   onUpdate: fnMigrateScript,
-  //   params: {
-  //     rest: true
-  //   }
-  // })
+  const migrateScript = new sst.Script(stack, "MigrateScript", {
+    defaults: {
+      function: {
+        environment: { FN_MIGRATE: fnMigrate.functionArn },
+        permissions: [fnMigrate],
+      },
+    },
+    onUpdate: {
+      handler:"services/data/migrate/migrateCaller.onUpdate",
+    },
+    params: { rest: true }
+  })
 
   return {bucket, APP_REGION, domain, subdomain}
 }
