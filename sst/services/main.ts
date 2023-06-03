@@ -68,7 +68,7 @@ export async function main({req, context}: ReqParsed): Promise<RecordResult> {
     db,
     user,
     // TODO later when we add sharing, use `req.as_user`. Currently forcing it off by using uid
-    vid: user.id,
+    vid: user.id as string, // something's going on with drizzle...
     connectionId,
     // TODO handle this later instead, set toUids or something which pulls from DB
     handleReq,

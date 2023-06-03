@@ -155,6 +155,7 @@ export class Habitica extends Base {
         and char_length(habitica_api_token) > 0
         -- stop tracking inactive users
         and updated_at > now() - interval '4 days'
+      order by updated_at desc
     `)
 
     let errs = []

@@ -295,9 +295,8 @@ const http = new HttpHandler()
 
 class CronHandler extends Handler<ScheduledEvent> {
   match (event) {
-    return event.source === "aws.events"
+    return process.env.CRON === "true"
   }
-  // match: (event) => event['detail-type'] === "Scheduled Event",
 
   async parse(event) {
     // FIXME no easy way to inform the CDK construct to pass something along. A tag? for now, I'll just match-make
@@ -343,11 +342,11 @@ const stripe = new Stripe()
 type HandlerKey = "http" | "s3" | "sns" | "lambda" | "ws" | "cron" | "cognito" | "stripe"
 export function whichHandler(event: any, context: Context): HandlerKey {
   // TODO would multiple triggers ever hit the same Lambda at once?
+  if (cron.match(event)) {return "cron"}
   if (stripe.match(event)) {return "stripe"}
   if (sns.match(event)) {return "sns"}
   if (ws.match(event)) {return "ws"}
   if (http.match(event)) {return "http"}
-  if (cron.match(event)) {return "cron"}
   if (cognito.match(event)) {return "cognito"}
   // if (S3.match(event)) {return new S3()}
   return "lambda"

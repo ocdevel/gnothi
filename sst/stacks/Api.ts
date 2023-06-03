@@ -13,7 +13,6 @@ export function Api({ app, stack }: sst.StackContext) {
   const ml = sst.use(Ml);
   const {addLogging} = sst.use(Logs);
   const {auth, fnAuth} = sst.use(Auth);
-  const {APP_REGION} = sst.use(Misc)
 
   const HABITICA_USER = new sst.Config.Secret(stack, "HABITICA_USER")
   const HABITICA_APP = new sst.Config.Secret(stack, "HABITICA_APP")
@@ -82,7 +81,7 @@ export function Api({ app, stack }: sst.StackContext) {
 
   const fnBackground = withRds(stack, "FnBackground", {
     handler: "services/main.main",
-    timeout: "3 minutes",
+    timeout: timeouts.xl,
     memorySize: rams.sm,
     permissions: [
       // when I put this in bind[], it says no access
@@ -96,7 +95,6 @@ export function Api({ app, stack }: sst.StackContext) {
       FN_STORE_NAME,
       FN_PREPROCESS_NAME,
 
-      APP_REGION,
       API_WS,
     ]
   })
@@ -120,7 +118,6 @@ export function Api({ app, stack }: sst.StackContext) {
     handler: "services/main.proxy",
     bind: [
       ml.OPENAI_KEY,
-      APP_REGION,
       API_WS,
       auth,
       fnBackground,
@@ -132,9 +129,26 @@ export function Api({ app, stack }: sst.StackContext) {
   })
   addLogging(fnMain, "FnMain")
 
-  const habiticaCron = new sst.Cron(stack, "FnHabiticaCron", {
+  // basically duplicating fnMain, but with fewer permissions and maxed-out timeout
+  const fnCron = withRds(stack, "FnCron", {
+    memorySize: rams.sm,
+    timeout: timeouts.xl,
+    handler: "services/main.proxy",
+    environment: {
+      CRON: "true"
+    },
+    bind: [
+      API_WS,
+      HABITICA_USER,
+      HABITICA_APP,
+    ]
+  })
+  addLogging(fnCron, "FnCron")
+
+  const cronHabitica = new sst.Cron(stack, "CronHabitica", {
     schedule: "rate(1 hour)",
-    job: fnMain,
+    job: fnCron,
+    // enabled: true
     enabled: "prod" === app.stage
   })
 

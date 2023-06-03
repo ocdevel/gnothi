@@ -17,10 +17,7 @@ import {Logger} from "../../aws/logs";
 
 const TOKEN_LIMIT = 4096
 const RESPONSE_LIMIT = 256
-const configuration = new Configuration({
-  apiKey: Config.OPENAI_KEY,
-})
-const openai = new OpenAIApi(configuration);
+let openai: OpenAIApi
 
 function truncate(text) {
   const encoded = encode(text)
@@ -38,11 +35,22 @@ export async function completion(
     prompt: string // just mark as required
   }
 ): Promise<string> {
+
+  // doing it down here instead of up-top, to prevent requiring Config.OPENAI_KEY in
+  // functions which won't need this
+  if (!openai) {
+    const configuration = new Configuration({
+      apiKey: Config.OPENAI_KEY,
+    })
+    openai = new OpenAIApi(configuration);
+  }
+
   const {prompt, ...rest} = opts
   const truncated = truncate(prompt)
   try {
     const {prompt, ...rest} = opts
     const res = await openai.createChatCompletion({
+
       model: 'gpt-3.5-turbo',
       temperature: 0.2, // 0.5
       max_tokens: 256, // 4096 - prompt.len - 256 = 0
