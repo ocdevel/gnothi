@@ -110,6 +110,7 @@ export const insights_prompt_request = new Route(r.insights_prompt_request,async
   const text = texts.join('\n')
   const response = await completion({
     // entry v summary handled above, so just replace either/or here
+    model: "gpt-4",
     prompt: prompt.replace("<journal>", text)
   })
 

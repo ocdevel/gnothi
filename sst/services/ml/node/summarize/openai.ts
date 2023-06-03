@@ -52,7 +52,8 @@ function parseCompletion(output): ParsedCompletion {
 
   const title = titleLine.replace(/Title:\s*/, '');
   const summary = summaryLine.replace(/Summary:\s*/, '');
-  const emotion = emotionLine.replace(/Emotion:\s*/, '');
+  let emotion = emotionLine.replace(/Emotion:\s*/, '') || ""
+  emotion = emotion.toLowerCase().trim()
 
   const themeRegExp = /(\w+)\[([^\]]+)\](.*?)(?=\||$)/g;
   let match;
@@ -88,6 +89,7 @@ export async function summarize({texts}: FnIn): Promise<ParsedCompletion> {
   // Even with any of keywords,emotion,summary disabled; crafting our combinedPrompt over time makes this easier to
   // get right, and we can just remove the results before returning
   const response = await completion({
+    model: "gpt-3.5-turbo",
     max_tokens: 512,
     prompt: combinedPrompt.replace("<journal>", squashed),
   })
