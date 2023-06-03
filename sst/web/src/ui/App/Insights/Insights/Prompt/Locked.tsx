@@ -20,9 +20,13 @@ export default function Locked() {
   const openModal = useCallback(() => {setPremiumModal(true)}, [])
 
   return <Box>
-    <Typography>This is a premium feature</Typography>
-    <Button variant="contained" color="primary" onClick={openModal}>
-      Upgrade
+    <Button
+      variant="contained"
+      color="primary"
+      onClick={openModal}
+      fullWidth
+    >
+      Upgrade to Premium
     </Button>
   </Box>
 }

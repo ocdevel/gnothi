@@ -209,7 +209,6 @@ export default function Unlocked({entry_ids, view}: UnlockedProps) {
   }
 
   function renderModal() {
-
     function tab0() {
       return <Stack spacing={2} component="form">
         <PromptSelector prompt={prompt} setPrompt={setPrompt} />
@@ -266,18 +265,11 @@ export default function Unlocked({entry_ids, view}: UnlockedProps) {
     function tab2() {
       return <>Prompt history</>
     }
+
     return <Container maxWidth={false}>
       <Box
         sx={{mt: 2}}>
-        <Typography
-          variant="h5"
-          alignItems='flex-start'
-          sx={{mb: 2}}
-        >
-          Prompt
-        </Typography>
-
-        <Tabs
+        {/*<Tabs
           tabs={[
             {value: "0", label: "Prompt", render: tab0},
             {value: "1", label: "Info", render: tab1},
@@ -285,7 +277,8 @@ export default function Unlocked({entry_ids, view}: UnlockedProps) {
 
           ]}
           defaultTab="0"
-        />
+        />*/}
+        {tab0()}
       </Box>
     </Container>
   }

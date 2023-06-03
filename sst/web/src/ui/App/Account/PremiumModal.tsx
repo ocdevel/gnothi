@@ -1,4 +1,4 @@
-import {FullScreenDialog} from "../../Components/Dialog.tsx";
+import {BasicDialog, FullScreenDialog} from "../../Components/Dialog.tsx";
 import DialogContent from "@mui/material/DialogContent";
 import {useStore} from "../../../data/store";
 import {shallow} from "zustand/shallow";
@@ -30,6 +30,7 @@ export default function PremiumModal() {
     s.send
   ], shallow)
   const [canceling, setCanceling] = useState(false)
+  const [showDisclaimer, setShowDisclaimer] = useState(false)
 
   async function fetchStripeDetails() {
     if (!(me?.payment_id && premiumModal)) {return}
@@ -67,12 +68,8 @@ export default function PremiumModal() {
   function premiumInactiveFooter() {
     return <Button
       {...buttonDefaults}
-      href={`${PAYMENT_LINK}?client_reference_id=${me.id}`}
-      target="_blank"
-    >
-      Upgrade
-    </Button>
-
+      onClick={() => setShowDisclaimer(true)}
+    >Upgrade</Button>
   }
 
   function basicActiveFooter() {
@@ -91,14 +88,40 @@ export default function PremiumModal() {
 
   if (!me) {return <Loading label="user" />}
 
-  return <FullScreenDialog title={"Premium"} open={premiumModal} onClose={close}>
-    <DialogContent>
-      <Banner />
-      <PlanComparison
-        premiumFooter={me.premium ? premiumActiveFooter : premiumInactiveFooter}
-        basicFooter={me.premium ? basicInactiveFooter : basicActiveFooter}
-      />
-      <FeatureLayout />
-    </DialogContent>
-  </FullScreenDialog>
+  function clickLastUpgrade() {
+    setShowDisclaimer(false)
+    // use javascript to redirect user to the payment link, target=_blank
+    const link = `${PAYMENT_LINK}?client_reference_id=${me.id}`
+    window.open(link, "_blank")
+  }
+
+  return <>
+    <FullScreenDialog title={"Premium"} open={premiumModal} onClose={close}>
+      <DialogContent>
+        <Banner />
+        <PlanComparison
+          premiumFooter={me.premium ? premiumActiveFooter : premiumInactiveFooter}
+          basicFooter={me.premium ? basicInactiveFooter : basicActiveFooter}
+        />
+        {/*<FeatureLayout />*/}
+      </DialogContent>
+    </FullScreenDialog>
+    <BasicDialog
+      open={showDisclaimer && !me.premium}
+      onClose={() => setShowDisclaimer(false)}
+      size={"sm"}
+    >
+      <DialogContent sx={{padding: 5}}>
+        <Typography variant="h5" gutterBottom>Heading</Typography>
+        <Typography pb={5}>Insert information about OpenAI <a href="https://openai.com/policies/privacy-policy" target="_blank">OpenAI's privacy policy</a></Typography>
+        <Button
+          {...buttonDefaults}
+          size="large"
+          onClick={clickLastUpgrade}
+        >
+          Upgrade
+        </Button>
+      </DialogContent>
+    </BasicDialog>
+  </>
 }

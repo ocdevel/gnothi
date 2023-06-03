@@ -140,7 +140,7 @@ export default function PlanComparison({
               Run dream interpretations, get feedback on entries, and create custom prompts to ask AI anything
             </Typography>
 
-            <Typography
+            {/*<Typography
               marginTop={2}
               variant="body1"
               fontWeight={500}
@@ -155,8 +155,7 @@ export default function PlanComparison({
               color='black'
             >
               Use Magic Search to find anything from past entries in a flash, or ask your journal questions
-            </Typography>
-
+            </Typography>*/}
 
             <Typography
               marginTop={2}
@@ -173,7 +172,7 @@ export default function PlanComparison({
               textAlign="left"
               color='black'
             >
-              Request a consultation to get help with onboarding so you can get the most out of Gnothi
+              Request a consultation via email to get help with onboarding so you can get the most out of Gnothi
             </Typography>
           </CardContent>
 
