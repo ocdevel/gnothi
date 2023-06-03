@@ -24,12 +24,12 @@ import {Duration} from "aws-cdk-lib";
 import {SesConfigStack} from "./Ses";
 
 
+const rootDomain = "gnothiai.com"
 
 export function sharedStage(stage: string) {
   // For now, due to the cost of Nat Gateway, RDS cluster, etc; I'm using prod for all shared resources. The real
-  // thing to look out for is ensuring no use of same DB schema. Otherwise, much of the resources are safe-enough.
-  // If Gnothi grows, we'll switch to "prod" v "staging". staging because that'll verify the hosted DNS, but it
-  // will be shared for dev, test, etc.
+  // thing to look out for is ensuring no use of same DB schema. If Gnothi grows, we'll switch to "prod" v "staging".
+  // staging because that'll verify the hosted DNS, but it will be shared for dev, test, etc.
   return "prod"
   // return stage === "prod" ? "prod" : "staging"
 }
@@ -39,12 +39,15 @@ export function exportName(stage: string, name: string) {
 }
 
 export function getDomains(stage: string) {
-  const domain = "gnothiai.com"
-  const sharedStage_ = sharedStage(stage)
+  const shared = sharedStage(stage)
   return {
-    domain,
-    // revisit if I need multiple subdomains, curruntly only prod & staging
-    subdomain: sharedStage_ === "prod" ? domain : `${sharedStage_}.${domain}`
+    // for top-level resources like hosted zone
+    root: rootDomain,
+    // for shared-level resources like SES, RDS, Certificate. This will likely only ever be prod/staging (but
+    // only prod to start off)
+    shared: shared === "prod" ? rootDomain : `${shared}.${rootDomain}`,
+    // for each stge/instance, like legion4, staging, dev, test, prod, etc.
+    stage: stage === "prod" ? rootDomain : `${stage}.${rootDomain}`,
   }
 }
 
@@ -54,12 +57,12 @@ export function SharedCreate(context: StackContext) {
   const sharedStage_ = sharedStage(stage)
 
   // subdomain is the registered {sharedStage}.gnothi, so "staging.gnothi" for dev/test/staging
-  const {domain, subdomain} = getDomains(sharedStage_)
+  const domains = getDomains(sharedStage_)
 
   function createHostedZone() {
     // const hostedZone = aws_route53.HostedZone.fromLookup(stack, 'HostedZone', { domainName });
     const hostedZone = new aws_route53.HostedZone(stack, 'HostedZone', {
-      zoneName: subdomain,
+      zoneName: domains.root,
     })
     // Error: Found an encoded list token string in a scalar string context. Use 'Fn.select(0, list)' (not 'list[0]') to extract elements from token lists.
     // That's fine, I'll look up the NS records in console since I'm delegating from gnothiai.com (parent) manually anyway
@@ -110,7 +113,8 @@ export function SharedCreate(context: StackContext) {
     })
 
     const certificate = new aws_acm.Certificate(stack, 'DomainCertificate', {
-      domainName: subdomain,
+      // want to generate 1 per for sharedStage-subdomain
+      domainName: domains.shared,
       validation: aws_acm.CertificateValidation.fromDns(hostedZone),
     })
 
@@ -185,12 +189,12 @@ export function SharedCreate(context: StackContext) {
   // Have the SES configuration setup at the root level, and shared down to dev / staging. This so we can test
   // email templates to send, etc.
   function createSes() {
-    const {domain, subdomain} = getDomains(stage)
+    // 1 SES configuration per shared stage. This allows one-time setup for staging, dev, etc.
     const subscribeEmail = process.env.SES_SUBSCRIBE_EMAIL ? [process.env.SES_SUBSCRIBE_EMAIL] : []
     const sesAttr = {
       // Email addresses will be added to the verified list and will be sent a confirmation email
       // TOOD investigate these. May I should just add them afterwards via console.
-      emailList: [`gnothi@${subdomain}`, ...subscribeEmail],
+      emailList: [`gnothi@${domains.root}`, ...subscribeEmail],
       // Email addresses to subscribe to SNS topic for delivery notifications
       notifList: [...subscribeEmail],
       // Notify on delivery status inc Send, Delivery, Open
@@ -199,7 +203,7 @@ export function SharedCreate(context: StackContext) {
 
     const domainAttr = {
       // zoneName for the email domain is required. hostedZoneId for a Route53 domain is optional.
-      zoneName: subdomain,
+      zoneName: domains.root,
       hostedZoneId: '',
     };
     return new SesConfigStack(stack, "SesConfig", {
@@ -321,7 +325,7 @@ export function SharedImport(context: StackContext) {
         ...(app.mode === "dev" ? {IS_LOCAL: "true"} : {}),
 
         stage,
-        sharedStage: sharedStage_,
+        sharedStage: sharedStage_, // TODO remove this?
       }
     }))
     fn.addToRolePolicy(readSecretPolicy)

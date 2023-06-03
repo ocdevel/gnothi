@@ -2,7 +2,7 @@ import { APIGatewayEvent, APIGatewayProxyResult, Context } from 'aws-lambda'
 import {readFileSync, existsSync, readdirSync} from "fs";
 import {sql, SQL} from "drizzle-orm";
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
-import {sharedStage, DB} from "../db"
+import {dbname, DB} from "../db"
 import {users} from '../schemas/users'
 import { exec } from 'child_process';
 import { Config } from "sst/node/config"
@@ -44,39 +44,43 @@ export async function main(event: MigrateEvent, context: Context): Promise<APIGa
   const dbPostgres = new DB({database: 'postgres'})
   await dbPostgres.connect()
 
-  const exists = await dbPostgres.query(sql`SELECT datname FROM pg_database WHERE datname=${sharedStage}`)
+  const exists = await dbPostgres.query(sql`SELECT datname FROM pg_database WHERE datname=${dbname}`)
   if (exists.length === 0) {
     console.log("db didn't exist, creating")
     event.wipe = true
     event.first = true
+    event.rest = true
   }
 
   if (event?.wipe) {
-    await dbPostgres.pg.query(killConnections(sharedStage))
-    await dbPostgres.pg.query(`drop database if exists ${sharedStage}`)
-    await dbPostgres.pg.query(`create database ${sharedStage}`)
+    await dbPostgres.pg.query(killConnections(dbname))
+    await dbPostgres.pg.query(`drop database if exists ${dbname}`)
+    await dbPostgres.pg.query(`create database ${dbname}`)
     await wipeCognito()
   }
 
   // git-blame for auto-check if db exists, create if not
 
-  const dbTarget = new DB({database: sharedStage})
+  const dbTarget = new DB({database: dbname})
   await dbTarget.connect()
 
-  console.log("migrating", sharedStage, migrationsRoot)
+  console.log("migrating", dbname, migrationsRoot)
 
   // git-blame for v0 migration
+
+  // seems this is only used in MySQL?
+  // const migrationsTable = "drizzle_migrations"
 
   if (event?.first) {
     // Having it manually specified since the v0 -> v1 migration will run this first, then import data,
     // then run the rest
-    await migrate(dbTarget.drizzle, {migrationsFolder: migrationsFirst})
+    await migrate(dbTarget.drizzle, { migrationsFolder: migrationsFirst })
   }
   if (event.rest) {
     // then do the rest of the (modern / current) migrations; post v0. Note, v0 db schema was generated as a migration
     // for drizzle, then the folder was copy/pasted into the rest/ folder on which to build. This because I can't
     // tell drizzle in code-form (here) to migrate step1, then do stuff, then migrate 1-on.
-    await migrate(dbTarget.drizzle, {migrationsFolder: migrationsRest})
+    await migrate(dbTarget.drizzle, { migrationsFolder: migrationsRest })
   }
 
   // TODO something smarter, like drizzle table version number

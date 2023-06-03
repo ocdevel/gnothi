@@ -1,5 +1,5 @@
 import * as sst from "sst/constructs";
-import { SharedImport, getDomains } from './Shared'
+import { SharedImport } from './Shared'
 import {StringAttribute, BooleanAttribute} from 'aws-cdk-lib/aws-cognito'
 import {aws_ec2, RemovalPolicy} from 'aws-cdk-lib'
 import {rams, timeouts} from "./util";
@@ -18,7 +18,7 @@ export function Auth({ app, stack }: sst.StackContext) {
     withRds
   } = sst.use(SharedImport);
   const {addLogging} = sst.use(Logs);
-  const {domain, subdomain} = sst.use(Misc)
+  const {domains} = sst.use(Misc)
 
   // SST samples
   // Cognito JWT example from https://sst.dev/examples/how-to-add-jwt-authorization-with-cognito-user-pool-to-a-serverless-api.html
@@ -66,10 +66,10 @@ export function Auth({ app, stack }: sst.StackContext) {
         // accountRecovery: aws_cognito.AccountRecovery.EMAIL_ONLY,
         email: aws_cognito.UserPoolEmail.withSES({
           sesRegion: app.region,
-          fromEmail: `gnothi@${subdomain}`,
+          fromEmail: `gnothi@${domains.root}`,
           fromName: 'Gnothi',
-          replyTo: `gnothi@${subdomain}`,
-          sesVerifiedDomain: subdomain,
+          replyTo: `gnothi@${domains.root}`,
+          sesVerifiedDomain: domains.root,
         }),
       }
     },

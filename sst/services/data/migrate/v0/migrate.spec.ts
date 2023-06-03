@@ -1,6 +1,6 @@
 import {GetSecretValueCommand, SecretsManagerClient} from "@aws-sdk/client-secrets-manager";
 
-import {sharedStage, DB, urlToInfo} from "../../db"
+import {dbname, DB, urlToInfo} from "../../db"
 import {Config} from 'sst/node/config'
 
 import {users} from '../../schemas/users'

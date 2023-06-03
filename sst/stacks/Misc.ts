@@ -15,8 +15,7 @@ export function Misc(context: sst.StackContext) {
   const { app, stack } = context
   const {withRds} = sst.use(SharedImport)
   const {addLogging} = sst.use(Logs)
-  const APP_REGION = new sst.Config.Parameter(stack, "APP_REGION", {value: app.region})
-  const {domain, subdomain} = getDomains(app.stage)
+  const domains = getDomains(app.stage)
 
   // Common / misc bucket. Used for ML, file-uploads, etc
   const bucket = new sst.Bucket(stack, "Bucket")
@@ -31,7 +30,6 @@ export function Misc(context: sst.StackContext) {
     // copyFiles: [{from: "data/migrate"}],
     copyFiles: [{from: "services/data/migrate"}],
     bind: [
-      APP_REGION,
       // used to read the old SQL script or main migration
       bucket,
     ],
@@ -58,5 +56,5 @@ export function Misc(context: sst.StackContext) {
     params: { rest: true }
   })
 
-  return {bucket, APP_REGION, domain, subdomain}
+  return {bucket, domains}
 }

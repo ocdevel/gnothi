@@ -8,9 +8,7 @@ import { URL } from 'url'
 import { Config } from 'sst/node/config'
 import {Logger} from "../aws/logs";
 
- // TODO why was I using the sharedStage for the DB? shouldn't it stage-specific?
-// export const sharedStage = `gnothi${process.env.sharedStage}`
-export const sharedStage = `gnothi${process.env.SST_STAGE}`
+export const dbname = `gnothi${process.env.SST_STAGE}`
 
 class MyLogger implements Logger {
   logQuery(query: string, params: unknown[]): void {
@@ -88,7 +86,7 @@ export class DB {
         }
       }
     }
-    i.database = i.database || sharedStage
+    i.database = i.database || dbname
 
     // const pgClient = new PgClient({
     const pgClient = new Pool({
