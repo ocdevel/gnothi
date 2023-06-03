@@ -159,14 +159,14 @@ export default function Insights({entry_ids}: Insights) {
       {/*  /!*</Typography>*!/*/}
       {/*</Stack>*/}
 
-      <Insight
+      {me?.premium && <Insight
         label="Prompt"
         icon={<PromptIcon {...iconProps} />}
         description="Ask Gnothi anything"
         action="Choose a topic or create a custom prompt"
       >
         <Prompt entry_ids={entry_ids} view={view} />
-      </Insight>
+      </Insight>}
 
       <Insight
         label="Themes"

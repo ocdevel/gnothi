@@ -44,6 +44,13 @@ export async function main(event: MigrateEvent, context: Context): Promise<APIGa
   const dbPostgres = new DB({database: 'postgres'})
   await dbPostgres.connect()
 
+  const exists = await dbPostgres.query(sql`SELECT datname FROM pg_database WHERE datname=${sharedStage}`)
+  if (exists.length === 0) {
+    console.log("db didn't exist, creating")
+    event.wipe = true
+    event.first = true
+  }
+
   if (event?.wipe) {
     await dbPostgres.pg.query(killConnections(sharedStage))
     await dbPostgres.pg.query(`drop database if exists ${sharedStage}`)
