@@ -15,7 +15,7 @@
     "test:specific": "playwright test --project=chromium tests/tags.spec.ts"
   },
   "dependencies": {
-    "@aws-amplify/ui-react": "^4.6.2",
+    "@aws-amplify/ui-react": "^4.6.4",
     "@emotion/react": "^11.11.0",
     "@emotion/styled": "^11.11.0",
     "@hookform/resolvers": "^3.1.0",
@@ -61,14 +61,14 @@
     "@playwright/test": "^1.33.0",
     "@types/lodash": "^4.14.187",
     "@types/markdown-it": "^12.2.3",
-    "@types/react": "^18.0.0",
+    "@types/react": "^18.2.8",
     "@types/react-beautiful-dnd": "^13.1.2",
-    "@types/react-dom": "^18.0.0",
+    "@types/react-dom": "^18.2.4",
     "@types/react-stars": "^2.2.1",
     "@types/regression": "^2.0.2",
     "@types/uuid": "^8.3.4",
-    "@vitejs/plugin-react": "^3.0.0",
+    "@vitejs/plugin-react": "^4.0.0",
     "uuid": "^9.0.0",
-    "vite": "^4.0.3"
+    "vite": "^4.3.9"
   }
 }

@@ -86,7 +86,7 @@ export default function PremiumModal() {
     </Button>
   }
 
-  if (!me) {return <Loading label="user" />}
+  if (!me) {return null}
 
   function clickLastUpgrade() {
     setShowDisclaimer(false)

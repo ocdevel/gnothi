@@ -53,7 +53,7 @@ export function Misc(context: sst.StackContext) {
     onUpdate: {
       handler:"services/data/migrate/migrateCaller.onUpdate",
     },
-    params: { rest: true }
+    params: { rest: "true" }
   })
 
   return {bucket, domains}

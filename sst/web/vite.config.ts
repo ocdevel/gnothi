@@ -9,11 +9,12 @@ export default defineConfig({
   // Issue with Amplify specifically. See
   // https://github.com/aws/aws-sdk-js/issues/3673
   // https://stackoverflow.com/questions/70938763/build-problem-with-react-vitejs-and-was-amplify
-  resolve: {
-    alias: {
-      './runtimeConfig': './runtimeConfig.browser',
-    },
-  },
+  // resolve: {
+  //   alias: {
+  //     './runtimeConfig': './runtimeConfig.browser',
+  //   },
+  // },
+
   // https://stackoverflow.com/a/72962290
   // plugins: [react(), vanillaExtractPlugin()],
   plugins: [

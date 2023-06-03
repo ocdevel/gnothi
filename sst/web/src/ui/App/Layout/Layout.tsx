@@ -7,7 +7,7 @@ import {useStore} from "@gnothi/web/src/data/store";
 import {useEffect, useCallback} from "react";
 import Error from '@gnothi/web/src/ui/Components/Error'
 import {Loading} from '@gnothi/web/src/ui/Components/Routing'
-import Banner from '../../Components/Banner.tsx'
+import Banner from '../../Components/Banner'
 
 import {styles} from '../../Setup/Mui'
 
@@ -18,11 +18,11 @@ import {ErrorSnack} from "../../Components/Error";
 import SharingModal from "../Sharing"
 import EntryModal from "../Entries/Modal"
 import BehaviorsModal from "../Behaviors/Modal"
-import PremiumModal from '../Account/PremiumModal.tsx'
+import PremiumModal from '../Account/PremiumModal'
 import AppBar from './AppBar'
 import Footer from '../../Footer'
-import {AcknowledgeChecker} from "../../Setup/Acknowledge.tsx";
-import UserListener from './UserListener.tsx'
+import {AcknowledgeChecker} from "../../Setup/Acknowledge";
+import UserListener from './UserListener'
 
 
 // Have this separate since it'd otherwise cause a re-render after every lastJsonMessage, etc.

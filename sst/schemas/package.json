@@ -4,6 +4,7 @@
   "type": "module",
   "dependencies": {
     "zod": "^3.21.4",
+    "drizzle-zod": "^0.4.3",
     "dayjs": "^1.11.7"
   }
 }
