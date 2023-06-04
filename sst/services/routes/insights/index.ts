@@ -111,6 +111,7 @@ export const insights_prompt_request = new Route(r.insights_prompt_request,async
   const response = await completion({
     // entry v summary handled above, so just replace either/or here
     model: "gpt-4",
+    max_tokens: 512,
     prompt: prompt.replace("<journal>", text)
   })
 

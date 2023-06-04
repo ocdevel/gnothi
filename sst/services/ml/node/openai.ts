@@ -30,8 +30,9 @@ function truncate(text: string, responseLimit: number, model: "gpt-4" | "gpt-3.5
   const gpt4 = model === "gpt-4"
   const tokenLimit = gpt4 ? 8000 : 4000
   const encoded = encode(text)
-  if (encoded.length > tokenLimit - responseLimit) {
-    return decode(encoded.slice(0, tokenLimit - responseLimit))
+  // has `tokens` if successful, otherwise encodes the input as-is; eg "undefined"
+  if (encoded?.tokens?.length > tokenLimit - responseLimit) {
+    return decode(encoded.tokens.slice(0, tokenLimit - responseLimit))
   }
   return text
 }
