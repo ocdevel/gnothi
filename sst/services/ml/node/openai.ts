@@ -7,16 +7,8 @@ import {
   CreateChatCompletionRequest,
   CreateChatCompletionResponse
 } from "openai"
-import {
-  encode as encodeGpt3,
-  decode as decodeGpt3,
-  isWithinTokenLimit as isWithinTokenLimitGpt3,
-} from 'gpt-tokenizer/model/text-davinci-003';
-import {
-  encode as encodeGpt4,
-  decode as decodeGpt4,
-  isWithinTokenLimit as isWithinTokenLimitGpt4,
-} from 'gpt-tokenizer/model/gpt-4';
+import { encode, decode } from 'gpt-token-utils'
+
 import {Logger} from "../../aws/logs";
 
 
@@ -33,10 +25,10 @@ function getOpenAi() {
 }
 
 function truncate(text: string, responseLimit: number, model: "gpt-4" | "gpt-3.5-turbo") {
+  // TODO use this module more effectively, it supports chat parsing (accounting for user/system, etc) https://github.com/niieani/gpt-tokenizer
+
   const gpt4 = model === "gpt-4"
-  const tokenLimit = gpt4 ? 8000 : 4096
-  const encode = gpt4 ? encodeGpt4 : encodeGpt3
-  const decode = gpt4 ? decodeGpt4 : decodeGpt3
+  const tokenLimit = gpt4 ? 8000 : 4000
   const encoded = encode(text)
   if (encoded.length > tokenLimit - responseLimit) {
     return decode(encoded.slice(0, tokenLimit - responseLimit))
