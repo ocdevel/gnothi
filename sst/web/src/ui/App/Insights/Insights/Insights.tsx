@@ -8,9 +8,6 @@ import Books from "./Books"
 import Behaviors from "./Behaviors"
 import Divider from "@mui/material/Divider";
 import dayjs from 'dayjs'
-
-const ENABLE_PROMPT = true
-
 import {
   FaLock
 } from "react-icons/fa"
@@ -24,6 +21,7 @@ import SummaryIcon from '@mui/icons-material/SummarizeOutlined';
 import ThemesIcon from '@mui/icons-material/DashboardOutlined';
 import BehaviorsIcon from '@mui/icons-material/InsertChartOutlinedRounded';
 import PromptIcon from '@mui/icons-material/ChatOutlined';
+import SettingsIcon from "@mui/icons-material/SettingsOutlined"
 
 
 
@@ -35,6 +33,7 @@ import Stack from "@mui/material/Stack"
 import { Typography } from "@mui/material"
 import {shallow} from "zustand/shallow";
 import {useDebouncedCallback} from "use-debounce";
+import IconButton from "@mui/material/IconButton";
 
 // 62da7182: books attrs, popovers
 const iconProps = {
@@ -48,9 +47,10 @@ interface Insight {
   description?: string
   action?: string
   children: React.ReactNode
+  settingsClick: () => void
 }
 
-function Insight({label, icon, description, action, children}: Insight) {
+function Insight({label, icon, description, action, children, settingsClick}: Insight) {
   return <Card
     sx={{ backgroundColor:'white', borderRadius: 2, boxShadow: 1}}
   >
@@ -61,13 +61,26 @@ function Insight({label, icon, description, action, children}: Insight) {
         spacing={1}
       >
         {icon}
-        <Typography 
+        <Typography
           variant="h4"
           fontWeight={500}
           textAlign={'center'}
           color="primary.main"
-          >{label}
-          </Typography>
+        >
+          {label}
+        </Typography>
+        {settingsClick && <Box
+          sx={{flex: 1, display: "flex", justifyContent: "flex-end"}}
+        >
+          <IconButton
+
+          color='primary'
+          size="small"
+          onClick={settingsClick}
+        >
+          <SettingsIcon sx={{fontSize: 25}}/>
+          </IconButton>
+        </Box>}
       </Stack>
       {description && <Typography
         color="primary.main"
@@ -95,11 +108,13 @@ export default function Insights({entry_ids}: Insights) {
     entriesHash,
     entryModal,
     me,
+    setPromptModal,
   ] = useStore(s => [
     s.filters.search,
     s.res.entries_list_response?.hash || {},
     s.entryModal,
-    s.user?.me
+    s.user?.me,
+    s.setPromptModal
   ], shallow)
 
   const send = useStore(useCallback(s => s.send, []))
@@ -162,6 +177,7 @@ export default function Insights({entry_ids}: Insights) {
       {me?.premium && <Insight
         label="Prompt"
         icon={<PromptIcon {...iconProps} />}
+        settingsClick={() => setPromptModal(true)}
         description="Ask Gnothi anything"
         action="Choose a topic or create a custom prompt"
       >

@@ -20,31 +20,32 @@ import * as S from '@gnothi/schemas'
 import Divider from "@mui/material/Divider";
 import {Insight} from '../Utils'
 import Grow from '@mui/material/Grow';
+import SettingsIcon from "@mui/icons-material/SettingsOutlined"
 
 import Tabs from "../../../../Components/Tabs"
 import Accordions from "../../../../Components/Accordions"
 import Container from "@mui/material/Container";
 import {FullScreenDialog} from "../../../../Components/Dialog";
 import PromptSelector from './Selector.tsx'
+import IconButton from "@mui/material/IconButton";
+import ManageBehaviorsIcon from "@mui/icons-material/SettingsOutlined";
 
 
 export type UnlockedProps = Insight & {
   entry_ids: string[]
 }
 
-type Trips = {
-  waiting: boolean
-  responses: S.Insights.insights_prompt_response[]
-  prompts: string[]
+interface Message {
+  id: string
+  user: "user" | "assistant"
+  message: string
 }
 
 export default function Unlocked({entry_ids, view}: UnlockedProps) {
-  const [modal, setModal] = useState(false)
-  const [trips, setTrips] = useState<Trips>({
-    waiting: false,
-    prompts: [],
-    responses: []
-  })
+  const modal = useStore(s => s.promptModal)
+  const setModal = useStore(s => s.setPromptModal)
+  const [messages, setMessages] = useState<Message[]>([])
+  const [waiting, setWaiting] = useState(false)
 
   // TODO useStore version of loading
   const send = useStore(useCallback(s => s.send, []))
@@ -53,28 +54,25 @@ export default function Unlocked({entry_ids, view}: UnlockedProps) {
 
   const [prompt, setPrompt] = useState<string>("")
   const [showHelp, setShowHelp] = useState<boolean>(false)
-  const btnDisabled = trips.waiting || prompt.length < 3
+  const btnDisabled = waiting || prompt.length < 3
+
+  function addMessage(user: Message['user'], message: string, id?: string) {
+    id = id || Date.now().toString()
+    setMessages([...messages, {user, message, id}])
+  }
 
   useEffect(() => {
-    if (!promptResponse) {
-      return
-    }
-    setTrips({
-      ...trips,
-      waiting: false,
-      responses: [...trips.responses, promptResponse]
-    })
+    if (!promptResponse) { return }
+    setWaiting(false)
+    addMessage("assistant", promptResponse.response, promptResponse.id)
   }, [promptResponse])
 
   const submit = () => {
     // They didn't enter anything
-    if (!prompt?.length) {return}
+    if (btnDisabled) {return}
 
-    setTrips({
-      ...trips,
-      waiting: true,
-      prompts: [...trips.prompts, prompt]
-    })
+    setWaiting(true)
+    addMessage("user", prompt)
     send("insights_prompt_request", {
       view,
       entry_ids,
@@ -85,114 +83,70 @@ export default function Unlocked({entry_ids, view}: UnlockedProps) {
     }
   }
 
-  const renderResponse = (
-    _: any,
-    i: number
-  ) => {
-    const prompt = trips.prompts[i]
-    const res = trips.responses[i]
-
+  function renderMessage(message: Message, i: number) {
     // return <Grow
     //   in={true}
     //   key={res.id}
     //   style={{transformOrigin: '0 0 0'}}
     //   timeout={1000}
     // >
-    return <div key={res.id}>
-      <Grid
-        container
-        direction='row'
-        marginTop={5}
-        spacing={4}
-      >
-        <Grid
-          item
-          xs={12} md={6}
-          alignItems='center'
-          justifyItems='flex-start'
-        >
-          <Card
-            sx={{
-              display: 'inline-block',
-              // transform: 'scale(0.8)',
-              backgroundColor: '#C3C7CC',
-              borderRadius: 3
-            }}
-          >
-            <CardContent>
-              <Typography
-                textAlign='left'>
-                Question:
-              </Typography>
-              <Typography
-                textAlign='left'
-                fontStyle='italic'
-              >
-                {prompt}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid
-          item
-          xs={12} md={6}
-          alignItems='center'
-          justifyItems='flex-end'
-        >
-          <Card
-            sx={{
-              display: 'inline-block',
-              // transform: 'scale(0.8)',
-              mt: 8,
-              backgroundColor: '#ffffff',
-              borderRadius: 3
-            }}
-          >
-            <CardContent>
-              <Typography
-                textAlign='left'>
-                Answer:
-              </Typography>
-              <Typography
-                textAlign='left'
-                fontStyle='italic'
-              >
-                {res.response}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-    </div>
-    // </Grow>
+    const bot = message.user === "assistant"
+    return <Grid
+      key={message.id}
+      item
+      xs={12}
+      sx={{
+        backgroundColor: bot ? '#ffffff' : '#C3C7CC',
+      }}
+    >
+      <CardContent>
+        <Typography>
+          {bot ? "Gnothi:" : "You:"}
+        </Typography>
+        <Typography>
+          {message.message}
+        </Typography>
+      </CardContent>
+    </Grid>
+  }
+
+  function renderMessages() {
+    return <Grid
+      container
+      direction='row'
+      marginTop={5}
+      borderRadius={3}
+      spacing={2}
+    >
+      {messages.slice().reverse().map(renderMessage)}
+    </Grid>
   }
 
   const borderRadius = 3
 
   function renderTeaser() {
-    return <Stack
-      spacing={2}
-      component="form"
-      alignItems='flex-end'>
+    return <>
+      <Stack
+        spacing={2}
+        component="form"
+        alignItems='flex-end'>
 
+        <PromptSelector prompt={prompt} setPrompt={setPrompt} />
 
-      <PromptSelector prompt={prompt} setPrompt={setPrompt} />
+        {/*<Button onClick={() => setShowHelp(!showHelp)}>{showHelp ? "Hide help" : "Show Help"}</Button>
+        {showHelp && <Typography>
+          Legend. The following placeholders are supported in your prompt:
+          <ul>
+            <li>&lt;entry&gt; - Uses your entire entry as the context for the prompt. Use with caution, as there's a max
+              number of characters that OpenAI can take as input. If you exceed, your entry will be truncated. If you know
+              your entry is short enough, use this. Otherwise, use &lt;paragraphs&gt; or &lt;summary&gt;</li>
+            <li>&lt;paragraphs&gt; - Runs the prompt independently for each paragraph in your entry</li>
+            <li>&lt;summary&gt; - Runs the prompt over the summary of your entry. Ideal for longer entries, where the
+              context should capture the essence of your entry (rather than the specifics).
+            </li>
+          </ul>
+        </Typography>}*/}
 
-      {/*<Button onClick={() => setShowHelp(!showHelp)}>{showHelp ? "Hide help" : "Show Help"}</Button>
-      {showHelp && <Typography>
-        Legend. The following placeholders are supported in your prompt:
-        <ul>
-          <li>&lt;entry&gt; - Uses your entire entry as the context for the prompt. Use with caution, as there's a max
-            number of characters that OpenAI can take as input. If you exceed, your entry will be truncated. If you know
-            your entry is short enough, use this. Otherwise, use &lt;paragraphs&gt; or &lt;summary&gt;</li>
-          <li>&lt;paragraphs&gt; - Runs the prompt independently for each paragraph in your entry</li>
-          <li>&lt;summary&gt; - Runs the prompt over the summary of your entry. Ideal for longer entries, where the
-            context should capture the essence of your entry (rather than the specifics).
-          </li>
-        </ul>
-      </Typography>}*/}
-
-      <Box>
         <Button
           sx={{elevation: 12, fontWeight: 500}}
           variant="outlined"
@@ -201,11 +155,10 @@ export default function Unlocked({entry_ids, view}: UnlockedProps) {
           disabled={btnDisabled}
           onClick={submit}
         >
-          {trips.waiting ? <CircularProgress/> : "Submit"}
+          {waiting ? <CircularProgress/> : "Submit"}
         </Button>
-      </Box>
-      <Button onClick={() => setModal(true)}>Explore Prompt</Button>
-    </Stack>
+      </Stack>
+    </>
   }
 
   function renderModal() {
@@ -220,10 +173,9 @@ export default function Unlocked({entry_ids, view}: UnlockedProps) {
           disabled={btnDisabled}
           onClick={submit}
         >
-          {trips.waiting ? <CircularProgress/> : "Submit"}
+          {waiting ? <CircularProgress/> : "Submit"}
         </Button>
-        {trips.responses.map(renderResponse)}
-
+        {renderMessages()}
       </Stack>
     }
 

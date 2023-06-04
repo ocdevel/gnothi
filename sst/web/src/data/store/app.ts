@@ -48,6 +48,8 @@ export interface AppSlice {
   setProfile: (profile: any) => void
   premiumModal: boolean
   setPremiumModal: (premiumModal: boolean) => void
+  promptModal: boolean
+  setPromptModal: (promptModal: boolean) => void
 
   // ----- Entry
   entryModal: EntryModal
@@ -137,6 +139,8 @@ export const appSlice: StateCreator<
   setProfile: (profile) => set({profile}),
   premiumModal: false,
   setPremiumModal: (premiumModal) => set({premiumModal}),
+  promptModal: false,
+  setPromptModal: (promptModal) => set({promptModal}),
 
   // ----- Entry
   entryModal: null,
