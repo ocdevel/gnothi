@@ -47,7 +47,7 @@ export default function Privacy() {
 
 function AsHtml() {
   return <Box>
-    <p><strong><em>Last modified: September 26, 2020</em></strong></p>
+    <p><strong><em>Last modified: May 28, 2023</em></strong></p>
     <p className="c0 c4"><span className="c3"></span></p>
     <p className="c0"><span className="c3">This Privacy Policy describes Our policies and procedures on the collection, use and
       disclosure of Your information when You use the Service and tells You about Your privacy rights and how the law

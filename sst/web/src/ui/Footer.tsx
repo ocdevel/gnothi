@@ -199,7 +199,7 @@ export default function Footer({inApp}: Footer) {
           fontWeight: 400
         }}
       >
-        Copyright © 2020 OCDevel, LLC
+        Copyright © 2019-2023 OCDevel, LLC
       </Typography>
     </Box>
 
