@@ -36,7 +36,7 @@ const buttonSx = {
 export function UserMenu() {
   const [user, setPremiumModal] = useStore(s => [
     s.user?.viewer,
-    s.setPremiumModal
+    s.modals.setPremium
   ], shallow)
   const logout = useStore(s => s.logout)
   const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(null);

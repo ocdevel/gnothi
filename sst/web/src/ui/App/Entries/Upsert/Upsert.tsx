@@ -50,8 +50,8 @@ interface Upsert {
 }
 
 export default function Upsert(props: Upsert) {
-  const entryModal = useStore(s => s.entryModal!)
-  const setEntryModal = useStore(s => s.setEntryModal)
+  const entryModal = useStore(s => s.modals.entry!)
+  const setEntryModal = useStore(s => s.modals.setEntry)
 
   const {mode} = entryModal
   const [isNew, isEdit] = [mode === "new", mode === "edit"]

@@ -35,7 +35,7 @@ interface Teaser {
   goToForm?: GoToForm
 }
 function Teaser({entry, goToForm}: Teaser) {
-  const setEntryModal = useStore(s => s.setEntryModal)
+  const setEntryModal = useStore(s => s.modals.setEntry)
   const me = useStore(s => s.user.me)
   const [hovered, setHovered] = useState(false)
   const onHover = useCallback(() => setHovered(true), [])

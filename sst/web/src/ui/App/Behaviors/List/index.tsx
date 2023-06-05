@@ -29,7 +29,6 @@ import AddCircleIcon from '@mui/icons-material/AddCircleOutline';
 import Accordions from '../../../Components/Accordions.tsx'
 import Stack from "@mui/material/Stack";
 import CardActions from "@mui/material/CardActions";
-import iconProps from "../../../Components/Icon";
 import {FaPlus as AddIcon} from "react-icons/fa";
 import BehaviorsIcon from "@mui/icons-material/InsertChartOutlinedRounded";
 import SettingsIcon from "@mui/icons-material/SettingsOutlined";

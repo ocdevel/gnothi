@@ -24,8 +24,8 @@ export default function PremiumModal() {
     send
   ] = useStore(s => [
     s.user?.me,
-    s.premiumModal,
-    s.setPremiumModal,
+    s.modals.premium,
+    s.modals.setPremium,
     s.res.stripe_list_response?.first,
     s.send
   ], shallow)

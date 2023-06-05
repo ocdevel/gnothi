@@ -6,7 +6,7 @@ import Behaviors from "../../Behaviors/List"
 import DialogContent from "@mui/material/DialogContent";
 
 export default function New() {
-  const setEntryModal = useStore(s => s.setEntryModal)
+  const setEntryModal = useStore(s => s.modals.setEntry)
   function onClose() {
     // if (window.localStorage.getItem("testing")) { return }
     setEntryModal(null)

@@ -1,4 +1,3 @@
-
 import Box from "@mui/material/Box"
 import Summarize from "./Summarize"
 // import Ask from "./Ask"
@@ -21,8 +20,8 @@ import SummaryIcon from '@mui/icons-material/SummarizeOutlined';
 import ThemesIcon from '@mui/icons-material/DashboardOutlined';
 import BehaviorsIcon from '@mui/icons-material/InsertChartOutlinedRounded';
 import PromptIcon from '@mui/icons-material/ChatOutlined';
-import SettingsIcon from "@mui/icons-material/SettingsOutlined"
-
+import ExpandIcon from '@mui/icons-material/FullscreenOutlined';
+import Tooltip from "@mui/material/Tooltip"
 
 
 import CardContent from '@mui/material/CardContent'
@@ -30,7 +29,7 @@ import CardHeader from '@mui/material/CardHeader'
 import Card from '@mui/material/Card'
 import {Stack2, Alert2} from "../../../Components/Misc";
 import Stack from "@mui/material/Stack"
-import { Typography } from "@mui/material"
+import {Typography} from "@mui/material"
 import {shallow} from "zustand/shallow";
 import {useDebouncedCallback} from "use-debounce";
 import IconButton from "@mui/material/IconButton";
@@ -47,12 +46,12 @@ interface Insight {
   description?: string
   action?: string
   children: React.ReactNode
-  settingsClick: () => void
+  moreClick?: () => void
 }
 
-function Insight({label, icon, description, action, children, settingsClick}: Insight) {
+function Insight({label, icon, description, action, children, moreClick}: Insight) {
   return <Card
-    sx={{ backgroundColor:'white', borderRadius: 2, boxShadow: 1}}
+    sx={{backgroundColor: 'white', borderRadius: 2, boxShadow: 1}}
   >
     <CardContent>
       <Stack
@@ -69,30 +68,31 @@ function Insight({label, icon, description, action, children, settingsClick}: In
         >
           {label}
         </Typography>
-        {settingsClick && <Box
+        {moreClick && <Box
           sx={{flex: 1, display: "flex", justifyContent: "flex-end"}}
         >
-          <IconButton
-
-          color='primary'
-          size="small"
-          onClick={settingsClick}
-        >
-          <SettingsIcon sx={{fontSize: 25}}/>
-          </IconButton>
+          <Tooltip title={"Explore more"}>
+            <IconButton
+              color='primary'
+              size="small"
+              onClick={moreClick}
+            >
+              <ExpandIcon sx={{fontSize: 25}}/>
+            </IconButton>
+          </Tooltip>
         </Box>}
       </Stack>
       {description && <Typography
         color="primary.main"
         variant="body1"
         fontWeight={500}
-        >{description}
-        </Typography> }
-       {action && <Typography
-          mb={3}
-         variant="body2"
-        >{action}
-        </Typography> }
+      >{description}
+      </Typography>}
+      {action && <Typography
+        mb={3}
+        variant="body2"
+      >{action}
+      </Typography>}
       {children}
     </CardContent>
   </Card>
@@ -102,6 +102,7 @@ function Insight({label, icon, description, action, children, settingsClick}: In
 interface Insights {
   entry_ids: string[]
 }
+
 export default function Insights({entry_ids}: Insights) {
   const [
     search,
@@ -109,12 +110,14 @@ export default function Insights({entry_ids}: Insights) {
     entryModal,
     me,
     setPromptModal,
+    setBehaviorsView
   ] = useStore(s => [
     s.filters.search,
     s.res.entries_list_response?.hash || {},
-    s.entryModal,
+    s.modals.entry,
     s.user?.me,
-    s.setPromptModal
+    s.modals.setPrompt,
+    s.behaviors.setView
   ], shallow)
 
   const send = useStore(useCallback(s => s.send, []))
@@ -140,7 +143,9 @@ export default function Insights({entry_ids}: Insights) {
   }, 4000)
 
   useEffect(() => {
-    if (!entry_ids.length) { return }
+    if (!entry_ids.length) {
+      return
+    }
     getInsights()
   }, [search, entry_ids])
 
@@ -177,11 +182,11 @@ export default function Insights({entry_ids}: Insights) {
       {me?.premium && <Insight
         label="Prompt"
         icon={<PromptIcon {...iconProps} />}
-        settingsClick={() => setPromptModal(true)}
+        moreClick={() => setPromptModal(true)}
         description="Ask Gnothi anything"
         action="Choose a topic or create a custom prompt"
       >
-        <Prompt entry_ids={entry_ids} view={view} />
+        <Prompt entry_ids={entry_ids} view={view}/>
       </Insight>}
 
       <Insight
@@ -199,15 +204,16 @@ export default function Insights({entry_ids}: Insights) {
         description="AI-generated snapshot"
         action="Adjust filters for different summaries"
       >
-        <Summarize view={view} />
+        <Summarize view={view}/>
       </Insight>
 
       {me?.is_cool && <Insight
         label="Behavior Tracking"
         icon={<BehaviorsIcon {...iconProps} />}
-        description="Here’s an overview of the daily habits and behaviors you’ve been tracking through Gnothi."//
+        moreClick={() => setBehaviorsView({lastPage: "dashboard", page: "modal", view: "overall"})}
+        action="Here’s an overview of the daily habits and behaviors you’ve been tracking through Gnothi."
       >
-        <Behaviors />
+        <Behaviors/>
       </Insight>}
 
       <Insight

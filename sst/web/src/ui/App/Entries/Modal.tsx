@@ -11,8 +11,8 @@ import DialogContent from "@mui/material/DialogContent";
 
 
 export default function Modal() {
-  const entryModal = useStore(s => s.entryModal)
-  const setEntryModal = useStore(useCallback(s => s.setEntryModal, []))
+  const entryModal = useStore(s => s.modals.entry)
+  const setEntryModal = useStore(useCallback(s => s.modals.setEntry, []))
   const as = useStore(s => s.user?.as)
 
   const entry = entryModal?.entry

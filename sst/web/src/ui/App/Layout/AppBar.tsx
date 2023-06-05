@@ -12,7 +12,7 @@ export default function AppBar_() {
     setEntryModal,
   ] = useStore(s => [
     s.sharing.setView,
-    s.setEntryModal,
+    s.modals.setEntry,
   ], shallow)
 
   const clickSharing = useCallback(() => {

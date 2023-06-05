@@ -4,6 +4,7 @@ import {EventsSlice} from './events'
 import {BehaviorsSlice} from './behaviors'
 import React from 'react'
 import {Users, Entries, Insights} from "@gnothi/schemas"
+import {produce} from 'immer'
 
 import dayjs from 'dayjs'
 import {SharingSlice} from "./sharing";
@@ -22,20 +23,17 @@ type EntryModal = null | {
   entry?: Entries.entries_list_response
 }
 
-type Insight = "themes" | "summary" | "prompt" | "books" | "behaviors" | null
-
 
 export interface AppSlice {
   // API response errors get handled a certain way. This is for manual error adding (eg client issues)
-  errors: string[]
-  setErrors: (error: React.FC[]) => void
-  addError: (error: React.FC) => void
+  errors: React.ReactNode[]
+  setErrors: (error: React.ReactNode[]) => void
+  addError: (error: React.ReactNode) => void
 
   // ----- Insights
   filters: Entries.Filters
   setFilters: (filters: Partial<Entries.Filters>) => void
   clearFilters: () => void
-  setInsight: (payload: [string, string]) => void
   // postInsight: (x: any) => Promise<void>
 
   // ----- User
@@ -43,22 +41,21 @@ export interface AppSlice {
   setAs: (as: string | null) => void
   setUser: (user: User) => void
 
+  modals: {
+    premium: boolean
+    setPremium: (show: boolean) => void
+    prompt: boolean
+    setPrompt: (show: boolean) => void
+    entry: EntryModal
+    setEntry: (entryModal: EntryModal) => void
+  }
+
   // changeAs: (id: string) => Promise<void>
   profile: string | null
   setProfile: (profile: any) => void
-  premiumModal: boolean
-  setPremiumModal: (premiumModal: boolean) => void
-  promptModal: boolean
-  setPromptModal: (promptModal: boolean) => void
-
-  // ----- Entry
-  entryModal: EntryModal
-  setEntryModal: (entryModal: EntryModal) => void
-
 
   // ----- Other
   selectedTags: {[k: string]: boolean}
-
 }
 
 export const appSlice: StateCreator<
@@ -69,8 +66,8 @@ export const appSlice: StateCreator<
 > = (set, get) => ({
   // Errors
   errors: [],
-  setErrors: (errors) => set(state => ({errors})),
-  addError: (error) => set(state => ({errors: [...state.errors, error]})),
+  setErrors: (errors) => set({errors}),
+  addError: (error) => set({errors: [...get().errors, error]}),
 
   // ----- Insights
   filters: initialFilters,
@@ -84,22 +81,6 @@ export const appSlice: StateCreator<
   clearFilters: () => {
     get().setFilters(initialFilters)
   },
-
-  setInsight: ([k, v]) => set({[k]: v}),
-
-  // postInsight: async (actions, k, helpers) => {
-  //   const {emit} = helpers.getStoreActions().ws
-  //   const {insights, ws} = helpers.getStoreState()
-  //
-  //   const body = { days: insights.days }
-  //   const tags = trueKeys(data.selectedTags)
-  //   if (tags.length) { body.tags = tags }
-  //
-  //   const formK = {question: "question", themes: "algo", summarize: "words"}[k]
-  //   body[formK] = insights[k]
-  //
-  //   emit([`insights/${k}/post`, body])
-  // },
 
   // ----- User
 
@@ -137,14 +118,17 @@ export const appSlice: StateCreator<
 
   profile: null,
   setProfile: (profile) => set({profile}),
-  premiumModal: false,
-  setPremiumModal: (premiumModal) => set({premiumModal}),
-  promptModal: false,
-  setPromptModal: (promptModal) => set({promptModal}),
 
-  // ----- Entry
-  entryModal: null,
-  setEntryModal: (entryModal) => set({entryModal}),
+  modals: {
+    premium: false,
+    setPremium: (show) => set(produce(state => {state.modals.premium = show})),
+    prompt: false,
+    setPrompt: (show) => set(produce(state => {state.modals.prompt = show})),
+
+    // ----- Entry
+    entry: null,
+    setEntry: (entryModal) => set(produce(state => {state.modals.entry = entryModal})),
+  },
 
   // ----- Tags
   selectedTags: {},

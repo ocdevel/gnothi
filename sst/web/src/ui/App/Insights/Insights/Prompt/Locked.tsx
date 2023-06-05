@@ -13,7 +13,7 @@ import {shallow} from "zustand/shallow";
 export default function Locked() {
   const [me, setPremiumModal] = useStore(s => [
     s.user?.me,
-    s.setPremiumModal
+    s.modals.setPremium
   ], shallow)
   if (!me?.id || me.premium) { return null }
 

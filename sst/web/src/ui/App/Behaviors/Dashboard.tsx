@@ -3,6 +3,8 @@ import {shallow} from "zustand/shallow";
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import Box from "@mui/material/Box";
+import Behavior from './List/Item.tsx'
+ import React from "react";
 
 export default function Dashboard() {
   const [send, user, fields, entries, day, isToday, view, setView] = useStore(s => [
@@ -27,33 +29,23 @@ export default function Dashboard() {
   function renderEmpty() {
     return <Box>
       <Typography>You have no behaviors to track</Typography>
-      <Button>Demo this feature</Button>
     </Box>
   }
 
   function renderList() {
     return <>
-      {fields?.ids?.map(id => {
-        const field = fields?.hash?.[id]
-        return <Typography
-          className="behavior"
-          key={id}
-          onClick={() => setView({page: "modal", view: "edit", fid: id})}
-        >
-          {field.name}
-        </Typography>
-      })}
+      {fields?.ids?.map(fid => <Behavior key={fid} fid={fid}/>)}
     </>
   }
 
   return <div className="dashboard">
     {fields?.ids?.length ? renderList() : renderEmpty()}
-    <Button
+    {/*<Button
       className="btn-expand"
       variant="contained"
       onClick={showModal}
     >
       Dive Deeper
-    </Button>
+    </Button>*/}
   </div>
 }

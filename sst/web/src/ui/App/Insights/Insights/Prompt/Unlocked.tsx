@@ -42,8 +42,8 @@ interface Message {
 }
 
 export default function Unlocked({entry_ids, view}: UnlockedProps) {
-  const modal = useStore(s => s.promptModal)
-  const setModal = useStore(s => s.setPromptModal)
+  const modal = useStore(s => s.modals.prompt)
+  const setModal = useStore(s => s.modals.setPrompt)
   const [messages, setMessages] = useState<Message[]>([])
   const [waiting, setWaiting] = useState(false)
 
