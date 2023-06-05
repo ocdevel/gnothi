@@ -37,8 +37,8 @@ export class Base {
     return sql`coalesce(${day || null}::timestamp at time zone with_tz.tz, now() at time zone with_tz.tz)`
   }
   tz_write(day: string | Date | undefined) {
-    console.log({tz_read_day: day})
-    return sql`coalesce(${day || null}, now())`
+    console.log({tz_write_day: day})
+    return sql`coalesce(${day || null}::timestamp at time zone with_tz.tz, now())`
   }
 
   constructor(context: FnContext) {
