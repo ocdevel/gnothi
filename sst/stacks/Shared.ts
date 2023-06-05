@@ -69,7 +69,14 @@ export function SharedCreate(context: StackContext) {
     // stack.addOutputs({
     //   hostedZoneNsRecords: hostedZone.hostedZoneNameServers!.join(','),
     // })
-    return hostedZone
+
+    const certificate = new aws_acm.Certificate(stack, 'DomainCertificate', {
+      // want to generate 1 per for sharedStage-subdomain
+      domainName: domains.shared,
+      validation: aws_acm.CertificateValidation.fromDns(hostedZone),
+    })
+
+    return {hostedZone, certificate}
   }
 
   function createVpc(): aws_ec2.Vpc {
@@ -100,23 +107,13 @@ export function SharedCreate(context: StackContext) {
     })
   }
 
-  function createClientVpn(vpc: aws_ec2.Vpc, hostedZone: aws_route53.HostedZone): aws_ec2.ClientVpnEndpoint | null {
+  function createClientVpn(vpc: aws_ec2.Vpc, hostedZone: aws_acm.Certificate): aws_ec2.ClientVpnEndpoint | null {
     // IMPORTANT: read ./clientVpnSetup.md to set this up! Required for RDS / EFS access from localhost
 
     const clientCertificateArn = process.env.CLIENT_CERTIFICATE_ARN
     if (!clientCertificateArn?.length) {
       return null
     }
-
-    stack.addOutputs({
-      clientCertificateArn,
-    })
-
-    const certificate = new aws_acm.Certificate(stack, 'DomainCertificate', {
-      // want to generate 1 per for sharedStage-subdomain
-      domainName: domains.shared,
-      validation: aws_acm.CertificateValidation.fromDns(hostedZone),
-    })
 
     const clientVpn = new aws_ec2.ClientVpnEndpoint(stack, 'ClientVpn', {
       vpc,
@@ -243,8 +240,8 @@ export function SharedCreate(context: StackContext) {
   }
 
   const vpc = createVpc()
-  const hostedZone = createHostedZone()
-  const clientVpn = createClientVpn(vpc, hostedZone)
+  const {hostedZone, certificate} = createHostedZone()
+  const clientVpn = createClientVpn(vpc, certificate)
   const rds = createRdsV2(vpc)
   const ses = createSes()
   const exported = exportVars(vpc, rds)

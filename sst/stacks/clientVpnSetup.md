@@ -30,7 +30,7 @@ aws acm import-certificate --certificate fileb://client.crt --private-key fileb:
 
 The output of that execution will give you the clientCertificateARN. Paste that into your .env file. Likely `.env.shared-dev` or just `.env.shared`. The shared-* concept is that one stack can be used for all dev projects (staging, local, testing, etc) to house RDS, VPC, and all the expensive stuff. And of course you'll have just one for your prod stuff, `shared-prod`.
 
-## 2. Setup client-config.ovpn
+## 2. Setup client-config.ovpn (start here if creating/destrying ClientVPN to save costs)
 
 First, deploy sst shared-(dev|prod) so that you have the ClientVpnEndpointID needed next.
 ```bash
