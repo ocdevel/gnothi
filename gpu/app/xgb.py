@@ -7,20 +7,23 @@ https://towardsdatascience.com/fine-tuning-xgboost-in-python-like-a-boss-b4543ed
 https://www.analyticsvidhya.com/blog/2016/03/complete-guide-parameter-tuning-xgboost-with-codes-python/
 https://github.com/optuna/optuna/blob/master/examples/xgboost_cv.py
 """
+import pdb
 import optuna, pdb
 import pandas as pd
 import numpy as np
 import xgboost as xgb
 from sklearn.model_selection import train_test_split
+import os
 from collections import OrderedDict
-from common.utils import is_test
+
+is_test = os.environ.get('TESTING')
 
 class EarlyStoppingExceeded(Exception):
     pass
 
 
 class MyXGB:
-    n_trials = 50 if is_test() else 150
+    n_trials = 5 if is_test else 150
     version = 1
     too_small = 20
     early_stop_at = 10
@@ -166,7 +169,6 @@ class MyXGB:
         x_train, x_val, y_train, y_val = train_test_split(x, y, test_size=0.3)
         dtrain = xgb.DMatrix(x_train, label=y_train)
         dval = xgb.DMatrix(x_val, label=y_val)
-
         return xgb.train(
             params={**self.base_params, **self.best_params},
             dtrain=dtrain,

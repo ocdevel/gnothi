@@ -1,16 +1,19 @@
 import pdb
 from app.xgb import MyXGB
 from xgboost import XGBRegressor, DMatrix
-from sqlalchemy import text
-from psycopg2.extras import Json as jsonb
+from sqlalchemy import create_engine, text, Table, MetaData
 from sqlalchemy.dialects import postgresql
-from common.database import session, engine, init_db
-from common.fixtures import fixtures
-import common.models as M
+from psycopg2.extras import Json as jsonb
 import pandas as pd
 import numpy as np
 import logging
 logger = logging.getLogger(__name__)
+
+engine = create_engine('postgresql://postgres:password@localhost:5432/gnothilegion4')
+
+metadata = MetaData()
+influencers_table = Table('influencers', metadata, autoload_with=engine)
+
 
 
 def good_target(fes, fs):
@@ -53,7 +56,7 @@ def impute_and_roll(fes, fs):
 
 # TODO put fixtures.load_xgb_hypers back
 
-def load_data(sess, user_id):
+def load_data(conn, user_id):
     fes = pd.read_sql("""
     -- ensure enough data
     with fe_ct as (
@@ -70,7 +73,7 @@ def load_data(sess, user_id):
     where f.user_id=%(uid)s
       and f.excluded_at is null
     order by fe.day asc
-    """, sess.bind, params={'uid': user_id})
+    """, conn, params={'uid': user_id})
     if not fes.size: return None  # not enough entries
 
     params = dict(
@@ -83,7 +86,7 @@ def load_data(sess, user_id):
     where user_id=%(uid)s
         and id in %(fids)s
         and excluded_at is null
-    """, sess.bind, params=params)
+    """, conn, params=params)
 
     fs = {r.id: r for i, r in fs.iterrows()}
 
@@ -97,29 +100,27 @@ def load_data(sess, user_id):
     return fs, fes
 
 
-def get_prev_best(sess, user_id):
+def get_prev_best(conn, user_id):
     """
     get x previous best hyper-runs for this user
     """
     # Ensure previous hyper-runs are up-to-date
-    sess.execute(text("""
+    conn.execute(text("""
     delete from model_hypers where model='influencers' and model_version != :version 
     """), dict(version=MyXGB.version))
-    sess.commit()
 
-    prev_best = sess.execute(text("""
+    prev_best = conn.execute(text("""
     select score, hypers from model_hypers where user_id=:uid and model='influencers'
     """), dict(uid=user_id)).fetchall()
 
     # clear older runs
-    sess.execute(text("""
+    conn.execute(text("""
     with hypers_ as (
         select id from model_hypers where user_id=:uid and model='influencers'
         order by created_at desc
         limit 2
     ) delete from model_hypers where user_id=:uid and model='influencers' and id not in (select id from hypers_)
     """), dict(uid=user_id))
-    sess.commit()
 
     if prev_best:
         return min([e.score for e in prev_best]), \
@@ -128,10 +129,10 @@ def get_prev_best(sess, user_id):
         return None
 
 
-def influencers_(sess, user_id):
+def influencers_(conn, user_id):
     logging.info("Influencers")
 
-    data = load_data(sess, user_id)
+    data = load_data(conn, user_id)
     if not data: return
     fs, fes = data
     # fes = fes.resample('D')
@@ -140,7 +141,7 @@ def influencers_(sess, user_id):
     x, y = fes, good_target(fes, fs)
     x, y = x.drop(columns=[y]), x[y]
     xgb_args = {}
-    prev_best = get_prev_best(sess, user_id)
+    prev_best = get_prev_best(conn, user_id)
     if prev_best:
         xgb_args['beat_this'] = prev_best[0]
         xgb_args['enqueue'] = prev_best[1]
@@ -150,9 +151,10 @@ def influencers_(sess, user_id):
     if x.shape[0] > MyXGB.too_small:
         score, hypers = xgb_.best_value, xgb_.best_params
         meta = dict(n_rows=x.shape[0], n_cols=x.shape[1])
-        sess.add(M.ModelHypers(model='influencers', model_version=xgb_.version, user_id=user_id, score=score,
-            hypers=hypers, meta=meta))
-        sess.commit()
+        conn.execute(text("""
+        insert into model_hypers (model, model_version, user_id, score, hypers, meta)
+        values ('influencers', :version, :uid, :score, :hypers, :meta)
+        """), dict(version=xgb_.version, uid=user_id, score=score, hypers=jsonb(hypers), meta=jsonb(meta)))
 
     next_preds = {}
     importances = {}
@@ -176,9 +178,9 @@ def influencers_(sess, user_id):
         ### Importances
         ### -----------
         x = fes_.drop(columns=[t])
-        y = fes_[t]
+        y = fes_[t].fillna(fes_[t].mean()) # FIXME this was added for v0, since I was getting NaN. I have no memory of this code
         model = xgb_.train(x, y)
-        
+
         imps = MyXGB.feature_importances(model)
         imps[t] = 0.
         all_imps.append(imps)
@@ -189,8 +191,8 @@ def influencers_(sess, user_id):
 
 
 def influencers():
-    with session() as sess:
-        users = sess.execute(text(f"""
+    with engine.connect() as conn:
+        users = conn.execute(text("""
         select id::text from users
         where
           -- has logged in recently
@@ -200,18 +202,17 @@ def influencers():
         """)).fetchall()
         for u in users:
             uid_ = dict(uid=u.id)
-            sess.execute(text(f"""
+            conn.execute(text("""
             update users set last_influencers=now() where id=:uid
             """), uid_)
-            sess.commit()
 
-            res = influencers_(sess, u.id)
+            res = influencers_(conn, u.id)
             if not res: continue
 
             # A field can get deleted while running XGB, causing a fkey constraint error.
             # https://docs.sqlalchemy.org/en/13/dialects/postgresql.html
             # Can't do on_conflict for FK constraints, get fresh ids and filter out missing ones.
-            fids = [x.id for x in sess.execute(text("""
+            fids = [x.id for x in conn.execute(text("""
             select id::text from fields where user_id=:uid
             """), uid_).fetchall()]
 
@@ -220,19 +221,24 @@ def influencers():
                 if fid not in fids: continue
                 inf_score, next_pred = all_imps[fid], next_preds[fid]
 
-                insert = postgresql.insert(M.Influencer.__table__).values([
+                insert = postgresql.insert(influencers_table).values([
                     dict(field_id=fid, influencer_id=inf_id, score=score)
                     for inf_id, score in others.items()
                     if inf_id in fids
                 ])
-                sess.execute(insert.on_conflict_do_update(
-                    constraint=M.Influencer.__table__.primary_key,
+                conn.execute(insert.on_conflict_do_update(
+                    index_elements=["field_id", "influencer_id"],
                     set_=dict(score=insert.excluded.score)
                 ))
-                sess.execute(text("""
+                conn.execute(text("""
                 update fields set influencer_score=:score, next_pred=:pred
                 where id=:fid;
                 """), dict(score=inf_score, pred=next_pred, fid=fid))
-                sess.commit()
 
     return {}
+
+if __name__ == '__main__':
+    with engine.connect() as conn:
+        # FIXME remove
+        conn.execute(text("update users set last_influencers=null where email='tylerrenelle@gmail.com'"))
+    influencers()

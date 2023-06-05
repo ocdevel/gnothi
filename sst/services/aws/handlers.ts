@@ -26,7 +26,7 @@ import {Bucket} from 'sst/node/bucket'
 import _ from "lodash";
 import {Logger} from './logs'
 import {wsConnections} from "../data/schemas/wsConnections";
-import {FnContext} from "../routes/types";
+import {FnContext, Req, Res} from "../routes/types";
 import {eq} from "drizzle-orm";
 
 export * as Handlers from './handlers'
@@ -36,7 +36,7 @@ export * as Handlers from './handlers'
 abstract class Handler<E = any> {
   abstract match(req: E): boolean
   abstract parse(event: E): Promise<Array<null | Api.Req>>
-  abstract respond(res: Api.Res, context: Api.FnContext): Promise<APIGatewayProxyResultV2>
+  abstract respond(res: Res, context: FnContext): Promise<APIGatewayProxyResultV2>
 }
 
 function proxyRes(res: Api.Res): APIGatewayProxyResultV2 {
@@ -299,9 +299,10 @@ class CronHandler extends Handler<ScheduledEvent> {
   }
 
   async parse(event) {
+    const caller = event.resources[0].toLowerCase()
     // FIXME no easy way to inform the CDK construct to pass something along. A tag? for now, I'll just match-make
     // based on the rule which triggered this function
-    const eventKey = event.resources[0].toLowerCase().includes("habitica") ? "habitica_sync_cron"
+    const eventKey = caller.includes("habitica") ? "habitica_sync_cron"
       : undefined // will need this error as I flesh out more crons
     return [{data: event, event: eventKey, trigger: "cron"}]
   }
