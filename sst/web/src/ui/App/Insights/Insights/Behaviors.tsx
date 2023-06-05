@@ -7,7 +7,9 @@ import Behavior from '../../Behaviors/List/Item.tsx'
 import React, {useEffect, useState} from "react";
 import {FieldName} from "../../Behaviors/utils";
 import Expand from '@mui/icons-material/FullscreenOutlined'
-import { PieChart, XAxis, YAxis, Pie, Legend, Tooltip, ResponsiveContainer, Brush, ReferenceLine } from 'recharts';
+import { PieChart, Pie, Legend, Tooltip, ResponsiveContainer, Brush, ReferenceLine } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
+
 
 
 import _ from "lodash";
@@ -39,24 +41,30 @@ export default function Dashboard() {
 
   // const influencers = useStore(s => s.res.fields_influencers_list_response?.rows)
 
-  let pieData = _.reduce(fields, (m, field, fid) => {
+  let data = _.reduce(fields, (m, field, fid) => {
     // keep only the top scores. At the end, if nothing meets the threshold, we show the "collect more data" component
-    if (!(field.influencer_score > .05)) {return m}
-    return [...m, {name: field.name, value: field.influencer_score}]
-  }, [])
+    if (!(field.influencer_score > 0.05)) {return m}
+    return [...m, {name: field.name, score: field.influencer_score}]
+  }, []).slice().sort((a,b) => b.score - a.score)
 
   function renderChart() {
-    return <Box display="flex" flexDirection="column" flexGrow={1}>
-      <ResponsiveContainer width="100%" height="100%">
-        <PieChart width={400} height={400}>
-          <Pie
-            dataKey="value"
-            data={pieData}
-            fill="#8884d8"
-            label={({name}) => name}
-          />
-        </PieChart>
-      </ResponsiveContainer>
+    return <Box width="100" height={250}>
+     <ResponsiveContainer width="100%" height="100%">
+  <BarChart
+    layout="vertical"
+    data={data}
+    margin={{
+      top: 5, right: 5, left: 5, bottom: 5,
+    }}
+  >
+    <CartesianGrid strokeDasharray="3 3" />
+    <XAxis type="number" />
+    <YAxis dataKey="name" type="category" />
+    <Tooltip />
+    <Legend />
+    <Bar dataKey="score" fill="#8884d8" />
+  </BarChart>
+</ResponsiveContainer>
     </Box>
   }
 
@@ -65,12 +73,12 @@ export default function Dashboard() {
   }
 
   function renderList() {
-    return fields?.ids?.map(fid => <Behavior key={fid} fid={fid}/>)
+    return fields?.map(f => <Behavior key={f.id} fid={f.id}/>)
   }
 
   return <div className="dashboard">
     {
-      pieData.length ? renderChart()
+      data.length ? renderChart()
       : fields?.length ? renderList()
       : renderEmpty()
     }
