@@ -5,6 +5,7 @@ import * as S from '@gnothi/schemas'
 import {users} from '../schemas/users'
 import {fields} from '../schemas/fields'
 import {fieldEntries} from '../schemas/fieldEntries'
+import {influencers, Influencer} from '../schemas/influencers'
 import { and, asc, desc, eq, or, sql } from 'drizzle-orm';
 
 export class Fields extends Base {
@@ -57,7 +58,7 @@ export class Fields extends Base {
 
 
   async entriesList(req: S.Fields.fields_entries_list_request) {
-    const {uid} = this.context
+    const {uid, db} = this.context
     const day = req.day
     return db.query<S.Fields.fields_list_response>(sql`
       ${this.with_tz()}
@@ -70,7 +71,7 @@ export class Fields extends Base {
   }
 
   async entriesPost(req: S.Fields.fields_entries_post_request) {
-    const {uid} = this.context
+    const {uid, db} = this.context
     const {day, field_id, value} = req
     return db.query(sql`
       ${this.with_tz()}
@@ -80,5 +81,15 @@ export class Fields extends Base {
       on conflict (field_id, day) do update set value=${value}
       returning *
     `)
+  }
+
+  async influencersList(req: S.Fields.fields_influencers_list_request) {
+    const {uid, db} = this.context
+    const res = await db.drizzle.execute(sql`
+      select i.* from ${influencers} i
+      inner join ${fields} f on f.id=i.field_id
+        and f.user_id=${uid}
+    `)
+    return res.rows
   }
 }

@@ -19,10 +19,11 @@ import TableBody from "@mui/material/TableBody";
 import Paper from "@mui/material/Paper";
 import {fields_list_response} from '@gnothi/schemas/fields'
 import {shallow} from "zustand/shallow";
+import Typography from "@mui/material/Typography";
 
 const round_ = (v: number | null) => v ? v.toFixed(2) : null
 
-export default function ChartModal() {
+export default function Charts() {
   const [showChart, setShowChart] = useStore(s => [
     s.behaviors.showChart, s.behaviors.setShowChart
   ], shallow)
@@ -166,16 +167,9 @@ export default function ChartModal() {
     </>
   }
 
-  return (
-    <FullScreenDialog
-      open={true}
-      onClose={close}
-      title={field ? "Influencers" : "Top Influencers"}
-    >
-      {field && <DialogTitle><FieldName name={field.name} maxWidth={960} /></DialogTitle>}
-      <DialogContent>
-        {renderBody()}
-      </DialogContent>
-    </FullScreenDialog>
-  );
+  return <>
+    <Typography variant="h4">{field ? "Influencers" : "Top Influencers"}</Typography>
+    {field && <Typography variant="h5"><FieldName name={field.name} maxWidth={960} /></Typography>}
+    {renderBody()}
+  </>
 }

@@ -16,6 +16,7 @@ export const users_everything_request = new Route(r.users_everything_request, as
     // 'entries_list_request', // now this is kicked off client-side with filters
     'fields_list_request',
     'fields_entries_list_request',
+    'fields_influencers_list_request',
 
     // Not yet implemented, ease up on the networking until they're back
     // 'groups_mine_list_request',

@@ -2,7 +2,9 @@ import {z} from 'zod'
 import {Passthrough, IdCol, dateCol, CoerceNumber} from './utils'
 import {Route} from './api'
 export * as Fields from './fields'
+import {influencers} from '@gnothi/services/data/schemas/influencers'
 import {v4 as uuid} from 'uuid'
+import {createSelectSchema} from "drizzle-zod";
 
 export const FieldType = z.enum([
   // medication changes / substance intake
@@ -116,6 +118,9 @@ export const fields_exclude_request = z.object({
   exclude: z.boolean()
 })
 export type fields_exclude_request = z.infer<typeof fields_exclude_request>
+
+export const fields_influencers_list_request = createSelectSchema(influencers)
+export type fields_influencers_list_request = z.infer<typeof fields_influencers_list_request>
 
 export const habitica_post_request = z.object({
   habitica_user_id: z.string().optional(),
@@ -232,6 +237,21 @@ export const routes = {
       keyby: 'field_id',
       op: "update",
       event_as: 'fields_entries_list_response'
+    }
+  },
+
+  fields_influencers_list_request: {
+    i: {
+      e: "fields_influencers_list_request",
+      s: Passthrough,
+      t: {ws: true},
+      snoopable: true
+    },
+    o: {
+      e: "fields_influencers_list_response",
+      s: fields_influencers_list_request,
+      t: {ws: true},
+      keyby: "field_id",
     }
   },
 

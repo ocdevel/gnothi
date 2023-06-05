@@ -37,3 +37,6 @@ export const fields_exclude_request = new Route(r.fields_exclude_request, async 
   })
 })
 
+export const fields_influencers_list_request = new Route(r.fields_influencers_list_request, async (req, context) => {
+  return context.m.fields.influencersList(req)
+})
