@@ -41,30 +41,34 @@ export default function Dashboard() {
 
   // const influencers = useStore(s => s.res.fields_influencers_list_response?.rows)
 
+  const maxInfluencers = 5
   let data = _.reduce(fields, (m, field, fid) => {
     // keep only the top scores. At the end, if nothing meets the threshold, we show the "collect more data" component
-    if (!(field.influencer_score > 0.05)) {return m}
+    if (!(field.influencer_score > .05)) {return m}
     return [...m, {name: field.name, score: field.influencer_score}]
-  }, []).slice().sort((a,b) => b.score - a.score)
+  }, []).slice().sort((a: number, b: number) => b.score - a.score).slice(0, maxInfluencers)
+
+  const hasInfluencers = false //data.length > 0
+  const hasFields = fields?.length > 0
 
   function renderChart() {
     return <Box width="100" height={250}>
      <ResponsiveContainer width="100%" height="100%">
-  <BarChart
-    layout="vertical"
-    data={data}
-    margin={{
-      top: 5, right: 5, left: 5, bottom: 5,
-    }}
-  >
-    <CartesianGrid strokeDasharray="3 3" />
-    <XAxis type="number" />
-    <YAxis dataKey="name" type="category" />
-    <Tooltip />
-    <Legend />
-    <Bar dataKey="score" fill="#8884d8" />
-  </BarChart>
-</ResponsiveContainer>
+      <BarChart
+        layout="vertical"
+        data={data}
+        margin={{
+          top: 5, right: 5, left: 5, bottom: 5,
+        }}
+      >
+        <CartesianGrid strokeDasharray="3 3" />
+        <XAxis type="number" />
+        <YAxis dataKey="name" type="category" />
+        <Tooltip />
+        <Legend />
+        <Bar dataKey="score" fill="#8884d8" />
+      </BarChart>
+    </ResponsiveContainer>
     </Box>
   }
 
@@ -73,13 +77,17 @@ export default function Dashboard() {
   }
 
   function renderList() {
-    return fields?.map(f => <Behavior key={f.id} fid={f.id}/>)
+    return <Typography>Not enough data to compute behavior statistics, keep tracking and check back in a few days</Typography>
+
+    // remove habitica to save space
+    const customFields = fields?.filter(f => !f.service?.length)
+    return customFields?.map(f => <Behavior key={f.id} fid={f.id}/>)
   }
 
   return <div className="dashboard">
     {
-      data.length ? renderChart()
-      : fields?.length ? renderList()
+      hasInfluencers ? renderChart()
+      : hasFields ? renderList()
       : renderEmpty()
     }
   </div>

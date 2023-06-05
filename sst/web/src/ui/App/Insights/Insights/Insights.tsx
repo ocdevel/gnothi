@@ -110,14 +110,16 @@ export default function Insights({entry_ids}: Insights) {
     entryModal,
     me,
     setPromptModal,
-    setBehaviorsView
+    setBehaviorsView,
+    setPremium
   ] = useStore(s => [
     s.filters.search,
     s.res.entries_list_response?.hash || {},
     s.modals.entry,
     s.user?.me,
     s.modals.setPrompt,
-    s.behaviors.setView
+    s.behaviors.setView,
+    s.modals.setPremium
   ], shallow)
 
   const send = useStore(useCallback(s => s.send, []))
@@ -179,15 +181,15 @@ export default function Insights({entry_ids}: Insights) {
       {/*  /!*</Typography>*!/*/}
       {/*</Stack>*/}
 
-      {me?.premium && <Insight
+      <Insight
         label="Prompt"
         icon={<PromptIcon {...iconProps} />}
-        moreClick={() => setPromptModal(true)}
+        moreClick={() => me?.premium ? setPromptModal(true) : setPremium(true)}
         description="Ask Gnothi anything"
         action="Choose a topic or create a custom prompt"
       >
         <Prompt entry_ids={entry_ids} view={view}/>
-      </Insight>}
+      </Insight>
 
       <Insight
         label="Themes"

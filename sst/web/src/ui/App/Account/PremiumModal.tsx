@@ -23,7 +23,7 @@ export default function PremiumModal() {
     stripe_list_response,
     send
   ] = useStore(s => [
-    s.user?.me,
+    s.user?.me, 
     s.modals.premium,
     s.modals.setPremium,
     s.res.stripe_list_response?.first,
@@ -68,6 +68,7 @@ export default function PremiumModal() {
   function premiumInactiveFooter() {
     return <Button
       {...buttonDefaults}
+      disabled={!me}
       onClick={() => setShowDisclaimer(true)}
     >Upgrade</Button>
   }
@@ -86,9 +87,8 @@ export default function PremiumModal() {
     </Button>
   }
 
-  if (!me) {return null}
-
   function clickLastUpgrade() {
+    if (!me) {return}
     setShowDisclaimer(false)
     // use javascript to redirect user to the payment link, target=_blank
     const link = `${PAYMENT_LINK}?client_reference_id=${me.id}`
@@ -100,14 +100,14 @@ export default function PremiumModal() {
       <DialogContent>
         <Banner />
         <PlanComparison
-          premiumFooter={me.premium ? premiumActiveFooter : premiumInactiveFooter}
-          basicFooter={me.premium ? basicInactiveFooter : basicActiveFooter}
+          premiumFooter={me?.premium ? premiumActiveFooter : premiumInactiveFooter}
+          basicFooter={me?.premium ? basicInactiveFooter : basicActiveFooter}
         />
         {/*<FeatureLayout />*/}
       </DialogContent>
     </FullScreenDialog>
     <BasicDialog
-      open={showDisclaimer && !me.premium}
+      open={showDisclaimer && !me?.premium}
       onClose={() => setShowDisclaimer(false)}
       size={"sm"}
     >
