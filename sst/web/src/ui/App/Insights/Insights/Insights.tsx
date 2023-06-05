@@ -207,14 +207,14 @@ export default function Insights({entry_ids}: Insights) {
         <Summarize view={view}/>
       </Insight>
 
-      {me?.is_cool && <Insight
+      <Insight
         label="Behavior Tracking"
         icon={<BehaviorsIcon {...iconProps} />}
         moreClick={() => setBehaviorsView({lastPage: "dashboard", page: "modal", view: "overall"})}
         action="Here’s an overview of the daily habits and behaviors you’ve been tracking through Gnothi."
       >
         <Behaviors/>
-      </Insight>}
+      </Insight>
 
       <Insight
         label="Top Books"
