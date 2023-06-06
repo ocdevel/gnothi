@@ -113,7 +113,7 @@ export const eventsSlice: StateCreator<
         res.ids.map(id => [id, res.hash[id].selected])
       )
       set({selectedTags})
-      console.log(selectedTags)
+      console.log('selectedTags', selectedTags)
     },
     fields_entries_list_response: (res) => {
       get().behaviors.field_entries_list_response(res)
@@ -121,7 +121,7 @@ export const eventsSlice: StateCreator<
   },
 
   handleEvent: (res: Api.Res) => {
-    console.log({res})
+    console.log(`${res.event}`, res)
     const {error, code, event} = res
 
     // Set the response in its location and lastResponse, even
