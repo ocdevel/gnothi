@@ -2,6 +2,8 @@ import * as sst from "sst/constructs";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as ec2 from "aws-cdk-lib/aws-ec2";
 import * as efs from "aws-cdk-lib/aws-efs";
+import * as aws_events from "aws-cdk-lib/aws-events"
+import * as aws_targets from  "aws-cdk-lib/aws-events-targets"
 import * as cdk from "aws-cdk-lib";
 import {rams} from "./util";
 import {SharedImport} from "./Shared";
@@ -125,6 +127,13 @@ export function Ml(context: sst.StackContext) {
     }),
   })
   fnBehaviors.addToRolePolicy(readSecretPolicy)
+  // sst.Cron only works with ss.Function, manually creating my own cron here
+  if (["staging","prod"].includes(app.stage)) {
+    const behaviorsRule = new aws_events.Rule(this, 'CronBehaviors', {
+      schedule: aws_events.Schedule.rate(cdk.Duration.hours(1)),
+    });
+    behaviorsRule.addTarget(new aws_targets.LambdaFunction(fnBehaviors));
+  }
 
   addLogging(fnPreprocess, "FnPreprocess")
   addLogging(fnBooks, "FnBooks")
@@ -142,5 +151,5 @@ export function Ml(context: sst.StackContext) {
     fnBehaviors_: fnBehaviors.functionName,
   })
 
-  return {fnPreprocess, fnBooks, fnAsk, fnSummarize, fnStore, fnBehaviors}
+  return {OPENAI_KEY, fnPreprocess, fnBooks, fnAsk, fnSummarize, fnStore, fnBehaviors}
 }

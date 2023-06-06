@@ -108,7 +108,7 @@ export function Api({ app, stack }: sst.StackContext) {
        ml.fnAsk.functionArn,
        ml.fnSummarize.functionArn,
        ml.fnStore.functionArn,
-       ml.fnPreprocess.functionArn
+       ml.fnPreprocess.functionArn,
      ],
    }))
 

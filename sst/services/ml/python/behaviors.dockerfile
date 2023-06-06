@@ -1,6 +1,6 @@
 FROM public.ecr.aws/lambda/python:3.9
 RUN pip3 install --no-cache-dir \
-  xgboost==1.7.6 \
+  xgboost==1.7.5 \
   optuna==3.2.0 \
   psycopg2-binary==2.9.5 \
   sqlalchemy==1.4.44 \

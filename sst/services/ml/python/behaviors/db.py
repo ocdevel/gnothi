@@ -26,12 +26,12 @@ def get_secret():
     return json.loads(secret)
 
 def get_connection_string():
+    dbname = f"gnothi{STAGE}"
     if IS_LOCAL:
         secret = {
             "username": "postgres",
             "password": "password",
             "host": "localhost",
-            "dbname": f"gnothi{STAGE}",
             "port": 5432
         }
     else:
@@ -39,10 +39,9 @@ def get_connection_string():
     username = secret['username']
     password = quote_plus(secret['password'])
     host = secret['host']
-    dbname = secret['dbname']
     port = secret['port']
 
-    print(f"Using gnothi{STAGE} DB")
+    print(f"Using {dbname}")
 
     # Construct the connection string
     return f"postgresql+psycopg2://{username}:{password}@{host}:{port}/{dbname}"
