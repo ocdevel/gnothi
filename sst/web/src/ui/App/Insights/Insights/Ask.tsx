@@ -9,20 +9,19 @@ import Typography from '@mui/material/Typography'
 
 import {useStore} from "@gnothi/web/src/data/store"
 import {Insight} from './Utils'
+import Alert from "@mui/material/Alert";
 
 export default function Ask({view}: Insight) {
   const answer = useStore(useCallback(s => s.res.insights_ask_response?.hash?.[view], [view]))
 
-  console.log("answer", answer)
   if (!answer?.answer?.length) {
     return null
   }
 
   return <>
-    <Card>
-      <CardContent>
-        <Typography>{answer.answer}</Typography>
-      </CardContent>
-    </Card>
+    <Alert sx={{mb: 2}}>
+      <Typography variant="h6">Answer</Typography>
+      <Typography>{answer.answer}</Typography>
+    </Alert>
   </>
 }

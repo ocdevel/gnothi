@@ -15,7 +15,6 @@ for env_key in [
     'SENTENCE_TRANSFORMERS_HOME'
 ]:
     os.environ[env_key] = f"{EFS}/models"
-os.environ["HAYSTACK_TELEMETRY_ENABLED"] = ""
 
 USE_GPU = os.getenv("CUDA_VISIBLE_DEVICES", False)
 if not USE_GPU:
@@ -25,7 +24,6 @@ if not USE_GPU:
 
 import logging
 logging.basicConfig(format="%(levelname)s - %(name)s - %(message)s", level=logging.WARNING)
-logging.getLogger("haystack").setLevel(logging.INFO)
 
 ENCODER_MODEL = "all-MiniLM-L6-v2"
 ENCODER_DIM = 384

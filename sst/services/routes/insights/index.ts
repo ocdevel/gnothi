@@ -31,7 +31,7 @@ export const insights_get_request = new Route(r.insights_get_request,async (req,
 export const insights_get_response = new Route(r.insights_get_response,async (req, context) => {
   const {m, uid: user_id} = context
   const {view, entry_ids, insights} = req
-  const {query} = insights
+  const query = insights.query || ""
   const promises = []
   // will be used to pair to which page called the insights client-side (eg list vs view)
   context.requestId = view
@@ -50,7 +50,7 @@ export const insights_get_response = new Route(r.insights_get_response,async (re
   })
   const entriesFiltered = idsFiltered.map(id => entriesHash[id])
 
-  if (query?.length) {
+  if (query?.length && query.endsWith("?")) {
     promises.push(ask({
       context,
       query,
@@ -58,7 +58,7 @@ export const insights_get_response = new Route(r.insights_get_response,async (re
       usePrompt,
       // only send the top few matching documents. Ease the burden on QA ML, and
       // ensure best relevance from embedding-match
-      entry_ids: idsFromVectorSearch.slice(0, 1)
+      entry_ids: idsFromVectorSearch.slice(0, 2)
     }))
   }
 

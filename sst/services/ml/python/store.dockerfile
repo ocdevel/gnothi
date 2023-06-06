@@ -6,8 +6,7 @@ RUN pip3 install --no-cache-dir \
     pandas==1.5.2 \
     pyarrow==12.0.0 \
     kneed==0.8.2 \
-    # force-install preferred huggingface, lots of trouble with haystack's 4.22.1
-    && pip3 install --no-cache-dir transformers==4.25.1
+    && pip3 install --no-cache-dir transformers==4.29.0
 
 COPY __init__.py ${LAMBDA_TASK_ROOT}/__init__.py
 COPY common ${LAMBDA_TASK_ROOT}/common
