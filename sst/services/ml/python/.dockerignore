@@ -3,7 +3,7 @@ data
 books/db
 **/*.rar
 **/*.sql
-**/.ipynb_checkpoints
+**/.ipynb*
 **/.pytest_cache
 mock_entries.json
 **/test_*.py

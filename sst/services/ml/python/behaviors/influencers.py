@@ -1,5 +1,5 @@
 import pdb
-from app.xgb import MyXGB
+from behaviors.xgb import MyXGB
 from xgboost import XGBRegressor, DMatrix
 from sqlalchemy import create_engine, text, Table, MetaData
 from sqlalchemy.dialects import postgresql
@@ -9,11 +9,10 @@ import numpy as np
 import logging
 logger = logging.getLogger(__name__)
 
-engine = create_engine('postgresql://postgres:password@localhost:5432/gnothilegion4')
+from behaviors.db import engine
 
 metadata = MetaData()
 influencers_table = Table('influencers', metadata, autoload_with=engine)
-
 
 
 def good_target(fes, fs):
@@ -190,7 +189,7 @@ def influencers_(conn, user_id):
     return next_preds, importances, all_imps
 
 
-def influencers():
+def main(event, context):
     with engine.connect() as conn:
         users = conn.execute(text("""
         select id::text from users
@@ -241,4 +240,4 @@ if __name__ == '__main__':
     with engine.connect() as conn:
         # FIXME remove
         conn.execute(text("update users set last_influencers=null where email='tylerrenelle@gmail.com'"))
-    influencers()
+    main(None, None)

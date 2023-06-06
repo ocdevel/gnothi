@@ -16,14 +16,14 @@ from sklearn.model_selection import train_test_split
 import os
 from collections import OrderedDict
 
-is_test = os.environ.get('TESTING')
+is_local = os.environ.get('IS_LOCAL')
 
 class EarlyStoppingExceeded(Exception):
     pass
 
 
 class MyXGB:
-    n_trials = 5 if is_test else 150
+    n_trials = 10 if is_local else 150
     version = 1
     too_small = 20
     early_stop_at = 10
@@ -169,6 +169,7 @@ class MyXGB:
         x_train, x_val, y_train, y_val = train_test_split(x, y, test_size=0.3)
         dtrain = xgb.DMatrix(x_train, label=y_train)
         dval = xgb.DMatrix(x_val, label=y_val)
+
         return xgb.train(
             params={**self.base_params, **self.best_params},
             dtrain=dtrain,

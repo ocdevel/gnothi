@@ -12,50 +12,41 @@ import {Logs} from "./Logs";
 // sst recommended usage. Just calling them as functions for now
 // https://gist.github.com/lefnire/4018a96ddee49d10b9a96c42b5698820
 
-type AccessPoint = {
-  fs: efs.FileSystem,
-  id: string,
-  path: string
-}
-function efsAccessPoint({fs, id, path}: AccessPoint) {
-  return fs.addAccessPoint(id, {
-    createAcl: {
-      ownerGid: '1001',
-      ownerUid: '1001',
-      permissions: '750'
-    },
-    path: `/export/${path}`,
-    posixUser: {
-      gid: '1001',
-      uid: '1001'
-    }
-  })
-}
+export function Ml(context: sst.StackContext) {
+  const { app, stack } = context
+  const {vpc, RDS_SECRET_ARN, readSecretPolicy, rdsSecret} = sst.use(SharedImport);
+  const {addLogging} = sst.use(Logs)
 
-type MLService = {
-  context: sst.StackContext,
-  vpc: ec2.IVpc,
-  fs: efs.FileSystem,
-  bucket: sst.Bucket,
-  addLogg: ReturnType<typeof Logs>["addLogging"]
-}
+  // Will put some assets in here like books.feather, and may move some EFS
+  // use-cases towards S3 + PyArrow
+  const {bucket} = sst.use(Misc)
 
-function lambdas({context, vpc, fs, bucket, addLogging}: MLService) {
+  // creates a file system in EFS to store cache models, weaviate data, etc
+  const fs = new efs.FileSystem(stack, 'Efs', {
+    vpc,
+    removalPolicy: cdk.RemovalPolicy.DESTROY
+  });
+
+
   // Our ML functions need HF models (large files) cached. Two options:
   // 1. Save HF model into docker image (see git-lfs sample)
   // 2. Save HF models in EFS mount, cache folder
   // - https://aws.amazon.com/blogs/compute/hosting-hugging-face-models-on-aws-lambda/
   // - https://github.com/cdk-patterns/serverless/blob/main/the-efs-lambda/typescript/lib/the-efs-lambda-stack.ts
   // Going with option 2 to save on lambda-start & CDK deployment times
-
-  const {app, stack} = context
-
   const OPENAI_KEY = new sst.Config.Secret(stack, "OPENAI_KEY")
 
-  const accessPoint = efsAccessPoint({
-    fs,
-    id: "LambdaAccessPoint",
-    path: "mldata"
+  const accessPoint = fs.addAccessPoint("LambdaAccessPoint", {
+    createAcl: {
+      ownerGid: '1001',
+      ownerUid: '1001',
+      permissions: '750'
+    },
+    path: `/export/mldata`,
+    posixUser: {
+      gid: '1001',
+      uid: '1001'
+    }
   })
 
   const mlFunctionProps = {
@@ -119,44 +110,37 @@ function lambdas({context, vpc, fs, bucket, addLogging}: MLService) {
   bucket.cdk.bucket.grantReadWrite(fnAsk)
   bucket.cdk.bucket.grantReadWrite(fnStore)
 
+
+  // TODO this function should remove access to RDS, and instead interact with the app server via S3
+  const fnBehaviors = new lambda.DockerImageFunction(stack, "FnBehaviors", {
+    vpc, // for RDS
+    environment: {
+      SST_STAGE: app.stage,
+      DB_SECRET_ARN: rdsSecret.secretArn,
+    },
+    memorySize: rams.ai,
+    timeout: cdk.Duration.minutes(15),
+    code: lambda.DockerImageCode.fromImageAsset("services/ml/python", {
+      file: "behaviors.dockerfile"
+    }),
+  })
+  fnBehaviors.addToRolePolicy(readSecretPolicy)
+
   addLogging(fnPreprocess, "FnPreprocess")
   addLogging(fnBooks, "FnBooks")
   addLogging(fnAsk, "FnAsk")
   addLogging(fnSummarize, "FnSummarize")
   addLogging(fnStore, "FnStore")
+  addLogging(fnBehaviors, "FnBehaviors")
 
   stack.addOutputs({
-    fnBooks_: fnBooks.functionArn,
-    fnAsk_: fnAsk.functionArn,
-    fnSummarize_: fnSummarize.functionArn,
-    fnStore_: fnStore.functionArn,
-    fnPreprocess_: fnPreprocess.functionArn,
-  })
-  return {fnBooks, fnAsk, fnSummarize, fnStore, fnPreprocess, OPENAI_KEY}
-}
-
-export function Ml(context: sst.StackContext) {
-  const { app, stack } = context
-  const {vpc} = sst.use(SharedImport);
-  const {addLogging} = sst.use(Logs)
-
-  // Will put some assets in here like books.feather, and may move some EFS
-  // use-cases towards S3 + PyArrow
-  const {bucket} = sst.use(Misc)
-
-  // creates a file system in EFS to store cache models, weaviate data, etc
-  const fs = new efs.FileSystem(stack, 'Efs', {
-    vpc,
-    removalPolicy: cdk.RemovalPolicy.DESTROY
-  });
-
-  const fns = lambdas({
-    context,
-    vpc,
-    fs,
-    bucket,
-    addLogging
+    fnBooks_: fnBooks.functionName,
+    fnAsk_: fnAsk.functionName,
+    fnSummarize_: fnSummarize.functionName,
+    fnStore_: fnStore.functionName,
+    fnPreprocess_: fnPreprocess.functionName,
+    fnBehaviors_: fnBehaviors.functionName,
   })
 
-  return fns
+  return {fnPreprocess, fnBooks, fnAsk, fnSummarize, fnStore, fnBehaviors}
 }
