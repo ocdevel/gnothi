@@ -38,12 +38,8 @@ export type EntryWithTags = z.infer<typeof EntryWithTags>
 
 const JustDate = z.string().regex(/[0-9]{4}-[0-9]{2}-[0-9]{2}/)
 export const Filters = z.object({
-  startDate: JustDate
-    .optional()
-    .default(
-      dayjs().subtract(3, 'years').format("YYYY-MM-DD")
-    ),
-  endDate: JustDate.or(z.literal("now")).default("now"),
+  startDate: JustDate.optional(),
+  endDate: JustDate.optional(),
   tags: BoolMap.default({}),
   search: z.string().optional(),
 })

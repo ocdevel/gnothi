@@ -14,7 +14,7 @@ export const initialFilters = Entries.entries_list_request.parse({})
 
 interface User {
   as: string | null,
-  me: Users.users_list_response | null
+  me: Users.User | null
   viewer: Users.users_list_response | null
 }
 

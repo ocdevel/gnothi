@@ -21,7 +21,7 @@ export const users = pgTable('users', {
   created_at: tsCol("created_at"),
   updated_at: tsCol("updated_at"),
 
-  // profile
+  // profile & settings
   username: varchar("username"),
   first_name: varchar("first_name"),
   last_name: varchar("last_name"),
@@ -30,6 +30,9 @@ export const users = pgTable('users', {
   birthday: date("birthday"),
   timezone: varchar("timezone"),
   bio: varchar("bio"),
+  // the default search filter for start date, in days. Null by default for now, but we may consider
+  // the start of Gnothi time, like "2019-01-01"
+  filter_days: integer("filter_days"),
 
   // admin
   is_superuser: boolean("is_superuser").default(false),
@@ -51,6 +54,7 @@ export const users = pgTable('users', {
   accept_disclaimer: timestamp("accept_disclaimer"),
   accept_privacy_policy: timestamp("accept_privacy_policy"),
 
+  // payments
   premium: boolean("premium").default(false),
   // This is duplicated from the payments table. This just affords us better performance
   payment_id: varchar("payment_id")

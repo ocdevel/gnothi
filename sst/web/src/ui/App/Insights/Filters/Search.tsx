@@ -17,11 +17,22 @@ const serverFmt = "YYYY-MM-DD" // must always be this way before submitting to t
 const clientFmt = "YYYY-MM-DD" // can make this something else if we want the browser to show differently
 
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import {shallow} from "zustand/shallow";
+import {useDebouncedCallback} from "use-debounce";
 // import { DateRangePicker } from "@mui/x-date-pickers/DateRangePicker";
 
 function DatePicker2() {
-  const filters = useStore(s => s.filters)
-  const setFilters = useStore(s => s.setFilters)
+  const [
+    filters,
+    setFilters,
+    send,
+    me
+  ] = useStore(s => [
+    s.filters,
+    s.setFilters,
+    s.send,
+    s.user?.me
+  ], shallow)
 
   const slotProps = {
     textField: {
@@ -35,18 +46,19 @@ function DatePicker2() {
 
   // just change the date
   function changeStartDate(d: Dayjs | null) {
-    setFilters({startDate: d?.format(serverFmt) || null})
+    setFilters({startDate: d?.format(serverFmt) || undefined})
   }
 
   // change the date, and persist the preference to the user
   function changeStartDateShortcut(d: Dayjs | null) {
     changeStartDate(d)
-    // TODO add a universal preferences_put route
-    // send("users_put_request", {default_filter_start_date: d?.format(serverFmt) || null})
+    if (!d) {return}
+    const filter_days = dayjs().diff(d, "day")
+    send("users_put_request", {filter_days})
   }
 
   function changeEndDate(d: Dayjs | null) {
-    setFilters({endDate: d?.format(serverFmt) || null})
+    setFilters({endDate: d?.format(serverFmt) || undefined})
   }
 
   return <Stack
@@ -96,7 +108,7 @@ function DatePicker2() {
     <DatePicker
       label="End"
       format={clientFmt}
-      value={filters.endDate === "now" ? dayjs() : dayjs(filters.endDate)}
+      value={filters.endDate}
       onChange={changeEndDate}
       disableFuture
       slotProps={slotProps}
@@ -114,12 +126,9 @@ export default function Search() {
   const setFilters = useStore(s => s.setFilters)
   const [search, setSearch] = useState('')
 
-  const trigger_ = (search: string) => setFilters({search})
-  const trigger = React.useMemo(
-    () => debounce(trigger_, 1000),
-   []
-  )
-  // TODO unlisten on unmount https://dmitripavlutin.com/react-throttle-debounce/
+  const trigger = useDebouncedCallback((search: string) => {
+    setFilters({search})
+  }, 1000)
 
   const changeSearch: ChangeEventHandler<HTMLInputElement> = (e) => {
     const search = e.target.value
@@ -127,32 +136,32 @@ export default function Search() {
     trigger(search)
   }
   return <>
-  <Paper
-    elevation={1}
-    component="form"
-    sx={{
-      px: 2,
-      py: 1,
-      display: 'flex',
-      alignItems: 'center',
-      width: '100%',
-      backgroundColor: "white",
-      borderRadius: 3,
-    }}
-  >
-    <InputBase
-      fullWidth
-      value={search}
-      onChange={changeSearch}
-      sx={{ flex: 1 }}
-      placeholder="Search keywords and phrases"
-      inputProps={{ 'aria-label': 'Search keywords and phrases' }}
-    />
-    {/*<IconButton type="button" sx={{ p: '10px' }} aria-label="search">
-      <SearchIcon />
-    </IconButton>*/}
-    {/*<Divider sx={{ height: 28, m: 0.5 }} orientation="vertical" />*/}
-    <DatePicker2 />
-  </Paper>
+    <Paper
+      elevation={1}
+      component="form"
+      sx={{
+        px: 2,
+        py: 1,
+        display: 'flex',
+        alignItems: 'center',
+        width: '100%',
+        backgroundColor: "white",
+        borderRadius: 3,
+      }}
+    >
+      <InputBase
+        fullWidth
+        value={search}
+        onChange={changeSearch}
+        sx={{ flex: 1 }}
+        placeholder="Search keywords and phrases"
+        inputProps={{ 'aria-label': 'Search keywords and phrases' }}
+      />
+      {/*<IconButton type="button" sx={{ p: '10px' }} aria-label="search">
+        <SearchIcon />
+      </IconButton>*/}
+      {/*<Divider sx={{ height: 28, m: 0.5 }} orientation="vertical" />*/}
+      <DatePicker2 />
+    </Paper>
   </>
 }

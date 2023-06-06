@@ -38,7 +38,7 @@ export class Entries extends Base {
   }
 
   async filter(req: S.Entries.entries_list_request): Promise<entries_list_response[]> {
-    const {uid, db} = this.context
+    const {user, uid, db} = this.context
     const {tags, startDate, endDate} = req
     const tids = boolMapToKeys(tags)
 
@@ -48,19 +48,20 @@ export class Entries extends Base {
       return []
     }
 
-    // TODO adding 2 days for good measure; really should be 1 day + timezone
-    const endDate_ = (endDate === "now" || !endDate)
-      ? dayjs().add(2, "day").format('YYYY-MM-DD')
-      : endDate
+    const startDate_ = startDate ||
+      dayjs().subtract(user.filter_days, "day").format('YYYY-MM-DD')
+
+    // TODO adding 2 days for good measure. Need to use with_tz instead in query
+    const endDate_ = endDate || dayjs().add(2, "day").format('YYYY-MM-DD')
 
     type EntriesSQL = Entry & { tags: string[] }
     const rows = await db.query<EntriesSQL>(sql`
       select e.*,
           json_agg(et.*) as tags
       from ${entries} e
-             inner join ${entriesTags} et on e.id = et.entry_id
+        inner join ${entriesTags} et on e.id = et.entry_id
       where e.user_id = ${uid}
-        and e.created_at > ${startDate}::date
+        and e.created_at > ${startDate_}::date
         and e.created_at <= ${endDate_}::date
         and et.tag_id in ${tids}
       group by e.id

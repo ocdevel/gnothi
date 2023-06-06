@@ -37,8 +37,14 @@ export const users_whoami_response = z.object({
 })
 export type users_whoami_response = z.infer<typeof users_whoami_response>
 
-export const users_timezone_put_request = User.pick({timezone: true})
-export type users_timezone_put_request = z.infer<typeof users_timezone_put_request>
+// We'll often be submitting individual attributes, like timezone by itself. Be sure to remove "undefined"
+// on the server so it doesn't wipe other attrs! We'll allow nulls and empty-strings to get through, as a removal
+export const users_put_request = User.pick({
+  timezone: true,
+  filter_days: true
+  // TODO add the profile fields
+}).partial()
+export type users_put_request = z.infer<typeof users_put_request>
 
 
 export const routes = {
@@ -110,20 +116,21 @@ export const routes = {
     }
   },
 
-  users_timezone_put_request: {
+  users_put_request: {
     i: {
-      e: "users_timezone_put_request",
-      s: users_timezone_put_request,
+      e: "users_put_request",
+      s: users_put_request,
       t: {ws: true},
       snoopable: false
     },
     o: {
-      e: 'users_timezone_put_response',
+      e: "users_put_response",
       s: users_list_response,
-      t: {ws: true},
-      event_as: 'users_list_response'
+      t:  {ws: true},
+      event_as: "users_list_response",
+      keyby: "id"
     }
-  },
+  }
 }
 
 

@@ -24,7 +24,7 @@ export default function UserListener() {
     if (!tznames.includes(user.timezone)) {
       // Guess their default timezone (TODO should call this out?)
       const timezone = dayjs.tz.guess()
-      send("users_timezone_put_request", {timezone})
+      send("users_put_request", {timezone})
     }
   }
 

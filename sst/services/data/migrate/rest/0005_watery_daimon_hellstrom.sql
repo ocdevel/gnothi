@@ -1,0 +1,1 @@
+ALTER TABLE "users" ADD COLUMN "filter_days" integer;

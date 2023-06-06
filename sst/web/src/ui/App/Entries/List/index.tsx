@@ -11,26 +11,10 @@ import Ask from '../../Insights/Insights/Ask'
 import {useStore} from "../../../../data/store";
 
 export default function List({group_id=null}) {
-  const selectedTags = useStore(s => s.selectedTags)
-  const filters = useStore(s => s.filters)
-  const send = useStore(useCallback(s => s.send, []))
-
   const entries = useStore(s => s.res.entries_list_response)
 
   const res = entries?.res
   const ids = entries?.ids || []
-
-  useEffect(() => {
-    // user's tags (end therefore selection) hasn't come in yet, don't fetch entries
-    if (!Object.entries(selectedTags)?.length) {
-      return
-    }
-    const filters_ = {
-      ...filters,
-      tags: selectedTags
-    }
-    send("entries_list_request", filters_)
-  }, [filters, selectedTags])
 
   if (res?.error && res.code === 403) {
     return <h5>{res.data}</h5>

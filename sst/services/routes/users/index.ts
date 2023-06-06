@@ -73,7 +73,10 @@ export const users_list_request = new Route(r.users_list_request,async function(
   return users
 })
 
-export const users_timezone_put_request = new Route(r.users_timezone_put_request, async (req, context) => {
+export const users_put_request = new Route(r.users_put_request, async (req, context) => {
+  // they'll be setting individual attributes, eg timezone. So remove anything zod optionally parses
+  // in, unless it's explicitly null
+  req = DB.removeUndefined(req)
   const res = await context.db.drizzle.update(users)
     .set(req) // validated / limited via zod
     .where(eq(users.id, context.uid))
