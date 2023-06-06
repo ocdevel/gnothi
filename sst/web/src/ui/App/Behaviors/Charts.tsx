@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from "react";
+import React, {useEffect, useMemo, useState} from "react";
 import _ from "lodash";
 import regression from 'regression';
 import {CartesianGrid, Line, Tooltip, XAxis, YAxis, ResponsiveContainer,
@@ -24,47 +24,80 @@ import Typography from "@mui/material/Typography";
 const round_ = (v: number | null) => v ? v.toFixed(2) : null
 
 export default function Charts() {
-  const [showChart, setShowChart] = useStore(s => [
-    s.behaviors.showChart, s.behaviors.setShowChart
+  const [
+    view,
+    fieldsHash,
+    historyRows,
+    influencersAll,
+    send,
+    as
+  ] = useStore(s => [
+    s.behaviors.view,
+    s.res.fields_list_response?.hash || {},
+    s.res.fields_history_list_response?.rows,
+    s.res.fields_influencers_list_response?.rows,
+    s.send,
+    s.user?.as
   ], shallow)
-  const as = useStore(state => state.user.as)
-  const send = useStore(s => s.send)
-  const history = useStore(s => s.res.fields_history_list_response?.data)
-
-  const fields_ = useStore(s => s.res.fields_list_response)
-  const influencers = useStore(s => s.res.fields_influencers_list_response?.rows)
-
-  const fields = fields_?.rows || []
-  const hash = fields_?.hash || {}
-  const field = (showChart === "overall" || showChart === false) ? null
-    : hash?.[showChart]
-  const overall = showChart === "overall"
-
 
   useEffect(() => {
-    if (field) {
-      send('fields_history_list_request', {id: field.id})
+    if (view.fid) {
+      send('fields_history_list_request', {id: view.fid})
     }
-  }, [field])
+  }, [view.fid])
 
-  if (showChart === false) { return null }
+  const field = view.fid ? fieldsHash?.[view.fid] : null
+  const overall = view.view === "overall"
+
+  const influencersFiltered = useMemo<Array<[string,number]>>(() => {
+    // since the xgboost cron touches both influencers table and fields.influencer_score, this counts for both
+    // "overall" and "field"
+    if (_.isEmpty(influencersAll)) {
+      return null
+    }
+
+    let chain: typeof _.chain
+    if (view.view === "overall") {
+      chain = _.chain(fieldsHash).reduce((m,v, k) => ({
+        ...m,
+        [k]: v.influencer_score
+      }), {})
+    } else {
+      // per-field influencers
+      // FIXME do I have this backwards?
+      chain = _.chain(influencersAll)
+        .filter(v => v.field_id === view.fid)
+        .reduce((m,v,k) => ({ ...m, [v.influencer_id]: v.score }), {})
+    }
+    return chain
+      .toPairs()
+      .filter(([fid,score]) => score > 0) // remove non-influential fields (majority)
+      .orderBy(([fid,score]) => -score)
+      .value()
+
+  }, [influencersAll, view])
+
+  if (!view.view) { return null }
   if (!overall && !field) { return null }
 
-  const close = React.useCallback(() => setShowChart(false), [])
+  function renderRow(row: Array<string, number>) {
+    const [fid, score] = row
+    const inf = fieldsHash[fid]
+    return <TableRow key={fid}>
+      <TableCell><FieldName name={inf.name} maxWidth={250} /></TableCell>
+      <TableCell>{ round_(score) }</TableCell>
+      <TableCell>{ round_(inf.avg) }</TableCell>
+      <TableCell>{ round_(inf.next_pred) }</TableCell>
+    </TableRow>
+  }
 
-  let influencers_ = _.isEmpty(influencers) ? false
-    : field ? influencers[field.id]
-    : _.reduce(fields, (m,v,k) => {
-        m[k] = v.influencer_score
-        return m
-      }, {})
-
-  const renderInfluencers = () => {
-    if (!influencers_) {
+  function renderTable () {
+    if (!influencersFiltered?.length) {
       return <p>
         After you've logged enough field entries, this feature will show you which fields influence this field. If you're expecting results now, make sure you set fields as <strong>target</strong> (edit the field), then wait an hour or two. Influencers only calculate for target fields.
       </p>
     }
+
     return <>
       <TableContainer component={Paper}>
         <Table striped size="small">
@@ -77,17 +110,7 @@ export default function Charts() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {_(influencers_)
-              .toPairs()
-              .filter(x => x[1] > 0)
-              .orderBy(x => -x[1])
-              .value()
-              .map(x => <TableRow key={x[0]}>
-                <TableCell><FieldName name={fields[x[0]].name} maxWidth={250} /></TableCell>
-                <TableCell>{ round_(x[1]) }</TableCell>
-                <TableCell>{ round_(fields[x[0]].avg) }</TableCell>
-                <TableCell>{ round_(fields[x[0]].next_pred) }</TableCell>
-              </TableRow>)}
+            {influencersFiltered.map(renderRow)}
           </TableBody>
         </Table>
       </TableContainer>
@@ -95,17 +118,17 @@ export default function Charts() {
   }
 
   const renderChart = () => {
-    if (history.length < 1) {return}
+    if (!(historyRows?.length > 0)) {return null}
 
     // add trend-line https://github.com/tom-alexander/regression-js#readme
     // returns [equation, string, points, r2, predict()]
-    let data = history.map((d, i) => [i, d.value])
+    let data = historyRows.map((d, i) => [i, d.value])
     const result = regression.linear(data, {precision: 9})
     const points = result.points
 
     const thisYear = moment().format('YYYY')
     let [hasNeg, hasPos] = [false, false] // will add a reference line if both positive/negative values present
-    data = history.map((d, i) => {
+    data = historyRows.map((d, i) => {
       const fmt = moment(d.created_at).format('YYYY') === thisYear ? 'MM-DD' : 'YYYY-MM-DD'
       if (d.value > 0) {hasPos = true}
       if (d.value < 0) {hasNeg = true}
@@ -120,7 +143,7 @@ export default function Charts() {
       bar: "#8884d8",
       trend: "green", //"#82ca9d"
       scroller: "#8884d8",
-      xAxis: null, //"#000",
+      xAxis: "#000", // TODO was `null` in 2019 code, why?
       referenceLine: "#000"
     }
 
@@ -161,9 +184,9 @@ export default function Charts() {
       </div>}
       {field && <div>
         <h5>Top Influencers</h5>
-        {renderInfluencers()}
+        {renderTable()}
       </div>}
-      {overall && renderInfluencers()}
+      {overall && renderTable()}
     </>
   }
 

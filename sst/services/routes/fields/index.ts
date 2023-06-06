@@ -1,7 +1,6 @@
 import {Routes, Fields} from '@gnothi/schemas'
 import {Route} from '../types'
 import {Fields as FieldsModel} from '../../data/models/fields'
-import {FieldEntries as FieldEntriesModel} from '../../data/models/fieldEntries'
 
 const r = Routes.routes
 
@@ -38,5 +37,9 @@ export const fields_exclude_request = new Route(r.fields_exclude_request, async 
 })
 
 export const fields_influencers_list_request = new Route(r.fields_influencers_list_request, async (req, context) => {
-  return context.m.fields.influencersList(req)
+  return context.m.fields.influencersList()
+})
+
+export const fields_history_list_request = new Route(r.fields_history_list_request, async (req, context) => {
+  return context.m.fields.historyList(req)
 })

@@ -122,6 +122,13 @@ export type fields_exclude_request = z.infer<typeof fields_exclude_request>
 export const fields_influencers_list_request = createSelectSchema(influencers)
 export type fields_influencers_list_request = z.infer<typeof fields_influencers_list_request>
 
+export const fields_history_list_request = z.object({
+  id: z.string()
+})
+export type fields_history_list_request = z.infer<typeof fields_history_list_request>
+export const fields_history_list_response = FieldEntry.pick({value: true, created_at: true})
+export type fields_history_list_response = z.infer<typeof fields_history_list_response>
+
 export const habitica_post_request = z.object({
   habitica_user_id: z.string().optional(),
   habitica_api_token: z.string().optional(),
@@ -251,7 +258,23 @@ export const routes = {
       e: "fields_influencers_list_response",
       s: fields_influencers_list_request,
       t: {ws: true},
-      keyby: "field_id",
+      // DON'T KEY BY! Or add an arbitrary id to each row.
+      // Will collect on the client side.
+      // keyby: "field_id",
+    }
+  },
+
+  fields_history_list_request: {
+    i: {
+      e: "fields_history_list_request",
+      s: fields_history_list_request,
+      t: {ws: true},
+      snoopable: true
+    },
+    o: {
+      e: "fields_history_list_response",
+      s: fields_history_list_response,
+      t: {ws: true},
     }
   },
 

@@ -6,8 +6,9 @@ import CardActions from "@mui/material/CardActions";
 import Card from "@mui/material/Card";
 import React from "react";
 import {Link} from "../../../Components/Link";
+import Charts from '../Charts'
 
-export default function View() {
+export function ViewComingSoon() {
   return <Card sx={{borderRadius: 2, height:"100%", backgroundColor: "white"}}>
     <CardContent sx={{backgroundColor: "white", mx: 5}}>
       <Box
@@ -32,4 +33,8 @@ export default function View() {
       </CardActions>
     </CardContent>
   </Card>
+}
+
+export default function View() {
+  return <Charts />
 }

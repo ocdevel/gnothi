@@ -136,8 +136,6 @@ export class Habitica extends Base {
           value: value,
           day: lastCron
         })
-        // FIXME
-        // M.Field.update_avg(db, f.id)
         console.log(task.text, value, lastCron)
       }
     }

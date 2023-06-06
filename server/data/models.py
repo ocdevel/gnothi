@@ -238,27 +238,6 @@ class Note(Base):
             obj[eid].append(r)
         return obj
 
-class Field(Base):
-    user = orm.relationship("User")
-
-    @staticmethod
-    def update_avg(db, fid):
-        db.execute(sa.text("""
-        update fields set avg=(
-            select avg(value) from field_entries2 fe
-            where fe.field_id=:fid and fe.value is not null
-        ) where id=:fid
-        """), dict(fid=fid))
-        db.commit()
-
-    @staticmethod
-    def get_history(db, fid):
-        FE = FieldEntry
-        return db.query(FE)\
-            .with_entities(FE.value, FE.created_at)\
-            .filter(FE.field_id == fid, FE.value.isnot(None), FE.created_at.isnot(None))\
-            .order_by(FE.created_at.asc())\
-            .all()
 
 
 class FieldEntryOld(Base):

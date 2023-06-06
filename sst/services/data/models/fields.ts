@@ -73,7 +73,7 @@ export class Fields extends Base {
   async entriesPost(req: S.Fields.fields_entries_post_request) {
     const {uid, db} = this.context
     const {day, field_id, value} = req
-    return db.query(sql`
+    const res = db.query(sql`
       ${this.with_tz()}
       insert into ${fieldEntries} (user_id, field_id, value, day, created_at)
       select ${uid}, ${field_id}, ${value}, date(${this.tz_read(day)}), ${this.tz_write(day)}
@@ -81,9 +81,22 @@ export class Fields extends Base {
       on conflict (field_id, day) do update set value=${value}
       returning *
     `)
+    await this.context.m.fields.updateAvg(field_id)
+    return res
   }
 
-  async influencersList(req: S.Fields.fields_influencers_list_request) {
+  async historyList(req: S.Fields.fields_history_list_request) {
+    const {uid, db} = this.context
+    const {id} = req
+    const res = await db.drizzle.execute(sql`
+      select fe.value, fe.created_at from ${fieldEntries} fe
+      where fe.field_id=${id} and fe.value is not null and fe.created_at is not null
+      order by fe.created_at asc
+    `)
+    return res.rows
+  }
+
+  async influencersList() {
     const {uid, db} = this.context
     const res = await db.drizzle.execute(sql`
       select i.* from ${influencers} i
@@ -91,5 +104,14 @@ export class Fields extends Base {
         and f.user_id=${uid}
     `)
     return res.rows
+  }
+
+  async updateAvg(fid: string) {
+    return this.context.db.drizzle.execute(sql`
+      update fields set avg=(
+          select avg(value) from field_entries2 fe
+          where fe.field_id=${fid} and fe.value is not null
+      ) where id=${fid}
+    `)
   }
 }

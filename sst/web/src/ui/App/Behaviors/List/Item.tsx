@@ -58,7 +58,7 @@ export default function Item({fid, advanced}: Item) {
       }}
       key={f.id}
     >
-      <Grid item xs={sizes[0]} className='field-name' sx={{cursor: "pointer"}} onClick={handleEdit}>
+      <Grid item xs={sizes[0]} className='field-name' sx={{cursor: "pointer"}} onClick={handleView}>
         <FieldName name={f.name} />
       </Grid>
 

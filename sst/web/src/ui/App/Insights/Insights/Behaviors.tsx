@@ -44,11 +44,11 @@ export default function Dashboard() {
   const maxInfluencers = 5
   let data = _.reduce(fields, (m, field, fid) => {
     // keep only the top scores. At the end, if nothing meets the threshold, we show the "collect more data" component
-    if (!(field.influencer_score > .05)) {return m}
+    if (!(field.influencer_score > .0001)) {return m}
     return [...m, {name: field.name, score: field.influencer_score}]
   }, []).slice().sort((a: number, b: number) => b.score - a.score).slice(0, maxInfluencers)
 
-  const hasInfluencers = false //data.length > 0
+  const hasInfluencers = data.length > 0
   const hasFields = fields?.length > 0
 
   function renderChart() {
@@ -77,7 +77,7 @@ export default function Dashboard() {
   }
 
   function renderList() {
-    return <Typography>Not enough data to compute behavior statistics, keep tracking and check back in a few days</Typography>
+    // return <Typography>Not enough data to compute behavior statistics, keep tracking and check back in a few days</Typography>
 
     // remove habitica to save space
     const customFields = fields?.filter(f => !f.service?.length)
