@@ -39,7 +39,7 @@ abstract class Handler<E = any> {
   abstract respond(res: Res, context: FnContext): Promise<APIGatewayProxyResultV2>
 }
 
-function proxyRes(res: Api.Res): APIGatewayProxyResultV2 {
+function proxyRes(res: Res): APIGatewayProxyResultV2 {
   if (res.error) {
     return {statusCode: res.code, body: `${res.data} - ${res.event}`}
   }
@@ -230,7 +230,7 @@ class WsHandler extends Handler<APIGatewayProxyWebsocketEventV2> {
     return batches;
   }
 
-  async respondOne(res: Api.Res, {connectionId}: Partial<FnContext>) {
+  async repondToConnection(res: Res, {connectionId}: Partial<FnContext>) {
    if (!connectionId) {
      console.warn("Trying to to WS without connectionId")
      return
@@ -282,9 +282,8 @@ class WsHandler extends Handler<APIGatewayProxyWebsocketEventV2> {
       .select({connectionId: wsConnections.connection_id})
       .from(wsConnections)
       .where(eq(wsConnections.user_id, context.uid))
-    await Promise.all(connections.map(async ({connectionId}) => {
-      return this.respondOne(res, {connectionId})
-    }))
+    const respondOneConnection = async ({connectionId}) => this.repondToConnection(res, {connectionId})
+    await Promise.all(connections.map(respondOneConnection))
     return proxyRes(res)
   }
 }

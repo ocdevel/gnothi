@@ -9,6 +9,7 @@ import Typography from "@mui/material/Typography";
 import {API_WS} from '../..//utils/config'
 import {Auth} from 'aws-amplify'
 import {WebSocketEvents} from "vitest";
+import {useDebouncedCallback} from "use-debounce";
 
 // Need to get a little tricky in this file. Previously I was trigging a users_everything_request on
 // readyState===ready. But that changes for each jwt refresh, which triggers re-fetching the user every 5 minutes.
@@ -17,6 +18,8 @@ import {WebSocketEvents} from "vitest";
 // and recreate the websocket) only when necessary. To ensure that, I'm using store.getState() to call into the
 // store, and only listening on variables inside the hook whose changes warrant a re-render.
 const get = useStore.getState
+
+let everythingRequestSent = false
 
 export default function useApi(): void {
   const authenticated = useStore(s => s.authenticated)
@@ -69,8 +72,14 @@ export default function useApi(): void {
     return sess.getIdToken().getJwtToken()
   }
 
-  async function onFirstAuth() {
-    if (!authenticated) {return}
+  async function onFirstAuth(authed: boolean) {
+    if (!authed) {return}
+
+
+    // TODO this shouldn't be necessary. The useEffect(...[authenticated]) is triggering twice for true
+    if (everythingRequestSent) {return}
+    everythingRequestSent = true
+
     setJwt(await getJwt())
 
     // useWebSocket will queue it up intelligently, if websocket isn't yet open
@@ -79,9 +88,9 @@ export default function useApi(): void {
     // dependency or race condition. It actually worked fine, but I'm following my gut here. The WS portion of send()
     // is just this simple code anyway, so no harm
     sendJsonMessage({event: "users_everything_request", data: {}})
-
   }
-  useEffect(() => { onFirstAuth() }, [authenticated])
+
+  useEffect(() => { onFirstAuth(authenticated) }, [authenticated])
 
   useEffect(() => {
     // Set the literal function. This will be used inside our send() calls from now on
