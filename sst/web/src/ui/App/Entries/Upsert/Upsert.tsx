@@ -10,8 +10,6 @@ import {Entry as NotesList} from '../Notes/List'
 import _ from 'lodash'
 import {FullScreenDialog} from "../../../Components/Dialog";
 import TextField from '@mui/material/TextField';
-import {AdapterDayjs} from '@mui/x-date-pickers/AdapterDayjs';
-import {LocalizationProvider} from '@mui/x-date-pickers/LocalizationProvider';
 import {DatePicker} from '@mui/x-date-pickers/DatePicker';
 
 import {useStore} from "../../../../data/store"
@@ -34,6 +32,7 @@ import {Entries} from '@gnothi/schemas'
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import CardActions from "@mui/material/CardActions";
+import dayjs from 'dayjs'
 
 const placeholder = `Welcome to your journal! This is the perfect place to reflect, express yourself, and capture your thoughts. Take a moment to think about your day, your experiences, or anything that's been on your mind. Use this space to write freely and let your thoughts flow. 
 
@@ -89,12 +88,16 @@ export default function Upsert(props: Upsert) {
   }
 
   useEffect(() => {
-    if (isNew) { return loadDraft() }
+    if (isNew) {
+      return loadDraft()
+    }
   }, [isNew])
 
   useEffect(() => {
     return // fixme
-    if (!entry) {return}
+    if (!entry) {
+      return
+    }
     const form_ = _.pick(entry, 'title text created_at'.split(' '))
     form.reset(form_)
     setFormOrig(form_)
@@ -109,7 +112,9 @@ export default function Upsert(props: Upsert) {
 
   useEffect(() => {
     setSubmitting(false)
-    if (entries_upsert_response?.code !== 200) { return }
+    if (entries_upsert_response?.code !== 200) {
+      return
+    }
     const response = entries_upsert_response.data[0]
     clearDraft()
     clear(["entries_upsert_response"])
@@ -119,12 +124,16 @@ export default function Upsert(props: Upsert) {
 
   useEffect(() => {
     setSubmitting(false)
-    if (entries_delete_response?.code === 200) {go()}
+    if (entries_delete_response?.code === 200) {
+      go()
+    }
   }, [entries_delete_response])
 
   const loadDraft = () => {
     const draft = localStorage.getItem(draftId)
-    if (draft) { form.reset(JSON.parse(draft)) }
+    if (draft) {
+      form.reset(JSON.parse(draft))
+    }
   }
   const saveDraft = useCallback(
     _.debounce(() => {
@@ -135,10 +144,12 @@ export default function Upsert(props: Upsert) {
   const clearDraft = () => {
     console.log('clearDraft')
     localStorage.removeItem(draftId)
-    if (formOrig) {form.reset(formOrig)}
+    if (formOrig) {
+      form.reset(formOrig)
+    }
   }
 
-  const go = (to='/j') => {
+  const go = (to = '/j') => {
     clearDraft()
     props.onClose?.()
     // send('entries_list_request', {})
@@ -166,7 +177,9 @@ export default function Upsert(props: Upsert) {
   }
 
   const deleteEntry = async () => {
-    if (isNew) {return}
+    if (isNew) {
+      return
+    }
     const title = entry.title || entry.ai_title || entry.created_at
     if (window.confirm(`Delete entry: ${title}?`)) {
       setSubmitting(true)
@@ -189,9 +202,11 @@ export default function Upsert(props: Upsert) {
   }
 
   function renderButtons() {
-    if (as) {return null}
+    if (as) {
+      return null
+    }
     if (entries_upsert_response?.submitting) {
-      return <CircularProgress />
+      return <CircularProgress/>
     }
 
     return <>
@@ -207,7 +222,7 @@ export default function Upsert(props: Upsert) {
         >
           Delete
         </Button>
-        <Button size="small"  onClick={cancel}>
+        <Button size="small" onClick={cancel}>
           Cancel
         </Button>
       </>}
@@ -228,78 +243,79 @@ export default function Upsert(props: Upsert) {
     // const [value, setValue] = React.useState<Dayjs>(dayjs(entry.created_at || new Date()));
 
     return (
-      <LocalizationProvider dateAdapter={AdapterDayjs}>
-        <Controller
-          control={form.control}
-          name="created_at"
-          render={obj => <DatePicker
-            label="Date"
-            value={obj.field.value}
-            inputFormat="YYYY-MM-DD"
-            onChange={(newVal) => {
-              setChangedDate(true)
-              obj.field.onChange(newVal)
-            }}
-            disableFuture
-            renderInput={(params) => <TextField {...params} />}
-          />}
-        />
-      </LocalizationProvider>
+      <Controller
+        control={form.control}
+        name="created_at"
+        render={obj => <DatePicker
+          {...obj}
+          label="Date"
+          format="YYYY-MM-DD"
+          disableFuture
+          value={dayjs(obj.field.value)}
+          onChange={(newVal) => {
+            setChangedDate(true)
+            obj.field.onChange(newVal)
+          }}
+        />}
+      />
     );
   }
 
   function renderForm() {
-    return <Stack className="form-upsert"
-                  spacing={2}
-                  direction='column'>
+    return (
+      <Stack
+        className="form-upsert"
+        spacing={2}
+        direction='column'>
 
-      {datePicker()}
-      <TextField2
-        name='title'
-        label='Title'
-        helperText='Leave blank if you want AI to generate a title based on your entry'
-        form={form}
-      />
-
-      <Editor
-        name='text'
-        placeholder={placeholder}
-        form={form}
-        onChange={changeText}
-      />
-
-      {/*<div>*/}
-      {/*  <TextField2*/}
-      {/*    name='created_at'*/}
-      {/*    label='Date'*/}
-      {/*    form={form}*/}
-      {/*    placeholder="YYYY-MM-DD"*/}
-      {/*    helperText="Manually enter this entry's date (otherwise it's set to time of submission)."*/}
-      {/*  />*/}
-      {/*</div>*/}
-      {/*<br/>*/}
-
-      <Error
-        event={/entries\/entr(ies|y).*/g}
-        codeRange={[400, 500]}
-      />
-
-      <Stack justifyContent='space-between' direction='row' alignItems='center'>
-        <Tags
-          selected={tags}
-          setSelected={setTags}
-          noClick={false}
-          noEdit={false}
-          preSelectMain={isNew}
+        {datePicker()}
+        <TextField2
+          name='title'
+          label='Title'
+          helperText='Leave blank if you want AI to generate a title based on your entry'
+          form={form}
         />
+
+        <Editor
+          name='text'
+          placeholder={placeholder}
+          form={form}
+          onChange={changeText}
+        />
+
+        {/*<div>*/}
+        {/*  <TextField2*/}
+        {/*    name='created_at'*/}
+        {/*    label='Date'*/}
+        {/*    form={form}*/}
+        {/*    placeholder="YYYY-MM-DD"*/}
+        {/*    helperText="Manually enter this entry's date (otherwise it's set to time of submission)."*/}
+        {/*  />*/}
+        {/*</div>*/}
+        {/*<br/>*/}
+
+        <Error
+          event={/entries\/entr(ies|y).*/g}
+          codeRange={[400, 500]}
+        />
+
+        <Stack justifyContent='space-between' direction='row' alignItems='center'>
+          <Tags
+            selected={tags}
+            setSelected={setTags}
+            noClick={false}
+            noEdit={false}
+            preSelectMain={isNew}
+          />
+        </Stack>
       </Stack>
-    </Stack>
+    );
   }
 
   return <Card sx={{borderRadius: 2, height: "100%", backgroundColor: "#ffffff"}}>
     <CardContent sx={{backgroundColor: "white"}}>
       {renderForm()}
-      <CardActions sx={{backgroundColor: "white", justifyContent: "flex-end", mt:2}}>
+      <CardActions sx={{backgroundColor: "white", justifyContent: "flex-end", mt: 2}}>
         {/*viewing && <Box sx={{marginRight: 'auto'}}>
         <NoteCreate id={id} />
       </Box>*/}

@@ -77,5 +77,5 @@ const send = useStore(s => s.send)
         <Button color="primary" variant='outlined' onClick={form.handleSubmit(submit)}>Invite</Button>
       </DialogActions>
     </BasicDialog>
-  </>
+  </>;
 }

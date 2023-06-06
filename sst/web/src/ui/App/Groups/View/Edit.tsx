@@ -229,5 +229,5 @@ const send = useStore(s => s.send)
         {renderButtons()}
       </DialogActions>
     </BasicDialog>
-  </>
+  </>;
 }

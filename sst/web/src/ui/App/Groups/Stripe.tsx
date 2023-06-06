@@ -123,5 +123,5 @@ const send = useStore(s => s.send)
         {status.processing ? 'Processing' : <>Pay {amt}</>}
       </Button>
     </form>
-  </>
+  </>;
 }

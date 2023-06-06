@@ -80,40 +80,42 @@ export default function View({entry, onClose}: Entry) {
 
 
   function renderEntry() {
-    return <Box px={4}>
-      {date}
-      <Typography variant='h4' mb={0} color="primary" fontWeight={500} className='title'>{entry.title}</Typography>
-      <Box
-        display='flex'
-        justifyContent='space-between'
-        direction='row'
-        alignItems='center'
-        marginTop={3}
-        marginBottom={4}
-        >
-        <Stack spacing={2} direction="column">
-        <Tags
-          selected={tags}
-          setSelected={setTags}
-          noClick={true}
-          noEdit={true}
-          preSelectMain={false}
-        />
-        </Stack>
-      </Box>
-      <div className='text'>
-        <ReactMarkdown
-          linkTarget='_blank'
-        >
-          {entry.text}
-        </ReactMarkdown>
-      </div>
+    return (
+      <Box px={4}>
+        {date}
+        <Typography variant='h4' mb={0} color="primary" fontWeight={500} className='title'>{entry.title}</Typography>
+        <Box
+          display='flex'
+          justifyContent='space-between'
+          direction='row'
+          alignItems='center'
+          marginTop={3}
+          marginBottom={4}
+          >
+          <Stack spacing={2} direction="column">
+          <Tags
+            selected={tags}
+            setSelected={setTags}
+            noClick={true}
+            noEdit={true}
+            preSelectMain={false}
+          />
+          </Stack>
+        </Box>
+        <div className='text'>
+          <ReactMarkdown
+            linkTarget='_blank'
+          >
+            {entry.text}
+          </ReactMarkdown>
+        </div>
 
-      <Error
-        event={/entries\/entr(ies|y).*/g}
-        codeRange={[400, 500]}
-      />
-    </Box>
+        <Error
+          event={/entries\/entr(ies|y).*/g}
+          codeRange={[400, 500]}
+        />
+      </Box>
+    );
   }
 
   function renderNotes() {

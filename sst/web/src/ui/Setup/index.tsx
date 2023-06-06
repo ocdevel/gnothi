@@ -10,10 +10,11 @@ import {HelmetProvider} from 'react-helmet-async'
 import utc from 'dayjs/plugin/utc'
 import timezone from 'dayjs/plugin/timezone'
 import dayjs from 'dayjs'
-import {Amplify} from "aws-amplify";
-import {awsConfig} from "../../utils/config.ts";
 dayjs.extend(utc)
 dayjs.extend(timezone)
+
+import {Amplify} from "aws-amplify";
+import {awsConfig} from "../../utils/config.ts";
 import "@aws-amplify/ui-react/styles.css";
 import "./Auth.scss"
 Amplify.configure(awsConfig);

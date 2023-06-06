@@ -3,6 +3,8 @@ import CssBaseline from "@mui/material/CssBaseline";
 import StyledEngineProvider from "@mui/material/StyledEngineProvider";
 import {createTheme, ThemeProvider, ThemeOptions} from "@mui/material/styles";
 import {makeStyles} from "@mui/material/styles";
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
+import { LocalizationProvider } from '@mui/x-date-pickers'
 
 const colors = {
   grey: "#fafafa",
@@ -183,8 +185,10 @@ export default function Mui({children}: React.PropsWithChildren<{}>) {
   //   {children}
   // </StyledEngineProvider>
 
-  return <ThemeProvider theme={theme}>
-    <CssBaseline />
-    {children}
-  </ThemeProvider>
+  return <LocalizationProvider dateAdapter={AdapterDayjs}>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      {children}
+    </ThemeProvider>
+  </LocalizationProvider>
 }

@@ -11,11 +11,54 @@ import IconButton from '@mui/material/IconButton';
 import CalendarIcon from '@mui/icons-material/CalendarMonthOutlined';
 import Stack from "@mui/material/Stack";
 import {Typography} from "@mui/material";
+import dayjs from 'dayjs'
 
-import { Dayjs } from 'dayjs';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+// import { DateRangePicker } from "@mui/x-date-pickers/DateRangePicker";
+
+function DatePicker2() {
+  const filters = useStore(s => s.filters)
+  const setFilters = useStore(s => s.setFilters)
+
+  const slotProps = {
+    textField: {
+      size: "small",
+      sx: {maxWidth:135},
+      variant: "standard",
+      // placeholder: undefined,
+      InputProps: {disableUnderline: true}
+    }
+  }
+
+  return <Stack
+    direction="row"
+    spacing={2}
+    alignItems="center"
+  >
+    {/*<CalendarIcon />*/}
+      <DatePicker
+        label="Start"
+        format="YYYY-MM-DD"
+        value={dayjs(filters.startDate)}
+        onChange={(startDate) => {
+          setFilters({startDate})
+        }}
+        disableFuture
+        slotProps={slotProps}
+      />
+      {/*<Typography variant="body1">-</Typography>*/}
+      <DatePicker
+        label="End"
+        format="YYYY-MM-DD"
+        value={filters.endDate === "now" ? dayjs() : dayjs(filters.endDate)}
+        onChange={(endDate) => {
+          setFilters({endDate})
+        }}
+        disableFuture
+        slotProps={slotProps}
+      />
+  </Stack>
+}
 
 /**
  * Entries() is expensive, so isolate <Search /> and only update the Entries.search
@@ -23,7 +66,6 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
  */
 export default function Search() {
   // TODO use zodResolver for better performance
-
   const filters = useStore(s => s.filters)
   const setFilters = useStore(s => s.setFilters)
   const [search, setSearch] = useState('')
@@ -66,59 +108,7 @@ export default function Search() {
       <SearchIcon />
     </IconButton>*/}
     {/*<Divider sx={{ height: 28, m: 0.5 }} orientation="vertical" />*/}
-    <Stack
-      direction="row"
-      spacing={2}
-      alignItems="center"
-    >
-      {/*<CalendarIcon />*/}
-      <LocalizationProvider dateAdapter={AdapterDayjs}>
-        <DatePicker
-          label="Start"
-          inputFormat="YYYY-MM-DD"
-          value={filters.startDate}
-          onChange={(startDate) => {
-            setFilters({startDate});
-          }}
-          disableFuture
-          renderInput={(params) => {
-            console.log(params)
-            return <TextField
-              {...params}
-              size="small"
-              sx={{maxWidth:150}}
-              variant="standard"
-              placeholder={undefined}
-              InputProps={{
-                ...params.InputProps,
-                disableUnderline: true
-              }}
-            />
-          }}
-        />
-        {/*<Typography variant="body1">-</Typography>*/}
-        <DatePicker
-          label="End"
-          inputFormat="YYYY-MM-DD"
-          value={filters.endDate === "now" ? undefined : filters.endDate}
-          onChange={(endDate) => {
-            setFilters({endDate});
-          }}
-          disableFuture
-          renderInput={(params) => <TextField
-            {...params}
-            size="small"
-            sx={{maxWidth:150}}
-            variant="standard"
-            placeholder={undefined}
-            InputProps={{
-                ...params.InputProps,
-                disableUnderline: true
-              }}
-          />}
-        />
-      </LocalizationProvider>
-    </Stack>
+    <DatePicker2 />
   </Paper>
   </>
 }
