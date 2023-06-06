@@ -254,7 +254,7 @@ export default function Upsert(props: Upsert) {
           value={dayjs(obj.field.value)}
           onChange={(newVal) => {
             setChangedDate(true)
-            obj.field.onChange(newVal)
+            obj.field.onChange(newVal.format("YYYY-MM-DD"))
           }}
         />}
       />
