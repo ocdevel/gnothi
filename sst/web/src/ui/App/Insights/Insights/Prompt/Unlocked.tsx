@@ -29,17 +29,13 @@ import {FullScreenDialog} from "../../../../Components/Dialog";
 import PromptSelector from './Selector.tsx'
 import IconButton from "@mui/material/IconButton";
 import ManageBehaviorsIcon from "@mui/icons-material/SettingsOutlined";
+import type {Message} from '@gnothi/schemas/insights'
 
 
 export type UnlockedProps = Insight & {
   entry_ids: string[]
 }
 
-interface Message {
-  id: string
-  user: "user" | "assistant"
-  message: string
-}
 
 export default function Unlocked({entry_ids, view}: UnlockedProps) {
   const modal = useStore(s => s.modals.prompt)
@@ -56,15 +52,11 @@ export default function Unlocked({entry_ids, view}: UnlockedProps) {
   const [showHelp, setShowHelp] = useState<boolean>(false)
   const btnDisabled = waiting || prompt.length < 3
 
-  function addMessage(user: Message['user'], message: string, id?: string) {
-    id = id || Date.now().toString()
-    setMessages([...messages, {user, message, id}])
-  }
-
   useEffect(() => {
     if (!promptResponse) { return }
     setWaiting(false)
-    addMessage("assistant", promptResponse.response, promptResponse.id)
+    // The response comes back as the full chat history. Clobber what's here.
+    setMessages(promptResponse.messages)
   }, [promptResponse])
 
   const submit = () => {
@@ -72,12 +64,17 @@ export default function Unlocked({entry_ids, view}: UnlockedProps) {
     if (btnDisabled) {return}
 
     setWaiting(true)
-    addMessage("user", prompt)
-    send("insights_prompt_request", {
+
+    const message = {role: "user", content: prompt, id: Date.now().toString()}
+    const updated = [...messages, message]
+    setMessages(updated)
+    const request = {
       view,
       entry_ids,
-      prompt
-    })
+      messages: updated
+    }
+
+    send("insights_prompt_request", request)
     if (!modal) {
       setModal(true)
     }
@@ -90,27 +87,39 @@ export default function Unlocked({entry_ids, view}: UnlockedProps) {
     //   style={{transformOrigin: '0 0 0'}}
     //   timeout={1000}
     // >
-    const bot = message.user === "assistant"
+    const {role, content, id} = message
     return <Grid
-      key={message.id}
+      key={id}
       item
       xs={12}
       sx={{
-        backgroundColor: bot ? '#ffffff' : '#C3C7CC',
+        backgroundColor: role === "user" ? '#ffffff' : '#C3C7CC',
       }}
     >
       <CardContent>
         <Typography>
-          {bot ? "Gnothi:" : "You:"}
+          {{
+            system: "System",
+            assistant: "Gnothi",
+            user: "You"
+          }[role]}
         </Typography>
         <Typography>
-          {message.message}
+          {message.content}
         </Typography>
       </CardContent>
     </Grid>
   }
 
   function renderMessages() {
+    const DEBUG = false
+
+    const messages_ = messages
+      .filter(m => DEBUG || m.user !== "system")
+      // the user's entries are injected between triple-quotes, for easier prompt-engineering. Makes
+      // it easy for us to remove it. We *could* show it, but it will be their full squashed entry history
+      .filter(m => DEBUG || !m.content.startsWith(`"""`))
+      .slice().reverse() // TODO gotta get chatbox at bottom, messages natural order
     return <Grid
       container
       direction='row'
@@ -118,7 +127,7 @@ export default function Unlocked({entry_ids, view}: UnlockedProps) {
       borderRadius={3}
       spacing={2}
     >
-      {messages.slice().reverse().map(renderMessage)}
+      {messages_.map(renderMessage)}
     </Grid>
   }
 

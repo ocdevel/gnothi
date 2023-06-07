@@ -1,7 +1,7 @@
 import * as S from '@gnothi/schemas'
 import {GnothiError} from "../errors";
 import {v4 as uuid} from 'uuid'
-import {completion} from '../../ml/node/openai'
+import {completion, defaultSystemMessage} from '../../ml/node/openai'
 import {z} from 'zod'
 // @ts-ignore
 import dayjs from 'dayjs'
@@ -91,33 +91,64 @@ export const insights_get_response = new Route(r.insights_get_response,async (re
     }
   }
 
-  if (insights.summarize) {
-
-  }
-
   await Promise.all(promises)
   return [{view, done: true}]
 })
 
-
 export const insights_prompt_request = new Route(r.insights_prompt_request,async (req, context) => {
-  const mInsights = context.m.insights
-  const entries = await mInsights.entriesByIds(req.entry_ids)
-  const {prompt, view} = req
+  const {messages, view} = req
+  let messages_ = []
 
+  // on the first prompt, we'll tee it up with their entries. We'll send it back
+  // as a new chat, and going forward they'll send up the full chat context each message
+  if (messages.length === 1) {
+    const entries = await context.m.insights.entriesByIds(req.entry_ids)
 
-  const texts = entries.length > 1 ? entries.map(getSummary) : entries.map(getText)
-  const text = texts.join('\n')
+    const texts = entries.length > 1 ? entries.map(getSummary) : entries.map(getText)
+    const joined = texts.join(' ')
+    const message = messages[0]
+
+    messages_ = [{
+      id: ulid(),
+      role: "system",
+      content: `${defaultSystemMessage} Below within triple quotes is a user's journal entry. Please read it and respond to the user's query: "${message.content}"`,
+    }, {
+      id: message.id,
+      role: "user",
+      content: `"""${joined}"""`
+    }]
+  } else if (messages.length > 1) {
+    messages_ = messages
+  } else {
+    throw new GnothiError({code: 400, message: "Invalid messages length"})
+  }
+
   const response = await completion({
     // entry v summary handled above, so just replace either/or here
-    model: "gpt-4",
-    max_tokens: 512,
-    prompt: prompt.replace("<journal>", text)
+
+    // will use gpt4 for premium, but it's too slow - I need to wrap
+    // as a background job
+    model: "gpt-3.5-turbo",
+    // model: "gpt-4",
+
+    max_tokens: 384,
+    prompt: messages_.map(m => {
+      // remove `id` from messages. Needed for request/response, but OpenAI doesn't want it
+      const {id, ...rest} = m
+      return rest
+    })
   })
+
+  // Return to them the full conversation history, as the client will use that going forward
+  // to continue the conversation
+  const fullChat = [
+    ...messages_,
+    {id: ulid(), role: "assistant", content: response}
+  ]
 
   return [{
     id: ulid(),
     view: req.view,
-    response
+    messages: fullChat
   }]
 })

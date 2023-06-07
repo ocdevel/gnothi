@@ -70,14 +70,21 @@ export const insights_search_response = Insight.extend({
 })
 export type insights_search_response = z.infer<typeof insights_search_response>
 
+export const Message = z.object({
+  id: z.string(), // just a timestamp or something, it's needed for `key` in React
+  role: z.enum(["system", "user", "assistant"]),
+  content: z.string()
+})
+export type Messages = z.infer<typeof Messages>
+
 export const insights_prompt_request = Insight.extend({
   entry_ids: z.string().array(),
-  prompt: z.string()
+  messages: Message.array()
 })
 export type insights_prompt_request = z.infer<typeof insights_prompt_request>
 export const insights_prompt_response = Insight.extend({
-  id: z.string(),
-  response: z.string()
+  id: z.string(), // different than messages[].id, this is needed for keyby in the Event system
+  messages: Message.array()
 })
 export type insights_prompt_response = z.infer<typeof insights_prompt_response>
 
