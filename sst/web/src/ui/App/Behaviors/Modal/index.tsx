@@ -67,22 +67,8 @@ export default function Modal() {
   >
     <Container maxWidth={false}>
       <Grid container direction="row" spacing={2}>
-        <Grid
-          container
-          item
-          xs={12}
-          md={6}
-          direction="column"
-          justifyContent="flex-start"
-          alignItems="flex-start"
-          spacing={2}
-        >
-          {/*<Grid item>*/}
-          {/*  <DayChanger />*/}
-          {/*</Grid>*/}
-          <Grid item>
-            <Behaviors advanced={true} />
-          </Grid>
+        <Grid item  xs={12} md={6}>
+          <Behaviors advanced={true} />
         </Grid>
         <Grid item xs={12} md={6}>
           {renderDetails()}

@@ -21,6 +21,9 @@ import {fields_list_response} from '@gnothi/schemas/fields'
 import {shallow} from "zustand/shallow";
 import Typography from "@mui/material/Typography";
 import KeepTracking from './KeepTracking'
+import List from "@mui/material/List";
+import ListItem from "@mui/material/ListItem";
+import Stack from "@mui/material/Stack";
 
 const round_ = (v: number | null) => v ? v.toFixed(2) : null
 
@@ -93,6 +96,16 @@ export default function Charts() {
     </TableRow>
   }
 
+  function renderTableHeader() {
+    if (field) {
+      return <Stack direction="row" spacing={2} alignItems="flex-end">
+        <Typography variant="h4">Behaviors most influencing</Typography>
+        <FieldName name={field.name} maxWidth={960} />
+      </Stack>
+    }
+    return <Typography variant="h4">Most influential behaviors</Typography>
+  }
+
   function renderTable () {
     // TODO remove this, or merge with <KeepTracking />. This code is never reached
     if (!influencersFiltered?.length) {
@@ -102,6 +115,7 @@ export default function Charts() {
     }
 
     return <>
+      {renderTableHeader()}
       <TableContainer component={Paper}>
         <Table striped size="small">
           <TableHead>
@@ -172,30 +186,38 @@ export default function Charts() {
     </div>
   }
 
-  const renderBody = () => {
+  function renderStats() {
+    if (!field) {return null}
     return <>
-      {renderChart()}
-      {field && <div>
-        <h5>Stats</h5>
-        <ul>
-          <li>
-            Predicted Next Value:{' '}
-            {field.next_pred ? round_(field.next_pred) : "<feature available after more field entries>"}
-          </li>
-          <li>Average/day: {round_(field.avg)}</li>
-        </ul>
-      </div>}
-      {field && <div>
-        <h5>Top Influencers</h5>
-        {renderTable()}
-      </div>}
-      {overall && renderTable()}
+      <Typography variant="h4">Stats</Typography>
+      <TableContainer component={Paper}>
+        <Table striped size="small">
+          <TableHead>
+            <TableRow>
+              <TableCell>Importance</TableCell>
+              <TableCell>Average/day</TableCell>
+              <TableCell>Predicted Next Value</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            <TableRow>
+              <TableCell>{ round_(field.influencer_score) }</TableCell>
+              <TableCell>{ round_(field.avg) }</TableCell>
+              <TableCell>{field.next_pred ? round_(field.next_pred) : "<feature available after more field entries>"}</TableCell>
+            </TableRow>
+          </TableBody>
+        </Table>
+      </TableContainer>
     </>
   }
 
-  return <>
-    <Typography variant="h4">{field ? "Influencers" : "Top Influencers"}</Typography>
-    {field && <Typography variant="h5"><FieldName name={field.name} maxWidth={960} /></Typography>}
-    {renderBody()}
-  </>
+  if (field) {
+    return <Stack spacing={2}>
+      <Typography variant="h4"><FieldName name={field.name} maxWidth={960} /></Typography>
+      {renderChart()}
+      {renderStats()}
+      {renderTable()}
+    </Stack>
+  }
+  return renderTable()
 }
