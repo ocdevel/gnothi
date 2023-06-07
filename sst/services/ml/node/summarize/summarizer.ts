@@ -123,7 +123,7 @@ export async function summarizeInsights({context, entries}: SummarizeInsights): 
  * Helper function just for summarizing entries on submit
  */
 
-interface SummarizeEntryIn {
+export interface SummarizeEntryIn {
   text: string
   paras: string[]
 }

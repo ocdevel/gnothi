@@ -48,18 +48,18 @@ function truncate(inputMessages: Message[], responseLimit: number, model: "gpt-4
     const tokensToDiscard = totalTokens - (tokenLimit - responseLimit);
     let discardedTokens = 0;
 
-    messages = _.takeWhile(messages, (message) => {
-      const messageTokens = encode(message.content).tokens.length;
+    for (let i = 0; i < messages.length; i++) {
+      const messageTokens = encode(messages[i].content).tokens.length;
 
       if (discardedTokens + messageTokens <= tokensToDiscard) {
         discardedTokens += messageTokens;
-        return false;
+        messages[i].content = "";
       } else {
         const tokensToKeep = messageTokens - (tokensToDiscard - discardedTokens);
-        message.content = decode(encode(message.content).tokens.slice(0, tokensToKeep));
-        return true;
+        messages[i].content = decode(encode(messages[i].content).tokens.slice(0, tokensToKeep));
+        break;
       }
-    });
+    }
   }
 
   // Remove messages that have been completely truncated
@@ -69,7 +69,7 @@ function truncate(inputMessages: Message[], responseLimit: number, model: "gpt-4
 }
 
 
-type Prompt = string | Message
+export type Prompt = string | Message[]
 
 // 0d5c00b81263fb653e89d9dae95f15fc9d14f078 - davinci-003 and standard completions (10x cost)
 export async function completion(
@@ -89,7 +89,6 @@ export async function completion(
     { role: "user", content: prompt }
   ]
   const truncated = truncate(messages, max_tokens, model)
-  debugger
 
   try {
     const {prompt, ...rest} = opts

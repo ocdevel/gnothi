@@ -25,6 +25,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import {shallow} from "zustand/shallow";
 import Switch from "@mui/material/Switch";
 import FormControlLabel from "@mui/material/FormControlLabel";
+import {STAGE} from '../../utils/config'
 
 const buttonSx = {
   fontWeight: 300,
@@ -46,10 +47,12 @@ export function UserMenu() {
     // {name: 'Profile', onClick: () => {
     //   handleCloseUserMenu()
     // }},
-    {name: 'Premium', onClick: () => {
-      handleCloseUserMenu()
-      setPremiumModal(true)
-    }},
+    ...(STAGE === "prod" ? [] : [{
+      name: 'Premium', onClick: () => {
+        handleCloseUserMenu()
+        setPremiumModal(true)
+      }}]
+    ),
     // {name: 'Settings', onClick: () => {
     //   handleCloseUserMenu()
     // }},

@@ -33,6 +33,7 @@ import {Typography} from "@mui/material"
 import {shallow} from "zustand/shallow";
 import {useDebouncedCallback} from "use-debounce";
 import IconButton from "@mui/material/IconButton";
+import {STAGE} from '../../../../utils/config'
 
 // 62da7182: books attrs, popovers
 const iconProps = {
@@ -158,6 +159,8 @@ export default function Insights({entry_ids}: Insights) {
   //   </Alert2>
   // }
 
+  const showPrompt = STAGE !== "prod" || me?.is_premium
+
   return <div className="insights">
     <Stack2>
       {/*<Stack>*/}
@@ -181,7 +184,7 @@ export default function Insights({entry_ids}: Insights) {
       {/*  /!*</Typography>*!/*/}
       {/*</Stack>*/}
 
-      <Insight
+      {showPrompt && <Insight
         label="Prompt"
         icon={<PromptIcon {...iconProps} />}
         moreClick={() => me?.premium ? setPromptModal(true) : setPremium(true)}
@@ -189,7 +192,7 @@ export default function Insights({entry_ids}: Insights) {
         action="Choose a topic or create a custom prompt"
       >
         <Prompt entry_ids={entry_ids} view={view}/>
-      </Insight>
+      </Insight>}
 
       <Insight
         label="Themes"
