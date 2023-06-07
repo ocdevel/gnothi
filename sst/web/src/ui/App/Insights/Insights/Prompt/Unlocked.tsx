@@ -42,6 +42,8 @@ export default function Unlocked({entry_ids, view}: UnlockedProps) {
   const setModal = useStore(s => s.modals.setPrompt)
   const [messages, setMessages] = useState<Message[]>([])
   const [waiting, setWaiting] = useState(false)
+  const [custom, setCustom] = useState(false)
+
 
   // TODO useStore version of loading
   const send = useStore(useCallback(s => s.send, []))
@@ -76,8 +78,16 @@ export default function Unlocked({entry_ids, view}: UnlockedProps) {
 
     send("insights_prompt_request", request)
     if (!modal) {
+      setPrompt("")
+      setCustom(true)
       setModal(true)
     }
+  }
+
+  function closeModal() {
+    setCustom(false)
+    setMessages([])
+    setModal(false)
   }
 
   function renderMessage(message: Message, i: number) {
@@ -112,10 +122,10 @@ export default function Unlocked({entry_ids, view}: UnlockedProps) {
   }
 
   function renderMessages() {
-    const DEBUG = false
+    const DEBUG = true
 
     const messages_ = messages
-      .filter(m => DEBUG || m.user !== "system")
+      .filter(m => DEBUG || m.role !== "system")
       // the user's entries are injected between triple-quotes, for easier prompt-engineering. Makes
       // it easy for us to remove it. We *could* show it, but it will be their full squashed entry history
       .filter(m => DEBUG || !m.content.startsWith(`"""`))
@@ -140,7 +150,12 @@ export default function Unlocked({entry_ids, view}: UnlockedProps) {
         component="form"
         alignItems='flex-end'>
 
-        <PromptSelector prompt={prompt} setPrompt={setPrompt} />
+        <PromptSelector
+          prompt={prompt}
+          setPrompt={setPrompt}
+          custom={custom}
+          setCustom={setCustom}
+        />
 
         {/*<Button onClick={() => setShowHelp(!showHelp)}>{showHelp ? "Hide help" : "Show Help"}</Button>
         {showHelp && <Typography>
@@ -173,7 +188,12 @@ export default function Unlocked({entry_ids, view}: UnlockedProps) {
   function renderModal() {
     function tab0() {
       return <Stack spacing={2} component="form">
-        <PromptSelector prompt={prompt} setPrompt={setPrompt} />
+        <PromptSelector
+          prompt={prompt}
+          setPrompt={setPrompt}
+          custom={custom}
+          setCustom={setCustom}
+        />
 
         <Button
           sx={{elevation: 12}}
@@ -249,7 +269,7 @@ export default function Unlocked({entry_ids, view}: UnlockedProps) {
     <FullScreenDialog
       title=""
       open={!!modal}
-      onClose={() => setModal(false)}
+      onClose={closeModal}
       ctas={[]}
       className="insights"
       backButton={true}

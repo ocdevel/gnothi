@@ -75,7 +75,7 @@ export const Message = z.object({
   role: z.enum(["system", "user", "assistant"]),
   content: z.string()
 })
-export type Messages = z.infer<typeof Messages>
+export type Message = z.infer<typeof Message>
 
 export const insights_prompt_request = Insight.extend({
   entry_ids: z.string().array(),

@@ -7,6 +7,7 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
+import {Checkbox2} from "../../../../Components/Form.tsx";
 
 console.log(presets)
 
@@ -26,31 +27,23 @@ type Preset = {
 interface Selector {
   prompt: string
   setPrompt: (prompt: string) => void
-  teaser?: boolean
+  custom: boolean
+  setCustom: (custom: boolean) => void
 }
-export default function Selector({prompt, setPrompt, teaser}: Selector) {
+export default function Selector({
+  prompt,
+  setPrompt,
+  custom,
+  setCustom,
+}: Selector) {
   const [preset, setPreset] = useState<Preset | null>(null)
 
-  function editPreset() {
-    setPreset(presetsObj.custom)
+  function toggleCustom() {
+    setCustom(!custom)
   }
 
-  return <>
-    <Autocomplete
-       fullWidth
-       options={presetsFlat}
-       groupBy={(option) => option.category}
-       getOptionLabel={(option) => option.label}
-       value={preset}
-       onChange={(e, val) => {
-         setPreset(val)
-         setPrompt(val?.prompt || "")
-       }}
-       renderInput={(params) => (
-         <TextField {...params} label="Journal prompts" />
-       )}
-    />
-    {preset?.key === "custom" ? <TextField
+  function renderCustom() {
+    return <TextField
       fullWidth={true}
       sx={{
         '& fieldset': {
@@ -65,12 +58,41 @@ export default function Selector({prompt, setPrompt, teaser}: Selector) {
       minRows={4}
       maxRows={8}
       // helperText="Enter a prompt, with <placeholder> values like so: Interpret the following dream <paragraphs>"
-    /> : <Typography
-      color="text.secondary"
-      sx={{cursor: "pointer"}}
-      onClick={editPreset}
-    >
-      {prompt}
-    </Typography>}
+    />
+  }
+
+  function renderDropdown() {
+    return <>
+      <Autocomplete
+       fullWidth
+       options={presetsFlat}
+       groupBy={(option) => option.category}
+       getOptionLabel={(option) => option.label}
+       value={preset}
+       onChange={(e, val) => {
+         setPreset(val)
+         setPrompt(val?.prompt || "")
+       }}
+       renderInput={(params) => (
+         <TextField {...params} label="Sample prompts" />
+       )}
+      />
+      <Typography
+        color="text.secondary"
+        sx={{cursor: "pointer"}}
+        onClick={toggleCustom}
+      >
+        {prompt}
+      </Typography>
+    </>
+  }
+
+  return <>
+    <Checkbox2
+      label="Custom prompt"
+      onChange={toggleCustom}
+      value={custom}
+    />
+    {custom ? renderCustom() : renderDropdown() }
   </>
 }
