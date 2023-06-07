@@ -97,7 +97,7 @@ const send = useStore(s => s.send)
   )
 
   const books_ = books?.length ?
-    _(books).reject(b => ~removed.indexOf(b.id)).map(renderBook).value()
+    _.chain(books).reject(b => ~removed.indexOf(b.id)).map(renderBook).value()
     : shelf === 'ai' ? <p>No AI recommendations yet. This will populate when you have enough entries.</p>
     : null
 

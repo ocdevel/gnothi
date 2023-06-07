@@ -66,7 +66,7 @@ export default function Dashboard() {
         <YAxis dataKey="name" type="category" />
         <Tooltip />
         <Legend />
-        <Bar dataKey="score" fill="#8884d8" />
+        <Bar dataKey="score" fill="#50577a" />
       </BarChart>
     </ResponsiveContainer>
     </Box>

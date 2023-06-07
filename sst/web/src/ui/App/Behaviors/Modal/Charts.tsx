@@ -143,9 +143,9 @@ export default function Charts() {
     })
 
     const colors = {
-      bar: "#8884d8",
+      bar: "#50577a",
       trend: "green", //"#82ca9d"
-      scroller: "#8884d8",
+      scroller: "#50577a",
       xAxis: "#000", // TODO was `null` in 2019 code, why?
       referenceLine: "#000"
     }

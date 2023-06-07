@@ -140,7 +140,7 @@ export default function Behaviors({advanced}: Behaviors) {
   const groups: FieldGroup[] = [{
     service: 'custom',
     name: 'Custom',
-    fields: _(fields?.rows)
+    fields: _.chain(fields?.rows)
       .filter(v => !v.service && !v.excluded_at)
       .sortBy('id').value(),
     emptyText: () => <Box>
@@ -181,7 +181,7 @@ export default function Behaviors({advanced}: Behaviors) {
   }, {
     service: 'habitica',
     name: 'Habitica',
-    fields: _(fields?.rows)
+    fields: _.chain(fields?.rows)
       .filter(v => v.service === 'habitica' && !v.excluded_at)
       .sortBy('id')
       .value(),
@@ -218,7 +218,7 @@ export default function Behaviors({advanced}: Behaviors) {
   }, {
     service: 'excluded',
     name: 'Excluded from AI',
-    fields: _(fields?.rows)
+    fields: _.chain(fields?.rows)
       .filter(v => !!v.excluded_at)
       .sortBy('id')
       .value(),
