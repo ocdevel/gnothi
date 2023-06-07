@@ -16,7 +16,7 @@ import {Logs} from "./Logs";
 
 export function Ml(context: sst.StackContext) {
   const { app, stack } = context
-  const {vpc, RDS_SECRET_ARN, readSecretPolicy, rdsSecret} = sst.use(SharedImport);
+  const {vpc, readSecretPolicy, rdsSecret} = sst.use(SharedImport);
   const {addLogging} = sst.use(Logs)
 
   // Will put some assets in here like books.feather, and may move some EFS
@@ -120,7 +120,9 @@ export function Ml(context: sst.StackContext) {
       SST_STAGE: app.stage,
       DB_SECRET_ARN: rdsSecret.secretArn,
     },
-    memorySize: rams.ai,
+    // 310mb used avg. I don't think it's RAM heavy, but CPU. Doubling for good
+    // measure, but keep an eye - I worry this is too low.
+    memorySize: 620,
     timeout: cdk.Duration.minutes(15),
     code: lambda.DockerImageCode.fromImageAsset("services/ml/python", {
       file: "behaviors.dockerfile"

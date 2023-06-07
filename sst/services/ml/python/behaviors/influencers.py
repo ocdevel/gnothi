@@ -220,15 +220,21 @@ def main(event, context):
                 if fid not in fids: continue
                 inf_score, next_pred = all_imps[fid], next_preds[fid]
 
-                insert = postgresql.insert(influencers_table).values([
+                influencers_update = [
                     dict(field_id=fid, influencer_id=inf_id, score=score)
                     for inf_id, score in others.items()
-                    if inf_id in fids
-                ])
-                conn.execute(insert.on_conflict_do_update(
-                    index_elements=["field_id", "influencer_id"],
-                    set_=dict(score=insert.excluded.score)
-                ))
+                    if (inf_id in fids # excluded fields deleted while this was running
+                       and score > 0) # don't include non-influential scores (majority), save DB space
+                ]
+                print(influencers_update)
+
+                # will be empty if all scores were 0, which isn't uncommon
+                if influencers_update:
+                    insert = postgresql.insert(influencers_table).values(influencers_update)
+                    conn.execute(insert.on_conflict_do_update(
+                        index_elements=["field_id", "influencer_id"],
+                        set_=dict(score=insert.excluded.score)
+                    ))
                 conn.execute(text("""
                 update fields set influencer_score=:score, next_pred=:pred
                 where id=:fid;
