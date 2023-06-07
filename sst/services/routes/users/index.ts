@@ -1,7 +1,7 @@
 import {Routes} from '@gnothi/schemas'
 import {FnContext, Route} from '../types'
 import {users, User} from '../../data/schemas/users'
-import {and, eq} from 'drizzle-orm'
+import {and, eq, sql} from 'drizzle-orm'
 import {DB} from '../../data/db'
 import {entriesUpsertResponse} from '../entries'
 
@@ -41,17 +41,13 @@ export const users_everything_request = new Route(r.users_everything_request, as
 // which got stuck in processing; or deliberately when I change the models and invalidate all entries in the DB. Doing
 // it per user on load saves me from running over the full database, for users who may not be returning (AI is expensive)
 export const users_everything_response = new Route(r.users_everything_response, async (req, context) => {
-  for (let i = 0; i < 500; i++) {
-    const stuckEntry = await context.m.entries.getStuckEntry(req.id)
+  const uid = req.id
+  for (let i = 0; i < 300; i++) {
+    const stuckEntry = await context.m.entries.getStuckEntry(uid)
     if (!stuckEntry) {break}
     console.log(`Fixing: stuck ${i}`)
-    // Detatch the context from whomever triggered this. That's because user.id might be referenced (eg, in fetching tags
-    // in entriesUpsertResponse) and we don't want to send anything via websocket.
-    const detachedContext = await context.clone({
-      user: {id: stuckEntry.user_id} as User,
-    });
-
-    await entriesUpsertResponse(stuckEntry, detachedContext);
+    // sending context for this user, see git-blame for detachedContext if we ever go outside this user
+    await entriesUpsertResponse(stuckEntry, context);
   }
   return []
 })
