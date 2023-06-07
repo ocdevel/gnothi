@@ -47,7 +47,7 @@ export default function Unlocked({entry_ids, view}: UnlockedProps) {
 
   // TODO useStore version of loading
   const send = useStore(useCallback(s => s.send, []))
-  const promptResponse = useStore(s => s.res.insights_prompt_response?.hash?.[view])
+  const promptResponse = useStore(s => s.res.insights_prompt_final?.hash?.[view])
   // start with just blank prompt, will populate other prompts via HTTP -> Gist
 
   const [prompt, setPrompt] = useState<string>("")

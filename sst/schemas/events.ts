@@ -140,6 +140,7 @@ export const Events = z.enum([
   'insights_get_final',
   'insights_prompt_request',
   'insights_prompt_response',
+  'insights_prompt_final',
 
   'insights_books_list_request',
   'insights_books_list_response',

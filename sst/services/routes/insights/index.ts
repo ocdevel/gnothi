@@ -95,7 +95,12 @@ export const insights_get_response = new Route(r.insights_get_response,async (re
   return [{view, done: true}]
 })
 
+// pass to background, prompt can take a long time
 export const insights_prompt_request = new Route(r.insights_prompt_request,async (req, context) => {
+  return [req]
+})
+
+export const insights_prompt_response = new Route(r.insights_prompt_response,async (req, context) => {
   const {messages, view} = req
   let messages_ = []
 
@@ -125,12 +130,7 @@ export const insights_prompt_request = new Route(r.insights_prompt_request,async
 
   const response = await completion({
     // entry v summary handled above, so just replace either/or here
-
-    // will use gpt4 for premium, but it's too slow - I need to wrap
-    // as a background job
-    model: "gpt-3.5-turbo",
-    // model: "gpt-4",
-
+    model: "gpt-4",
     max_tokens: 384,
     prompt: messages_.map(m => {
       // remove `id` from messages. Needed for request/response, but OpenAI doesn't want it

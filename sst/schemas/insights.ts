@@ -82,11 +82,13 @@ export const insights_prompt_request = Insight.extend({
   messages: Message.array()
 })
 export type insights_prompt_request = z.infer<typeof insights_prompt_request>
-export const insights_prompt_response = Insight.extend({
+export const insights_prompt_response = insights_prompt_request
+export type insights_prompt_response = z.infer<typeof insights_prompt_response>
+export const insights_prompt_final = Insight.extend({
   id: z.string(), // different than messages[].id, this is needed for keyby in the Event system
   messages: Message.array()
 })
-export type insights_prompt_response = z.infer<typeof insights_prompt_response>
+export type insights_prompt_final = z.infer<typeof insights_prompt_final>
 
 export const routes = {
   insights_get_request: {
@@ -126,6 +128,19 @@ export const routes = {
     o: {
       e: "insights_prompt_response",
       s: insights_prompt_response,
+      t: {background: true},
+    }
+  },
+
+  insights_prompt_response: {
+    i: {
+      e: 'insights_prompt_response',
+      s: insights_prompt_response,
+      t: {background: true},
+    },
+    o: {
+      e: "insights_prompt_final",
+      s: insights_prompt_final,
       t: {ws: true},
       keyby: 'view',
     }
