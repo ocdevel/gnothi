@@ -12,8 +12,8 @@ import Button from "@mui/material/Button";
 import {FullScreenDialog} from "../../../Components/Dialog";
 import Container from "@mui/material/Container";
 import Behaviors from '../List'
-import View from './View'
-import Overall from './Overall'
+import KeepTracking from './KeepTracking'
+import Charts from './Charts'
 
 export default function Modal() {
   const [user, send, fields, view, setView] = useStore(s => [
@@ -39,8 +39,7 @@ export default function Modal() {
     return <>
       {view.view === "new" && <Create />}
       {view.view === "edit" && <Update />}
-      {view.view === "view" && <View />}
-      {view.view === "overall" && <Overall />}
+      {["overall","view"].includes(view.view) && <Charts />}
     </>
   }
 
