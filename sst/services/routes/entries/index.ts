@@ -8,8 +8,7 @@ import {entries, Entry} from "../../data/schemas/entries";
 import {tags, Tag} from "../../data/schemas/tags";
 import {sql} from "drizzle-orm";
 import {preprocess} from "../../ml/node/preprocess";
-import * as sumSummarizer from "../../ml/node/summarize/summarizer";
-import * as sumOpenai from "../../ml/node/summarize/openai";
+import {summarizeEntry} from "../../ml/node/summarize";
 import {upsert} from "../../ml/node/upsert";
 import {eq, and, inArray} from "drizzle-orm"
 import * as _ from 'lodash'
@@ -70,12 +69,14 @@ export async function entriesUpsertResponse(req: S.Entries.entries_upsert_respon
 
   const usePrompt = Boolean(context.user.premium)
 
-  const summarizeEntry = usePrompt ? sumOpenai.summarizeEntry : sumSummarizer.summarizeEntry
   const summary = skip_summarize ? {
-      title: "",
-      paras: clean.paras,
-      body: {text: "", emotion: "", keywords: []}
-    } : await summarizeEntry(clean)
+    title: "",
+    paras: clean.paras,
+    body: {text: "", emotion: "", keywords: []}
+  } : await summarizeEntry({
+    ...clean,
+    usePrompt: false
+  })
   console.log({summary})
 
   updates = {

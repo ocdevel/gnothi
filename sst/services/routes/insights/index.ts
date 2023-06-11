@@ -8,8 +8,7 @@ import dayjs from 'dayjs'
 import {reduce as _reduce} from "lodash"
 import type {Entry} from '@gnothi/schemas/entries'
 import type {insights_ask_response, insights_themes_response, insights_summarize_response} from '@gnothi/schemas/insights'
-import {summarize, summarizeInsights} from '../../ml/node/summarize/summarizer'
-import {summarizeInsights as summarizeInsightsOpenai} from '../../ml/node/summarize/openai'
+import {summarizeInsights} from '../../ml/node/summarize'
 import {search} from '../../ml/node/search'
 import {books} from '../../ml/node/books'
 import {ask} from '../../ml/node/ask'
@@ -71,24 +70,11 @@ export const insights_get_response = new Route(r.insights_get_response,async (re
   }
 
   if (insights.summarize) {
-    if (usePrompt) {
-      promises.push(summarizeInsightsOpenai({
-        context,
-        entries: entriesFiltered
-      }))
-    } else {
-      promises.push(summarizeInsights({
-        context,
-        entries: entriesFiltered
-      }))
-
-      // Themes
-      promises.push(themes({
-        context,
-        clusters,
-        entries: entriesFiltered
-      }))
-    }
+    promises.push(summarizeInsights({
+      context,
+      entries: entriesFiltered,
+      usePrompt: false
+    }))
   }
 
   await Promise.all(promises)
