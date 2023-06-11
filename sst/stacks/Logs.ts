@@ -25,35 +25,35 @@ export function Logs(context: sst.StackContext){
     // Need a unique ID for the Filter & Alarm, but fn.id / fn.functionName aren't working
     // const id = fn.functionArn.replace(/[^A-Za-z0-9]/g, '');
 
-    // Create CloudWatch metric filter
-    const metricFilter = new aws_logs.MetricFilter(stack, `MetricFilter${id}`, {
-      logGroup: fn.logGroup,
-
-      filterPattern: aws_logs.FilterPattern.anyTerm(
-        'ERROR', 'Error', 'error',
-        'EXCEPTION', 'Exception', 'exception',
-      ),
-      // filterPattern: aws_logs.FilterPattern.stringValue('$.level', '=', 'ERROR'),
-
-      metricName: 'ErrorCount',
-      metricNamespace: `${app.name}/${app.stage}`,
-      metricValue: '1', // optional?
-    });
-
-    // Create CloudWatch alarm
-    new aws_cloudwatch.Alarm(stack, `MetricAlarm${id}`, {
-      metric: metricFilter.metric(), // metricFilter.metric({})
-      threshold: 1,
-      evaluationPeriods: 1,
-      actionsEnabled: true,
-
-      // treatMissingData: TreatMissingData.IGNORE,
-      comparisonOperator: aws_cloudwatch.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
-      // datapointsToAlarm: 1,
-
-      alarmActions: [topic],
-      // alarmActions: [new aws_sns.SnsAction(topic)],
-    });
+    // // Create CloudWatch metric filter
+    // const metricFilter = new aws_logs.MetricFilter(stack, `MetricFilter${id}`, {
+    //   logGroup: fn.logGroup,
+    //
+    //   filterPattern: aws_logs.FilterPattern.anyTerm(
+    //     'ERROR', 'Error', 'error',
+    //     'EXCEPTION', 'Exception', 'exception',
+    //   ),
+    //   // filterPattern: aws_logs.FilterPattern.stringValue('$.level', '=', 'ERROR'),
+    //
+    //   metricName: 'ErrorCount',
+    //   metricNamespace: `${app.name}/${app.stage}`,
+    //   metricValue: '1', // optional?
+    // });
+    //
+    // // Create CloudWatch alarm
+    // new aws_cloudwatch.Alarm(stack, `MetricAlarm${id}`, {
+    //   metric: metricFilter.metric(), // metricFilter.metric({})
+    //   threshold: 1,
+    //   evaluationPeriods: 1,
+    //   actionsEnabled: true,
+    //
+    //   // treatMissingData: TreatMissingData.IGNORE,
+    //   comparisonOperator: aws_cloudwatch.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
+    //   // datapointsToAlarm: 1,
+    //
+    //   alarmActions: [topic],
+    //   // alarmActions: [new aws_sns.SnsAction(topic)],
+    // });
 
     // Grant the function permissions to PutMetricData on CloudWatch
     fn.addToRolePolicy(new aws_iam.PolicyStatement({

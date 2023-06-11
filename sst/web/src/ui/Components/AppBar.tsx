@@ -47,12 +47,12 @@ export function UserMenu() {
     // {name: 'Profile', onClick: () => {
     //   handleCloseUserMenu()
     // }},
-    ...(STAGE === "prod" ? [] : [{
-      name: 'Premium', onClick: () => {
-        handleCloseUserMenu()
-        setPremiumModal(true)
-      }}]
-    ),
+    // ...(STAGE === "prod" ? [] : [{
+    //   name: 'Premium', onClick: () => {
+    //     handleCloseUserMenu()
+    //     setPremiumModal(true)
+    //   }}]
+    // ),
     // {name: 'Settings', onClick: () => {
     //   handleCloseUserMenu()
     // }},

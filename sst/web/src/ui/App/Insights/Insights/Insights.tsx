@@ -159,7 +159,7 @@ export default function Insights({entry_ids}: Insights) {
   //   </Alert2>
   // }
 
-  const showPrompt = STAGE !== "prod" || me?.is_premium
+  const showPrompt = false && STAGE !== "prod" || me?.is_premium
 
   return <div className="insights">
     <Stack2>
