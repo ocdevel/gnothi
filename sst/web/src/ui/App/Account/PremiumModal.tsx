@@ -70,7 +70,7 @@ export default function PremiumModal() {
       {...buttonDefaults}
       disabled={!me}
       onClick={() => setShowDisclaimer(true)}
-    >Upgrade</Button>
+    >Try it Free for a Week</Button>
   }
 
   function basicActiveFooter() {
@@ -96,7 +96,7 @@ export default function PremiumModal() {
   }
 
   return <>
-    <FullScreenDialog title={"Premium"} open={premiumModal} onClose={close}>
+    <FullScreenDialog title={"Plan Comparison"} open={premiumModal} onClose={close}>
       <DialogContent>
         <Banner />
         <PlanComparison
@@ -111,15 +111,22 @@ export default function PremiumModal() {
       onClose={() => setShowDisclaimer(false)}
       size={"sm"}
     >
-      <DialogContent sx={{padding: 5}}>
-        <Typography variant="h5" gutterBottom>Heading</Typography>
-        <Typography pb={5}>Insert information about OpenAI <a href="https://openai.com/policies/privacy-policy" target="_blank">OpenAI's privacy policy</a></Typography>
+      <DialogContent
+        sx={{padding: 5}}>
+        <Typography
+          variant="h4"
+          fontWeight={500}
+          color="primary"
+          pb={2}
+          gutterBottom>Just a quick heads up...</Typography>
+        <Typography pb={2}>Premium means you get unlimited access to GPT for sharper insights through Open AI.</Typography>
+        <Typography pb={5}>Be sure to take a look at <a href="https://openai.com/policies/privacy-policy" target="_blank">OpenAI's privacy policy</a> as well as their <a href="https://openai.com/policies/terms-of-use" target="_blank">terms of use</a> so you're familiar with their policies.</Typography>
         <Button
           {...buttonDefaults}
-          size="large"
+          size="small"
           onClick={clickLastUpgrade}
         >
-          Upgrade
+          Start my Free Trial
         </Button>
       </DialogContent>
     </BasicDialog>

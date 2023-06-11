@@ -87,6 +87,7 @@ export function BasicDialog({
     <Grid container
           direction='row'
           alignItems='center'
+          sx={{borderRadius: 3}}
     >
       {title && <Grid item sx={{flex: 1}}>
         <DialogTitle>{title}</DialogTitle>

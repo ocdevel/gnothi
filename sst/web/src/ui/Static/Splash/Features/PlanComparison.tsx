@@ -16,16 +16,20 @@ import ListItem_ from "@mui/material/ListItem";
 import CardActions from "@mui/material/CardActions";
 import CheckIcon from '@mui/icons-material/TaskAlt';
 import StarIcon from '@mui/icons-material/StarBorder';
+import DreamsIcon from '@mui/icons-material/BedtimeOutlined';
+import FeedbackIcon from '@mui/icons-material/ThumbUpAltOutlined';
+import CustomIcon from '@mui/icons-material/ChatOutlined';
 
 export const buttonDefaults = {
   sx: {
     alignItems: 'center',
     justifyContent: 'center',
     width: '100%',
-    marginBottom: 2
+    marginBottom: 2,
   },
   variant: 'contained',
-  size: 'small'
+  size: 'small',
+  color: "secondary"
 } as unknown as ButtonProps
 
 interface PlanComparison {
@@ -36,9 +40,20 @@ export default function PlanComparison({
   premiumFooter,
   basicFooter,
 }: PlanComparison) {
-  const checkIcon = <CheckIcon
+  const dreamsIcon = <DreamsIcon
     fontSize='inherit'
     color='secondary'
+  />
+  const feedbackIcon = <FeedbackIcon
+    fontSize='inherit'
+    color='secondary'
+  />
+  const customIcon = <CustomIcon
+    fontSize='inherit'
+    color='secondary'
+  />
+  const checkIcon2 = <CheckIcon sx={{color: "#59887c"}}
+    fontSize='inherit'
   />
 
   function renderDefaultFooter() {
@@ -77,11 +92,14 @@ export default function PlanComparison({
             borderWidth: '1px',
           }}
         >
-          <CardContent>
+          <CardContent sx={{marginX: 2
+          }}
+          >
             <Typography
-              variant="subtitle2"
+              variant="h4"
+              fontWeight={600}
               textAlign="left"
-              color='#50627a'
+              color="primary"
 
             >
               Premium
@@ -92,7 +110,7 @@ export default function PlanComparison({
               textAlign="left"
               color='#50627a'
             >
-              $9.99
+              $8.99
             </Typography>
             <Typography
               variant="body2"
@@ -130,14 +148,44 @@ export default function PlanComparison({
               textAlign="left"
               color='#50627a'
             >
-              AI interactive chat
+              GPT-enabled chat, called <i>Prompt</i>
             </Typography>
             <Typography
               variant="body2"
               textAlign="left"
               color='black'
             >
-              Run dream interpretations, get feedback on entries, and create custom prompts to ask AI anything
+              Game-changing AI feature that will take your journaling to the next level
+            </Typography>
+
+            <Typography
+              variant="body2"
+              textAlign="left"
+              color='black'
+              marginLeft={1}
+              marginTop={1}
+            >
+              {dreamsIcon} Run dream interpretations
+            </Typography>
+
+            <Typography
+              variant="body2"
+              textAlign="left"
+              color='black'
+              marginLeft={1}
+              marginTop={.5}
+            >
+              {feedbackIcon} Get feedback on entries
+            </Typography>
+
+            <Typography
+              variant="body2"
+              textAlign="left"
+              color='black'
+              marginLeft={1}
+              marginTop={.5}
+            >
+              {customIcon} Custom prompts: ask AI anything
             </Typography>
 
             {/*<Typography
@@ -177,7 +225,9 @@ export default function PlanComparison({
           </CardContent>
 
 
-          <CardActions>
+          <CardActions
+          sx={{marginX: 2}}
+          >
             {premiumFooter? premiumFooter() : renderDefaultFooter()}
           </CardActions>
 
@@ -201,9 +251,12 @@ export default function PlanComparison({
             borderWidth: '1px',
           }}
         >
-          <CardContent>
+          <CardContent
+          sx={{marginX: 2}}
+          >
             <Typography
-              variant="subtitle2"
+              variant="h4"
+              fontWeight={600}
               textAlign="left"
               color='#50627a'
 
@@ -244,7 +297,27 @@ export default function PlanComparison({
               marginTop={1}
             >
 
-              {checkIcon} Write as much as you want
+              {checkIcon2} Write as much as you want
+            </Typography>
+
+            {/*<Typography*/}
+            {/*  variant="body2"*/}
+            {/*  textAlign="left"*/}
+            {/*  color='black'*/}
+            {/*  marginLeft={1}*/}
+            {/*  marginTop={.5}*/}
+            {/*>*/}
+            {/*  {checkIcon2} Run unlimited themes and summaries*/}
+            {/*</Typography>*/}
+
+            <Typography
+              variant="body2"
+              textAlign="left"
+              color='black'
+              marginLeft={1}
+              marginTop={.5}
+            >
+              {checkIcon2} Track behaviors and get AI insights
             </Typography>
 
             <Typography
@@ -254,7 +327,7 @@ export default function PlanComparison({
               marginLeft={1}
               marginTop={.5}
             >
-              {checkIcon} Run unlimited themes and summaries
+              {checkIcon2} Get personalized book recommendations
             </Typography>
 
             <Typography
@@ -264,38 +337,18 @@ export default function PlanComparison({
               marginLeft={1}
               marginTop={.5}
             >
-              {checkIcon} Track behaviors and get AI insights
+              {checkIcon2} Organize entries with custom tags
             </Typography>
 
-            <Typography
-              variant="body2"
-              textAlign="left"
-              color='black'
-              marginLeft={1}
-              marginTop={.5}
-            >
-              {checkIcon} Get personalized book recommendations
-            </Typography>
-
-            <Typography
-              variant="body2"
-              textAlign="left"
-              color='black'
-              marginLeft={1}
-              marginTop={.5}
-            >
-              {checkIcon} Organize entries with custom tags
-            </Typography>
-
-            <Typography
-              variant="body2"
-              textAlign="left"
-              color='black'
-              marginLeft={1}
-              marginTop={.5}
-            >
-              {checkIcon} Share entries with friends or therapists
-            </Typography>
+            {/*<Typography*/}
+            {/*  variant="body2"*/}
+            {/*  textAlign="left"*/}
+            {/*  color='black'*/}
+            {/*  marginLeft={1}*/}
+            {/*  marginTop={.5}*/}
+            {/*>*/}
+            {/*  {checkIcon2} Share entries with friends or therapists*/}
+            {/*</Typography>*/}
 
             <Typography
               marginTop={2}
@@ -318,7 +371,9 @@ export default function PlanComparison({
 
           </CardContent>
 
-          <CardActions>
+          <CardActions
+          sx={{marginX: 2}}
+          >
             {basicFooter ? basicFooter() : renderDefaultFooter()}
           </CardActions>
         </Card>

@@ -3,13 +3,7 @@ export const STAGE = import.meta.env.VITE_STAGE
 const env = (
   // Using manually-entered values for staging env vars so we can develop localhost
   // against staging backend. Edge-case, won't use for production or other
-
-
-  //  STAGE === "staging" ?  {"VITE_API_WS":"wss://67jndf1ak4.execute-api.us-east-1.amazonaws.com/legion4","VITE_API_HTTP":"https://pmake3nzve.execute-api.us-east-1.amazonaws.com","VITE_REGION":"us-east-1","VITE_USER_POOL_ID":"us-east-1_A7IaNNEo9","VITE_USER_POOL_CLIENT_ID":"4dtc6lv06ick36klca0g7k5u8p"}
-   STAGE === "staging" ?  {"VITE_API_WS":"wss://j5u72t8pd0.execute-api.us-east-1.amazonaws.com/staging","VITE_API_HTTP":"https://d7mou9s4v0.execute-api.us-east-1.amazonaws.com","VITE_REGION":"us-east-1","VITE_USER_POOL_ID":"us-east-1_d9iRhEBui","VITE_USER_POOL_CLIENT_ID":"3npah3sqpbpbp3o8anv8tnhs7j"}
-
-
-
+  STAGE === "staging" ?  {"VITE_API_WS":"wss://d7ud2b1nmj.execute-api.us-east-1.amazonaws.com/staging","VITE_API_HTTP":"https://igse7evgoh.execute-api.us-east-1.amazonaws.com","VITE_REGION":"us-east-1","VITE_USER_POOL_ID":"us-east-1_d7gcLJxhc","VITE_USER_POOL_CLIENT_ID":"4t29tg4gqil69ovhk4c5na4j61"}
   // Allow editing static pages without need for a backend
   : STAGE === "offline" ? {
     "VITE_API_WS": "",

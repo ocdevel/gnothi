@@ -22,11 +22,12 @@ export default function Locked() {
   return <Box>
     <Button
       variant="contained"
-      color="primary"
+      color="secondary"
+      size="small"
       onClick={openModal}
       fullWidth
     >
-      Upgrade to Premium
+      Upgrade to premium
     </Button>
   </Box>
 }
