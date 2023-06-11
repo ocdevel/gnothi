@@ -73,7 +73,7 @@ export const insights_get_response = new Route(r.insights_get_response,async (re
     promises.push(summarizeInsights({
       context,
       entries: entriesFiltered,
-      usePrompt: false
+      usePrompt
     }))
   }
 

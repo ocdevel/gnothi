@@ -75,7 +75,7 @@ export async function entriesUpsertResponse(req: S.Entries.entries_upsert_respon
     body: {text: "", emotion: "", keywords: []}
   } : await summarizeEntry({
     ...clean,
-    usePrompt: false
+    usePrompt
   })
   console.log({summary})
 

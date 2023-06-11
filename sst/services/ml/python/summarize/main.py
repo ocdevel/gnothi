@@ -6,14 +6,15 @@ import re
 # this comes from how tisuth training
 longmodel = {'revision': "f5f212b", "max_tokens": 8192}
 shortmodel = {'revision': "5ce62a4", "max_tokens": 4096}
-m = shortmodel
+m = longmodel
 
 model_name = "lefnire/tisuth"
-model = AutoModelForSeq2SeqLM.from_pretrained(model_name, revision=m['revision'], trust_remote_code=True)
+model = AutoModelForSeq2SeqLM.from_pretrained(model_name, revision=m['revision'])#, trust_remote_code=True)
+model.config.use_cache = True
 tokenizer = AutoTokenizer.from_pretrained(
     model_name,
     revision=m['revision'],
-    trust_remote_code=True,
+    #trust_remote_code=True,
     # max_input_length=m['max_tokens'],
     # truncation=True,
     # padding="max_length"
@@ -39,7 +40,7 @@ pipe = pipeline("text2text-generation", model=model, tokenizer=tokenizer)
 
 
 def main(event, context):
-    output = pipe(event['texts'], truncation=True)
+    output = pipe(event['texts'], truncation=True, use_cache=True)
     return {
         'data': output
     }
