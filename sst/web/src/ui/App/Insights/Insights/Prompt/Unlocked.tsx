@@ -42,7 +42,7 @@ export default function Unlocked({entry_ids, view}: UnlockedProps) {
   const setModal = useStore(s => s.modals.setPrompt)
   const [messages, setMessages] = useState<Message[]>([])
   const [waiting, setWaiting] = useState(false)
-  const [custom, setCustom] = useState(false)
+  const [model, setModel] = useState<"gpt-3.5-turbo" | "gpt-4">("gpt-3.5-turbo")
 
 
   // TODO useStore version of loading
@@ -73,21 +73,53 @@ export default function Unlocked({entry_ids, view}: UnlockedProps) {
     const request = {
       view,
       entry_ids,
-      messages: updated
+      messages: updated,
+      model
     }
 
     send("insights_prompt_request", request)
     if (!modal) {
       setPrompt("")
-      setCustom(true)
       setModal(true)
     }
   }
 
   function closeModal() {
-    setCustom(false)
     setMessages([])
     setModal(false)
+  }
+
+  function renderModelAndSubmit() {
+    return <Grid container justifyContent="space-between" alignItems="center">
+      <Grid item>
+        <FormControl variant="standard" sx={{ m: 1, minWidth: 120 }}>
+          <InputLabel id="model-select-label">Model</InputLabel>
+          <Select
+            size="small"
+            labelId="model-select-label"
+            id="model-select"
+            value={model}
+            onChange={(e) => setModel(e.target.value)}
+            label="Model"
+          >
+            <MenuItem value="gpt-3.5-turbo">GPT3 - Fast, Simple</MenuItem>
+            <MenuItem value="gpt-4">GPT4 - Slow, Wise</MenuItem>
+          </Select>
+        </FormControl>
+      </Grid>
+      <Grid item>
+        <Button
+          sx={{elevation: 12, fontWeight: 500}}
+          variant="outlined"
+          size="small"
+          color="secondary"
+          disabled={btnDisabled}
+          onClick={submit}
+        >
+          {waiting ? <CircularProgress/> : "Submit"}
+        </Button>
+      </Grid>
+    </Grid>
   }
 
   function renderMessage(message: Message, i: number) {
@@ -147,14 +179,11 @@ export default function Unlocked({entry_ids, view}: UnlockedProps) {
     return <>
       <Stack
         spacing={2}
-        component="form"
-        alignItems='flex-end'>
+        component="form">
 
         <PromptSelector
           prompt={prompt}
           setPrompt={setPrompt}
-          custom={custom}
-          setCustom={setCustom}
         />
 
         {/*<Button onClick={() => setShowHelp(!showHelp)}>{showHelp ? "Hide help" : "Show Help"}</Button>
@@ -171,16 +200,7 @@ export default function Unlocked({entry_ids, view}: UnlockedProps) {
           </ul>
         </Typography>}*/}
 
-        <Button
-          sx={{elevation: 12, fontWeight: 500}}
-          variant="outlined"
-          size="small"
-          color="secondary"
-          disabled={btnDisabled}
-          onClick={submit}
-        >
-          {waiting ? <CircularProgress/> : "Submit"}
-        </Button>
+        {renderModelAndSubmit()}
       </Stack>
     </>
   }
@@ -191,19 +211,9 @@ export default function Unlocked({entry_ids, view}: UnlockedProps) {
         <PromptSelector
           prompt={prompt}
           setPrompt={setPrompt}
-          custom={custom}
-          setCustom={setCustom}
         />
 
-        <Button
-          sx={{elevation: 12}}
-          variant="contained"
-          color="secondary"
-          disabled={btnDisabled}
-          onClick={submit}
-        >
-          {waiting ? <CircularProgress/> : "Submit"}
-        </Button>
+        {renderModelAndSubmit()}
         {renderMessages()}
       </Stack>
     }

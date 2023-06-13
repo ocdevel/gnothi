@@ -3,11 +3,6 @@ import React, {useState} from "react";
 import presets from '../../../../../data/prompts.yml'
 import keyBy from "lodash/keyBy";
 import Autocomplete from "@mui/material/Autocomplete";
-import Stack from "@mui/material/Stack";
-import Typography from "@mui/material/Typography";
-import Button from "@mui/material/Button";
-import CircularProgress from "@mui/material/CircularProgress";
-import {Checkbox2} from "../../../../Components/Form.tsx";
 
 type PromptYml = {key?: string, label: string, prompt: string}
 type CategoryYml = {category: string, prompts: PromptYml[]}
@@ -21,15 +16,11 @@ type Option = PromptYml
 interface Selector {
   prompt: string
   setPrompt: (prompt: string) => void
-  custom: boolean
-  setCustom: (custom: boolean) => void
 }
 
 export default function Selector({
   prompt,
   setPrompt,
-  custom,
-  setCustom,
 }: Selector) {
   const [option, setOption] = useState<Option | null>(null)
 
@@ -63,7 +54,7 @@ export default function Selector({
           label: newValue,
           prompt: newValue,
         })
-        setPrompt(newValue?.prompt || "")
+        setPrompt(newValue || "")
       }}
     />
   </>

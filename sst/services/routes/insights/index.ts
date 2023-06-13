@@ -87,7 +87,7 @@ export const insights_prompt_request = new Route(r.insights_prompt_request,async
 })
 
 export const insights_prompt_response = new Route(r.insights_prompt_response,async (req, context) => {
-  const {messages, view} = req
+  const {messages, view, model} = req
   let messages_ = []
 
   // on the first prompt, we'll tee it up with their entries. We'll send it back
@@ -116,7 +116,7 @@ export const insights_prompt_response = new Route(r.insights_prompt_response,asy
 
   const response = await completion({
     // entry v summary handled above, so just replace either/or here
-    model: "gpt-3.5-turbo",
+    model,
     max_tokens: 384,
     prompt: messages_.map(m => {
       // remove `id` from messages. Needed for request/response, but OpenAI doesn't want it
