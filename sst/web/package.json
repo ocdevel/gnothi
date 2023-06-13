@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "start": "VITE_STAGE=dev sst bind vite",
+    "start": "sst bind vite",
     "staging": "VITE_STAGE=staging vite",
     "offline": "VITE_STAGE=offline vite",
     "build:orig": "tsc && vite build",
