@@ -5,6 +5,7 @@ import Themes from "./Themes"
 import Prompt from "./Prompt/Prompt"
 import Books from "./Books"
 import Behaviors from "./Behaviors"
+import Admin from "./Admin"
 import Divider from "@mui/material/Divider";
 import dayjs from 'dayjs'
 import {
@@ -21,6 +22,7 @@ import ThemesIcon from '@mui/icons-material/DashboardOutlined';
 import BehaviorsIcon from '@mui/icons-material/InsertChartOutlinedRounded';
 import PromptIcon from '@mui/icons-material/ChatOutlined';
 import ExpandIcon from '@mui/icons-material/FullscreenOutlined';
+import AdminIcon from '@mui/icons-material/AdminPanelSettingsOutlined';
 import Tooltip from "@mui/material/Tooltip"
 
 
@@ -228,6 +230,14 @@ export default function Insights({entry_ids}: Insights) {
       >
         <Books view={view}/>
       </Insight>
+
+      {me?.is_superuser && <Insight
+        label="Admin"
+        icon={<AdminIcon {...iconProps} />}
+        description="Admin tools and analytics"
+      >
+        <Admin view={view}/>
+      </Insight>}
 
     </Stack2>
   </div>

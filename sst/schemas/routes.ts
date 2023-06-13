@@ -9,6 +9,7 @@ import {Auth} from './auth'
 import {Insights} from './insights'
 import {Notes} from './notes'
 import {Stripe} from './stripe'
+import {Admin} from './admin'
 
 export * as Routes from './routes'
 
@@ -23,5 +24,6 @@ export const routes = {
   ...Auth.routes,
   ...Insights.routes,
   ...Notes.routes,
-  ...Stripe.routes
+  ...Stripe.routes,
+  ...Admin.routes
 }

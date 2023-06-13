@@ -171,11 +171,7 @@ export const Events = z.enum([
   'habitica_delete_request',
   'habitica_sync_cron',
 
-  'payments_publickey_request',
-  'payments_publickey_response',
-  'payments_products_request',
-  'payments_products_response',
-  'payments_paymentintent_request',
-  'payments_paymentintent_response',
+  'admin_analytics_list_request',
+  'admin_analytics_list_response'
 ])
 export type Events = z.infer<typeof Events>

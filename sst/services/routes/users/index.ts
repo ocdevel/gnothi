@@ -25,6 +25,7 @@ export const users_everything_request = new Route(r.users_everything_request, as
     // 'shares_ingress_list_request',
     // 'shares_egress_list_request',
 
+    'admin_analytics_list_request'
   ].map(async (event) => {
     await context.handleReq({event, data: {}}, context)
   })
