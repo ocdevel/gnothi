@@ -42,7 +42,7 @@ export default function Unlocked({entry_ids, view}: UnlockedProps) {
   const setModal = useStore(s => s.modals.setPrompt)
   const [messages, setMessages] = useState<Message[]>([])
   const [waiting, setWaiting] = useState(false)
-  const [model, setModel] = useState<"gpt-3.5-turbo" | "gpt-4">("gpt-3.5-turbo")
+  const [model, setModel] = useState<"gpt-3.5-turbo-16k" | "gpt-4">("gpt-3.5-turbo-16k")
 
 
   // TODO useStore version of loading
@@ -102,7 +102,7 @@ export default function Unlocked({entry_ids, view}: UnlockedProps) {
             onChange={(e) => setModel(e.target.value)}
             label="Model"
           >
-            <MenuItem value="gpt-3.5-turbo">GPT3 - Fast, Simple</MenuItem>
+            <MenuItem value="gpt-3.5-turbo-16k">GPT3 - Fast, Simple</MenuItem>
             <MenuItem value="gpt-4">GPT4 - Slow, Wise</MenuItem>
           </Select>
         </FormControl>
