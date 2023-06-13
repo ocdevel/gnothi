@@ -110,11 +110,19 @@ export default function PremiumModal() {
 
   function premiumInactiveFooter() {
     if (canceled) {return null}
-    return <Button
-      {...buttonDefaults}
-      disabled={!me}
-      onClick={() => setShowDisclaimer(true)}
-    >Try it Free for a Week</Button>
+    return <>
+      <Button
+        fullWidth
+        {...buttonDefaults}
+        disabled={!me}
+        href={`${PAYMENT_LINK}?client_reference_id=${me?.id}`}
+      >
+        Try it Free for a Week
+      </Button>
+      <div>
+        <Typography variant="body2" textAlign='center' px={2}>Upgrade enables GPT. See OpenAI's <a href="https://openai.com/policies/privacy-policy" target="_blank">privacy policy</a> and <a href="https://openai.com/policies/terms-of-use" target="_blank">terms of use</a></Typography>
+      </div>
+    </>
   }
 
   function basicActiveFooter() {
@@ -132,14 +140,6 @@ export default function PremiumModal() {
     </Button>
   }
 
-  function clickLastUpgrade() {
-    if (!me) {return}
-    setShowDisclaimer(false)
-    // use javascript to redirect user to the payment link, target=_blank
-    const link = `${PAYMENT_LINK}?client_reference_id=${me.id}`
-    window.open(link, "_blank")
-  }
-
   return <>
     <FullScreenDialog title={"Plan Comparison"} open={premiumModal} onClose={close}>
       <DialogContent>
@@ -151,29 +151,5 @@ export default function PremiumModal() {
         {/*<FeatureLayout />*/}
       </DialogContent>
     </FullScreenDialog>
-    <BasicDialog
-      open={showDisclaimer && !me?.premium}
-      onClose={() => setShowDisclaimer(false)}
-      size={"sm"}
-    >
-      <DialogContent
-        sx={{padding: 5}}>
-        <Typography
-          variant="h4"
-          fontWeight={500}
-          color="primary"
-          pb={2}
-          gutterBottom>Just a quick heads up...</Typography>
-        <Typography pb={2}>Premium means you get unlimited access to GPT for sharper insights through Open AI.</Typography>
-        <Typography pb={5}>Be sure to take a look at <a href="https://openai.com/policies/privacy-policy" target="_blank">OpenAI's privacy policy</a> as well as their <a href="https://openai.com/policies/terms-of-use" target="_blank">terms of use</a> so you're familiar with their policies.</Typography>
-        <Button
-          {...buttonDefaults}
-          size="small"
-          onClick={clickLastUpgrade}
-        >
-          Start my Free Trial
-        </Button>
-      </DialogContent>
-    </BasicDialog>
   </>
 }
