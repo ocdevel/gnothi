@@ -110,7 +110,7 @@ export default function Unlocked({entry_ids, view}: UnlockedProps) {
       <Grid item>
         <Button
           sx={{elevation: 12, fontWeight: 500}}
-          variant="outlined"
+          variant={modal ? "contained" : "outlined"}
           size="small"
           color="secondary"
           disabled={btnDisabled}

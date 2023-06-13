@@ -1,6 +1,9 @@
 import {clients} from './clients'
 import { PutMetricDataCommand} from "@aws-sdk/client-cloudwatch";
 import type {User} from '../data/schemas/users'
+import crypto from 'crypto'
+import axios from 'axios'
+import {Config} from 'sst/node/config'
 
 interface Log {
   event: string
@@ -52,28 +55,32 @@ export class Logger {
     // this isn't "we give certain users no-tracking", it's: users with admin privs are spamming the app, and are
     // skewing the metrics
     if (user.is_cool) {return}
-    try {
-      const dimensions_: {Name: string, Value: string}[] = [
-        {Name: "event", Value: event},
-        {
-          Name: "v0",
-          Value: String(new Date(user.created_at as string) < new Date("2023-05-28"))
-        },
-        ...(dimensions || [])
-      ]
-      return clients.cw.send(new PutMetricDataCommand({
-        MetricData: [
-          {
-            MetricName: "UserEvent",
-            Unit: 'Count',
-            Value: 1,
-            Dimensions: dimensions_
-          },
-        ],
-        Namespace: `gnothi/${process.env.SST_STAGE}`,
-      }));
-    } catch (err) {
-      console.log('Error putting metric data:', err);
+    if (event.includes("_list_")
+      || event.includes("_get_")
+      || event.includes("_whoami_")
+      || event.includes("_response")
+    ) {
+      return
     }
+    const api_secret = Config.GA_API_SECRET
+    const measurement_id = Config.GA_MEASUREMENT_ID
+    await axios.post(`https://www.google-analytics.com/mp/collect?api_secret=${api_secret}&measurement_id=${measurement_id}`, {
+      // Hash user id because I don't want to track them, just cohort flow. If this is still not ok, I'll
+      // remove the user_id completely.
+      // client_id: Logger._hashId(user.id),
+      client_id: "server",
+      events: [{
+        name: event,
+        params: {
+          v0: new Date(user.created_at as string) < new Date("2023-05-28")
+        }
+      }]
+    })
+  }
+
+  static _hashId(id: string) {
+    const hash = crypto.createHash('sha256');
+    hash.update(id);
+    return hash.digest('hex');
   }
 }
