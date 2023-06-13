@@ -187,7 +187,7 @@ export default function Insights({entry_ids}: Insights) {
         icon={<PromptIcon {...iconProps} />}
         moreClick={() => me?.premium ? setPromptModal(true) : setPremium(true)}
         description="Ask Gnothi anything"
-        action="Choose a topic or create a custom prompt"
+        action={`The context for the query ${view === "list" ? "are the entries you see, based on your filters." : "is this entry"}`}
       >
         <Prompt entry_ids={entry_ids} view={view}/>
       </Insight>
