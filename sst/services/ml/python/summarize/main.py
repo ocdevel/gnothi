@@ -4,9 +4,10 @@ from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, pipeline
 import re
 
 # this comes from how tisuth training
-longmodel = {'revision': "f5f212b", "max_tokens": 8192}
-shortmodel = {'revision': "5ce62a4", "max_tokens": 4096}
-m = longmodel
+led8k = {'revision': "f5f212b", "max_tokens": 8192}
+led4k = {'revision': "5ce62a4", "max_tokens": 4096}
+led12k = {'revision': "0c6a38c", "max_tokens": 12032}
+m = led12k
 
 model_name = "lefnire/tisuth"
 model = AutoModelForSeq2SeqLM.from_pretrained(model_name, revision=m['revision'])#, trust_remote_code=True)
@@ -40,7 +41,7 @@ pipe = pipeline("text2text-generation", model=model, tokenizer=tokenizer)
 
 
 def main(event, context):
-    output = pipe(event['texts'], truncation=True, use_cache=True)
+    output = pipe(event['texts'], truncation=True, use_cache=True, repetition_penalty=2.0)
     return {
         'data': output
     }

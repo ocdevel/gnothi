@@ -51,13 +51,13 @@ export default function Themes({view}: Insight) {
         variant="body1"
         fontWeight={500}
         color="primary">{theme.word}</Typography>
-        <Typography
-          variant="body2"
-          color="primary"
-          mt={-1}
-          mb={1}>
-        AI took note of the following:
-      </Typography>
+      {/*<Typography*/}
+      {/*  variant="body2"*/}
+      {/*  color="primary"*/}
+      {/*  mt={-1}*/}
+      {/*  mb={1}>*/}
+      {/*  AI took note of the following:*/}
+      {/*</Typography>*/}
 
       <Typography 
         variant='body1'
@@ -81,12 +81,8 @@ export default function Themes({view}: Insight) {
     </Box>
   }
 
-  // FIXME openai geneartes good themes. There's a bug with the old theme system that basically duplicates
-  // the same theme multiple times. Showing only 1 for now
-  const themes_ = me.premium ? themes.themes : themes.themes.slice(0,1)
-
   return <>
-    {themes_.map(renderTheme)}
+    {themes?.themes?.map(renderTheme)}
   </>
 
   // const themes_ =_.sortBy(reply.themes, 'n_entries').slice().reverse()

@@ -225,11 +225,11 @@ export default function PlanComparison({
           </CardContent>
 
 
-          <CardActions
+          <CardContent
           sx={{marginX: 2}}
           >
             {premiumFooter? premiumFooter() : renderDefaultFooter()}
-          </CardActions>
+          </CardContent>
 
 
         </Card>
@@ -371,11 +371,11 @@ export default function PlanComparison({
 
           </CardContent>
 
-          <CardActions
+          <CardContent
           sx={{marginX: 2}}
           >
             {basicFooter ? basicFooter() : renderDefaultFooter()}
-          </CardActions>
+          </CardContent>
         </Card>
       </Grid>
 

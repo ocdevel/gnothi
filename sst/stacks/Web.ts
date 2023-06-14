@@ -9,6 +9,7 @@ export function Web({ app, stack }: StackContext) {
   const {domains} = use(Misc)
 
   const environment = {
+    VITE_STAGE: app.stage,
     VITE_API_WS: ws.url,
     VITE_API_HTTP: http.url,
 

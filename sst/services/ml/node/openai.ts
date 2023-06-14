@@ -35,7 +35,7 @@ type Message = {
   role: "user" | "system" | "assistant"
   content: string
 }
-function truncate(inputMessages: Message[], responseLimit: number, model: "gpt-4" | "gpt-3.5-turbo"): Message[] {
+function truncate(inputMessages: Message[], responseLimit: number, model: "gpt-4" | "gpt-3.5-turbo-16k"): Message[] {
   const gpt4 = model === "gpt-4";
   const tokenLimit = gpt4 ? 8000 : 4096;
 
@@ -81,7 +81,7 @@ export async function completion(
   // use gpt-4 for prompt (insights), and gpt-3 for entry-level tasks like summarization.
   // Gpt3 does a decent job of that, and is faster/cheaper. Wheras prompt really benefits from a high-quality
   // psychological understanding of the text
-  const model = opts.model || "gpt-3.5-turbo"
+  const model = opts.model || "gpt-3.5-turbo-16k"
   const max_tokens = opts.max_tokens || 256
 
   const messages = Array.isArray(prompt) ? prompt : [

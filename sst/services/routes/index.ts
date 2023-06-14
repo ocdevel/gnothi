@@ -9,6 +9,7 @@ import * as shares from './shares'
 import * as insights from './insights'
 import * as notes from './notes'
 import * as stripe from './stripe'
+import * as admin from './admin'
 
 export default {
   ...entries,
@@ -22,4 +23,5 @@ export default {
   ...insights,
   ...notes,
   ...stripe,
+  ...admin
 }

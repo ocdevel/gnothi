@@ -5,6 +5,7 @@ import Themes from "./Themes"
 import Prompt from "./Prompt/Prompt"
 import Books from "./Books"
 import Behaviors from "./Behaviors"
+import Admin from "./Admin"
 import Divider from "@mui/material/Divider";
 import dayjs from 'dayjs'
 import {
@@ -21,6 +22,7 @@ import ThemesIcon from '@mui/icons-material/DashboardOutlined';
 import BehaviorsIcon from '@mui/icons-material/InsertChartOutlinedRounded';
 import PromptIcon from '@mui/icons-material/ChatOutlined';
 import ExpandIcon from '@mui/icons-material/FullscreenOutlined';
+import AdminIcon from '@mui/icons-material/AdminPanelSettingsOutlined';
 import Tooltip from "@mui/material/Tooltip"
 
 
@@ -159,8 +161,6 @@ export default function Insights({entry_ids}: Insights) {
   //   </Alert2>
   // }
 
-  const showPrompt = false && STAGE !== "prod" || me?.is_premium
-
   return <div className="insights">
     <Stack2>
       {/*<Stack>*/}
@@ -184,15 +184,15 @@ export default function Insights({entry_ids}: Insights) {
       {/*  /!*</Typography>*!/*/}
       {/*</Stack>*/}
 
-      {showPrompt && <Insight
+      <Insight
         label="Prompt"
         icon={<PromptIcon {...iconProps} />}
         moreClick={() => me?.premium ? setPromptModal(true) : setPremium(true)}
         description="Ask Gnothi anything"
-        action="Choose a topic or create a custom prompt"
+        action={`The context for the query ${view === "list" ? "are the entries you see, based on your filters." : "is this entry"}`}
       >
         <Prompt entry_ids={entry_ids} view={view}/>
-      </Insight>}
+      </Insight>
 
       <Insight
         label="Themes"
@@ -230,6 +230,14 @@ export default function Insights({entry_ids}: Insights) {
       >
         <Books view={view}/>
       </Insight>
+
+      {me?.is_superuser && <Insight
+        label="Admin"
+        icon={<AdminIcon {...iconProps} />}
+        description="Admin tools and analytics"
+      >
+        <Admin view={view}/>
+      </Insight>}
 
     </Stack2>
   </div>

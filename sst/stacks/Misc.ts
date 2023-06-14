@@ -38,23 +38,18 @@ export function Misc(context: sst.StackContext) {
 
   const FN_DB_MIGRATE = new sst.Config.Parameter(stack, "FN_DB_MIGRATE", {value: fnMigrate.functionArn})
 
+  const fnAdmin = withRds(stack, "FnAdmin", {
+    handler: "services/routes/adminFns.main",
+  })
+
   stack.addOutputs({
     bucket: bucket.bucketName,
     fnMigrate: fnMigrate.functionArn,
+    fnAdmin: fnAdmin.functionArn,
   })
 
-  const migrateScript = new sst.Script(stack, "MigrateScript", {
-    defaults: {
-      function: {
-        environment: { FN_MIGRATE: fnMigrate.functionArn },
-        permissions: [fnMigrate],
-      },
-    },
-    onUpdate: {
-      handler:"services/data/migrate/migrateCaller.onUpdate",
-    },
-    params: { rest: "true" }
-  })
+  const GA_MEASUREMENT_ID = new sst.Config.Secret(stack, "GA_MEASUREMENT_ID")
+  const GA_API_SECRET = new sst.Config.Secret(stack, "GA_API_SECRET")
 
-  return {bucket, domains}
+  return {bucket, domains, GA_MEASUREMENT_ID, GA_API_SECRET}
 }

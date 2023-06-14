@@ -112,7 +112,7 @@ export async function summarizeOpenai({texts}: FnIn): Promise<ParsedCompletion> 
     {role: "user", content: combinedPrompt.replace("<journal>", squashed)},
   ]
   const response = await completion({
-    model: "gpt-3.5-turbo",
+    model: "gpt-3.5-turbo-16k",
     max_tokens: 512,
     prompt: messages
   })
