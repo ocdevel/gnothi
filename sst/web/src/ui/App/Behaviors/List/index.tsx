@@ -8,36 +8,34 @@ import {useStore} from "@gnothi/web/src/data/store"
 import Card from "@mui/material/Card";
 import Grid from "@mui/material/Grid";
 import CardContent from "@mui/material/CardContent";
-import CardHeader from "@mui/material/CardHeader";
-import Accordion from "@mui/material/Accordion";
-import AccordionSummary from "@mui/material/AccordionSummary";
 import AccordionDetails from "@mui/material/AccordionDetails";
 import Button, {ButtonProps} from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
 import Tooltip from "@mui/material/Tooltip";
 import CircularProgress from "@mui/material/CircularProgress";
-import ExpandMore from "@mui/icons-material/ExpandMore";
 import Box from "@mui/material/Box";
-import Advanced from "../Modal/Advanced";
 import DayChanger from '../Modal/DayChanger'
 import * as S from '@gnothi/schemas'
 import {shallow} from 'zustand/shallow'
 import Behavior from './Item'
 import ManageBehaviorsIcon from '@mui/icons-material/SettingsOutlined';
 import IconButton from "@mui/material/IconButton";
-import AddCircleIcon from '@mui/icons-material/AddCircleOutline';
 import Accordions from '../../../Components/Accordions.tsx'
 import Stack from "@mui/material/Stack";
 import CardActions from "@mui/material/CardActions";
-import {FaPlus as AddIcon} from "react-icons/fa";
-import BehaviorsIcon from "@mui/icons-material/InsertChartOutlinedRounded";
 import SettingsIcon from "@mui/icons-material/SettingsOutlined";
 import StarIcon from '@mui/icons-material/StarBorder';
-import FitnessIcon from '@mui/icons-material/FitnessCenter';
 import DoneIcon from '@mui/icons-material/Done';
-import AutoGraphIcon from '@mui/icons-material/AutoGraphOutlined';
 import TipsIcon from '@mui/icons-material/TipsAndUpdatesOutlined';
 import NumbersIcon from '@mui/icons-material/NumbersOutlined';
+
+// import ExpandMore from "@mui/icons-material/ExpandMore";
+// import Advanced from "../Modal/Advanced";
+// import AddCircleIcon from '@mui/icons-material/AddCircleOutline';
+// import {FaPlus as AddIcon} from "react-icons/fa";
+// import BehaviorsIcon from "@mui/icons-material/InsertChartOutlinedRounded";
+// import FitnessIcon from '@mui/icons-material/FitnessCenter';
+// import AutoGraphIcon from '@mui/icons-material/AutoGraphOutlined';
 
 
 interface FieldGroup {

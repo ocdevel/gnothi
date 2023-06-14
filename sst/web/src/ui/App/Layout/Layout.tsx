@@ -15,7 +15,7 @@ import Container from "@mui/material/Container";
 import {ErrorSnack} from "../../Components/Error";
 // import GroupsToolbar from "../Groups/List/Toolbar"
 // import GroupToolbar from "../Groups/View/Toolbar"
-import SharingModal from "../Sharing"
+// import SharingModal from "../Sharing"
 import EntryModal from "../Entries/Modal"
 import BehaviorsModal from "../Behaviors/Modal"
 import PremiumModal from '../Account/PremiumModal'
@@ -39,42 +39,34 @@ function Errors() {
   return <ErrorSnack />
 }
 
-export default function Layout() {
-  const as = useStore(state => state.user?.as);
-  const user = useStore(state => state.user?.me)
-	const navigate = useNavigate()
-
+function Container_() {
   // Disable left/right paddding for privacy, terms, disclaimer - since those pages add their own
   const {pathname} = useLocation()
-  const disableGutters = ['/privacy', '/terms', '/disclaimre'].includes(pathname)
-  // const disableGutters = false
+  const disableGutters = ['/privacy', '/terms', '/disclaimer'].includes(pathname)
+  return <Container maxWidth={false} disableGutters={disableGutters}>
+    <Outlet />
+  </Container>
+}
 
-  useEffect(() => {
-    // FIXME only do after first load
-    if (as) {navigate('/j')}
-  }, [as])
-
-  // Disabling this for now; should progressively load parts of the site. Make sure there's no hard dependencies
-  // use anywhere! Use `store.user?.me?.id` kind of stuff.
-  // if (!user) {
-  //   return <Loading label="user" />
-  // }
-
+export default function Layout() {
+  // const as = useStore(state => state.user?.as);
+	// const navigate = useNavigate()
+  // useEffect(() => {
+  //   // FIXME only do after first load
+  //   if (as) {navigate('/j')}
+  // }, [as])
   // return <Box key={as}>
+
   return <>
     <Box>
       <AppBar />
       <Banner />
-      <Container maxWidth={false} disableGutters={disableGutters}>
-        <Outlet />
-      </Container>
+      <Container_ />
       <Footer inApp={true} />
     </Box>
-
-
     <UserListener />
     <SetupApi />
-    <SharingModal />
+    {/*<SharingModal />*/}
     <EntryModal />
     <BehaviorsModal />
     <PremiumModal />
