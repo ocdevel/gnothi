@@ -139,6 +139,7 @@ export const eventsSlice: StateCreator<
   handleEvent: (res: Api.Res) => {
     console.log(`${res.event}`, res)
     const {error, code, event} = res
+    const event_as = res.event_as || res.event
 
     // To see how long each
     if (times) {
@@ -146,34 +147,38 @@ export const eventsSlice: StateCreator<
       times[event] = dayjs()
     }
 
-    function update(event: Events.Event, updates: any) {
+    function update(updates: object, isError=false) {
       set(produce(state => {
         state.lastRes = res
-        state.resBuff[event] = updates
+        // set the raw event, needed for triggers
+        if (event !== event_as) {
+          if (!state.res[event]) {state.res[event] = {}}
+          state.res[event].res = res
+        }
+        if (isError) {return}
 
-        let resBuffFlush = get().resBuffFlush[event]
+        // Then start setting the object updates
+        state.resBuff[event_as] = updates
+
+        let resBuffFlush = get().resBuffFlush[event_as]
         if (!resBuffFlush) {
           resBuffFlush = _.debounce((event, updates) => {
             set(produce(state => {
               state.res[event] = updates
             }))
             get().hooks[event]?.(updates)
-          }, debounceTimes[event] || 30)
-          state.resBuffFlush[event] = resBuffFlush
+          }, debounceTimes[event_as] || 30)
+          state.resBuffFlush[event_as] = resBuffFlush
         }
-        resBuffFlush(event, updates)
+        resBuffFlush(event_as, updates)
       }))
     }
 
     // The rest only applies to successful responses
     if (error) {
-      return update(event, {
-        ...(state.res[event] || {}),
-        res
-      })
+      return update({}, true)
     }
 
-    const event_as = res.event_as || res.event
     const {data, keyby, op} = res
 
     // @ts-ignore
@@ -222,7 +227,7 @@ export const eventsSlice: StateCreator<
 
       // 4. Leave .first and .res alone
     }
-    update(event_as, updates)
+    update(updates)
   },
 
   clearEvents: (events) => {
