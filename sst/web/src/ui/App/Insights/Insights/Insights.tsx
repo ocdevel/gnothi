@@ -117,7 +117,7 @@ export default function Insights({entry_ids}: Insights) {
     setPremium
   ] = useStore(s => [
     s.filters.search,
-    s.res.entries_list_response?.hash || {},
+    s.res.entries_list_response_debounce?.hash || {},
     s.modals.entry,
     s.user?.me,
     s.modals.setPrompt,
@@ -145,7 +145,7 @@ export default function Insights({entry_ids}: Insights) {
         prompt: undefined
       }
     })
-  }, 4000)
+  }, 1000)
 
   useEffect(() => {
     if (!entry_ids.length) {

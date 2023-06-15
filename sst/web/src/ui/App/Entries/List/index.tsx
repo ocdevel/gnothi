@@ -12,13 +12,12 @@ import {useStore} from "../../../../data/store";
 
 // pulled out here for optimization
 function InsightsDashboard() {
-  const ids = useStore(s => s.res.entries_list_response?.ids || [])
+  const ids = useStore(s => s.res.entries_list_response_debounce?.ids || [])
   return <Insights entry_ids={ids} />
 }
 
 export default function List({group_id=null}) {
-  const entries = useStore(s => s.res.entries_list_response)
-  const res = entries?.res
+  const res = useStore(s => s.res.entries_list_response?.res)
   if (res?.error && res.code === 403) {
     return <h5>{res.data}</h5>
   }

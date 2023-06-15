@@ -13,7 +13,7 @@ import {Loading} from "../../../Components/Routing.tsx";
 
 
 export default function Entries({group_id=null}) {
-  const entries = useStore(s => s.res.entries_list_response)
+  const entries = useStore(s => s.res.entries_list_response_debounce)
   const search_response = useStore(s => s.res.insights_search_response?.hash?.list)
 
   const ids = entries?.ids || []

@@ -69,10 +69,13 @@ export interface EventsSlice {
     // notifs_shares_list_response?: Api.ResUnwrap<z.infer<typeof r.notifs_shares_list_request.o.s>>
     shares_ingress_list_response?: Api.ResUnwrap<Shares.shares_ingress_list_response>
     shares_egress_list_response?: Api.ResUnwrap<Shares.shares_egress_list_response>
+
+    entries_list_response_debounce?: Api.ResUnwrap<Entries.entries_list_response>
   }
   hooks: {
     tags_list_response: (res: Api.ResUnwrap<z.infer<typeof r.tags_list_request.o.s>>) => void
     fields_entries_list_response: BehaviorsSlice['behaviors']['fields_entries_list_response']
+    entries_list_response: (res: API.ResUnwrap<Entries.entries_list_response>) => void
   }
   handleEvent: (response: Api.Res) => void
 
@@ -117,7 +120,12 @@ export const eventsSlice: StateCreator<
     },
     fields_entries_list_response: (res) => {
       get().behaviors.field_entries_list_response(res)
-    }
+    },
+    entries_list_response: _.debounce((res) => {
+      set(produce(state => {
+        state.res.entries_list_response_debounce = res
+      }))
+    }, 200)
   },
 
   handleEvent: (res: Api.Res) => {
