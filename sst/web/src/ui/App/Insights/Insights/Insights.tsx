@@ -12,7 +12,7 @@ import {
   FaLock
 } from "react-icons/fa"
 
-import React, {useState, useEffect, useCallback} from "react"
+import React, {useState, useEffect, useCallback, useMemo} from "react"
 import {useStore} from "../../../../data/store"
 
 
@@ -107,25 +107,17 @@ interface Insights {
 }
 
 export default function Insights({entry_ids}: Insights) {
-  const [
-    search,
-    entriesHash,
-    entryModal,
-    me,
-    setPromptModal,
-    setBehaviorsView,
-    setPremium
-  ] = useStore(s => [
+  const [search, me] = useStore(s => [
     s.filters.search,
-    s.res.entries_list_response_debounce?.hash || {},
-    s.modals.entry,
     s.user?.me,
+  ], shallow)
+
+  const [send, setPromptModal, setBehaviorsView, setPremium] = useStore(useCallback(s => [
+    s.send,
     s.modals.setPrompt,
     s.behaviors.setView,
     s.modals.setPremium
-  ], shallow)
-
-  const send = useStore(useCallback(s => s.send, []))
+  ], []), shallow)
   const view = entry_ids.length === 1 ? entry_ids[0] : "list"
 
   // git-blame: checks here to prevent requesting insights if not ready. Now instead I'm debouncing, and
@@ -148,9 +140,7 @@ export default function Insights({entry_ids}: Insights) {
   }, 1000)
 
   useEffect(() => {
-    if (!entry_ids.length) {
-      return
-    }
+    if (!entry_ids.length) { return }
     getInsights()
   }, [search, entry_ids])
 
@@ -184,7 +174,7 @@ export default function Insights({entry_ids}: Insights) {
       {/*  /!*</Typography>*!/*/}
       {/*</Stack>*/}
 
-      <Insight
+      {useMemo(() => <Insight
         label="Prompt"
         icon={<PromptIcon {...iconProps} />}
         moreClick={() => me?.premium ? setPromptModal(true) : setPremium(true)}
@@ -192,36 +182,36 @@ export default function Insights({entry_ids}: Insights) {
         action={`The context for the query ${view === "list" ? "are the entries you see, based on your filters." : "is this entry"}`}
       >
         <Prompt entry_ids={entry_ids} view={view}/>
-      </Insight>
+      </Insight>, [me?.premium, entry_ids, view])}
 
-      <Insight
+      {useMemo(() => <Insight
         label="Themes"
         icon={<ThemesIcon {...iconProps} />}
         description="Identify patterns across entries"
         action="Adjust filters for different themes"
       >
         <Themes view={view}/>
-      </Insight>
+      </Insight>, [view])}
 
-      <Insight
+      {useMemo(() => <Insight
         label="Summary"
         icon={<SummaryIcon {...iconProps} />}
         description="AI-generated snapshot"
         action="Adjust filters for different summaries"
       >
         <Summarize view={view}/>
-      </Insight>
+      </Insight>, [view])}
 
-      <Insight
+      {useMemo(() => <Insight
         label="Behavior Tracking"
         icon={<BehaviorsIcon {...iconProps} />}
         moreClick={() => setBehaviorsView({lastPage: "dashboard", page: "modal", view: "overall"})}
         action="Here’s an overview of the daily habits and behaviors you’ve been tracking through Gnothi."
       >
         <Behaviors/>
-      </Insight>
+      </Insight>, [])}
 
-      <Insight
+      {useMemo(() => <Insight
         label="Top Books"
         icon={<BooksIcon {...iconProps} />}
         description="Titles recommended by AI"
@@ -229,15 +219,15 @@ export default function Insights({entry_ids}: Insights) {
         //You can thumbs up or down books to train AI on your interests, or add titles you’re interested in to your bookshelf."
       >
         <Books view={view}/>
-      </Insight>
+      </Insight>, [view])}
 
-      {me?.is_superuser && <Insight
+      {useMemo(() => me?.is_superuser && <Insight
         label="Admin"
         icon={<AdminIcon {...iconProps} />}
         description="Admin tools and analytics"
       >
         <Admin view={view}/>
-      </Insight>}
+      </Insight>, [me?.is_superuser])}
 
     </Stack2>
   </div>

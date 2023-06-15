@@ -12,7 +12,7 @@ import {useStore} from "../../../../data/store";
 
 // pulled out here for optimization
 function InsightsDashboard() {
-  const ids = useStore(s => s.res.entries_list_response_debounce?.ids || [])
+  const ids = useStore(s => s.res.entries_list_response?.ids || [])
   return <Insights entry_ids={ids} />
 }
 

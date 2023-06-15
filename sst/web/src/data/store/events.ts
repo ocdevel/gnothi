@@ -23,6 +23,7 @@ import {Res, ResUnwrap} from "@gnothi/schemas/api";
 import {z} from 'zod'
 import {behaviorsSlice, BehaviorsSlice} from "./behaviors";
 import {SharingSlice} from "./sharing";
+import dayjs from 'dayjs'
 
 const r = Routes.routes
 // const responses = Object.fromEntries(
@@ -72,10 +73,13 @@ export interface EventsSlice {
 
     entries_list_response_debounce?: Api.ResUnwrap<Entries.entries_list_response>
   }
+  resBuff: EventsSlice['res']
+  resBuffFlush: {
+    [k in Events.Events]?: (event: string, res: any) => void
+  }
   hooks: {
     tags_list_response: (res: Api.ResUnwrap<z.infer<typeof r.tags_list_request.o.s>>) => void
     fields_entries_list_response: BehaviorsSlice['behaviors']['fields_entries_list_response']
-    entries_list_response: (res: API.ResUnwrap<Entries.entries_list_response>) => void
   }
   handleEvent: (response: Api.Res) => void
 
@@ -87,6 +91,18 @@ export interface EventsSlice {
   clearEvents: (events: Events.Events[]) => void
 }
 
+// There's a complexity: we're using APIG websockets to receive all events. It sends responses in batches,
+// because Websocket max payload is 128kb. If we render every batch as it comes down, it can overload the client
+// (a performance issue); so we need to collect the responses via a buffer + debounce system. Use git-blame to see
+// how things were before. Not everything needs long debounces; it's mostly just entries_list_response, which causes
+// lots of triggers when `ids` is updated. The others will default to a small number (say 30) just for consistency
+// and safety with this system. Uncomment times below to see how long each batch takes since its last batch.
+const times = {}
+const debounceTimes = {
+  entries_list_response: 300,
+  fields_history_list_response: 200
+}
+
 export const eventsSlice: StateCreator<
   AppSlice & EventsSlice & ApiSlice & BehaviorsSlice & SharingSlice,
   [],
@@ -96,18 +112,15 @@ export const eventsSlice: StateCreator<
   lastRes: undefined,
   req: {},
   res: {},
+  // buffer of responses in one event to collect, which will be flushed to res above
+  resBuff: {},
+  // _.debounce() functions, keyed by the event.
+  resBuffFlush: {},
   // _hooks: {
     // 'set_groups_message_get_response': action((state, data) => {
     //   const k = 'groups/messages/get'
     //   state.data[k] = [...state.data[k], data]
     // }),
-    //
-    // 'set_users/profile/put': action((state, data) => {
-    //   data.timezone = _.find(timezones, t => t.value === data.timezone)
-    //   state.data['users/profile/put'] = data
-    // }),
-    //
-
   // },
   hooks: {
     tags_list_response: (res) => {
@@ -121,37 +134,50 @@ export const eventsSlice: StateCreator<
     fields_entries_list_response: (res) => {
       get().behaviors.field_entries_list_response(res)
     },
-    entries_list_response: _.debounce((res) => {
-      set(produce(state => {
-        state.res.entries_list_response_debounce = res
-      }))
-    }, 200)
   },
 
   handleEvent: (res: Api.Res) => {
     console.log(`${res.event}`, res)
     const {error, code, event} = res
 
-    // Set the response in its location and lastResponse, even
-    // in case of error we will want to look it up
-    set(produce(state => {
-      state.lastRes = res
-      if (!state.res[event]) {
-        state.res[event] = {}
-      }
-      state.res[event].res = res
-    }))
+    // To see how long each
+    if (times) {
+      if (times[event]) { console.log("timediff", event, dayjs().diff(times[event], 'ms')) }
+      times[event] = dayjs()
+    }
+
+    function update(event: Events.Event, updates: any) {
+      set(produce(state => {
+        state.lastRes = res
+        state.resBuff[event] = updates
+
+        let resBuffFlush = get().resBuffFlush[event]
+        if (!resBuffFlush) {
+          resBuffFlush = _.debounce((event, updates) => {
+            set(produce(state => {
+              state.res[event] = updates
+            }))
+            get().hooks[event]?.(updates)
+          }, debounceTimes[event] || 30)
+          state.resBuffFlush[event] = resBuffFlush
+        }
+        resBuffFlush(event, updates)
+      }))
+    }
 
     // The rest only applies to successful responses
     if (error) {
-      return;
+      return update(event, {
+        ...(state.res[event] || {}),
+        res
+      })
     }
 
-    const event_ = res.event_as || res.event
+    const event_as = res.event_as || res.event
     const {data, keyby, op} = res
 
     // @ts-ignore
-    const current = get().res[event_] || {}
+    const current = get().resBuff[event_as] || {}
     let updates = {
       res,
       rows: data,
@@ -160,7 +186,7 @@ export const eventsSlice: StateCreator<
       ids: !keyby ? [] : data.map(d => _.get(d, keyby))
     }
     if (!keyby) {
-      console.warn(`No keyby for ${event_}, ids[] and hash{} will be empty`)
+      console.warn(`No keyby for ${event_as}, ids[] and hash{} will be empty`)
     }
 
     if (!op) {
@@ -196,11 +222,7 @@ export const eventsSlice: StateCreator<
 
       // 4. Leave .first and .res alone
     }
-    set(produce(state => {
-      state.res[event_] = updates
-    }))
-
-    get().hooks[event_]?.(updates)
+    update(event_as, updates)
   },
 
   clearEvents: (events) => {
