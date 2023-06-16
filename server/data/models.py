@@ -536,32 +536,6 @@ class Bookshelf(Base):
         if should_update:
             Job.create_job(db, user_id=user_id, method='books', data_in={'args': [str(user_id)]})
 
-    @staticmethod
-    def upsert(db, user_id, book_id, shelf):
-        db.execute(sa.text("""
-        insert into bookshelf(book_id, user_id, shelf)  
-        values (:book_id, :user_id, :shelf)
-        on conflict (book_id, user_id) do update set shelf=:shelf
-        """), dict(user_id=user_id, book_id=int(book_id), shelf=shelf))
-
-        dir = dict(ai=0, cosine=0, like=1, already_read=1, dislike=-1, remove=0, recommend=1)[shelf]
-        db.execute(sa.text("""
-        update books set thumbs=thumbs+:dir where id=:bid
-        """), dict(dir=dir, bid=book_id))
-
-        db.commit()
-        Bookshelf.update_books(db, user_id)
-
-    @staticmethod
-    def get_shelf(db, user_id, shelf):
-        books = db.execute(sa.text(f"""
-        select b.id, b.title, b.text, b.author, b.topic, b.amazon
-        from books b 
-        inner join bookshelf bs on bs.book_id=b.id 
-            and bs.user_id=:uid and bs.shelf=:shelf
-        order by bs.score asc
-        """), dict(uid=user_id, shelf=shelf)).fetchall()
-        return books
 
     @staticmethod
     def books_with_scores(db: Session, uid):

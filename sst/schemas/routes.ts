@@ -10,6 +10,7 @@ import {Insights} from './insights'
 import {Notes} from './notes'
 import {Stripe} from './stripe'
 import {Admin} from './admin'
+import {Books} from './books'
 
 export * as Routes from './routes'
 
@@ -25,5 +26,6 @@ export const routes = {
   ...Insights.routes,
   ...Notes.routes,
   ...Stripe.routes,
-  ...Admin.routes
+  ...Admin.routes,
+  ...Books.routes,
 }
