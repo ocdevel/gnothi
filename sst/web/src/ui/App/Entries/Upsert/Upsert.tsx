@@ -1,5 +1,5 @@
 import {useNavigate, useParams, Navigate} from "react-router-dom"
-import React, {useEffect, useState, useContext, useCallback} from "react"
+import React, {useEffect, useState, useContext, useCallback, useMemo} from "react"
 import {fmtDate} from "../../../../utils/utils"
 import {FaPen} from "react-icons/fa"
 import Tags from "../../Tags/Tags"
@@ -66,7 +66,7 @@ export default function Upsert(props: Upsert) {
     ...defaults
   })
 
-
+  const insights_nextentry_response = useStore(s => s.res.insights_nextentry_response?.hash?.['list']?.text)
   const navigate = useNavigate()
   const as = useStore(s => s.user.as)
   const send = useStore(s => s.send)
@@ -78,6 +78,7 @@ export default function Upsert(props: Upsert) {
   const clear = useStore(a => a.clearEvents)
   const [changedDate, setChangedDate] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [showSuggested, setShowSuggested] = useState(false)
 
   const id = entry?.id
   const draftId = `draft-${id || "new"}`
@@ -261,6 +262,22 @@ export default function Upsert(props: Upsert) {
     );
   }
 
+  const suggestedNextEntry = useMemo(() => {
+    if (!insights_nextentry_response?.length) { return null }
+    return <>
+      <Button
+        variant="text"
+        color="secondary"
+        onClick={() => setShowSuggested(!showSuggested)}
+      >
+        {showSuggested ? "Hide Suggestion" : "See Gnothi's suggested deep-dive"}
+      </Button>
+      {showSuggested && <Typography variant='body2'>
+        <ReactMarkdown>{insights_nextentry_response}</ReactMarkdown>
+      </Typography>}
+    </>
+  }, [insights_nextentry_response, showSuggested])
+
   function renderForm() {
     return (
       <Stack
@@ -282,6 +299,8 @@ export default function Upsert(props: Upsert) {
           form={form}
           onChange={changeText}
         />
+
+        {suggestedNextEntry}
 
         {/*<div>*/}
         {/*  <TextField2*/}

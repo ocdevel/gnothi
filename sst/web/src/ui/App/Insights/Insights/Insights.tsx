@@ -137,7 +137,7 @@ export default function Insights({entry_ids}: Insights) {
         prompt: undefined
       }
     })
-  }, 1000)
+  }, 2000)
 
   useEffect(() => {
     if (!entry_ids.length) { return }

@@ -64,6 +64,9 @@ export const insights_books_response = Insight.extend({
   }).array()
 })
 export type insights_books_response = z.infer<typeof insights_books_response>
+export const insights_nextentry_response = Insight.extend({
+  text: z.string()
+})
 
 export const insights_search_response = Insight.extend({
   entry_ids: z.string().array()
@@ -90,6 +93,7 @@ export const insights_prompt_final = Insight.extend({
   messages: Message.array()
 })
 export type insights_prompt_final = z.infer<typeof insights_prompt_final>
+
 
 export const routes = {
   insights_get_request: {
@@ -175,6 +179,12 @@ export const routes = {
   insights_books_response: <DefO<any>>{
     e: "insights_books_response",
     s: insights_books_response,
+    t: {ws: true},
+    keyby: 'view'
+  },
+  insights_nextentry_response: <DefO<any>>{
+    e: "insights_nextentry_response",
+    s: insights_nextentry_response,
     t: {ws: true},
     keyby: 'view'
   }

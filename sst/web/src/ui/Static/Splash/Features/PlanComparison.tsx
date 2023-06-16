@@ -18,6 +18,8 @@ import CheckIcon from '@mui/icons-material/TaskAlt';
 import StarIcon from '@mui/icons-material/StarBorder';
 import DreamsIcon from '@mui/icons-material/BedtimeOutlined';
 import FeedbackIcon from '@mui/icons-material/ThumbUpAltOutlined';
+import SuggestedIcon from '@mui/icons-material/ExploreOutlined';
+import EnhancedIcon from '@mui/icons-material/UpgradeOutlined';
 import CustomIcon from '@mui/icons-material/ChatOutlined';
 
 export const buttonDefaults = {
@@ -40,18 +42,13 @@ export default function PlanComparison({
   premiumFooter,
   basicFooter,
 }: PlanComparison) {
-  const dreamsIcon = <DreamsIcon
-    fontSize='inherit'
-    color='secondary'
-  />
-  const feedbackIcon = <FeedbackIcon
-    fontSize='inherit'
-    color='secondary'
-  />
-  const customIcon = <CustomIcon
-    fontSize='inherit'
-    color='secondary'
-  />
+  const featureIcon = {fontSize: "inherit", color: "secondary"}
+  const dreamsIcon = <DreamsIcon {...featureIcon} />
+  const feedbackIcon = <FeedbackIcon {...featureIcon} />
+  const customIcon = <CustomIcon {...featureIcon} />
+  const suggestedIcon = <SuggestedIcon {...featureIcon} />
+  const enhancedIcon = <EnhancedIcon {...featureIcon} />
+
   const checkIcon2 = <CheckIcon sx={{color: "#59887c"}}
     fontSize='inherit'
   />
@@ -163,6 +160,16 @@ export default function PlanComparison({
               textAlign="left"
               color='black'
               marginLeft={1}
+              marginTop={.5}
+            >
+              {customIcon} Custom prompts: ask AI anything
+            </Typography>
+
+            <Typography
+              variant="body2"
+              textAlign="left"
+              color='black'
+              marginLeft={1}
               marginTop={1}
             >
               {dreamsIcon} Run dream interpretations
@@ -173,10 +180,21 @@ export default function PlanComparison({
               textAlign="left"
               color='black'
               marginLeft={1}
-              marginTop={.5}
+              marginTop={1}
             >
-              {feedbackIcon} Get feedback on entries
+              {suggestedIcon} Suggested next journal topics
             </Typography>
+
+            <Typography
+              variant="body2"
+              textAlign="left"
+              color='black'
+              marginLeft={1}
+              marginTop={1}
+            >
+              {enhancedIcon} Better quality summaries and themes
+            </Typography>
+
 
             <Typography
               variant="body2"
@@ -185,7 +203,7 @@ export default function PlanComparison({
               marginLeft={1}
               marginTop={.5}
             >
-              {customIcon} Custom prompts: ask AI anything
+              {feedbackIcon} Get feedback on entries
             </Typography>
 
             {/*<Typography
