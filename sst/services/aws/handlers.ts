@@ -28,6 +28,7 @@ import {Logger} from './logs'
 import {wsConnections} from "../data/schemas/wsConnections";
 import {FnContext, Req, Res} from "../routes/types";
 import {eq} from "drizzle-orm";
+import {ulid} from 'ulid'
 
 export * as Handlers from './handlers'
 
@@ -236,20 +237,28 @@ class WsHandler extends Handler<APIGatewayProxyWebsocketEventV2> {
      return
     }
 
-    const MAX_SIZE = 128 * 1024; // 128 KB
+    // FIXME I'm making some space for the rest of the response (responseId, chunk{i,of}, etc). I should be
+    // chunking those in.
+    // const MAX_SIZE = 128 * 1024; // 128 KB
+    const MAX_SIZE = 128 * 1024 - 200; // 128 KB - 200 bytes (rough estimate for response wrapper)
 
     // should always be an array, but you can never be too careful
     const isArr = Array.isArray(res.data) // will be false if we have an error
     const dataChunks = isArr ? this.batchData(res.data, MAX_SIZE) : [res.data];
     const isChunking = isArr && dataChunks.length > 1
+    // responseId groups the chunks together. If the client switches gears (eg change tags), it will discard
+    // chunks coming from the previous batch
+    const responseId = ulid()
     const resChunks = !isChunking ? [res]
-      : dataChunks.map((chunk, i) => {
-        if (i === 0) {return {...res, data: chunk}}
-        return {...res, op: "append", data: chunk}
-      })
+      : dataChunks.map((chunk, i) => ({
+        ...res,
+        responseId,
+        chunk: {i, of: dataChunks.length - 1},
+        data: chunk
+      }))
     for (const chunk of resChunks) {
-      // The last chunk is sometimes empty. Don't send it. Only do that if we are indeed chunking
-      if (isChunking && !chunk.data?.length) {continue}
+      // // The last chunk is sometimes empty. Don't send it. Only do that if we are indeed chunking
+      // if (isChunking && !chunk.data?.length) {continue}
 
       try {
         await clients.apig.send(new PostToConnectionCommand({
@@ -260,13 +269,13 @@ class WsHandler extends Handler<APIGatewayProxyWebsocketEventV2> {
         if (error.name === 'GoneException') {
           // They user may have closed the tab. Don't want to throw an error, but we do want to log it just in case
           // there's more error here than meets the eye
-          res.error = true
-          res.code = 500
-          Logger.warn({
-            message: "WebSocketError: trying to send to disconnected client.",
-            data: res,
-            event: res.event
-          })
+          // res.error = true
+          // res.code = 500
+          // Logger.warn({
+          //   message: "WebSocketError: trying to send to disconnected client.",
+          //   data: res,
+          //   event: res.event
+          // })
         } else {
           debugger
           throw error // Re-throw the error if it's not a GoneException

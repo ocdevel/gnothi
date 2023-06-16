@@ -48,8 +48,16 @@ export const AnyToObj = z.preprocess(
 export const Req = z.object({
   event: Events,
   trigger: z.enum(['ws', 'http', 'sns', 's3', 'lambda']).optional(),
-  as_user: z.string().uuid().optional(),
   data: AnyToObj,
+  as_user: z.string().uuid().optional(),
+
+  // When sending chunks of data via websockets, we need to track (1) the progress, (2) are
+  // we still buffering from the same response batch
+  responseId: z.string().optional(),
+  chunk: z.object({
+    i: z.number(),
+    of: z.number()
+  }).optional(),
 })
 export type Req = z.infer<typeof Req>
 
