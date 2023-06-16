@@ -8,7 +8,7 @@ import {InferModel} from "drizzle-orm"
 import {idCol, tsCol} from './utils'
 import {userId} from './users'
 
-const shelves = pgEnum('shelves', [
+export const shelves = pgEnum('shelves', [
   'ai',
   'cosine',
   'like',

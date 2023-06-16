@@ -160,7 +160,8 @@ export async function summarizeInsights({context, entries, usePrompt}: Summarize
         r.insights_themes_response,
         parsed,
         context
-      )
+      ),
+      suggestNextEntry({parsed, context, usePrompt, entries})
     ])
   }
 
@@ -178,6 +179,28 @@ export async function summarizeInsights({context, entries, usePrompt}: Summarize
     texts: entries.map(getSummary),
   })
   return sendInsights(parsed)
+}
+
+interface SuggestNextEntry {
+  context: FnContext
+  usePrompt: boolean
+  entries: S.Entries.Entry[]
+  view: string
+}
+export async function suggestNextEntry({entries, context, usePrompt, view}: SuggestNextEntry) {
+  if (!usePrompt) { return }
+  if (!entries?.length) {return}
+  const text = squashTexts(entries.map(getSummary))
+  const response = await completion({
+    model: "gpt-3.5-turbo-16k",
+    max_tokens: 256,
+    prompt: `Below in triple quotes are my previous journal entries. What should I journal about next to explore more deeply the deeper themes in these entries?\n"""${text}"""`
+  })
+  return sendInsight(
+    r.insights_nextentry_response,
+    {text: response},
+    context
+  )
 }
 
 

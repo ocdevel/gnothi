@@ -1,4 +1,4 @@
-import React, {useEffect, useState, useCallback} from 'react'
+import React, {useEffect, useState, useCallback, useMemo} from 'react'
 import {MainTags} from "../../Tags/Tags";
 import Search from "./Search";
 import {useStore} from "../../../../data/store";
@@ -41,7 +41,7 @@ export default function Filters() {
     setFilters({startDate})
   }, [me])
 
-  return <Box
+  return useMemo(() => <Box
     paddingTop={0}
     paddingRight={5}
     paddingLeft={5}
@@ -70,5 +70,5 @@ export default function Filters() {
         {MainTags}
       </Grid>
     </Grid>
-  </Box>
+  </Box>, [])
 }

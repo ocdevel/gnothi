@@ -122,8 +122,7 @@ function DatePicker2() {
  */
 export default function Search() {
   // TODO use zodResolver for better performance
-  const filters = useStore(s => s.filters)
-  const setFilters = useStore(s => s.setFilters)
+  const setFilters = useStore(useCallback(s => s.setFilters, []))
   const [search, setSearch] = useState('')
 
   const trigger = useDebouncedCallback((search: string) => {

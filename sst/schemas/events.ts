@@ -128,7 +128,6 @@ export const Events = z.enum([
   'groups_entries_get_response',
   'groups_enter_request',
 
-
   'insights_get_request',
   'insights_get_response',
   'insights_themes_response',
@@ -142,12 +141,12 @@ export const Events = z.enum([
   'insights_prompt_response',
   'insights_prompt_final',
 
-  'insights_books_list_request',
-  'insights_books_list_response',
-  'insights_books_post_request',
-  'insights_books_post_response',
-  'insights_books_top_request',
-  'insights_books_top_response',
+  'books_list_request',
+  'books_list_response',
+  'books_post_request',
+  'books_post_response',
+  'books_top_request',
+  'books_top_response',
 
   'shares_ingress_list_request',
   'shares_ingress_list_response',

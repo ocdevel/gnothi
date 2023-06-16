@@ -34,49 +34,51 @@ export function Entry({entry_id}: ListOld) {
   ], shallow)
 
   useEffect(() => {
-    if (!entry_id) {return}
+    if (!entry_id) {
+      return
+    }
     send('entries_notes_list_request', {entry_id})
   }, [entry_id])
 
-  const divider = <Divider orientation="vertical" variant="middle" flexItem />
-
+  const divider = <Divider orientation="vertical" variant="middle" flexItem/>
 
   function renderNote(n: S.Notes.entries_notes_list_response) {
-    return <Box className='note' key={n.id} >
-        <Stack direction="row" spacing={1}>
-          <Typography color="secondary" className='type'>{_.startCase(n.type)}</Typography>
+    return <Box className='note' key={n.id}>
+      <Stack direction="row" spacing={1}>
+        <Typography color="secondary" className='type'>{_.startCase(n.type)}</Typography>
+        {divider}
+        <Typography color="secondary" className='created_at'>{fmtDate(n.created_at)}</Typography>
+        {n.private && <>
           {divider}
-          <Typography color="secondary" className='created_at'>{fmtDate(n.created_at)}</Typography>
-          {n.private && <>
-            {divider}
-            <Typography color="secondary" className='private'>Private</Typography>
-          </>}
-        </Stack>
+          <Typography color="secondary" className='private'>Private</Typography>
+        </>}
+      </Stack>
       <Box marginBottom={3}>
-      <div className='text'>{n.text}</div>
-        </Box>
+        <div className='text'>{n.text}</div>
+      </Box>
     </Box>
   }
 
 
-  return <Box className="notes list"
-               spacing={2}
-               sx={{
-                 borderRadius: 2,
-                 backgroundColor: "#ffffff",
-                 marginTop: 6,
-                 marginBottom: 6,
-                 px: 4,
-                 // borderStyle: "solid",
-                 // borderColor: "secondary.main",
-                 // borderWidth: 1.5,
-              }}
-              >
+  return <Box
+    className="notes list"
+    spacing={2}
+    sx={{
+      borderRadius: 2,
+      backgroundColor: "#ffffff",
+      marginTop: 6,
+      marginBottom: 6,
+      px: 4,
+      // borderStyle: "solid",
+      // borderColor: "secondary.main",
+      // borderWidth: 1.5,
+    }}
+  >
     <Stack sx={{backgroundColor: "white"}}>
-      <NotesNotifs entry_id={entry_id} />
-    <Typography color="primary" mb={2} variant="h4" fontWeight={500}>Notes</Typography>
-    {notes?.map(renderNote)}
-    <NotesCreate entry_id={entry_id} />
+      <NotesNotifs entry_id={entry_id}/>
+      <Typography color="primary" mb={2} variant="h4" fontWeight={500}>Notes</Typography>
+      {notes?.map(renderNote)}
+      <NotesCreate entry_id={entry_id}/>
     </Stack>
   </Box>
 
@@ -103,13 +105,15 @@ export function All() {
     send('entries_notes_list_request', {})
   }, [as])
 
-  if (!notes?.ids?.length) {return null}
+  if (!notes?.ids?.length) {
+    return null
+  }
   const {ids, hash} = notes
 
   function renderNote(id: string) {
     const n = hash[id]
     return <>
-      <Chip color="primary" label={n.type} />
+      <Chip color="primary" label={n.type}/>
       {n.private ? "[private] " : null}
       {n.text}
       <hr/>

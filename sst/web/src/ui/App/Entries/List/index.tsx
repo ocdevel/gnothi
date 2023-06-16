@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useState} from "react"
+import React, {useCallback, useEffect, useState, useMemo} from "react"
 import {Helmet} from 'react-helmet-async'
 
 import {All as NotesAll} from "../Notes/List";
@@ -10,17 +10,19 @@ import Entries from "./Entries"
 import Ask from '../../Insights/Insights/Ask'
 import {useStore} from "../../../../data/store";
 
+// pulled out here for optimization
+function InsightsDashboard() {
+  const ids = useStore(s => s.res.entries_list_response?.ids || [])
+  return <Insights entry_ids={ids} />
+}
+
 export default function List({group_id=null}) {
-  const entries = useStore(s => s.res.entries_list_response)
-
-  const res = entries?.res
-  const ids = entries?.ids || []
-
+  const res = useStore(s => s.res.entries_list_response?.res)
   if (res?.error && res.code === 403) {
     return <h5>{res.data}</h5>
   }
 
-  return <div className="list">
+  return useMemo(() => <div className="list">
     <Helmet>
       <title>Gnothi AI Journal</title>
     </Helmet>
@@ -31,9 +33,9 @@ export default function List({group_id=null}) {
         <Entries />
       </Grid>
       <Grid item sm={12} lg={4} md={5}>
-        <Insights entry_ids={ids} />
+        <InsightsDashboard />
         <NotesAll />
       </Grid>
     </Grid>
-  </div>
+  </div>, [])
 }

@@ -11,7 +11,6 @@ import {Alert2} from "../../../Components/Misc";
 import Box from "@mui/material/Box";
 import {Loading} from "../../../Components/Routing.tsx";
 
-
 export default function Entries({group_id=null}) {
   const entries = useStore(s => s.res.entries_list_response)
   const search_response = useStore(s => s.res.insights_search_response?.hash?.list)

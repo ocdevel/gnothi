@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from "react";
+import React, {useCallback, useEffect, useMemo, useState} from "react";
 import _ from 'lodash'
 import {
   FaTags,
@@ -22,14 +22,17 @@ import IconButton from "@mui/material/IconButton";
 import Divider from "@mui/material/Divider";
 import {Menu2} from "@gnothi/web/src/ui/Components/Form"
 import {Alert2} from "@gnothi/web/src/ui/Components/Misc"
+import {FullScreenDialog} from "../../../Components/Dialog.tsx";
 
 export default function Books() {
-const send = useStore(s => s.send)
+  const send = useStore(useCallback(s => s.send, []))
   const as = useStore(state => state.as)
-  const booksGet = useStore(s => s.res.insights_books_list_response?.res)
-  const books = useStore(s => s.res.insights_books_list_response?.rows)
+  const books = useStore(s => s.res.books_list_response)
   const [shelf, setShelf] = useState('ai')  // like|dislike|already_read|remove|recommend
   const [removed, setRemoved] = useState([])
+
+  const rows = books?.rows || []
+  const res = books?.res || {}
 
   const shelves = [
     {value: "ai", label: "AI Recommends"},
@@ -43,12 +46,13 @@ const send = useStore(s => s.send)
   const shelvesObj = _.keyBy(shelves, 'value')
 
   useEffect(() => {
-    send("insights_books_get_request", {shelf})
+    console.log({shelf})
+    send("books_list_request", {shelf})
     setRemoved([])
   }, [shelf])
 
-  if (booksGet?.code === 403) {
-    return <h5>{booksGet.detail}</h5>
+  if (res?.code === 403) {
+    return <h5>{res.detail}</h5>
   }
 
   const changeShelf = (shelf_) => {
@@ -57,7 +61,7 @@ const send = useStore(s => s.send)
   }
 
   const putOnShelf = async (id, shelf_) => {
-    send('insights_books_post_request', {id, shelf: shelf_})
+    send('books_post_request', {id, shelf: shelf_})
     setRemoved([...removed, id])
   }
 
@@ -96,20 +100,18 @@ const send = useStore(s => s.send)
     </Card>
   )
 
-  const books_ = books?.length ?
-    _.chain(books).reject(b => ~removed.indexOf(b.id)).map(renderBook).value()
-    : shelf === 'ai' ? <p>No AI recommendations yet. This will populate when you have enough entries.</p>
-    : null
-
-
-  return <>
+  return <FullScreenDialog
+    title='Books'
+    open={true}
+    onClose={() => {}}
+  >
     <div>
       <Menu2
-        label={`Shelf: ${shelvesObj[shelf].label}`}
+        label={`Shelf: ${shelvesObj[shelf]?.label}`}
         options={shelves}
         onChange={changeShelf}
       />
-      {booksGet?.sending && <CircularProgress />}
+      {res?.sending && <CircularProgress />}
     </div>
     <Alert2
       noTop
@@ -118,6 +120,10 @@ const send = useStore(s => s.send)
     >
       Use thumbs <FaThumbsUp /> to improve AI's recommendations. Wikipedia & other resources coming soon. If the recommendations are bad, <a href="https://github.com/lefnire/gnothi/issues/101" target="_blank">try this</a>.
     </Alert2>
-    {books_}
-  </>
+    {useMemo(() => rows?.length ?
+      rows.filter(b => !removed.includes(b.id)).map(renderBook)
+      : shelf === 'ai' ? <p>No AI recommendations yet. This will populate when you have enough entries.</p>
+      : null
+    , [rows])}
+  </FullScreenDialog>
 }

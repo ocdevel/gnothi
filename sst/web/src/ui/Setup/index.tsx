@@ -1,5 +1,4 @@
 import React, {useState, useEffect, useRef} from 'react'
-// import '@aws-amplify/ui-react/dist/styles.css'
 import '../App.scss'
 import Mui from "./Mui";
 import Routing from "./Routing";

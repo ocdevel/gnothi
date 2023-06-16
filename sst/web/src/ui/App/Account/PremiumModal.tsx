@@ -115,6 +115,7 @@ export default function PremiumModal() {
         fullWidth
         {...buttonDefaults}
         disabled={!me}
+        target="_blank"
         href={`${PAYMENT_LINK}?client_reference_id=${me?.id}`}
       >
         Try it Free for a Week

@@ -31,13 +31,18 @@ function getOpenAi() {
   return openai
 }
 
+type Model = "gpt-4" | "gpt-3.5-turbo-16k" | "gpt-3.5-turbo"
 type Message = {
   role: "user" | "system" | "assistant"
   content: string
 }
-function truncate(inputMessages: Message[], responseLimit: number, model: "gpt-4" | "gpt-3.5-turbo-16k"): Message[] {
+function truncate(inputMessages: Message[], responseLimit: number, model: Model): Message[] {
   const gpt4 = model === "gpt-4";
-  const tokenLimit = gpt4 ? 8000 : 4096;
+  const tokenLimit = {
+    "gpt-4": 8000,
+    "gpt-3.5-turbo": 4096,
+    "gpt-3.5-turbo-16k": 16000,
+  }[model]
 
   // Create a deep copy of the messages
   let messages = _.cloneDeep(inputMessages);
