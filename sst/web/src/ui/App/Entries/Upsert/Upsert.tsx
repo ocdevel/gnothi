@@ -294,14 +294,14 @@ export default function Upsert(props: Upsert) {
           form={form}
         />
 
+        {suggestedNextEntry}
+
         <Editor
           name='text'
           placeholder={placeholder}
           form={form}
           onChange={changeText}
         />
-
-        {suggestedNextEntry}
 
         {/*<div>*/}
         {/*  <TextField2*/}

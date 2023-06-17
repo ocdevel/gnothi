@@ -257,9 +257,6 @@ class WsHandler extends Handler<APIGatewayProxyWebsocketEventV2> {
         data: chunk
       }))
     for (const chunk of resChunks) {
-      // // The last chunk is sometimes empty. Don't send it. Only do that if we are indeed chunking
-      // if (isChunking && !chunk.data?.length) {continue}
-
       try {
         await clients.apig.send(new PostToConnectionCommand({
           ConnectionId: connectionId,
