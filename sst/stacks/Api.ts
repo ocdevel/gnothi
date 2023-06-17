@@ -144,6 +144,8 @@ export function Api({ app, stack }: sst.StackContext) {
     },
     bind: [
       API_WS,
+      GA_MEASUREMENT_ID,
+      GA_API_SECRET,
       HABITICA_USER,
       HABITICA_APP,
     ]
