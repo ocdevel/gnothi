@@ -15,50 +15,19 @@ The journey of a thousand miles begins with a single commit. Happy coding!
 
 * Summaries: AI summarizes your entries, your week, your year.
 * Themes: AI shows your recurring themes & issues. Also valuable for dream themes.
+* Prompt: chat with your journal (TODO integrate local language models)
 * Books: AI recommends self-help books based on your entries.
-* Security: All text is industry-standard encrypted.
+* Security: industry best practices
 * Field Tracking (lots to be done here): Track fields (mood, sleep, substance intake, etc). AI shows you how they interact and which ones to focus on.
 * Share (coming soon): Share journals with therapists, who can use all these tools to catch up since your last session.
 * Questions (coming soon): Ask AI anything about yourself. The answers and insights may surprise you.
 
 # Setup
-Currently very hairy, will clean this up soon.
+This is an SST site (CDK, AWS). Which means even local development runs against an AWS stack. Normally that's awesome and cheap, but for Gnothi there's a VPC for security (private subnets and a NAT gateway), which is $30/mo min; and Aurora Serverless v2 Postgres, which is $40/mo min. So I need to figure out how to Dockerize the dev requirements for localhost development. In the mean time, if you see an opportunity for bugs/features in the code, take a stab at it and I'll integreate on my end. I'll beef up this README when I can get a viable local dev setup.
 
-### Essentials
-* Install Postgres. Currently not using Docker, as I'm constantly pruning and I want to keep my data between sessions (and use the same SQL hosts for other projects).
-* `cp common/config.example.json common/config.json` and modify
-* Install Docker & docker-compose
+### Steps
 * `docker-compose up -d`
-* If you get errors with `gpu-dev`, try `docker-compose up -d client && docker-compose up -d server` (then see section below)
-
-### To use AI
-* The client & server should run without the AI stuff, for a while, but you'll want to get this working eventually.
-* Libgen
-    * Quickstart by extracting https://gnothiai.com/libgens.zip to /storage/libgen/*. Each file starts with <ENVIRONMENT>, so replace with "testing" or "development" or such.
-    * If you're not interested in books development, you can stop now. Below is how to generate those libgen files.
-    * Install MySQL server on your host
-    * Download [libgen/dbdumps/libgen.rar](http://gen.lib.rus.ec/dbdumps/), extract, improt into MySQL
-    * Modify `common/config.json` for MySQL/libgen
-* Install Docker & docker-compose [with GPU support](https://ocdevel.com/blog/20201207-wsl2-gpu-docker)
-* `docker-compose up -d`
-
-I'll be developing lefnire/ml-tools actively along with Gnothi, so on my machine it's setup like:
-
-```
-git clone https://github.com/lefnire/ml-tools.git  # might need to delete that folder first, if docker-compose created it
-docker-compose exec gpu-dev
-$ pip install -e /ml-tools
-```
-
-## Tests
-First test GPU, which sets up fixtures. Then test server. Client tests sorely needed!
-
-```
-docker-compose exec gpu-dev bash
-$ pytest tests -svv
-$ # once it's done, you want to run it in another tab for your server tests
-$ ENVIRONMENT=testing python app/run.py
-
-docker-compose exec server bash
-$ pytest tests -svv
-```
+* `cp .env .env.shared-prod` -> modify with your email
+* `cp .env .env.dev` -> modify with your email 
+* `AWS_PROFILE=<your profile> npm start`
+* `cd web && npm start`

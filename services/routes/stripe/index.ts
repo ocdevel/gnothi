@@ -72,9 +72,9 @@ export const stripe_webhook_request = new Route(r.stripe_webhook_request, async 
     // This is really where their subscription is activated, but we don't have client_reference_id here,
     // so doing it in the above step
   } else if (event.type === "customer.subscription.deleted") {
-    const stripe_id = event.data.object.id
-    if (!stripe_id) { throw new Error(`Stripe: missing id attr to create subscription. Tried event.data.object.subscription. ${JSON.stringify(event)}`) }
-    user = await cancelSubscription(stripe_id, context)
+    // const stripe_id = event.data.object.id
+    // if (!stripe_id) { throw new Error(`Stripe: missing id attr to create subscription. Tried event.data.object.subscription. ${JSON.stringify(event)}`) }
+    // user = await cancelSubscription(stripe_id, context)
   } else {
     console.log("Stripe: Unhandled event type", event.type)
   }

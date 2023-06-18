@@ -1,0 +1,22 @@
+version: "3.7"
+
+services:
+  server:
+    build:
+      context: .
+      dockerfile: ./server.dockerfile
+    container_name: gnothi-server
+    entrypoint: /bin/bash
+    environment:
+      ENVIRONMENT: development
+    ports:
+      - 5002:8000
+    stdin_open: true
+    volumes:
+      - ./server/:/app
+      - ./common/:/app/common
+      - ./storage:/storage
+    logging:
+      options:
+        max-size: "5m"
+        max-file: "3"

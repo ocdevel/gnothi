@@ -1,0 +1,22 @@
+# handled separately
+storage
+ml-tools
+storage-dev
+
+# bloat
+**/.idea
+**/.pytest_cache
+**/__pycache__
+**/tmp
+**/.ipynb_checkpoints
+**/.DS_Store
+
+# sensitive
+**/config.yml
+**/config.json
+**/.aws
+**/*.sql
+**/*.csv
+
+tmp
+sst-remove
