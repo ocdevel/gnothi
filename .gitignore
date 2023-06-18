@@ -1,7 +1,26 @@
-# handled separately
-storage
-ml-tools
-storage-dev
+# dependencies
+node_modules
+
+# sst
+.sst
+.build
+
+# misc
+.DS_Store
+
+# local env files
+.env.*
+!.env.local
+
+.idea
+
+tmp
+
+cdk.context.json
+
+
+.env-shared-*
+/.sst.config.1684950561589.mjs
 
 # bloat
 **/.idea

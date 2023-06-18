@@ -1,22 +1,12 @@
-version: "3.7"
+version: '3.1'
 
 services:
-  server:
-    build:
-      context: .
-      dockerfile: ./server.dockerfile
-    container_name: gnothi-server
-    entrypoint: /bin/bash
-    environment:
-      ENVIRONMENT: development
-    ports:
-      - 5002:8000
-    stdin_open: true
+  db:
+    image: postgres:14.6
+    restart: always
     volumes:
-      - ./server/:/app
-      - ./common/:/app/common
-      - ./storage:/storage
-    logging:
-      options:
-        max-size: "5m"
-        max-file: "3"
+      - ./pg_tmp:/home
+    environment:
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
