@@ -9,6 +9,7 @@ import {FnContext} from "../../routes/types";
 import {notes, Note} from '../schemas/notes'
 import _ from 'lodash'
 import {bookshelf} from "../schemas/booksShelf";
+import {users} from '../schemas/users'
 
 const shelfDirection = {ai: 0, cosine: 0, like: 1, already_read: 1, dislike: -1, remove: 0, recommend: 1}
 
@@ -37,22 +38,22 @@ export class Books extends Base {
     const dir = shelfDirection[shelf]
     await Promise.all([
       db.drizzle.insert(books).values({
-        ...book,
-        thumbs: dir
-      }).onConflictDoUpdate({
-        target: [books.id],
-        set: {thumbs: sql`thumbs + ${dir}`}
-      }),
+          ...book,
+          thumbs: dir
+        }).onConflictDoUpdate({
+          target: books.id,
+          set: {thumbs: sql`${books.thumbs} + ${dir}`}
+        }),
       db.drizzle.insert(bookshelf).values({
         book_id: book.id,
         user_id: uid,
         shelf
       }).onConflictDoUpdate({
-        target: [users.id, books.id],
+        target: [bookshelf.book_id, bookshelf.user_id],
         set: {shelf}
       })
     ])
-    return [{id, shelf}]
+    return [{id: book.id, shelf}]
   }
 
   async listThumbs(uid: string): Promise<Thumb[]> {
@@ -60,7 +61,6 @@ export class Books extends Base {
     const res = await db.drizzle.select({id: bookshelf.book_id, shelf: bookshelf.shelf})
       .from(bookshelf)
       .where(eq(bookshelf.user_id, uid))
-    console.log(res)
     return res.map(b => ({
       id: b.id,
       direction: shelfDirection[b.shelf]

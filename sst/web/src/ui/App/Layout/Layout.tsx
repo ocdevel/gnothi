@@ -19,7 +19,7 @@ import {ErrorSnack} from "../../Components/Error";
 import EntryModal from "../Entries/Modal"
 import BehaviorsModal from "../Behaviors/Modal"
 import PremiumModal from '../Account/PremiumModal'
-// import BooksModal from '../Insights/Resources/Books'
+import BooksModal from '../Insights/Resources/Books'
 import AppBar from './AppBar'
 import Footer from '../../Footer'
 import {AcknowledgeChecker} from "../../Setup/Acknowledge";
@@ -71,7 +71,7 @@ export default function Layout() {
     <EntryModal />
     <BehaviorsModal />
     <PremiumModal />
-    {/*<BooksModal />*/}
+    <BooksModal />
     <AcknowledgeChecker />
     <Errors />
   </>

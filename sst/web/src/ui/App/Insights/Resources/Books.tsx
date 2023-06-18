@@ -24,6 +24,16 @@ import {Menu2} from "@gnothi/web/src/ui/Components/Form"
 import {Alert2} from "@gnothi/web/src/ui/Components/Misc"
 import {FullScreenDialog} from "../../../Components/Dialog"
 import * as S from '@gnothi/schemas'
+import Stack from "@mui/material/Stack";
+import DialogContent from "@mui/material/DialogContent";
+import {shallow} from "zustand/shallow";
+import Box from "@mui/material/Box";
+import {create} from "zustand";
+
+const useLocalStore = create((set, get) => ({
+  movedTo: {},
+  setMovedTo: (id, shelf) => set({movedTo: {...get().movedTo, [id]: shelf}}),
+}))
 
 
 interface ShelfButton {
@@ -33,11 +43,14 @@ interface ShelfButton {
   popover: string
 }
 function ShelfButton({b, shelf, icon, popover}: ShelfButton) {
+  const setMovedTo = useLocalStore(useCallback(s => s.setMovedTo, []))
   const send = useStore(useCallback(s => s.send, []))
   function putOnShelf() {
     send('books_post_request', {book: b, shelf})
+    console.log('putOnShelf', {book: b, shelf})
+    setMovedTo(b.id, shelf)
   }
-  return <Tooltip title={popover}>
+  return <Tooltip title={popover} placement="top-start">
     <IconButton variant='outline' onClick={putOnShelf}>
       {icon}
     </IconButton>
@@ -47,44 +60,64 @@ function ShelfButton({b, shelf, icon, popover}: ShelfButton) {
 interface BookComponent {
   b: S.Books.Book
 }
+const faThumbsUp = <FaThumbsUp/>
+const faThumbsDown = <FaThumbsDown/>
+const faCheck = <FaCheck/>
+const faTimes = <FaTimes/>
 function Book({b}: BookComponent) {
+  const as = useStore(s => s.user?.as)
   return <Card key={b.id} elevation={0}>
-    <CardHeader
-      title={b.amazon ? <a href={b.amazon} target='_blank'>{b.title}</a> : b.title}
-    />
-    <CardContent>
-      <Typography variant='body2' color='text.secondary' sx={{mb: 2}}>
-        <div><FaUser/> {b.author}</div>
-        <div><FaTags/> {b.topic}</div>
-        {b.amazon && <div><FaAmazon/> Amazon Affiliate Link <a href='https://github.com/lefnire/gnothi/issues/47'
-                                                               target='_blank'>?</a></div>}
-      </Typography>
-      <Typography variant='body1'>{b.text}</Typography>
+    <CardContent sx={{backgroundColor: "white"}}>
+      <Stack direction='row' spacing={2}>
+        <Box sx={{flex: 1}}>
+          <Typography variant="h6">
+            {b.amazon ? <a href={b.amazon} target='_blank'>{b.title}</a> : b.title}
+          </Typography>
+          <Typography variant='body2' color='text.secondary' sx={{mb: 2}}>
+            <div><FaUser/> {b.author}</div>
+            <div><FaTags/> {b.topic}</div>
+            {b.amazon && <div><FaAmazon/> Amazon Affiliate Link <a href='https://github.com/lefnire/gnothi/issues/47'
+                                                                   target='_blank'>?</a></div>}
+          </Typography>
+          <Typography variant='body1'>{b.text}</Typography>
+        </Box>
+        <Stack justifyContent='flex-start' spacing={2} direction='column'>
+          {as ? <>
+            <ShelfButton b={b} shelf='recommend' icon={faThumbsUp} popover="Recommend this book to the user (remove from results)"/>
+          </> : <>
+            <ShelfButton b={b} shelf='like' icon={faThumbsUp} popover="Like and save for later (remove from results)"/>
+            <ShelfButton b={b} shelf='dislike' icon={faThumbsDown} popover="Dislike (remove from results)"/>
+            <ShelfButton b={b} shelf='already_read' icon={faCheck} popover="I've read this. Like but don't save (remove from results)"/>
+            <ShelfButton b={b} shelf='remove' icon={faTimes} popover="Remove from results, but don't affect algorithm."/>
+          </>}
+        </Stack>
+      </Stack>
     </CardContent>
-    <CardActions sx={{justifyContent: 'space-around'}}>
-      {as ? <>
-        <ShelfButton b={b} shelf='recommend' icon={<FaThumbsUp/>} popover="Recommend this book to the user (remove from results)"/>
-      </> : <>
-        <ShelfButton b={b} shelf='like' icon={<FaThumbsUp/>} popover="Like and save for later (remove from results)"/>
-        <ShelfButton b={b} shelf='dislike' icon={<FaThumbsDown/>} popover="Dislike (remove from results)"/>
-        <ShelfButton b={b} shelf='already_read' icon={<FaCheck/>} popover="I've read this. Like but don't save (remove from results)"/>
-        <ShelfButton b={b} shelf='remove' icon={<FaTimes/>} popover="Remove from results, but don't affect algorithm."/>
-      </>}
-    </CardActions>
-    <Divider/>
   </Card>
 }
 
 export default function Books() {
-  const send = useStore(useCallback(s => s.send, []))
-  const as = useStore(state => state.as)
+  const [
+    // these are their shelves
+    books_list_response,
+    booksModal, // this is "view", used normally for insights (eg "list" or an entry_id)
+    setBooksModal
+  ] = useStore(s => [
+    s.res.books_list_response,
+    s.modals.books,
+    s.modals.setBooks,
+  ], shallow)
   // these are the AI-recommended books.
-  const insights_books_response = useStore(s => s.res.insights_books_response?.rows)
-  const books_list_response = useStore(s => s.res.books_list_response)
+  const insights_books_response = useStore(s => s.res.insights_books_response?.hash?.[booksModal]?.books)
+  const send = useStore(useCallback(s => s.send, []))
   const [shelf, setShelf] = useState('ai')  // like|dislike|already_read|remove|recommend
+  // Until I consolidate books_list_response with insights_books_response, I need to track the removed books
+  // (see sst/schemas/books)
+  const movedTo = useLocalStore(s => s.movedTo)
 
-  const rows = shelf === "ai" ? insights_books_response
-    : books_list_response?.rows || []
+  let rows = shelf === "ai" ? insights_books_response : books_list_response?.rows
+  rows = rows || []
+  rows = rows.filter(b => !movedTo[b.id] || movedTo[b.id] === shelf)
   const res = books_list_response?.res || {}
 
   const shelves = [
@@ -102,9 +135,9 @@ export default function Books() {
 
   useEffect(() => {
     // handled via insights_books_response, which is driven by the filter system. It's not a shelf
-    if (shelf === "ai") {return}
-
-    send("books_list_request", {shelf})
+    if (shelf !== "ai") {
+      send("books_list_request", {shelf})
+    }
   }, [shelf])
 
   if (res?.code === 403) {
@@ -118,28 +151,32 @@ export default function Books() {
 
   return <FullScreenDialog
     title='Books'
-    open={true}
-    onClose={() => {}}
+    open={Boolean(booksModal)}
+    onClose={() => setBooksModal(null)}
   >
-    <div>
-      <Menu2
-        label={`Shelf: ${shelvesObj[shelf]?.label}`}
-        options={shelves}
-        onChange={changeShelf}
-      />
-      {res?.sending && <CircularProgress />}
-    </div>
-    <Alert2
-      noTop
-      severity='info'
-      title="AI-recommended self-help books based on your entries."
-    >
-      Use thumbs <FaThumbsUp /> to improve AI's recommendations. Wikipedia & other resources coming soon. If the recommendations are bad, <a href="https://github.com/lefnire/gnothi/issues/101" target="_blank">try this</a>.
-    </Alert2>
-    {useMemo(() => rows?.length ?
-      rows.map(b => <Book key={b.id} b={b} />)
-      : shelf === 'ai' ? <p>No AI recommendations yet. This will populate when you have enough entries.</p>
-      : null
-    , [rows])}
+    <DialogContent>
+      <Stack spacing={2}>
+        <div>
+          <Menu2
+            label={`Shelf: ${shelvesObj[shelf]?.label}`}
+            options={shelves}
+            onChange={changeShelf}
+          />
+          {res?.sending && <CircularProgress />}
+        </div>
+        <Alert2
+          noTop
+          severity='info'
+          title="AI-recommended self-help books based on your entries."
+        >
+          Use thumbs <FaThumbsUp /> to improve AI's recommendations. If you want more resources than Books, simply ask Prompt (eg "what podcasts would you recommend?")
+        </Alert2>
+        {useMemo(() => rows?.length ?
+          rows.map(b => <Book key={b.id} b={b} />)
+          : shelf === 'ai' ? <p>No AI recommendations yet. This will populate when you have enough entries.</p>
+          : null
+        , [rows])}
+      </Stack>
+    </DialogContent>
   </FullScreenDialog>
 }

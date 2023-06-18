@@ -3,6 +3,8 @@ from common.util import fix_np
 from sentence_transformers.util import semantic_search
 import pyarrow.feather as feather
 import os
+import numpy as np
+import pandas as pd
 import logging
 import boto3
 
@@ -31,22 +33,32 @@ df = feather.read_feather(file).set_index('id', drop=False)
 
 def main(event, context):
     embedding = fix_np(event['embedding'])
-    thumbs = event['thumbs']
-    for t in thumbs:
-        bid, direction = t['id'], t['direction']
-        if bid not in df.index:
-            continue
-        # get the liked/disliked book's embedding
-        # multiply by the direction of the thumb, add a gradient step to the search embedding
-        correction = df.loc[bid].embedding * direction * .1
-        print("Books correction. Direction:", direction, "Book:", df.loc[bid]['name'])
-        embedding = embedding + correction
+    lr = .01  # fiddle with this. And balance it against global thumbs.
+
+    thumbs = pd.DataFrame(event['thumbs'])
+    # Filter out the books that are not in the original df
+    thumbs = thumbs[thumbs['id'].isin(df.index)]
+    # Compute corrections
+    corrections = thumbs.apply(lambda t: df.loc[t['id']].embedding * t['direction'] * lr, axis=1)
+    # Sum corrections and add to original embedding
+    total_correction = corrections.sum()
+    embedding += total_correction
+
+    # Filter out the books which they've shelved
+    filtered = df.loc[~df.index.isin(thumbs['id'])]
+
     results = semantic_search(
         query_embeddings=embedding,
-        corpus_embeddings=fix_np(df.embedding.values),
+        corpus_embeddings=fix_np(filtered.embedding.values),
         top_k=15,
         corpus_chunk_size=100
     )
     idx_order = [r['corpus_id'] for r in results[0]]
-    ordered = df.iloc[idx_order].drop(columns=['embedding'])
+    ordered = filtered.iloc[idx_order].drop(columns=['embedding'])
+    # the Gnothi DB schema has them named differently. Woops.
+    ordered = ordered.rename(columns={
+        'name': 'title',
+        'content': 'text',
+        'genre': 'topic'
+    })
     return ordered.to_dict("records")

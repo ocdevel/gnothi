@@ -112,11 +112,12 @@ export default function Insights({entry_ids}: Insights) {
     s.user?.me,
   ], shallow)
 
-  const [send, setPromptModal, setBehaviorsView, setPremium] = useStore(useCallback(s => [
+  const [send, setPromptModal, setBehaviorsView, setPremium, setBooks] = useStore(useCallback(s => [
     s.send,
     s.modals.setPrompt,
     s.behaviors.setView,
-    s.modals.setPremium
+    s.modals.setPremium,
+    s.modals.setBooks
   ], []), shallow)
   const view = entry_ids.length === 1 ? entry_ids[0] : "list"
 
@@ -212,11 +213,12 @@ export default function Insights({entry_ids}: Insights) {
       </Insight>, [])}
 
       {useMemo(() => <Insight
-        label="Top Books"
+        label="Books"
         icon={<BooksIcon {...iconProps} />}
         description="Titles recommended by AI"
-        action="Links and a bookshelf are coming soon!"
+        // action="Links and a bookshelf are coming soon!"
         //You can thumbs up or down books to train AI on your interests, or add titles you’re interested in to your bookshelf."
+        moreClick={() => setBooks(view)}
       >
         <Books view={view}/>
       </Insight>, [view])}
