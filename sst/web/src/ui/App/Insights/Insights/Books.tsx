@@ -41,7 +41,7 @@ export default function Books({view}: Insight) {
           variant: 'body1', mb: 1
          }}
          >
-        {b.name} by {b.author}
+        {b.title} by {b.author}
          </Typography>
 
       <Divider/>

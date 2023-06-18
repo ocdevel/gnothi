@@ -70,13 +70,8 @@ export interface EventsSlice {
     // notifs_shares_list_response?: Api.ResUnwrap<z.infer<typeof r.notifs_shares_list_request.o.s>>
     shares_ingress_list_response?: Api.ResUnwrap<Shares.shares_ingress_list_response>
     shares_egress_list_response?: Api.ResUnwrap<Shares.shares_egress_list_response>
-
-    entries_list_response_debounce?: Api.ResUnwrap<Entries.entries_list_response>
   }
   resBuff: EventsSlice['res']
-  resBuffFlush: {
-    [k in Events.Events]?: (event: string, res: any) => void
-  }
   hooks: {
     tags_list_response: (res: Api.ResUnwrap<z.infer<typeof r.tags_list_request.o.s>>) => void
     fields_entries_list_response: BehaviorsSlice['behaviors']['fields_entries_list_response']
@@ -91,18 +86,6 @@ export interface EventsSlice {
   clearEvents: (events: Events.Events[]) => void
 }
 
-// There's a complexity: we're using APIG websockets to receive all events. It sends responses in batches,
-// because Websocket max payload is 128kb. If we render every batch as it comes down, it can overload the client
-// (a performance issue); so we need to collect the responses via a buffer + debounce system. Use git-blame to see
-// how things were before. Not everything needs long debounces; it's mostly just entries_list_response, which causes
-// lots of triggers when `ids` is updated. The others will default to a small number (say 30) just for consistency
-// and safety with this system. Uncomment times below to see how long each batch takes since its last batch.
-const times = {}
-const debounceTimes = {
-  entries_list_response: 300,
-  fields_history_list_response: 200
-}
-
 export const eventsSlice: StateCreator<
   AppSlice & EventsSlice & ApiSlice & BehaviorsSlice & SharingSlice,
   [],
@@ -114,8 +97,6 @@ export const eventsSlice: StateCreator<
   res: {},
   // buffer of responses in one event to collect, which will be flushed to res above
   resBuff: {},
-  // _.debounce() functions, keyed by the event.
-  resBuffFlush: {},
   // _hooks: {
     // 'set_groups_message_get_response': action((state, data) => {
     //   const k = 'groups/messages/get'
@@ -141,42 +122,27 @@ export const eventsSlice: StateCreator<
     const {error, code, event} = res
     const event_as = res.event_as || res.event
 
-    // To see how long each
-    if (times) {
-      if (times[event]) { console.log("timediff", event, dayjs().diff(times[event], 'ms')) }
-      times[event] = dayjs()
-    }
-
-    function update(updates: object, isError=false) {
+    // The rest only applies to successful responses, but we still need the response for error-handling
+    if (error) {
       set(produce(state => {
         state.lastRes = res
-        // set the raw event, needed for triggers
-        if (event !== event_as) {
-          if (!state.res[event]) {state.res[event] = {}}
-          state.res[event].res = res
-        }
-        if (isError) {return}
-
-        // Then start setting the object updates
-        state.resBuff[event_as] = updates
-
-        let resBuffFlush = get().resBuffFlush[event_as]
-        if (!resBuffFlush) {
-          resBuffFlush = _.debounce((event, updates) => {
-            set(produce(state => {
-              state.res[event] = updates
-            }))
-            get().hooks[event]?.(updates)
-          }, debounceTimes[event_as] || 30)
-          state.resBuffFlush[event_as] = resBuffFlush
-        }
-        resBuffFlush(event_as, updates)
+        if (!state.res[event]) {state.res[event] = {}}
+        state.res[event].res = res
       }))
+      return
     }
 
-    // The rest only applies to successful responses
-    if (error) {
-      return update({}, true)
+    // If we're receiving chunks, handle special
+    if (res.chunk?.i > 0) {
+      const workingOn = get().resBuff[event]?.res?.requestId
+      if (workingOn && workingOn !== res.requestId) {
+        // We're still receiving chunks from an old batch. Eg, if the user clicks tags quickly. Disgard old-batch
+        // chunks
+        return
+      } else {
+        // We're past the first chunk (which would be "update"); append to the buffer
+        res.op = "append"
+      }
     }
 
     const {data, keyby, op} = res
@@ -227,7 +193,23 @@ export const eventsSlice: StateCreator<
 
       // 4. Leave .first and .res alone
     }
-    update(updates)
+    const shouldFlush = !res.chunk || (res.chunk.i === res.chunk.of)
+    set(produce(state => {
+      state.lastRes = res
+
+      // Then start setting the object updates
+      state.resBuff[event_as] = updates
+      if (shouldFlush) {
+        state.res[event_as] = updates
+        if (event !== event_as) {
+          if (!state.res[event]) {state.res[event] = {}}
+          state.res[event].res = res
+        }
+      }
+    }))
+    if (shouldFlush) {
+      get().hooks[event_as]?.(updates)
+    }
   },
 
   clearEvents: (events) => {

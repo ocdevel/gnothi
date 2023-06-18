@@ -62,11 +62,14 @@ export const insights_get_response = new Route(r.insights_get_response,async (re
   }
 
   if (insights.books) {
-    promises.push(books({
-      context,
-      usePrompt,
-      search_mean
-    }))
+    promises.push((async () => {
+      const thumbs = await m.books.listThumbs(user_id)
+      return await books({
+        thumbs,
+        context,
+        search_mean
+      })
+    })())
   }
 
   if (insights.summarize) {

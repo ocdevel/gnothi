@@ -98,6 +98,7 @@ export function Auth({ app, stack }: sst.StackContext) {
     handler: "services/auth/wsAuthorizer.handler",
     memorySize: rams.sm,
     timeout: timeouts.md,
+    bind: [GA_API_SECRET, GA_MEASUREMENT_ID],
     environment: {
       USER_POOL_ID: auth.userPoolId,
       USER_POOL_CLIENT_ID: auth.userPoolClientId

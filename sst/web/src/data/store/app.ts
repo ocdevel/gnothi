@@ -48,6 +48,8 @@ export interface AppSlice {
     setPrompt: (show: boolean) => void
     entry: EntryModal
     setEntry: (entryModal: EntryModal) => void
+    books: string | null
+    setBooks: (view: string | null) => void
   }
 
   // changeAs: (id: string) => Promise<void>
@@ -128,6 +130,9 @@ export const appSlice: StateCreator<
     // ----- Entry
     entry: null,
     setEntry: (entryModal) => set(produce(state => {state.modals.entry = entryModal})),
+
+    books: null,
+    setBooks: (view) => set(produce(state => {state.modals.books = view})),
   },
 
   // ----- Tags
