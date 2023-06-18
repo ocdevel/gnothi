@@ -72,9 +72,6 @@ export interface EventsSlice {
     shares_egress_list_response?: Api.ResUnwrap<Shares.shares_egress_list_response>
   }
   resBuff: EventsSlice['res']
-  resBuffFlush: {
-    [k in Events.Events]?: (event: string, res: any) => void
-  }
   hooks: {
     tags_list_response: (res: Api.ResUnwrap<z.infer<typeof r.tags_list_request.o.s>>) => void
     fields_entries_list_response: BehaviorsSlice['behaviors']['fields_entries_list_response']
@@ -100,7 +97,6 @@ export const eventsSlice: StateCreator<
   res: {},
   // buffer of responses in one event to collect, which will be flushed to res above
   resBuff: {},
-  resBuffFlush: {},
   // _hooks: {
     // 'set_groups_message_get_response': action((state, data) => {
     //   const k = 'groups/messages/get'

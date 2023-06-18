@@ -8,3 +8,4 @@ books/db
 mock_entries.json
 **/test_*.py
 *.parquet
+**/__pycache__

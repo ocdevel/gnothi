@@ -45,6 +45,9 @@ export default function Themes({view}: Insight) {
         {renderRow("Entries v1", analytics.n_entries_v1)}
         {renderRow("Notes", analytics.n_notes)}
         {renderRow("Notes v1", analytics.n_notes_v1)}
+        {renderRow("Bookshelf", analytics.n_bookshelf)}
+        {renderRow("Bookshelf v1", analytics.n_bookshelf_v1)}
+        {renderRow("Premium", analytics.n_premium)}
       </TableBody>
     </Table>
   </TableContainer>

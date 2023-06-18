@@ -27,14 +27,24 @@ if not os.path.exists(file):
         s3_path,
         file
     )
-df = feather.read_feather(file)
+df = feather.read_feather(file).set_index('id', drop=False)
 
 def main(event, context):
     embedding = fix_np(event['embedding'])
+    thumbs = event['thumbs']
+    for t in thumbs:
+        bid, direction = t['id'], t['direction']
+        if bid not in df.index:
+            continue
+        # get the liked/disliked book's embedding
+        # multiply by the direction of the thumb, add a gradient step to the search embedding
+        correction = df.loc[bid].embedding * direction * .1
+        print("Books correction. Direction:", direction, "Book:", df.loc[bid]['name'])
+        embedding = embedding + correction
     results = semantic_search(
         query_embeddings=embedding,
         corpus_embeddings=fix_np(df.embedding.values),
-        top_k=10,
+        top_k=15,
         corpus_chunk_size=100
     )
     idx_order = [r['corpus_id'] for r in results[0]]

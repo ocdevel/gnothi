@@ -20,8 +20,9 @@ export const books_top_list_response = Book
 export type books_top_list_response = z.infer<typeof books_top_list_response>
 
 export const books_post_request = z.object({
-  id: z.number(),
-  shelf: z.string()
+  shelf: z.string(),
+  // we're not saving all books which are recommended from the
+  book: Book
 })
 export type books_post_request = z.infer<typeof books_post_request>
 export const books_post_response = books_list_request
@@ -52,6 +53,9 @@ export const routes = {
       e: 'books_post_response',
       s: books_post_response,
       event_as: "books_list_response",
+      // we remove the new-shelf book from the current viewing list.
+      // This will also do so if they click the same shelf they're viewing (repeat),
+      // but it's edge-case enough to not break this otherwise elegant solution
       op: "remove",
       t: {ws: true},
       keyby: 'id'

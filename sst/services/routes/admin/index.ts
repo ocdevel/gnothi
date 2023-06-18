@@ -15,7 +15,10 @@ SELECT
     (SELECT COUNT(*) FROM entries) AS n_entries,
     (SELECT COUNT(*) FROM entries WHERE created_at > '2023-05-28') AS n_entries_v1,
     (SELECT COUNT(*) FROM notes) AS n_notes,
-    (SELECT COUNT(*) FROM notes WHERE created_at > '2023-05-28') AS n_notes_v1
+    (SELECT COUNT(*) FROM notes WHERE created_at > '2023-05-28') AS n_notes_v1,
+    (SELECT COUNT(*) FROM "bookshelf") AS n_bookshelf,
+    (SELECT COUNT(*) FROM "bookshelf" WHERE created_at > '2023-05-28') AS n_bookshelf_v1,
+    (SELECT COUNT(*) FROM users WHERE payment_id IS NOT NULL) AS n_premium
 --     (
 --         SELECT jsonb_agg(jsonb_build_object('day', day, 'count', ct))
 --         FROM (
