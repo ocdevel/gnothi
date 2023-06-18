@@ -8,3 +8,4 @@ books/db
 mock_entries.json
 haystack
 **/*.parquet
+*.ipynb
