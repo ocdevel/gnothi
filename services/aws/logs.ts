@@ -55,6 +55,7 @@ export class Logger {
     // this isn't "we give certain users no-tracking", it's: users with admin privs are spamming the app, and are
     // skewing the metrics
     if (user.is_cool) {return}
+    if (process.env.SST_STAGE !== "prod") {return}
     if (event.includes("_list_")
       || event.includes("_get_")
       || event.includes("_whoami_")
