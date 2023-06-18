@@ -50,6 +50,8 @@ export interface AppSlice {
     setEntry: (entryModal: EntryModal) => void
     books: string | null
     setBooks: (view: string | null) => void
+    summary: string | null
+    setSummary: (view: string | null) => void
   }
 
   // changeAs: (id: string) => Promise<void>
@@ -133,6 +135,8 @@ export const appSlice: StateCreator<
 
     books: null,
     setBooks: (view) => set(produce(state => {state.modals.books = view})),
+    summary: null,
+    setSummary: (view) => set(produce(state => {state.modals.summary = view})),
   },
 
   // ----- Tags

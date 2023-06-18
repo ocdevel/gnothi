@@ -1,7 +1,6 @@
 import Box from "@mui/material/Box"
-import Summarize from "./Summarize"
+import {Summarize} from "./Summarize"
 // import Ask from "./Ask"
-import Themes from "./Themes"
 import Prompt from "./Prompt/Prompt"
 import Books from "./Books"
 import Behaviors from "./Behaviors"
@@ -112,12 +111,20 @@ export default function Insights({entry_ids}: Insights) {
     s.user?.me,
   ], shallow)
 
-  const [send, setPromptModal, setBehaviorsView, setPremium, setBooks] = useStore(useCallback(s => [
+  const [
+    send,
+    setPromptModal,
+    setBehaviorsView,
+    setPremium,
+    setBooks,
+    setSummary
+  ] = useStore(useCallback(s => [
     s.send,
     s.modals.setPrompt,
     s.behaviors.setView,
     s.modals.setPremium,
-    s.modals.setBooks
+    s.modals.setBooks,
+    s.modals.setSummary
   ], []), shallow)
   const view = entry_ids.length === 1 ? entry_ids[0] : "list"
 
@@ -186,19 +193,11 @@ export default function Insights({entry_ids}: Insights) {
       </Insight>, [me?.premium, entry_ids, view])}
 
       {useMemo(() => <Insight
-        label="Themes"
-        icon={<ThemesIcon {...iconProps} />}
-        description="Identify patterns across entries"
-        action="Adjust filters for different themes"
-      >
-        <Themes view={view}/>
-      </Insight>, [view])}
-
-      {useMemo(() => <Insight
         label="Summary"
         icon={<SummaryIcon {...iconProps} />}
         description="AI-generated snapshot"
-        action="Adjust filters for different summaries"
+        action="Adjust filters for different results. Expand for more details."
+        moreClick={() => setSummary(view)}
       >
         <Summarize view={view}/>
       </Insight>, [view])}
@@ -216,7 +215,7 @@ export default function Insights({entry_ids}: Insights) {
         label="Books"
         icon={<BooksIcon {...iconProps} />}
         description="Titles recommended by AI"
-        // action="Links and a bookshelf are coming soon!"
+        action="Adjust filters for different results. Expand for thumb up/down and bookshelves."
         //You can thumbs up or down books to train AI on your interests, or add titles you’re interested in to your bookshelf."
         moreClick={() => setBooks(view)}
       >
