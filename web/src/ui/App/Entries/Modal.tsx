@@ -1,5 +1,5 @@
 import {useStore} from "../../../data/store";
-import React, {useEffect, useCallback} from "react";
+import React, {useEffect, useCallback, useMemo} from "react";
 import {FullScreenDialog} from "../../Components/Dialog";
 import {fmtDate} from "../../../utils/utils";
 import {useParams} from "react-router-dom";
@@ -9,41 +9,44 @@ import New from "./Upsert/New"
 import Upsert from './Upsert/Upsert'
 import DialogContent from "@mui/material/DialogContent";
 
+const get = useStore.getState
 
-export default function Modal() {
+function ModalContent() {
   const entryModal = useStore(s => s.modals.entry)
-  const setEntryModal = useStore(useCallback(s => s.modals.setEntry, []))
   const as = useStore(s => s.user?.as)
+
+  const onClose = useCallback(() => get().modals.setEntry(null), [])
 
   const entry = entryModal?.entry
   const mode = as ? "view" : entryModal?.mode
-
-  const onClose = useCallback(() => setEntryModal(null), [])
-
-  function renderContent() {
-    if (entry && mode === 'edit') {
-      return <Upsert entry={entry} onClose={onClose} />
-    }
-    if (entry && mode === "view") {
-      return <View entry={entry} onClose={onClose} />
-    }
-    if (mode === "new") {
-      return <New onClose={onClose} />
-    }
-    return null
+  if (entry && mode === 'edit') {
+    return <Upsert entry={entry} onClose={onClose} />
   }
+  if (entry && mode === "view") {
+    return <View entry={entry} onClose={onClose} />
+  }
+  if (mode === "new") {
+    return <New onClose={onClose} />
+  }
+  return null
+}
+
+
+export default function Modal() {
+  const open = useStore(s => Boolean(s.modals.entry))
+  const onClose = useCallback(() => get().modals.setEntry(null), [])
 
   // const title = entry ? fmtDate(entry.created_at) : "New Entry";
   const title = ""
 
   return <FullScreenDialog
     className="entries modal"
-    open={!!entryModal}
+    open={open}
     onClose={onClose}
     title={title}
   >
     <DialogContent>
-      {renderContent()}
+      <ModalContent />
     </DialogContent>
   </FullScreenDialog>
 }

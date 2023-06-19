@@ -17,14 +17,13 @@ export default function Entries({group_id=null}) {
 
   const ids = entries?.ids || []
   const hash = entries?.hash || {}
+  const idsShallow = ids.join("")
 
   const [page, setPage] = useState(1)
 
-  let navigate = useNavigate()
-
   useEffect(() => {
     setPage(1)
-  }, [entries])
+  }, [idsShallow])
 
   if (!entries?.ids) {
     return <Loading label="entries" />
@@ -54,9 +53,9 @@ export default function Entries({group_id=null}) {
   const filteredPage = !usePaging ? filtered :
       filtered.slice(page0idx*pageSize, page0idx*pageSize + pageSize)
   const nPages = _.ceil(filtered.length / pageSize)
-  function changePage (e: React.ChangeEvent<unknown>, p: number) {
+  const changePage = useCallback((e: React.ChangeEvent<unknown>, p: number) => {
     setPage(p)
-  }
+  }, [])
 
   return <div className='entries'>
     {filteredPage.map(eid => <Teaser eid={eid} key={eid}/> )}
