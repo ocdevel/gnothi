@@ -14,7 +14,7 @@ import DialogContent from "@mui/material/DialogContent";
 type Summarize = Insight & {
   expanded?: boolean
 }
-export function Summarize({view, expanded}: Summarize) {
+export function Summarize({view, expanded=true}: Summarize) {
   const entries = useStore(s => s.res.entries_list_response?.rows)
   const submitted = useStore(useCallback(s => !!s.res.insights_get_response?.hash?.[view], [view]))
   const summary = useStore(useCallback(s => s.res.insights_summarize_response?.hash?.[view], [view]))
@@ -36,9 +36,9 @@ export function Summarize({view, expanded}: Summarize) {
 
   function renderExpanded() {
     return <Box>
-      <Typography variant="h5">Summary</Typography>
+      {/*<Typography variant="h5">Summary</Typography>*/}
       <Typography className="result" mb={2}>{summary.summary}</Typography>
-      <Typography variant="h5">Themes</Typography>
+      {/*<Typography variant="h5">Themes</Typography>*/}
       <Themes view={view} />
     </Box>
   }
