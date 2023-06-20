@@ -34,7 +34,7 @@ export class Utils {
     },
     entries: {
       create: {
-        title: '.upsert .textfield-title input',
+        title: '.entries.modal .upsert .textfield-title input',
         text: '.rc-md-editor textarea',
         btnSubmit: ".entries.modal .upsert .btn-submit"
       }
@@ -65,16 +65,16 @@ export class Utils {
     const mainTagP = this.catchWs("tags_list_response", {log: false})
 
     const auth = {email: `${ulid()}@x.com`, pass: "MyPassword!1"}
-    await page.locator(".appbar .cta-primary").click() // signup
+    await page.locator(".appbar .cta-secondary").click() // signup
     await page.locator(".checkbox-acceptTermsConditionsDisclaimerPrivacyPolicy").click()
     await page.locator(".btn-next").click()
     // await page.getByText("Create Account").click()
     
     const selRegister = "form[data-amplify-authenticator-signup]"
     await page.locator(`${selRegister} input[name="email"]`).fill(auth.email)
-    await page.locator("Password", {exact: true}).fill(auth.pass)
-    await page.locator("Confirm Password", {exact: true}).fill(auth.pass)
-    await page.locator("button[type=submit]").click()
+    await page.locator(`${selRegister} input[name="password"]`).fill(auth.pass)
+    await page.locator(`${selRegister} input[name="confirm_password"]`).fill(auth.pass)
+    await page.locator(`${selRegister} button[type=submit]`).click()
     // TODO catchWs("tags_list_response") to save Main UUID
     // await expect(page).toHaveTitle(/New Entry/)
     this.auth = auth

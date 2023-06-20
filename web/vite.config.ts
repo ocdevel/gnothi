@@ -17,6 +17,10 @@ export default defineConfig({
 
   // https://stackoverflow.com/a/72962290
   // plugins: [react(), vanillaExtractPlugin()],
+  server: {
+    host: "0.0.0.0",
+    // port: 5172
+  },
   plugins: [
     react({
       include: "**/*.tsx",

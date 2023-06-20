@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "start": "sst bind vite",
+    "start": "AWS_PROFILE=gnothiadmin sst bind vite",
     "staging": "VITE_STAGE=staging vite",
     "offline": "VITE_STAGE=offline vite",
     "build:orig": "tsc && vite build",

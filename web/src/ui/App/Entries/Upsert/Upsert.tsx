@@ -332,7 +332,10 @@ export default function Upsert(props: Upsert) {
     );
   }
 
-  return <Card sx={{borderRadius: 2, height: "100%", backgroundColor: "#ffffff"}}>
+  return <Card
+    className="upsert"
+    sx={{borderRadius: 2, height: "100%", backgroundColor: "#ffffff"}}
+  >
     <CardContent sx={{backgroundColor: "white"}}>
       {renderForm()}
       <CardActions sx={{backgroundColor: "white", justifyContent: "flex-end", mt: 2}}>
