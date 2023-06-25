@@ -60,6 +60,7 @@ export class Logger {
       || event.includes("_whoami_")
       || event.includes("_response")
       || event.includes("_cron")
+      || event.includes("habitica_sync")
       || event.includes("stripe_webhook")
     ) {
       return
