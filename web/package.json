@@ -23,6 +23,7 @@
     "@mui/lab": "^5.0.0-alpha.133",
     "@mui/material": "^5.13.4",
     "@mui/x-date-pickers": "^6.6.0",
+    "@sentry/react": "^7.56.0",
     "@stripe/react-stripe-js": "^2.1.0",
     "@stripe/stripe-js": "^1.53.0",
     "aws-amplify": "^5.2.2",

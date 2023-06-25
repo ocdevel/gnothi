@@ -1,3 +1,4 @@
+import  "./Sentry"
 import React, {useState, useEffect, useRef} from 'react'
 import '../App.scss'
 import Mui from "./Mui";
