@@ -52,10 +52,10 @@ async function preSignUp(event: PreSignUpTriggerEvent, context) {
 
 async function postConfirmationConfirmForgotPassword(event: PostConfirmationTriggerEvent, context) {
   const res = await db.drizzle
-    .select({created_at: users.created_at, is_cool: users.is_cool})
+    .select({created_at: users.created_at, is_cool: users.is_cool, is_superuser: users.is_superuser})
     .from(users).where(eq(users.cognito_id, event.userName))
   if (res.length) {
-    await Logger.metric({event: "users_confirmforgotpassword", user: res[0]})
+    Logger.metric({event: "users_confirmforgotpassword", user: res[0]})
   }
   return event
 }

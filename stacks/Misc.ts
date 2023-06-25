@@ -48,8 +48,5 @@ export function Misc(context: sst.StackContext) {
     fnAdmin: fnAdmin.functionArn,
   })
 
-  const GA_MEASUREMENT_ID = new sst.Config.Secret(stack, "GA_MEASUREMENT_ID")
-  const GA_API_SECRET = new sst.Config.Secret(stack, "GA_API_SECRET")
-
-  return {bucket, domains, GA_MEASUREMENT_ID, GA_API_SECRET}
+  return {bucket, domains}
 }
