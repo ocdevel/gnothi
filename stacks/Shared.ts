@@ -148,7 +148,7 @@ export function SharedCreate(context: StackContext) {
       description: 'Postgres SG',
       allowAllOutbound: true,
     });
-    sg.addIngressRule(aws_ec2.Peer.anyIpv4(), aws_ec2.Port.tcp(5432));
+    sg.addIngressRule(aws_ec2.Peer.ipv4(vpc.vpcCidrBlock), aws_ec2.Port.tcp(5432));
 
     const rds = new aws_rds.DatabaseCluster(stack, "Rds", {
       engine: aws_rds.DatabaseClusterEngine.auroraPostgres({
