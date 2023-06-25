@@ -13,7 +13,7 @@ interface LogEvent {
   message: string;
 }
 
-const ToAddresses = process.env.SES_SUBSCRIBE_EMAIL?.split(',')?.filter(Boolean)
+const ToAddresses = process.env.LOG_TO_EMAILS?.split(',')?.filter(Boolean)
 
 async function sendEmail(subject: string, data: unknown) {
   if (!ToAddresses) {return}
@@ -68,8 +68,8 @@ export async function main(event: CloudWatchLogsEvent, context: any) {
 
   const logEvents = logData.logEvents as LogEvent[]
 
-  // Filter for error log entries
-  const errorEvents = logEvents.filter(logEvent => logEvent.message.includes('ERROR'));
+  const errorEvents = logEvents.filter(logEvent => logEvent.message.includes('ERROR'))
+    .filter(logEvent => !logEvent.message.includes('Token expired'))
   const metricEvents = logEvents.filter(logEvent => logEvent.message.includes('METRIC'))
 
   if (metricEvents.length) {

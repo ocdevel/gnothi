@@ -25,7 +25,7 @@ export function Logs(context: sst.StackContext){
     memorySize: "128 MB",
     environment: {
       // comma-separated emails, in .env.{STAGE}
-      SES_SUBSCRIBE_EMAIL: process.env.SES_SUBSCRIBE_EMAIL || "",
+      LOG_TO_EMAILS: process.env.LOG_TO_EMAILS || "",
     }
   })
   // Allow the log aggregator to send emails

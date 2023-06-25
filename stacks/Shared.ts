@@ -187,13 +187,12 @@ export function SharedCreate(context: StackContext) {
   // email templates to send, etc.
   function createSes() {
     // 1 SES configuration per shared stage. This allows one-time setup for staging, dev, etc.
-    const subscribeEmail = process.env.SES_SUBSCRIBE_EMAIL ? [process.env.SES_SUBSCRIBE_EMAIL] : []
     const sesAttr = {
       // Email addresses will be added to the verified list and will be sent a confirmation email
       // TOOD investigate these. May I should just add them afterwards via console.
-      emailList: [`gnothi@${domains.root}`, ...subscribeEmail],
+      emailList: [`gnothi@${domains.root}`],
       // Email addresses to subscribe to SNS topic for delivery notifications
-      notifList: [...subscribeEmail],
+      notifList: [],
       // Notify on delivery status inc Send, Delivery, Open
       sendDeliveryNotifications: true,
     };
