@@ -14,6 +14,7 @@ import Container from "@mui/material/Container";
 import Behaviors from '../List'
 import KeepTracking from './KeepTracking'
 import Charts from './Charts'
+import TableQA from './TableQA.tsx'
 
 const get = useStore.getState
 
@@ -72,6 +73,8 @@ export default function Modal() {
       <Grid container direction="row" spacing={2}>
         <Grid item  xs={12} md={6}>
           <Behaviors advanced={true} />
+          <Box sx={{mb:2}}></Box>
+          <TableQA />
         </Grid>
         <Grid item xs={12} md={6}>
           <ModalContent />

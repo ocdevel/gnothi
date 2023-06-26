@@ -115,7 +115,7 @@ export function Ml(context: sst.StackContext) {
 
   // TODO this function should remove access to RDS, and instead interact with the app server via S3
   const fnBehaviors = new lambda.DockerImageFunction(stack, "FnBehaviors", {
-    vpc, // for RDS
+    ...mlFunctionProps,
     environment: {
       SST_STAGE: app.stage,
       DB_SECRET_ARN: rdsSecret.secretArn,

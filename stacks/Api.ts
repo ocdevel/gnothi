@@ -78,6 +78,7 @@ export function Api({ app, stack }: sst.StackContext) {
   const FN_SUMMARIZE_NAME = new sst.Config.Parameter(stack, "FN_SUMMARIZE_NAME", {value: ml.fnSummarize.functionName})
   const FN_STORE_NAME = new sst.Config.Parameter(stack, "FN_STORE_NAME", {value: ml.fnStore.functionName})
   const FN_PREPROCESS_NAME = new sst.Config.Parameter(stack, "FN_PREPROCESS_NAME", {value: ml.fnPreprocess.functionName})
+  const FN_BEHAVIORS_NAME = new sst.Config.Parameter(stack, "FN_BEHAVIORS_NAME", {value: ml.fnBehaviors.functionName})
 
   const fnBackground = withRds(stack, "FnBackground", {
     handler: "services/main.main",
@@ -94,6 +95,7 @@ export function Api({ app, stack }: sst.StackContext) {
       FN_SUMMARIZE_NAME,
       FN_STORE_NAME,
       FN_PREPROCESS_NAME,
+      FN_BEHAVIORS_NAME,
 
       API_WS,
     ]
@@ -109,6 +111,7 @@ export function Api({ app, stack }: sst.StackContext) {
        ml.fnSummarize.functionArn,
        ml.fnStore.functionArn,
        ml.fnPreprocess.functionArn,
+       ml.fnBehaviors.functionArn,
      ],
    }))
 

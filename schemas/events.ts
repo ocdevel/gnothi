@@ -91,6 +91,9 @@ export const Events = z.enum([
   'fields_entries_cleardupes_response',
   'fields_entries_clear_request',
   'fields_entries_clear_response',
+  'fields_ask_request',
+  'fields_ask_response',
+  'fields_ask_final',
 
   'groups_list_request',
   'groups_list_response',
