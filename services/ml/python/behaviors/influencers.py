@@ -1,7 +1,7 @@
 import pdb
 from behaviors.xgb import MyXGB
 from xgboost import XGBRegressor, DMatrix
-from sqlalchemy import create_engine, text, Table, MetaData
+from sqlalchemy import text, Table, MetaData
 from sqlalchemy.dialects import postgresql
 from psycopg2.extras import Json as jsonb
 import pandas as pd
@@ -241,9 +241,3 @@ def main(event, context):
                 """), dict(score=inf_score, pred=next_pred, fid=fid))
 
     return {}
-
-if __name__ == '__main__':
-    with engine.connect() as conn:
-        # FIXME remove
-        conn.execute(text("update users set last_influencers=null where email='tylerrenelle@gmail.com'"))
-    main(None, None)

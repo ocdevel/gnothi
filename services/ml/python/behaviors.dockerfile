@@ -5,11 +5,13 @@ RUN pip3 install --no-cache-dir \
   psycopg2-binary==2.9.5 \
   sqlalchemy==1.4.44 \
   pandas==1.5.2 \
-  scikit-learn==1.1.3
+  scikit-learn==1.1.3 \
+  transformers[torch]==4.30.1
 
 COPY __init__.py ${LAMBDA_TASK_ROOT}/__init__.py
+COPY common ${LAMBDA_TASK_ROOT}/common
 COPY behaviors ${LAMBDA_TASK_ROOT}/behaviors
 # This will change to main.main once we add more behaviors stuff, like TableGPT
-CMD [ "behaviors/influencers.main" ]
+CMD [ "behaviors/main.main" ]
 
 
