@@ -99,10 +99,10 @@ export async function entriesUpsertResponse(req: S.Entries.entries_upsert_respon
   const updateEntry = driz.update(entries)
     .set(updates)
     .where(eq(entries.id, eid))
-    .catch(e => {
+    .catch(error => {
       // FIXME some entries are having trouble saving to .text_paras, I think due to quotes in the paras? Like
       // drizzle / pg-node aren't handling those. For now mark these as skip, and deal with later.
-      Logger.error({message: "Error updating entry", data: e, event: "entries_upsert_response"})
+      console.error("entries_upsert_response", error, JSON.stringify(updates))
       const {text_paras, ...rest} = updates
       return driz.update(entries).set({
         ...rest,
