@@ -111,7 +111,7 @@ export async function completion(
     const res = await getOpenAi().createChatCompletion(completionRequest);
     return res.data.choices[0].message.content
   } catch (error) {
-    Logger.error("ml/node/openai#completion", error)
+    Logger.error("ml/node/openai#completion", {error})
     throw error
   }
 }

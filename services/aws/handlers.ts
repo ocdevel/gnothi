@@ -267,7 +267,7 @@ class WsHandler extends Handler<APIGatewayProxyWebsocketEventV2> {
             ConnectionId: connectionId,
             Data: Buff.fromObj({...res, error: true, code: 500, data: [{error}]})
           }))
-          Logger.error(res.event, error) // Re-throw the error if it's not a GoneException
+          Logger.error(res.event, {error}) // Re-throw the error if it's not a GoneException
         }
       }
     }

@@ -139,7 +139,7 @@ export class DB {
       return queryResult.rows.map(DB.removeNull)
     } catch (error) {
       // (await this.client()).release(true)
-      Logger.error("data/db#query", {error, sql_})
+      Logger.error("data/db#query", {error, sql: sql_})
       debugger
       throw error
     // } finally {

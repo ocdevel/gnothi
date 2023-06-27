@@ -5,6 +5,7 @@ interface Metric {
   user: Pick<User, 'is_cool' | 'is_superuser' | 'created_at'>
   dimensions?: {Name: string, Value: string}[]
 }
+
 export class Logger {
   static log(event: string, data: unknown) {
     let data_ = {...data} || {}
@@ -24,7 +25,12 @@ export class Logger {
     return console.warn(event, JSON.stringify(data, null, 2))
   }
   static error(event: string, data: unknown) {
-    return console.error(event, JSON.stringify(data, null, 2))
+    const data_ = {...data}
+    // JSON.stringify won't add the stackTrace, just the error message.
+    if (data.error?.stack) {
+      data_.stack = data.error.stack
+    }
+    console.error(event, JSON.stringify(data_, null, 2))
   }
   static metric({event, user, dimensions}: Metric) {
     // this isn't "we give certain users no-tracking", it's: users with admin privs are spamming the app, and are
