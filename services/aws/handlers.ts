@@ -130,9 +130,7 @@ export async function lambdaSend<O = any>(
   const Payload = InvocationType === "Event" ? null
       : Buff.toObj(response.Payload) as O
   if (response.FunctionError) {
-    const Error = Payload as {errorType: string, errorMessage: string, stackTrace: string[]}
-    const error = `${Error.errorType}: ${Error.errorMessage}`
-    Logger.error({message: error, data: Error.stackTrace, event: "aws/handlers#lambdaSend"})
+    Logger.error("aws/handlers#lambdaSend", {request: data, response: Payload})
     throw error
   }
   return {
@@ -246,13 +244,9 @@ class WsHandler extends Handler<APIGatewayProxyWebsocketEventV2> {
     const metaTemplate = {...meta, responseId, chunk: {i: 0, of: 999}}
     const metaSize = this.sizeOfObject(metaTemplate)
     const maxWsPayloadSize = 128 * 1024 - metaSize;
+    const dataChunks = this.batchData(data, maxWsPayloadSize)
 
-    // should always be an array, but you can never be too careful
-    const isArr = Array.isArray(data) // will be false if we have an error
-    const dataChunks = isArr ? this.batchData(data, maxWsPayloadSize) : [data];
-    const isChunking = isArr && dataChunks.length > 1
-
-    const resChunks = !isChunking ? [res]
+    const resChunks = !dataChunks.length === 1 ? [res]
       : dataChunks.map((chunk, i) => ({
         ...metaTemplate,
         chunk: {i, of: dataChunks.length - 1},
@@ -266,18 +260,14 @@ class WsHandler extends Handler<APIGatewayProxyWebsocketEventV2> {
         }))
       } catch (error) {
         if (error.name === 'GoneException') {
-          // They user may have closed the tab. Don't want to throw an error, but we do want to log it just in case
-          // there's more error here than meets the eye
-          // res.error = true
-          // res.code = 500
-          // Logger.warn({
-          //   message: "WebSocketError: trying to send to disconnected client.",
-          //   data: res,
-          //   event: res.event
-          // })
+          // They user may have closed the tab. Don't throw an error, TODO revisit (git-blame) in case there's something more
         } else {
           debugger
-          throw error // Re-throw the error if it's not a GoneException
+          await client.apig.send(new PostToConnectionCommand({
+            ConnectionId: connectionId,
+            Data: Buff.fromObj({...res, error: true, code: 500, data: [{error}]})
+          }))
+          Logger.error(res.event, error) // Re-throw the error if it's not a GoneException
         }
       }
     }

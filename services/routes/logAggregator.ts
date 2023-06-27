@@ -37,7 +37,7 @@ async function sendEmail(subject: string, data: unknown) {
       Source: "gnothi@gnothiai.com"
     }));
   } catch (error) {
-    console.error('Failed to send email', error);
+    console.error('Failed to send email', error)
   }
 }
 

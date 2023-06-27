@@ -34,7 +34,7 @@ export default function Entries({group_id=null}) {
   }
 
   if (entries?.res?.error && entries.res.code === 403) {
-    return <h5>{entries.res.data}</h5>
+    return <h5>{entries.res.data[0].error}</h5>
   }
 
   let filtered: string[] = ids

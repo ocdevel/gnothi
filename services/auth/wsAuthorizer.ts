@@ -2,7 +2,6 @@
 
 import {APIGatewayRequestAuthorizerHandler} from "aws-lambda";
 import {CognitoJwtVerifier} from "aws-jwt-verify";
-import {Logger} from "../aws/logs";
 
 const UserPoolId = process.env.USER_POOL_ID!;
 const AppClientId = process.env.USER_POOL_CLIENT_ID!;
@@ -20,8 +19,9 @@ export const handler: APIGatewayRequestAuthorizerHandler = async (event, context
     console.log("Token is valid. Payload:", payload);
 
     return allowPolicy(event.methodArn, payload);
-  } catch (error: any) {
-    Logger.error({message: error.message, event: "auth/wsAuthorizer#handler"});
+  } catch (error) {
+    // not using Logger to reduce imports for this tiny function
+    console.error("auth/wsAuthorizer#handler", JSON.stringify(error, null, 2))
     return denyAllPolicy();
   }
 };

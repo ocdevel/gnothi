@@ -25,8 +25,10 @@ export function ErrorSnack() {
 
   useEffect(() => {
     if (lastRes?.error) {
-      console.error(lastRes)
-      addError(<div><Typography>{lastRes.data}</Typography><Typography variant="caption">{lastRes.event}</Typography></div>)
+      const console_ = lastRes.code >= 500 ? console.error : console.warn
+      console_(lastRes)
+      const error = lastRes.data[0].error
+      addError(<div><Typography>{error}</Typography><Typography variant="caption">{lastRes.event}</Typography></div>)
     }
   }, [lastRes])
   

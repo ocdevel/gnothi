@@ -94,7 +94,7 @@ export default function Behaviors({advanced}: Behaviors) {
   }, [fields])
 
   if (fields?.res?.error && fields.res.code === 403) {
-    return <h5>{fields.res.data}</h5>
+    return <h5>{fields.res.data[0].error}</h5>
   }
 
   async function fetchFieldEntries() {

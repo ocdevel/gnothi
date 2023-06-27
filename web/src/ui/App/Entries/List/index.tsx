@@ -19,7 +19,7 @@ function InsightsDashboard() {
 export default function List({group_id=null}) {
   const res = useStore(s => s.res.entries_list_response?.res)
   if (res?.error && res.code === 403) {
-    return <h5>{res.data}</h5>
+    return <h5>{res.data[0].error}</h5>
   }
 
   return useMemo(() => <div className="list">
