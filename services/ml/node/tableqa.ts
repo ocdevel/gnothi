@@ -16,6 +16,7 @@ export async function tableQa({user_id, query}: FnIn): Promise<FnOut> {
   const fnName = Config.FN_BEHAVIORS_NAME
   const {Payload} = await lambdaSend<LambdaOut>(
     {
+      event: "tableqa",
       query,
       user_id,
     },

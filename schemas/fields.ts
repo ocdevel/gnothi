@@ -138,7 +138,9 @@ export const fields_ask_request = z.object({
   query: z.string()
 })
 export type fields_ask_request = z.infer<typeof fields_ask_request>
-export const fields_ask_response = fields_ask_request
+export const fields_ask_response = fields_ask_request.extend({
+  user_id: z.string(),
+})
 export type fields_ask_response = z.infer<typeof fields_ask_response>
 export const fields_ask_final = z.object({
   id: z.string(),

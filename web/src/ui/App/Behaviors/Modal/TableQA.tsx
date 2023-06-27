@@ -12,15 +12,10 @@ export default function TableQA() {
   const send = useStore(useCallback(s => s.send, []))
   const answer = useStore(s => s.res.fields_ask_final?.first?.answer)
   const [query, setQuery] = useState("")
-  const sending = useStore(s => Boolean(s.req.fields_ask_request))
+  const sending = useStore(s => s.req.fields_ask_request)
   function submit() {
     send("fields_ask_request", {query})
   }
-
-  useEffect(() => {
-    if (answer) {setSending(false)}
-  }, [answer])
-
   return <Card sx={{backgroundColor: "white"}}>
     <CardContent sx={{backgroundColor: "white"}}>
       <Typography variant="body1">Try asking a question about your behaviors</Typography>

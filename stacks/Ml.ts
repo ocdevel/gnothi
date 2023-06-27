@@ -122,7 +122,10 @@ export function Ml(context: sst.StackContext) {
     },
     // 310mb used avg. I don't think it's RAM heavy, but CPU. Doubling for good
     // measure, but keep an eye - I worry this is too low.
-    memorySize: 620,
+    // memorySize: 620,
+
+    // TODO separate Influencers from TableQA. Influencers only needs 620mb RAM, TableQA needs much more
+    memorySize: 3446,
     timeout: cdk.Duration.minutes(15),
     code: lambda.DockerImageCode.fromImageAsset("services/ml/python", {
       file: "behaviors.dockerfile"

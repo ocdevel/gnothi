@@ -134,6 +134,7 @@ const handleRes: FnContext['handleRes'] = async (def, res, fnContext) => {
     event: res.event || def.e,
     keyby: def.keyby,
     event_as: def.event_as,
+    clears: def.clears,
     op: def.op
   }
   await Promise.all(

@@ -2,6 +2,7 @@ import {Routes, Fields} from '@gnothi/schemas'
 import {Route} from '../types'
 import {Fields as FieldsModel} from '../../data/models/fields'
 import {tableQa} from "../../ml/node/tableqa";
+import {ulid} from 'ulid'
 
 const r = Routes.routes
 
@@ -46,13 +47,9 @@ export const fields_history_list_request = new Route(r.fields_history_list_reque
 })
 
 export const fields_ask_request = new Route(r.fields_ask_request, async (req, context) => {
-  console.log("fields_ask_request")
-  return [req]
+  return [{...req, user_id: context.uid}]
 })
 export const fields_ask_response = new Route(r.fields_ask_response, async (req, context) => {
-  const res = await tableQa({
-    user_id: context.uid,
-    query: req.query
-  })
-  return [{id: Date.now(), ...res}]
+  const res = await tableQa(req)
+  return [{id: ulid(), ...res}]
 })

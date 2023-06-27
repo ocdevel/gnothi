@@ -41,10 +41,11 @@ function ModalContent() {
 }
 
 export default function Modal() {
-  const [as,  view] = useStore(s => [
-    s.user?.as,
+  const [user,  view] = useStore(s => [
+    s.user,
     s.behaviors.view,
   ], shallow)
+  const [as, me] = [user?.as, user?.me]
   const [setView] = useStore(useCallback(s => [s.behaviors.setView], []))
 
   const onCta = useCallback(() => setView({view: "new", fid: null}), [])
@@ -73,8 +74,10 @@ export default function Modal() {
       <Grid container direction="row" spacing={2}>
         <Grid item  xs={12} md={6}>
           <Behaviors advanced={true} />
-          <Box sx={{mb:2}}></Box>
-          <TableQA />
+          {me?.premium && <>
+            <Box sx={{mb:2}}></Box>
+            <TableQA />
+          </>}
         </Grid>
         <Grid item xs={12} md={6}>
           <ModalContent />
