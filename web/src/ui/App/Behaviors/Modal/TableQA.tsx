@@ -12,9 +12,8 @@ export default function TableQA() {
   const send = useStore(useCallback(s => s.send, []))
   const answer = useStore(s => s.res.fields_ask_final?.first?.answer)
   const [query, setQuery] = useState("")
-  const [sending, setSending] = useState(false)
+  const sending = useStore(s => Boolean(s.req.fields_ask_request))
   function submit() {
-    setSending(true)
     send("fields_ask_request", {query})
   }
 

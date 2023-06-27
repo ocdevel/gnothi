@@ -100,6 +100,7 @@ export const routes = {
       s: entries_upsert_response,
       t: {ws: true, background: true},
       event_as: "entries_list_response",
+      clears: "entries_put_request",
       keyby: 'id',
       op: "update",
     },
@@ -113,6 +114,7 @@ export const routes = {
       e: 'entries_upsert_response',
       s: entries_upsert_response,
       t: {ws: true, background: true},
+      clears: "entries_post_request",
       event_as: "entries_list_response",
       keyby: 'id',
       op: "prepend",
@@ -146,6 +148,7 @@ export const routes = {
       s: entries_delete_response,
       t: {ws: true},
       event_as: "entries_list_response",
+      clears: "entries_delete_request",
       keyby: 'id',
       op: "delete"
     }

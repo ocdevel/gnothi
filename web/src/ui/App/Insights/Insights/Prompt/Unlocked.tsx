@@ -41,7 +41,7 @@ export default function Unlocked({entry_ids, view}: UnlockedProps) {
   const modal = useStore(s => s.modals.prompt)
   const setModal = useStore(s => s.modals.setPrompt)
   const [messages, setMessages] = useState<Message[]>([])
-  const [waiting, setWaiting] = useState(false)
+  const waiting = useStore(s => s.req.insights_prompt_request)
   const [model, setModel] = useState<"gpt-3.5-turbo-16k" | "gpt-4">("gpt-3.5-turbo-16k")
 
 
@@ -56,7 +56,6 @@ export default function Unlocked({entry_ids, view}: UnlockedProps) {
 
   useEffect(() => {
     if (!promptResponse) { return }
-    setWaiting(false)
     // The response comes back as the full chat history. Clobber what's here.
     setMessages(promptResponse.messages)
   }, [promptResponse])
@@ -64,8 +63,6 @@ export default function Unlocked({entry_ids, view}: UnlockedProps) {
   const submit = () => {
     // They didn't enter anything
     if (btnDisabled) {return}
-
-    setWaiting(true)
 
     const message = {role: "user", content: prompt, id: Date.now().toString()}
     const updated = [...messages, message]

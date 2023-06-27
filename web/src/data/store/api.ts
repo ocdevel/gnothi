@@ -12,6 +12,7 @@ import {Auth} from 'aws-amplify'
 import {ulid} from 'ulid'
 import {BehaviorsSlice} from "./behaviors";
 import {SharingSlice} from "./sharing";
+import produce from "immer";
 
 export interface ApiSlice {
   // useWebsocket just proxies everything into this store
@@ -85,6 +86,9 @@ export const apiSlice: StateCreator<
       event,
       data,
     }
+    set(produce(state => {
+      state.req[event] = data
+    }))
     if (protocol === 'ws') {
       // ws response will come in useSend, then call back here to handler
       return get().sendJsonMessage(request)

@@ -364,6 +364,7 @@ export const routes = {
     o: {
       e: 'fields_ask_final',
       s: fields_ask_final,
+      clears: "fields_ask_request",
       t: {ws: true},
     }
   }
