@@ -90,7 +90,8 @@ export function Ml(context: sst.StackContext) {
   })
   const fnSummarize = new lambda.DockerImageFunction(stack, "FnSummarize", {
     ...mlFunctionProps,
-    memorySize: 4357,
+    memorySize: 8000, // maxing out with 12k tokens via Tisuth. Need to use 8k model and observe RAM
+    // memorySize: 4357,
     // TODO figure out why so long
     timeout: cdk.Duration.minutes(15),
     code: lambda.DockerImageCode.fromImageAsset("services/ml/python", {
