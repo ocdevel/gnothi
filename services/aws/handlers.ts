@@ -232,27 +232,29 @@ class WsHandler extends Handler<APIGatewayProxyWebsocketEventV2> {
   }
 
   async repondToConnection(res: Res, {connectionId}: Partial<FnContext>) {
-   if (!connectionId) {
-     console.warn("Trying to to WS without connectionId")
-     return
+    if (!connectionId) {
+      console.warn("Trying to to WS without connectionId")
+      return
     }
 
-    // FIXME I'm making some space for the rest of the response (responseId, chunk{i,of}, etc). I should be
-    // chunking those in.
-    // const MAX_SIZE = 128 * 1024; // 128 KB
-    const MAX_SIZE = 128 * 1024 - 200; // 128 KB - 200 bytes (rough estimate for response wrapper)
-
-    // should always be an array, but you can never be too careful
-    const isArr = Array.isArray(res.data) // will be false if we have an error
-    const dataChunks = isArr ? this.batchData(res.data, MAX_SIZE) : [res.data];
-    const isChunking = isArr && dataChunks.length > 1
     // responseId groups the chunks together. If the client switches gears (eg change tags), it will discard
     // chunks coming from the previous batch
     const responseId = ulid()
+    const {data, ...meta} = res
+    // chunk is added dynamically, but we need to account for its size here. Assume max-case
+
+    const metaTemplate = {...meta, responseId, chunk: {i: 0, of: 999}}
+    const metaSize = this.sizeOfObject(metaTemplate)
+    const maxWsPayloadSize = 128 * 1024 - metaSize;
+
+    // should always be an array, but you can never be too careful
+    const isArr = Array.isArray(data) // will be false if we have an error
+    const dataChunks = isArr ? this.batchData(data, maxWsPayloadSize) : [data];
+    const isChunking = isArr && dataChunks.length > 1
+
     const resChunks = !isChunking ? [res]
       : dataChunks.map((chunk, i) => ({
-        ...res,
-        responseId,
+        ...metaTemplate,
         chunk: {i, of: dataChunks.length - 1},
         data: chunk
       }))

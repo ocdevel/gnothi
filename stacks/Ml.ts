@@ -125,7 +125,7 @@ export function Ml(context: sst.StackContext) {
     // memorySize: 620,
 
     // TODO separate Influencers from TableQA. Influencers only needs 620mb RAM, TableQA needs much more
-    memorySize: 3446,
+    memorySize: 3283,
     timeout: cdk.Duration.minutes(15),
     code: lambda.DockerImageCode.fromImageAsset("services/ml/python", {
       file: "behaviors.dockerfile"
