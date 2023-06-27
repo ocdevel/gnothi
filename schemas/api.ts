@@ -15,6 +15,7 @@ export type ResOverrides = {
   keyby?: string
   event_as?: Events
   op?: "update" | "prepend" | "append" | "delete"
+  clears?: Events // if something was a request, tell it it's done fetching
   // id?: string ???
   // uids?: string[] ???
 }

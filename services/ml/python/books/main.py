@@ -33,19 +33,22 @@ df = feather.read_feather(file).set_index('id', drop=False)
 
 def main(event, context):
     embedding = fix_np(event['embedding'])
-    lr = .01  # fiddle with this. And balance it against global thumbs.
 
-    thumbs = pd.DataFrame(event['thumbs'])
-    # Filter out the books that are not in the original df
-    thumbs = thumbs[thumbs['id'].isin(df.index)]
-    # Compute corrections
-    corrections = thumbs.apply(lambda t: df.loc[t['id']].embedding * t['direction'] * lr, axis=1)
-    # Sum corrections and add to original embedding
-    total_correction = corrections.sum()
-    embedding += total_correction
+    if event['thumbs']:
+        lr = .01  # fiddle with this. And balance it against global thumbs.
+        thumbs = pd.DataFrame(event['thumbs'])
+        # Filter out the books that are not in the original df
+        thumbs = thumbs[thumbs['id'].isin(df.index)]
+        # Compute corrections
+        corrections = thumbs.apply(lambda t: df.loc[t['id']].embedding * t['direction'] * lr, axis=1)
+        # Sum corrections and add to original embedding
+        total_correction = corrections.sum()
+        embedding += total_correction
 
-    # Filter out the books which they've shelved
-    filtered = df.loc[~df.index.isin(thumbs['id'])]
+        # Filter out the books which they've shelved
+        filtered = df.loc[~df.index.isin(thumbs['id'])]
+    else:
+        filtered = df
 
     results = semantic_search(
         query_embeddings=embedding,

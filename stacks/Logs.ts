@@ -3,6 +3,7 @@ import {
   aws_cloudwatch,
   aws_iam,
   aws_logs,
+  aws_lambda,
   aws_sns,
   aws_sns_subscriptions,
   custom_resources,
@@ -15,100 +16,38 @@ import * as sst from "sst/constructs";
 export function Logs(context: sst.StackContext){
   const {app, stack} = context
 
-  // Create SNS topic
-  const topic = new aws_sns.Topic(stack, 'TopicAlarms');
-  // Add email subscription to SNS topic
-  console.log(process.env.SES_SUBSCRIBE_EMAIL)
-  topic.addSubscription(new aws_sns_subscriptions.EmailSubscription(process.env.SES_SUBSCRIBE_EMAIL));
+  const GA_MEASUREMENT_ID = new sst.Config.Secret(stack, "GA_MEASUREMENT_ID")
+  const GA_API_SECRET = new sst.Config.Secret(stack, "GA_API_SECRET")
 
-  function addLogging(fn: sst.Function, id: string) {
+  const fnLogAggregator = new sst.Function(stack, "FnLogAggregator", {
+    handler: "services/routes/logAggregator.main",
+    bind: [GA_MEASUREMENT_ID, GA_API_SECRET],
+    memorySize: "128 MB",
+    environment: {
+      // comma-separated emails, in .env.{STAGE}
+      LOG_TO_EMAILS: process.env.LOG_TO_EMAILS || "",
+    }
+  })
+  // Allow the log aggregator to send emails
+  fnLogAggregator.addToRolePolicy(new aws_iam.PolicyStatement({
+    actions: ['ses:SendEmail', 'ses:SendRawEmail', "cloudwatch:PutMetricData"],
+    resources: ['*'], // adjust this to your needs
+  }))
+  stack.addOutputs({
+    LogAggregator: `AWS_PROFILE=${process.env.AWS_PROFILE} AWS_REGION=${app.region} aws logs tail --follow /aws/lambda/${fnLogAggregator.functionName}`
+  })
+
+  function addLogging(fn: sst.Function | aws_lambda.Function, id: string) {
     // Need a unique ID for the Filter & Alarm, but fn.id / fn.functionName aren't working
     // const id = fn.functionArn.replace(/[^A-Za-z0-9]/g, '');
-
-    // // Create CloudWatch metric filter
-    // const metricFilter = new aws_logs.MetricFilter(stack, `MetricFilter${id}`, {
-    //   logGroup: fn.logGroup,
-    //
-    //   filterPattern: aws_logs.FilterPattern.anyTerm(
-    //     'ERROR', 'Error', 'error',
-    //     'EXCEPTION', 'Exception', 'exception',
-    //   ),
-    //   // filterPattern: aws_logs.FilterPattern.stringValue('$.level', '=', 'ERROR'),
-    //
-    //   metricName: 'ErrorCount',
-    //   metricNamespace: `${app.name}/${app.stage}`,
-    //   metricValue: '1', // optional?
-    // });
-    //
-    // // Create CloudWatch alarm
-    // new aws_cloudwatch.Alarm(stack, `MetricAlarm${id}`, {
-    //   metric: metricFilter.metric(), // metricFilter.metric({})
-    //   threshold: 1,
-    //   evaluationPeriods: 1,
-    //   actionsEnabled: true,
-    //
-    //   // treatMissingData: TreatMissingData.IGNORE,
-    //   comparisonOperator: aws_cloudwatch.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
-    //   // datapointsToAlarm: 1,
-    //
-    //   alarmActions: [topic],
-    //   // alarmActions: [new aws_sns.SnsAction(topic)],
-    // });
-
-    // Grant the function permissions to PutMetricData on CloudWatch
-    fn.addToRolePolicy(new aws_iam.PolicyStatement({
-      actions: ['cloudwatch:PutMetricData'],
-      resources: ['*'],
-    }))
+    fn.logGroup.addSubscriptionFilter(`SubscriptionFilter${id}`, {
+      destination: new aws_logs_destinations.LambdaDestination(fnLogAggregator),
+      filterPattern: aws_logs.FilterPattern.anyTerm("ERROR", "Error", "error", "EXCEPTION", "Exception", "exception", "WARN", "Warn", "warn", "METRIC"),
+    })
   }
 
   return {addLogging}
 }
 
-function cloudWatchInsightsQuery({app, stack}: sst.StackContext) {
-  // stack is the name that will be visible in the AWS CloudWatch Logs Insights "Queries" tab.
-  const queryName = `Errors_${app.stage}`;
-  // Remember to format the query for readability purposes!
-  const byAPIGWRequestIdQuery = `fields @timestamp, @logStream, @message
-  | sort @timestamp desc
-  | filter @requestId = "PASTE_REQUEST_ID_HERE"`;
-
-  return new custom_resources.AwsCustomResource(stack, "insightsQuery", {
-    policy: custom_resources.AwsCustomResourcePolicy.fromStatements([
-      new aws_iam.PolicyStatement({
-        effect: aws_iam.Effect.ALLOW,
-        actions: ["logs:PutQueryDefinition", "logs:DeleteQueryDefinition"],
-        resources: [`arn:aws:logs:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:*`]
-      })
-    ]),
-    onCreate: {
-      action: "putQueryDefinition",
-      service: "CloudWatchLogs",
-      parameters: {
-        name: queryName,
-        queryString: byAPIGWRequestIdQuery
-      },
-      physicalResourceId:
-        custom_resources.PhysicalResourceId.fromResponse("queryDefinitionId")
-    },
-    onUpdate: {
-      action: "putQueryDefinition",
-      service: "CloudWatchLogs",
-      parameters: {
-        name: queryName,
-        queryString: byAPIGWRequestIdQuery,
-        queryDefinitionId: new custom_resources.PhysicalResourceIdReference()
-      },
-      physicalResourceId:
-        custom_resources.PhysicalResourceId.fromResponse("queryDefinitionId")
-    },
-    onDelete: {
-      action: "deleteQueryDefinition",
-      service: "CloudWatchLogs",
-      parameters: {
-        queryDefinitionId: new custom_resources.PhysicalResourceIdReference()
-      }
-    }
-  });
-}
-
+// git-blame for CloudWatch Alarm (email) using MetricFilter
+// git-blame for CloudWatchMetricQuery as AWS-managed log aggregator

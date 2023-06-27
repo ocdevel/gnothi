@@ -134,6 +134,20 @@ export const habitica_post_request = z.object({
   habitica_api_token: z.string().optional(),
 })
 
+export const fields_ask_request = z.object({
+  query: z.string()
+})
+export type fields_ask_request = z.infer<typeof fields_ask_request>
+export const fields_ask_response = fields_ask_request.extend({
+  user_id: z.string(),
+})
+export type fields_ask_response = z.infer<typeof fields_ask_response>
+export const fields_ask_final = z.object({
+  id: z.string(),
+  answer: z.string()
+})
+export type fields_ask_final = z.infer<typeof fields_ask_final>
+
 
 export const routes = {
   fields_list_request: {
@@ -327,6 +341,33 @@ export const routes = {
       e: 'void',
       s: z.void(),
       t: {cron: true},
+    }
+  },
+
+  fields_ask_request: {
+    i: {
+      e: 'fields_ask_request',
+      s: fields_ask_request,
+      t: {ws: true},
+      snoopable: true
+    },
+    o: {
+      e: 'fields_ask_response',
+      s: fields_ask_response,
+      t: {ws: true, background: true},
+    }
+  },
+  fields_ask_response: {
+    i: {
+      e: 'fields_ask_response',
+      s: fields_ask_response,
+      t: {background: true},
+    },
+    o: {
+      e: 'fields_ask_final',
+      s: fields_ask_final,
+      clears: "fields_ask_request",
+      t: {ws: true},
     }
   }
 

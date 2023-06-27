@@ -26,10 +26,11 @@ const PAYMENT_LINK = STAGE === "prod" ? "https://buy.stripe.com/fZe02UdpT5Xd6yI6
   : "https://buy.stripe.com/test_dR68wJ2kj6lc4es3cc"
 
 
+const fmt = (x) => dayjs.unix(x).format('YYYY-MM-DD')
+
 export function SubscriptionDetails() {
   const stripe_list_response = useStore(s => s.res.stripe_list_response?.first)
   const s = stripe_list_response
-  const fmt = (x) => dayjs.unix(x).format('YYYY-MM-DD')
   if (!s) {return null}
   const canceled = s.status === "canceled"
   return <TableContainer

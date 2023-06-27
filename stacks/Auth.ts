@@ -18,7 +18,7 @@ export function Auth({ app, stack }: sst.StackContext) {
     withRds
   } = sst.use(SharedImport);
   const {addLogging} = sst.use(Logs);
-  const {domains, GA_API_SECRET, GA_MEASUREMENT_ID} = sst.use(Misc)
+  const {domains} = sst.use(Misc)
 
   // SST samples
   // Cognito JWT example from https://sst.dev/examples/how-to-add-jwt-authorization-with-cognito-user-pool-to-a-serverless-api.html
@@ -31,7 +31,6 @@ export function Auth({ app, stack }: sst.StackContext) {
     memorySize: rams.sm,
     timeout: timeouts.md,
     handler: "services/auth/triggers.main",
-    bind: [GA_API_SECRET, GA_MEASUREMENT_ID]
   })
   addLogging(fnAuthTriggers, "FnAuthTriggers")
 
@@ -98,7 +97,6 @@ export function Auth({ app, stack }: sst.StackContext) {
     handler: "services/auth/wsAuthorizer.handler",
     memorySize: rams.sm,
     timeout: timeouts.md,
-    bind: [GA_API_SECRET, GA_MEASUREMENT_ID],
     environment: {
       USER_POOL_ID: auth.userPoolId,
       USER_POOL_CLIENT_ID: auth.userPoolClientId

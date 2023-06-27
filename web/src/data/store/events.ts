@@ -128,6 +128,7 @@ export const eventsSlice: StateCreator<
         state.lastRes = res
         if (!state.res[event]) {state.res[event] = {}}
         state.res[event].res = res
+        if (res.clears) { state.req[res.clears] = null }
       }))
       return
     }
@@ -205,6 +206,7 @@ export const eventsSlice: StateCreator<
           if (!state.res[event]) {state.res[event] = {}}
           state.res[event].res = res
         }
+        if (res.clears) { state.req[res.clears] = null }
       }
     }))
     if (shouldFlush) {

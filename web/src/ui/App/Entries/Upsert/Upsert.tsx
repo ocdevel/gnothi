@@ -78,7 +78,7 @@ export default function Upsert(props: Upsert) {
   const entries_delete_response = useStore(s => s.res.entries_delete_response?.res)
   const clear = useStore(a => a.clearEvents)
   const [changedDate, setChangedDate] = useState(false)
-  const [submitting, setSubmitting] = useState(false)
+  const submitting = useStore(s => s.req.entries_post_request || s.req.entries_put_request || s.req.entries_delete_request)
   const [showSuggested, setShowSuggested] = useState(false)
 
   const id = entry?.id
@@ -113,7 +113,6 @@ export default function Upsert(props: Upsert) {
   }, [])
 
   useEffect(() => {
-    setSubmitting(false)
     if (entries_upsert_response?.code !== 200) {
       return
     }
@@ -125,7 +124,6 @@ export default function Upsert(props: Upsert) {
   }, [entries_upsert_response])
 
   useEffect(() => {
-    setSubmitting(false)
     if (entries_delete_response?.code === 200) {
       go()
     }
@@ -170,7 +168,6 @@ export default function Upsert(props: Upsert) {
       delete data.created_at
     }
 
-    setSubmitting(true)
     if (isNew) {
       send('entries_post_request', data)
     } else {
@@ -184,7 +181,6 @@ export default function Upsert(props: Upsert) {
     }
     const title = entry.title || entry.ai_title || entry.created_at
     if (window.confirm(`Delete entry: ${title}?`)) {
-      setSubmitting(true)
       send('entries_delete_request', {id: id})
     }
   }
@@ -206,9 +202,6 @@ export default function Upsert(props: Upsert) {
   function renderButtons() {
     if (as) {
       return null
-    }
-    if (entries_upsert_response?.submitting) {
-      return <CircularProgress/>
     }
 
     return <>
@@ -332,7 +325,10 @@ export default function Upsert(props: Upsert) {
     );
   }
 
-  return <Card sx={{borderRadius: 2, height: "100%", backgroundColor: "#ffffff"}}>
+  return <Card
+    className="upsert"
+    sx={{borderRadius: 2, height: "100%", backgroundColor: "#ffffff"}}
+  >
     <CardContent sx={{backgroundColor: "white"}}>
       {renderForm()}
       <CardActions sx={{backgroundColor: "white", justifyContent: "flex-end", mt: 2}}>

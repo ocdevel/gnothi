@@ -14,18 +14,16 @@ import Container from "@mui/material/Container";
 import Behaviors from '../List'
 import KeepTracking from './KeepTracking'
 import Charts from './Charts'
+import TableQA from './TableQA.tsx'
 
-export default function Modal() {
-  const [user, send, fields, view, setView] = useStore(s => [
-    s.user,
-    s.send,
+const get = useStore.getState
+
+function ModalContent() {
+  const [fields, view] = useStore(s => [
     s.res.fields_list_response,
-    s.behaviors.view,
-    s.behaviors.setView
+    s.behaviors.view.view,
   ], shallow)
-
-  const {as, viewer, me} = user
-
+  const setView = useStore(useCallback(s => s.behaviors.setView, []))
 
   useEffect(() => {
     // no fields present. No matter why they came here, they
@@ -33,16 +31,22 @@ export default function Modal() {
     if (!fields?.ids?.length) {
       setView({view: "new", fid: null})
     }
-  }, [fields])
+  }, [fields?.ids?.join("")])
 
-  function renderDetails() {
-    return <>
-      {view.view === "new" && <Create />}
-      {view.view === "edit" && <Update />}
-      {["overall","view"].includes(view.view) && <Charts />}
-    </>
-  }
+  return <>
+    {view === "new" && <Create />}
+    {view === "edit" && <Update />}
+    {["overall","view"].includes(view) && <Charts />}
+  </>
+}
 
+export default function Modal() {
+  const [user,  view] = useStore(s => [
+    s.user,
+    s.behaviors.view,
+  ], shallow)
+  const [as, me] = [user?.as, user?.me]
+  const [setView] = useStore(useCallback(s => [s.behaviors.setView], []))
 
   const onCta = useCallback(() => setView({view: "new", fid: null}), [])
   const ctas = as ? [] : [
@@ -60,6 +64,7 @@ export default function Modal() {
   const onClose = useCallback(() => setView({page: view.lastPage}), [])
 
   return <FullScreenDialog
+    title=""
     className="behaviors modal"
     ctas={ctas}
     open={view.page === "modal"}
@@ -69,9 +74,13 @@ export default function Modal() {
       <Grid container direction="row" spacing={2}>
         <Grid item  xs={12} md={6}>
           <Behaviors advanced={true} />
+          {me?.premium && <>
+            <Box sx={{mb:2}}></Box>
+            <TableQA />
+          </>}
         </Grid>
         <Grid item xs={12} md={6}>
-          {renderDetails()}
+          <ModalContent />
         </Grid>
       </Grid>
     </Container>

@@ -1,7 +1,6 @@
 import Box from "@mui/material/Box"
-import Summarize from "./Summarize"
+import {Summarize} from "./Summarize"
 // import Ask from "./Ask"
-import Themes from "./Themes"
 import Prompt from "./Prompt/Prompt"
 import Books from "./Books"
 import Behaviors from "./Behaviors"
@@ -36,6 +35,8 @@ import {shallow} from "zustand/shallow";
 import {useDebouncedCallback} from "use-debounce";
 import IconButton from "@mui/material/IconButton";
 import {STAGE} from '../../../../utils/config'
+
+const get = useStore.getState
 
 // 62da7182: books attrs, popovers
 const iconProps = {
@@ -105,21 +106,14 @@ function Insight({label, icon, description, action, children, moreClick}: Insigh
 interface Insights {
   entry_ids: string[]
 }
-
 export default function Insights({entry_ids}: Insights) {
   const [search, me] = useStore(s => [
     s.filters.search,
     s.user?.me,
   ], shallow)
 
-  const [send, setPromptModal, setBehaviorsView, setPremium, setBooks] = useStore(useCallback(s => [
-    s.send,
-    s.modals.setPrompt,
-    s.behaviors.setView,
-    s.modals.setPremium,
-    s.modals.setBooks
-  ], []), shallow)
   const view = entry_ids.length === 1 ? entry_ids[0] : "list"
+  const entryIdsShallow = entry_ids.join("") // for [dependencies] listeners, do a value-compare rather than reference
 
   // git-blame: checks here to prevent requesting insights if not ready. Now instead I'm debouncing, and
   // letting the server decide.
@@ -128,7 +122,7 @@ export default function Insights({entry_ids}: Insights) {
     // Logging each time this is called, until I'm sure our logic above is solid.
     console.log('insights:useEffect', [search, entry_ids])
 
-    send("insights_get_request", {
+    get().send("insights_get_request", {
       view,
       entry_ids,
       insights: {
@@ -143,7 +137,7 @@ export default function Insights({entry_ids}: Insights) {
   useEffect(() => {
     if (!entry_ids.length) { return }
     getInsights()
-  }, [search, entry_ids])
+  }, [search, entryIdsShallow])
 
   // FIXME handle on a per-insight basis
   // if (!entry_ids?.length) {
@@ -178,27 +172,19 @@ export default function Insights({entry_ids}: Insights) {
       {useMemo(() => <Insight
         label="Prompt"
         icon={<PromptIcon {...iconProps} />}
-        moreClick={() => me?.premium ? setPromptModal(true) : setPremium(true)}
+        moreClick={() => me?.premium ? get().modals.setPrompt(true) : get().modals.setPremium(true)}
         description="Ask Gnothi anything"
         action={`The context for the query ${view === "list" ? "are the entries you see, based on your filters." : "is this entry"}`}
       >
         <Prompt entry_ids={entry_ids} view={view}/>
-      </Insight>, [me?.premium, entry_ids, view])}
+      </Insight>, [Boolean(me?.premium), entryIdsShallow, view])}
 
       {useMemo(() => <Insight
-        label="Themes"
-        icon={<ThemesIcon {...iconProps} />}
-        description="Identify patterns across entries"
-        action="Adjust filters for different themes"
-      >
-        <Themes view={view}/>
-      </Insight>, [view])}
-
-      {useMemo(() => <Insight
-        label="Summary"
+        label="Summary & Themes"
         icon={<SummaryIcon {...iconProps} />}
         description="AI-generated snapshot"
-        action="Adjust filters for different summaries"
+        action="Adjust filters for different results. Expand for more details."
+        // moreClick={() => setSummary(view)}
       >
         <Summarize view={view}/>
       </Insight>, [view])}
@@ -206,7 +192,7 @@ export default function Insights({entry_ids}: Insights) {
       {useMemo(() => <Insight
         label="Behavior Tracking"
         icon={<BehaviorsIcon {...iconProps} />}
-        moreClick={() => setBehaviorsView({lastPage: "dashboard", page: "modal", view: "overall"})}
+        moreClick={() => get().behaviors.setView({lastPage: "dashboard", page: "modal", view: "overall"})}
         action="Here’s an overview of the daily habits and behaviors you’ve been tracking through Gnothi."
       >
         <Behaviors/>
@@ -216,9 +202,9 @@ export default function Insights({entry_ids}: Insights) {
         label="Books"
         icon={<BooksIcon {...iconProps} />}
         description="Titles recommended by AI"
-        // action="Links and a bookshelf are coming soon!"
+        action="Adjust filters for different results. Expand for thumb up/down and bookshelves."
         //You can thumbs up or down books to train AI on your interests, or add titles you’re interested in to your bookshelf."
-        moreClick={() => setBooks(view)}
+        moreClick={() => get().modals.setBooks(view)}
       >
         <Books view={view}/>
       </Insight>, [view])}
@@ -229,7 +215,7 @@ export default function Insights({entry_ids}: Insights) {
         description="Admin tools and analytics"
       >
         <Admin view={view}/>
-      </Insight>, [me?.is_superuser])}
+      </Insight>, [Boolean(me?.is_superuser)])}
 
     </Stack2>
   </div>

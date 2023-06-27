@@ -146,6 +146,7 @@ export const routes = {
     o: {
       e: "insights_prompt_final",
       s: insights_prompt_final,
+      clears: "insights_prompt_request",
       t: {ws: true},
       keyby: 'view',
     }

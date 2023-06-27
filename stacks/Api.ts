@@ -13,7 +13,6 @@ export function Api({ app, stack }: sst.StackContext) {
   const ml = sst.use(Ml);
   const {addLogging} = sst.use(Logs)
   const {auth, fnAuth} = sst.use(Auth)
-  const {GA_MEASUREMENT_ID, GA_API_SECRET} = sst.use(Misc)
 
   const HABITICA_USER = new sst.Config.Secret(stack, "HABITICA_USER")
   const HABITICA_APP = new sst.Config.Secret(stack, "HABITICA_APP")
@@ -79,6 +78,7 @@ export function Api({ app, stack }: sst.StackContext) {
   const FN_SUMMARIZE_NAME = new sst.Config.Parameter(stack, "FN_SUMMARIZE_NAME", {value: ml.fnSummarize.functionName})
   const FN_STORE_NAME = new sst.Config.Parameter(stack, "FN_STORE_NAME", {value: ml.fnStore.functionName})
   const FN_PREPROCESS_NAME = new sst.Config.Parameter(stack, "FN_PREPROCESS_NAME", {value: ml.fnPreprocess.functionName})
+  const FN_BEHAVIORS_NAME = new sst.Config.Parameter(stack, "FN_BEHAVIORS_NAME", {value: ml.fnBehaviors.functionName})
 
   const fnBackground = withRds(stack, "FnBackground", {
     handler: "services/main.main",
@@ -89,14 +89,13 @@ export function Api({ app, stack }: sst.StackContext) {
       ws,
     ],
     bind: [
-      GA_MEASUREMENT_ID,
-      GA_API_SECRET,
       ml.OPENAI_KEY,
       FN_BOOKS_NAME,
       FN_ASK_NAME,
       FN_SUMMARIZE_NAME,
       FN_STORE_NAME,
       FN_PREPROCESS_NAME,
+      FN_BEHAVIORS_NAME,
 
       API_WS,
     ]
@@ -112,6 +111,7 @@ export function Api({ app, stack }: sst.StackContext) {
        ml.fnSummarize.functionArn,
        ml.fnStore.functionArn,
        ml.fnPreprocess.functionArn,
+       ml.fnBehaviors.functionArn,
      ],
    }))
 
@@ -120,8 +120,6 @@ export function Api({ app, stack }: sst.StackContext) {
     timeout: timeouts.md,
     handler: "services/main.proxy",
     bind: [
-      GA_MEASUREMENT_ID,
-      GA_API_SECRET,
       ml.OPENAI_KEY,
       API_WS,
       auth,
@@ -144,8 +142,6 @@ export function Api({ app, stack }: sst.StackContext) {
     },
     bind: [
       API_WS,
-      GA_MEASUREMENT_ID,
-      GA_API_SECRET,
       HABITICA_USER,
       HABITICA_APP,
     ]
