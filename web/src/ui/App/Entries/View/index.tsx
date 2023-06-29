@@ -40,6 +40,7 @@ interface Entry {
   entry: S.Entries.entries_list_response
   onClose?: any
 }
+
 export default function View({entry, onClose}: Entry) {
   const setEntryModal = useStore(useCallback(s => s.modals.setEntry, []))
   const as = useStore(s => s.user.as)
@@ -48,7 +49,9 @@ export default function View({entry, onClose}: Entry) {
   const id = entry.id!
 
   function renderButtons() {
-    if (as) {return null}
+    if (as) {
+      return null
+    }
     return <>
       <Button
         className="btn-edit"
@@ -56,7 +59,7 @@ export default function View({entry, onClose}: Entry) {
         size='small'
         color='primary'
         onClick={() => setEntryModal({mode: "edit", entry})}
-        startIcon={<FaPen />}
+        startIcon={<FaPen/>}
       >
         Edit
       </Button>
@@ -90,15 +93,15 @@ export default function View({entry, onClose}: Entry) {
           alignItems='center'
           marginTop={3}
           marginBottom={4}
-          >
+        >
           <Stack spacing={2} direction="column">
-          <Tags
-            selected={tags}
-            setSelected={setTags}
-            noClick={true}
-            noEdit={true}
-            preSelectMain={false}
-          />
+            <Tags
+              selected={tags}
+              setSelected={setTags}
+              noClick={true}
+              noEdit={true}
+              preSelectMain={false}
+            />
           </Stack>
         </Box>
         <div className='text'>
@@ -119,34 +122,35 @@ export default function View({entry, onClose}: Entry) {
 
   function renderNotes() {
     return <div>
-      <NotesList entry_id={id} />
+      <NotesList entry_id={id}/>
     </div>
   }
 
   function renderSidebar() {
-    return <Insights entry_ids={[id]} key={id} />
+    return <Insights entry_ids={[id]} key={id}/>
 
   }
 
-  return <Grid container
-           className="view"
-            alignItems="flex-start"
-             spacing={2}
+  return <Grid
+    container
+    className="view"
+    alignItems="flex-start"
+    spacing={2}
   >
     <Grid item xs={12} lg={7}>
 
-        <Card sx={{borderRadius: 2, height: "100%"}}>
-          <CardContent sx={{backgroundColor: "white"}}>
-            <CardActions sx={{backgroundColor: "white", justifyContent: "flex-end"}}>
-              {renderButtons()}
-            </CardActions>
-            {renderEntry()}
-            {renderNotes()}
-          </CardContent>
-        </Card>
+      <Card sx={{borderRadius: 2, height: "100%"}}>
+        <CardContent sx={{backgroundColor: "white"}}>
+          <CardActions sx={{backgroundColor: "white", justifyContent: "flex-end"}}>
+            {renderButtons()}
+          </CardActions>
+          {renderEntry()}
+          {renderNotes()}
+        </CardContent>
+      </Card>
     </Grid>
     <Grid item xs={12} lg={5}>
-        {renderSidebar()}
+      {renderSidebar()}
     </Grid>
   </Grid>
 }
