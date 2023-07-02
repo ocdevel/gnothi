@@ -151,6 +151,7 @@ export default function Books() {
 
   return <FullScreenDialog
     title='Books'
+    className="books modal"
     open={Boolean(booksModal)}
     onClose={() => setBooksModal(null)}
   >

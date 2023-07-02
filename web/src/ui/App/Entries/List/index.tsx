@@ -3,7 +3,7 @@ import {Helmet} from 'react-helmet-async'
 
 import {All as NotesAll} from "../Notes/List";
 
-import Grid from '@mui/material/Grid'
+import Grid from '@mui/material/Unstable_Grid2'; // Grid version 2
 import Filters from '../../Insights/Filters'
 import Insights from '../../Insights/Insights/Insights.tsx'
 import Entries from "./Entries"
@@ -32,7 +32,7 @@ export default function List({group_id=null}) {
         <Ask view={'list'} />
         <Entries />
       </Grid>
-      <Grid item sm={12} lg={4} md={5}>
+      <Grid item sm={12} md={5} lg={4}>
         <InsightsDashboard />
         <NotesAll />
       </Grid>
