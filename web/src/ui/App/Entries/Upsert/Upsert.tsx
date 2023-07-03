@@ -14,9 +14,6 @@ import {DatePicker} from '@mui/x-date-pickers/DatePicker';
 
 import {useStore} from "../../../../data/store"
 import Error from "../../../Components/Error";
-import CircularProgress from "@mui/material/CircularProgress"
-import DialogActions from "@mui/material/DialogActions"
-import DialogContent from "@mui/material/DialogContent"
 import Grid from "@mui/material/Grid"
 import Button from "@mui/material/Button"
 import Box from "@mui/material/Box"
@@ -34,6 +31,7 @@ import CardContent from "@mui/material/CardContent";
 import CardActions from "@mui/material/CardActions";
 import dayjs from 'dayjs'
 import ReactMarkdown from "react-markdown";
+import SuggestEntry from './SuggestEntry.tsx'
 
 const placeholder = `Welcome to your journal! This is the perfect place to reflect, express yourself, and capture your thoughts. Take a moment to think about your day, your experiences, or anything that's been on your mind. Use this space to write freely and let your thoughts flow. 
 
@@ -67,7 +65,6 @@ export default function Upsert(props: Upsert) {
     ...defaults
   })
 
-  const insights_nextentry_response = useStore(s => s.res.insights_nextentry_response?.hash?.['list']?.text)
   const navigate = useNavigate()
   const as = useStore(s => s.user.as)
   const send = useStore(s => s.send)
@@ -79,7 +76,6 @@ export default function Upsert(props: Upsert) {
   const clear = useStore(a => a.clearEvents)
   const [changedDate, setChangedDate] = useState(false)
   const submitting = useStore(s => s.req.entries_post_request || s.req.entries_put_request || s.req.entries_delete_request)
-  const [showSuggested, setShowSuggested] = useState(false)
 
   const id = entry?.id
   const draftId = `draft-${id || "new"}`
@@ -256,21 +252,7 @@ export default function Upsert(props: Upsert) {
     );
   }
 
-  const suggestedNextEntry = useMemo(() => {
-    if (!insights_nextentry_response?.length) { return null }
-    return <>
-      <Button
-        variant="text"
-        color="secondary"
-        onClick={() => setShowSuggested(!showSuggested)}
-      >
-        {showSuggested ? "Hide Suggestion" : "See Gnothi's suggested deep-dive"}
-      </Button>
-      {showSuggested && <Typography variant='body2'>
-        <ReactMarkdown>{insights_nextentry_response}</ReactMarkdown>
-      </Typography>}
-    </>
-  }, [insights_nextentry_response, showSuggested])
+  const suggestedNextEntry = useMemo(() => <SuggestEntry />, [])
 
   function renderForm() {
     return (
