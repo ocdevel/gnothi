@@ -4,7 +4,7 @@ import Dialog, {DialogProps} from '@mui/material/Dialog';
 import Typography from '@mui/material/Typography';
 import CloseIcon from '@mui/icons-material/Close';
 import Slide from '@mui/material/Slide';
-import { TransitionProps } from '@mui/material/transitions'
+import {TransitionProps} from '@mui/material/transitions'
 import Grid from "@mui/material/Grid";
 import DialogTitle from "@mui/material/DialogTitle";
 import AppBar, {CTA} from './AppBar'
@@ -36,7 +36,13 @@ type FullScreenDialog = Dialog & {
 }
 
 export function FullScreenDialog({
-  title, open, onClose, ctas, children, className, backButton
+  title,
+  open,
+  onClose,
+  ctas,
+  children,
+  className,
+  backButton
 }: FullScreenDialog) {
   return (
     <Dialog
@@ -46,20 +52,20 @@ export function FullScreenDialog({
       open={open}
       onClose={onClose}
       TransitionComponent={Transition}
+      // keepMounted
     >
-
       <DialogContent
-      sx={{backgroundColor: '#fafafa', p: 0, m: 0}}
+        sx={{backgroundColor: '#fafafa', p: 0, m: 0}}
       >
         <AppBar
-        onClose={onClose}
-        backButton={backButton}
-        title={title}
-        ctas={ctas}
-        clearBottom={true}
-      />
-      {children}
-        </DialogContent>
+          onClose={onClose}
+          backButton={backButton}
+          title={title}
+          ctas={ctas}
+          clearBottom={true}
+        />
+        {children}
+      </DialogContent>
     </Dialog>
   );
 }
@@ -68,13 +74,14 @@ type BasicDialog = Omit<Dialog, 'title'> & {
   size: DialogProps["maxWidth"]
   title?: string
 }
+
 export function BasicDialog({
   open,
   onClose,
   title,
   children,
   className,
-  size="xl"
+  size = "xl",
 }: BasicDialog) {
   return <Dialog
     disableEnforceFocus={true /* max callstack issue when popups inside modal */}
@@ -82,12 +89,13 @@ export function BasicDialog({
     open={open}
     onClose={onClose}
     className={className}
-
+    // keepMounted
   >
-    <Grid container
-          direction='row'
-          alignItems='center'
-          sx={{borderRadius: 3}}
+    <Grid
+      container
+      direction='row'
+      alignItems='center'
+      sx={{borderRadius: 3}}
     >
       {title && <Grid item sx={{flex: 1}}>
         <DialogTitle>{title}</DialogTitle>
@@ -97,7 +105,7 @@ export function BasicDialog({
           onClick={onClose as OnClick}
           aria-label="close"
         >
-          <CloseIcon />
+          <CloseIcon/>
         </IconButton>
       </Grid>
     </Grid>

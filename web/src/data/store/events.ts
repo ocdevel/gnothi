@@ -149,7 +149,7 @@ export const eventsSlice: StateCreator<
     const {data, keyby, op} = res
 
     // @ts-ignore
-    const current = get().resBuff[event_as] || {}
+    const current = get().resBuff[event_as] || {ids: [], hash: {}}
     let updates = {
       res,
       rows: data,
@@ -178,7 +178,6 @@ export const eventsSlice: StateCreator<
       if (op === "update") {
         updates.ids = current.ids
       } else if (op === 'prepend') {
-        if (!current?.ids) {debugger}
         updates.ids = [...updates.ids, ...current.ids]
       } else if (op === 'append') {
         updates.ids = [...current.ids, ...updates.ids]

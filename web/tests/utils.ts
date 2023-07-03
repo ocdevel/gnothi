@@ -7,6 +7,39 @@ import type {Events} from "@gnothi/schemas/events";
 const URL = 'http://localhost:5173'
 // const URL = 'https://d345r2wooxhdr2.cloudfront.net'
 
+export const sel = {
+  appbar: {
+    close: '.btn-dialog-close',
+    cta: '.appbar .cta-primary',
+  },
+  tags: {
+    input: ".textfield-tags-post input",
+    submit: ".btn-tags-post"
+  },
+  entries: {
+    list: {
+      teaser: ".entries .list .teaser",
+      text: '.entries .list .teaser .text',
+      addTag: ".entries .tags .btn-edit"
+    },
+    view: {
+      base: '.entries.modal .view',
+      text: ".entries.modal .view .text",
+      btnEdit: ".entries.modal .view .btn-edit"
+    },
+    upsert: {
+      base: ".entries.modal .upsert",
+      tags: ".entries.modal .upsert .form-upsert .tags .btn-select",
+      btnDelete: ".entries.modal .upsert .btn-delete",
+      form: {
+        title: '.entries.modal .upsert .textfield-title input',
+        text: '.rc-md-editor textarea', //".entries.modal .upsert .editor textarea"
+        submit: ".entries.modal .upsert .btn-submit"
+      }
+    }
+  }
+}
+
 const mockEntriesFile = readFileSync("tests/mock_entries.json", {encoding: "utf-8"})
 const mockEntries = JSON.parse(mockEntriesFile).map(e => ({
   // remove unwanted fields like id/user_id/created_at
@@ -26,20 +59,6 @@ export class Utils {
   entries: any[]
   tags: Record<string, string> = {} // {noai: <uuid>}
   wsListeners: {[k in Events]?: (v: unknown) => void} // resolvers
-
-  sel = {
-    appbar: {
-      close: '.btn-dialog-close',
-      cta: '.appbar .cta-primary',
-    },
-    entries: {
-      create: {
-        title: '.entries.modal .upsert .textfield-title input',
-        text: '.rc-md-editor textarea',
-        btnSubmit: ".entries.modal .upsert .btn-submit"
-      }
-    }
-  }
 
   constructor(page: Page) {
     this.page = page
@@ -88,33 +107,39 @@ export class Utils {
     await this.signup()
     const tagsPostP = this.catchWs("tags_post_response")
     const page = this.page
-    await page.locator(".entries .tags .btn-edit").click()
-    await page.locator(".textfield-tags-post input").fill("No AI")
-    await page.locator(".btn-tags-post").click()
+    await page.locator(sel.entries.list.addTag).click()
+    await page.locator(sel.tags.input).fill("No AI")
+    await page.locator(sel.tags.submit).click()
     this.tags["noai"] = (await tagsPostP).data[0].id
     const tagRow = await page.locator(".form-tags-put").nth(1)
     await tagRow.locator(".checkbox-tags-ai-summarize").click()
     // Actually let's keep indexing enabled for tests, it's fast. It's summarize that's slow
     // await tagRow.locator(".checkbox-tags-ai-index").click()
-    await page.locator(this.sel.appbar.close).click()
+    await page.locator(sel.appbar.close).click()
   }
 
   async _addEntry({title, text, noai=false, submit=true}: {title: string, text: string, noai?: boolean, submit?: boolean}) {
     const page = this.page
-    await page.locator(this.sel.appbar.cta).click()
-    await page.locator(this.sel.entries.create.title).fill(title)
-    await page.locator(this.sel.entries.create.text).fill(text)
+    await page.locator(sel.appbar.cta).click()
+    await page.locator(sel.entries.upsert.form.title).fill(title)
+    await page.locator(sel.entries.upsert.form.text).fill(text)
     if (noai) {
       // Swap tags
-      await page.locator(".entries.modal .upsert .form-upsert .tags .btn-select").nth(0).click()
-      await page.locator(".entries.modal .upsert .form-upsert .tags .btn-select").nth(1).click()
+      await page.locator(sel.entries.upsert.tags).nth(0).click()
+      await page.locator(sel.entries.upsert.tags).nth(1).click()
     }
     if (submit) {
-      await page.locator(this.sel.entries.create.btnSubmit).click()
+      await page.locator(sel.entries.upsert.form.submit).click()
     } else {
       // intended as a draft. Give it a moment to save to localStorage
       await page.waitForTimeout(1000)
     }
+  }
+
+  async addEntry(summarize=false) {
+    await this.addNoAiTag()
+    const entry = mockEntries[0]
+    await this._addEntry({title: entry.title, text: entry.text, noai: !summarize})
   }
 
   async addEntries({n_summarize=0, n_index=0}: {n_summarize: number, n_index: number}) {
@@ -137,7 +162,7 @@ export class Utils {
       // previously waiting for 5sec for summary to finish genearting. TODO not sure why?
       // Now waiting for 1 sec for entry_post_response to trigger view-modal, before we can close it
       await page.waitForTimeout(2000) 
-      await page.locator(this.sel.appbar.close).click()
+      await page.locator(sel.appbar.close).click()
     }
 
     // then index the rest
@@ -151,7 +176,7 @@ export class Utils {
       buffer = buffer.slice(1)
       this.entries.push(entry)
       await this._addEntry({title: entry.title, text: entry.text, noai: true})
-      await page.locator(this.sel.appbar.close).click()
+      await page.locator(sel.appbar.close).click()
       await page.waitForTimeout(500) // indexing is faster
     }
   }

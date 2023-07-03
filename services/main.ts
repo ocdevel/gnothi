@@ -88,7 +88,7 @@ const handleReq: FnContext['handleReq'] = async (req, fnContext) => {
   if (!req) {return null}
 
   // Logger.info({event: req.event, data: req, message: "handleReq"} )
-  Logger.metric({event: req.event, user: fnContext.user} )
+  Logger.metric({event: req.event, user: fnContext.user})
   const route = routes[req.event]
   if (!route) {
     throw new GnothiError({message: `No route found for ${req.event}`})
@@ -101,19 +101,20 @@ const handleReq: FnContext['handleReq'] = async (req, fnContext) => {
   try {
     const data = await route.fn(req.data, fnContext)
     res = {data}
-  } catch (e) {
+  } catch (error) {
+    res = error instanceof GnothiError ? {
+      code: error.code,
+      data: [{error: error.message}]
+    } : {
+      code: 500,
+      data: [{error: error.toString()}]
+    }
     res = {
       error: true,
       event: req.event,
-      ...(e instanceof GnothiError ? {
-        code: e.code,
-        data: e.message
-      } : {
-        code: 500,
-        data: e.toString()
-      })
+      ...res
     }
-    Logger.error({message: e.toString(), data: {stack: e.stack}, event: req.event})
+    Logger.error(req.event, {error})
     debugger
   }
   return await handleRes(

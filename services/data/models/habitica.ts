@@ -165,7 +165,7 @@ export class Habitica extends Base {
       }
     }
     if (errs.length) {
-      Logger.error({data: errs, event: "data/models/habitica#cron"})
+      Logger.error("data/models/habitica#cron", errs)
     }
     return {}
   }

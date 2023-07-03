@@ -20,8 +20,9 @@ export const handler: APIGatewayRequestAuthorizerHandler = async (event, context
     console.log("Token is valid. Payload:", payload);
 
     return allowPolicy(event.methodArn, payload);
-  } catch (error: any) {
-    Logger.error({message: error.message, event: "auth/wsAuthorizer#handler"});
+  } catch (error) {
+    // not using Logger to reduce imports for this tiny function
+    Logger.error("auth/wsAuthorizer#handler", {error})
     return denyAllPolicy();
   }
 };

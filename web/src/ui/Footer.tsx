@@ -81,7 +81,7 @@ export default function Footer({inApp}: Footer) {
         alignItems: 'flex-start',   //align - vertical placement - top/bottom
         justifyItems: 'flex-start',
         marginTop: 10,
-        mx: {xs: 2, lg: 5},
+        px: {xs: 2, lg: 5},
         marginBottom: 3
       }}
     >

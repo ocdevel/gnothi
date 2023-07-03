@@ -130,9 +130,7 @@ export async function lambdaSend<O = any>(
   const Payload = InvocationType === "Event" ? null
       : Buff.toObj(response.Payload) as O
   if (response.FunctionError) {
-    const Error = Payload as {errorType: string, errorMessage: string, stackTrace: string[]}
-    const error = `${Error.errorType}: ${Error.errorMessage}`
-    Logger.error({message: error, data: Error.stackTrace, event: "aws/handlers#lambdaSend"})
+    Logger.error("aws/handlers#lambdaSend", {request: data, response: Payload})
     throw error
   }
   return {
@@ -232,27 +230,25 @@ class WsHandler extends Handler<APIGatewayProxyWebsocketEventV2> {
   }
 
   async repondToConnection(res: Res, {connectionId}: Partial<FnContext>) {
-   if (!connectionId) {
-     console.warn("Trying to to WS without connectionId")
-     return
+    if (!connectionId) {
+      console.warn("Trying to to WS without connectionId")
+      return
     }
 
-    // FIXME I'm making some space for the rest of the response (responseId, chunk{i,of}, etc). I should be
-    // chunking those in.
-    // const MAX_SIZE = 128 * 1024; // 128 KB
-    const MAX_SIZE = 128 * 1024 - 200; // 128 KB - 200 bytes (rough estimate for response wrapper)
-
-    // should always be an array, but you can never be too careful
-    const isArr = Array.isArray(res.data) // will be false if we have an error
-    const dataChunks = isArr ? this.batchData(res.data, MAX_SIZE) : [res.data];
-    const isChunking = isArr && dataChunks.length > 1
     // responseId groups the chunks together. If the client switches gears (eg change tags), it will discard
     // chunks coming from the previous batch
     const responseId = ulid()
-    const resChunks = !isChunking ? [res]
+    const {data, ...meta} = res
+    // chunk is added dynamically, but we need to account for its size here. Assume max-case
+
+    const metaTemplate = {...meta, responseId, chunk: {i: 0, of: 999}}
+    const metaSize = this.sizeOfObject(metaTemplate)
+    const maxWsPayloadSize = 128 * 1024 - metaSize;
+    const dataChunks = this.batchData(data, maxWsPayloadSize)
+
+    const resChunks = !dataChunks.length === 1 ? [res]
       : dataChunks.map((chunk, i) => ({
-        ...res,
-        responseId,
+        ...metaTemplate,
         chunk: {i, of: dataChunks.length - 1},
         data: chunk
       }))
@@ -264,18 +260,14 @@ class WsHandler extends Handler<APIGatewayProxyWebsocketEventV2> {
         }))
       } catch (error) {
         if (error.name === 'GoneException') {
-          // They user may have closed the tab. Don't want to throw an error, but we do want to log it just in case
-          // there's more error here than meets the eye
-          // res.error = true
-          // res.code = 500
-          // Logger.warn({
-          //   message: "WebSocketError: trying to send to disconnected client.",
-          //   data: res,
-          //   event: res.event
-          // })
+          // They user may have closed the tab. Don't throw an error, TODO revisit (git-blame) in case there's something more
         } else {
           debugger
-          throw error // Re-throw the error if it's not a GoneException
+          await client.apig.send(new PostToConnectionCommand({
+            ConnectionId: connectionId,
+            Data: Buff.fromObj({...res, error: true, code: 500, data: [{error}]})
+          }))
+          Logger.error(res.event, {error}) // Re-throw the error if it's not a GoneException
         }
       }
     }

@@ -143,7 +143,12 @@ export default function PremiumModal() {
   }
 
   return <>
-    <FullScreenDialog title={"Plan Comparison"} open={premiumModal} onClose={close}>
+    <FullScreenDialog
+      title="Plan Comparison"
+      open={premiumModal}
+      onClose={close}
+      className="premium modal"
+    >
       <DialogContent>
         <Banner />
         <PlanComparison

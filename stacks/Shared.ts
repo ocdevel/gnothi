@@ -107,34 +107,34 @@ export function SharedCreate(context: StackContext) {
     })
   }
 
-  function createClientVpn(vpc: aws_ec2.Vpc, hostedZone: aws_acm.Certificate): aws_ec2.ClientVpnEndpoint | null {
-    // IMPORTANT: read ./clientVpnSetup.md to set this up! Required for RDS / EFS access from localhost
+  function createBastionHost(vpc: aws_ec2.Vpc) {
+    // enter a value here to use a bastion host. you'll need to manually create a keypair in console first
+    const myIp = null
+    if (!myIp) {return null}
+    const keyName = 'bastion-prod'
 
-    const clientCertificateArn = process.env.CLIENT_CERTIFICATE_ARN
-    if (!clientCertificateArn?.length) {
-      return null
-    }
-
-    const clientVpn = new aws_ec2.ClientVpnEndpoint(stack, 'ClientVpn', {
+    // Create a security group in VPC
+    const securityGroup = new aws_ec2.SecurityGroup(stack, 'BastionSG', {
       vpc,
-      cidr: '10.100.0.0/16',
-      serverCertificateArn: certificate.certificateArn,
-      // this allows you to have normal internet access as well, so not all traffic goes through the VPN. Essential,
-      // since we're in an isolated subnet.
-      splitTunnel: true,
-      clientCertificateArn: clientCertificateArn,
-    })
-
-    const clientVpnTargetNetworkAssociation = new aws_ec2.CfnClientVpnTargetNetworkAssociation(stack, 'ClientVpnAssociation', {
-      clientVpnEndpointId: clientVpn.endpointId, // use the ref attribute to get the client VPN endpoint ID
-      subnetId: vpc.privateSubnets[1].subnetId, // assuming you want to associate the first private subnet
+      description: 'Allow ssh access to ec2 instances',
+      allowAllOutbound: true   // Can be set to false if you want to restrict outbound traffic
     });
 
-    stack.addOutputs({
-      clientVpnEndpointId: clientVpn.endpointId,
-    })
+    // Add an ingress rule to allow SSH from your IP address
+    securityGroup.addIngressRule(aws_ec2.Peer.ipv4(`${myIp}/32`), aws_ec2.Port.tcp(22), 'allow ssh access from my IP');
 
-    return clientVpn
+    const instance = new aws_ec2.Instance(stack, 'Ec2Bastion', {
+      vpc,
+      vpcSubnets: { subnetType: aws_ec2.SubnetType.PUBLIC },
+      instanceType: aws_ec2.InstanceType.of(aws_ec2.InstanceClass.T2, aws_ec2.InstanceSize.MICRO),
+      machineImage: new aws_ec2.AmazonLinuxImage(), // or any other image
+      keyName,
+      securityGroup: securityGroup,
+    });
+
+    // Output the public IP of the bastion host
+    stack.addOutputs({'BastionPublicIp': instance.instancePublicIp })
+    return instance
   }
 
   function createRdsV2(vpc: aws_ec2.Vpc): aws_rds.DatabaseCluster {
@@ -240,7 +240,7 @@ export function SharedCreate(context: StackContext) {
 
   const vpc = createVpc()
   const {hostedZone, certificate} = createHostedZone()
-  const clientVpn = createClientVpn(vpc, certificate)
+  const bastion = createBastionHost(vpc)
   const rds = createRdsV2(vpc)
   const ses = createSes()
   const exported = exportVars(vpc, rds)

@@ -64,7 +64,12 @@ export function Summarize({view, expanded=true}: Summarize) {
 export function SummarizeModal() {
   const view = useStore(s => s.modals.summary)
   const setView = useStore(useCallback(s => s.modals.setSummary, []))
-  return <FullScreenDialog title={"Summary & Themes"} open={Boolean(view)} onClose={() => setView(null)}>
+  return <FullScreenDialog
+    title={"Summary & Themes"}
+    open={Boolean(view)}
+    onClose={() => setView(null)}
+    className="summarize modal"
+  >
     <DialogContent>
       <Summarize view={view} expanded={true} />
     </DialogContent>

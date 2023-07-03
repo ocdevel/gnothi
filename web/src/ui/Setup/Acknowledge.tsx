@@ -167,6 +167,7 @@ export function AcknowledgeChecker() {
     open={true}
     onClose={() => {}}
     size="md"
+    className="acknowledge modal"
   >
     <DialogContent>
       <Acknowledgements existingUser={true} />

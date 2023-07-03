@@ -1,22 +1,13 @@
-import {clients} from './clients'
-import { PutMetricDataCommand} from "@aws-sdk/client-cloudwatch";
 import type {User} from '../data/schemas/users'
 import crypto from 'crypto'
-import axios from 'axios'
-
-interface Log {
-  event: string
-  level?: "info" | "warn" | "error" | "metric"
-  message?: string
-  data?: any
-}
 interface Metric {
   event: string
   user: Pick<User, 'is_cool' | 'is_superuser' | 'created_at'>
   dimensions?: {Name: string, Value: string}[]
 }
+
 export class Logger {
-  static log({event, level, message, data}: Log) {
+  static log(event: string, data: unknown) {
     let data_ = {...data} || {}
 
     // Removing data.error if key present but value is undefined, to prevent filter on "error" catching
@@ -28,27 +19,18 @@ export class Logger {
     if ("prod" === process.env.SST_STAGE) {
       delete data_.data
     }
-
-    const obj = {
-      event,
-      level: level || "info",
-      data: data_,
-      // This allows deeper drilling via CloudWatch Insights. Eg, we can ignore anything not starting with "gnothi:"
-      // and we can filter by "gnothi:error:", etc.
-      message: `gnothi:${level}:${event} ${message}`,
+    return console.log(event, JSON.stringify(data, null, 2))
+  }
+  static warn(event: string, data: unknown) {
+    return console.warn(event, JSON.stringify(data, null, 2))
+  }
+  static error(event: string, data: unknown) {
+    const data_ = {...data}
+    // JSON.stringify won't add the stackTrace, just the error message.
+    if (data.error?.stack) {
+      data_.stack = data.error.stack
     }
-
-    // Log it here, now we can use CW Insights for this function
-    console[obj.level](obj)
-  }
-  static info(log: Log) {
-    return this.log({...log, level: "info"})
-  }
-  static warn(log: Log) {
-    return this.log({...log, level: "warn"})
-  }
-  static error(log: Log) {
-    return this.log({...log, level: "error"})
+    console.error(event, JSON.stringify(data_, null, 2))
   }
   static metric({event, user, dimensions}: Metric) {
     // this isn't "we give certain users no-tracking", it's: users with admin privs are spamming the app, and are

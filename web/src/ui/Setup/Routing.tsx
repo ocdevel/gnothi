@@ -8,6 +8,7 @@ import {
 } from "react-router-dom";
 import React, {useEffect} from "react";
 import {useStore} from "../../data/store";
+//import * as Sentry from "@sentry/react";
 
 import {S, Error} from '../Components/Routing'
 import * as StaticRoutes from '../Static/Routes'
@@ -20,7 +21,10 @@ const common = {
   errorElement: <Error />,
 }
 
-const routerAuthed = createBrowserRouter([{
+// const createBrowserRouter_ = Sentry.wrapCreateBrowserRouter(createBrowserRouter);
+const createBrowserRouter_ = createBrowserRouter
+
+const routerAuthed = createBrowserRouter_([{
   path: "/",
   element: <S><AppLayout /></S>,
   ...common,
@@ -30,7 +34,7 @@ const routerAuthed = createBrowserRouter([{
   ]
 }])
 
-const routerAnon = createBrowserRouter([{
+const routerAnon = createBrowserRouter_([{
   path: "/",
   element: <S><SplashLayout /></S>,
   ...common,

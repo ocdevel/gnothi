@@ -77,7 +77,7 @@ export async function entriesUpsertResponse(req: S.Entries.entries_upsert_respon
     ...clean,
     usePrompt
   })
-  console.log({summary})
+  //console.log({summary})
 
   updates = {
     text_clean: clean.text,
@@ -102,7 +102,7 @@ export async function entriesUpsertResponse(req: S.Entries.entries_upsert_respon
     .catch(error => {
       // FIXME some entries are having trouble saving to .text_paras, I think due to quotes in the paras? Like
       // drizzle / pg-node aren't handling those. For now mark these as skip, and deal with later.
-      console.error("entries_upsert_response", error, JSON.stringify(updates))
+      Logger.error("entries_upsert_response", {error, updates})
       const {text_paras, ...rest} = updates
       return driz.update(entries).set({
         ...rest,

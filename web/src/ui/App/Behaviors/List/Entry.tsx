@@ -15,64 +15,50 @@ interface Entry {
 }
 export default function Entry({f}: Entry) {
   const [
-    send,
     value,
-    setValues,
-
-    day,
     dayStr,
     isToday,
   ] = useStore(s => [
-    s.send,
     s.behaviors.values?.[f.id],
-    s.behaviors.setValues,
-
-    s.behaviors.day,
     s.behaviors.dayStr,
     s.behaviors.isToday,
   ], shallow)
+  const [send, setValues] = useStore(useCallback(s => [s.send, s.behaviors.setValues], []))
 
   const fid = f.id
 
-  // manual (text) entry should wait a good while for them to finish typing. Otherwise, send immediately
-  const waitFor = f.type === "number" ? 1000 : 0
-
   // Update field-entries as they type / click, but not too fast; can cause race-condition in DB
-  const postFieldVal = useDebouncedCallback(
-    (value: any) => {
-      // don't do value?.length, because 0 is a valid value. Later: account for null, which is Fivestar unset().
-      // Would need some unsetting logic server-side too
-      if (value === null || value === undefined || value === "") {return}
-      const req = {
-        field_id: fid,
-        value: parseFloat(value), // until we support strings,
-        day: isToday ? null : dayStr
-      }
-      console.log(req)
-      send(`fields_entries_post_request`, req)
-    }, 
-    waitFor
-  )
+  const postFieldVal = useCallback((value: any) => {
+    // don't do value?.length, because 0 is a valid value. Later: account for null, which is Fivestar unset().
+    // Would need some unsetting logic server-side too
+    if (value === null || value === undefined || value === "") {return}
+    const req = {
+      field_id: fid,
+      value: parseFloat(value), // until we support strings,
+      day: isToday ? null : dayStr
+    }
+    console.log(req)
+    send(`fields_entries_post_request`, req)
+  }, [])
 
-  // since we're debouncing, add a few flush() conditions for Number
-  // exit modal too fast
-  useEffect(() => {return () => postFieldVal.flush()}, [postFieldVal])
-  // change day too fast
-  useEffect(() => {postFieldVal.flush()}, [day])
-
-  const setValue = useCallback((e: any) => {
-    let value = e?.target?.value ?? e
+  const changeStar = useCallback((event: any, value: number | null) => {
+    setValues({[fid]: value})
     postFieldVal(value)
+  }, [])
+
+  const changeCheck = useCallback((value: number) => (e: React.SyntheticEvent<HTMLInputElement>) => {
+    setValues({[fid]: value})
+    postFieldVal(value)
+  }, [])
+
+  const changeNumber = useCallback((e: React.SyntheticEvent<HTMLInputElement>) => {
+    let value = e.target.value
     setValues({[fid]: value})
   }, [])
 
-  const changeStar = useCallback((event: any, v: number | null) => {
-    setValue(v)
-  }, [])
-
-  const changeCheck = useCallback((v: number) => (e: React.SyntheticEvent<HTMLInputElement>) => {
-    setValue(v)
-  }, [])
+  const sendNumber = useCallback(() => {
+    postFieldVal(value)
+  }, [value])
 
 
   if (f.type === 'fivestar') return <>
@@ -107,10 +93,12 @@ export default function Entry({f}: Entry) {
     <TextField
       disabled={!!f.service && isToday}
       type='number'
+      step='any'
+      onBlur={sendNumber}
       sx={{maxWidth: 120}}
       size="small"
       value={value || 0}
-      onChange={setValue}
+      onChange={changeNumber}
     />
   </>
 }
