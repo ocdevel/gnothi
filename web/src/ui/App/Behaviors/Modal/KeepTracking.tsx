@@ -7,6 +7,7 @@ import Card from "@mui/material/Card";
 import React from "react";
 import {Link} from "../../../Components/Link";
 import {shallow} from "zustand/shallow";
+import {DISCORD_LINK} from "../../../../utils/config.ts";
 
 export default function KeepTracking() {
   return <Card sx={{borderRadius: 2, height:"100%", backgroundColor: "white"}}>
@@ -27,7 +28,7 @@ export default function KeepTracking() {
           variant="outlined"
           color="secondary"
           size="small"
-          to="https://discord.gg/TNEvx2YR"
+          to={DISCORD_LINK}
           target="_blank"
         >Connect with the creators</Link.Button>
       </CardActions>

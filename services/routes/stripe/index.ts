@@ -10,6 +10,7 @@ import {Config} from 'sst/node/config'
 import {db} from "../../data/dbSingleton";
 import {GnothiError} from "../errors";
 import {z} from 'zod'
+import {Logger} from "../../aws/logs";
 
 const r = Routes.routes
 
@@ -82,6 +83,7 @@ export const stripe_webhook_request = new Route(r.stripe_webhook_request, async 
   if (user) {
     // update the user of new subscription
     await notifyUser(event, user, context)
+    Logger.metric({event: event.type, user})
   }
 
   // Send acknowledgement receipt to stripe

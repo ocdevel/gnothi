@@ -20,7 +20,7 @@ import CardContent from "@mui/material/CardContent";
 import CardActions from "@mui/material/CardActions";
 import IconButton from "@mui/material/IconButton";
 import Divider from "@mui/material/Divider";
-import {Menu2} from "@gnothi/web/src/ui/Components/Form"
+import {Menu2} from "../../../Components/Form"
 import {Alert2} from "@gnothi/web/src/ui/Components/Misc"
 import {FullScreenDialog} from "../../../Components/Dialog"
 import * as S from '@gnothi/schemas'

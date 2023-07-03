@@ -6,7 +6,7 @@ import {useStore} from "../store";
 import {z} from 'zod'
 import type {WebSocketHook} from "react-use-websocket/dist/lib/types";
 import Typography from "@mui/material/Typography";
-import {API_WS} from '../..//utils/config'
+import {API_WS, DISCORD_LINK} from '../../utils/config'
 import {Auth} from 'aws-amplify'
 import {WebSocketEvents} from "vitest";
 import {useDebouncedCallback} from "use-debounce";
@@ -64,7 +64,7 @@ export default function useApi(): void {
     }
     // wasn't that. Something terrible.
     console.log(event)
-    // get().addError(<Typography>Oops! We've hit a hiccup (it's not you, it's us). Try a quick refresh or re-login. Need a hand? Email us at <a href="mailto:gnothi@gnothiai.com">gnothi@gnothiai.com</a> or drop a message on <a href="https://discord.gg/TNEvx2YR" target="_blank">Discord</a> - your account is safe and sound.</Typography>)
+    // get().addError(<Typography>Oops! We've hit a hiccup (it's not you, it's us). Try a quick refresh or re-login. Need a hand? Email us at <a href="mailto:gnothi@gnothiai.com">gnothi@gnothiai.com</a> or drop a message on <a href={DISCORD_LINK} target="_blank">Discord</a> - your account is safe and sound.</Typography>)
   }
 
   async function getJwt() {

@@ -24,6 +24,7 @@ import {
   MdOutlineBackHand as DisclaimerIcon
 } from "react-icons/md"
 import {styles} from "./Setup/Mui.tsx";
+import {DISCORD_LINK} from "../utils/config.ts";
 
 interface FooterLink {
   icon?: React.FC
@@ -122,7 +123,7 @@ export default function Footer({inApp}: Footer) {
           <FooterLink
             color={sx.font.color}
             icon={<DiscordIcon {...sx.icon} />}
-            to="https://discord.gg/TNEvx2YR"
+            to={DISCORD_LINK}
             external
           >Chat on Discord</FooterLink>
           <FooterLink

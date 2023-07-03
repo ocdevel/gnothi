@@ -16,7 +16,7 @@ interface LogEvent {
 const ToAddresses = process.env.LOG_TO_EMAILS?.split(',')?.filter(Boolean)
 
 async function sendEmail(subject: string, data: unknown) {
-  if (!ToAddresses) {return}
+  if (!ToAddresses?.length) {return}
   try {
     await sesClient.send(new SendEmailCommand({
       Destination: {

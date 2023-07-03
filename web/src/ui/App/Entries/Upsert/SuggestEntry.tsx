@@ -21,14 +21,12 @@ export default function SuggestEntry() {
     setPremium(true)
   }
 
-
   const loading = premium && !insights_nextentry_response?.length
   const disabled = loading && !showSuggested
   const startIcon = loading ? <CircularProgress size={10} /> : null
 
   return <>
     <Button
-      aria-describedby={id}
       variant="text"
       color="secondary"
       endIcon={startIcon}
