@@ -1,11 +1,12 @@
 import {lambdaSend} from "../../aws/handlers"
-import {insights_books_response} from '@gnothi/schemas/insights'
+import {insights_books_response} from '../../../schemas/insights'
 import {Config} from 'sst/node/config'
 import * as S from "@gnothi/schemas"
 import {sendInsight} from "./utils";
+import {FnContext} from "../../routes/types";
 
 type FnIn = {
-  context?: S.Api.FnContext
+  context?: FnContext
   search_mean: number[]
   thumbs: {id: number, direction: number}[]
 }

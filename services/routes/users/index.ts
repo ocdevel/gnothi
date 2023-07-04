@@ -48,7 +48,9 @@ export const users_everything_response = new Route(r.users_everything_response, 
     if (!stuckEntry) {break}
     console.log(`Fixing: stuck ${i}`)
     // sending context for this user, see git-blame for detachedContext if we ever go outside this user
-    await entriesUpsertResponse(stuckEntry, context);
+    await entriesUpsertResponse(stuckEntry, context)
+    // Give openai some breathing room. Wait 1 second
+    await new Promise(resolve => setTimeout(resolve, 1000))
   }
   return []
 })
