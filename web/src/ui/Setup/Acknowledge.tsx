@@ -16,6 +16,7 @@ import FormControlLabel from "@mui/material/FormControlLabel";
 import Checkbox from "@mui/material/Checkbox";
 import {theme as muiTheme} from '../Setup/Mui'
 import Button from "@mui/material/Button";
+import {DISCORD_LINK} from "../../utils/config.ts";
 
 // Create a Zustand store local to this file to track just the two acknowledgement checkboxes.
 type AcksObj = {
@@ -70,7 +71,7 @@ export function Acknowledgements({existingUser}: Acknowledgements) {
       <Stack mb={2}>
         <Typography {...subtitleProps}>We're thrilled to announce the launch of Gnothi v1!</Typography>
         </Stack>
-        <Typography>If you have any questions, or need any help navigating the new updates, feel free to drop us an <a href="mailto:gnothi@gnothiai.com">email</a> or reach out on <a href="https://discord.gg/TNEvx2YR" target="_blank">Discord</a> to connect.</Typography>
+        <Typography>If you have any questions, or need any help navigating the new updates, feel free to drop us an <a href="mailto:gnothi@gnothiai.com">email</a> or reach out on <a href={DISCORD_LINK} target="_blank">Discord</a> to connect.</Typography>
         </Stack>
         <Stack mb={2} justifyItems="center">
         <Typography><CheckIcon sx={{fontSize:15, mr:1}}/>New features coming soon</Typography>

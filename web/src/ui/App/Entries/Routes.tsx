@@ -7,7 +7,9 @@ import Dashboard from "./List"
 import New from "./Upsert/New"
 // import {EntriesRouter as ModalRouter} from "./Modal"
 
-const defaults = {errorElement: <Error />}
+const defaults = {
+  // errorElement: <Error />
+}
 
 const routes = [
   {path: "j", ...defaults, element: <Layout />, children: [

@@ -48,3 +48,5 @@ export const awsConfig = {
   //   ],
   // },
 }
+
+export const DISCORD_LINK = "https://discord.gg/Bhb8qYV7E6"

@@ -217,6 +217,11 @@ export default function Insights({entry_ids}: Insights) {
         <Admin view={view}/>
       </Insight>, [Boolean(me?.is_superuser)])}
 
+      <iframe style={{borderRadius: 8}} width="100%" height="315" src="https://www.youtube.com/embed/bi0KS8JdHbE" title="YouTube video player"
+        frameBorder="0"
+        allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+        allowFullScreen></iframe>
+
     </Stack2>
   </div>
 }

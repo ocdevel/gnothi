@@ -28,6 +28,7 @@ import StarIcon from '@mui/icons-material/StarBorder';
 import DoneIcon from '@mui/icons-material/Done';
 import TipsIcon from '@mui/icons-material/TipsAndUpdatesOutlined';
 import NumbersIcon from '@mui/icons-material/NumbersOutlined';
+import {DISCORD_LINK} from "../../../../utils/config.ts";
 
 // import ExpandMore from "@mui/icons-material/ExpandMore";
 // import Advanced from "../Modal/Advanced";
@@ -206,7 +207,7 @@ export default function Behaviors({advanced}: Behaviors) {
       <Typography mb={1} mb={3} variant={"body2"}>4. Enter your User ID and API token <i>(below)</i></Typography>
       <Typography color="#0077C2" variant={"body1"} fontWeight={500}>Have questions?</Typography>
       <Typography mb={3} color="#0077C2" fontWeight={500} variant={"body2"}>Feel free to send an <a
-        href="mailto:gnothi@gnothiai.com">email</a> or reach out on <a href="https://discord.gg/TNEvx2YR"
+        href="mailto:gnothi@gnothiai.com">email</a> or reach out on <a href={DISCORD_LINK}
                                                                        target="_blank">Discord</a> to
         connect.</Typography>
       <Typography mb={3}>Your User ID and API Token are database-encrypted. <em>All</em> sensitive data in Gnothi is
@@ -238,7 +239,7 @@ export default function Behaviors({advanced}: Behaviors) {
         "Excluded" drop-down.</Typography>
       <Typography color="#0077C2" variant={"body1"} fontWeight={500}>Have questions?</Typography>
       <Typography mb={3} color="#0077C2" fontWeight={500} variant={"body2"}>Feel free to send an <a
-        href="mailto:gnothi@gnothiai.com">email</a> or reach out on <a href="https://discord.gg/TNEvx2YR"
+        href="mailto:gnothi@gnothiai.com">email</a> or reach out on <a href={DISCORD_LINK}
                                                                        target="_blank">Discord</a> to
         connect.</Typography>
     </Box>
