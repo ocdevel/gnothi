@@ -18,7 +18,7 @@ const SplashLayout = React.lazy( () => import("../Static/Splash/Layout"))
 const AppLayout = React.lazy(() => import("../App/Layout/Layout"))
 
 const common = {
-  errorElement: <Error />,
+  // errorElement: <Error />,
 }
 
 // const createBrowserRouter_ = Sentry.wrapCreateBrowserRouter(createBrowserRouter);
