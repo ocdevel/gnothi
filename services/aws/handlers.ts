@@ -122,22 +122,19 @@ export async function lambdaSend<O = any>(
   FunctionName: string,
   InvocationType: InvokeCommandInput['InvocationType']
 ): Promise<InvokeCommandOutput_<O>> {
-  const response = await clients.lambda.send(new InvokeCommand({
+  const {Payload, ...rest} = await clients.lambda.send(new InvokeCommand({
     InvocationType,
     Payload: Buff.fromObj(data),
     FunctionName,
   }))
-  const Payload = InvocationType === "Event" ? null
-      : Buff.toObj(response.Payload) as O
-  if (response.FunctionError) {
-    Logger.error("aws/handlers#lambdaSend", {request: data, response: Payload})
-    throw error
+  const PayloadObj = InvocationType === "Event" ? null
+      : Buff.toObj(Payload) as O
+  const response = {...rest, Payload: PayloadObj}
+  if (rest.FunctionError) {
+    Logger.error("aws/handlers#lambdaSend", {request: data, response})
+    throw new Error(PayloadObj.errorMessage)
   }
-  return {
-    ...response,
-    // Revisit how to decode the Payload. Buffer vs Uint8Array?
-    Payload
-  }
+  return response
 }
 
 class LambdaHandler extends Handler<any> {
@@ -243,15 +240,16 @@ class WsHandler extends Handler<APIGatewayProxyWebsocketEventV2> {
 
     const metaTemplate = {...meta, responseId, chunk: {i: 0, of: 999}}
     const metaSize = this.sizeOfObject(metaTemplate)
-    const maxWsPayloadSize = 128 * 1024 - metaSize;
+    const wiggleRoom = 100
+    const maxWsPayloadSize = 128 * 1024 - metaSize - wiggleRoom;
     const dataChunks = this.batchData(data, maxWsPayloadSize)
 
-    const resChunks = !dataChunks.length < 2 ? [res]
-      : dataChunks.map((chunk, i) => ({
-        ...metaTemplate,
-        chunk: {i, of: dataChunks.length - 1},
-        data: chunk
-      }))
+    // if 0 or 1 items, send as-is. Otherwise, send as chunks
+    const resChunks = dataChunks.length > 1 ? dataChunks.map((chunk, i) => ({
+      ...metaTemplate,
+      chunk: {i, of: dataChunks.length - 1},
+      data: chunk
+    })) : [res]
     for (const chunk of resChunks) {
       try {
         await clients.apig.send(new PostToConnectionCommand({
@@ -263,11 +261,11 @@ class WsHandler extends Handler<APIGatewayProxyWebsocketEventV2> {
           // They user may have closed the tab. Don't throw an error, TODO revisit (git-blame) in case there's something more
         } else {
           debugger
-          await client.apig.send(new PostToConnectionCommand({
+          Logger.error(res.event, {error, chunk}) // Re-throw the error if it's not a GoneException
+          await clients.apig.send(new PostToConnectionCommand({
             ConnectionId: connectionId,
             Data: Buff.fromObj({...res, error: true, code: 500, data: [{error}]})
           }))
-          Logger.error(res.event, {error}) // Re-throw the error if it's not a GoneException
         }
       }
     }

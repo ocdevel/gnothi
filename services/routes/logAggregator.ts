@@ -13,14 +13,15 @@ interface LogEvent {
   message: string;
 }
 
-const ToAddresses = process.env.LOG_TO_EMAILS?.split(',')?.filter(Boolean)
+const metricEmails = process.env.METRIC_EMAILS?.split(',')?.filter(Boolean) || []
+const errorEmails = process.env.ERROR_EMAILS?.split(',')?.filter(Boolean) || []
 
-async function sendEmail(subject: string, data: unknown) {
-  if (!ToAddresses?.length) {return}
+async function sendEmail(toAddresses: string[], subject: string, data: unknown) {
+  if (!toAddresses.length) {return}
   try {
     await sesClient.send(new SendEmailCommand({
       Destination: {
-        ToAddresses: ToAddresses
+        ToAddresses: toAddresses
       },
       Message: {
         Body: {
@@ -71,7 +72,7 @@ async function emailMetrics(logEvents: LogEvent[]) {
       || m.includes("customer.subscription.deleted")
   }).map(parseLogJson).filter(Boolean)
   if (!metrics?.length) {return}
-  await sendEmail("Gnothi Metric", metrics)
+  await sendEmail(metricEmails,"Gnothi Metric", metrics)
 }
 
 export async function main(event: CloudWatchLogsEvent, context: any) {
@@ -94,6 +95,6 @@ export async function main(event: CloudWatchLogsEvent, context: any) {
 
   if (errorEvents.length) {
     console.error(errorEvents)
-    await sendEmail("Gnothi Error", errorEvents)
+    await sendEmail(errorEmails,"Gnothi Error", errorEvents)
   }
 };
