@@ -246,7 +246,7 @@ class WsHandler extends Handler<APIGatewayProxyWebsocketEventV2> {
     const maxWsPayloadSize = 128 * 1024 - metaSize;
     const dataChunks = this.batchData(data, maxWsPayloadSize)
 
-    const resChunks = !dataChunks.length === 1 ? [res]
+    const resChunks = !dataChunks.length < 2 ? [res]
       : dataChunks.map((chunk, i) => ({
         ...metaTemplate,
         chunk: {i, of: dataChunks.length - 1},

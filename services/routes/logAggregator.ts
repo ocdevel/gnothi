@@ -59,8 +59,21 @@ async function sendMetrics(logEvents: LogEvent[]) {
     `https://www.google-analytics.com/mp/collect?api_secret=${api_secret}&measurement_id=${measurement_id}`,
     metric
   )))
+}
+
+async function emailMetrics(logEvents: LogEvent[]) {
+  const metrics = logEvents.filter(logEvent => {
+    const m = logEvent.message
+    return m.includes("users_signup")
+      || m.includes("fields_ask_request")
+      || m.includes("insights_prompt_request")
+      || m.includes("checkout.session.completed")
+      || m.includes("customer.subscription.deleted")
+  }).map(parseLogJson).filter(Boolean)
+  if (!metrics?.length) {return}
   await sendEmail("Gnothi Metric", metrics)
 }
+
 export async function main(event: CloudWatchLogsEvent, context: any) {
   const payload = Buffer.from(event.awslogs.data, 'base64');
   const decompressed = zlib.gunzipSync(payload);
@@ -73,7 +86,10 @@ export async function main(event: CloudWatchLogsEvent, context: any) {
   const metricEvents = logEvents.filter(logEvent => logEvent.message.includes('METRIC'))
 
   if (metricEvents.length) {
-    await sendMetrics(metricEvents)
+    await Promise.all([
+      sendMetrics(metricEvents),
+      emailMetrics(metricEvents)
+    ])
   }
 
   if (errorEvents.length) {
