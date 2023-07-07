@@ -5,9 +5,11 @@ import ReactMarkdown from "react-markdown";
 import {useStore} from "../../../../data/store";
 import {useCallback, useState} from "react";
 import CircularProgress from "@mui/material/CircularProgress";
+import PremiumIcon from '@mui/icons-material/LockOutlined';
+
 
 export default function SuggestEntry() {
-  const premium = useStore(s => s.user?.me?.premium)
+  const premium = false //useStore(s => s.user?.me?.premium)
   const setPremium = useStore(useCallback(s => s.modals.setPremium,[]))
   const insights_nextentry_response = useStore(s => s.res.insights_nextentry_response?.hash?.['list']?.text)
   const [showSuggested, setShowSuggested] = useState(false)
@@ -32,6 +34,7 @@ export default function SuggestEntry() {
       endIcon={startIcon}
       disabled={disabled}
       onClick={handleClick}
+      startIcon={premium ? null : <PremiumIcon />}
     >
       {showSuggested ? "Hide Suggestion" : "See Gnothi's suggested deep-dive"}
     </Button>

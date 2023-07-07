@@ -14,10 +14,7 @@ import {DatePicker} from '@mui/x-date-pickers/DatePicker';
 
 import {useStore} from "../../../../data/store"
 import Error from "../../../Components/Error";
-import Grid from "@mui/material/Grid"
 import Button from "@mui/material/Button"
-import Box from "@mui/material/Box"
-import Typography from "@mui/material/Typography"
 import {TextField2, Checkbox2} from "../../../Components/Form";
 import Editor from "../../../Components/Editor";
 import {Alert2} from "../../../Components/Misc";
@@ -75,7 +72,7 @@ export default function Upsert(props: Upsert) {
   const entries_delete_response = useStore(s => s.res.entries_delete_response?.res)
   const clear = useStore(a => a.clearEvents)
   const [changedDate, setChangedDate] = useState(false)
-  const submitting = useStore(s => s.req.entries_post_request || s.req.entries_put_request || s.req.entries_delete_request)
+  const submitting = useStore(s => Boolean(s.req.entries_post_request || s.req.entries_put_request || s.req.entries_delete_request))
 
   const id = entry?.id
   const draftId = `draft-${id || "new"}`
@@ -203,7 +200,6 @@ export default function Upsert(props: Upsert) {
     return <>
       {id && <>
         <Button
-          color='secondary'
           className='btn-delete'
           sx={{marginRight: 'auto'}}
           color="warning"

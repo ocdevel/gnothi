@@ -51,14 +51,6 @@ export const Req = z.object({
   trigger: z.enum(['ws', 'http', 'sns', 's3', 'lambda']).optional(),
   data: AnyToObj,
   as_user: z.string().uuid().optional(),
-
-  // When sending chunks of data via websockets, we need to track (1) the progress, (2) are
-  // we still buffering from the same response batch
-  responseId: z.string().optional(),
-  chunk: z.object({
-    i: z.number(),
-    of: z.number()
-  }).optional(),
 })
 export type Req = z.infer<typeof Req>
 
@@ -66,6 +58,13 @@ export type Req = z.infer<typeof Req>
 type Res_ = {
   event: Events
   code: number
+  // When sending chunks of data via websockets, we need to track (1) the progress, (2) are
+  // we still buffering from the same response batch
+  responseId?: string
+  chunk?: {
+    i: number
+    of: number
+  }
 }
 export type ResError = Res_ & {
   error: true
