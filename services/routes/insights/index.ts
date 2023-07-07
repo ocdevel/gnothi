@@ -28,7 +28,7 @@ export const insights_get_request = new Route(r.insights_get_request,async (req,
 
 export const insights_get_response = new Route(r.insights_get_response,async (req, context) => {
   const {m, uid: user_id} = context
-  const {view, entry_ids, insights} = req
+  const {view, entry_ids, insights, tryPremium} = req
   const query = insights.query || ""
   const promises = []
   // will be used to pair to which page called the insights client-side (eg list vs view)
@@ -72,10 +72,13 @@ export const insights_get_response = new Route(r.insights_get_response,async (re
   }
 
   if (insights.summarize) {
+    // will expand this past summarize when I add the credits system
+    const usePrompt_ = Boolean(usePrompt || tryPremium)
+
     promises.push(summarizeInsights({
       context,
       entries: entriesFiltered,
-      usePrompt
+      usePrompt: usePrompt_
     }))
 
     promises.push(suggestNextEntry({

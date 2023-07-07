@@ -183,11 +183,11 @@ export default function Insights({entry_ids}: Insights) {
         label="Summary & Themes"
         icon={<SummaryIcon {...iconProps} />}
         description="AI-generated snapshot"
-        action="Adjust filters for different results. Expand for more details."
+        action="Adjust filters for different results."
         // moreClick={() => setSummary(view)}
       >
-        <Summarize view={view}/>
-      </Insight>, [view])}
+        <Summarize view={view} entry_ids={entry_ids} />
+      </Insight>, [view, entry_ids])}
 
       {useMemo(() => <Insight
         label="Behavior Tracking"

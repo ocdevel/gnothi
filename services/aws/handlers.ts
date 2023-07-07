@@ -229,6 +229,10 @@ class WsHandler extends Handler<APIGatewayProxyWebsocketEventV2> {
       chunks.push(currentChunk);
     }
 
+    if (!chunks.length) {
+      chunks.push([])
+    }
+
     return chunks.map((chunk, i) => ({
       ...metaTemplate,
       chunk: {i, of: chunks.length - 1},

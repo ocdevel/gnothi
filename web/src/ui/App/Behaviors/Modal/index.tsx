@@ -74,10 +74,8 @@ export default function Modal() {
       <Grid container direction="row" spacing={2}>
         <Grid item  xs={12} md={6}>
           <Behaviors advanced={true} />
-          {me?.premium && <>
-            <Box sx={{mb:2}}></Box>
-            <TableQA />
-          </>}
+          <Box sx={{mb:2}}></Box>
+          <TableQA />
         </Grid>
         <Grid item xs={12} md={6}>
           <ModalContent />

@@ -161,7 +161,6 @@ export async function summarizeInsights({context, entries, usePrompt}: Summarize
         parsed,
         context
       ),
-      suggestNextEntry({parsed, context, usePrompt, entries})
     ])
   }
 

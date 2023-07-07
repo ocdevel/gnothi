@@ -13,6 +13,7 @@ const Insight = z.object({
 
 export const insights_get_request = Insight.extend({
   entry_ids: z.string().array(),
+  tryPremium: z.boolean().optional(),
   insights: z.object({
     summarize: z.boolean().optional(), // also includes themes
     query: z.string().optional(), // if using a ?, acts as a question
@@ -120,7 +121,8 @@ export const routes = {
       e: 'insights_get_final',
       s: insights_get_final,
       t: {ws: true},
-      keyby: 'view'
+      keyby: 'view',
+      clears: "insights_get_request"
     }
   },
   insights_prompt_request: {
@@ -169,24 +171,28 @@ export const routes = {
     e: "insights_themes_response",
     s: insights_themes_response,
     t: {ws: true},
+    op: "update",
     keyby: 'view'
   },
   insights_summarize_response: <DefO<any>>{
     e: "insights_summarize_response",
     s: insights_summarize_response,
     t: {ws: true},
+    op: "update",
     keyby: 'view'
   },
   insights_books_response: <DefO<any>>{
     e: "insights_books_response",
     s: insights_books_response,
     t: {ws: true},
+    op: "update",
     keyby: 'view'
   },
   insights_nextentry_response: <DefO<any>>{
     e: "insights_nextentry_response",
     s: insights_nextentry_response,
     t: {ws: true},
+    op: "update",
     keyby: 'view'
   }
 }
