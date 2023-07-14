@@ -48,7 +48,9 @@ export function UserMenu() {
     //   handleCloseUserMenu()
     // }},
     {
-      name: 'Premium', onClick: () => {
+      name: 'Premium',
+      className: "btn-premium",
+      onClick: () => {
         handleCloseUserMenu()
         setPremiumModal(true)
       }
@@ -56,14 +58,19 @@ export function UserMenu() {
     // {name: 'Settings', onClick: () => {
     //   handleCloseUserMenu()
     // }},
-    {name: 'Logout', onClick: () => {
-      handleCloseUserMenu()
-      logout()
-    }},
+    {
+      name: 'Logout',
+      className: "btn-logout",
+      onClick: () => {
+        handleCloseUserMenu()
+        logout()
+      }
+    },
   ]
-  return <Box sx={{ flexGrow: 0}}>
+  return <Box sx={{ flexGrow: 0}} className="usermenu">
     <Tooltip title="Open settings">
       <IconButton
+        className="btn-profile"
         onClick={handleOpenUserMenu}
         sx={{ ...buttonSx, p: 0 }}>
         <Avatar alt={user?.email}>
@@ -89,6 +96,8 @@ export function UserMenu() {
     >
       {items.map((item) => (
         <MenuItem
+          classes={{root: item.className}}
+          className={item.className}
           sx={{...buttonSx}}
           key={item.name}
           onClick={item.onClick}

@@ -32,7 +32,6 @@ function SetupApi() {
   return null
 }
 
-
 function Errors() {
   // const error = useStore(state => state.apiError);
   // <Error message={error} />

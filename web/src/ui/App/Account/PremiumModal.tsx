@@ -26,7 +26,7 @@ const PAYMENT_LINK = STAGE === "prod" ? "https://buy.stripe.com/fZe02UdpT5Xd6yI6
   : "https://buy.stripe.com/test_dR68wJ2kj6lc4es3cc"
 
 
-const fmt = (x) => dayjs.unix(x).format('YYYY-MM-DD')
+const fmt = (x: any) => dayjs.unix(x).format('YYYY-MM-DD')
 
 export function SubscriptionDetails() {
   const stripe_list_response = useStore(s => s.res.stripe_list_response?.first)
@@ -81,7 +81,7 @@ export default function PremiumModal() {
     s.send
   ], shallow)
   const [canceling, setCanceling] = useState(false)
-  const [showDisclaimer, setShowDisclaimer] = useState(false)
+  // git-blame for showDisclaimer()
 
   const canceled = stripe_list_response?.status === "canceled"
 
@@ -94,7 +94,6 @@ export default function PremiumModal() {
     fetchStripeDetails()
   }, [me?.payment_id, premiumModal])
 
-
   const close = useCallback(() => {setPremiumModal(false)}, [])
   async function cancelStripe() {
     // show confirmation alert, get yes response first
@@ -104,7 +103,6 @@ export default function PremiumModal() {
     window.location.href = "/"
   }
 
-
   function premiumActiveFooter() {
     return <SubscriptionDetails />
   }
@@ -113,6 +111,7 @@ export default function PremiumModal() {
     if (canceled) {return null}
     return <>
       <Button
+        className="btn-upgrade"
         fullWidth
         {...buttonDefaults}
         disabled={!me}

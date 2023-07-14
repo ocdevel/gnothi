@@ -11,6 +11,8 @@ export const sel = {
   appbar: {
     close: '.btn-dialog-close',
     cta: '.appbar .cta-primary',
+    btnProfile: '.appbar .usermenu .btn-profile',
+    btnPremium: '.btn-premium' // TODO have more specific selector, having trouble with .appbar .usermenu .btn-premium
   },
   tags: {
     input: ".textfield-tags-post input",
@@ -37,6 +39,9 @@ export const sel = {
         submit: ".entries.modal .upsert .btn-submit"
       }
     }
+  },
+  premium: {
+    btnUpgrade: ".premium.modal .btn-upgrade"
   }
 }
 
