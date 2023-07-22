@@ -1,12 +1,12 @@
 import { GetSecretValueCommand, SecretsManagerClient } from '@aws-sdk/client-secrets-manager'
 import {APIGatewayEvent, APIGatewayProxyResult, Context} from 'aws-lambda'
-import { Client as PgClient, Pool, QueryResult } from 'pg'
 import { pgTable, serial, text, varchar } from 'drizzle-orm/pg-core';
-import { drizzle, NodePgDatabase } from 'drizzle-orm/node-postgres'
-import { sql, SQL } from 'drizzle-orm'
+import { drizzle, PostgresJsDatabase } from 'drizzle-orm/postgres-js'
+import {Assume, sql, SQL} from 'drizzle-orm'
 import { URL } from 'url'
 import { Config } from 'sst/node/config'
 import {Logger} from "../aws/logs";
+import postgres, {ExecutionResult} from 'postgres';
 
 export const dbname = `gnothi${process.env.SST_STAGE}`
 
@@ -50,8 +50,8 @@ export class DB {
   // not instantiated by callers
   public info: ConnectionInfo
   private connected = false
-  public pg: Pool
-  public drizzle: NodePgDatabase
+  public pg: ReturnType<typeof postgres>
+  public drizzle: PostgresJsDatabase
 
   constructor(info: ConnectionInfo = {}) {
     this.info = info
@@ -67,7 +67,7 @@ export class DB {
       i.host = parsed.host
       i.database = parsed.database
     } else if (!i.host) {
-      if (~["staging", "prod"].indexOf(process.env.SST_STAGE)) {
+      if (~["staging", "prod"].indexOf(process.env.SST_STAGE!)) {
         console.log("Using RDS database")
         // get the secret from secrets manager.
         const secretsClient = new SecretsManagerClient({})
@@ -89,8 +89,8 @@ export class DB {
     i.database = i.database || dbname
 
     // const pgClient = new PgClient({
-    const pgClient = new Pool({
-      max: 1, min: 0, // single connection for singleton Lambda
+    const pgClient = postgres({
+      max: 1, // single connection for singleton Lambda
       host: i.host.host, // host is the endpoint of the db cluster
       port: i.host.port, // port is 5432
       user: i.host.username, // username is the same as the secret name
@@ -135,8 +135,8 @@ export class DB {
       await this.connect()
     }
     try {
-      const queryResult: QueryResult<O> = await this.drizzle.execute<O>(sql_)
-      return queryResult.rows.map(DB.removeNull)
+      const queryResult: postgres.RowList<Assume<O, postgres.Row>[]> = await this.drizzle.execute<O>(sql_)
+      return queryResult.map(DB.removeNull)
     } catch (error) {
       // (await this.client()).release(true)
       Logger.error("data/db#query", {error, sql: sql_})

@@ -93,7 +93,7 @@ export class Fields extends Base {
       where fe.field_id=${id} and fe.value is not null and fe.created_at is not null
       order by fe.created_at asc
     `)
-    return res.rows
+    return res
   }
 
   async influencersList() {
@@ -103,7 +103,7 @@ export class Fields extends Base {
       inner join ${fields} f on f.id=i.field_id
         and f.user_id=${uid}
     `)
-    return res.rows
+    return res
   }
 
   async updateAvg(fid: string) {

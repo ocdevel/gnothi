@@ -59,7 +59,7 @@ export class Habitica extends Base {
       )
       select date(${huser.lastCron}::timestamptz at time zone tz.tz)::text last_cron
       from tz;
-    `)).rows[0].last_cron
+    `))[0].last_cron
 
     const userFields = (await driz.select().from(fields).where(and(
       eq(fields.user_id, user.id),
@@ -157,7 +157,7 @@ export class Habitica extends Base {
     `)
 
     let errs = []
-    for (const u of users.rows) {
+    for (const u of users) {
       try {
         await this.syncFor(u)
       } catch (err) {

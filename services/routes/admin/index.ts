@@ -40,5 +40,5 @@ SELECT
 export const admin_analytics_list_request = new Route(r.admin_analytics_list_request, async (req, context) => {
   if (!context.user.is_superuser) {return []}
   const res = await context.db.drizzle.execute(query)
-  return res.rows
+  return res
 })
