@@ -238,8 +238,8 @@ export class Entries extends Base {
       SELECT e.*, (SELECT json_agg(et.*) FROM entries_tags et WHERE e.id = et.entry_id) as tags
       FROM updated e;
     `)
-    if (!res.rows?.[0]) {return null}
-    const row = DB.removeNull(res.rows[0]) as S.Entries.entries_upsert_response
+    if (!res?.[0]) {return null}
+    const row = DB.removeNull(res[0]) as S.Entries.entries_upsert_response
     return {...row, tags: tagsToBoolMap(row.tags)}
   }
 }

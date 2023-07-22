@@ -29,7 +29,7 @@ export class Books extends Base {
           and bs.user_id=${uid} and bs.shelf=${shelf}
       order by bs.score asc
     `)
-    return res.rows
+    return res
   }
 
   async post(req: S.Books.books_post_request): Promise<S.Books.books_list_response> {

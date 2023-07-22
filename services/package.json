@@ -24,12 +24,11 @@
     "drizzle-orm": "0.27.0",
     "gpt-token-utils": "^1.2.0",
     "openai": "^3.3.0",
-    "pg": "^8.11.1",
+    "postgres": "^3.3.5",
     "stripe": "^12.7.0",
     "ulid": "^2.3.0"
   },
   "devDependencies": {
-    "@types/aws-lambda": "^8.10.115",
-    "@types/pg": "^8.6.6"
+    "@types/aws-lambda": "^8.10.115"
   }
 }

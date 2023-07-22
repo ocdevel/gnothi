@@ -1,7 +1,7 @@
 import { APIGatewayEvent, APIGatewayProxyResult, Context } from 'aws-lambda'
 import {readFileSync, existsSync, readdirSync} from "fs";
 import {sql, SQL} from "drizzle-orm";
-import { migrate } from 'drizzle-orm/node-postgres/migrator';
+import { migrate } from 'drizzle-orm/postgres-js/migrator';
 import {dbname, DB} from "../db"
 import {users} from '../schemas/users'
 import { exec } from 'child_process';

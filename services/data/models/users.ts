@@ -51,7 +51,7 @@ export class Users extends Base {
       ) / 60 as mins
       from ${users} limit 1
     `)
-    return res.rows[0].mins || 99
+    return res[0].mins || 99
   }
   
   async tz(userId: string) {
@@ -60,7 +60,7 @@ export class Users extends Base {
       select coalesce(timezone, 'America/Los_Angeles') as tz
       from ${users} where id=${userId}
     `)
-    return res.rows[0].tz
+    return res[0].tz
   }
   
   async profileToText(): Promise<string> {
