@@ -107,7 +107,7 @@ export default function PlanComparison({
               textAlign="left"
               color='#50627a'
             >
-              $8.99
+              $4.99
             </Typography>
             <Typography
               variant="body2"
