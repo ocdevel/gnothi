@@ -1,5 +1,6 @@
 EFS = "/mnt/mldata"
 VECTORS_PATH = f"{EFS}/vectors"
+MODELS_PATH = f"{EFS}/models"
 
 import os
 # I tried setting the first two as ENV in Dockerfile but no cigar.
@@ -14,7 +15,7 @@ for env_key in [
     'PYTORCH_TRANSFORMERS_CACHE',
     'SENTENCE_TRANSFORMERS_HOME'
 ]:
-    os.environ[env_key] = f"{EFS}/models"
+    os.environ[env_key] = MODELS_PATH
 
 USE_GPU = os.getenv("CUDA_VISIBLE_DEVICES", False)
 if not USE_GPU:
