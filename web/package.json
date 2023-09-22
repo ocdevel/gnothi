@@ -59,7 +59,7 @@
   },
   "devDependencies": {
     "@modyfi/vite-plugin-yaml": "^1.0.4",
-    "@playwright/test": "^1.36.0",
+    "@playwright/test": "^1.38.1",
     "@sentry/vite-plugin": "^2.3.0",
     "@types/lodash": "^4.14.187",
     "@types/markdown-it": "^12.2.3",

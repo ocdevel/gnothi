@@ -77,16 +77,3 @@ export const users = pgTable('users', {
 export const userId = (col="user_id") => uuid(col).notNull().references(() => users.id, {onDelete: 'cascade'})
 
 export type User = InferModel<typeof users>
-
-
-// TODO keeping some old auth stuff on hand for a bit, just until I'm happy the migration went smoothly.
-// Afterwards, delete the table.
-export const authOld = pgTable('auth_old', {
-  id: userId('id').primaryKey(),
-  email: varchar('email', {length: 320}).notNull(),
-  hashed_password: varchar('hashed_password').notNull(),
-  updated_at: tsCol('updated_at')
-}, table => ({
-  ix_auth_old_email: uniqueIndex("ix_auth_old_email").on(table.email),
-  ix_auth_old_updated_at: index("ix_auth_old_updated_at").on(table.updated_at),
-}))
