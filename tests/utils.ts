@@ -1,5 +1,5 @@
 import { expect } from '@playwright/test';
-import type {Page} from "@playwright/test"
+import type {Page, BrowserContext} from "@playwright/test"
 import {readFileSync} from "fs";
 import {ulid} from "ulid";
 import type {Events} from "@gnothi/schemas/events";
@@ -22,6 +22,7 @@ export const sel = {
     list: {
       teaser: ".entries .list .teaser",
       text: '.entries .list .teaser .text',
+      textAi: '.entries .list .teaser .text.ai',
       addTag: ".entries .tags .btn-edit"
     },
     view: {
@@ -42,6 +43,14 @@ export const sel = {
   },
   premium: {
     btnUpgrade: ".premium.modal .btn-upgrade"
+  },
+  insights: {
+    summarize: {
+      result: ".insights .summarize .result",
+      resultNone: ".insights .summarize .result.none",
+      resultAi: ".insights .summarize .result.ai",
+      btnUseCredit: ".insights .summarize .btn-use-credit",
+    }
   }
 }
 
@@ -60,13 +69,15 @@ type CatchWs = {
 
 export class Utils {
   page: Page
+  context?: BrowserContext
   auth: {email: string, pass: string}
   entries: any[]
   tags: Record<string, string> = {} // {noai: <uuid>}
   wsListeners: {[k in Events]?: (v: unknown) => void} // resolvers
 
-  constructor(page: Page) {
+  constructor(page: Page, context?: BrowserContext) {
     this.page = page
+    this.context = context
     this.entries = []
     this.wsListeners = {}
     this.listenWebsockets()
@@ -184,6 +195,24 @@ export class Utils {
       await page.locator(sel.appbar.close).click()
       await page.waitForTimeout(500) // indexing is faster
     }
+  }
+
+  async upgradeAccount() {
+    const {page, context} = this
+    if (!context) { throw new Error("context wasn't passed to `new Utils(page, context)`, required for upgradeAccount")}
+    await page.locator(sel.appbar.close).click()
+    await page.locator(sel.appbar.btnProfile).click()
+    await page.locator(sel.appbar.btnPremium).click()
+    await page.locator(sel.premium.btnUpgrade).click()
+    const stripePage = await context.waitForEvent('page');
+    await stripePage.locator('input[name="email"]').fill(`${ulid()}@x.com`)
+    await stripePage.locator('input[name="cardNumber"]').fill("4242424242424242")
+    await stripePage.locator('input[name="cardExpiry"]').fill("1225")
+    await stripePage.locator('input[name="cardCvc"]').fill("123")
+    await stripePage.locator('input[name="billingName"]').fill("Test User")
+    await stripePage.locator('input[name="billingPostalCode"]').fill("12345")
+    await stripePage.locator('input[name="enableStripePass"]').uncheck()
+    await stripePage.locator('button[type="submit"]').click()
   }
 
   listenWebsockets() {

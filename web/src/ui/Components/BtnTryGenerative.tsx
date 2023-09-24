@@ -34,7 +34,13 @@ export default function BtnTryGenerative({
     submit()
   }
 
-  const btnProps_: ButtonProps = {variant: "contained", color: "primary", ...btnProps}
+  const {className, ...btnRest} = btnProps
+  const btnProps_: ButtonProps = {
+    variant: "contained",
+    color: "primary",
+    className: className ? `${className} btn-use-credit` : `btn-use-credit`,
+    ...btnProps
+  }
 
   if (me?.premium || creditActive) {
     if (!premiumLabel) { return null }

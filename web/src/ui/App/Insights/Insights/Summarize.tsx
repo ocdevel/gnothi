@@ -20,6 +20,7 @@ import Stack from "@mui/material/Stack";
 import {shallow} from "zustand/shallow";
 import {Stack2} from "../../../Components/Misc";
 import BtnTryGenerative from '../../../Components/BtnTryGenerative'
+import {SUMMARIZE_EMPTY, SUMMARIZE_DISABLED, SUMMARIZE_NOT_TRIGGERED} from "@gnothi/schemas/insights"
 
 const get = useStore.getState
 
@@ -66,16 +67,18 @@ export function Summarize({view, entry_ids}: Summarize) {
   // const themes = useStore(s => s.res.insights_themes_response?.hash?.[view])
 
   function renderSummary() {
-    if (waiting) {return <LinearProgress />}
     if (!entries?.length) {
-      return <Typography className="no-result">Nothing to summarize. Try adjusting filters</Typography>
+      return <Typography className="result none">{SUMMARIZE_EMPTY}</Typography>
     }
+    if (waiting) {return <LinearProgress />}
+    // TODO consider removing the empty texts, since the server sends these anyway
     if (!summary) {
-      return <Typography className="no-result">No summary available</Typography>
+      return <Typography className="result none">{SUMMARIZE_NOT_TRIGGERED}</Typography>
     }
+    const klass = summary.failed ? "result none" : "result ai"
     return <Box>
       {/*<Typography variant="h5">Summary</Typography>*/}
-      <Typography className="result" mb={2}>{summary.summary}</Typography>
+      <Typography className={klass} mb={2}>{summary.summary}</Typography>
       {/*<Typography variant="h5">Themes</Typography>*/}
       <Themes view={view} />
       <TryGenerative view={view} entry_ids={entry_ids} />

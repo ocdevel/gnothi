@@ -6,7 +6,7 @@ import {v4 as uuid} from 'uuid'
 import {sendInsight} from "./utils";
 import {completion, Prompt} from "./openai";
 import {getSummary} from '@gnothi/schemas/entries'
-import {insights_themes_response} from '@gnothi/schemas/insights'
+import {insights_themes_response, SUMMARIZE_DISABLED, SUMMARIZE_EMPTY} from '@gnothi/schemas/insights'
 const r = S.Routes.routes
 import {FnContext} from '../../routes/types'
 
@@ -40,8 +40,9 @@ type ParsedCompletion = {
   title: string
   summary: string
   emotion: string
+  failed?: boolean
   themes: {
-    word: string
+    title: string
     keywords: string[]
     summary: string
   }[]
@@ -149,7 +150,8 @@ export async function summarizeInsights({context, entries, generative}: Summariz
   if (entries.length === 0) {
     return sendInsights({
       title: "",
-      summary: "Nothing to summarize",
+      summary: SUMMARIZE_EMPTY,
+      failed: true,
       emotion: "neutral",
       themes: []
     })
@@ -157,7 +159,8 @@ export async function summarizeInsights({context, entries, generative}: Summariz
   if (!generative) {
     return sendInsights({
       title: "",
-      summary: "Generative AI disabled. Use a credit or upgrade to Generative to see themes and summary",
+      summary: SUMMARIZE_DISABLED,
+      failed: true,
       emotion: "neutral",
       themes: []
     })

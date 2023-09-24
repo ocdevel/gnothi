@@ -207,11 +207,7 @@ export default function Upsert(props: Upsert) {
       return null
     }
 
-    const submitProps: ButtonProps = {
-      className: "btn-submit",
-      disabled: submitting,
-      type: "submit"
-    }
+    const generative = me?.premium || creditActive
 
     return <>
       {id && <>
@@ -229,16 +225,22 @@ export default function Upsert(props: Upsert) {
           Cancel
         </Button>
       </>}
-      {!(me?.premium || creditActive) && <Button
+      {!generative && <Button
         color="inherit"
         variant='contained'
-        {...submitProps}
+        disabled={submitting}
+        type="submit"
+        className="btn-submit"
         onClick={submitHandler}
       >
         Submit
       </Button>}
       <BtnTryGenerative
-        btnProps={submitProps}
+        btnProps={{
+          disabled: submitting,
+          type: "submit",
+          className: generative ? "btn-submit" : "btn-submit-ai"
+        }}
         tryLabel={"AI Submit"}
         premiumLabel={"Submit"}
         submit={submitHandler}

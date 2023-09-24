@@ -4,6 +4,9 @@ export * as Insights from './insights'
 import dayjs from 'dayjs'
 import {Route, DefO} from "./api"
 
+export const SUMMARIZE_NOT_TRIGGERED = "Summary & themes will generate when you've created an entry or adjusted filters."
+export const SUMMARIZE_EMPTY = "Nothing to summarize. Make sure you have journal entries, and they're visible based on your filters."
+export const SUMMARIZE_DISABLED = "Generative AI disabled. Use a credit or upgrade to Generative to see themes and summary."
 
 const Insight = z.object({
   // `id` will determine where these insights are run for. Eg, list-view's id might be
@@ -34,6 +37,7 @@ export type insights_ask_response = z.infer<typeof insights_ask_response>
 export const insights_summarize_response = Insight.extend({
   summary: z.string(),
   keywords: z.string().array(),
+  failed: z.boolean().optional(),
   emotion: z.enum([
     // "anger 🤬 disgust 🤢 fear 😨 joy 😀 neutral 😐 sadness 😭 surprise 😲"
     "anger", "disgust", "fear", "joy", "neutral", "sadness", "surprise"
