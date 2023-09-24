@@ -12,7 +12,12 @@ export const sel = {
     close: '.btn-dialog-close',
     cta: '.appbar .cta-primary',
     btnProfile: '.appbar .usermenu .btn-profile',
-    btnPremium: '.btn-premium' // TODO have more specific selector, having trouble with .appbar .usermenu .btn-premium
+    btnPremium: '.btn-premium', // TODO have more specific selector, having trouble with .appbar .usermenu .btn-premium,
+    creditBanner: {
+      base: '.appbar .credit-banner',
+      nCredits: '.appbar .credit-banner .n-credits',
+      timer: '.appbar .credit-banner .timer'
+    }
   },
   tags: {
     input: ".textfield-tags-post input",
@@ -50,6 +55,9 @@ export const sel = {
       resultNone: ".insights .summarize .result.none",
       resultAi: ".insights .summarize .result.ai",
       btnUseCredit: ".insights .summarize .btn-use-credit",
+    },
+    books: {
+      book: ".insights .books .book"
     }
   }
 }

@@ -308,6 +308,7 @@ function CreditBanner() {
     <Alert
       icon={false}
       severity="info"
+      className='credit-banner'
       action={
         <Button color="inherit" size="small" onClick={() => setPremium(true)}>
           Upgrade for unlimited
@@ -315,10 +316,10 @@ function CreditBanner() {
       }
       // sx={{display: "flex", justifyContent: "space-between", alignItems: "center", flexDirection: "column"}}
     >
-      <AlertTitle>{me?.credits} / 10 credits</AlertTitle>
+      <AlertTitle className='n-credits'>{me?.credits} / 10 credits</AlertTitle>
       <Stack2 direction='row'>
         <Typography>Credit active:</Typography>
-        <Chip variant="outlined" label={formatSecondsToMinutes(timeLeft)} />
+        <Chip className='timer' variant="outlined" label={formatSecondsToMinutes(timeLeft)} />
       </Stack2>
     </Alert>
   </>

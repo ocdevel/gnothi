@@ -35,7 +35,8 @@ export default function Books({view}: Insight) {
   ) {
 
     return <Stack direction="column" mb={2} key={b.id}>
-      <Typography 
+      <Typography
+        className='book'
         sx={{
           fontStyle: "italic", 
           variant: 'body1', mb: 1
@@ -59,7 +60,7 @@ export default function Books({view}: Insight) {
 
   const icons = {color: "secondary", fontSize: "large"} as const
   if (!books?.length) {return null}
-  return <Box>
+  return <Box className='books'>
     {books.slice(0,6).map(renderBook)}
   </Box>
 }
