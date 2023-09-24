@@ -105,7 +105,7 @@ export class Users extends Base {
 
     // They have x minutes to use a credit, across all Generative tasks for that "session"
     // TODO ensure timezone works out ok
-    const alreadyActive = dayjs().diff(dayjs(user.last_credit), 'minute') < CREDIT_MINUTES
+    const alreadyActive = user.last_credit && dayjs().diff(dayjs(user.last_credit), 'minute') < CREDIT_MINUTES
     if (alreadyActive) { return true }
     if (!useCredit) { return false }
 
@@ -116,6 +116,8 @@ export class Users extends Base {
     await this.context.db.drizzle.update(users)
       .set({credits: user.credits, last_credit: sql`now()`})
       .where(eq(users.id, user.id)).execute()
+    // notify of credit usage
+    await this.context.handleReq({event: 'users_list_request', data: {}}, this.context)
     return true
   }
 }

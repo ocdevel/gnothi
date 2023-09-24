@@ -50,7 +50,7 @@ export default function Themes({view}: Insight) {
         marginBottom={1}
         variant="body1"
         fontWeight={500}
-        color="primary">{theme.word}</Typography>
+        color="primary">{theme.title}</Typography>
       {/*<Typography*/}
       {/*  variant="body2"*/}
       {/*  color="primary"*/}

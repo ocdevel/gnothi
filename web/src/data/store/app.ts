@@ -154,11 +154,11 @@ export const appSlice: StateCreator<
   creditSeconds: 0,
   creditActivate: () => {
     if (get().creditActive) { return }
-    set({creditActive: true})
+    set({creditActive: true, creditSeconds: 0})
     setInterval(() => {
       const creditSeconds = get().creditSeconds + 1
       set({creditSeconds})
-      if (creditSeconds > Users.CREDIT_MINUTES * 60 * 1000) {
+      if (creditSeconds > Users.CREDIT_MINUTES * 60) {
         set({creditActive: false})
       }
     }, 1000)

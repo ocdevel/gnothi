@@ -30,6 +30,8 @@ import dayjs from "dayjs";
 import {CREDIT_MINUTES} from '../../../../schemas/users'
 import Chip from "@mui/material/Chip";
 import {Stack2} from "./Misc.tsx";
+import Alert from "@mui/material/Alert";
+import AlertTitle from "@mui/material/AlertTitle";
 
 const buttonSx = {
   fontWeight: 300,
@@ -281,8 +283,8 @@ export default function ResponsiveAppBar({
           {renderMiddle()}
           {renderRight()}
         </Toolbar>
-        <CreditBanner />
       </Container>
+      <CreditBanner />
     </AppBar>
   </>
 }
@@ -291,21 +293,35 @@ function CreditBanner() {
   const [
     creditActive,
     creditSeconds,
-    me
+    me,
+    setPremium
   ] = useStore(s => [
     s.creditActive,
     s.creditSeconds,
-    s.user?.me
+    s.user?.me,
+    s.modals.setPremium
   ], shallow)
   if (!creditActive) { return null }
   if (!me) { return null }
   const timeLeft = CREDIT_MINUTES * 60 - creditSeconds
-  return <Toolbar disableGutters sx={{display: "flex", justifyContent: "space-between", alignItems: "center"}}>
-    <Stack2 direction="row">
-      <Typography>{me?.credits} / 10 credits. Credit currently active:</Typography>
-      <Chip variant="outlined" label={formatSecondsToMinutes(timeLeft)} />
-    </Stack2>
-  </Toolbar>
+  return <>
+    <Alert
+      icon={false}
+      severity="info"
+      action={
+        <Button color="inherit" size="small" onClick={() => setPremium(true)}>
+          Upgrade for unlimited
+        </Button>
+      }
+      // sx={{display: "flex", justifyContent: "space-between", alignItems: "center", flexDirection: "column"}}
+    >
+      <AlertTitle>{me?.credits} / 10 credits</AlertTitle>
+      <Stack2 direction='row'>
+        <Typography>Credit active:</Typography>
+        <Chip variant="outlined" label={formatSecondsToMinutes(timeLeft)} />
+      </Stack2>
+    </Alert>
+  </>
 }
 
 function formatSecondsToMinutes(seconds: number): string {

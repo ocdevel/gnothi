@@ -17,28 +17,28 @@ import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import {ulid} from "ulid"
 import Stack from "@mui/material/Stack";
+import {shallow} from "zustand/shallow";
+import {Stack2} from "../../../Components/Misc";
+import BtnTryGenerative from '../../../Components/BtnTryGenerative'
 
 const get = useStore.getState
 
 type Summarize = Insight & {
   entry_ids: string[]
-  isGenerative?: boolean
+  isTryGenerative?: boolean
 }
 
-function Generative({view, entry_ids}: Summarize) {
-  const [clicked, setClicked] = useState(false)
-  const [submitted, setSubmitted] = useState(false)
-  const [readMore, setReadMore] = useState(false)
-  const premiumView = `${view}premium`
-  const waiting = useStore(s => s.req.insights_get_request?.view === premiumView)
+function TryGenerative({view, entry_ids}: Summarize) {
+  const me = useStore(s => s.user?.me)
+  const [creditActive, creditActivate] = useStore(s => [s.creditActive, s.creditActivate], shallow)
+
+  if (me?.premium || creditActive) {
+    return null
+  }
 
   function submit() {
-    if (!clicked) {
-      return setClicked(true)
-    }
-    setSubmitted(true)
     get().send("insights_get_request", {
-      view: premiumView,
+      view,
       entry_ids,
       generative: true,
       insights: {
@@ -49,51 +49,21 @@ function Generative({view, entry_ids}: Summarize) {
       }
     })
   }
-  if (submitted) {
-    // effectively only allows to try this once per browsing session; but this is just a "sure that works" until
-    // I figure out a better way to track/identify which responses came from try-premium, reset the button, etc.
-    return <Card sx={{mb:2}}>
-      <CardContent>
-        <Summarize isGenerative={true} view={premiumView} entry_ids={entry_ids} />
-        {!waiting && <Button color="secondary" variant="contained" fullWidth onClick={() => get().modals.setPremium(true)}>Upgrade</Button>}
-      </CardContent>
-    </Card>
-  }
-  if (!clicked) {
-    return <Button
-      color="secondary"
-      fullWidth
-      onClick={submit}
-      sx={{mb: 2}}
-    >
-      See Premium's Version
-    </Button>
-  }
-  const readMoreBtn = readMore ? null : <span style={{cursor: "pointer", textDecoration: "underline"}} onClick={() => setReadMore(true)}>Read more</span>
-  return <Card sx={{mb: 2}}>
-    <Stack component={CardContent} spacing={2}>
-      {readMore
-        ? <Typography>When you save a journal entry, a <strong>summary</strong> and <strong>themes</strong> are generated and saved with it. Those outputs are used in downstream AI tasks. Better outputs at save-time result in stronger AI results later. You can test-drive how Free and Premium compare here, but it's a read-only snapshot. Upgrading will re-generate summaries & themes for your existing entries, and use GPT going forward. <a href="https://github.com/ocdevel/gnothi/issues/160" target="_blank">Read more here</a>.</Typography>
-        : <Typography>Premium can improve results. Test-drive it here. Upgrading applies it to entry saves. {readMoreBtn}</Typography>
-      }
-      <Button color="secondary" fullWidth variant="contained" onClick={submit}>Generate</Button>
-      <Typography variant="body2">This uses GPT. See OpenAI's <a href="https://openai.com/policies/privacy-policy" target="_blank">privacy policy</a> and <a href="https://openai.com/policies/terms-of-use" target="_blank">terms of use</a></Typography>
-    </Stack>
-  </Card>
+
+  // f8a18dd115e268833f7be9fb01dbf51a25f07f60 - content with "about this" and upgrade button
+  return <BtnTryGenerative
+    submit={submit}
+    btnProps={{fullWidth: true}}
+    tryLabel="Try Generative"
+    premiumLabel={null}
+  />
 }
 
-export function Summarize({view, entry_ids, isGenerative=false}: Summarize) {
-  const premium = useStore(s => s.user?.me?.premium)
+export function Summarize({view, entry_ids}: Summarize) {
   const entries = useStore(s => s.res.entries_list_response?.rows)
   const waiting = useStore(s => s.req.insights_get_request?.view === view)
   const summary = useStore(s => s.res.insights_summarize_response?.hash?.[view])
   // const themes = useStore(s => s.res.insights_themes_response?.hash?.[view])
-
-  const generative = useMemo(() => {
-    if (premium) {return null}
-    if (isGenerative) {return null}
-    return <Generative view={view} entry_ids={entry_ids} />
-  }, [view, entry_ids, premium])
 
   function renderSummary() {
     if (waiting) {return <LinearProgress />}
@@ -105,10 +75,10 @@ export function Summarize({view, entry_ids, isGenerative=false}: Summarize) {
     }
     return <Box>
       {/*<Typography variant="h5">Summary</Typography>*/}
-      {generative}
       <Typography className="result" mb={2}>{summary.summary}</Typography>
       {/*<Typography variant="h5">Themes</Typography>*/}
       <Themes view={view} />
+      <TryGenerative view={view} entry_ids={entry_ids} />
     </Box>
   }
 

@@ -20,6 +20,7 @@ import PromptSelector from './Selector.tsx'
 import type {Message} from '@gnothi/schemas/insights'
 import PremiumIcon from '@mui/icons-material/LockOutlined';
 import {shallow} from "zustand/shallow";
+import BtnTryGenerative from '../../../../Components/BtnTryGenerative'
 
 // import {LinearProgress} from "@mui/material";
 // import axios from "axios"
@@ -36,24 +37,24 @@ export default function Prompt({entry_ids, view}: Prompt) {
     me,
     modal,
     promptResponse,
-    waiting
+    waiting,
+    creditActive
   ] = useStore(s => [
     s.user?.me,
     s.modals.prompt,
     s.res.insights_prompt_final?.hash?.[view],
-    s.req.insights_prompt_request
+    s.req.insights_prompt_request,
+    s.creditActive
   ], shallow)
   const [
     send,
     setModal,
-    setPremiumModal
   ] = useStore(useCallback(s => [
     s.send,
     s.modals.setPrompt,
-    s.modals.setPremium
   ], []))
   const [messages, setMessages] = useState<Message[]>([])
-  const [model, setModel] = useState<"gpt-3.5-turbo-16k" | "gpt-4">("gpt-3.5-turbo-16k")
+  const [model, setModel] = useState<"gpt-3.5-turbo-16k" | "gpt-4">("gpt-4")
 
   const [prompt, setPrompt] = useState<string>("")
   const [showHelp, setShowHelp] = useState<boolean>(false)
@@ -66,10 +67,6 @@ export default function Prompt({entry_ids, view}: Prompt) {
   }, [promptResponse])
 
   const submit = () => {
-    if (!me?.premium) {
-      return setPremiumModal(true)
-    }
-
     // They didn't enter anything
     if (btnDisabled) {return}
 
@@ -77,6 +74,7 @@ export default function Prompt({entry_ids, view}: Prompt) {
     const updated = [...messages, message]
     setMessages(updated)
     const request = {
+      generative: useStore.getState().creditActive,
       view,
       entry_ids,
       messages: updated,
@@ -95,37 +93,46 @@ export default function Prompt({entry_ids, view}: Prompt) {
     setModal(false)
   }
 
+  function renderModelSelector() {
+    // Ditching model-selector for now, just use GPT-4. When we have Llama 2, add this back
+    return <div></div>
+    return <Grid item>
+      <FormControl variant="standard" sx={{ m: 1, minWidth: 120 }}>
+        <InputLabel id="model-select-label">Model</InputLabel>
+        <Select
+          size="small"
+          labelId="model-select-label"
+          id="model-select"
+          value={model}
+          onChange={(e) => setModel(e.target.value)}
+          label="Model"
+        >
+          <MenuItem value="gpt-4">GPT4 - Slow, Wise</MenuItem>
+          <MenuItem value="gpt-3.5-turbo-16k">GPT3 - Fast, Simple</MenuItem>
+        </Select>
+      </FormControl>
+    </Grid>
+  }
+
+  function renderSubmit() {
+    return <Grid item>
+      <BtnTryGenerative
+        btnProps={{
+          sx: {elevation: 12, fontWeight: 500},
+          // variant: (modal ? "contained" : "outlined"),
+          disabled: btnDisabled
+        }}
+        submit={submit}
+        tryLabel={waiting ? <CircularProgress /> : "Try Prompt"}
+        premiumLabel={waiting ? <CircularProgress/> : "Submit"}
+      />
+    </Grid>
+  }
+
   function renderModelAndSubmit() {
     return <Grid container justifyContent="space-between" alignItems="center">
-      <Grid item>
-        <FormControl variant="standard" sx={{ m: 1, minWidth: 120 }}>
-          <InputLabel id="model-select-label">Model</InputLabel>
-          <Select
-            size="small"
-            labelId="model-select-label"
-            id="model-select"
-            value={model}
-            onChange={(e) => setModel(e.target.value)}
-            label="Model"
-          >
-            <MenuItem value="gpt-3.5-turbo-16k">GPT3 - Fast, Simple</MenuItem>
-            <MenuItem value="gpt-4">GPT4 - Slow, Wise</MenuItem>
-          </Select>
-        </FormControl>
-      </Grid>
-      <Grid item>
-        <Button
-          sx={{elevation: 12, fontWeight: 500}}
-          variant={modal ? "contained" : "outlined"}
-          size="small"
-          color="secondary"
-          disabled={btnDisabled}
-          startIcon={me?.premium ? null : <PremiumIcon/>}
-          onClick={submit}
-        >
-          {waiting ? <CircularProgress/> : "Submit"}
-        </Button>
-      </Grid>
+     {renderModelSelector()}
+     {renderSubmit()}
     </Grid>
   }
 

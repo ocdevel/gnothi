@@ -28,12 +28,12 @@ export const insights_get_request = new Route(r.insights_get_request,async (req,
 
 export const insights_get_response = new Route(r.insights_get_response,async (req, context) => {
   const {m, uid: user_id, user} = context
-  const {view, entry_ids, insights, generative} = req
+  const {view, entry_ids, insights} = req
   const query = insights.query || ""
   const promises = []
   // will be used to pair to which page called the insights client-side (eg list vs view)
   context.requestId = view
-  const canGenerative = context.m.users.canGenerative(user, generative)
+  const generative = await context.m.users.canGenerative(user, req.generative)
 
   const entriesAll = await m.entries.getByIds(entry_ids)
   const entriesHash = Object.fromEntries(entriesAll.map(e => [e.id, e]))
