@@ -26,6 +26,10 @@ import {shallow} from "zustand/shallow";
 import Switch from "@mui/material/Switch";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import {STAGE} from '../../utils/config'
+import dayjs from "dayjs";
+import {CREDIT_MINUTES} from '../../../../schemas/users'
+import Chip from "@mui/material/Chip";
+import {Stack2} from "./Misc.tsx";
 
 const buttonSx = {
   fontWeight: 300,
@@ -277,9 +281,35 @@ export default function ResponsiveAppBar({
           {renderMiddle()}
           {renderRight()}
         </Toolbar>
+        <CreditBanner />
       </Container>
     </AppBar>
   </>
 }
 
+function CreditBanner() {
+  const [
+    creditActive,
+    creditSeconds,
+    me
+  ] = useStore(s => [
+    s.creditActive,
+    s.creditSeconds,
+    s.user?.me
+  ], shallow)
+  if (!creditActive) { return null }
+  if (!me) { return null }
+  const timeLeft = CREDIT_MINUTES * 60 - creditSeconds
+  return <Toolbar disableGutters sx={{display: "flex", justifyContent: "space-between", alignItems: "center"}}>
+    <Stack2 direction="row">
+      <Typography>{me?.credits} / 10 credits. Credit currently active:</Typography>
+      <Chip variant="outlined" label={formatSecondsToMinutes(timeLeft)} />
+    </Stack2>
+  </Toolbar>
+}
 
+function formatSecondsToMinutes(seconds: number): string {
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+  return `${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
+}

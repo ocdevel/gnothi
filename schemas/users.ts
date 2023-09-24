@@ -11,6 +11,8 @@ export * as Users from './users'
 // The fields were: `username, first_name, last_name, birthday, gender, orientation, timezone, bio`
 // username will be overridden on server, doubling as display_name from previous version
 
+export const CREDIT_MINUTES = 5 // minutes
+
 export const User = createInsertSchema(users, {
   created_at: dateCol(),
   updated_at: dateCol(),

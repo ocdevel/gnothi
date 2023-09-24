@@ -56,7 +56,9 @@ export const entries_put_request = EntryWithTags
     title: true,
     text: true,
     created_at: true,
-    tags: true
+    tags: true,
+  }).extend({
+    generative: z.boolean().default(true)
   })
 export const entries_post_request = entries_put_request.omit({id: true})
 

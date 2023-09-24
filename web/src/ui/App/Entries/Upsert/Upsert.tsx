@@ -29,6 +29,9 @@ import CardActions from "@mui/material/CardActions";
 import dayjs from 'dayjs'
 import ReactMarkdown from "react-markdown";
 import SuggestEntry from './SuggestEntry.tsx'
+import Typography from "@mui/material/Typography";
+import SubmitButton from "./SubmitButton";
+import {shallow} from "zustand/shallow";
 
 const placeholder = `Welcome to your journal! This is the perfect place to reflect, express yourself, and capture your thoughts. Take a moment to think about your day, your experiences, or anything that's been on your mind. Use this space to write freely and let your thoughts flow. 
 
@@ -47,6 +50,7 @@ interface Upsert {
 export default function Upsert(props: Upsert) {
   const entryModal = useStore(s => s.modals.entry!)
   const setEntryModal = useStore(s => s.modals.setEntry)
+  const [creditActivate] = useStore(s => [s.creditActivate], shallow)
 
   const {mode} = entryModal
   const [isNew, isEdit] = [mode === "new", mode === "edit"]
@@ -54,7 +58,6 @@ export default function Upsert(props: Upsert) {
   const [entry, tags_] = isNew ? [{}, {}] : [
     props.entry!, props.entry!.tags
   ]
-
 
   const defaults = isEdit ? {defaultValues: entry} : {}
   const form = useForm({
@@ -166,7 +169,11 @@ export default function Upsert(props: Upsert) {
     } else {
       send('entries_put_request', {...data, id})
     }
+    if (formData.generative) {
+      creditActivate()
+    }
   }
+  const submitHandler = form.handleSubmit(submit)
 
   const deleteEntry = async () => {
     if (isNew) {
@@ -213,7 +220,8 @@ export default function Upsert(props: Upsert) {
           Cancel
         </Button>
       </>}
-      <Button
+      <SubmitButton form={form} submit={submitHandler} submitting={submitting} />
+      {/*<Button
         color="primary"
         variant='contained'
         type="submit"
@@ -221,8 +229,9 @@ export default function Upsert(props: Upsert) {
         disabled={submitting}
         size="small"
         onClick={form.handleSubmit(submit)}
-      >Submit
-      </Button>
+      >
+        Submit
+      </Button>*/}
     </>
   }
 
@@ -299,6 +308,7 @@ export default function Upsert(props: Upsert) {
             preSelectMain={isNew}
           />
         </Stack>
+
       </Stack>
     );
   }

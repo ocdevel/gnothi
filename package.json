@@ -13,7 +13,10 @@
     "test": "AWS_REGION=us-east-1 AWS_PROFILE=gnothiadmin sst bind -- vitest run",
     "test:gendata": "AWS_REGION=us-east-1 AWS_PROFILE=gnothiadmin sst bind -- vitest run services/tests/setup_mock.spec.ts",
     "migrate:generate": "npx drizzle-kit generate:pg --schema services/data/schemas --out services/data/migrate/rest",
-    "v0:migrate": "AWS_REGION=us-east-1 AWS_PROFILE=gnothiadmin sst bind vitest run services/data/migrate/v0/migrate.spec.ts --stage=legion4"
+    "v0:migrate": "AWS_REGION=us-east-1 AWS_PROFILE=gnothiadmin sst bind vitest run services/data/migrate/v0/migrate.spec.ts --stage=legion4",
+
+    "web:test": "playwright test --project=chromium --headed",
+    "web:test:specific": "playwright test --project=chromium --headed tests/premium.spec.ts"
   },
   "devDependencies": {
     "@aws-sdk/client-cognito-identity-provider": "^3.335.0",

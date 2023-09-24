@@ -22,10 +22,10 @@ const get = useStore.getState
 
 type Summarize = Insight & {
   entry_ids: string[]
-  isTryPremium?: boolean
+  isGenerative?: boolean
 }
 
-function TryPremium({view, entry_ids}: Summarize) {
+function Generative({view, entry_ids}: Summarize) {
   const [clicked, setClicked] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [readMore, setReadMore] = useState(false)
@@ -40,7 +40,7 @@ function TryPremium({view, entry_ids}: Summarize) {
     get().send("insights_get_request", {
       view: premiumView,
       entry_ids,
-      tryPremium: true,
+      generative: true,
       insights: {
         summarize: true,
         query: "",
@@ -54,7 +54,7 @@ function TryPremium({view, entry_ids}: Summarize) {
     // I figure out a better way to track/identify which responses came from try-premium, reset the button, etc.
     return <Card sx={{mb:2}}>
       <CardContent>
-        <Summarize isTryPremium={true} view={premiumView} entry_ids={entry_ids} />
+        <Summarize isGenerative={true} view={premiumView} entry_ids={entry_ids} />
         {!waiting && <Button color="secondary" variant="contained" fullWidth onClick={() => get().modals.setPremium(true)}>Upgrade</Button>}
       </CardContent>
     </Card>
@@ -82,17 +82,17 @@ function TryPremium({view, entry_ids}: Summarize) {
   </Card>
 }
 
-export function Summarize({view, entry_ids, isTryPremium=false}: Summarize) {
+export function Summarize({view, entry_ids, isGenerative=false}: Summarize) {
   const premium = useStore(s => s.user?.me?.premium)
   const entries = useStore(s => s.res.entries_list_response?.rows)
   const waiting = useStore(s => s.req.insights_get_request?.view === view)
   const summary = useStore(s => s.res.insights_summarize_response?.hash?.[view])
   // const themes = useStore(s => s.res.insights_themes_response?.hash?.[view])
 
-  const tryPremium = useMemo(() => {
+  const generative = useMemo(() => {
     if (premium) {return null}
-    if (isTryPremium) {return null}
-    return <TryPremium view={view} entry_ids={entry_ids} />
+    if (isGenerative) {return null}
+    return <Generative view={view} entry_ids={entry_ids} />
   }, [view, entry_ids, premium])
 
   function renderSummary() {
@@ -105,7 +105,7 @@ export function Summarize({view, entry_ids, isTryPremium=false}: Summarize) {
     }
     return <Box>
       {/*<Typography variant="h5">Summary</Typography>*/}
-      {tryPremium}
+      {generative}
       <Typography className="result" mb={2}>{summary.summary}</Typography>
       {/*<Typography variant="h5">Themes</Typography>*/}
       <Themes view={view} />

@@ -13,7 +13,7 @@ const Insight = z.object({
 
 export const insights_get_request = Insight.extend({
   entry_ids: z.string().array(),
-  tryPremium: z.boolean().optional(),
+  generative: z.boolean().optional(),
   insights: z.object({
     summarize: z.boolean().optional(), // also includes themes
     query: z.string().optional(), // if using a ?, acts as a question
@@ -84,6 +84,7 @@ export type Message = z.infer<typeof Message>
 export const insights_prompt_request = Insight.extend({
   entry_ids: z.string().array(),
   messages: Message.array(),
+  generative: z.boolean().optional(),
   model: z.enum(['gpt-3.5-turbo-16k', 'gpt-4'])
 })
 export type insights_prompt_request = z.infer<typeof insights_prompt_request>

@@ -45,7 +45,7 @@ export const sel = {
   }
 }
 
-const mockEntriesFile = readFileSync("tests/mock_entries.json", {encoding: "utf-8"})
+const mockEntriesFile = readFileSync("./tests/mock_entries.json", {encoding: "utf-8"})
 const mockEntries = JSON.parse(mockEntriesFile).map(e => ({
   // remove unwanted fields like id/user_id/created_at
   title: e.title,

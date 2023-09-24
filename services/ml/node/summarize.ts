@@ -1,7 +1,6 @@
 import {lambdaSend} from "../../aws/handlers"
 import {Function} from "sst/node/function";
 import * as S from '@gnothi/schemas'
-import {TextsParamsMatch} from "../errors";
 import {Config} from 'sst/node/config'
 import {v4 as uuid} from 'uuid'
 import {sendInsight} from "./utils";
@@ -16,7 +15,7 @@ type ThemesOut = insights_themes_response['themes']
 export interface SummarizeEntryIn {
   text: string
   paras: string[]
-  usePrompt: boolean
+  generative: boolean
 }
 export interface SummarizeEntryOut {
   title: string
@@ -127,9 +126,9 @@ export async function summarizeLambda({texts}: FnIn): Promise<ParsedCompletion> 
 interface SummarizeInsights {
   entries: S.Entries.Entry[]
   context: FnContext,
-  usePrompt: boolean
+  generative: boolean
 }
-export async function summarizeInsights({context, entries, usePrompt}: SummarizeInsights) {
+export async function summarizeInsights({context, entries, generative}: SummarizeInsights) {
   async function sendInsights(parsed: ParsedCompletion): Promise<FnOut> {
     const themes: ThemesOut = parsed.themes
     const keywords = themes.map(t => t.keywords).flat()
@@ -155,7 +154,15 @@ export async function summarizeInsights({context, entries, usePrompt}: Summarize
       themes: []
     })
   }
-  const fn = usePrompt ? summarizeOpenai : summarizeLambda
+  if (!generative) {
+    return sendInsights({
+      title: "",
+      summary: "Generative AI disabled. Use a credit or upgrade to Generative to see themes and summary",
+      emotion: "neutral",
+      themes: []
+    })
+  }
+  const fn = generative ? summarizeOpenai : summarizeLambda
   const parsed = await fn({
     // summarize summaries, NOT full originals (to reduce token max)
     texts: entries.map(getSummary),
@@ -165,12 +172,12 @@ export async function summarizeInsights({context, entries, usePrompt}: Summarize
 
 interface SuggestNextEntry {
   context: FnContext
-  usePrompt: boolean
+  generative: boolean
   entries: S.Entries.Entry[]
   view: string
 }
-export async function suggestNextEntry({entries, context, usePrompt, view}: SuggestNextEntry) {
-  if (!usePrompt) { return }
+export async function suggestNextEntry({entries, context, generative, view}: SuggestNextEntry) {
+  if (!generative) { return }
   if (!entries?.length) {return}
   const text = squashTexts(entries.map(getSummary))
   const response = await completion({
@@ -186,13 +193,13 @@ export async function suggestNextEntry({entries, context, usePrompt, view}: Sugg
 }
 
 
-export async function summarizeEntry({text, paras, usePrompt}: SummarizeEntryIn): Promise<SummarizeEntryOut> {
+export async function summarizeEntry({text, paras, generative}: SummarizeEntryIn): Promise<SummarizeEntryOut> {
   // This shouldn't happen, but I haven't tested to ensure
   if (paras.length === 0) {
     throw "paras.length === 0, investigate"
   }
 
-  const fn = usePrompt ? summarizeOpenai : summarizeLambda
+  const fn = generative ? summarizeOpenai : summarizeLambda
   const parsed = await fn({
     // summarize summaries, NOT full originals (to reduce token max)
     texts: paras,

@@ -27,13 +27,13 @@ export const insights_get_request = new Route(r.insights_get_request,async (req,
 })
 
 export const insights_get_response = new Route(r.insights_get_response,async (req, context) => {
-  const {m, uid: user_id} = context
-  const {view, entry_ids, insights, tryPremium} = req
+  const {m, uid: user_id, user} = context
+  const {view, entry_ids, insights, generative} = req
   const query = insights.query || ""
   const promises = []
   // will be used to pair to which page called the insights client-side (eg list vs view)
   context.requestId = view
-  const usePrompt = Boolean(context.user.premium)
+  const canGenerative = context.m.users.canGenerative(user, generative)
 
   const entriesAll = await m.entries.getByIds(entry_ids)
   const entriesHash = Object.fromEntries(entriesAll.map(e => [e.id, e]))
@@ -44,7 +44,7 @@ export const insights_get_response = new Route(r.insights_get_response,async (re
     user_id,
     entries: entriesAll,
     query,
-    usePrompt
+    generative
   })
   const entriesFiltered = idsFiltered.map(id => entriesHash[id])
 
@@ -53,7 +53,7 @@ export const insights_get_response = new Route(r.insights_get_response,async (re
       context,
       query,
       user_id,
-      usePrompt,
+      generative,
       // only send the top few matching documents. Ease the burden on QA ML, and
       // ensure best relevance from embedding-match
       entry_ids: idsFromVectorSearch.slice(0, 2)
@@ -72,19 +72,16 @@ export const insights_get_response = new Route(r.insights_get_response,async (re
   }
 
   if (insights.summarize) {
-    // will expand this past summarize when I add the credits system
-    const usePrompt_ = Boolean(usePrompt || tryPremium)
-
     promises.push(summarizeInsights({
       context,
       entries: entriesFiltered,
-      usePrompt: usePrompt_
+      generative
     }))
 
     promises.push(suggestNextEntry({
       context,
       entries: entriesFiltered,
-      usePrompt,
+      generative,
       view
     }))
   }
@@ -99,7 +96,8 @@ export const insights_prompt_request = new Route(r.insights_prompt_request,async
 })
 
 export const insights_prompt_response = new Route(r.insights_prompt_response,async (req, context) => {
-  const {messages, view, model} = req
+  const {messages, view, model, generative} = req
+  if (!generative) {return []}
   let messages_ = []
 
   // on the first prompt, we'll tee it up with their entries. We'll send it back

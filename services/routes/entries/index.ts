@@ -13,6 +13,7 @@ import {upsert} from "../../ml/node/upsert";
 import {eq, and, inArray} from "drizzle-orm"
 import * as _ from 'lodash'
 import {Logger} from "../../aws/logs";
+import dayjs from "dayjs";
 
 const r = S.Routes.routes
 
@@ -49,6 +50,7 @@ export async function entriesUpsertResponse(req: S.Entries.entries_upsert_respon
   const promises = []
   let updated = {...entry}
   let updates: Partial<Entry> = {}
+  const {user} = context
 
   const tags_ = await driz.select()
     .from(tags)
@@ -64,10 +66,13 @@ export async function entriesUpsertResponse(req: S.Entries.entries_upsert_respon
     skip_index = true
     skip_summarize = true
   }
-
+  
   const clean = await preprocess({text: entry.text, method: 'md2txt'})
 
-  const usePrompt = Boolean(context.user.premium)
+  const generative = await context.m.users.canGenerative(user)
+  if (!generative) {
+    skip_summarize = true
+  }
 
   const summary = skip_summarize ? {
     title: "",
@@ -75,7 +80,7 @@ export async function entriesUpsertResponse(req: S.Entries.entries_upsert_respon
     body: {text: "", emotion: "", keywords: []}
   } : await summarizeEntry({
     ...clean,
-    usePrompt
+    generative
   })
   //console.log({summary})
 

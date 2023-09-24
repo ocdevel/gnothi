@@ -5,7 +5,7 @@ import {boolMapToKeys} from '@gnothi/schemas/utils'
 // @ts-ignore
 import dayjs from "dayjs";
 import {db} from "../dbSingleton";
-import {entries_list_response} from '@gnothi/schemas/entries'
+import {CREDIT_MINUTES} from '@gnothi/schemas/users'
 import {sql} from "drizzle-orm"
 import { and, asc, desc, eq, or } from 'drizzle-orm';
 import {users, User} from '../schemas/users'
@@ -96,5 +96,26 @@ export class Users extends Base {
     txt = txt.replace(/\s+/g, ' ');
     // console.log(txt);
     return txt;
+  }
+
+  async canGenerative(user: User, useCredit?: boolean): Promise<boolean> {
+    // FIXME handle viewer
+    if (user.premium) { return true }
+    if (user.credits < 0) { return false }
+
+    // They have x minutes to use a credit, across all Generative tasks for that "session"
+    // TODO ensure timezone works out ok
+    const alreadyActive = dayjs().diff(dayjs(user.last_credit), 'minute') < CREDIT_MINUTES
+    if (alreadyActive) { return true }
+    if (!useCredit) { return false }
+
+    // update user inline for downstream tasks of same Lambda call
+    user.credits = user.credits - 1
+    user.last_credit = new Date()
+
+    await this.context.db.drizzle.update(users)
+      .set({credits: user.credits, last_credit: sql`now()`})
+      .where(eq(users.id, user.id)).execute()
+    return true
   }
 }
