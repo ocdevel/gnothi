@@ -1,7 +1,8 @@
 FROM public.ecr.aws/lambda/python:3.9
 
+RUN yum install -y wget
 RUN pip3 install --no-cache-dir \
-  transformers[torch]==4.29.0
+  ctransformers>=0.2.24
 
 COPY __init__.py ${LAMBDA_TASK_ROOT}/__init__.py
 COPY common ${LAMBDA_TASK_ROOT}/common

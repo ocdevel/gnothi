@@ -26,6 +26,12 @@ import {shallow} from "zustand/shallow";
 import Switch from "@mui/material/Switch";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import {STAGE} from '../../utils/config'
+import dayjs from "dayjs";
+import {CREDIT_MINUTES} from '../../../../schemas/users'
+import Chip from "@mui/material/Chip";
+import {Stack2} from "./Misc.tsx";
+import Alert from "@mui/material/Alert";
+import AlertTitle from "@mui/material/AlertTitle";
 
 const buttonSx = {
   fontWeight: 300,
@@ -48,7 +54,9 @@ export function UserMenu() {
     //   handleCloseUserMenu()
     // }},
     {
-      name: 'Premium', onClick: () => {
+      name: 'Premium',
+      className: "btn-premium",
+      onClick: () => {
         handleCloseUserMenu()
         setPremiumModal(true)
       }
@@ -56,14 +64,19 @@ export function UserMenu() {
     // {name: 'Settings', onClick: () => {
     //   handleCloseUserMenu()
     // }},
-    {name: 'Logout', onClick: () => {
-      handleCloseUserMenu()
-      logout()
-    }},
+    {
+      name: 'Logout',
+      className: "btn-logout",
+      onClick: () => {
+        handleCloseUserMenu()
+        logout()
+      }
+    },
   ]
-  return <Box sx={{ flexGrow: 0}}>
+  return <Box sx={{ flexGrow: 0}} className="usermenu">
     <Tooltip title="Open settings">
       <IconButton
+        className="btn-profile"
         onClick={handleOpenUserMenu}
         sx={{ ...buttonSx, p: 0 }}>
         <Avatar alt={user?.email}>
@@ -89,6 +102,8 @@ export function UserMenu() {
     >
       {items.map((item) => (
         <MenuItem
+          classes={{root: item.className}}
+          className={item.className}
           sx={{...buttonSx}}
           key={item.name}
           onClick={item.onClick}
@@ -269,8 +284,52 @@ export default function ResponsiveAppBar({
           {renderRight()}
         </Toolbar>
       </Container>
+      <CreditBanner />
     </AppBar>
   </>
 }
 
+function CreditBanner() {
+  const [
+    creditActive,
+    creditSeconds,
+    me,
+    setPremium
+  ] = useStore(s => [
+    s.creditActive,
+    s.creditSeconds,
+    s.user?.me,
+    s.modals.setPremium
+  ], shallow)
+  if (!creditActive) { return null }
+  if (!me) { return null }
+  const timeLeft = CREDIT_MINUTES * 60 - creditSeconds
+  return <>
+    <Alert
+      icon={false}
+      severity="info"
+      className='credit-banner'
+      action={<Stack direction='column' gap={1}>
+        <Button variant='outlined' color="inherit" size="small" onClick={() => setPremium(true)}>
+          Upgrade for Unlimited
+        </Button>
+        {/*<Button variant='text' color="inherit" size="small" onClick={() => setPremium(true)}>
+          Share for +10 Credits
+        </Button>*/}
+      </Stack>}
+      // sx={{display: "flex", justifyContent: "space-between", alignItems: "center", flexDirection: "column"}}
+    >
+      <AlertTitle className='n-credits'>{me?.credits} / 10 credits</AlertTitle>
+      <Stack2 direction='row'>
+        <Typography>Credit active:</Typography>
+        <Chip className='timer' variant="outlined" label={formatSecondsToMinutes(timeLeft)} />
+      </Stack2>
+    </Alert>
+  </>
+}
 
+function formatSecondsToMinutes(seconds: number): string {
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+  return `${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
+}

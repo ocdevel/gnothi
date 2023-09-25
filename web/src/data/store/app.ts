@@ -59,7 +59,10 @@ export interface AppSlice {
   setProfile: (profile: any) => void
 
   // ----- Other
-  selectedTags: {[k: string]: boolean}
+  selectedTags: {[k: string]: boolean},
+  creditActive: boolean,
+  creditSeconds: number
+  creditActivate: () => void,
 }
 
 export const appSlice: StateCreator<
@@ -146,4 +149,19 @@ export const appSlice: StateCreator<
   // ee: {
   //   toolbar_groups_create: false
   // },
+
+  creditActive: false,
+  creditSeconds: 0,
+  creditActivate: () => {
+    if (get().creditActive) { return }
+    const creditInterval = setInterval(() => {
+      const creditSeconds = get().creditSeconds + 1
+      set({creditSeconds})
+      if (creditSeconds > Users.CREDIT_MINUTES * 60) {
+        set({creditActive: false})
+        clearInterval(creditInterval)
+      }
+    }, 1000)
+    set({creditActive: true, creditSeconds: 0})
+  }
 })

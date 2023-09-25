@@ -7,7 +7,6 @@ import {z} from 'zod'
 import dayjs from 'dayjs'
 import {reduce as _reduce} from "lodash"
 import type {Entry} from '@gnothi/schemas/entries'
-import type {insights_ask_response, insights_themes_response, insights_summarize_response} from '@gnothi/schemas/insights'
 import {summarizeInsights, suggestNextEntry} from '../../ml/node/summarize'
 import {search} from '../../ml/node/search'
 import {books} from '../../ml/node/books'
@@ -27,13 +26,13 @@ export const insights_get_request = new Route(r.insights_get_request,async (req,
 })
 
 export const insights_get_response = new Route(r.insights_get_response,async (req, context) => {
-  const {m, uid: user_id} = context
+  const {m, uid: user_id, user} = context
   const {view, entry_ids, insights} = req
   const query = insights.query || ""
   const promises = []
   // will be used to pair to which page called the insights client-side (eg list vs view)
   context.requestId = view
-  const usePrompt = Boolean(context.user.premium)
+  const generative = await context.m.users.canGenerative(user, req.generative)
 
   const entriesAll = await m.entries.getByIds(entry_ids)
   const entriesHash = Object.fromEntries(entriesAll.map(e => [e.id, e]))
@@ -44,7 +43,7 @@ export const insights_get_response = new Route(r.insights_get_response,async (re
     user_id,
     entries: entriesAll,
     query,
-    usePrompt
+    generative
   })
   const entriesFiltered = idsFiltered.map(id => entriesHash[id])
 
@@ -53,7 +52,7 @@ export const insights_get_response = new Route(r.insights_get_response,async (re
       context,
       query,
       user_id,
-      usePrompt,
+      generative,
       // only send the top few matching documents. Ease the burden on QA ML, and
       // ensure best relevance from embedding-match
       entry_ids: idsFromVectorSearch.slice(0, 2)
@@ -75,13 +74,13 @@ export const insights_get_response = new Route(r.insights_get_response,async (re
     promises.push(summarizeInsights({
       context,
       entries: entriesFiltered,
-      usePrompt
+      generative
     }))
 
     promises.push(suggestNextEntry({
       context,
       entries: entriesFiltered,
-      usePrompt,
+      generative,
       view
     }))
   }
@@ -96,7 +95,8 @@ export const insights_prompt_request = new Route(r.insights_prompt_request,async
 })
 
 export const insights_prompt_response = new Route(r.insights_prompt_response,async (req, context) => {
-  const {messages, view, model} = req
+  const {messages, view, model, generative} = req
+  if (!generative) {return []}
   let messages_ = []
 
   // on the first prompt, we'll tee it up with their entries. We'll send it back

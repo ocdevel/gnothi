@@ -87,12 +87,14 @@ export default function View({entry, onClose}: Entry) {
         {date}
         <Typography variant='h4' mb={0} color="primary" fontWeight={500} className='title'>{entry.title}</Typography>
         <Box
-          display='flex'
-          justifyContent='space-between'
-          direction='row'
-          alignItems='center'
-          marginTop={3}
-          marginBottom={4}
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            direction: 'row',
+            alignItems: 'center',
+            marginTop: 3,
+            marginBottom: 4
+          }}
         >
           <Stack spacing={2} direction="column">
             <Tags

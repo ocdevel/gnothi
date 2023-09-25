@@ -13,7 +13,7 @@ type FnIn = {
   query: string
   user_id: string
   entries: Entry[]
-  usePrompt: boolean
+  generative: boolean
 }
 type LambdaIn = {
   event: "search"

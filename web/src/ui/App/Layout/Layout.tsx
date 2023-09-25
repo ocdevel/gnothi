@@ -17,7 +17,6 @@ import {ErrorSnack} from "../../Components/Error";
 // import GroupToolbar from "../Groups/View/Toolbar"
 // import SharingModal from "../Sharing"
 import EntryModal from "../Entries/Modal"
-import {SummarizeModal} from "../Insights/Insights/Summarize"
 import BehaviorsModal from "../Behaviors/Modal"
 import PremiumModal from '../Account/PremiumModal'
 import BooksModal from '../Insights/Resources/Books'
@@ -32,7 +31,6 @@ function SetupApi() {
   useApi()
   return null
 }
-
 
 function Errors() {
   // const error = useStore(state => state.apiError);
@@ -73,7 +71,6 @@ export default function Layout() {
     <BehaviorsModal />
     <PremiumModal />
     <BooksModal />
-    <SummarizeModal />
     <AcknowledgeChecker />
     <Errors />
   </>

@@ -1,5 +1,6 @@
 import {test, expect, chromium} from '@playwright/test'
 import type {Page} from '@playwright/test' 
+import {SUMMARIZE_EMPTY, SUMMARIZE_DISABLED, SUMMARIZE_NOT_TRIGGERED} from "../schemas/insights"
 
 // @ts-ignore
 import {sel, Utils} from './utils.ts'
@@ -12,13 +13,41 @@ import { templateSettings } from 'lodash'
 test.describe("Entries", () => {
   test.describe('CRUD', () => {
     // create accounted for everywhere
-    test("view", async ({page}) => {
-      await (new Utils(page)).addEntry()
+    test("Basic: Create->View", async ({page, context}) => {
+      const utils = new Utils(page, context)
+      await utils.signup()
+
+      // Create an AI entry. Keep it on-hand for credit/premium, but it shouldn't use AI yet
+      await expect(page.locator(sel.insights.summarize.resultNone)).toContainText(SUMMARIZE_EMPTY)
+      await utils.addEntry(true)
       await expect(page.locator(sel.entries.view.text)).not.toBeEmpty()
       await page.locator(sel.appbar.close).click()
       await expect(page.locator(sel.entries.list.text)).toHaveCount(1)
+      await expect(page.locator(sel.entries.list.textAi)).toHaveCount(0)
       
+      // Create a non-AI entry. Keep it on hand to ensure, after credit/premium, it stays no-ai
+      await utils.addEntry(false)
+      await page.locator(sel.appbar.close).click()
+      await expect(page.locator(".entries .list .teaser")).toHaveCount(2)
+
+      // Raw-text shows on free
+      await expect(page.locator(sel.entries.list.text).nth(0)).not.toBeEmpty()
+      // ai summary shouldn't exist on free
+      await expect(page.locator(sel.entries.list.textAi)).toHaveCount(0)
+
+      // Activate a credit, insights come through. Give first run time to warm-start the Lambda
+      await expect(page.locator(sel.insights.summarize.result)).toContainText(SUMMARIZE_DISABLED, {timeout: 60000})
+      // after the long-awaited warm-start, to ensure it's had time
+      await expect(page.locator(sel.insights.books.book)).toHaveCount(6)
+      await page.locator(sel.insights.summarize.btnUseCredit).click()
+      await expect(page.locator(sel.insights.summarize.resultAi)).toBeVisible()
+      await expect(page.locator(sel.appbar.creditBanner.nCredits)).toContainText("9 / 10 credits")
+
+      await utils.addEntry(true)
+      await page.locator(sel.appbar.close).click()
+      await expect(page.locator(sel.entries.list.textAi)).toHaveCount(2)
     })
+
     test("update", async ({page}) => {
       const utils = new Utils(page)
       await utils.addEntry()

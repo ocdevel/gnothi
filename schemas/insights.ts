@@ -4,6 +4,9 @@ export * as Insights from './insights'
 import dayjs from 'dayjs'
 import {Route, DefO} from "./api"
 
+export const SUMMARIZE_NOT_TRIGGERED = "Summary & themes will generate when you've created an entry or adjusted filters."
+export const SUMMARIZE_EMPTY = "Nothing to summarize. Make sure you have journal entries, and they're visible based on your filters."
+export const SUMMARIZE_DISABLED = "Generative AI disabled. Use a credit or upgrade to Generative to see themes and summary."
 
 const Insight = z.object({
   // `id` will determine where these insights are run for. Eg, list-view's id might be
@@ -13,6 +16,7 @@ const Insight = z.object({
 
 export const insights_get_request = Insight.extend({
   entry_ids: z.string().array(),
+  generative: z.boolean().optional(),
   insights: z.object({
     summarize: z.boolean().optional(), // also includes themes
     query: z.string().optional(), // if using a ?, acts as a question
@@ -33,6 +37,7 @@ export type insights_ask_response = z.infer<typeof insights_ask_response>
 export const insights_summarize_response = Insight.extend({
   summary: z.string(),
   keywords: z.string().array(),
+  failed: z.boolean().optional(),
   emotion: z.enum([
     // "anger 🤬 disgust 🤢 fear 😨 joy 😀 neutral 😐 sadness 😭 surprise 😲"
     "anger", "disgust", "fear", "joy", "neutral", "sadness", "surprise"
@@ -44,7 +49,7 @@ export type insights_summarize_response = z.infer<typeof insights_summarize_resp
 // themes will be clustered version of the same, so multiple summaries
 export const insights_themes_response = z.object({
   themes: insights_summarize_response.extend({
-    word: z.string().optional(),
+    title: z.string().optional(),
     id: z.string()
   }).array()
 })
@@ -83,6 +88,7 @@ export type Message = z.infer<typeof Message>
 export const insights_prompt_request = Insight.extend({
   entry_ids: z.string().array(),
   messages: Message.array(),
+  generative: z.boolean().optional(),
   model: z.enum(['gpt-3.5-turbo-16k', 'gpt-4'])
 })
 export type insights_prompt_request = z.infer<typeof insights_prompt_request>
@@ -120,7 +126,8 @@ export const routes = {
       e: 'insights_get_final',
       s: insights_get_final,
       t: {ws: true},
-      keyby: 'view'
+      keyby: 'view',
+      clears: "insights_get_request"
     }
   },
   insights_prompt_request: {
@@ -169,24 +176,28 @@ export const routes = {
     e: "insights_themes_response",
     s: insights_themes_response,
     t: {ws: true},
+    op: "update",
     keyby: 'view'
   },
   insights_summarize_response: <DefO<any>>{
     e: "insights_summarize_response",
     s: insights_summarize_response,
     t: {ws: true},
+    op: "update",
     keyby: 'view'
   },
   insights_books_response: <DefO<any>>{
     e: "insights_books_response",
     s: insights_books_response,
     t: {ws: true},
+    op: "update",
     keyby: 'view'
   },
   insights_nextentry_response: <DefO<any>>{
     e: "insights_nextentry_response",
     s: insights_nextentry_response,
     t: {ws: true},
+    op: "update",
     keyby: 'view'
   }
 }

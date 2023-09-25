@@ -5,7 +5,8 @@ import {
   CreateCompletionRequest,
   CreateCompletionRequestPrompt,
   CreateChatCompletionRequest,
-  CreateChatCompletionResponse
+  CreateChatCompletionResponse,
+  ErrorResponse
 } from "openai"
 import { encode, decode } from 'gpt-token-utils'
 import _ from 'lodash'
@@ -111,7 +112,10 @@ export async function completion(
     const res = await getOpenAi().createChatCompletion(completionRequest);
     return res.data.choices[0].message.content
   } catch (error) {
-    Logger.error("ml/node/openai#completion", {error})
-    throw error
+    Logger.error("ml/node/openai#completion", {error, truncated})
+    if ([429, 503].includes(error.status)) {
+      throw new Error("OpenAI overloaded, try again soon")
+    }
+    throw new Error(error.message)
   }
 }

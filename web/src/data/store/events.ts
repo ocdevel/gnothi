@@ -133,8 +133,10 @@ export const eventsSlice: StateCreator<
       return
     }
 
+    const {chunk} = res
+
     // If we're receiving chunks, handle special
-    if (res.chunk?.i > 0) {
+    if (chunk && chunk.i > 0) {
       const workingOn = get().resBuff[event]?.res?.requestId
       if (workingOn && workingOn !== res.requestId) {
         // We're still receiving chunks from an old batch. Eg, if the user clicks tags quickly. Disgard old-batch
@@ -193,7 +195,7 @@ export const eventsSlice: StateCreator<
 
       // 4. Leave .first and .res alone
     }
-    const shouldFlush = !res.chunk || (res.chunk.i === res.chunk.of)
+    const shouldFlush = !chunk || (chunk.i === chunk.of)
     set(produce(state => {
       state.lastRes = res
 

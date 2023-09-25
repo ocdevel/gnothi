@@ -14,10 +14,7 @@ import {DatePicker} from '@mui/x-date-pickers/DatePicker';
 
 import {useStore} from "../../../../data/store"
 import Error from "../../../Components/Error";
-import Grid from "@mui/material/Grid"
-import Button from "@mui/material/Button"
-import Box from "@mui/material/Box"
-import Typography from "@mui/material/Typography"
+import Button, {ButtonProps} from "@mui/material/Button"
 import {TextField2, Checkbox2} from "../../../Components/Form";
 import Editor from "../../../Components/Editor";
 import {Alert2} from "../../../Components/Misc";
@@ -32,6 +29,9 @@ import CardActions from "@mui/material/CardActions";
 import dayjs from 'dayjs'
 import ReactMarkdown from "react-markdown";
 import SuggestEntry from './SuggestEntry.tsx'
+import Typography from "@mui/material/Typography";
+import {shallow} from "zustand/shallow";
+import BtnTryGenerative from '../../../Components/BtnTryGenerative'
 
 const placeholder = `Welcome to your journal! This is the perfect place to reflect, express yourself, and capture your thoughts. Take a moment to think about your day, your experiences, or anything that's been on your mind. Use this space to write freely and let your thoughts flow. 
 
@@ -50,6 +50,7 @@ interface Upsert {
 export default function Upsert(props: Upsert) {
   const entryModal = useStore(s => s.modals.entry!)
   const setEntryModal = useStore(s => s.modals.setEntry)
+  const [creditActivate] = useStore(s => [s.creditActivate], shallow)
 
   const {mode} = entryModal
   const [isNew, isEdit] = [mode === "new", mode === "edit"]
@@ -58,7 +59,6 @@ export default function Upsert(props: Upsert) {
     props.entry!, props.entry!.tags
   ]
 
-
   const defaults = isEdit ? {defaultValues: entry} : {}
   const form = useForm({
     resolver: zodResolver(Entries.entries_post_request.omit({tags: true})),
@@ -66,6 +66,8 @@ export default function Upsert(props: Upsert) {
   })
 
   const navigate = useNavigate()
+  const me = useStore(s => s.user?.me)
+  const creditActive = useStore(s => s.creditActive)
   const as = useStore(s => s.user.as)
   const send = useStore(s => s.send)
   const [formOrig, setFormOrig] = useState()
@@ -75,7 +77,7 @@ export default function Upsert(props: Upsert) {
   const entries_delete_response = useStore(s => s.res.entries_delete_response?.res)
   const clear = useStore(a => a.clearEvents)
   const [changedDate, setChangedDate] = useState(false)
-  const submitting = useStore(s => s.req.entries_post_request || s.req.entries_put_request || s.req.entries_delete_request)
+  const submitting = useStore(s => Boolean(s.req.entries_post_request || s.req.entries_put_request || s.req.entries_delete_request))
 
   const id = entry?.id
   const draftId = `draft-${id || "new"}`
@@ -155,6 +157,7 @@ export default function Upsert(props: Upsert) {
   function submit(formData: Entries.entries_post_request) {
     const data = {
       ...formData,
+      generative: useStore.getState().creditActive,
       tags: tags,
     }
 
@@ -169,7 +172,11 @@ export default function Upsert(props: Upsert) {
     } else {
       send('entries_put_request', {...data, id})
     }
+    if (formData.generative) {
+      creditActivate()
+    }
   }
+  const submitHandler = form.handleSubmit(submit)
 
   const deleteEntry = async () => {
     if (isNew) {
@@ -200,10 +207,11 @@ export default function Upsert(props: Upsert) {
       return null
     }
 
+    const generative = me?.premium || creditActive
+
     return <>
       {id && <>
         <Button
-          color='secondary'
           className='btn-delete'
           sx={{marginRight: 'auto'}}
           color="warning"
@@ -217,16 +225,26 @@ export default function Upsert(props: Upsert) {
           Cancel
         </Button>
       </>}
-      <Button
-        color="primary"
+      {!generative && <Button
+        color="inherit"
         variant='contained'
+        disabled={submitting}
         type="submit"
         className="btn-submit"
-        disabled={submitting}
-        size="small"
-        onClick={form.handleSubmit(submit)}
-      >Submit
-      </Button>
+        onClick={submitHandler}
+      >
+        Submit
+      </Button>}
+      <BtnTryGenerative
+        btnProps={{
+          disabled: submitting,
+          type: "submit",
+          className: generative ? "btn-submit" : "btn-submit-ai"
+        }}
+        tryLabel={"AI Submit"}
+        premiumLabel={"Submit"}
+        submit={submitHandler}
+      />
     </>
   }
 
@@ -303,6 +321,7 @@ export default function Upsert(props: Upsert) {
             preSelectMain={isNew}
           />
         </Stack>
+
       </Stack>
     );
   }
@@ -313,7 +332,7 @@ export default function Upsert(props: Upsert) {
   >
     <CardContent sx={{backgroundColor: "white"}}>
       {renderForm()}
-      <CardActions sx={{backgroundColor: "white", justifyContent: "flex-end", mt: 2}}>
+      <CardActions sx={{backgroundColor: "white", justifyContent: "flex-end", alignItems: "flex-start", gap: 2, mt: 2}}>
         {/*viewing && <Box sx={{marginRight: 'auto'}}>
         <NoteCreate id={id} />
       </Box>*/}

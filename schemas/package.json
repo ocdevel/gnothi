@@ -3,8 +3,8 @@
   "version": "0.0.0",
   "type": "module",
   "dependencies": {
-    "zod": "^3.21.4",
-    "drizzle-zod": "^0.4.3",
-    "dayjs": "^1.11.8"
+    "zod": "^3.22.2",
+    "drizzle-zod": "^0.5.1",
+    "dayjs": "^1.11.10"
   }
 }

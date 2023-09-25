@@ -107,9 +107,10 @@ interface Insights {
   entry_ids: string[]
 }
 export default function Insights({entry_ids}: Insights) {
-  const [search, me] = useStore(s => [
+  const [search, me, creditActive] = useStore(s => [
     s.filters.search,
     s.user?.me,
+    s.creditActive
   ], shallow)
 
   const view = entry_ids.length === 1 ? entry_ids[0] : "list"
@@ -125,6 +126,7 @@ export default function Insights({entry_ids}: Insights) {
     get().send("insights_get_request", {
       view,
       entry_ids,
+      generative: creditActive,
       insights: {
         summarize: true,
         query: search,
@@ -183,11 +185,11 @@ export default function Insights({entry_ids}: Insights) {
         label="Summary & Themes"
         icon={<SummaryIcon {...iconProps} />}
         description="AI-generated snapshot"
-        action="Adjust filters for different results. Expand for more details."
+        action="Adjust filters for different results."
         // moreClick={() => setSummary(view)}
       >
-        <Summarize view={view}/>
-      </Insight>, [view])}
+        <Summarize view={view} entry_ids={entry_ids} />
+      </Insight>, [view, entry_ids])}
 
       {useMemo(() => <Insight
         label="Behavior Tracking"

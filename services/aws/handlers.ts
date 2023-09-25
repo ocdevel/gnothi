@@ -201,29 +201,43 @@ class WsHandler extends Handler<APIGatewayProxyWebsocketEventV2> {
   sizeOfObject(obj: any) {
     return new TextEncoder().encode(JSON.stringify(obj)).length;
   }
-  batchData(data: any[], maxSize: number) {
-    const batches = [];
-    let currentBatch = [];
-    let currentBatchSize = 0;
+  chunkData(res: Res) {
+    // responseId groups the chunks together. If the client switches gears (eg change tags), it will discard
+    // chunks coming from the previous batch
+    const responseId = ulid()
+    const {data, ...meta} = res
+    // chunk is added dynamically, but we need to account for its size here. Assume max-case
+    const metaTemplate = {...meta, responseId, chunk: {i: 0, of: 999}}
+    const wiggleRoom = 100
+    const maxWsPayloadSize = 128 * 1024 - wiggleRoom
+
+    const chunks = [];
+    let currentChunk = [];
 
     for (const item of data) {
-      const itemSize = this.sizeOfObject(item);
+      const chunkSize = this.sizeOfObject({...metaTemplate, data: [...currentChunk, item]})
 
-      if (currentBatchSize + itemSize > maxSize) {
-        batches.push(currentBatch);
-        currentBatch = [item];
-        currentBatchSize = itemSize;
+      if (chunkSize > maxWsPayloadSize) {
+        chunks.push(currentChunk);
+        currentChunk = [item];
       } else {
-        currentBatch.push(item);
-        currentBatchSize += itemSize;
+        currentChunk.push(item);
       }
     }
 
-    if (currentBatch.length > 0) {
-      batches.push(currentBatch);
+    if (currentChunk.length > 0) {
+      chunks.push(currentChunk);
     }
 
-    return batches;
+    if (!chunks.length) {
+      chunks.push([])
+    }
+
+    return chunks.map((chunk, i) => ({
+      ...metaTemplate,
+      chunk: {i, of: chunks.length - 1},
+      data: chunk
+    }))
   }
 
   async repondToConnection(res: Res, {connectionId}: Partial<FnContext>) {
@@ -232,25 +246,9 @@ class WsHandler extends Handler<APIGatewayProxyWebsocketEventV2> {
       return
     }
 
-    // responseId groups the chunks together. If the client switches gears (eg change tags), it will discard
-    // chunks coming from the previous batch
-    const responseId = ulid()
-    const {data, ...meta} = res
-    // chunk is added dynamically, but we need to account for its size here. Assume max-case
+    const chunks = this.chunkData(res)
 
-    const metaTemplate = {...meta, responseId, chunk: {i: 0, of: 999}}
-    const metaSize = this.sizeOfObject(metaTemplate)
-    const wiggleRoom = 100
-    const maxWsPayloadSize = 128 * 1024 - metaSize - wiggleRoom;
-    const dataChunks = this.batchData(data, maxWsPayloadSize)
-
-    // if 0 or 1 items, send as-is. Otherwise, send as chunks
-    const resChunks = dataChunks.length > 1 ? dataChunks.map((chunk, i) => ({
-      ...metaTemplate,
-      chunk: {i, of: dataChunks.length - 1},
-      data: chunk
-    })) : [res]
-    for (const chunk of resChunks) {
+    for (const chunk of chunks) {
       try {
         await clients.apig.send(new PostToConnectionCommand({
           ConnectionId: connectionId,

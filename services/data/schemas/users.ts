@@ -14,14 +14,16 @@ import {InferModel} from 'drizzle-orm'
 import {idCol, tsCol} from './utils'
 
 export const users = pgTable('users', {
-  // core
+  // Core
+  // ---
   id: idCol(),
-  email: varchar("email", {length: 320}).notNull(),
+  email: varchar("email").notNull(),
   cognito_id: varchar("cognito_id"),
   created_at: tsCol("created_at"),
   updated_at: tsCol("updated_at"),
 
-  // profile & settings
+  // Profile & settings
+  // ---
   username: varchar("username"),
   first_name: varchar("first_name"),
   last_name: varchar("last_name"),
@@ -34,30 +36,38 @@ export const users = pgTable('users', {
   // the start of Gnothi time, like "2019-01-01"
   filter_days: integer("filter_days"),
 
-  // admin
+  // Admin
+  // ---
   is_superuser: boolean("is_superuser").default(false),
   is_cool: boolean("is_cool").default(false),
   therapist: boolean("therapist").default(false),
-  n_tokens: integer("n_tokens").default(0),
 
   // ML
+  // ---
   ai_ran: boolean("ai_ran").default(false),
   last_books: timestamp("last_books", {withTimezone: true}),
   last_influencers: timestamp("last_influencers", {withTimezone: true}),
 
-  // habitica
+  // Habitica
+  // ---
   habitica_user_id: varchar("habitica_user_id"),
   habitica_api_token: varchar("habitica_api_token"),
 
-  // compliance
+  // Compliance
+  // ---
   accept_terms_conditions: timestamp("accept_terms_conditions"),
   accept_disclaimer: timestamp("accept_disclaimer"),
   accept_privacy_policy: timestamp("accept_privacy_policy"),
 
-  // payments
+  // Premium
+  // ---
   premium: boolean("premium").default(false),
   // This is duplicated from the payments table. This just affords us better performance
-  payment_id: varchar("payment_id")
+  payment_id: varchar("payment_id"),
+  credits: integer("credits").notNull().default(10),
+  // If you spend a credit for Generative, keep it on for some minute so the different tools can use it
+  // I don't think we need to index it, since we'll check code-side
+  last_credit: timestamp("last_credit", {withTimezone: true}),
 
   // ws_id = sa.Column(sa.Unicode, index=True)
   // as = FKCol('users.id')
@@ -77,16 +87,3 @@ export const users = pgTable('users', {
 export const userId = (col="user_id") => uuid(col).notNull().references(() => users.id, {onDelete: 'cascade'})
 
 export type User = InferModel<typeof users>
-
-
-// TODO keeping some old auth stuff on hand for a bit, just until I'm happy the migration went smoothly.
-// Afterwards, delete the table.
-export const authOld = pgTable('auth_old', {
-  id: userId('id').primaryKey(),
-  email: varchar('email', {length: 320}).notNull(),
-  hashed_password: varchar('hashed_password').notNull(),
-  updated_at: tsCol('updated_at')
-}, table => ({
-  ix_auth_old_email: uniqueIndex("ix_auth_old_email").on(table.email),
-  ix_auth_old_updated_at: index("ix_auth_old_updated_at").on(table.updated_at),
-}))
