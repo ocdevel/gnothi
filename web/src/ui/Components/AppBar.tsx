@@ -309,11 +309,14 @@ function CreditBanner() {
       icon={false}
       severity="info"
       className='credit-banner'
-      action={
-        <Button color="inherit" size="small" onClick={() => setPremium(true)}>
-          Upgrade for unlimited
+      action={<Stack direction='column' gap={1}>
+        <Button variant='outlined' color="inherit" size="small" onClick={() => setPremium(true)}>
+          Upgrade for Unlimited
         </Button>
-      }
+        {/*<Button variant='text' color="inherit" size="small" onClick={() => setPremium(true)}>
+          Share for +10 Credits
+        </Button>*/}
+      </Stack>}
       // sx={{display: "flex", justifyContent: "space-between", alignItems: "center", flexDirection: "column"}}
     >
       <AlertTitle className='n-credits'>{me?.credits} / 10 credits</AlertTitle>

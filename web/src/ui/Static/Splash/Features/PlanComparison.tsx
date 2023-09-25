@@ -52,6 +52,37 @@ function PlanCard({children}: React.PropsWithChildren) {
   </Card>
 }
 
+function PlanTitle({title, subtitle, price, children}: React.PropsWithChildren<{ title: string, subtitle: string, price: string }>) {
+  return <>
+    <Typography
+      variant="h4"
+      fontWeight={600}
+      textAlign="left"
+      color="primary"
+      mb={0}
+    >
+      {title}
+    </Typography>
+    <Typography
+      variant="body1"
+      textAlign="left"
+      color='secondary'
+      fontWeight={500}
+    >
+      {subtitle}
+    </Typography>
+    <Typography
+      marginTop={1}
+      variant="subtitle2"
+      textAlign="left"
+      color='#50627a'
+    >
+      {price}
+    </Typography>
+    {children}
+  </>
+}
+
 function FeatureItem({title, content, mt=2}: { title: string, content: string, mt?: number }) {
   return <>
     <Typography
@@ -72,10 +103,6 @@ function FeatureItem({title, content, mt=2}: { title: string, content: string, m
       {content}
     </Typography>
   </>
-}
-
-function PlanBody({children}: React.PropsWithChildren) {
-
 }
 
 const featureIcon = {fontSize: "inherit", color: "secondary"}
@@ -115,57 +142,32 @@ export default function PlanComparison({
       justifyContent='center'
     >
 
-      <Grid
-        item
-        xs={12} md={4}
-      >
+      <Grid item xs={12} md={4}>
         <PlanCard>
           <CardContent sx={{marginX: 2}}>
-            <Typography
-              variant="h4"
-              fontWeight={600}
-              textAlign="left"
-              color="primary"
-              mb={0}
-            >
-              Basic
-            </Typography>
-            <Typography
-              variant="body1"
-              textAlign="left"
-              color='secondary'
-              fontWeight={500}
-            >
-              AI Insights, No Generative AI
-            </Typography>
-            <Typography
-              marginTop={1}
-              variant="subtitle2"
-              textAlign="left"
-              color='#50627a'
-            >
-              $0
-            </Typography>
-
-
-          <FeatureItem
-            mt={3}
-            title="Unlimited Journal Entries:"
-            // content="Write freely, no limits attached"
-            content="Write as much as you want, whenever you want"
-          />
-          <FeatureItem
-            title="Behavior Tracking & Insights:"
-            content="Monitor habits and understand their correlations"
-          />
-          <FeatureItem
-            title="Advanced Search Options:"
-            content="Use keyword, date, and semantic search to find entries"
-          />
-          <FeatureItem
-            title="Book Recommendations:"
-            content="Discover reads that resonate with your journal themes"
-          />
+            <PlanTitle
+              title="Basic"
+              subtitle="AI Insights, No Generative AI"
+              price="$0"
+            />
+            <FeatureItem
+              mt={3}
+              title="Unlimited Journal Entries:"
+              // content="Write freely, no limits attached"
+              content="Write as much as you want, whenever you want"
+            />
+            <FeatureItem
+              title="Behavior Tracking & Insights:"
+              content="Monitor habits and understand their correlations"
+            />
+            <FeatureItem
+              title="Advanced Search Options:"
+              content="Use keyword, date, and semantic search to find entries"
+            />
+            <FeatureItem
+              title="Book Recommendations:"
+              content="Discover reads that resonate with your journal themes"
+            />
           </CardContent>
 
           <CardContent sx={{marginX: 2}}>
@@ -176,69 +178,43 @@ export default function PlanComparison({
         </PlanCard>
       </Grid>
 
-
-
-      <Grid
-        item
-        xs={12} md={4}
-      >
-
+      <Grid item xs={12} md={4}>
         <PlanCard>
           <CardContent sx={{marginX: 2}}>
-            <Typography
-              variant="h4"
-              fontWeight={600}
-              textAlign="left"
-              color="primary"
-              mb={0}
-
+            <PlanTitle
+              title="Premium"
+              subtitle="All-Inclusive AI Experience"
+              price="$4.99"
             >
-              Premium
-            </Typography>
-            <Typography
-              variant="body1"
-              textAlign="left"
-              color='secondary'
-              fontWeight={500}
-            >
-              All-Inclusive AI Experience
-            </Typography>
-            <Typography
-              marginTop={1}
-              variant="subtitle2"
-              textAlign="left"
-              color='#50627a'
-            >
-              $4.99
-            </Typography>
-            <Typography
-              variant="body2"
-              textAlign="left"
-              color='#50627a'
-            >
-              Billed monthly. Cancel anytime.
-            </Typography>
-
-            <Stack
-              marginTop={3}
-              direction="row"
-              spacing={.5}
-              alignItems="center"
-            >
-              <CheckIcon
-                fontSize='inherit'
-                sx={{color: "#59887c"}}
-              />
               <Typography
-                variant="body1"
-                fontWeight={700}
+                variant="body2"
                 textAlign="left"
-                color='#59887c'
-                //sx={{textDecoration: 'underline'}}
+                color='#50627a'
               >
-                Everything in Basic, plus:
+                Billed monthly. Cancel anytime.
               </Typography>
-            </Stack>
+
+              <Stack
+                marginTop={3}
+                direction="row"
+                spacing={.5}
+                alignItems="center"
+              >
+                <CheckIcon
+                  fontSize='inherit'
+                  sx={{color: "#59887c"}}
+                />
+                <Typography
+                  variant="body1"
+                  fontWeight={700}
+                  textAlign="left"
+                  color='#59887c'
+                  //sx={{textDecoration: 'underline'}}
+                >
+                  Everything in Basic, plus:
+                </Typography>
+              </Stack>
+            </PlanTitle>
 
             <FeatureItem
               title="Interactive AI Chat:"
