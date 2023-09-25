@@ -15,7 +15,12 @@
 import {Duration} from 'aws-cdk-lib'
 
 export const rams = {
-  sm: 128,
+  // 274 is the new recommended for fnMain, fnBackground after the credits update. I think it's because
+  // of postgres-js, but TODO investigate. This is huge bump in Lambda costs
+  // sm: 128,
+  sm: 512,
+
+
   // md: 256, // haven't decided past small yet
   // lg: 512,
 
