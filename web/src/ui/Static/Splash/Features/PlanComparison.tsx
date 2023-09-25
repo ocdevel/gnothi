@@ -71,6 +71,137 @@ export default function PlanComparison({
       justifyContent='center'
     >
 
+      <Grid item
+            xs={12} md={4}
+      >
+        <Card
+          sx={{
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            backgroundColor: '#ffffff',
+            borderRadius: 3,
+            borderColor: '#50577A',
+            borderStyle: 'solid',
+            borderWidth: '1px',
+          }}
+        >
+          <CardContent
+          sx={{marginX: 2}}
+          >
+            <Typography
+              variant="h4"
+              fontWeight={600}
+              textAlign="left"
+              color='#50627a'
+              mb={0}
+
+            >
+              Basic
+            </Typography>
+            <Typography
+              variant="body1"
+              textAlign="left"
+              color='secondary'
+              fontWeight={500}
+            >
+              Pure Journaling, Zero AI
+            </Typography>
+            <Typography
+              marginTop={1}
+              variant="subtitle2"
+              textAlign="left"
+              color='#50627a'
+            >
+              $0
+            </Typography>
+
+
+            <Typography
+              marginTop={3}
+              variant="body1"
+              fontWeight={500}
+              textAlign="left"
+              color='#50627a'
+            >
+              Unlimited Journal Entries:
+            </Typography>
+            <Typography
+              variant="body2"
+              fontWeight={500}
+              textAlign="left"
+              color='#50627a'
+            >
+              Write as much as you want, whenever you want
+            </Typography>
+
+            <Typography
+              marginTop={2}
+              variant="body1"
+              fontWeight={500}
+              textAlign="left"
+              color='#50627a'
+            >
+              Behavior Tracking:
+            </Typography>
+            <Typography
+              variant="body2"
+              fontWeight={500}
+              textAlign="left"
+              color='#50627a'
+            >
+              Keep tabs on your habits and activities
+            </Typography>
+
+             <Typography
+              marginTop={2}
+              variant="body1"
+              fontWeight={500}
+              textAlign="left"
+              color='#50627a'
+            >
+              Tagging System:
+            </Typography>
+            <Typography
+              variant="body2"
+              fontWeight={500}
+              textAlign="left"
+              color='#50627a'
+            >
+              Organize your entries for easy retrieval
+            </Typography>
+
+             <Typography
+              marginTop={2}
+              variant="body1"
+              fontWeight={500}
+              textAlign="left"
+              color='#50627a'
+            >
+              Keyword & Date Search:
+            </Typography>
+            <Typography
+              variant="body2"
+              fontWeight={500}
+              textAlign="left"
+              color='#50627a'
+            >
+              Find past entries effortlessly
+            </Typography>
+
+
+
+          </CardContent>
+
+          <CardContent
+          sx={{marginX: 2}}
+          >
+            {basicFooter ? basicFooter() : renderDefaultFooter()}
+          </CardContent>
+        </Card>
+      </Grid>
+
       <Grid
         item
         xs={12} md={4}
@@ -97,9 +228,18 @@ export default function PlanComparison({
               fontWeight={600}
               textAlign="left"
               color="primary"
+              mb={0}
 
             >
-              Premium
+              Analytic
+            </Typography>
+            <Typography
+              variant="body1"
+              textAlign="left"
+              color='secondary'
+              fontWeight={500}
+            >
+              AI Insights, No Generative AI
             </Typography>
             <Typography
               marginTop={1}
@@ -107,15 +247,9 @@ export default function PlanComparison({
               textAlign="left"
               color='#50627a'
             >
-              $4.99
+              $0
             </Typography>
-            <Typography
-              variant="body2"
-              textAlign="left"
-              color='black'
-            >
-              Billed monthly. Cancel anytime.
-            </Typography>
+
 
             <Stack
               marginTop={3}
@@ -145,83 +279,16 @@ export default function PlanComparison({
               textAlign="left"
               color='#50627a'
             >
-              GPT-enabled chat, called <i>Prompt</i>
+              Behavior Insights:
             </Typography>
             <Typography
               variant="body2"
-              textAlign="left"
-              color='black'
-            >
-              Game-changing AI feature that will take your journaling to the next level
-            </Typography>
-
-            <Typography
-              variant="body2"
-              textAlign="left"
-              color='black'
-              marginLeft={1}
-              marginTop={.5}
-            >
-              {customIcon} Custom prompts: ask AI anything
-            </Typography>
-
-            <Typography
-              variant="body2"
-              textAlign="left"
-              color='black'
-              marginLeft={1}
-              marginTop={1}
-            >
-              {dreamsIcon} Run dream interpretations
-            </Typography>
-
-            <Typography
-              variant="body2"
-              textAlign="left"
-              color='black'
-              marginLeft={1}
-              marginTop={1}
-            >
-              {suggestedIcon} Suggested next journal topics
-            </Typography>
-
-            <Typography
-              variant="body2"
-              textAlign="left"
-              color='black'
-              marginLeft={1}
-              marginTop={1}
-            >
-              {enhancedIcon} Better quality summaries and themes
-            </Typography>
-
-
-            <Typography
-              variant="body2"
-              textAlign="left"
-              color='black'
-              marginLeft={1}
-              marginTop={.5}
-            >
-              {feedbackIcon} Get feedback on entries
-            </Typography>
-
-            {/*<Typography
-              marginTop={2}
-              variant="body1"
               fontWeight={500}
               textAlign="left"
               color='#50627a'
             >
-              Advanced search capabilities
+              Understand correlations and patterns in your activities
             </Typography>
-            <Typography
-              variant="body2"
-              textAlign="left"
-              color='black'
-            >
-              Use Magic Search to find anything from past entries in a flash, or ask your journal questions
-            </Typography>*/}
 
             <Typography
               marginTop={2}
@@ -230,15 +297,33 @@ export default function PlanComparison({
               textAlign="left"
               color='#50627a'
             >
-              Personalized Support
+              Book Recommendations:
             </Typography>
-
             <Typography
               variant="body2"
+              fontWeight={500}
               textAlign="left"
-              color='black'
+              color='#50627a'
             >
-              Request a consultation via email to get help with onboarding so you can get the most out of Gnothi
+              Get curated reads that align with your journal themes
+            </Typography>
+
+             <Typography
+              marginTop={2}
+              variant="body1"
+              fontWeight={500}
+              textAlign="left"
+              color='#50627a'
+            >
+              Semantic Search:
+            </Typography>
+            <Typography
+              variant="body2"
+              fontWeight={500}
+              textAlign="left"
+              color='#50627a'
+            >
+              Go beyond keywords with context-aware search
             </Typography>
           </CardContent>
 
@@ -253,9 +338,13 @@ export default function PlanComparison({
         </Card>
       </Grid>
 
-      <Grid item
-            xs={12} md={4}
+
+
+      <Grid
+        item
+        xs={12} md={4}
       >
+
         <Card
           sx={{
             height: '100%',
@@ -269,17 +358,26 @@ export default function PlanComparison({
             borderWidth: '1px',
           }}
         >
-          <CardContent
-          sx={{marginX: 2}}
+          <CardContent sx={{marginX: 2
+          }}
           >
             <Typography
               variant="h4"
               fontWeight={600}
               textAlign="left"
-              color='#50627a'
+              color="primary"
+              mb={0}
 
             >
-              Basic
+              Generative
+            </Typography>
+            <Typography
+              variant="body1"
+              textAlign="left"
+              color='secondary'
+              fontWeight={500}
+            >
+              All-Inclusive AI Experience
             </Typography>
             <Typography
               marginTop={1}
@@ -287,14 +385,46 @@ export default function PlanComparison({
               textAlign="left"
               color='#50627a'
             >
-              $0
+              $4.99
+            </Typography>
+
+            <Stack
+              marginTop={3}
+              direction="row"
+              spacing={.5}
+              alignItems="center"
+            >
+              <CheckIcon
+                fontSize='inherit'
+                sx={{color: "#59887c"}}
+              />
+              <Typography
+                variant="body1"
+                fontWeight={700}
+                textAlign="left"
+                color='#59887c'
+                //sx={{textDecoration: 'underline'}}
+              >
+                Everything in Analytic, plus:
+              </Typography>
+            </Stack>
+
+            <Typography
+              marginTop={2}
+              variant="body1"
+              fontWeight={500}
+              textAlign="left"
+              color='#50627a'
+            >
+              Interactive AI Chat:
             </Typography>
             <Typography
               variant="body2"
+              fontWeight={500}
               textAlign="left"
-              color='black'
+              color='#50627a'
             >
-              Tried and true. Always free.
+              Get dream interpretations, feedback, journal prompts, and more
             </Typography>
 
             <Typography
@@ -304,96 +434,46 @@ export default function PlanComparison({
               textAlign="left"
               color='#50627a'
             >
-              Unlimited journal essentials
+              Summaries and Themes:
             </Typography>
-
             <Typography
               variant="body2"
+              fontWeight={500}
               textAlign="left"
-              color='black'
-              marginLeft={1}
-              marginTop={1}
+              color='#50627a'
             >
-
-              {checkIcon2} Write as much as you want
+              See what AI sees to dive deeper
             </Typography>
 
-            {/*<Typography*/}
-            {/*  variant="body2"*/}
-            {/*  textAlign="left"*/}
-            {/*  color='black'*/}
-            {/*  marginLeft={1}*/}
-            {/*  marginTop={.5}*/}
-            {/*>*/}
-            {/*  {checkIcon2} Run unlimited themes and summaries*/}
-            {/*</Typography>*/}
 
-            <Typography
-              variant="body2"
-              textAlign="left"
-              color='black'
-              marginLeft={1}
-              marginTop={.5}
-            >
-              {checkIcon2} Track behaviors and get AI insights
-            </Typography>
 
-            <Typography
-              variant="body2"
-              textAlign="left"
-              color='black'
-              marginLeft={1}
-              marginTop={.5}
-            >
-              {checkIcon2} Get personalized book recommendations
-            </Typography>
-
-            <Typography
-              variant="body2"
-              textAlign="left"
-              color='black'
-              marginLeft={1}
-              marginTop={.5}
-            >
-              {checkIcon2} Organize entries with custom tags
-            </Typography>
-
-            {/*<Typography*/}
-            {/*  variant="body2"*/}
-            {/*  textAlign="left"*/}
-            {/*  color='black'*/}
-            {/*  marginLeft={1}*/}
-            {/*  marginTop={.5}*/}
-            {/*>*/}
-            {/*  {checkIcon2} Share entries with friends or therapists*/}
-            {/*</Typography>*/}
-
-            <Typography
+             <Typography
               marginTop={2}
               variant="body1"
               fontWeight={500}
               textAlign="left"
               color='#50627a'
             >
-              Community Support
+              Magic Search:
             </Typography>
-
             <Typography
               variant="body2"
+              fontWeight={500}
               textAlign="left"
-              color='black'
-              //marginBottom={2.5}
+              color='#50627a'
             >
-              Get access to videos, tutorials, and other information to learn how to take advantage of all the features
+              Scan and interpret your complete journal history
             </Typography>
-
           </CardContent>
+
 
           <CardContent
           sx={{marginX: 2}}
           >
-            {basicFooter ? basicFooter() : renderDefaultFooter()}
+            {premiumFooter? premiumFooter() : renderDefaultFooter()}
           </CardContent>
+
+
         </Card>
       </Grid>
 
