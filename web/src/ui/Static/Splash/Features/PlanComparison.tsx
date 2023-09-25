@@ -34,6 +34,61 @@ export const buttonDefaults = {
   color: "secondary"
 } as unknown as ButtonProps
 
+function PlanCard({children}: React.PropsWithChildren) {
+  return <Card
+    sx={{
+      height: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'space-between',
+      backgroundColor: '#ffffff',
+      borderRadius: 3,
+      borderColor: '#50577A',
+      borderStyle: 'solid',
+      borderWidth: '1px',
+    }}
+  >
+    {children}
+  </Card>
+}
+
+function FeatureItem({title, content, mt=2}: { title: string, content: string, mt?: number }) {
+  return <>
+    <Typography
+      marginTop={mt}
+      variant="body1"
+      fontWeight={500}
+      textAlign="left"
+      color='#50627a'
+    >
+      {title}
+    </Typography>
+    <Typography
+      variant="body2"
+      fontWeight={500}
+      textAlign="left"
+      color='#50627a'
+    >
+      {content}
+    </Typography>
+  </>
+}
+
+function PlanBody({children}: React.PropsWithChildren) {
+
+}
+
+const featureIcon = {fontSize: "inherit", color: "secondary"}
+const dreamsIcon = <DreamsIcon {...featureIcon} />
+const feedbackIcon = <FeedbackIcon {...featureIcon} />
+const customIcon = <CustomIcon {...featureIcon} />
+const suggestedIcon = <SuggestedIcon {...featureIcon} />
+const enhancedIcon = <EnhancedIcon {...featureIcon} />
+
+const checkIcon2 = <CheckIcon sx={{color: "#59887c"}}
+  fontSize='inherit'
+/>
+
 interface PlanComparison {
   premiumFooter?: any
   basicfooter?: any
@@ -42,17 +97,6 @@ export default function PlanComparison({
   premiumFooter,
   basicFooter,
 }: PlanComparison) {
-  const featureIcon = {fontSize: "inherit", color: "secondary"}
-  const dreamsIcon = <DreamsIcon {...featureIcon} />
-  const feedbackIcon = <FeedbackIcon {...featureIcon} />
-  const customIcon = <CustomIcon {...featureIcon} />
-  const suggestedIcon = <SuggestedIcon {...featureIcon} />
-  const enhancedIcon = <EnhancedIcon {...featureIcon} />
-
-  const checkIcon2 = <CheckIcon sx={{color: "#59887c"}}
-    fontSize='inherit'
-  />
-
   function renderDefaultFooter() {
      return <Button
         {...buttonDefaults}
@@ -71,167 +115,20 @@ export default function PlanComparison({
       justifyContent='center'
     >
 
-      <Grid item
-            xs={12} md={4}
-      >
-        <Card
-          sx={{
-            height: '100%',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-            backgroundColor: '#ffffff',
-            borderRadius: 3,
-            borderColor: '#50577A',
-            borderStyle: 'solid',
-            borderWidth: '1px',
-          }}
-        >
-          <CardContent
-          sx={{marginX: 2}}
-          >
-            <Typography
-              variant="h4"
-              fontWeight={600}
-              textAlign="left"
-              color='#50627a'
-              mb={0}
-
-            >
-              Basic
-            </Typography>
-            <Typography
-              variant="body1"
-              textAlign="left"
-              color='secondary'
-              fontWeight={500}
-            >
-              Pure Journaling, Zero AI
-            </Typography>
-            <Typography
-              marginTop={1}
-              variant="subtitle2"
-              textAlign="left"
-              color='#50627a'
-            >
-              $0
-            </Typography>
-
-
-            <Typography
-              marginTop={3}
-              variant="body1"
-              fontWeight={500}
-              textAlign="left"
-              color='#50627a'
-            >
-              Unlimited Journal Entries:
-            </Typography>
-            <Typography
-              variant="body2"
-              fontWeight={500}
-              textAlign="left"
-              color='#50627a'
-            >
-              Write as much as you want, whenever you want
-            </Typography>
-
-            <Typography
-              marginTop={2}
-              variant="body1"
-              fontWeight={500}
-              textAlign="left"
-              color='#50627a'
-            >
-              Behavior Tracking:
-            </Typography>
-            <Typography
-              variant="body2"
-              fontWeight={500}
-              textAlign="left"
-              color='#50627a'
-            >
-              Keep tabs on your habits and activities
-            </Typography>
-
-             <Typography
-              marginTop={2}
-              variant="body1"
-              fontWeight={500}
-              textAlign="left"
-              color='#50627a'
-            >
-              Tagging System:
-            </Typography>
-            <Typography
-              variant="body2"
-              fontWeight={500}
-              textAlign="left"
-              color='#50627a'
-            >
-              Organize your entries for easy retrieval
-            </Typography>
-
-             <Typography
-              marginTop={2}
-              variant="body1"
-              fontWeight={500}
-              textAlign="left"
-              color='#50627a'
-            >
-              Keyword & Date Search:
-            </Typography>
-            <Typography
-              variant="body2"
-              fontWeight={500}
-              textAlign="left"
-              color='#50627a'
-            >
-              Find past entries effortlessly
-            </Typography>
-
-
-
-          </CardContent>
-
-          <CardContent
-          sx={{marginX: 2}}
-          >
-            {basicFooter ? basicFooter() : renderDefaultFooter()}
-          </CardContent>
-        </Card>
-      </Grid>
-
       <Grid
         item
         xs={12} md={4}
       >
-
-        <Card
-          sx={{
-            height: '100%',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-            backgroundColor: '#ffffff',
-            borderRadius: 3,
-            borderColor: '#50577A',
-            borderStyle: 'solid',
-            borderWidth: '1px',
-          }}
-        >
-          <CardContent sx={{marginX: 2
-          }}
-          >
+        <PlanCard>
+          <CardContent sx={{marginX: 2}}>
             <Typography
               variant="h4"
               fontWeight={600}
               textAlign="left"
               color="primary"
               mb={0}
-
             >
-              Analytic
+              Basic
             </Typography>
             <Typography
               variant="body1"
@@ -250,6 +147,77 @@ export default function PlanComparison({
               $0
             </Typography>
 
+
+          <FeatureItem
+            mt={3}
+            title="Unlimited Journal Entries:"
+            // content="Write freely, no limits attached"
+            content="Write as much as you want, whenever you want"
+          />
+          <FeatureItem
+            title="Behavior Tracking & Insights:"
+            content="Monitor habits and understand their correlations"
+          />
+          <FeatureItem
+            title="Advanced Search Options:"
+            content="Use keyword, date, and semantic search to find entries"
+          />
+          <FeatureItem
+            title="Book Recommendations:"
+            content="Discover reads that resonate with your journal themes"
+          />
+          </CardContent>
+
+          <CardContent sx={{marginX: 2}}>
+            {basicFooter ? basicFooter() : renderDefaultFooter()}
+          </CardContent>
+
+
+        </PlanCard>
+      </Grid>
+
+
+
+      <Grid
+        item
+        xs={12} md={4}
+      >
+
+        <PlanCard>
+          <CardContent sx={{marginX: 2}}>
+            <Typography
+              variant="h4"
+              fontWeight={600}
+              textAlign="left"
+              color="primary"
+              mb={0}
+
+            >
+              Premium
+            </Typography>
+            <Typography
+              variant="body1"
+              textAlign="left"
+              color='secondary'
+              fontWeight={500}
+            >
+              All-Inclusive AI Experience
+            </Typography>
+            <Typography
+              marginTop={1}
+              variant="subtitle2"
+              textAlign="left"
+              color='#50627a'
+            >
+              $4.99
+            </Typography>
+            <Typography
+              variant="body2"
+              textAlign="left"
+              color='#50627a'
+            >
+              Billed monthly. Cancel anytime.
+            </Typography>
 
             <Stack
               marginTop={3}
@@ -272,209 +240,30 @@ export default function PlanComparison({
               </Typography>
             </Stack>
 
-            <Typography
-              marginTop={3}
-              variant="body1"
-              fontWeight={500}
-              textAlign="left"
-              color='#50627a'
-            >
-              Behavior Insights:
-            </Typography>
-            <Typography
-              variant="body2"
-              fontWeight={500}
-              textAlign="left"
-              color='#50627a'
-            >
-              Understand correlations and patterns in your activities
-            </Typography>
+            <FeatureItem
+              title="Interactive AI Chat:"
+              content="Get dream interpretations, feedback, journal prompts, and more"
+            />
 
-            <Typography
-              marginTop={2}
-              variant="body1"
-              fontWeight={500}
-              textAlign="left"
-              color='#50627a'
-            >
-              Book Recommendations:
-            </Typography>
-            <Typography
-              variant="body2"
-              fontWeight={500}
-              textAlign="left"
-              color='#50627a'
-            >
-              Get curated reads that align with your journal themes
-            </Typography>
-
-             <Typography
-              marginTop={2}
-              variant="body1"
-              fontWeight={500}
-              textAlign="left"
-              color='#50627a'
-            >
-              Semantic Search:
-            </Typography>
-            <Typography
-              variant="body2"
-              fontWeight={500}
-              textAlign="left"
-              color='#50627a'
-            >
-              Go beyond keywords with context-aware search
-            </Typography>
+            <FeatureItem
+              mt={3}
+              title="Summaries and Themes:"
+              content="Capture recurring patterns across your entries"
+            />
+            <FeatureItem
+              title="Magic Search:"
+              // content="Scan and interpret your complete journal history"
+              content="Query your entire journal history to extract valuable insights"
+            />
           </CardContent>
 
 
-          <CardContent
-          sx={{marginX: 2}}
-          >
+          <CardContent sx={{marginX: 2}}>
             {premiumFooter? premiumFooter() : renderDefaultFooter()}
           </CardContent>
 
 
-        </Card>
-      </Grid>
-
-
-
-      <Grid
-        item
-        xs={12} md={4}
-      >
-
-        <Card
-          sx={{
-            height: '100%',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-            backgroundColor: '#ffffff',
-            borderRadius: 3,
-            borderColor: '#50577A',
-            borderStyle: 'solid',
-            borderWidth: '1px',
-          }}
-        >
-          <CardContent sx={{marginX: 2
-          }}
-          >
-            <Typography
-              variant="h4"
-              fontWeight={600}
-              textAlign="left"
-              color="primary"
-              mb={0}
-
-            >
-              Generative
-            </Typography>
-            <Typography
-              variant="body1"
-              textAlign="left"
-              color='secondary'
-              fontWeight={500}
-            >
-              All-Inclusive AI Experience
-            </Typography>
-            <Typography
-              marginTop={1}
-              variant="subtitle2"
-              textAlign="left"
-              color='#50627a'
-            >
-              $4.99
-            </Typography>
-
-            <Stack
-              marginTop={3}
-              direction="row"
-              spacing={.5}
-              alignItems="center"
-            >
-              <CheckIcon
-                fontSize='inherit'
-                sx={{color: "#59887c"}}
-              />
-              <Typography
-                variant="body1"
-                fontWeight={700}
-                textAlign="left"
-                color='#59887c'
-                //sx={{textDecoration: 'underline'}}
-              >
-                Everything in Analytic, plus:
-              </Typography>
-            </Stack>
-
-            <Typography
-              marginTop={2}
-              variant="body1"
-              fontWeight={500}
-              textAlign="left"
-              color='#50627a'
-            >
-              Interactive AI Chat:
-            </Typography>
-            <Typography
-              variant="body2"
-              fontWeight={500}
-              textAlign="left"
-              color='#50627a'
-            >
-              Get dream interpretations, feedback, journal prompts, and more
-            </Typography>
-
-            <Typography
-              marginTop={3}
-              variant="body1"
-              fontWeight={500}
-              textAlign="left"
-              color='#50627a'
-            >
-              Summaries and Themes:
-            </Typography>
-            <Typography
-              variant="body2"
-              fontWeight={500}
-              textAlign="left"
-              color='#50627a'
-            >
-              See what AI sees to dive deeper
-            </Typography>
-
-
-
-             <Typography
-              marginTop={2}
-              variant="body1"
-              fontWeight={500}
-              textAlign="left"
-              color='#50627a'
-            >
-              Magic Search:
-            </Typography>
-            <Typography
-              variant="body2"
-              fontWeight={500}
-              textAlign="left"
-              color='#50627a'
-            >
-              Scan and interpret your complete journal history
-            </Typography>
-          </CardContent>
-
-
-          <CardContent
-          sx={{marginX: 2}}
-          >
-            {premiumFooter? premiumFooter() : renderDefaultFooter()}
-          </CardContent>
-
-
-        </Card>
+        </PlanCard>
       </Grid>
 
     </Grid>
