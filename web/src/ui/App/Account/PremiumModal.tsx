@@ -118,7 +118,7 @@ export default function PremiumModal() {
         target="_blank"
         href={`${PAYMENT_LINK}?client_reference_id=${me?.id}`}
       >
-        Try it Free for a Week
+        Upgrade
       </Button>
       <div>
         <Typography variant="body2" textAlign='center' px={2}>Upgrade enables GPT. See OpenAI's <a href="https://openai.com/policies/privacy-policy" target="_blank">privacy policy</a> and <a href="https://openai.com/policies/terms-of-use" target="_blank">terms of use</a></Typography>

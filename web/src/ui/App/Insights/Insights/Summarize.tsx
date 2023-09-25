@@ -55,7 +55,7 @@ function TryGenerative({view, entry_ids}: Summarize) {
   return <BtnTryGenerative
     submit={submit}
     btnProps={{fullWidth: true}}
-    tryLabel="Try Generative"
+    tryLabel="Try Premium"
     premiumLabel={null}
   />
 }

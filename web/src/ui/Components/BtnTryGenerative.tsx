@@ -78,7 +78,7 @@ export default function BtnTryGenerative({
     </Stack2>
     <BasicDialog open={showHelp} onClose={() => setShowHelp(false)} size={'sm'}>
       <CardContent>
-        <Typography>You can use 10 credits to test-drive the Generative Plan. When you activate 1 credit, it is active for 5 minutes across the site and you can use all generative features. These features include Summary & Themes (per entry submission AND the list-view), Prompt (chat), and next-entry suggestion. When the timer runs out, you'll need to use another credit to activate Generative Mode, or upgrade to the Generative Plan.</Typography>
+        <Typography>You can use 10 credits to test-drive Premium. When you activate 1 credit, it is active for 5 minutes across the site and you can use all generative features. These features include Summary & Themes (list-view on the dashboard, and per entry), Prompt (chat), and next entry suggestion (when starting a new entry). When the timer runs out, you'll need to use another credit to activate, or upgrade to the Premium plan.</Typography>
       </CardContent>
     </BasicDialog>
   </Stack2>
