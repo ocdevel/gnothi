@@ -21,6 +21,7 @@ import type {Message} from '@gnothi/schemas/insights'
 import PremiumIcon from '@mui/icons-material/LockOutlined';
 import {shallow} from "zustand/shallow";
 import BtnTryGenerative from '../../../../Components/BtnTryGenerative'
+import ReactMarkdown from "react-markdown";
 
 // import {LinearProgress} from "@mui/material";
 // import axios from "axios"
@@ -161,7 +162,7 @@ export default function Prompt({entry_ids, view}: Prompt) {
           }[role]}
         </Typography>
         <Typography>
-          {message.content}
+          <ReactMarkdown>{message.content}</ReactMarkdown>
         </Typography>
       </CardContent>
     </Grid>
