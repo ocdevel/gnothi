@@ -212,7 +212,7 @@ export async function suggestNextEntry({entries, context, generative, view}: Sug
   const response = await completion({
     model: "gpt-3.5-turbo-16k",
     max_tokens: 256,
-    prompt: `Below in triple quotes are my previous journal entries. What should I journal about next to explore more deeply the deeper themes in these entries?\n"""${text}"""`
+    prompt: `Between >>> and <<< are my prior journal entries. What should I journal about next to encourage personal growth?\n>>> ${text} <<<`
   })
   return sendInsight(
     r.insights_nextentry_response,
