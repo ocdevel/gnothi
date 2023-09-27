@@ -37,13 +37,14 @@ type Message = {
   role: "user" | "system" | "assistant"
   content: string
 }
+export const tokenLimits = {
+  "gpt-4": 8000,
+  "gpt-3.5-turbo": 4096,
+  "gpt-3.5-turbo-16k": 16000,
+}
 function truncate(inputMessages: Message[], responseLimit: number, model: Model): Message[] {
   const gpt4 = model === "gpt-4";
-  const tokenLimit = {
-    "gpt-4": 8000,
-    "gpt-3.5-turbo": 4096,
-    "gpt-3.5-turbo-16k": 16000,
-  }[model]
+  const tokenLimit = tokenLimits[model]
 
   // Create a deep copy of the messages
   let messages = _.cloneDeep(inputMessages);
@@ -80,10 +81,11 @@ export type Prompt = string | Message[]
 // 0d5c00b81263fb653e89d9dae95f15fc9d14f078 - davinci-003 and standard completions (10x cost)
 export async function completion(
   opts: Partial<CreateChatCompletionRequest> & {
-    prompt: Prompt
+    prompt: Prompt,
+    skipTruncate?: boolean
   }
 ): Promise<string> {
-  const {prompt, ...rest} = opts
+  const {prompt, skipTruncate, ...rest} = opts
   // use gpt-4 for prompt (insights), and gpt-3 for entry-level tasks like summarization.
   // Gpt3 does a decent job of that, and is faster/cheaper. Wheras prompt really benefits from a high-quality
   // psychological understanding of the text
@@ -94,10 +96,9 @@ export async function completion(
     { role: "system", content: defaultSystemMessage },
     { role: "user", content: prompt }
   ]
-  const truncated = truncate(messages, max_tokens, model)
+  const truncated = skipTruncate ? messages : truncate(messages, max_tokens, model)
 
   try {
-    const {prompt, ...rest} = opts
     const completionRequest: CreateChatCompletionRequest = {
       model,
       temperature: 0.2, // gpt suggests 0.2-0.4
