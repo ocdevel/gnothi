@@ -1,7 +1,7 @@
 import {Stack2} from "./Misc.tsx";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
-import React from "react";
+import React, {useMemo} from "react";
 import {shallow} from "zustand/shallow";
 import {useStore} from "../../data/store";
 import {ButtonProps} from '@mui/material/Button'
@@ -28,6 +28,12 @@ export default function BtnTryGenerative({
   ], shallow)
 
   const [showHelp, setShowHelp] = React.useState<boolean>(false)
+
+  const dialog = useMemo(() => <BasicDialog open={showHelp} onClose={() => setShowHelp(false)} size={'sm'}>
+      <CardContent>
+        <Typography>Users get 10 credits to test-drive Premium. When you activate 1 credit, it is active for 5 minutes and you can use all generative features. These include summary & themes (dashboard view, and per entry), prompt (chat), and next entry suggestion (when starting a new entry), etc. When the timer runs out, you'll need to use another credit to activate, or upgrade to the Premium plan.</Typography>
+      </CardContent>
+    </BasicDialog>, [showHelp])
 
   function handleSubmit() {
     creditActivate()
@@ -61,25 +67,23 @@ export default function BtnTryGenerative({
     </Button>
   }
 
-  return <Stack2 direction='column' alignItems="center">
-    <Button
-      onClick={handleSubmit}
-      {...btnProps_}
-    >
-      {tryLabel} (1 credit)
-    </Button>
-    <Stack2 direction='row'>
-      <Typography variant='body2'>{me?.credits ?? 10} / 10 Credits{creditActive ? " (credit currently active)" : ""}</Typography>
-      <Typography
-        variant="caption"
-        sx={{textDecoration: "underline", cursor: "pointer"}}
-        onClick={() => setShowHelp(true)}
-      >What's this?</Typography>
+  return <>
+    <Stack2 direction='column' alignItems="center">
+      <Button
+        onClick={handleSubmit}
+        {...btnProps_}
+      >
+        {tryLabel} (1 credit)
+      </Button>
+      <Stack2 direction='row'>
+        <Typography variant='body2'>{me?.credits ?? 10} / 10 Credits{creditActive ? " (credit currently active)" : ""}</Typography>
+        <Typography
+          variant="caption"
+          sx={{textDecoration: "underline", cursor: "pointer"}}
+          onClick={() => setShowHelp(true)}
+        >What's this?</Typography>
+      </Stack2>
     </Stack2>
-    <BasicDialog open={showHelp} onClose={() => setShowHelp(false)} size={'sm'}>
-      <CardContent>
-        <Typography>You can use 10 credits to test-drive Premium. When you activate 1 credit, it is active for 5 minutes across the site and you can use all generative features. These features include Summary & Themes (list-view on the dashboard, and per entry), Prompt (chat), and next entry suggestion (when starting a new entry). When the timer runs out, you'll need to use another credit to activate, or upgrade to the Premium plan.</Typography>
-      </CardContent>
-    </BasicDialog>
-  </Stack2>
+    {dialog}
+  </>
 }

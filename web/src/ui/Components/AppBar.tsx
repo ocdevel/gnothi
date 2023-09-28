@@ -7,7 +7,7 @@ import Container from '@mui/material/Container';
 import Avatar from '@mui/material/Avatar';
 import Tooltip from '@mui/material/Tooltip';
 import MenuItem from '@mui/material/MenuItem';
-import React, {useState, useEffect} from 'react'
+import React, {useState, useEffect, useMemo} from 'react'
 import {Link} from '@gnothi/web/src/ui/Components/Link'
 
 import Button from "@mui/material/Button";
@@ -32,6 +32,8 @@ import Chip from "@mui/material/Chip";
 import {Stack2} from "./Misc.tsx";
 import Alert from "@mui/material/Alert";
 import AlertTitle from "@mui/material/AlertTitle";
+import {BasicDialog} from "./Dialog.tsx";
+import CardContent from "@mui/material/CardContent";
 
 const buttonSx = {
   fontWeight: 300,
@@ -301,9 +303,17 @@ function CreditBanner() {
     s.user?.me,
     s.modals.setPremium
   ], shallow)
+  const [showShare, setShowShare] = useState(false)
+  const dialog = useMemo(() => <BasicDialog open={showShare} onClose={() => setShowShare(false)} size="sm">
+    <CardContent>
+      <Typography>Share Gnothi on social media, Reddit, etc. Email proof (a link or screenshot) to gnothi@gnothiai.com and we'll send you 7 free credits. One use per customer.</Typography>
+    </CardContent>
+  </BasicDialog>, [showShare])
+
   if (!creditActive) { return null }
   if (!me) { return null }
   const timeLeft = CREDIT_MINUTES * 60 - creditSeconds
+
   return <>
     <Alert
       icon={false}
@@ -313,9 +323,9 @@ function CreditBanner() {
         <Button variant='outlined' color="inherit" size="small" onClick={() => setPremium(true)}>
           Upgrade for Unlimited
         </Button>
-        {/*<Button variant='text' color="inherit" size="small" onClick={() => setPremium(true)}>
-          Share for +10 Credits
-        </Button>*/}
+        <Button variant='text' color="inherit" size="small" onClick={() => setShowShare(true)}>
+          Share for +7 Credits
+        </Button>
       </Stack>}
       // sx={{display: "flex", justifyContent: "space-between", alignItems: "center", flexDirection: "column"}}
     >
@@ -325,6 +335,8 @@ function CreditBanner() {
         <Chip className='timer' variant="outlined" label={formatSecondsToMinutes(timeLeft)} />
       </Stack2>
     </Alert>
+
+    {dialog}
   </>
 }
 
