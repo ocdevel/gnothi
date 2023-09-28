@@ -7,6 +7,22 @@ import {useStore} from "../../data/store";
 import {ButtonProps} from '@mui/material/Button'
 import {BasicDialog} from "./Dialog.tsx";
 import CardContent from "@mui/material/CardContent";
+import {create} from "zustand";
+
+const useDialogStore = create<{show: boolean, setShow: (show: boolean) => void}>((set, get) => ({
+  show: false,
+  setShow: (show: boolean) => set({show}),
+}))
+
+function Dialog() {
+  const [show, setShow] = useDialogStore(s => [s.show, s.setShow], shallow)
+  return <BasicDialog open={show} onClose={() => setShow(false)} size={'sm'}>
+    <CardContent>
+      <Typography>Users get 10 credits to test-drive Premium. When you activate 1 credit, it is active for 5 minutes and you can use all generative features. These include summary & themes (dashboard view, and per entry), prompt (chat), and next entry suggestion (when starting a new entry), etc. When the timer runs out, you'll need to use another credit to activate, or upgrade to the Premium plan.</Typography>
+    </CardContent>
+  </BasicDialog>
+}
+const dialog = <Dialog />
 
 interface BtnTryGenerative {
   tryLabel: string
@@ -26,14 +42,7 @@ export default function BtnTryGenerative({
     s.creditActivate,
     s.modals.setPremium
   ], shallow)
-
-  const [showHelp, setShowHelp] = React.useState<boolean>(false)
-
-  const dialog = useMemo(() => <BasicDialog open={showHelp} onClose={() => setShowHelp(false)} size={'sm'}>
-      <CardContent>
-        <Typography>Users get 10 credits to test-drive Premium. When you activate 1 credit, it is active for 5 minutes and you can use all generative features. These include summary & themes (dashboard view, and per entry), prompt (chat), and next entry suggestion (when starting a new entry), etc. When the timer runs out, you'll need to use another credit to activate, or upgrade to the Premium plan.</Typography>
-      </CardContent>
-    </BasicDialog>, [showHelp])
+  const setShow = useDialogStore(s => s.setShow)
 
   function handleSubmit() {
     creditActivate()
@@ -80,7 +89,7 @@ export default function BtnTryGenerative({
         <Typography
           variant="caption"
           sx={{textDecoration: "underline", cursor: "pointer"}}
-          onClick={() => setShowHelp(true)}
+          onClick={() => setShow(true)}
         >What's this?</Typography>
       </Stack2>
     </Stack2>
