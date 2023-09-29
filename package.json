@@ -14,25 +14,24 @@
     "test:gendata": "AWS_REGION=us-east-1 AWS_PROFILE=gnothiadmin sst bind -- vitest run services/tests/setup_mock.spec.ts",
     "migrate:generate": "npx drizzle-kit generate:pg --schema services/data/schemas --out services/data/migrate/rest",
     "v0:migrate": "AWS_REGION=us-east-1 AWS_PROFILE=gnothiadmin sst bind vitest run services/data/migrate/v0/migrate.spec.ts --stage=legion4",
-
     "web:test": "playwright test --project=chromium --headed",
     "web:test:specific": "playwright test --project=chromium --headed tests/premium.spec.ts"
   },
   "devDependencies": {
-    "@aws-sdk/client-cognito-identity-provider": "^3.335.0",
+    "@aws-sdk/client-cognito-identity-provider": "^3.421.0",
     "@playwright/test": "^1.38.1",
-    "@tsconfig/node18": "^2.0.1",
-    "@types/lodash": "^4.14.194",
+    "@tsconfig/node18": "^18.2.2",
+    "@types/lodash": "^4.14.199",
     "aws-cdk-lib": "2.95.1",
     "constructs": "10.2.69",
-    "dotenv": "^16.0.3",
+    "dotenv": "^16.3.1",
     "drizzle-kit": "^0.19.13",
-    "sst": "2.26.2",
-    "typescript": "^5.1.3",
-    "vitest": "^0.31.4"
+    "sst": "2.26.9",
+    "typescript": "^5.1.6",
+    "vitest": "^0.34.6"
   },
   "dependencies": {
-    "openai": "^3.2.1"
+    "openai": "^4.11.0"
   },
   "workspaces": [
     "services",

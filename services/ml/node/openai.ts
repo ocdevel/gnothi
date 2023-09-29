@@ -1,6 +1,7 @@
 import {Config} from 'sst/node/config'
+import openai, {OpenAI} from "openai"
+import {ChatCompletionCreateParams, ChatCompletionMessageParam} from "openai/resources/chat";
 import {
-  Configuration,
   OpenAIApi,
   CreateCompletionRequest,
   CreateCompletionRequestPrompt,
@@ -20,16 +21,15 @@ import {Logger} from "../../aws/logs";
 // "You are a conversational support system."
 export const defaultSystemMessage = "You are an insightful guide."
 
-let openai: OpenAIApi
-function getOpenAi() {
+let openai_: OpenAI
+function getOpenAi(): OpenAI {
   // doing it down here instead of up-top, to prevent requiring Config.OPENAI_KEY in
   // functions which won't need this
-  if (openai) {return openai}
-  const configuration = new Configuration({
+  if (openai_) {return openai_}
+  openai_ = new openai.OpenAI({
     apiKey: Config.OPENAI_KEY,
   })
-  openai = new OpenAIApi(configuration);
-  return openai
+  return openai_
 }
 
 type Model = "gpt-4" | "gpt-3.5-turbo-16k" | "gpt-3.5-turbo"
@@ -80,7 +80,7 @@ export type Prompt = string | Message[]
 
 // 0d5c00b81263fb653e89d9dae95f15fc9d14f078 - davinci-003 and standard completions (10x cost)
 export async function completion(
-  opts: Partial<CreateChatCompletionRequest> & {
+  opts: Partial<ChatCompletionCreateParams> & {
     prompt: Prompt,
     skipTruncate?: boolean
   }
@@ -110,8 +110,8 @@ export async function completion(
       ...rest ,
       messages: truncated
     }
-    const res = await getOpenAi().createChatCompletion(completionRequest);
-    return res.data.choices[0].message.content
+    const res = await getOpenAi().chat.completions.create(completionRequest);
+    return res.choices[0].message.content
   } catch (error) {
     Logger.error("ml/node/openai#completion", {error, truncated})
     if ([429, 503].includes(error.status)) {
