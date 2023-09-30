@@ -3,7 +3,7 @@ import _ from "lodash";
 import {BasicDialog} from "@gnothi/web/src/ui/Components/Dialog";
 
 import {useStore} from "@gnothi/web/src/data/store"
-import {Create, Update} from "./Upsert"
+import {Create, Update} from "./Upsert/Upsert.tsx"
 import {shallow} from "zustand/shallow";
 import Grid from "@mui/material/Grid";
 import Box from "@mui/material/Box";

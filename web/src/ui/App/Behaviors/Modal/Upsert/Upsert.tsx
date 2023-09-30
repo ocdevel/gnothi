@@ -1,4 +1,4 @@
-import React, {useState} from "react";
+import React, {useEffect, useState} from "react";
 import _ from "lodash";
 import {BasicDialog} from "@gnothi/web/src/ui/Components/Dialog";
 
@@ -20,9 +20,11 @@ import TextField from "@mui/material/TextField";
 import CardActions from "@mui/material/CardActions";
 import Stack from "@mui/material/Stack";
 import Divider from "@mui/material/Divider";
-import Accordions from '../../../Components/Accordions'
-import {Stack2} from "../../../Components/Misc.tsx"
+import Accordions from '../../../../Components/Accordions.tsx'
+import {Stack2} from "../../../../Components/Misc.tsx"
 import Box from "@mui/material/Box";
+import {SelectTemplate} from "./SelectTemplate.tsx";
+import {useUpsertStore} from './upsertStore'
 
 export function Update() {
   const [send, fields, view, setView] = useStore(s => [
@@ -71,11 +73,17 @@ function Form({field, submit}: Form) {
     s.behaviors.view,
     s.behaviors.setView,
   ], shallow)
+  const [setField, setForm] = useUpsertStore(s => [s.setField, s.setForm], shallow)
 
   const form = useForm({
     resolver: zodResolver(S.Fields.fields_post_request),
     defaultValues: field
   })
+
+  useEffect(() => {
+    setField(field)
+    setForm(form)
+  }, [])
 
   const fid = field.id || null
 
@@ -123,12 +131,6 @@ function Form({field, submit}: Form) {
     defValHelp.average += ` (currently ${field.avg})`
   }
   defValHelp = defValHelp[default_value]
-
-  const typeHelp = {
-    number: "Track quantities, like hours slept or glasses of water",
-    fivestar: "Rate aspects of your life. Perfect for things like mood, productivity, etc",
-    check: "Simple yes or no for daily habits, like exercise or meditation"
-  }[type]
 
 
   function renderDeleteButtons() {
@@ -199,17 +201,7 @@ function Form({field, submit}: Form) {
         className='input-name'
         form={form}
       />
-        <Select2
-          name='type'
-          label="Type"
-          form={form}
-          options={[
-            {value: 'number', label: "Number"},
-            {value: 'fivestar', label: "Five-Star"},
-            {value: 'check', label: "Check"},
-          ]}
-          helperText={typeHelp}
-        />
+      <SelectTemplate />
       <Accordions sx={{mt: 2}} accordions={[
         {
           title: "Advanced",

@@ -9,7 +9,7 @@ import InputLabel from "@mui/material/InputLabel";
 import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
 import Button from "@mui/material/Button";
-import {Controller, ControllerProps} from "react-hook-form";
+import {Controller, ControllerProps, FieldValue, FieldValues, Path, UseFormReturn} from "react-hook-form";
 import React, {useState} from "react";
 import {useForm} from "react-hook-form";
 import {yupResolver} from "@hookform/resolvers/yup";
@@ -183,15 +183,15 @@ export function Autocomplete2(props) {
   />
 }
 
-interface Select2 {
-  name: string
+interface Select2<T extends FieldValues> {
+  name: Path<T>
   label: string
-  form: any
+  form: UseFormReturn<T>
   options: Array<{value: string, label: string}>
   helperText?: React.ReactNode
   className?: string
 }
-export function Select2({name, label, form, options, helperText, className}: Select2) {
+export function Select2<T extends FieldValues>({name, label, form, options, helperText, className}: Select2<T>) {
   return <Controller
     name={name}
     control={form.control}
@@ -228,7 +228,7 @@ export function Select2({name, label, form, options, helperText, className}: Sel
   />
 }
 
-function HelperText2({text}: { text?: string | null }) {
+function HelperText2({text}: { text?: string | React.ReactNode }) {
   if (!text) {return null}
   return <FormHelperText sx={{color: "#0077C2", fontWeight: 500, mt: 1.5 }}><TipsIcon sx={{fontSize: 18, marginRight: .5}}/>{text}</FormHelperText>
 }
