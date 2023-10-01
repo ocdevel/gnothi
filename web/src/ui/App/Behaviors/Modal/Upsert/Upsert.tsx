@@ -24,7 +24,11 @@ import Accordions from '../../../../Components/Accordions.tsx'
 import {Stack2} from "../../../../Components/Misc.tsx"
 import Box from "@mui/material/Box";
 import {SelectTemplate} from "./SelectTemplate.tsx";
-import {useUpsertStore} from './upsertStore'
+import {UpsertProps, WithHelp} from "./Utils.tsx";
+import {DeleteButtons} from "./DeleteExclude.tsx";
+import {DefaultValues} from "./DefaultValues.tsx";
+import {ResetPeriods} from "./ResetPeriods.tsx";
+import {TrackingType} from "./TrackingType.tsx";
 
 export function Update() {
   const [send, fields, view, setView] = useStore(s => [
@@ -73,27 +77,22 @@ function Form({field, submit}: Form) {
     s.behaviors.view,
     s.behaviors.setView,
   ], shallow)
-  const [setField, setForm] = useUpsertStore(s => [s.setField, s.setForm], shallow)
 
-  const form = useForm({
-    resolver: zodResolver(S.Fields.fields_post_request),
+  const form = useForm<fields_post_request>({
+    resolver: zodResolver(fields_post_request),
     defaultValues: field
   })
 
-  useEffect(() => {
-    setField(field)
-    setForm(form)
-  }, [])
-
   const fid = field.id || null
+
+  const upsertProps: UpsertProps = fid ? {form, field, isNew: false}
+    : {form, isNew: true}
 
   React.useEffect(() => {
     form.reset(field)
   }, [fid])
 
   console.log(form.formState.errors)
-
-  const [type, default_value] = form.watch(['type', 'default_value'])
 
   function close() {
     // close the new-field (upsert) form, NOT the modal. Just go
@@ -106,75 +105,14 @@ function Form({field, submit}: Form) {
   //   close()
   // }
 
-  const destroyField = async () => {
-    if (!fid) {return}
-    if (!window.confirm("Are you sure? This will delete all data for this field.")) {
-      return
-    }
-    send('fields_delete_request', {id: fid})
-    close()
-  }
 
-  const excludeField = async (exclude=true) => {
-    send('fields_exclude_request', {id: fid, exclude})
-    // close(false)
-  }
-
-  let defValHelp = {
-    value: `Recommended if you don't plan on tracking behaviors daily`,
-    ffill: `Auto-populates with the value from your last entry for this field`,
-    average: `Defaults to the average across all your entries for this field`
-  }
-  const lastEntry = fid && _.last(field.history)
-  if (lastEntry) { // only show if have values to work with
-    defValHelp.ffill += ` (currently ${lastEntry.value})`
-    defValHelp.average += ` (currently ${field.avg})`
-  }
-  defValHelp = defValHelp[default_value]
-
-
-  function renderDeleteButtons() {
-    if (!fid) {return null}
-    return <Stack>
-       <Typography mt={3} color="primary" variant={"body1"} fontWeight={500}>Delete or exclude a behavior</Typography>
-      <Typography mb={3} variant="body2">Excluding a behavior temporarily removes it from showing up, optimizing machine learning with fewer fields, while <u><i>deleting permanently erases the behavior</i></u> and all associated values.</Typography>
-
-    <Stack direction='row'>
-      <Stack alignItems='center' flex={1}>
-          <Button
-          className="btn-delete"
-          color='error'
-          disabled={!!field.service}
-          onClick={destroyField}
-          size='small'
-        >Delete</Button>
-      </Stack>
-      <Divider orientation='vertical' flexItem />
-      <Stack alignItems='center' flex={1}>
-        {field.excluded_at ? <>
-          <Button
-            color='info'
-            onClick={() => excludeField(false)}
-            size='small'
-          >Include</Button>
-          <Typography variant='body2'>Bring this field back</Typography>
-        </> : <>
-          <Button
-            className='btn-remove'
-            color='error'
-            onClick={() => excludeField(true)}
-            size='small'
-          >Exclude</Button>
-        </>}
-      </Stack>
-      </Stack>
-    </Stack>
-  }
-
-  return <Card  className="upsert"
-                sx={{backgroundColor: "#ffffff",
-                  borderRadius: 2,
-                  }}>
+  return <Card
+    className="upsert"
+    sx={{
+      backgroundColor: "#ffffff",
+      borderRadius: 2,
+    }}
+  >
     <CardContent>
       <Stack direction='row' justifyContent='space-between' alignItems='center' mb={2}>
         <Typography variant="h4" color="primary" fontWeight={500} m={0}>{fid ? "Edit" : "Add New"}</Typography>
@@ -191,53 +129,30 @@ function Form({field, submit}: Form) {
           </Button>
         </CardActions>
       </Stack>
-    <Stack
-      spacing={2}
-    >
-      <TextField2
-        name='name'
-        label="Name"
-        placeholder="Add the behavior you want to track (you can use emojis too). Keep names short and sweet."
-        className='input-name'
-        form={form}
+    <Stack2>
+      <WithHelp
+        field={<TextField2
+          name='name'
+          label="Name"
+          placeholder="Title of behavior to track"
+          className='input-name'
+          form={form}
+        />}
+        help={<Typography>Add the behavior you want to track. You can use Markdown (eg for links) and emojis. But try to keep it short, due to display formatting.</Typography>}
       />
-      <SelectTemplate />
+      <SelectTemplate {...upsertProps} />
       <Accordions sx={{mt: 2}} accordions={[
         {
           title: "Advanced",
           content: <Box mb={3}>
-            <Typography color="primary" variant={"body1"} fontWeight={500}>Setting a default value</Typography>
-            <Typography mb={3} variant="body2">Default values are automatically assigned to your fields on days you don't manually update them, based on the option you select here.</Typography>
-            <Select2
-              name='default_value'
-              label="Default"
-              form={form}
-              options={[
-                {value: 'value', label: "Manual Default (Recommended)"},
-                {value: 'ffill', label: "Yesterday's value"},
-                {value: 'average', label: "Average Value"},
-              ]}
-              helperText={defValHelp}
-            />
-             <Box mt={2}>
-            {default_value === 'value' && <>
-              <TextField2
-                name='default_value_value'
-                className="input-default_value_value"
-                label="Default Value"
-                type="number"
-                form={form}
-                min={type === 'check' ? 0 : null}
-                max={type === 'check' ? 1 : null}
-                // helperText="Fill in the value which will be populated if you don't track for this day. Alternatively, you can leave it blank. If youdon't know, it's recommended alkfejkalseu rdfoiuase "
-              />
-            </>}
-               </Box>
-            {renderDeleteButtons()}
+            <TrackingType {...upsertProps} />
+            <ResetPeriods {...upsertProps} />
+            <DefaultValues {...upsertProps} />
+            <DeleteButtons {...upsertProps} />
           </Box>
         }
       ]} />
-    </Stack>
+    </Stack2>
 
 
     </CardContent>
