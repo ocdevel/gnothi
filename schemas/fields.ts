@@ -4,62 +4,25 @@ import {Route} from './api'
 export * as Fields from './fields'
 import {influencers} from '@gnothi/services/data/schemas/influencers'
 import {v4 as uuid} from 'uuid'
-import {createSelectSchema} from "drizzle-zod";
+import {fields} from '@gnothi/services/data/schemas/fields'
+import {createSelectSchema, createInsertSchema} from 'drizzle-zod'
 
-export const FieldType = z.enum([
-  // medication changes / substance intake
-  // exercise, sleep, diet, weight
-  "number",
+const fieldsInsertSchema = createInsertSchema(fields)
 
-  // happiness score
-  "fivestar",
 
-  // periods
-  "check",
 
-  // moods (happy, sad, anxious, wired, bored, ..)
-  "option",
+export const Field = fieldsInsertSchema.extend({
+  // created_at: dateCol().default(() => new Date()),
+  // Add the templates, since they're only client-side
+  type: z.enum(["number", "fivestar", "check", "option", "habit", "daily", "todo", "reward"]).default("fivestar"),
+  // drizzle-zod doesn't pick up default values from fields, which is needed or react-hook-form
+  // need to extend all these to add the default
+  analyze_enabled: fieldsInsertSchema.shape.analyze_enabled.default(true),
+  default_value: fieldsInsertSchema.shape.default_value.default("value"),
+  reset_period: fieldsInsertSchema.shape.reset_period.default("daily"),
+  score_up_good: fieldsInsertSchema.shape.score_up_good.default(true)
 
-  // think of more
-  // weather_api?
-  // text entries?
-]).default("fivestar")
-
-export const DefaultValueTypes = z.enum([
-  "value",  // which includes None
-  "average",
-  "ffill"
-]).default("value")
-
-export const Field = z.object({
-  //Entries that change over time. Uses:
-  // * Charts
-  // * Effects of sentiment, topics on entries
-  // * Global trends (exercise -> 73% happiness)
-  id: IdCol,
-
-  type: FieldType,
-  name: z.string(),
-  // Start entries/graphs/correlations here
-  created_at: dateCol().default(() => new Date()),
-  // Don't actually delete fields, unless it's the same day. Instead
-  // stop entries/graphs/correlations here
-  excluded_at: dateCol().optional(),
-  default_value: DefaultValueTypes,
-  default_value_value: z.number().optional(),
-  // option{single_or_multi, options:[], ..}
-  // number{float_or_int, ..}
-  attributes: z.object({}).passthrough().default({}), // JSON TODO
-  // Used if pulling from external service
-  service: z.string().optional(),
-  service_id: z.string().optional(),
-
-  user_id: z.string().uuid(), // FK users.id
-
-  // Populated via ml.influencers.
-  influencer_score: z.number().default(0),
-  next_pred: z.number().default(0),
-  avg: z.number().default(0)
+  // user_id: z.string().uuid(), // FK users.id
 })
 export type Field = z.infer<typeof Field>
 
@@ -74,11 +37,19 @@ export const FieldEntry = z.object({
 })
 export type FieldEntry = z.infer<typeof FieldEntry>
 
-export const fields_post_request = Field.pick({
-  type: true,
-  name: true,
-  default_value: true,
-  default_value_value: true,
+export const fields_post_request = Field.omit({
+  id: true,
+  created_at: true,
+  updated_at: true,
+  service: true,
+  service_id: true,
+  user_id: true,
+  influencer_score: true,
+  next_pred: true,
+  avg: true,
+  score_total: true,
+  score_period: true,
+  streak: true,
 })
 export type fields_post_request = z.infer<typeof fields_post_request>
 export const fields_put_request = fields_post_request.extend({

@@ -26,9 +26,10 @@ import Box from "@mui/material/Box";
 import {SelectTemplate} from "./SelectTemplate.tsx";
 import {UpsertProps, WithHelp} from "./Utils.tsx";
 import {DeleteButtons} from "./DeleteExclude.tsx";
-import {DefaultValues} from "./DefaultValues.tsx";
+import {AnalyzeAdvanced} from "./AnalyzeAdvanced.tsx";
 import {ResetPeriods} from "./ResetPeriods.tsx";
 import {TrackingType} from "./TrackingType.tsx";
+import {ScoreAdvanced} from "./ScoreAdvanced.tsx";
 
 export function Update() {
   const [send, fields, view, setView] = useStore(s => [
@@ -143,15 +144,19 @@ function Form({field, submit}: Form) {
       <SelectTemplate {...upsertProps} />
       <TrackingType {...upsertProps} />
       <ResetPeriods {...upsertProps} />
-      <Accordions sx={{mt: 2}} accordions={[
-        {
-          title: "Advanced",
-          content: <Box mb={3}>
-            <DefaultValues {...upsertProps} />
-            <DeleteButtons {...upsertProps} />
-          </Box>
-        }
-      ]} />
+      <Accordions
+        defaultExpanded={0}
+        accordions={[
+          {
+            title: "Advanced",
+            content: <Stack2>
+              <AnalyzeAdvanced {...upsertProps} />
+              <ScoreAdvanced {...upsertProps} />
+              <DeleteButtons {...upsertProps} />
+            </Stack2>
+          }
+        ]}
+      />
     </Stack2>
 
 

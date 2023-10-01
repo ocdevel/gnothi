@@ -5,6 +5,7 @@ import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import {useState} from "react";
 import Box from "@mui/material/Box";
 import Alert from "@mui/material/Alert";
+import Typography from "@mui/material/Typography";
 
 type CreateProps = {
   isNew: true;
@@ -24,10 +25,12 @@ interface WithHelp {
   field: React.ReactNode
   help: React.ReactNode
   helpTitle?: string
+  fieldTitle?: string
 }
-export function WithHelp({field, help, helpTitle}: WithHelp) {
+export function WithHelp({field, help, helpTitle, fieldTitle}: WithHelp) {
   const [show, setShow] = useState(false)
   return <Box>
+    {fieldTitle && <Typography variant='h6' mb={1}>{fieldTitle}</Typography>}
     <Stack2 direction='row' alignItems='center'>
       {field}
       <HelpOutlineIcon style={{cursor:" pointer"}} onClick={() => setShow(!show)}/>

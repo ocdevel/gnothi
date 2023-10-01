@@ -29,6 +29,6 @@ export function TrackingType({field, form, isNew}: UpsertProps) {
   return <WithHelp
     field={buttons}
     help={help}
-    helpTitle="Tracking Type"
+    fieldTitle="Tracking Type"
   />
 }

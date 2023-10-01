@@ -1,6 +1,6 @@
 import {users, userId} from './users'
 
-import {InferModel} from 'drizzle-orm'
+import {InferInsertModel, InferSelectModel} from 'drizzle-orm'
 import {
   pgTable,
   index,
@@ -39,8 +39,8 @@ export const resetPeriods = pgEnum("resetperiods", [
   "weekly",
   "monthly",
   "yearly",
-  "forever", // infinite counter
-  "none", // don't even use this feature
+  "forever", // infinite counter, eg rewards
+  // "none", // don't even use this feature? this is handled by scoring=on/off
 ])
 
 /**
@@ -135,5 +135,5 @@ export const fields = pgTable('fields', {
 })
 
 
-export type Field = InferModel<typeof fields>
+export type Field = InferSelectModel<typeof fields>
 export const fieldId = (name='field_id') => uuid(name).notNull().references(() => fields.id, {onDelete: 'cascade'})
