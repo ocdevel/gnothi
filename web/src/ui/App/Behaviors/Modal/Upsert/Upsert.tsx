@@ -141,12 +141,12 @@ function Form({field, submit}: Form) {
         help={<Typography>Add the behavior you want to track. You can use Markdown (eg for links) and emojis. But try to keep it short, due to display formatting.</Typography>}
       />
       <SelectTemplate {...upsertProps} />
+      <TrackingType {...upsertProps} />
+      <ResetPeriods {...upsertProps} />
       <Accordions sx={{mt: 2}} accordions={[
         {
           title: "Advanced",
           content: <Box mb={3}>
-            <TrackingType {...upsertProps} />
-            <ResetPeriods {...upsertProps} />
             <DefaultValues {...upsertProps} />
             <DeleteButtons {...upsertProps} />
           </Box>

@@ -40,6 +40,22 @@ function ModalContent() {
   </>
 }
 
+// FIXME remove modal stuff fully, then export just the one component
+export function BehaviorsContent() {
+  return <Container maxWidth={false}>
+    <Grid container direction="row" spacing={2}>
+      <Grid item  xs={12} md={6}>
+        <Behaviors advanced={true} />
+        <Box sx={{mb:2}}></Box>
+        <TableQA />
+      </Grid>
+      <Grid item xs={12} md={6}>
+        <ModalContent />
+      </Grid>
+    </Grid>
+  </Container>
+}
+
 export default function Modal() {
   const [user,  view] = useStore(s => [
     s.user,
@@ -70,17 +86,6 @@ export default function Modal() {
     open={view.page === "modal"}
     onClose={onClose}
   >
-    <Container maxWidth={false}>
-      <Grid container direction="row" spacing={2}>
-        <Grid item  xs={12} md={6}>
-          <Behaviors advanced={true} />
-          <Box sx={{mb:2}}></Box>
-          <TableQA />
-        </Grid>
-        <Grid item xs={12} md={6}>
-          <ModalContent />
-        </Grid>
-      </Grid>
-    </Container>
+    <ModalContent />
   </FullScreenDialog>
 }

@@ -5,12 +5,14 @@ import entriesRoutes from "./Entries/Routes"
 // const Account = lazy(() => import("./Account"))
 
 import {S, Error} from '@gnothi/web/src/ui/Components/Routing'
+import {BehaviorsContent} from "./Behaviors/Modal";
 
 const routes = [
   ...entriesRoutes,
   // {path: "account", element: <Account />},
   // ...groupRoutes,
-  {index: true,  element: <Navigate to="/j" replace />}
+  {path: "behaviors", element: <BehaviorsContent />},
+  {index: true,  element: <Navigate to="/j" replace />},
 ]
 
 export default routes

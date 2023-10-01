@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react'
 // import { vanillaExtractPlugin } from '@vanilla-extract/vite-plugin'
 import ViteYaml from '@modyfi/vite-plugin-yaml';
 import { sentryVitePlugin } from "@sentry/vite-plugin";
+import mdx from "@mdx-js/rollup"
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -16,6 +17,7 @@ export default defineConfig({
 
   // server: { host: "0.0.0.0", port: 5173 },
   plugins: [
+    mdx(),
     react({
       include: "**/*.tsx",
     }),

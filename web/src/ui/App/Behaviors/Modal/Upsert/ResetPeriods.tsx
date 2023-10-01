@@ -3,6 +3,8 @@ import Box from "@mui/material/Box";
 import ButtonGroup from "@mui/material/ButtonGroup";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
+import ResetPeriodsHelp from './Help/ResetPeriods.mdx'
+import {useMemo} from "react";
 
 export function ResetPeriods(props: UpsertProps) {
   return <Box>
@@ -11,6 +13,11 @@ export function ResetPeriods(props: UpsertProps) {
 }
 
 export function Days({field, form, isNew}: UpsertProps) {
+  const [score_enabled] = form.watch(["score_enabled"])
+
+  const help = useMemo(() => <ResetPeriodsHelp />, [])
+
+  if (!score_enabled) {return null}
   const days = <Box>
     <Typography>Days of week</Typography>
     <ButtonGroup aria-label="days of the week">
@@ -23,6 +30,5 @@ export function Days({field, form, isNew}: UpsertProps) {
       <Button>Su</Button>
     </ButtonGroup>
   </Box>
-  const help = <Typography>On which days of the week should this behavior be due (determines if points are applied, and if the field should reset.)</Typography>
   return <WithHelp field={days} help={help} helpTitle="Days of week" />
 }
