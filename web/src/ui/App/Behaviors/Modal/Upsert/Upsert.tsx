@@ -23,7 +23,7 @@ import Divider from "@mui/material/Divider";
 import Accordions from '../../../../Components/Accordions.tsx'
 import {Stack2} from "../../../../Components/Misc.tsx"
 import Box from "@mui/material/Box";
-import {SelectTemplate} from "./SelectTemplate.tsx";
+import {BehaviorTemplate, BehaviorType} from "./BehaviorType.tsx";
 import {UpsertProps, WithHelp} from "./Utils.tsx";
 import {DeleteButtons} from "./DeleteExclude.tsx";
 import {AnalyzeAdvanced} from "./AnalyzeAdvanced.tsx";
@@ -131,6 +131,7 @@ function Form({field, submit}: Form) {
         </CardActions>
       </Stack>
     <Stack2>
+      <BehaviorTemplate {...upsertProps} />
       <WithHelp
         field={<TextField2
           name='name'
@@ -141,7 +142,7 @@ function Form({field, submit}: Form) {
         />}
         help={<Typography>Add the behavior you want to track. You can use Markdown (eg for links) and emojis. But try to keep it short, due to display formatting.</Typography>}
       />
-      <SelectTemplate {...upsertProps} />
+      <BehaviorType {...upsertProps} />
       <TrackingType {...upsertProps} />
       <ResetPeriods {...upsertProps} />
       <Accordions
