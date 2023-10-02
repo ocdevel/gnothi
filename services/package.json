@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "db:migrate": "npx drizzle-kit generate:pg --out data/migrate/rest --schema data/schemas"
+    "migrate:generate": "npx drizzle-kit generate:pg --out data/migrate/rest --schema data/schemas"
   },
   "dependencies": {
     "@aws-sdk/client-apigatewaymanagementapi": "^3.421.0",

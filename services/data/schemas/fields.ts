@@ -91,24 +91,24 @@ export const fields = pgTable('fields', {
 
   // analyze
   // ---
-  analyze_enabled: boolean("use_analysis").default(true),
+  analyze_enabled: boolean("analyze_enabled").default(true),
   // Don't actually delete fields, unless it's the same day. Instead stop entries/graphs/correlations here
   // TODO consider removing this. We can just let them enable/disable and it goes back into the analysis?
   analyze_disabled_at: timestamp('analyze_disabled_at', {withTimezone: true}),
 
   // score
   // ---
-  score_enabled: boolean("use_score").default(false),
-  score_total: doublePrecision("score").default(0),
+  score_enabled: boolean("score_enabled").default(false),
+  score_total: doublePrecision("score_total").default(0),
   // when using scoring; are positive numbers good (pushups), or bad (beers)?
   score_up_good: boolean("score_up_good").default(true),
   // what's the score for "today" (unlike the total)
-  score_period: doublePrecision("score").default(0),
+  score_period: doublePrecision("score_period").default(0),
   streak: integer("streak").default(0),
 
   // Reset Periods
   // ---
-  reset_period: resetPeriods("reset_period").default("none"),
+  reset_period: resetPeriods("reset_period").default("forever"),
   reset_quota: integer("reset_quota").default(1), // how many times per week this should be done
   reset_every: integer("reset_every").default(1), // repeat every 2 weeks
   monday: boolean("monday").default(true),
@@ -121,8 +121,6 @@ export const fields = pgTable('fields', {
   date_start: date("date_start"), // is there any value in this?
   date_due: date("date_due"),
 
-  // FIXME think about these
-  difficulty: integer("difficulty").default(1), // 1-4. Consider removing, should be self-adjusting
   notes: varchar("notes"),
 }, (table) => {
   return {

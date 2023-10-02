@@ -157,6 +157,13 @@ function Form({field, submit}: Form) {
           }
         ]}
       />
+      <Box>
+        <h6>Missing features:</h6>
+        <ul><li>due dates (start, end)</li>
+          <li>read-only parts (score_total, score_period, streak)</li>
+          <li>notes</li>
+        </ul>
+      </Box>
     </Stack2>
 
 
