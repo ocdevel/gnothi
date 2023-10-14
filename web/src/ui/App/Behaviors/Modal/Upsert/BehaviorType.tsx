@@ -49,6 +49,8 @@ export function BehaviorTemplate(props: UpsertProps) {
     if (template === "daily") {
       form.setValue("type", "check")
       form.setValue("reset_period", "daily")
+      form.setValue("default_value", "value")
+      form.setValue("default_value_value", 0)
       return
     }
     if (template === "todo") {
@@ -70,11 +72,11 @@ export function BehaviorTemplate(props: UpsertProps) {
     label="Template"
     form={form}
     options={[
-      {value: 'data', label: "Data"},
       {value: 'habit', label: "Habit"},
       {value: 'daily', label: "Daily"},
       {value: 'todo', label: "Todo"},
       {value: 'reward', label: "Reward"},
+      {value: 'data', label: "Data"},
     ]}
     // helperText={typeHelp}
   />

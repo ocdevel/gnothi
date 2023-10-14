@@ -11,10 +11,13 @@ import EditIcon from "@mui/icons-material/EditOutlined";
 import ViewIcon from "@mui/icons-material/BarChartOutlined";
 import Stack from "@mui/material/Stack";
 import BehaviorEntry from './Entry'
+import Paper from "@mui/material/Paper";
+import Box from "@mui/material/Box";
 
 interface Item {
   fid: string
   advanced: boolean
+  odd?: boolean
 }
 export default function Item({fid, advanced}: Item) {
   // let rowStyle = {width: '100%', margin: 0}
@@ -44,51 +47,60 @@ export default function Item({fid, advanced}: Item) {
   const sizes = advanced ? [5, 5, 2] : [6, 6]
 
   return (
-    <Grid
-      className={`behavior behavior-${f.type}`}
-      container
-      sx={{
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        mb: 2,
-        ...(f.excluded_at ? {
-          textDecoration: 'line-through',
-          opacity: .5
-        } : {})
-      }}
-      key={f.id}
-    >
-      <Grid item xs={sizes[0]} className='field-name' sx={{cursor: "pointer"}} onClick={handleView}>
-        <FieldName name={f.name} />
-      </Grid>
-
-      <Grid item xs={sizes[1]}>
+      <Box
+        className={`behavior behavior-${f.type}`}
+        sx={{
+          display: "flex",
+          gap: 2,
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          mb: 2,
+          ...(f.excluded_at ? {
+            textDecoration: 'line-through',
+            opacity: .5
+          } : {})
+        }}
+        key={f.id}
+      >
         <BehaviorEntry f={f} />
-      </Grid>
 
-      {advanced && <Grid container item xs={sizes[2]}>
-        <Grid item>
-          {/*<IconButton
-            sx={{cursor: "grab"}}
-            onClick={handleSort}
-          >
-            <SortIcon />
-          </IconButton>*/}
-          <IconButton onClick={handleEdit} className='btn-edit'>
-            <EditIcon />
-          </IconButton>
-        </Grid>
-        <Grid item>
-          <Badge
-            badgeContent={f.avg && f.avg.toFixed(1)}
-            onClick={handleView}
-          >
-            <IconButton onClick={handleView} className='btn-view'>
-              <ViewIcon />
+        <Box
+          className='field-name'
+          sx={{cursor: "pointer"}}
+          onClick={handleView}
+        >
+          <FieldName name={f.name} />
+        </Box>
+
+        {advanced && <Box
+          sx={{
+            flex:1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'flex-end'
+        }}>
+          <Box>
+            {/*<IconButton
+              sx={{cursor: "grab"}}
+              onClick={handleSort}
+            >
+              <SortIcon />
+            </IconButton>*/}
+            <IconButton onClick={handleEdit} className='btn-edit'>
+              <EditIcon />
             </IconButton>
-          </Badge>
-        </Grid>
-      </Grid>}
-    </Grid>
+          </Box>
+          <Box>
+            <Badge
+              badgeContent={f.avg && f.avg.toFixed(1)}
+              onClick={handleView}
+            >
+              <IconButton onClick={handleView} className='btn-view'>
+                <ViewIcon />
+              </IconButton>
+            </Badge>
+          </Box>
+        </Box>}
+      </Box>
   )
 }
