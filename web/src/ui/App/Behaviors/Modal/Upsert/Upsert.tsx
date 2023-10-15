@@ -131,7 +131,6 @@ function Form({field, submit}: Form) {
         </CardActions>
       </Stack>
     <Stack2>
-      <BehaviorTemplate {...upsertProps} />
       <WithHelp
         field={<TextField2
           name='name'
@@ -142,6 +141,7 @@ function Form({field, submit}: Form) {
         />}
         help={<Typography>Add the behavior you want to track. You can use Markdown (eg for links) and emojis. But try to keep it short, due to display formatting.</Typography>}
       />
+      <BehaviorTemplate {...upsertProps} />
       <BehaviorType {...upsertProps} />
       <TrackingType {...upsertProps} />
       <ResetPeriods {...upsertProps} />

@@ -15,7 +15,7 @@ import {z} from "zod"
 export function BehaviorTemplate(props: UpsertProps) {
   const form = useForm({
     resolver: zodResolver(z.object({
-      template: z.enum(["data", "habit", "daily", "todo", "reward"]).default("data"),
+      template: z.enum(["custom", "habit", "daily", "todo", "reward"]).default("custom"),
     })),
   })
   const template = form.watch("template")
@@ -76,9 +76,9 @@ export function BehaviorTemplate(props: UpsertProps) {
       {value: 'daily', label: "Daily"},
       {value: 'todo', label: "Todo"},
       {value: 'reward', label: "Reward"},
-      {value: 'data', label: "Data"},
+      {value: 'custom', label: "Custom"},
     ]}
-    // helperText={typeHelp}
+    // helperText="Start here"
   />
   return <WithHelp field={select} help={help} />
 }

@@ -62,7 +62,6 @@ export default function Item({fid, advanced}: Item) {
         }}
         key={f.id}
       >
-        <BehaviorEntry f={f} />
 
         <Box
           className='field-name'
@@ -72,7 +71,9 @@ export default function Item({fid, advanced}: Item) {
           <FieldName name={f.name} />
         </Box>
 
-        {advanced && <Box
+        <BehaviorEntry f={f} />
+
+        {false && advanced && <Box
           sx={{
             flex:1,
             display: 'flex',
