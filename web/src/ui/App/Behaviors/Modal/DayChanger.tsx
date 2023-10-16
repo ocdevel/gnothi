@@ -14,6 +14,7 @@ export default function DayChanger() {
   const day = useStore(s => s.behaviors.day)
   const dayStr = useStore(s => s.behaviors.dayStr)
   const isToday = useStore(s => s.behaviors.isToday)
+
   const changeDay = (dir: 1 | -1) => {
     if (dir === -1 ) {
       setDay(dayjs(day).subtract(1, 'day'))

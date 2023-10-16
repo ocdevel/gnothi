@@ -1,5 +1,5 @@
 import Behaviors from "./List/Lane.tsx";
-import React from "react";
+import React, {useEffect} from "react";
 import Grid from "@mui/material/Unstable_Grid2";
 import Box from "@mui/material/Box";
 import DayChanger from "./Modal/DayChanger.tsx";
@@ -29,6 +29,8 @@ export function Track() {
     s.behaviors.isToday,
     s.behaviors.setView
   ], shallow)
+
+
   return <Box>
     <Box
       sx={{display: "flex", justifyContent: "space-between", mb: 2}}

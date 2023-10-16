@@ -97,6 +97,7 @@ export const fields = pgTable('fields', {
   // ---
 
   lane: lanes("lane").default("custom"),
+  // sort: integer("sort").default(0),
 
   // analyze
   // ---
