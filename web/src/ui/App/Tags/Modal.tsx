@@ -147,7 +147,7 @@ export default function Modal({close}: Modal) {
               justifyItems="flex-start">
           <Grid justifyContent='space-between' container item spacing={3}>
             <Grid item sm={12} md={7}>
-              <Sortable items={tags} render={renderTag} onReorder={reorder}/>
+              {/*<Sortable items={tags} render={renderTag} onReorder={reorder}/>*/}
               <Create/>
             </Grid>
             <Grid item sm={12} md={5}>

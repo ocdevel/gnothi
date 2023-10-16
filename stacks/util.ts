@@ -6,10 +6,21 @@
  * 1. https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax-examples.html
  * 2. https://stackoverflow.com/a/66523153
  *
+ *
+ * === Below is a CloudWatch Log Insights query to run against a single Lambda LogGroup to come up with
+ *  a recommendation of RAM usage, based on the average usage. note, it won't work if it's under-allocated,
+ *  since the function would just crash (see below) ===
  * filter @type = "REPORT"
  *     | stats max(@maxMemoryUsed / 1000 / 1000) as maxMemoryUsedMB,
  *          max(@maxMemoryUsed / 1000 / 1000) + max(@maxMemoryUsed / 1000 / 1000)*0.3 as recommendedMb,
  *          max(@duration / 1000) as maxDuration
+ *
+ * === This query will find any Lambdas which are hitting the ceiling (crashing), so I can up the RAM
+ * sufficiently before I can collect enough data for the above query ===
+ * fields @timestamp, @logStream, @maxMemoryUsed, @memorySize |
+ * filter @type = "REPORT"
+ *     and @maxMemoryUsed >= @memorySize - 10000000 // Threshold of 10 MB
+ * | stats count() by @logStream
  */
 
 import {Duration} from 'aws-cdk-lib'
