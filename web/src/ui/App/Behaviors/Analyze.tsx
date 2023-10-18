@@ -18,28 +18,6 @@ import TableQA from './Modal/TableQA.tsx'
 
 const get = useStore.getState
 
-function ModalContent() {
-  const [fields, view] = useStore(s => [
-    s.res.fields_list_response,
-    s.behaviors.view.view,
-  ], shallow)
-  const setView = useStore(useCallback(s => s.behaviors.setView, []))
-
-  useEffect(() => {
-    // no fields present. No matter why they came here, they
-    // probably need to create a field first
-    if (!fields?.ids?.length) {
-      setView({view: "new", fid: null})
-    }
-  }, [fields?.ids?.join("")])
-
-  return <>
-    {view === "new" && <Create />}
-    {view === "edit" && <Update />}
-    {["overall","view"].includes(view) && <Charts />}
-  </>
-}
-
 // FIXME remove modal stuff fully, then export just the one component
 export function Analyze() {
   return <Container maxWidth={false}>
@@ -57,35 +35,9 @@ export function Analyze() {
 }
 
 export default function Modal() {
-  const [user,  view] = useStore(s => [
-    s.user,
-    s.behaviors.view,
-  ], shallow)
-  const [as, me] = [user?.as, user?.me]
-  const [setView] = useStore(useCallback(s => [s.behaviors.setView], []))
+  return <div>app/behaviors/analyze.tsx, delete this</div>
+}
 
-  const onCta = useCallback(() => setView({view: "new", fid: null}), [])
-  const ctas = as ? [] : [
-    // {
-    //   name: "Top Influencers",
-    //   secondary: true,
-    //   onClick: () => setView({view: "overall"}),
-    // },
-    // {
-    //   name: "Add Behavior",
-    //   onClick: onCta,
-    // }
-  ]
-
-  const onClose = useCallback(() => setView({page: view.lastPage}), [])
-
-  return <FullScreenDialog
-    title=""
-    className="behaviors modal"
-    ctas={ctas}
-    open={view.page === "modal"}
-    onClose={onClose}
-  >
-    <ModalContent />
-  </FullScreenDialog>
+function ModalContent() {
+  return <div>app/behaviors/analyze.tsx, delete this</div>
 }

@@ -1,4 +1,4 @@
-import React, {useEffect, useMemo} from "react";
+import React, {useEffect, useMemo, useState} from "react";
 import {Select2} from "../../../../Components/Form.tsx";
 import {shallow} from "zustand/shallow";
 import {UpsertProps, WithHelp} from "./Utils.tsx";
@@ -10,66 +10,14 @@ import TemplateHelp from './Help/Template.mdx'
 import {useForm} from "react-hook-form";
 import {zodResolver} from "@hookform/resolvers/zod";
 import {z} from "zod"
-
+import {useStore} from "../../../../../data/store";
 
 export function BehaviorTemplate(props: UpsertProps) {
-  const form = useForm({
-    resolver: zodResolver(z.object({
-      template: z.enum(["custom", "habit", "daily", "todo", "reward"]).default("custom"),
-    })),
-  })
-  const template = form.watch("template")
-  useEffect(() => {
-    const {form} = props
-    // FIXME there's no form.setValues() (multiple), and instead there's form.reset({values}); but that resets
-    // things like subscriptions, dirty states, etc. Which sucks, because the below causes a ton of re-renders
-    if (template === "data") {
-      form.setValue("score_enabled", false)
-      form.setValue("analyze_enabled", true)
-      form.setValue("type", "fivestar")
-      return
-    }
-
-    form.setValue("score_enabled", true)
-    form.setValue("analyze_enabled", true)
-    form.setValue("reset_every", 1)
-    form.setValue("monday", true)
-    form.setValue("tuesday", true)
-    form.setValue("wednesday", true)
-    form.setValue("thursday", true)
-    form.setValue("friday", true)
-    form.setValue("saturday", true)
-    form.setValue("sunday", true)
-    form.setValue("reset_quota", 1)
-    if (template === "habit") {
-      form.setValue("type", "number")
-      form.setValue("reset_period", "daily")
-      return
-    }
-    if (template === "daily") {
-      form.setValue("type", "check")
-      form.setValue("reset_period", "daily")
-      form.setValue("default_value", "value")
-      form.setValue("default_value_value", 0)
-      return
-    }
-    if (template === "todo") {
-      form.setValue("type", "check")
-      form.setValue("reset_period", "forever")
-      form.setValue("score_up_good", true)
-      return
-    }
-    if (template === "reward") {
-      form.setValue("type", "number")
-      form.setValue("reset_period", "forever")
-      form.setValue("score_up_good", false)
-      return
-    }
-  }, [template])
+  const {form} = props
   const help = useMemo(() => <TemplateHelp />, [])
   const select = <Select2
-    name='template'
-    label="Template"
+    name='lane'
+    label="Column"
     form={form}
     options={[
       {value: 'habit', label: "Habit"},

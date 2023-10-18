@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from "react";
+import React, {useCallback, useEffect, useMemo, useState} from "react";
 import _ from "lodash";
 import {BasicDialog} from "@gnothi/web/src/ui/Components/Dialog";
 
@@ -8,7 +8,7 @@ import DialogContent from "@mui/material/DialogContent";
 import Button from "@mui/material/Button";
 import Grid from "@mui/material/Grid";
 import {TextField2, Select2} from "@gnothi/web/src/ui/Components/Form";
-import {useForm, Controller} from "react-hook-form"
+import {useForm, Controller, UseFormReturn} from "react-hook-form"
 import {zodResolver} from "@hookform/resolvers/zod"
 import * as S from "@gnothi/schemas"
 import {fields_post_request} from "@gnothi/schemas/fields";
@@ -30,8 +30,76 @@ import {AnalyzeAdvanced} from "./AnalyzeAdvanced.tsx";
 import {ResetPeriods} from "./ResetPeriods.tsx";
 import {TrackingType} from "./TrackingType.tsx";
 import {ScoreAdvanced} from "./ScoreAdvanced.tsx";
+import {FullScreenDialog} from "../../../../Components/Dialog.tsx";
+import Charts from "../Charts.tsx";
+import TemplateHelp from "./Help/Template.mdx";
 
-export function Update() {
+export function UpsertModal() {
+  const [
+    fields,
+    view,
+    user
+  ] = useStore(s => [
+    s.res.fields_list_response,
+    s.behaviors.view,
+    s.user,
+  ], shallow)
+  const [setView] = useStore(useCallback(s => [s.behaviors.setView], []))
+
+  const {as, me} = user || {}
+
+  const form = useForm<fields_post_request>({
+    resolver: zodResolver(fields_post_request),
+  })
+  useLaneWatcher(form)
+
+  useEffect(() => {
+    if (view.view === "new") {
+      // Effectively a reset, see useLaneWatcher
+      form.setValue("lane", view.fid || "habit")
+    }
+    if (view.view === "edit") {
+      form.reset(fields.hash[view.fid])
+    }
+  }, [view])
+
+  const onCta = useCallback(() => setView({view: "new", fid: null}), [])
+  const ctas = as ? [] : [
+    // {
+    //   name: "Top Influencers",
+    //   secondary: true,
+    //   onClick: () => setView({view: "overall"}),
+    // },
+    // {
+    //   name: "Add Behavior",
+    //   onClick: onCta,
+    // }
+  ]
+
+  const onClose = useCallback(() => setView({view: null, fid: null}), [])
+  const open = ["new", "edit"].includes(view.view)
+
+  return <>
+    <FullScreenDialog
+      title=""
+      className="behaviors upsert"
+      ctas={ctas}
+      open={open}
+      onClose={onClose}
+    >
+      {view.view === "new" && <Create form={form} />}
+      {view.view === "edit" && <Update form={form} />}
+      {["overall","view"].includes(view) && <Charts />}
+    </FullScreenDialog>
+  </>
+}
+
+
+interface UpsertProps {
+  form: UseFormReturn<fields_post_request>
+}
+
+export function Update({form}: UpsertProps) {
   const [send, fields, view, setView] = useStore(s => [
     s.send,
     s.res.fields_list_response?.hash,
@@ -49,10 +117,10 @@ export function Update() {
     console.log({data})
     send('fields_put_request', {id: fid, ...data})
   }
-  return <Form submit={submit} field={field} />
+  return <Form submit={submit} field={field} form={form} />
 }
 
-export function Create() {
+export function Create({form}: UpsertProps) {
   const [send, setView] = useStore(s => [
     s.send,
     s.behaviors.setView
@@ -63,7 +131,7 @@ export function Create() {
     console.log({data})
     send('fields_post_request', data)
   }
-  return <Form submit={submit} field={field} />
+  return <Form submit={submit} field={field} form={form}/>
 }
 
 
@@ -72,26 +140,17 @@ interface Form {
   submit: (data: S.Fields.fields_post_request) => void
 }
 
-function Form({field, submit}: Form) {
+function Form({field, submit, form}: Form) {
   const [send, view, setView, ] = useStore(s => [
     s.send,
     s.behaviors.view,
     s.behaviors.setView,
   ], shallow)
 
-  const form = useForm<fields_post_request>({
-    resolver: zodResolver(fields_post_request),
-    defaultValues: field
-  })
-
   const fid = field.id || null
 
   const upsertProps: UpsertProps = fid ? {form, field, isNew: false}
     : {form, isNew: true}
-
-  React.useEffect(() => {
-    form.reset(field)
-  }, [fid])
 
   console.log(form.formState.errors)
 
@@ -170,4 +229,55 @@ function Form({field, submit}: Form) {
 
     </CardContent>
   </Card>
+}
+
+function useLaneWatcher(form: UpsertProps['form']) {
+  const lane = form.watch("lane")
+  useEffect(() => {
+    // FIXME there's no form.setValues() (multiple), and instead there's form.reset({values}); but that resets
+    // things like subscriptions, dirty states, etc. Which sucks, because the below causes a ton of re-renders
+    if (lane === "custom") {
+      form.setValue("score_enabled", false)
+      form.setValue("analyze_enabled", true)
+      form.setValue("type", "fivestar")
+      return
+    }
+
+    form.setValue("score_enabled", true)
+    form.setValue("analyze_enabled", true)
+    form.setValue("reset_every", 1)
+    form.setValue("monday", true)
+    form.setValue("tuesday", true)
+    form.setValue("wednesday", true)
+    form.setValue("thursday", true)
+    form.setValue("friday", true)
+    form.setValue("saturday", true)
+    form.setValue("sunday", true)
+    form.setValue("reset_quota", 1)
+    if (lane === "habit") {
+      form.setValue("type", "number")
+      form.setValue("reset_period", "daily")
+      return
+    }
+    if (lane === "daily") {
+      form.setValue("type", "check")
+      form.setValue("reset_period", "daily")
+      form.setValue("default_value", "value")
+      form.setValue("default_value_value", 0)
+      return
+    }
+    if (lane === "todo") {
+      form.setValue("type", "check")
+      form.setValue("reset_period", "forever")
+      form.setValue("score_up_good", true)
+      return
+    }
+    if (lane === "reward") {
+      form.setValue("type", "number")
+      form.setValue("reset_period", "forever")
+      form.setValue("score_up_good", false)
+      return
+    }
+  }, [lane])
+  return null
 }

@@ -85,6 +85,10 @@ export default function Behaviors({lane}: Behaviors) {
     f.lane === lane || (lane === "custom" && !f.lane)
   )) || []
 
+  function onClick() {
+    setView({view: "new", fid: lane})
+  }
+
   return <div className="list">
     <Card
       sx={{backgroundColor: '#ffffff', borderRadius: 2, height: "100%"}}
@@ -92,7 +96,7 @@ export default function Behaviors({lane}: Behaviors) {
       <CardContent sx={{mx: 1}}>
         <Box sx={{display: "flex", justifyContent: "space-between", mb: 2}}>
           <Typography variant="h4" color="primary" fontWeight={500}>{headers[lane]}</Typography>
-          <Button variant="contained" size="small">Add</Button>
+          <Button variant="contained" size="small" onClick={onClick}>Add</Button>
         </Box>
         {
           !laneFields.length ? abouts[lane]

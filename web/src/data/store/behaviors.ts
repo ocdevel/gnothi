@@ -8,6 +8,7 @@ import {AppSlice} from "./app";
 import produce from 'immer'
 import _ from "lodash";
 import {SharingSlice} from "./sharing";
+import {fields_entries_list_response, fields_post_request} from "../../../../schemas/fields.ts";
 
 export const fmt = 'YYYY-MM-DD'
 export function iso(day?: Dayjs | string) {
@@ -19,8 +20,6 @@ type Id = string
 export type ViewPage = "entry" | "dashboard" | "modal"
 export type ViewView = "new" | "overall" | "view" | "edit" | null
 type View = {
-  lastPage: ViewPage
-  page: ViewPage
   view: ViewView
   fid: Id | null
 }
@@ -37,7 +36,7 @@ export interface BehaviorsSlice {
     view: View
     setView: (view: Partial<View>) => void
 
-    field_entries_list_response: (res: S.Fields.field_entries_list_response) => void
+    field_entries_list_response: (res: fields_entries_list_response) => void
   }
 }
 
@@ -58,7 +57,7 @@ export const behaviorsSlice: StateCreator<
         }
       }))
     },
-    field_entries_list_response(res: S.Fields.field_entries_list_response) {
+    field_entries_list_response(res: field_entries_list_response) {
       // on change, especially via the DayChanger, re-set the "form" values for behaviors/list/entry.tsx
       const rows = res.rows?.map(r => [r.field_id, r.value]) || []
       get().behaviors.setValues(Object.fromEntries(rows))
@@ -85,19 +84,13 @@ export const behaviorsSlice: StateCreator<
     isToday: true,
 
     view: {
-      lastPage: "dashboard",
-      page: "dashboard",
       view: null,
       fid: null
     },
     setView: (view) => set(produce(state => {
-      const curr = state.behaviors.view
       state.behaviors.view = {
         ...state.behaviors.view,
         ...view,
-        lastPage: (
-          view.page === "modal" && ["entry", "dashboard"].includes(curr.page) ? curr.page
-          : view.page),
       }
     })),
   }

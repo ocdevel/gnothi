@@ -36,15 +36,6 @@ export function Track() {
       sx={{display: "flex", justifyContent: "space-between", mb: 2}}
     >
       <DayChanger/>
-      <Button
-        variant="contained"
-        color="primary"
-        size="small"
-        sx={{minWidth: 120}}
-        onClick={() => setView({view: "new"})}
-      >
-        Add Behavior
-      </Button>
     </Box>
     <Grid container spacing={2}>
       <Grid xs={12} sm={4} md={3}>
