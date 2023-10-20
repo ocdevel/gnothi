@@ -85,9 +85,9 @@ export default function Behaviors({lane}: Behaviors) {
     f.lane === lane || (lane === "custom" && !f.lane)
   )) || []
 
-  function onClick() {
+  const onClick = useCallback(() => {
     setView({view: "new", fid: lane})
-  }
+  }, [lane])
 
   return <div className="list">
     <Card

@@ -36,12 +36,9 @@ export default function Item({fid, advanced}: Item) {
     alert("Not implemented")
   }, [fid])
 
-  const handleView = useCallback(() => {
-    setView({page: "modal", view: "view", fid})
-  }, [fid])
 
-    const handleEdit = useCallback(() => {
-    setView({page: "modal", view: "edit", fid})
+  const handleEdit = useCallback(() => {
+    setView({view: "edit", fid})
   }, [fid])
 
   const sizes = advanced ? [5, 5, 2] : [6, 6]
@@ -66,7 +63,7 @@ export default function Item({fid, advanced}: Item) {
         <Box
           className='field-name'
           sx={{cursor: "pointer"}}
-          onClick={handleView}
+          onClick={handleEdit}
         >
           <FieldName name={f.name} />
         </Box>
