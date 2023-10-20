@@ -55,10 +55,7 @@ export function UpsertModal() {
 
   const {as, me} = user || {}
 
-  const fid = (view.view === "edit" && view.fid) || null
-  const field = fid ? fields?.hash?.[fid] : fields_post_request.omit({name: true}).parse({})
-
-  const form = useFormWatcher()
+  const [form, field, fid] = useFormWatcher()
 
   const upsertProps: UpsertProps = fid ? {form, field, isNew: false}
     : {form, isNew: true}
@@ -84,7 +81,7 @@ export function UpsertModal() {
 
   function submit(data: fields_post_request) {
     console.log({data})
-    if (field) {
+    if (fid) {
       send('fields_put_request', {id: field.id, ...data})
     } else {
       send("fields_post_request", data)

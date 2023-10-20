@@ -46,26 +46,13 @@ interface Behaviors {
 export default function Behaviors({lane}: Behaviors) {
   const advanced = true
   const [
-    send,
     user,
     fields,
-    syncRes,
-
-    day,
-    dayStr,
-    isToday,
-    setView
   ] = useStore(s => [
-    s.send,
     s.user,
     s.res.fields_list_response,
-    s.res.habitica_sync_response?.res,
-
-    s.behaviors.day,
-    s.behaviors.dayStr,
-    s.behaviors.isToday,
-    s.behaviors.setView
   ], shallow)
+  const [setView] = useStore(useCallback(s => [s.behaviors.setView], []))
 
   // TODO cache-busting @ 49d212a2
   // ensure no longer needed. Original comment:

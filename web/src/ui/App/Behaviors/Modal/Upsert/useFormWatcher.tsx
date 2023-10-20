@@ -2,7 +2,7 @@
 
 // needs to be listened to top-level, before child components are instantiated with {form}
 import {UpsertProps} from "./Utils.tsx";
-import {useCallback, useEffect} from "react";
+import {useCallback, useEffect, useMemo} from "react";
 import {shallow} from "zustand/shallow";
 import {useForm} from "react-hook-form";
 import {zodResolver} from "@hookform/resolvers/zod";
@@ -66,25 +66,29 @@ export function useFormWatcher(): UpsertProps['form'] {
   })
   const lane = form.watch("lane")
 
+  const [field, fid] = useMemo(() => {
+    const fid = (view.view === "edit" && view.fid) || null
+    if (fid) {
+      const field = fields?.hash?.[fid]
+      return [field, fid]
+    }
+    const clickedLane = view.fid || "custom"
+    const field = fields_post_request.omit({name: true}).parse({
+      lane: clickedLane,
+      ...laneDefaults[clickedLane]
+    })
+    return [field, fid]
+  }, [view, fields?.hash])
+
+
   useEffect(() => {
     console.log({view})
-    if (view.view === "new") {
-      // Effectively a reset, see useLaneWatcher
-      const lane = view.fid || "custom"
-      const cleared = fields_post_request.omit({name: true}).parse({
-        lane,
-        ...laneDefaults
-      })
-      form.reset(cleared)
-    }
-    if (view.view === "edit") {
-      form.reset(fields.hash[view.fid])
-    }
-  }, [view])
+    form.reset(field)
+  }, [field])
 
   useEffect(() => {
     if (!lane) {
-      debugger
+      // not available via form yet. TODO look into this, I didn't expect this.
       return
     }
     console.log({lane})
@@ -94,5 +98,5 @@ export function useFormWatcher(): UpsertProps['form'] {
       form.setValue(k, v)
     }
   }, [lane])
-  return form
+  return [form, field, fid]
 }
