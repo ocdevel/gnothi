@@ -32,12 +32,12 @@ export const fields_entries_post_request = new Route(r.fields_entries_post_reque
   const {user_update, field_update, field_entry_update} = updates[0]
   await Promise.all([
     context.handleRes(
-      r.users_list_request.o,
+      {...r.users_list_request.o, op: "update"},
       {data: [user_update]},
       context
     ),
     context.handleRes(
-      r.fields_list_request.o,
+      {...r.fields_list_request.o, op: "update"},
       {data: [field_update]},
       context
     )

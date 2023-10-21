@@ -24,7 +24,10 @@ export class Fields extends Base {
     const {uid, db} = this.context
     const {drizzle} = db
     // git-blame removed scrubbing, since that's handled via zod fields_post_request
-    const res = await drizzle.insert(fields).values(req).returning()
+    const res = await drizzle.insert(fields).values({
+      ...req,
+      user_id: uid
+    }).returning()
     return res.map(DB.removeNull)
   }
 
