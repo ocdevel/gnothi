@@ -7,6 +7,9 @@ import {fields} from '../schemas/fields'
 import {fieldEntries} from '../schemas/fieldEntries'
 import {influencers, Influencer} from '../schemas/influencers'
 import { and, asc, desc, eq, or, sql } from 'drizzle-orm';
+import {Routes} from '@gnothi/schemas'
+
+const r = Routes.routes
 
 export class Fields extends Base {
   async list() {
@@ -20,14 +23,8 @@ export class Fields extends Base {
   async post(req: S.Fields.fields_post_request) {
     const {uid, db} = this.context
     const {drizzle} = db
-    const res = await drizzle.insert(fields).values({
-      name: req.name,
-      type: req.type,
-      default_value: req.default_value,
-      default_value_value: req.default_value_value,
-      lane: req.lane,
-      user_id: uid
-    }).returning()
+    // git-blame removed scrubbing, since that's handled via zod fields_post_request
+    const res = await drizzle.insert(fields).values(req).returning()
     return res.map(DB.removeNull)
   }
 
@@ -117,7 +114,7 @@ export class Fields extends Base {
       -- Update the field's score
       field_update AS (
         UPDATE fields
-        SET score_total = score_total + (SELECT diff FROM score_diff)
+        SET score_total = CASE WHEN score_enabled THEN score_total + (SELECT diff FROM score_diff) ELSE score_total END
         WHERE id = ${field_id}
         RETURNING *
       ),
@@ -141,9 +138,12 @@ export class Fields extends Base {
       user_update AS (
         -- Update the user's score
         UPDATE users
-        SET score = score + (SELECT final_diff FROM score_direction)
-        WHERE id = ${uid}
-        RETURNING *
+        SET score = score + CASE WHEN fields.score_enabled THEN (SELECT final_diff FROM score_direction) ELSE 0 END
+        FROM fields
+        WHERE 
+          fields.id = ${field_id} AND
+          users.id = ${uid}
+        RETURNING users.*
       )
       SELECT
         row_to_json(user_update.*) AS user_update,
@@ -153,7 +153,7 @@ export class Fields extends Base {
         user_update, field_update, upsert;
     `)
 
-    const {user_update, field_update, field_entry_update} = res[0]
+    return res
 
     // const res = await db.query(sql`
     //   ${this.with_tz()}
@@ -163,10 +163,6 @@ export class Fields extends Base {
     //   on conflict (field_id, day) do update set value=${value}
     //   returning *
     // `)
-
-    // FIXME send user_update, field_update
-
-    return [field_entry_update]
   }
 
   async historyList(req: S.Fields.fields_history_list_request) {

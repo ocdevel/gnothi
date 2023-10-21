@@ -28,7 +28,21 @@ export const fields_entries_list_request = new Route(r.fields_entries_list_reque
 })
 
 export const fields_entries_post_request = new Route(r.fields_entries_post_request, async (req, context) => {
-  return context.m.fields.entriesPost(req)
+  const updates = await context.m.fields.entriesPost(req)
+  const {user_update, field_update, field_entry_update} = updates[0]
+  await Promise.all([
+    context.handleRes(
+      r.users_list_request.o,
+      {data: [user_update]},
+      context
+    ),
+    context.handleRes(
+      r.fields_list_request.o,
+      {data: [field_update]},
+      context
+    )
+  ])
+  return [field_entry_update]
 })
 
 export const fields_exclude_request = new Route(r.fields_exclude_request, async (req, context) => {

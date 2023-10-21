@@ -9,6 +9,7 @@ import {useStore} from "../../../data/store";
 
 export function Track() {
   const [
+    me,
     send,
     user,
     fields,
@@ -17,8 +18,9 @@ export function Track() {
     day,
     dayStr,
     isToday,
-    setView
+    setView,
   ] = useStore(s => [
+    s.user?.me,
     s.send,
     s.user,
     s.res.fields_list_response,
@@ -36,6 +38,9 @@ export function Track() {
       sx={{display: "flex", justifyContent: "space-between", mb: 2}}
     >
       <DayChanger/>
+      <Button variant="outlined" disabled sx={{minWidth: 100}}>
+        Score: {me?.score}
+      </Button>
     </Box>
     <Grid container spacing={2}>
       <Grid xs={12} sm={4} md={3}>
