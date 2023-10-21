@@ -80,12 +80,12 @@ export function UpsertModal() {
 
 
   function submit(data: fields_post_request) {
-    console.log({data})
     if (fid) {
       send('fields_put_request', {id: field.id, ...data})
     } else {
       send("fields_post_request", data)
     }
+    onClose()
   }
 
   function renderForm() {
@@ -100,7 +100,6 @@ export function UpsertModal() {
         <Stack direction='row' justifyContent='space-between' alignItems='center' mb={2}>
           <Typography variant="h4" color="primary" fontWeight={500} m={0}>{fid ? "Edit" : "Add New"}</Typography>
           <CardActions sx={{justifyContent: 'flex-end'}}>
-            <Button size="small" onClick={close}>Cancel</Button>
             <Button
               color="primary"
               variant="contained"

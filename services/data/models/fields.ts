@@ -25,6 +25,7 @@ export class Fields extends Base {
       type: req.type,
       default_value: req.default_value,
       default_value_value: req.default_value_value,
+      lane: req.lane,
       user_id: uid
     }).returning()
     return res.map(DB.removeNull)
@@ -73,16 +74,99 @@ export class Fields extends Base {
   async entriesPost(req: S.Fields.fields_entries_post_request) {
     const {uid, db} = this.context
     const {day, field_id, value} = req
-    const res = db.query(sql`
-      ${this.with_tz()}
-      insert into ${fieldEntries} (user_id, field_id, value, day, created_at)
-      select ${uid}, ${field_id}, ${value}, date(${this.tz_read(day)}), ${this.tz_write(day)}
-      from with_tz
-      on conflict (field_id, day) do update set value=${value}
-      returning *
+
+
+    // Big ol' query which (1) logs the field-entry; (2) scores the field; (3) updates the global (user) score.
+    // Thanks GPT!
+    // TODO I had to remove all table/column interpolation. I think drizzle is creating aliases, which is
+    // causing cross-CTE alias reference issues? The error is:
+    // TypeError: Converting circular structure to JSON\n    --> starting at object with constructor 'PgTable'\n    |     property 'id' -> object with constructor 'PgUUID'\n    --- property 'table' closes the circle
+    // NOTE: due to that, remember the table field_entries2, NOT field_entries. If I ever change the table name,
+    // remember to change that here too.
+    const res = await db.query(sql`
+      WITH with_tz AS (
+        select id, coalesce(timezone, 'America/Los_Angeles') as tz
+        from users where id=${this.context.vid}
+      ),
+      -- Fetch the old value
+      old_value AS (
+        SELECT value
+        FROM field_entries2
+        WHERE user_id=${uid} AND field_id=${field_id}
+        ORDER BY created_at DESC
+        LIMIT 1
+      ),
+      -- Your existing upsert logic
+      upsert AS (
+        INSERT INTO field_entries2 (user_id, field_id, value, day, created_at)
+        SELECT 
+          ${uid}, 
+          ${field_id}, 
+          ${value}, 
+          DATE(COALESCE(${day || null}::TIMESTAMP AT TIME ZONE with_tz.tz, now() AT TIME ZONE with_tz.tz)), 
+          COALESCE(${day || null}::TIMESTAMP AT TIME ZONE with_tz.tz, now())
+        FROM with_tz
+        ON CONFLICT (field_id, day) DO UPDATE SET value=${value}
+        RETURNING *
+      ),
+      -- Determine the score difference
+      score_diff AS (
+        SELECT             
+          (SELECT value FROM upsert) - COALESCE((SELECT value FROM old_value), 0) AS diff
+      ),
+      -- Update the field's score
+      field_update AS (
+        UPDATE fields
+        SET score_total = score_total + (SELECT diff FROM score_diff)
+        WHERE id = ${field_id}
+        RETURNING *
+      ),
+      -- Determine the direction of scoring based on score_up_good
+      score_direction AS (
+        SELECT
+          (SELECT diff FROM score_diff) *
+          CASE
+            WHEN score_up_good THEN 1
+            ELSE -1
+          END AS final_diff
+        FROM field_update
+      ),
+      -- Update the field's average value
+      average_update AS (
+        UPDATE fields SET avg=(
+            SELECT AVG(value) FROM field_entries2 fe
+            WHERE fe.field_id=${field_id} AND fe.value IS NOT NULL
+        ) WHERE id=${field_id}
+      ),
+      user_update AS (
+        -- Update the user's score
+        UPDATE users
+        SET score = score + (SELECT final_diff FROM score_direction)
+        WHERE id = ${uid}
+        RETURNING *
+      )
+      SELECT
+        row_to_json(user_update.*) AS user_update,
+        row_to_json(field_update.*) AS field_update,
+        row_to_json(upsert.*) AS field_entry_update
+      FROM
+        user_update, field_update, upsert;
     `)
-    await this.context.m.fields.updateAvg(field_id)
-    return res
+
+    const {user_update, field_update, field_entry_update} = res[0]
+
+    // const res = await db.query(sql`
+    //   ${this.with_tz()}
+    //   insert into ${fieldEntries} (user_id, field_id, value, day, created_at)
+    //   select ${uid}, ${field_id}, ${value}, date(${this.tz_read(day)}), ${this.tz_write(day)}
+    //   from with_tz
+    //   on conflict (field_id, day) do update set value=${value}
+    //   returning *
+    // `)
+
+    // FIXME send user_update, field_update
+
+    return [field_entry_update]
   }
 
   async historyList(req: S.Fields.fields_history_list_request) {
@@ -104,14 +188,5 @@ export class Fields extends Base {
         and f.user_id=${uid}
     `)
     return res
-  }
-
-  async updateAvg(fid: string) {
-    return this.context.db.drizzle.execute(sql`
-      update fields set avg=(
-          select avg(value) from field_entries2 fe
-          where fe.field_id=${fid} and fe.value is not null
-      ) where id=${fid}
-    `)
   }
 }

@@ -7,7 +7,7 @@ import {
   date,
   boolean,
   integer,
-  uniqueIndex,
+  uniqueIndex, doublePrecision,
 } from 'drizzle-orm/pg-core';
 import {InferModel} from 'drizzle-orm'
 
@@ -68,6 +68,9 @@ export const users = pgTable('users', {
   // If you spend a credit for Generative, keep it on for some minute so the different tools can use it
   // I don't think we need to index it, since we'll check code-side
   last_credit: timestamp("last_credit", {withTimezone: true}),
+
+  // habit-tracking
+  score: doublePrecision("score").default(0)
 
   // ws_id = sa.Column(sa.Unicode, index=True)
   // as = FKCol('users.id')
