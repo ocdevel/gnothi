@@ -14,6 +14,8 @@ import {shallow} from 'zustand/shallow'
 import Behavior from './Item'
 import Stack from "@mui/material/Stack";
 import CardActions from "@mui/material/CardActions";
+import AddIcon from '@mui/icons-material/AddCircleOutline';
+
 
 
 import HelpHabits from './Help/Habits.mdx'
@@ -21,6 +23,7 @@ import HelpDailies from './Help/Dailies.mdx'
 import HelpTodos from './Help/Todos.mdx'
 import HelpCustom from './Help/Custom.mdx'
 import Button from "@mui/material/Button";
+import IconButton from "@mui/material/IconButton";
 
 const headers = {
   habit: "Habits",
@@ -81,9 +84,17 @@ export default function Behaviors({lane}: Behaviors) {
       sx={{backgroundColor: '#ffffff', borderRadius: 2, height: "100%"}}
     >
       <CardContent sx={{mx: 1}}>
-        <Box sx={{display: "flex", justifyContent: "space-between", mb: 2}}>
+        <Box sx={{display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 2}}>
           <Typography variant="h4" color="primary" fontWeight={500}>{headers[lane]}</Typography>
-          <Button variant="contained" size="small" onClick={onClick}>Add</Button>
+
+          <IconButton
+            aria-label="add"
+            variant="contained"
+            onClick={onClick}
+            color="primary"
+          >
+            <AddIcon />
+          </IconButton>
         </Box>
         {
           !laneFields.length ? abouts[lane]

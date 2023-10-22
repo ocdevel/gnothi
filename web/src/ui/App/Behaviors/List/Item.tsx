@@ -13,6 +13,8 @@ import Stack from "@mui/material/Stack";
 import BehaviorEntry from './Entry'
 import Paper from "@mui/material/Paper";
 import Box from "@mui/material/Box";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
 
 interface Item {
   fid: string
@@ -43,22 +45,36 @@ export default function Item({fid, advanced}: Item) {
 
   const sizes = advanced ? [5, 5, 2] : [6, 6]
 
+  console.log({score_total: f.score_total})
   return (
-      <Box
+      <Card
         className={`behavior behavior-${f.type}`}
-        sx={{
-          display: "flex",
-          gap: 2,
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          mb: 2,
-          ...(f.excluded_at ? {
-            textDecoration: 'line-through',
-            opacity: .5
-          } : {})
-        }}
         key={f.id}
+        sx={{mb:1}}
       >
+        <Box
+          sx={{
+            backgroundColor: f.score_total < -4 ? "#de3f3f"
+              : f.score_total > 4 ? "#3bcad7"
+              : "#ffbe5d",
+          }}
+        >
+          <BehaviorEntry f={f} />
+        </Box>
+        <CardContent
+          sx={{
+            display: "flex",
+            backgroundColor: "white",
+            gap: 2,
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            ...(f.excluded_at ? {
+              textDecoration: 'line-through',
+              opacity: .5
+            } : {})
+          }}
+        >
+
 
         <Box
           className='field-name'
@@ -67,8 +83,6 @@ export default function Item({fid, advanced}: Item) {
         >
           <FieldName name={f.name} />
         </Box>
-
-        <BehaviorEntry f={f} />
 
         {false && advanced && <Box
           sx={{
@@ -99,6 +113,7 @@ export default function Item({fid, advanced}: Item) {
             </Badge>
           </Box>
         </Box>}
-      </Box>
+        </CardContent>
+      </Card>
   )
 }

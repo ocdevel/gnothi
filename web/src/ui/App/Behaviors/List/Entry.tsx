@@ -12,6 +12,7 @@ import {useDebouncedCallback} from 'use-debounce';
 import Button from "@mui/material/Button";
 import ButtonGroup from "@mui/material/ButtonGroup";
 import Checkbox from "@mui/material/Checkbox";
+import Box from "@mui/material/Box";
 
 interface Entry {
   f: S.Fields.fields_list_response
@@ -99,8 +100,8 @@ function NumberEntry({f, value, setValue, sendValue, isToday}: EntryVariant) {
     sendValue(value)
   }, [value])
 
-  return <ButtonGroup variant="contained" disableElevation>
-    <Button onClick={changeByOne(-1)}>-</Button>
+  return <Box sx={{display: "flex", flex: 1, justifyContent: "space-between"}}>
+    <Button variant="outlined" sx={{borderRadius:0}} onClick={changeByOne(-1)}>-</Button>
     <TextField
       disabled={!!f.service && isToday}
       type='number'
@@ -111,8 +112,8 @@ function NumberEntry({f, value, setValue, sendValue, isToday}: EntryVariant) {
       value={value}
       onChange={changeNumber}
     />
-    <Button onClick={changeByOne(1)}>+</Button>
-  </ButtonGroup>
+    <Button variant="outlined" sx={{borderRadius:0}} onClick={changeByOne(1)}>+</Button>
+  </Box>
 }
 
 function CheckEntry({f, value, setValue, sendValue, isToday}: EntryVariant) {
@@ -127,6 +128,5 @@ function CheckEntry({f, value, setValue, sendValue, isToday}: EntryVariant) {
     className="check"
     checked={value === 1}
     onChange={changeCheck}
-    sx={{ '& .MuiSvgIcon-root': { fontSize: 40 } }}
   />
 }
