@@ -15,7 +15,10 @@ export class Fields extends Base {
   async list() {
     const {uid, db} = this.context
     const {drizzle} = db
-    const res = await drizzle.select().from(fields).where(eq(fields.user_id, uid)).orderBy(desc(fields.created_at))
+    const res = await drizzle.select()
+      .from(fields)
+      .where(eq(fields.user_id, uid))
+      .orderBy(desc(fields.sort), desc(fields.created_at))
     return res.map(DB.removeNull)
   }
 

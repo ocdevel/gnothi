@@ -1,0 +1,1 @@
+ALTER TABLE "fields" ADD COLUMN "sort" integer DEFAULT 0;

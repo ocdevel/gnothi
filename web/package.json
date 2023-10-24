@@ -16,6 +16,7 @@
     "@aws-amplify/ui-react": "^5.3.1",
     "@emotion/react": "^11.11.1",
     "@emotion/styled": "^11.11.0",
+    "@hello-pangea/dnd": "^16.3.0",
     "@hookform/resolvers": "^3.3.1",
     "@mdx-js/rollup": "^2.3.0",
     "@mui/icons-material": "^5.14.11",

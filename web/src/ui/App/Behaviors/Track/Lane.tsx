@@ -1,4 +1,4 @@
-import React, {useEffect, useState, useCallback} from "react";
+import React, {useEffect, useState, useCallback, useMemo} from "react";
 // import {API_URL} from '../redux/ws'
 import _ from "lodash";
 
@@ -24,6 +24,8 @@ import HelpTodos from './Help/Todos.mdx'
 import HelpCustom from './Help/Custom.mdx'
 import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
+import {fields_list_response} from "../../../../../../schemas/fields.ts";
+import {Sortable} from '../../../Components/Sortable.tsx'
 
 const headers = {
   habit: "Habits",
@@ -57,6 +59,21 @@ export default function Behaviors({lane}: Behaviors) {
   ], shallow)
   const [setView] = useStore(useCallback(s => [s.behaviors.setView], []))
 
+  const [sorted, setSorted] = useState([])
+
+  const onReorder = useCallback((newOrder: fields_list_response[]) => {
+    // TODO submit order to server
+    setSorted(newOrder)
+  }, [])
+
+  useEffect(() => {
+    // set secondary sort on .sort?
+    // actually nevermind, since server sends it sorted via SQL
+    setSorted(fields?.rows?.filter(f => (
+      f.lane === lane || (lane === "custom" && !f.lane)
+    )) || [])
+  }, [lane, fields])
+
   // TODO cache-busting @ 49d212a2
   // ensure no longer needed. Original comment:
   // having lots of trouble refreshing certain things, esp. dupes list after picking. Force it for now
@@ -71,13 +88,22 @@ export default function Behaviors({lane}: Behaviors) {
     return <h5>{fields.res.data[0].error}</h5>
   }
 
-  const laneFields = fields?.rows?.filter(f => (
-    f.lane === lane || (lane === "custom" && !f.lane)
-  )) || []
-
   const onClick = useCallback(() => {
     setView({view: "new", fid: lane})
   }, [lane])
+
+  function renderBehavior(b: fields_list_response) {
+    return <Behavior key={b.id} fid={b.id} advanced={advanced} />
+  }
+
+  const sortable = useMemo(() => {
+    return <Sortable
+      items={sorted}
+      render={renderBehavior}
+      onReorder={onReorder}
+      sortableId={`sortable-${lane}`}
+    />
+  }, [sorted])
 
   return <div className="list">
     <Card
@@ -96,10 +122,8 @@ export default function Behaviors({lane}: Behaviors) {
             <AddIcon />
           </IconButton>
         </Box>
-        {
-          !laneFields.length ? abouts[lane]
-            : laneFields.map(f => <Behavior key={f.id} fid={f.id} advanced={advanced}/>)
-        }
+
+        { !sorted.length ? abouts[lane] : sortable }
       </CardContent>
     </Card>
   </div>
