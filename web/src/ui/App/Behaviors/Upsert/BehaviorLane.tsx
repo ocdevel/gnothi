@@ -1,7 +1,7 @@
 import {UpsertProps, WithHelp} from "./Utils.tsx";
 import React, {useEffect, useMemo} from "react";
 import TemplateHelp from "./Help/Lane.mdx";
-import {Select2} from "../../../../Components/Form.tsx";
+import {Select2} from "../../../Components/Form.tsx";
 
 export function BehaviorLane(props: UpsertProps) {
   const {form} = props

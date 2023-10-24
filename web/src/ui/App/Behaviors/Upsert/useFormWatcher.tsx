@@ -6,8 +6,8 @@ import {useCallback, useEffect, useMemo} from "react";
 import {shallow} from "zustand/shallow";
 import {useForm} from "react-hook-form";
 import {zodResolver} from "@hookform/resolvers/zod";
-import {useStore} from "../../../../../data/store";
-import {fields_post_request} from "../../../../../../../schemas/fields.ts";
+import {useStore} from "../../../../data/store";
+import {fields_post_request} from "../../../../../../schemas/fields.ts";
 
 const scoringDefaults = {
   score_enabled: true,
@@ -67,12 +67,12 @@ export function useFormWatcher(): UpsertProps['form'] {
   const lane = form.watch("lane")
 
   const [field, fid] = useMemo(() => {
-    const fid = (view.view === "edit" && view.fid) || null
+    const fid = view.view === "edit" && view.fid || null
     if (fid) {
       const field = fields?.hash?.[fid]
       return [field, fid]
     }
-    const clickedLane = view.fid || "custom"
+    const clickedLane = fid || "custom"
     const field = fields_post_request.omit({name: true}).parse({
       lane: clickedLane,
       ...laneDefaults[clickedLane]

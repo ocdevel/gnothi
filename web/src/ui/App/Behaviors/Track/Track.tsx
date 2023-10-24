@@ -1,37 +1,18 @@
-import Behaviors from "./List/Lane.tsx";
+import Behaviors from "./Lane.tsx";
 import React, {useEffect} from "react";
 import Grid from "@mui/material/Unstable_Grid2";
 import Box from "@mui/material/Box";
-import DayChanger from "./Modal/DayChanger.tsx";
+import DayChanger from "./DayChanger.tsx";
 import Button from "@mui/material/Button";
 import {shallow} from "zustand/shallow";
-import {useStore} from "../../../data/store";
+import {useStore} from "../../../../data/store";
 
 export function Track() {
   const [
     me,
-    send,
-    user,
-    fields,
-    syncRes,
-
-    day,
-    dayStr,
-    isToday,
-    setView,
   ] = useStore(s => [
     s.user?.me,
-    s.send,
-    s.user,
-    s.res.fields_list_response,
-    s.res.habitica_sync_response?.res,
-
-    s.behaviors.day,
-    s.behaviors.dayStr,
-    s.behaviors.isToday,
-    s.behaviors.setView
   ], shallow)
-
 
   return <Box>
     <Box

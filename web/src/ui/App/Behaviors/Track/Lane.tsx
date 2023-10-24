@@ -11,7 +11,7 @@ import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
 import * as S from '@gnothi/schemas'
 import {shallow} from 'zustand/shallow'
-import Behavior from './Item'
+import Behavior from './Behavior.tsx'
 import Stack from "@mui/material/Stack";
 import CardActions from "@mui/material/CardActions";
 import AddIcon from '@mui/icons-material/AddCircleOutline';

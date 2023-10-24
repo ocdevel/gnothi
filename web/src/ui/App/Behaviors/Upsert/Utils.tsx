@@ -1,6 +1,6 @@
 import {UseFormReturn} from "react-hook-form";
 import {fields_post_request, fields_list_response} from "@gnothi/schemas/fields.ts";
-import {Alert2, Stack2} from "../../../../Components/Misc.tsx";
+import {Alert2, Stack2} from "../../../Components/Misc.tsx";
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import {useState} from "react";
 import Box from "@mui/material/Box";

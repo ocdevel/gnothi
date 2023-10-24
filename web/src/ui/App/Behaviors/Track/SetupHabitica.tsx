@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from "react";
 
 import {useStore} from "@gnothi/web/src/data/store"
-import {BasicDialog} from "../../../Components/Dialog";
+import {BasicDialog} from "../../../Components/Dialog.tsx";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import Typography from "@mui/material/Typography";

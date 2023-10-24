@@ -10,18 +10,18 @@ import SortIcon from "@mui/icons-material/DragIndicatorOutlined";
 import EditIcon from "@mui/icons-material/EditOutlined";
 import ViewIcon from "@mui/icons-material/BarChartOutlined";
 import Stack from "@mui/material/Stack";
-import BehaviorEntry from './Entry'
+import BehaviorEntry from './BehaviorEntry.tsx'
 import Paper from "@mui/material/Paper";
 import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 
-interface Item {
+interface Behavior {
   fid: string
   advanced: boolean
   odd?: boolean
 }
-export default function Item({fid, advanced}: Item) {
+export default function Item({fid, advanced}: Behavior) {
   // let rowStyle = {width: '100%', margin: 0}
   const [
     fields,

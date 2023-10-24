@@ -82,7 +82,10 @@ export default function Charts() {
   }, [influencersAll, view])
 
   if (!influencersFiltered?.length) {
-    return <KeepTracking />
+    return <div>
+      <FieldName name={field?.name} />
+      <KeepTracking />
+    </div>
   }
 
   function renderRow(row: Array<string, number>) {

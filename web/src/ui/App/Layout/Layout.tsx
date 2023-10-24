@@ -17,7 +17,7 @@ import {ErrorSnack} from "../../Components/Error";
 // import GroupToolbar from "../Groups/View/Toolbar"
 // import SharingModal from "../Sharing"
 import EntryModal from "../Entries/Modal"
-import BehaviorsModal from "../Behaviors/Analyze.tsx"
+import BehaviorsModal from "../Behaviors/Analyze/Analyze.tsx"
 import PremiumModal from '../Account/PremiumModal'
 import BooksModal from '../Insights/Resources/Books'
 import AppBar from './AppBar'

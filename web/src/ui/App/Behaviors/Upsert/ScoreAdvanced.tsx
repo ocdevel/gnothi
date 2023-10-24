@@ -1,5 +1,5 @@
 import {UpsertProps, WithHelp} from "./Utils.tsx";
-import {Checkbox2} from "../../../../Components/Form.tsx";
+import {Checkbox2} from "../../../Components/Form.tsx";
 import Typography from "@mui/material/Typography";
 import {useMemo} from "react";
 

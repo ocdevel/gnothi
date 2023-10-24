@@ -6,11 +6,11 @@ import Typography from "@mui/material/Typography";
 import DayPickerHelp from './Help/DayPicker.mdx'
 import ResetPeriodHelp from './Help/ResetEvery.mdx'
 import {useMemo} from "react";
-import {Select2, TextField2} from "../../../../Components/Form.tsx";
+import {Select2, TextField2} from "../../../Components/Form.tsx";
 import ResetQuotaHelp from './Help/ResetQuota.mdx'
 import ResetEveryHelp from './Help/ResetEvery.mdx'
-import Accordions from "../../../../Components/Accordions.tsx";
-import {Stack2} from "../../../../Components/Misc.tsx";
+import Accordions from "../../../Components/Accordions.tsx";
+import {Stack2} from "../../../Components/Misc.tsx";
 
 export function ResetPeriods(props: UpsertProps) {
   const {form} = props

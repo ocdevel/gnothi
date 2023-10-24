@@ -2,7 +2,7 @@ import React from 'react'
 import Grid from '@mui/material/Grid'
 import {useStore} from "../../../../data/store";
 import Upsert from "./Upsert"
-import Behaviors from "../../Behaviors/List/Lane.tsx"
+import Behaviors from "../../Behaviors/Track/Lane.tsx"
 import DialogContent from "@mui/material/DialogContent";
 
 export default function New() {

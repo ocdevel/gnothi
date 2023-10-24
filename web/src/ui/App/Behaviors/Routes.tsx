@@ -1,8 +1,8 @@
 import React from 'react'
-import {BehaviorsContent} from "./Analyze.tsx";
+import {BehaviorsContent} from "./Analyze/Analyze.tsx";
 import {Layout} from "./Layout";
-import {Analyze} from "./Analyze";
-import {Track} from "./Track";
+import {Analyze} from "./Analyze/Analyze.tsx";
+import {Track} from "./Track/Track.tsx";
 import {Outlet} from "react-router-dom";
 
 const defaults = {

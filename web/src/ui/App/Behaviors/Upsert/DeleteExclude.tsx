@@ -5,7 +5,7 @@ import Button from "@mui/material/Button";
 import Divider from "@mui/material/Divider";
 import React from "react";
 import {shallow} from "zustand/shallow";
-import {useStore} from "../../../../../data/store";
+import {useStore} from "../../../../data/store";
 
 export function DeleteButtons({form, field, isNew}: UpsertProps) {
   const [send] = useStore(s => [s.send], shallow)

@@ -20,8 +20,8 @@ import TextField from "@mui/material/TextField";
 import CardActions from "@mui/material/CardActions";
 import Stack from "@mui/material/Stack";
 import Divider from "@mui/material/Divider";
-import Accordions from '../../../../Components/Accordions.tsx'
-import {Stack2} from "../../../../Components/Misc.tsx"
+import Accordions from '../../../Components/Accordions.tsx'
+import {Stack2} from "../../../Components/Misc.tsx"
 import Box from "@mui/material/Box";
 import {BehaviorType} from "./BehaviorType.tsx";
 import {BehaviorLane} from "./BehaviorLane.tsx";
@@ -31,8 +31,8 @@ import {AnalyzeAdvanced} from "./AnalyzeAdvanced.tsx";
 import {ResetPeriods} from "./ResetPeriods.tsx";
 import {TrackingType} from "./TrackingType.tsx";
 import {ScoreAdvanced} from "./ScoreAdvanced.tsx";
-import {FullScreenDialog} from "../../../../Components/Dialog.tsx";
-import Charts from "../Charts.tsx";
+import {FullScreenDialog} from "../../../Components/Dialog.tsx";
+import Charts from "../Analyze/Charts.tsx";
 import {useFormWatcher} from "./useFormWatcher.tsx";
 
 export function UpsertModal() {

@@ -8,7 +8,7 @@ import {useForm} from "react-hook-form";
 import {fields_post_request} from "@gnothi/schemas/fields.ts";
 import {zodResolver} from "@hookform/resolvers/zod";
 import {shallow} from "zustand/shallow";
-import {UpsertModal} from "./Modal/Upsert/Upsert.tsx";
+import {UpsertModal} from "./Upsert/Upsert.tsx";
 
 export function Layout() {
   const [

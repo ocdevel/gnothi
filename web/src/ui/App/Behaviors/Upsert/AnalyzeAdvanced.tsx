@@ -1,7 +1,7 @@
 import _ from "lodash";
 import {UpsertProps, WithHelp} from "./Utils.tsx";
 import React, {useMemo} from "react";
-import {Select2, TextField2} from "../../../../Components/Form.tsx";
+import {Select2, TextField2} from "../../../Components/Form.tsx";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import DefaultValuesHelp from './Help/DefaultValues.mdx'

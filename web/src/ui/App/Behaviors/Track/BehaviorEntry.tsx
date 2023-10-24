@@ -14,17 +14,17 @@ import ButtonGroup from "@mui/material/ButtonGroup";
 import Checkbox from "@mui/material/Checkbox";
 import Box from "@mui/material/Box";
 
-interface Entry {
+interface BehaviorEntry {
   f: S.Fields.fields_list_response
 }
 type Value = number | null
-type EntryVariant = Entry & {
+type EntryVariant = BehaviorEntry & {
   value: number
   setValue: (value: Value) => void
   sendValue: (value: Value) => void
   isToday: boolean
 }
-export default function Entry({f}: Entry) {
+export default function Entry({f}: BehaviorEntry) {
   const [
     value,
     dayStr,
