@@ -14,8 +14,8 @@ export function BehaviorLane(props: UpsertProps) {
       {value: 'habit', label: "Habit"},
       {value: 'daily', label: "Daily"},
       {value: 'todo', label: "Todo"},
-      {value: 'reward', label: "Reward"},
       {value: 'custom', label: "Custom"},
+      {value: 'reward', label: "Reward"},
     ]}
     // helperText="Start here"
   />

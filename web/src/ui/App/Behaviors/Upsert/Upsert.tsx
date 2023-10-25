@@ -25,6 +25,7 @@ import {Stack2} from "../../../Components/Misc.tsx"
 import Box from "@mui/material/Box";
 import {BehaviorType} from "./BehaviorType.tsx";
 import {BehaviorLane} from "./BehaviorLane.tsx";
+import {BehaviorValue} from "./BehaviorValue.tsx";
 import {UpsertProps, WithHelp} from "./Utils.tsx";
 import {DeleteButtons} from "./DeleteExclude.tsx";
 import {AnalyzeAdvanced} from "./AnalyzeAdvanced.tsx";
@@ -56,6 +57,7 @@ export function UpsertModal() {
   const {as, me} = user || {}
 
   const [form, field, fid] = useFormWatcher()
+  const lane = form.watch("lane")
 
   const upsertProps: UpsertProps = fid ? {form, field, isNew: false}
     : {form, isNew: true}
@@ -122,23 +124,29 @@ export function UpsertModal() {
           />}
           help={<Typography>Add the behavior you want to track. You can use Markdown (eg for links) and emojis. But try to keep it short, due to display formatting.</Typography>}
         />
-        <BehaviorLane {...upsertProps} />
-        <BehaviorType {...upsertProps} />
-        <TrackingType {...upsertProps} />
-        <ResetPeriods {...upsertProps} />
-        <Accordions
-          defaultExpanded={0}
-          accordions={[
-            {
-              title: "Advanced",
-              content: <Stack2>
-                <AnalyzeAdvanced {...upsertProps} />
-                <ScoreAdvanced {...upsertProps} />
-                <DeleteButtons {...upsertProps} />
-              </Stack2>
-            }
-          ]}
-        />
+        {lane === "reward" ? <>
+          <BehaviorLane {...upsertProps} />
+          <TrackingType {...upsertProps} />
+          <BehaviorValue {...upsertProps} />
+        </> : <>
+          <BehaviorLane {...upsertProps} />
+          <BehaviorType {...upsertProps} />
+          <TrackingType {...upsertProps} />
+          <ResetPeriods {...upsertProps} />
+          <Accordions
+            defaultExpanded={0}
+            accordions={[
+              {
+                title: "Advanced",
+                content: <Stack2>
+                  <AnalyzeAdvanced {...upsertProps} />
+                  <ScoreAdvanced {...upsertProps} />
+                  <DeleteButtons {...upsertProps} />
+                </Stack2>
+              }
+            ]}
+          />
+        </>}
         <Box>
           <h6>Missing features:</h6>
           <ul><li>due dates (start, end)</li>

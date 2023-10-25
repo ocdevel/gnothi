@@ -47,6 +47,7 @@ const laneDefaults = {
     score_up_good: true,
   },
   reward: {
+    ...scoringDefaults,
     type: "number",
     reset_period: "forever",
     score_up_good: false,
@@ -72,7 +73,7 @@ export function useFormWatcher(): UpsertProps['form'] {
       const field = fields?.hash?.[fid]
       return [field, fid]
     }
-    const clickedLane = fid || "custom"
+    const clickedLane = (view.view === "new" && view.fid || "custom") as keyof typeof laneDefaults
     const field = fields_post_request.omit({name: true}).parse({
       lane: clickedLane,
       ...laneDefaults[clickedLane]

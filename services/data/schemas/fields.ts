@@ -98,6 +98,8 @@ export const fields = pgTable('fields', {
 
   lane: lanes("lane").default("custom"),
   sort: integer("sort").default(0),
+  // Currently just for setting the point-value of a Reward, but might come in handy later
+  value: doublePrecision("value").default(0),
 
   // analyze
   // ---

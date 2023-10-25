@@ -22,28 +22,32 @@ import HelpHabits from './Help/Habits.mdx'
 import HelpDailies from './Help/Dailies.mdx'
 import HelpTodos from './Help/Todos.mdx'
 import HelpCustom from './Help/Custom.mdx'
+import HelpRewards from './Help/Rewards.mdx'
 import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
 import {fields_list_response} from "../../../../../../schemas/fields.ts";
 import {Sortable} from '../../../Components/Sortable.tsx'
+import {useDebounce, useDebouncedCallback} from "use-debounce";
 
 const headers = {
   habit: "Habits",
   daily: "Dailies",
   todo: "To-Dos",
-  custom: "Custom"
+  custom: "Data",
+  reward: "Rewards"
 }
 
 const abouts = {
   habit: <HelpHabits />,
   daily: <HelpDailies />,
   todo: <HelpTodos />,
-  custom: <HelpCustom />
+  custom: <HelpCustom />,
+  reward: <HelpRewards />
 }
 
 
 interface Behaviors {
-  lane: "habit" | "daily" | "todo" | "custom"
+  lane: "habit" | "daily" | "todo" | "custom" | "reward"
 }
 
 // TODO memoize this component, with some setter just for advanced=true|false. False just
@@ -65,23 +69,26 @@ export default function Behaviors({lane}: Behaviors) {
     s.behaviors.setView
   ], []))
 
-  const [sorted, setSorted] = useState([])
+  const [sorted, setSorted_] = useState([])
+  const setSorted = useDebouncedCallback((sorted) => setSorted_(sorted), 500 )
 
-  const onReorder = useCallback((newOrder: fields_list_response[]) => {
-    setSorted(newOrder)
-    send("fields_sort_request", newOrder.map((f, i) => ({id: f.id, sort: i})))
-  }, [])
-
-  const fidListener = fields?.ids?.slice().join()
-  useEffect(() => {
+  const laneFields = useMemo(() => {
     // set secondary sort on .sort?
     // actually nevermind, since server sends it sorted via SQL
-    setSorted(!fields?.rows?.length ? [] : fields
-      .rows
+    return (fields?.rows || [])
       .filter(f => f.lane === lane || (lane === "custom" && !f.lane))
       // .slice().sort((a, b) => (a.sort - b.sort))
-    )
-  }, [lane, fidListener])
+  }, [fields?.rows])
+
+  useEffect(() => {
+    setSorted(laneFields)
+  }, [laneFields])
+
+
+  const onReorder = useDebouncedCallback((newOrder: fields_list_response[]) => {
+    setSorted_(newOrder)
+    send("fields_sort_request", newOrder.map((f, i) => ({id: f.id, sort: i})))
+  })
 
   // TODO cache-busting @ 49d212a2
   // ensure no longer needed. Original comment:

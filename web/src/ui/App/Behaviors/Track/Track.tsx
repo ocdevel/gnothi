@@ -24,19 +24,21 @@ export function Track() {
       </Button>
     </Box>
     <Grid container spacing={2}>
-      <Grid xs={12} sm={4} md={3}>
+      <Grid xs={12} sm={6} md={4} lg={3}>
         <Behaviors lane="habit" />
       </Grid>
-      <Grid xs={12} sm={4} md={3}>
+      <Grid xs={12} sm={6} md={4} lg={3}>
         <Behaviors lane="daily" />
       </Grid>
-      <Grid xs={12} sm={4} md={3}>
+      <Grid xs={12} sm={6} md={4} lg={3}>
         <Behaviors lane="todo" />
       </Grid>
-      <Grid xs={12} sm={4} md={3}>
+      <Grid xs={12} sm={6} md={4} lg={3}>
         <Behaviors lane="custom"/>
       </Grid>
+      <Grid xs={12} sm={6} md={4} lg={3}>
+        <Behaviors lane="reward"/>
+      </Grid>
     </Grid>
-
   </Box>
 }

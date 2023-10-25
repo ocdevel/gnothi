@@ -46,7 +46,7 @@ export default function Entry({f}: BehaviorEntry) {
     const req = {
       field_id: fid,
       value: parseFloat(value), // until we support strings,
-      day: isToday ? null : dayStr
+      day: isToday ? null : dayStr,
     }
     console.log(req)
     send(`fields_entries_post_request`, req)
@@ -85,7 +85,8 @@ function FiveStarEntry({f, value, setValue, sendValue, isToday}: EntryVariant) {
 function NumberEntry({f, value, setValue, sendValue, isToday}: EntryVariant) {
   value = value || 0
   const changeNumber = useCallback((e: React.SyntheticEvent<HTMLInputElement>) => {
-    let value = e.target.value
+    let value = Number(e.target.value)
+    if (isNaN(value)) {return}
     setValue(value)
   }, [])
 
@@ -96,9 +97,19 @@ function NumberEntry({f, value, setValue, sendValue, isToday}: EntryVariant) {
   }, [value])
 
   // wrap it so we can wait till blur to send
-  const sendValue_ = useCallback((value: any) => {
+  const sendValue_ = useCallback((e: React.SyntheticEvent<HTMLInputElement>) => {
     sendValue(value)
   }, [value])
+
+  if (f.lane === "reward") {
+    return <Button
+      variant="outlined"
+      sx={{borderRadius:0}}
+      onClick={changeByOne(f.value)}
+    >
+      {f.value}
+    </Button>
+  }
 
   return <Box sx={{display: "flex", flex: 1, justifyContent: "space-between"}}>
     <Button variant="outlined" sx={{borderRadius:0}} onClick={changeByOne(-1)}>-</Button>

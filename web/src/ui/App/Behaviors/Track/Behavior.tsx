@@ -53,7 +53,9 @@ export default function Item({fid, advanced}: Behavior) {
       >
         <Box
           sx={{
-            backgroundColor: f.score_total < -4 ? "#de3f3f"
+            backgroundColor:
+              f.lane === "reward" ? "#fff"
+              : f.score_total < -4 ? "#de3f3f"
               : f.score_total > 4 ? "#3bcad7"
               : "#ffbe5d",
           }}

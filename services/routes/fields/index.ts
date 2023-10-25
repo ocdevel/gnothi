@@ -3,6 +3,9 @@ import {Route} from '../types'
 import {Fields as FieldsModel} from '../../data/models/fields'
 import {tableQa} from "../../ml/node/tableqa";
 import {ulid} from 'ulid'
+import {GnothiError} from "../errors.js";
+import {fields} from "../../data/schemas/fields.js";
+import {eq} from "drizzle-orm";
 
 const r = Routes.routes
 
@@ -32,6 +35,18 @@ export const fields_entries_list_request = new Route(r.fields_entries_list_reque
 })
 
 export const fields_entries_post_request = new Route(r.fields_entries_post_request, async (req, context) => {
+  const {uid, db: {drizzle}} = context
+
+  // Check if isReward and hasEnoughPoints
+  // TODO consider a more performant approach, like sending up the field.type with the request
+  const lane = await context.db.drizzle
+    .select({lane: fields.lane})
+    .from(fields)
+    .where(eq(fields.id, req.field_id))
+  if (lane[0].lane === "reward" && req.value > context.user.score) {
+    throw new GnothiError({message: "Not enough points"})
+  }
+
   const updates = await context.m.fields.entriesPost(req)
   const {user_update, field_update, field_entry_update} = updates[0]
   await Promise.all([
