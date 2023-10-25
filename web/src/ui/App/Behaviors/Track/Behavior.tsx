@@ -45,7 +45,6 @@ export default function Item({fid, advanced}: Behavior) {
 
   const sizes = advanced ? [5, 5, 2] : [6, 6]
 
-  console.log({score_total: f.score_total})
   return (
       <Card
         className={`behavior behavior-${f.type}`}

@@ -57,10 +57,19 @@ export const fields_put_request = fields_post_request.extend({
 })
 export type fields_put_request = z.infer<typeof fields_put_request>
 
+
 export const fields_list_request = Passthrough
 export type fields_list_request = z.infer<typeof fields_list_request>
 export const fields_list_response = Field
 export type fields_list_response = z.infer<typeof fields_list_response>
+
+export const fields_sort_request = z.object({
+  id: IdCol,
+  sort: z.number()
+}).array()
+export type fields_sort_request = z.infer<typeof fields_sort_request>
+export const fields_sort_response = fields_list_response
+export type fields_sort_response = z.infer<typeof fields_sort_response>
 
 export const fields_entries_list_request = z.object({
   day: dateCol().optional()
@@ -179,6 +188,22 @@ export const routes = {
       s: fields_list_response,
       event_as: "fields_list_response",
       op: "delete",
+      keyby: "id"
+    }
+  },
+  fields_sort_request: {
+    i: {
+      e: "fields_sort_request",
+      s: fields_sort_request,
+      t: {ws: true},
+      snoopable: false,
+    },
+    o: {
+      e: "fields_sort_response",
+      s: fields_sort_response,
+      t: {ws: true},
+      event_as: "fields_list_response",
+      // op: "update",
       keyby: "id"
     }
   },

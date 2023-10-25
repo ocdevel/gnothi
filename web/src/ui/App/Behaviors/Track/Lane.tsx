@@ -57,22 +57,31 @@ export default function Behaviors({lane}: Behaviors) {
     s.user,
     s.res.fields_list_response,
   ], shallow)
-  const [setView] = useStore(useCallback(s => [s.behaviors.setView], []))
+  const [
+    send,
+    setView
+  ] = useStore(useCallback(s => [
+    s.send,
+    s.behaviors.setView
+  ], []))
 
   const [sorted, setSorted] = useState([])
 
   const onReorder = useCallback((newOrder: fields_list_response[]) => {
-    // TODO submit order to server
     setSorted(newOrder)
+    send("fields_sort_request", newOrder.map((f, i) => ({id: f.id, sort: i})))
   }, [])
 
+  const fidListener = fields?.ids?.slice().join()
   useEffect(() => {
     // set secondary sort on .sort?
     // actually nevermind, since server sends it sorted via SQL
-    setSorted(fields?.rows?.filter(f => (
-      f.lane === lane || (lane === "custom" && !f.lane)
-    )) || [])
-  }, [lane, fields])
+    setSorted(!fields?.rows?.length ? [] : fields
+      .rows
+      .filter(f => f.lane === lane || (lane === "custom" && !f.lane))
+      // .slice().sort((a, b) => (a.sort - b.sort))
+    )
+  }, [lane, fidListener])
 
   // TODO cache-busting @ 49d212a2
   // ensure no longer needed. Original comment:

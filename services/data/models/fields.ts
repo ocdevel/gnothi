@@ -18,7 +18,7 @@ export class Fields extends Base {
     const res = await drizzle.select()
       .from(fields)
       .where(eq(fields.user_id, uid))
-      .orderBy(desc(fields.sort), desc(fields.created_at))
+      .orderBy(asc(fields.sort), desc(fields.created_at))
     return res.map(DB.removeNull)
   }
 
@@ -58,6 +58,28 @@ export class Fields extends Base {
       ))
       .returning()
     return res.map(DB.removeNull)
+  }
+
+  async sort(req: S.Fields.fields_sort_request): Promise<void> {
+    const {uid, db: {drizzle}} = this.context
+    const q = sql.empty()
+    req.forEach((f: S.Fields.fields_sort_request[0], i: number) => {
+      q.append(i === 0 ? sql`WITH` : sql`,`)
+      q.append(sql` update_${sql.raw(i)} AS (
+        UPDATE fields SET sort=${f.sort} 
+        WHERE id=${f.id} AND user_id=${uid} 
+      )`)
+    })
+    q.append(sql` SELECT * FROM fields WHERE user_id=${uid} ORDER BY sort ASC, created_at DESC;`)
+    return drizzle.execute(q)
+
+    // Can't get the batch API working, which is a huge bummer! Says it requires LibSQL, look into
+    // https://orm.drizzle.team/docs/batch-api
+    // return drizzle.batch(req.map((field: S.Fields.fields_sorts_request[0]) => {
+    //   return drizzle.update(fields)
+    //     .set({sort: field.sort})
+    //     .where(eq(fields.id, field.id))
+    // }))
   }
 
 
