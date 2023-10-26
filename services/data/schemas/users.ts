@@ -77,6 +77,7 @@ export const users = pgTable('users', {
 }, (t) => {
   return {
     ix_users_last_books: index("ix_users_last_books").on(t.last_books),
+    ix_users_timezone: index("ix_users_timezone").on(t.timezone),
     ix_users_last_influencers: index("ix_users_last_influencers").on(t.last_influencers),
     ix_users_cognito_id: uniqueIndex("ix_users_cognito_id").on(t.cognito_id),
     ix_users_created_at: index("ix_users_created_at").on(t.created_at),

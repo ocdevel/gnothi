@@ -141,6 +141,20 @@ export const fields = pgTable('fields', {
     ix_fields_created_at: index("ix_fields_created_at").on(table.created_at),
 
     // FIXME add indexes for new stuff
+    ix_fields_score_enabled: index("ix_fields_score_enabled").on(table.score_enabled),
+    ix_fields_analyze_enabled: index("ix_fields_analyze_enabled").on(table.analyze_enabled),
+    ix_fields_score_period: index("ix_fields_score_period").on(table.score_period),
+    ix_fields_reset_period: index("ix_fields_reset_period").on(table.reset_period),
+
+    // TODO Consider a composite index on these columns
+    ix_fields_monday: index("ix_fields_monday").on(table.monday),
+    ix_fields_tuesday: index("ix_fields_tuesday").on(table.tuesday),
+    ix_fields_wednesday: index("ix_fields_wednesday").on(table.wednesday),
+    ix_fields_thursday: index("ix_fields_thursday").on(table.thursday),
+    ix_fields_friday: index("ix_fields_friday").on(table.friday),
+    ix_fields_saturday: index("ix_fields_saturday").on(table.saturday),
+    ix_fields_sunday: index("ix_fields_sunday").on(table.sunday),
+
   }
 })
 

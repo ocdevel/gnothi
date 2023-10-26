@@ -13,6 +13,7 @@ import Button from "@mui/material/Button";
 import ButtonGroup from "@mui/material/ButtonGroup";
 import Checkbox from "@mui/material/Checkbox";
 import Box from "@mui/material/Box";
+import {FieldName} from "../utils.tsx";
 
 interface BehaviorEntry {
   f: S.Fields.fields_list_response
@@ -109,7 +110,7 @@ function NumberEntry({f, value, setValue, sendValue, isToday}: EntryVariant) {
 
   const purchase = useCallback(() => {
     if (f.value > points) {
-      return addError(<div>Not enough points</div>)
+      return addError(<Box>Not enough points for <FieldName name={f.name} /></Box>)
     }
     sendValue(f.value)
   }, [value])
@@ -129,19 +130,20 @@ function NumberEntry({f, value, setValue, sendValue, isToday}: EntryVariant) {
     </Button>
   }
 
-  return <Box sx={{display: "flex", flex: 1, justifyContent: "space-between"}}>
+  return <Box sx={{display: 'flex', alignItems: 'center'}}>
     <Button variant="outlined" sx={{borderRadius:0}} onClick={changeByOne(-1)}>-</Button>
+    <Button variant="outlined" sx={{borderRadius:0}} onClick={changeByOne(1)}>+</Button>
     <TextField
       disabled={!!f.service && isToday}
       type='number'
+      variant="standard"
       step='any'
       onBlur={sendValue_}
-      sx={{maxWidth: 60}}
+      sx={{ml: 2, maxWidth: 100}}
       size="small"
       value={value}
       onChange={changeNumber}
     />
-    <Button variant="outlined" sx={{borderRadius:0}} onClick={changeByOne(1)}>+</Button>
   </Box>
 }
 

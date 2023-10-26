@@ -109,74 +109,76 @@ export class Fields extends Base {
     // NOTE: due to that, remember the table field_entries2, NOT field_entries. If I ever change the table name,
     // remember to change that here too.
     const res = await db.query(sql`
-      ${this.with_tz()},
-      -- Fetch the old value
-      old_value AS (
-        SELECT value
-        FROM field_entries2
-        WHERE user_id=${uid} AND field_id=${field_id}
-        ORDER BY created_at DESC
-        LIMIT 1
-      ),
-      -- Your existing upsert logic
-      upsert AS (
-        INSERT INTO field_entries2 (user_id, field_id, value, day, created_at)
-        SELECT 
-          ${uid}, 
-          ${field_id}, 
-          ${value}, 
-          DATE(${this.tz_read(day)}), 
-          ${this.tz_write(day)}
-        FROM with_tz
-        ON CONFLICT (field_id, day) DO UPDATE SET value=${value}
-        RETURNING *
-      ),
-      -- Determine the score difference
-      score_diff AS (
-        SELECT             
-          (SELECT value FROM upsert) - COALESCE((SELECT value FROM old_value), 0) AS diff
-      ),
-      -- Update the field's score
-      field_update AS (
-        UPDATE fields
-        SET score_total = CASE WHEN score_enabled THEN score_total + (SELECT diff FROM score_diff) ELSE score_total END
-        WHERE id = ${field_id}
-        RETURNING *
-      ),
-      -- Determine the direction of scoring based on score_up_good
-      score_direction AS (
-        SELECT
-          (SELECT diff FROM score_diff) *
-          CASE
-            WHEN score_up_good THEN 1
-            ELSE -1
-          END AS final_diff
-        FROM field_update
-      ),
-      -- Update the field's average value
-      average_update AS (
-        UPDATE fields SET avg=(
-            SELECT AVG(value) FROM field_entries2 fe
-            WHERE fe.field_id=${field_id} AND fe.value IS NOT NULL
-        ) WHERE id=${field_id}
-      ),
-      user_update AS (
-        -- Update the user's score
-        UPDATE users
-        SET score = score + CASE WHEN fields.score_enabled THEN (SELECT final_diff FROM score_direction) ELSE 0 END
-        FROM fields
-        WHERE 
-          fields.id = ${field_id} AND
-          users.id = ${uid}
-        RETURNING users.*
-      )
-      SELECT
-        row_to_json(user_update.*) AS user_update,
-        row_to_json(field_update.*) AS field_update,
-        row_to_json(upsert.*) AS field_entry_update
-      FROM
-        user_update, field_update, upsert;
-    `)
+  ${this.with_tz()},
+  -- Fetch the old value
+  old_value AS (
+    SELECT value
+    FROM field_entries2
+    WHERE user_id=${uid} AND field_id=${field_id}
+    ORDER BY created_at DESC
+    LIMIT 1
+  ),
+  -- Your existing upsert logic
+  upsert AS (
+    INSERT INTO field_entries2 (user_id, field_id, value, day, created_at)
+    SELECT 
+      ${uid}, 
+      ${field_id}, 
+      ${value}, 
+      DATE(${this.tz_read(day)}), 
+      ${this.tz_write(day)}
+    FROM with_tz
+    ON CONFLICT (field_id, day) DO UPDATE SET value=${value}
+    RETURNING *
+  ),
+  -- Determine the score difference
+  score_diff AS (
+      SELECT             
+        (SELECT value FROM upsert) - COALESCE((SELECT value FROM old_value), 0) AS diff
+  ),
+  -- Update the field's score and score_period
+  field_update AS (
+      UPDATE fields
+      SET 
+          score_total = CASE WHEN score_enabled THEN score_total + (SELECT diff FROM score_diff) ELSE score_total END,
+          score_period = CASE WHEN score_enabled THEN score_period + (SELECT diff FROM score_diff) ELSE score_period END
+      WHERE id = ${field_id}
+      RETURNING *
+  ),
+  -- Determine the direction of scoring based on score_up_good
+  score_direction AS (
+    SELECT
+      (SELECT diff FROM score_diff) *
+      CASE
+        WHEN score_up_good THEN 1
+        ELSE -1
+      END AS final_diff
+    FROM field_update
+  ),
+  -- Update the field's average value
+  average_update AS (
+    UPDATE fields SET avg=(
+        SELECT AVG(value) FROM field_entries2 fe
+        WHERE fe.field_id=${field_id} AND fe.value IS NOT NULL
+    ) WHERE id=${field_id}
+  ),
+  user_update AS (
+    -- Update the user's score
+    UPDATE users
+    SET score = score + CASE WHEN fields.score_enabled THEN (SELECT final_diff FROM score_direction) ELSE 0 END
+    FROM fields
+    WHERE 
+      fields.id = ${field_id} AND
+      users.id = ${uid}
+    RETURNING users.*
+  )
+  SELECT
+    row_to_json(user_update.*) AS user_update,
+    row_to_json(field_update.*) AS field_update,
+    row_to_json(upsert.*) AS field_entry_update
+  FROM
+    user_update, field_update, upsert;
+`)
 
     return res
 
@@ -209,5 +211,87 @@ export class Fields extends Base {
         and f.user_id=${uid}
     `)
     return res
+  }
+
+  async cron() {
+    const megaQuery = sql`
+-- CREATE OR REPLACE FUNCTION process_fields() RETURNS void LANGUAGE plpgsql AS $$
+-- BEGIN
+    -- Identify the fields and associated users to process based on the hour of execution in their local time
+    WITH user_timezones AS (
+        SELECT 
+            id as user_id,
+            COALESCE(timezone, 'America/Los_Angeles') as timezone
+        FROM 
+            users
+    ),
+    active_fields AS (
+        SELECT 
+            utz.user_id,
+            f.id as field_id,
+            f.score_period,
+            f.score_quota,
+            f.monday,
+            f.tuesday,
+            f.wednesday,
+            f.thursday,
+            f.friday,
+            f.saturday,
+            f.sunday
+        FROM 
+            fields f
+        JOIN 
+            user_timezones utz ON utz.user_id = f.user_id
+        WHERE 
+            f.score_enabled = true
+            AND (
+                (
+                    f.score_period = 'daily' 
+                    AND (
+                        (EXTRACT(DOW FROM now() AT TIME ZONE utz.timezone) = 0 AND f.sunday)
+                        OR (EXTRACT(DOW FROM now() AT TIME ZONE utz.timezone) = 1 AND f.monday)
+                        OR (EXTRACT(DOW FROM now() AT TIME ZONE utz.timezone) = 2 AND f.tuesday)
+                        OR (EXTRACT(DOW FROM now() AT TIME ZONE utz.timezone) = 3 AND f.wednesday)
+                        OR (EXTRACT(DOW FROM now() AT TIME ZONE utz.timezone) = 4 AND f.thursday)
+                        OR (EXTRACT(DOW FROM now() AT TIME ZONE utz.timezone) = 5 AND f.friday)
+                        OR (EXTRACT(DOW FROM now() AT TIME ZONE utz.timezone) = 6 AND f.saturday)
+                    )
+                    AND EXTRACT(HOUR FROM now() AT TIME ZONE utz.timezone) = 0
+                )
+                OR (f.score_period = 'weekly' AND EXTRACT(DOW FROM now() AT TIME ZONE utz.timezone) = 0 AND EXTRACT(HOUR FROM now() AT TIME ZONE utz.timezone) = 0)
+                OR (f.score_period = 'monthly' AND EXTRACT(DAY FROM now() AT TIME ZONE utz.timezone) = 1 AND EXTRACT(HOUR FROM now() AT TIME ZONE utz.timezone) = 0)
+                -- ... and so on for other periods
+            )
+    ),
+    quota_check AS (
+        SELECT
+            af.field_id,
+            af.user_id,
+            af.score_quota - af.score_period AS points_to_deduct
+        FROM
+            active_fields af
+        WHERE
+            af.score_quota > af.score_period  -- Only include fields where the quota hasn't been met
+    ),
+    reset_score_period AS (
+        UPDATE
+            fields
+        SET
+            score_period = 0
+        WHERE
+            id IN (SELECT field_id FROM quota_check)
+        RETURNING id as field_id, user_id
+    )
+    UPDATE 
+        users u
+    SET 
+        score = score - qc.points_to_deduct
+    FROM 
+        quota_check qc
+    WHERE 
+        u.id = qc.user_id AND qc.points_to_deduct > 0;
+-- END;
+-- $$;
+`
   }
 }
