@@ -83,6 +83,17 @@ function FiveStarEntry({f, value, setValue, sendValue, isToday}: EntryVariant) {
 }
 
 function NumberEntry({f, value, setValue, sendValue, isToday}: EntryVariant) {
+  const [
+    points,
+  ] = useStore(s => [
+    s.me?.points || 0
+  ], shallow)
+  const [
+    addError
+  ] = useStore(useCallback(s => [
+    s.addError
+  ], []))
+
   value = value || 0
   const changeNumber = useCallback((e: React.SyntheticEvent<HTMLInputElement>) => {
     let value = Number(e.target.value)
@@ -96,6 +107,13 @@ function NumberEntry({f, value, setValue, sendValue, isToday}: EntryVariant) {
     sendValue(val)
   }, [value])
 
+  const purchase = useCallback(() => {
+    if (f.value > points) {
+      return addError(<div>Not enough points</div>)
+    }
+    sendValue(f.value)
+  }, [value])
+
   // wrap it so we can wait till blur to send
   const sendValue_ = useCallback((e: React.SyntheticEvent<HTMLInputElement>) => {
     sendValue(value)
@@ -105,7 +123,7 @@ function NumberEntry({f, value, setValue, sendValue, isToday}: EntryVariant) {
     return <Button
       variant="outlined"
       sx={{borderRadius:0}}
-      onClick={changeByOne(f.value)}
+      onClick={purchase}
     >
       {f.value}
     </Button>
