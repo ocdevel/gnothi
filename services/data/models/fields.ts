@@ -88,12 +88,12 @@ export class Fields extends Base {
     const day = req.day
     return db.query<S.Fields.fields_list_response>(sql`
       ${this.with_tz()}
-      select fe.* from ${fieldEntries} fe
-      inner join with_tz on with_tz.id=fe.user_id 
-      where fe.user_id=${uid}
-      and date(${this.tz_read(day)})=
+      SELECT fe.* FROM ${fieldEntries} fe
+      INNER JOIN with_tz ON with_tz.id=fe.user_id 
+      WHERE fe.user_id=${uid}
+      AND DATE(${this.tz_read(day)})=
           --use created_at rather than day in case they switch timezones
-          date(fe.created_at at time zone with_tz.tz)`)
+          DATE(fe.created_at AT TIME ZONE with_tz.tz)`)
   }
 
   async entriesPost(req: S.Fields.fields_entries_post_request) {
@@ -109,10 +109,7 @@ export class Fields extends Base {
     // NOTE: due to that, remember the table field_entries2, NOT field_entries. If I ever change the table name,
     // remember to change that here too.
     const res = await db.query(sql`
-      WITH with_tz AS (
-        select id, coalesce(timezone, 'America/Los_Angeles') as tz
-        from users where id=${this.context.vid}
-      ),
+      ${this.with_tz()},
       -- Fetch the old value
       old_value AS (
         SELECT value
@@ -128,8 +125,8 @@ export class Fields extends Base {
           ${uid}, 
           ${field_id}, 
           ${value}, 
-          DATE(COALESCE(${day || null}::TIMESTAMP AT TIME ZONE with_tz.tz, now() AT TIME ZONE with_tz.tz)), 
-          COALESCE(${day || null}::TIMESTAMP AT TIME ZONE with_tz.tz, now())
+          DATE(${this.tz_read(day)}), 
+          ${this.tz_write(day)}
         FROM with_tz
         ON CONFLICT (field_id, day) DO UPDATE SET value=${value}
         RETURNING *

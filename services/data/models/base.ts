@@ -24,21 +24,19 @@ export class Base {
 
   // NOTE!! Wherever this is used, make sure the $param order is respected
   with_tz() {
-    return sql`with with_tz as (
-      select id, coalesce(${users.timezone}, 'America/Los_Angeles') as tz
-      from ${users} where id=${this.context.vid}
+    return sql`WITH with_tz as (
+      SELECT id, COALESCE(timezone, 'America/Los_Angeles') AS tz
+      FROM users WHERE id=${this.context.vid}
     )`
   }
   at_tz = sql`at time zone with_tz.tz`
   // tz_read = `coalesce(:day ::timestamp ${this.at_tz}, now() ${this.at_tz})`
   // tz_write = `coalesce(:day ::timestamp ${this.at_tz}, now())`
   tz_read(day: string | Date) {
-    console.log({tz_read_day: day})
-    return sql`coalesce(${day || null}::timestamp at time zone with_tz.tz, now() at time zone with_tz.tz)`
+    return sql`COALESCE(${day || null}::TIMESTAMP AT TIME ZONE with_tz.tz, NOW() AT TIME ZONE with_tz.tz)`
   }
   tz_write(day: string | Date | undefined) {
-    console.log({tz_write_day: day})
-    return sql`coalesce(${day || null}::timestamp at time zone with_tz.tz, now())`
+    return sql`COALESCE(${day || null}::TIMESTAMP AT TIME ZONE with_tz.tz, now())`
   }
 
   constructor(context: FnContext) {
