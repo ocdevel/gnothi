@@ -137,7 +137,7 @@ export default function Insights({entry_ids}: Insights) {
   useEffect(() => {
     if (!entry_ids.length) { return }
     getInsights()
-  }, [search, entryIdsShallow])
+  }, [search, entryIdsShallow, creditActive])
 
   // FIXME handle on a per-insight basis
   // if (!entry_ids?.length) {
@@ -177,7 +177,7 @@ export default function Insights({entry_ids}: Insights) {
         action={`The context for the query ${view === "list" ? "are the entries you see, based on your filters." : "is this entry"}`}
       >
         <Prompt entry_ids={entry_ids} view={view}/>
-      </Insight>, [Boolean(me?.premium), entryIdsShallow, view])}
+      </Insight>, [me?.premium, entryIdsShallow, view])}
 
       {useMemo(() => <Insight
         label="Summary & Themes"

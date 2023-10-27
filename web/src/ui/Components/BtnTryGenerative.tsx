@@ -8,6 +8,7 @@ import {ButtonProps} from '@mui/material/Button'
 import {BasicDialog} from "./Dialog.tsx";
 import CardContent from "@mui/material/CardContent";
 import {create} from "zustand";
+import {CREDIT_MINUTES} from "../../../../schemas/users.ts";
 
 const useDialogStore = create<{show: boolean, setShow: (show: boolean) => void}>((set, get) => ({
   show: false,
@@ -18,7 +19,7 @@ function Dialog() {
   const [show, setShow] = useDialogStore(s => [s.show, s.setShow], shallow)
   return <BasicDialog open={show} onClose={() => setShow(false)} size={'sm'}>
     <CardContent>
-      <Typography>Users get 10 credits to test-drive Premium. When you activate 1 credit, it is active for 5 minutes and you can use all generative features. These include summary & themes (dashboard view, and per entry), prompt (chat), next entry suggestion (when starting a new entry), behavior analysis, and more. When the timer runs out, you'll need to use another credit to activate, or upgrade to the Premium plan.</Typography>
+      <Typography>Users get 10 credits to test-drive Premium. When you activate 1 credit, it is active for {CREDIT_MINUTES} minutes and you can use all generative features. These include summary & themes (dashboard view, and per entry), prompt (chat), next entry suggestion (when starting a new entry), behavior analysis, and more. When the timer runs out, you'll need to use another credit to activate, or upgrade to the Premium plan.</Typography>
     </CardContent>
   </BasicDialog>
 }
