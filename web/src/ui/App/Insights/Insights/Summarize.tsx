@@ -38,17 +38,7 @@ function TryGenerative({view, entry_ids}: Summarize) {
   }
 
   function submit() {
-    get().send("insights_get_request", {
-      view,
-      entry_ids,
-      generative: true,
-      insights: {
-        summarize: true,
-        query: "",
-        books: false,
-        prompt: undefined
-      }
-    })
+    // git-blame: remove submit from here, it's a useEffect dep in Insights.tsx
   }
 
   // f8a18dd115e268833f7be9fb01dbf51a25f07f60 - content with "about this" and upgrade button
