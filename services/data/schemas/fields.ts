@@ -69,7 +69,6 @@ export const fields = pgTable('fields', {
   name: varchar('name').notNull(),
   // Start entries/graphs/correlations here
   created_at: tsCol('created_at'),
-  excluded_at: timestamp('excluded_at', {withTimezone: true}),
   default_value: defaultValTypes("default_value").default("value"),
   default_value_value: doublePrecision('default_value_value'),
 
@@ -135,7 +134,6 @@ export const fields = pgTable('fields', {
   notes: varchar("notes"),
 }, (table) => {
   return {
-    ix_fields_excluded_at: index("ix_fields_excluded_at").on(table.excluded_at),
     ix_fields_user_id: index("ix_fields_user_id").on(table.user_id),
     ix_fields_created_at: index("ix_fields_created_at").on(table.created_at),
 

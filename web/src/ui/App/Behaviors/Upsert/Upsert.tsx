@@ -27,7 +27,7 @@ import {BehaviorType} from "./BehaviorType.tsx";
 import {BehaviorLane} from "./BehaviorLane.tsx";
 import {BehaviorValue} from "./BehaviorValue.tsx";
 import {UpsertProps, WithHelp} from "./Utils.tsx";
-import {DeleteButtons} from "./DeleteExclude.tsx";
+import {DeleteButton} from "./DeleteButton.tsx";
 import {AnalyzeAdvanced} from "./AnalyzeAdvanced.tsx";
 import {ResetPeriods} from "./ResetPeriods.tsx";
 import {TrackingType} from "./TrackingType.tsx";
@@ -81,14 +81,23 @@ export function UpsertModal() {
   const open = ["new", "edit"].includes(view.view)
 
 
-  function submit(data: fields_post_request) {
+  const submit = useCallback((data: fields_post_request) => {
     if (fid) {
       send('fields_put_request', {id: field.id, ...data})
     } else {
       send("fields_post_request", data)
     }
     onClose()
-  }
+  }, [fid])
+
+  const destroy = useCallback(() => {
+    if (!fid) {return}
+    if (!window.confirm("Delete this Behavior? This will delete all data for this field.")) {
+      return
+    }
+    onClose()
+    send('fields_delete_request', {id: fid})
+  }, [fid])
 
   function renderForm() {
     return <Card
@@ -141,7 +150,7 @@ export function UpsertModal() {
                 content: <Stack2>
                   <AnalyzeAdvanced {...upsertProps} />
                   <ScoreAdvanced {...upsertProps} />
-                  <DeleteButtons {...upsertProps} />
+                  <DeleteButton {...upsertProps} />
                 </Stack2>
               }
             ]}

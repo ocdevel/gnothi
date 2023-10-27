@@ -37,6 +37,8 @@ export interface BehaviorsSlice {
     setView: (view: Partial<View>) => void
 
     field_entries_list_response: (res: fields_entries_list_response) => void
+
+    destroy: (fid: string, cb?: () => void) => void
   }
 }
 
@@ -62,6 +64,7 @@ export const behaviorsSlice: StateCreator<
       const rows = res.rows?.map(r => [r.field_id, r.value]) || []
       get().behaviors.setValues(Object.fromEntries(rows))
     },
+
 
     day: dayjs(),
     dayStr: iso(),
@@ -93,5 +96,15 @@ export const behaviorsSlice: StateCreator<
         ...view,
       }
     })),
+
+    destroy: (id, cb) => {
+      if (!id) {return}
+      if (!window.confirm("Delete this Behavior? This will delete all data for this field.")) {
+        return
+      }
+      // eg an onClose handler, etc.
+      cb && cb()
+      get().send('fields_delete_request', {id})
+    }
   }
 })

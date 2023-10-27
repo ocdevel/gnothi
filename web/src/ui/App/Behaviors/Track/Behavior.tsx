@@ -32,19 +32,12 @@ export default function Item({fid, advanced}: Behavior) {
   ], shallow)
 
   const f = fields?.hash?.[fid]
-  if (!f) {return null} // not ready
-
-  const handleSort = useCallback(() => {
-    alert("Not implemented")
-  }, [fid])
-
 
   const handleEdit = useCallback(() => {
     setView({view: "edit", fid})
   }, [fid])
 
-  const sizes = advanced ? [5, 5, 2] : [6, 6]
-
+  if (!f) {return null} // not ready
   return (
       <Card
         className={`behavior behavior-${f.type}`}

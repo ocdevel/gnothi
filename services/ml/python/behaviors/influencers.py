@@ -70,7 +70,7 @@ def load_data(conn, user_id):
     inner join fe_ct on fe_ct.field_id=fe.field_id  -- just removes rows
     inner join fields f on f.id=fe.field_id -- ensure field still exists? (cascade should be fine, remove?)
     where f.user_id=%(uid)s
-      and f.excluded_at is null
+      and f.analyze_enabled is true
     order by fe.day asc
     """, conn, params={'uid': user_id})
     if not fes.size: return None  # not enough entries
@@ -84,7 +84,7 @@ def load_data(conn, user_id):
     from fields
     where user_id=%(uid)s
         and id in %(fids)s
-        and excluded_at is null
+        and analyze_enabled is true
     """, conn, params=params)
 
     fs = {r.id: r for i, r in fs.iterrows()}
