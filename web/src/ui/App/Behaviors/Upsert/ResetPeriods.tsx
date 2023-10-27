@@ -39,9 +39,9 @@ function ResetPeriod({form, field, isNew}: UpsertProps) {
       {value: "daily", label: "Daily"},
       {value: "weekly", label: "Weekly"},
       {value: "monthly", label: "Monthly"},
-      {value: "yearly", label: "Yearly"},
-      {value: "forever", label: "Forever"},
-      {value: "none", label: "Disabled"},
+      // maybe later. Removing for, eg taxes should be a ToDo
+      // {value: "yearly", label: "Yearly"},
+      {value: "never", label: "Never"},
     ]}
   />
   return <WithHelp field={select2} help={help} />

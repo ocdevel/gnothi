@@ -81,3 +81,9 @@ export const fields_ask_response = new Route(r.fields_ask_response, async (req, 
   const res = await tableQa(req)
   return [{id: ulid(), ...res}]
 })
+
+export const fields_cron = new Route(r.fields_cron, async (req, context) => {
+  // don't do these parallel. Habitica is really shoddy and can 401/502 frequently, make sure our cron goes first
+  await context.m.fields.cron()
+  await context.m.habitica.cron()
+})

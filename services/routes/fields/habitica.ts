@@ -44,8 +44,3 @@ export const habitica_sync_request = new Route(r.habitica_sync_request, async (r
   await afterHabitica(context)
   return []
 })
-
-export const habitica_sync_cron = new Route(r.habitica_sync_cron, async (req, context) => {
-  await context.m.habitica.cron()
-  return []
-})

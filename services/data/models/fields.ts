@@ -223,82 +223,73 @@ FROM
   }
 
   async cron() {
+    // Since there's no user.last_cron field tracking this, this function depends on being called excatly
+    // once each hour without fail.
+    // TODO add a user.last_cron, and use that instead of 0-1 hour checks
     const megaQuery = sql`
 -- CREATE OR REPLACE FUNCTION process_fields() RETURNS void LANGUAGE plpgsql AS $$
 -- BEGIN
-    -- Identify the fields and associated users to process based on the hour of execution in their local time
-    WITH user_timezones AS (
-        SELECT 
-            id as user_id,
-            COALESCE(timezone, 'America/Los_Angeles') as timezone
-        FROM 
-            users
-    ),
-    active_fields AS (
-        SELECT 
-            utz.user_id,
-            f.id as field_id,
-            f.score_period,
-            f.score_quota,
-            f.monday,
-            f.tuesday,
-            f.wednesday,
-            f.thursday,
-            f.friday,
-            f.saturday,
-            f.sunday
-        FROM 
-            fields f
-        JOIN 
-            user_timezones utz ON utz.user_id = f.user_id
-        WHERE 
-            f.score_enabled = true
-            AND (
-                (
-                    f.score_period = 'daily' 
-                    AND (
-                        (EXTRACT(DOW FROM now() AT TIME ZONE utz.timezone) = 0 AND f.sunday)
-                        OR (EXTRACT(DOW FROM now() AT TIME ZONE utz.timezone) = 1 AND f.monday)
-                        OR (EXTRACT(DOW FROM now() AT TIME ZONE utz.timezone) = 2 AND f.tuesday)
-                        OR (EXTRACT(DOW FROM now() AT TIME ZONE utz.timezone) = 3 AND f.wednesday)
-                        OR (EXTRACT(DOW FROM now() AT TIME ZONE utz.timezone) = 4 AND f.thursday)
-                        OR (EXTRACT(DOW FROM now() AT TIME ZONE utz.timezone) = 5 AND f.friday)
-                        OR (EXTRACT(DOW FROM now() AT TIME ZONE utz.timezone) = 6 AND f.saturday)
-                    )
-                    AND EXTRACT(HOUR FROM now() AT TIME ZONE utz.timezone) = 0
-                )
-                OR (f.score_period = 'weekly' AND EXTRACT(DOW FROM now() AT TIME ZONE utz.timezone) = 0 AND EXTRACT(HOUR FROM now() AT TIME ZONE utz.timezone) = 0)
-                OR (f.score_period = 'monthly' AND EXTRACT(DAY FROM now() AT TIME ZONE utz.timezone) = 1 AND EXTRACT(HOUR FROM now() AT TIME ZONE utz.timezone) = 0)
-                -- ... and so on for other periods
-            )
-    ),
-    quota_check AS (
-        SELECT
-            af.field_id,
-            af.user_id,
-            af.score_quota - af.score_period AS points_to_deduct
-        FROM
-            active_fields af
-        WHERE
-            af.score_quota > af.score_period  -- Only include fields where the quota hasn't been met
-    ),
-    reset_score_period AS (
-        UPDATE
-            fields
-        SET
-            score_period = 0
-        WHERE
-            id IN (SELECT field_id FROM quota_check)
-        RETURNING id as field_id, user_id
-    )
+  -- not using Base.with_tz since it selects where context.vid, we need all users
+  WITH with_tz as (
+    SELECT id, COALESCE(timezone, 'America/Los_Angeles') AS tz
+    FROM users
+  )
+  -- Identify the fields and associated users to process based on the hour of execution in their local time
+  active_fields AS (
+    SELECT f.*,
+    FROM fields f
+    JOIN with_tz ON with_tz.id = f.user_id
+    WHERE
+      -- rewards are reset-period=never, but allow for user-custom options too (instead of checking lane='reward')
+      f.reset_period != 'never'
+      AND f.score_enabled = true
+      AND (
+        (
+          f.reset_period = 'daily'
+          AND (
+            (EXTRACT(DOW FROM now() AT TIME ZONE with_tz.tz) = 0 AND f.sunday)
+            OR (EXTRACT(DOW FROM now() AT TIME ZONE with_tz.tz) = 1 AND f.monday)
+            OR (EXTRACT(DOW FROM now() AT TIME ZONE with_tz.tz) = 2 AND f.tuesday)
+            OR (EXTRACT(DOW FROM now() AT TIME ZONE with_tz.tz) = 3 AND f.wednesday)
+            OR (EXTRACT(DOW FROM now() AT TIME ZONE with_tz.tz) = 4 AND f.thursday)
+            OR (EXTRACT(DOW FROM now() AT TIME ZONE with_tz.tz) = 5 AND f.friday)
+            OR (EXTRACT(DOW FROM now() AT TIME ZONE with_tz.tz) = 6 AND f.saturday)
+          )
+          AND EXTRACT(HOUR FROM now() AT TIME ZONE with_tz.tz) = 0
+        )
+        OR (f.reset_period = 'weekly' AND EXTRACT(DOW FROM now() AT TIME ZONE with_tz.tz) = 0 AND EXTRACT(HOUR FROM now() AT TIME ZONE with_tz.tz) = 0)
+        OR (f.reset_period = 'monthly' AND EXTRACT(DAY FROM now() AT TIME ZONE with_tz.tz) = 1 AND EXTRACT(HOUR FROM now() AT TIME ZONE with_tz.tz) = 0)
+        -- ... and so on for other periods
+      )
+  ),
+  quota_check AS (
+    SELECT
+      af.id,
+      af.user_id,
+      af.reset_quota - af.score_period AS points_to_deduct
+    FROM
+      active_fields af
+    WHERE
+      -- Only include fields where the quota hasn't been met. If they go above quota, that's given points on + button
+      af.reset_quota > af.score_period  
+  ),
+  reset_score_period AS (
     UPDATE 
-        users u
+      fields
     SET 
-        score = score - qc.points_to_deduct
-    FROM 
-        quota_check qc
-    WHERE 
-        u.id = qc.user_id AND qc.points_to_deduct > 0;
+      score_period = 0
+    WHERE
+      id IN (SELECT field_id FROM quota_check)
+    RETURNING id as field_id, user_id
+  )
+  UPDATE
+    users u
+  SET
+    score = score - qc.points_to_deduct
+  FROM
+    quota_check qc
+  WHERE
+    u.id = qc.user_id AND qc.points_to_deduct > 0;
 -- END;
 -- $$;
 `

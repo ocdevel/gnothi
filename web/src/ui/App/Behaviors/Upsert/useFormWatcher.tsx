@@ -43,13 +43,13 @@ const laneDefaults = {
   todo: {
     ...scoringDefaults,
     type: "check",
-    reset_period: "forever",
+    reset_period: "never",
     score_up_good: true,
   },
   reward: {
     ...scoringDefaults,
     type: "number",
-    reset_period: "forever",
+    reset_period: "never",
     score_up_good: false,
   }
 }

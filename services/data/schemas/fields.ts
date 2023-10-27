@@ -39,8 +39,7 @@ export const resetPeriods = pgEnum("resetperiods", [
   "weekly",
   "monthly",
   "yearly",
-  "forever", // infinite counter, eg rewards
-  // "none", // don't even use this feature? this is handled by scoring=on/off
+  "never", // infinite counter, eg rewards
 ])
 export const lanes = pgEnum("lanes", [
   "habit",
@@ -54,7 +53,7 @@ export const lanes = pgEnum("lanes", [
  * Habit-tracking will operate like templates combining multiple columns. Eg
  * - Habits: type:number reset_period:daily reset_amount:1 monday:true, tuesday:true ...
  * - Dailies: type=check, (...habit)
- * - Todo: type=check, reset_period=forever, (...daily)
+ * - Todo: type=check, reset_period=never, (...daily)
  * - Rewards: ???
  */
 
@@ -120,7 +119,7 @@ export const fields = pgTable('fields', {
 
   // Reset Periods
   // ---
-  reset_period: resetPeriods("reset_period").default("forever"),
+  reset_period: resetPeriods("reset_period").default("daily"),
   reset_quota: integer("reset_quota").default(1), // how many times per week this should be done
   reset_every: integer("reset_every").default(1), // repeat every 2 weeks
   monday: boolean("monday").default(true),

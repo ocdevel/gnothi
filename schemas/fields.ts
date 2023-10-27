@@ -326,7 +326,7 @@ export const routes = {
       t: {ws: true},
     }
   },
-  habitica_sync_cron: {
+  fields_cron: {
     i: {
       e: 'void',
       s: Passthrough,
