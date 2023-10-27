@@ -21,10 +21,8 @@
     "aws-jwt-verify": "^4.0.0",
     "aws-sdk": "^2.1467.0",
     "aws4": "^1.12.0",
-    "drizzle-orm": "0.28.6",
     "gpt-token-utils": "^1.2.0",
     "openai": "^4.11.0",
-    "postgres": "^3.3.5",
     "stripe": "^13.8.0",
     "ulid": "^2.3.0"
   },
