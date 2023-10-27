@@ -19,6 +19,7 @@ export const User = createInsertSchema(users, {
   birthday: dateCol().optional(),
   last_books: dateCol().optional(),
   last_influencers: dateCol().optional(),
+  last_credit: dateCol().optional(),
   accept_terms_conditions: dateCol().optional(),
   accept_disclaimer: dateCol().optional(),
   accept_privacy_policy: dateCol().optional(),
@@ -131,6 +132,20 @@ export const routes = {
       t:  {ws: true},
       event_as: "users_list_response",
       keyby: "id"
+    }
+  },
+
+  users_credit_request: {
+    i: {
+      e: "users_credit_request",
+      s: Passthrough,
+      t: {ws: true},
+      snoopable: false,
+    },
+    o: {
+      // response is handled by canGenerative
+      e: "void",
+      s: z.void(),
     }
   }
 }

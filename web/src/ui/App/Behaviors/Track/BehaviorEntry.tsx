@@ -130,9 +130,9 @@ function NumberEntry({f, value, setValue, sendValue, isToday}: EntryVariant) {
     </Button>
   }
 
-  return <Box sx={{display: 'flex', alignItems: 'center'}}>
-    <Button variant="outlined" sx={{borderRadius:0}} onClick={changeByOne(-1)}>-</Button>
+  return <Box sx={{display: 'flex', alignItems: 'center', }}>
     <Button variant="outlined" sx={{borderRadius:0}} onClick={changeByOne(1)}>+</Button>
+    <Button variant="outlined" sx={{borderRadius:0}} onClick={changeByOne(-1)}>-</Button>
     <TextField
       disabled={!!f.service && isToday}
       type='number'

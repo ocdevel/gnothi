@@ -20,10 +20,11 @@ import Paper from "@mui/material/Paper";
 import {fields_list_response} from '@gnothi/schemas/fields'
 import {shallow} from "zustand/shallow";
 import Typography from "@mui/material/Typography";
-import KeepTracking from './KeepTracking'
+import {NotEnough} from './AnalyzeDisabled.tsx'
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
 import Stack from "@mui/material/Stack";
+import {Alert2} from "../../../Components/Misc.tsx";
 
 const round_ = (v: number | null) => v ? v.toFixed(2) : null
 
@@ -83,8 +84,8 @@ export default function Charts() {
 
   if (!influencersFiltered?.length) {
     return <div>
-      <FieldName name={field?.name} />
-      <KeepTracking />
+      <NotEnough />
+      <Alert2 severity="warning" title="Insufficient number of days tracked for"><FieldName name={field?.name} /></Alert2>
     </div>
   }
 
@@ -110,7 +111,7 @@ export default function Charts() {
   }
 
   function renderTable () {
-    // TODO remove this, or merge with <KeepTracking />. This code is never reached
+    // TODO remove this, or merge with <NotEnough />. This code is never reached
     if (!influencersFiltered?.length) {
       return <p>
         After you've logged enough field entries, this feature will show you which fields influence this field. If you're expecting results now, make sure you set fields as <strong>target</strong> (edit the field), then wait an hour or two. Influencers only calculate for target fields.

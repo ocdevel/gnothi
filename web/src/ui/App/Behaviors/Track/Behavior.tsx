@@ -39,6 +39,14 @@ export default function Item({fid, advanced}: Behavior) {
   }, [fid])
 
   if (!f) {return null} // not ready
+
+  // TODO make tabs for this, Active | Inactive:
+  // 1. Habits (nothing)
+  // 2. Dailies - due on that day vs not due
+  // 3. Todos - complete or not
+  // 4. Data - analyze_enabled=true vs false
+  const active = true
+
   return (
       <Card
         className={`behavior behavior-${f.type}`}
@@ -82,36 +90,6 @@ export default function Item({fid, advanced}: Behavior) {
         >
           <FieldName name={f.name} />
         </Box>
-
-        {false && advanced && <Box
-          sx={{
-            flex:1,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'flex-end'
-        }}>
-          <Box>
-            {/*<IconButton
-              sx={{cursor: "grab"}}
-              onClick={handleSort}
-            >
-              <SortIcon />
-            </IconButton>*/}
-            <IconButton onClick={handleEdit} className='btn-edit'>
-              <EditIcon />
-            </IconButton>
-          </Box>
-          <Box>
-            <Badge
-              badgeContent={f.avg && f.avg.toFixed(1)}
-              onClick={handleView}
-            >
-              <IconButton onClick={handleView} className='btn-view'>
-                <ViewIcon />
-              </IconButton>
-            </Badge>
-          </Box>
-        </Box>}
         </CardContent>
       </Card>
   )

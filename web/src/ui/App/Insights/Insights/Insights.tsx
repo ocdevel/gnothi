@@ -3,7 +3,6 @@ import {Summarize} from "./Summarize"
 // import Ask from "./Ask"
 import Prompt from "./Prompt/Prompt"
 import Books from "./Books"
-import Behaviors from "./Behaviors"
 import Admin from "./Admin"
 import Divider from "@mui/material/Divider";
 import dayjs from 'dayjs'
@@ -18,7 +17,6 @@ import {useStore} from "../../../../data/store"
 import BooksIcon from '@mui/icons-material/AutoStoriesOutlined';
 import SummaryIcon from '@mui/icons-material/SummarizeOutlined';
 import ThemesIcon from '@mui/icons-material/DashboardOutlined';
-import BehaviorsIcon from '@mui/icons-material/InsertChartOutlinedRounded';
 import PromptIcon from '@mui/icons-material/ChatOutlined';
 import ExpandIcon from '@mui/icons-material/FullscreenOutlined';
 import AdminIcon from '@mui/icons-material/AdminPanelSettingsOutlined';
@@ -191,14 +189,7 @@ export default function Insights({entry_ids}: Insights) {
         <Summarize view={view} entry_ids={entry_ids} />
       </Insight>, [view, entry_ids])}
 
-      {useMemo(() => <Insight
-        label="Behavior Tracking"
-        icon={<BehaviorsIcon {...iconProps} />}
-        moreClick={() => get().behaviors.setView({lastPage: "dashboard", page: "modal", view: "overall"})}
-        action="Here’s an overview of the daily habits and behaviors you’ve been tracking through Gnothi."
-      >
-        <Behaviors/>
-      </Insight>, [])}
+      {/* git-blame: removed behaviors from dashboard here */}
 
       {useMemo(() => <Insight
         label="Books"
