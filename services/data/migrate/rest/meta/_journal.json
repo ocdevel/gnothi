@@ -92,6 +92,13 @@
       "when": 1698429199533,
       "tag": "0012_material_karen_page",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "5",
+      "when": 1698436856337,
+      "tag": "0013_striped_makkari",
+      "breakpoints": true
     }
   ]
 }
