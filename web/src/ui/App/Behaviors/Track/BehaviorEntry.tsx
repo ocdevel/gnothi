@@ -85,9 +85,9 @@ function FiveStarEntry({f, value, setValue, sendValue, isToday}: EntryVariant) {
 
 function NumberEntry({f, value, setValue, sendValue, isToday}: EntryVariant) {
   const [
-    points,
+    score,
   ] = useStore(s => [
-    s.me?.points || 0
+    s.user?.me?.score || 0
   ], shallow)
   const [
     addError
@@ -109,11 +109,11 @@ function NumberEntry({f, value, setValue, sendValue, isToday}: EntryVariant) {
   }, [value])
 
   const purchase = useCallback(() => {
-    if (f.value > points) {
+    if (f.value > score) {
       return addError(<Box>Not enough points for <FieldName name={f.name} /></Box>)
     }
     sendValue(f.value)
-  }, [value])
+  }, [value, score])
 
   // wrap it so we can wait till blur to send
   const sendValue_ = useCallback((e: React.SyntheticEvent<HTMLInputElement>) => {

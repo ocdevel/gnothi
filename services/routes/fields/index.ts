@@ -35,21 +35,15 @@ export const fields_entries_list_request = new Route(r.fields_entries_list_reque
 })
 
 export const fields_entries_post_request = new Route(r.fields_entries_post_request, async (req, context) => {
-  const {uid, db: {drizzle}} = context
-
-  // Check if isReward and hasEnoughPoints
-  // Disabling here for now, doing check client-side to skip this every entry for performance (frequent calls to this
-  // route). If we expose an API, re-enable this check.
-  // const lane = await context.db.drizzle
-  //   .select({lane: fields.lane})
-  //   .from(fields)
-  //   .where(eq(fields.id, req.field_id))
-  // if (lane[0].lane === "reward" && req.value > context.user.score) {
-  //   throw new GnothiError({message: "Not enough points"})
-  // }
+  const {uid, db: {drizzle}, user: {score}} = context
 
   const updates = await context.m.fields.entriesPost(req)
   const {user_update, field_update, field_entry_update} = updates[0]
+
+  if (user_update.score === score && field_update.lane === "reward") {
+    throw new GnothiError({message: "Not enough points"})
+  }
+
   await Promise.all([
     context.handleRes(
       {...r.users_list_request.o, op: "update"},

@@ -109,87 +109,96 @@ export class Fields extends Base {
     // NOTE: due to that, remember the table field_entries2, NOT field_entries. If I ever change the table name,
     // remember to change that here too.
     const res = await db.query(sql`
-  ${this.with_tz()},
-  -- Fetch the old value
-  old_value AS (
-    SELECT value
-    FROM field_entries2
-    WHERE user_id=${uid} AND field_id=${field_id}
-    ORDER BY created_at DESC
-    LIMIT 1
-  ),
-  -- Your existing upsert logic
-  upsert AS (
-    INSERT INTO field_entries2 (user_id, field_id, value, day, created_at)
-    SELECT 
-      ${uid}, 
-      ${field_id}, 
-      ${value}, 
-      DATE(${this.tz_read(day)}), 
-      ${this.tz_write(day)}
-    FROM with_tz
-    ON CONFLICT (field_id, day) DO UPDATE SET value=${value}
-    RETURNING *
-  ),
-  -- Determine the score difference
-  score_diff AS (
-      SELECT             
-        (SELECT value FROM upsert) - COALESCE((SELECT value FROM old_value), 0) AS diff
-  ),
-  -- Update the field's score and score_period
-  field_update AS (
-      UPDATE fields
-      SET 
-          score_total = CASE WHEN score_enabled THEN score_total + (SELECT diff FROM score_diff) ELSE score_total END,
-          score_period = CASE WHEN score_enabled THEN score_period + (SELECT diff FROM score_diff) ELSE score_period END
-      WHERE id = ${field_id}
-      RETURNING *
-  ),
-  -- Determine the direction of scoring based on score_up_good
-  score_direction AS (
-    SELECT
-      (SELECT diff FROM score_diff) *
-      CASE
-        WHEN score_up_good THEN 1
-        ELSE -1
-      END AS final_diff
-    FROM field_update
-  ),
-  -- Update the field's average value
-  average_update AS (
-    UPDATE fields SET avg=(
-        SELECT AVG(value) FROM field_entries2 fe
-        WHERE fe.field_id=${field_id} AND fe.value IS NOT NULL
-    ) WHERE id=${field_id}
-  ),
-  user_update AS (
-    -- Update the user's score
-    UPDATE users
-    SET score = score + CASE WHEN fields.score_enabled THEN (SELECT final_diff FROM score_direction) ELSE 0 END
-    FROM fields
-    WHERE 
-      fields.id = ${field_id} AND
-      users.id = ${uid}
-    RETURNING users.*
-  )
+${this.with_tz()},
+-- Fetch the old value
+old_value AS (
+  SELECT 
+    CASE 
+      WHEN lane = 'reward' THEN 0
+      ELSE (
+        SELECT "value" 
+        FROM field_entries2
+        WHERE user_id = ${uid} AND field_id = ${field_id}
+        ORDER BY created_at DESC
+        LIMIT 1
+      )
+    END AS "value"
+  FROM fields
+  WHERE id = ${field_id}
+),
+-- Your existing upsert logic
+upsert AS (
+  INSERT INTO field_entries2 (user_id, field_id, "value", "day", created_at)
   SELECT
-    row_to_json(user_update.*) AS user_update,
-    row_to_json(field_update.*) AS field_update,
-    row_to_json(upsert.*) AS field_entry_update
-  FROM
-    user_update, field_update, upsert;
+    ${uid}, 
+    ${field_id}, 
+    ${value}, 
+    DATE(${this.tz_read(day)}), 
+    ${this.tz_write(day)}
+  FROM fields
+  JOIN with_tz ON fields.user_id = with_tz.id
+  WHERE 
+    fields.id = ${field_id}
+    AND (
+      lane != 'reward' 
+      OR (lane = 'reward' AND ${value} <= (SELECT score FROM users WHERE users.id = ${uid}))
+    )
+  ON CONFLICT (field_id, "day") DO UPDATE SET "value" = ${value}
+  RETURNING *
+),
+-- Determine the score difference
+score_diff AS (
+  SELECT 
+    ( 
+      -- will be 0 if it was a reward they couldn't afford,  since upsert skipped
+      COALESCE((SELECT "value" FROM upsert), 0) 
+      - COALESCE((SELECT value FROM old_value), 0)
+    ) AS diff
+),
+-- Update the field's score and score_period
+field_update AS (
+  UPDATE fields
+  SET 
+      score_total = CASE WHEN score_enabled THEN score_total + (SELECT diff FROM score_diff) ELSE score_total END,
+      score_period = CASE WHEN score_enabled THEN score_period + (SELECT diff FROM score_diff) ELSE score_period END
+  WHERE id = ${field_id}
+  RETURNING *
+),
+-- Determine the direction of scoring based on score_up_good
+score_direction AS (
+  SELECT
+    (SELECT diff FROM score_diff) *
+    CASE
+      WHEN score_up_good THEN 1
+      ELSE -1
+    END AS final_diff
+  FROM field_update
+),
+-- Update the field's average value
+average_update AS (
+  UPDATE fields SET "avg" = (
+    SELECT AVG("value") FROM field_entries2 fe
+    WHERE fe.field_id=${field_id} AND fe.value IS NOT NULL
+  ) WHERE id=${field_id}
+),
+user_update AS (
+  -- Update the user's score
+  UPDATE users
+  SET score = score + CASE WHEN fields.score_enabled THEN (SELECT final_diff FROM score_direction) ELSE 0 END
+  FROM fields
+  WHERE 
+    fields.id = ${field_id} AND
+    users.id = ${uid}
+  RETURNING users.*
+)
+SELECT
+  row_to_json(user_update.*) AS user_update,
+  row_to_json(field_update.*) AS field_update,
+  row_to_json(upsert.*) AS field_entry_update
+FROM
+  user_update, field_update, upsert;
 `)
-
     return res
-
-    // const res = await db.query(sql`
-    //   ${this.with_tz()}
-    //   insert into ${fieldEntries} (user_id, field_id, value, day, created_at)
-    //   select ${uid}, ${field_id}, ${value}, date(${this.tz_read(day)}), ${this.tz_write(day)}
-    //   from with_tz
-    //   on conflict (field_id, day) do update set value=${value}
-    //   returning *
-    // `)
   }
 
   async historyList(req: S.Fields.fields_history_list_request) {
