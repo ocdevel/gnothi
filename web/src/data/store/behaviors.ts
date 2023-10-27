@@ -38,7 +38,7 @@ export interface BehaviorsSlice {
 
     field_entries_list_response: (res: fields_entries_list_response) => void
 
-    destroy: (fid: string, cb?: () => void) => void
+    destroy: (fid?: string, cb?: () => void) => void
   }
 }
 

@@ -15,6 +15,7 @@ import Paper from "@mui/material/Paper";
 import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
+import {TripleDots} from "../Upsert/TripleDots.tsx";
 
 interface Behavior {
   fid: string
@@ -46,6 +47,9 @@ export default function Item({fid, advanced}: Behavior) {
       >
         <Box
           sx={{
+            display: "flex",
+            alignItems: 'center',
+            justifyContent: 'space-between',
             backgroundColor:
               f.lane === "reward" ? "#fff"
               : f.score_total < -4 ? "#de3f3f"
@@ -54,6 +58,7 @@ export default function Item({fid, advanced}: Behavior) {
           }}
         >
           <BehaviorEntry f={f} />
+          <TripleDots f={f} />
         </Box>
         <CardContent
           sx={{
