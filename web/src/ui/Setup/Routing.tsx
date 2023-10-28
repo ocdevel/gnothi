@@ -6,7 +6,7 @@ import {
   Outlet,
   useRouteError, useNavigate, useLocation
 } from "react-router-dom";
-import React, {useCallback, useEffect, useRef} from "react";
+import React, {useCallback, useEffect, useRef, useState} from "react";
 import {useStore} from "../../data/store";
 //import * as Sentry from "@sentry/react";
 
@@ -66,23 +66,29 @@ const router = createBrowserRouter_([{
 function AuthRedirect() {
   const navigate = useNavigate()
   const location = useLocation()
-  const redirectToRef = useRef(location.pathname === "/" ? "/j" : location.pathname);
-  const alreadyRedirected = useRef(false)
   const authenticated = useStore(state => state.authenticated);
 
+  // Immediately on first visit, store where they attempted to go. This way if auth kicks in, we can redirect
+  // them to that route. We'll set this to NULL on very next navigation, indicating that (a) we're done, don't
+  // do it again; or (b) they're bopping around splash pages, don't redirect on signup/signin
+  const pathAfterAuth = useRef<string | null>(
+    isAuthRoute(location.pathname) ? location.pathname
+      : location.pathname === "/" ? "/j"
+      : null
+  )
+
   useEffect(() => {
-    if (alreadyRedirected.current) {
-      return
-    }
+    // we've cleared it since the task is done
+    if (!pathAfterAuth.current) { return }
+
     if (authenticated) {
-      alreadyRedirected.current = true
-      navigate(redirectToRef.current, {replace: true});
-    } else {
-      if (isAuthRoute(location.pathname)) {
-        navigate("/", {replace: true})
-      }
+      const curr = pathAfterAuth.current
+      pathAfterAuth.current = null
+      navigate(curr, {replace: true})
+    } else if (isAuthRoute(location.pathname)) {
+      navigate("/", {replace: true})
     }
-  }, [location.pathname, authenticated]);
+  }, [authenticated]);
   return null
 }
 
