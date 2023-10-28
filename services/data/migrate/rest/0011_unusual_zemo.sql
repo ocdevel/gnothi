@@ -1,0 +1,1 @@
+ALTER TABLE "fields" ADD COLUMN "value" double precision DEFAULT 0;

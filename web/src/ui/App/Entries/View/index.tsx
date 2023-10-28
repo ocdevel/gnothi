@@ -36,6 +36,11 @@ import dayjs from "dayjs";
 import CardActions from "@mui/material/CardActions";
 
 
+// FIXME find a remark plugin, and refactor Behaviors/utils.tsx to share it
+function LinkRenderer(props) {
+  return <a href={props.href} target="_blank">{props.children}</a>
+}
+
 interface Entry {
   entry: S.Entries.entries_list_response
   onClose?: any
@@ -108,7 +113,7 @@ export default function View({entry, onClose}: Entry) {
         </Box>
         <div className='text'>
           <ReactMarkdown
-            linkTarget='_blank'
+            components={{link: LinkRenderer}}
           >
             {entry.text}
           </ReactMarkdown>

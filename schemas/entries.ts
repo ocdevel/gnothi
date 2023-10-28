@@ -35,6 +35,9 @@ export const EntryWithTags = Entry.extend({
   tags: BoolMap
 })
 export type EntryWithTags = z.infer<typeof EntryWithTags>
+export const EntryUpsert = EntryWithTags.extend({
+  generative: z.boolean().optional()
+})
 
 const JustDate = z.string().regex(/[0-9]{4}-[0-9]{2}-[0-9]{2}/)
 export const Filters = z.object({
@@ -50,21 +53,19 @@ export type entries_list_request = z.infer<typeof entries_list_request>
 export const entries_list_response = EntryWithTags
 export type entries_list_response = z.infer<typeof entries_list_response>
 
-export const entries_put_request = EntryWithTags
+export const entries_put_request = EntryUpsert
   .pick({
     id: true,
     title: true,
     text: true,
     created_at: true,
     tags: true,
-  }).extend({
-    generative: z.boolean().optional()
   })
 export const entries_post_request = entries_put_request.omit({id: true})
 
 export type entries_put_request = z.infer<typeof entries_put_request>
 export type entries_post_request = z.infer<typeof entries_post_request>
-export const entries_upsert_response = entries_list_response
+export const entries_upsert_response = EntryUpsert
 export type entries_upsert_response = z.infer<typeof entries_upsert_response>
 
 // _response will have a version without the AI inserts. _final will have all the inserts

@@ -1,25 +1,36 @@
+/**
+ * https://github.com/atlassian/react-beautiful-dnd/blob/master/docs/about/examples.md
+ * https://codesandbox.io/s/zqwz5n5p9x?file=/src/index.js
+ */
 import React, { useState, useMemo } from "react";
-import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
+// import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 
+// Turns out react-beautiful-dnd was abandoned & doesn't work with React 18+, this fork is drop-in replacement
+import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 
-
-const reorder = (list, startIndex, endIndex) => {
+function reorder<T>(list: T[], startIndex: number, endIndex: number): T[] {
   const result = Array.from(list);
   const [removed] = result.splice(startIndex, 1);
   result.splice(endIndex, 0, removed);
 
   return result;
-};
+}
 
-function Item({item, index, keyBy, render}) {
+interface Item<T> {
+  item: T
+  index: number
+  keyby: string
+  render: (item: T) => React.ReactNode
+}
+function Item<T>({item, index, keyby, render}: Item<T>) {
   return (
-    <Draggable draggableId={item[keyBy]} index={index}>
+    <Draggable draggableId={item[keyby]} index={index}>
       {provided => (
+        // TODO use component provided from caller, see codesandbox
         <div
           ref={provided.innerRef}
           {...provided.draggableProps}
           {...provided.dragHandleProps}
-
         >
           {render(item)}
         </div>
@@ -28,17 +39,29 @@ function Item({item, index, keyBy, render}) {
   );
 }
 
-const List = React.memo(function List({items, render, keyBy}) {
+interface List<T> {
+  items: T[]
+  render: (item: T) => React.ReactNode
+  keyby: string
+}
+const List = React.memo(function List<T>({items, render, keyby}: List<T>) {
   return items.map((item, index) => <Item
     item={item}
     index={index}
-    key={item[keyBy]}
-    keyBy={keyBy}
+    key={item[keyby]}
+    keyby={keyby}
     render={render}
   />);
 });
 
-export default function Sortable({items, onReorder, render, keyBy='id'}) {
+interface Sortable<T> {
+  items: T[]
+  onReorder: (items: T[]) => T[]
+  render: (item: T) => React.ReactNode
+  keyby?: string
+  droppableId?: string
+}
+export function Sortable<T>({items, onReorder, render, keyby='id', droppableId="list"}: Sortable<T>) {
   function onDragEnd(result) {
     if (!result.destination) { return }
     if (result.destination.index === result.source.index) { return }
@@ -50,12 +73,11 @@ export default function Sortable({items, onReorder, render, keyBy='id'}) {
   }
 
   return (
-
     <DragDropContext onDragEnd={onDragEnd} >
-      <Droppable droppableId="list" >
+      <Droppable droppableId={droppableId} >
         {provided => (
           <div ref={provided.innerRef} {...provided.droppableProps}>
-            <List items={items} render={render} keyBy={keyBy} />
+            <List items={items} render={render} keyby={keyby} />
             {provided.placeholder}
           </div>
         )}

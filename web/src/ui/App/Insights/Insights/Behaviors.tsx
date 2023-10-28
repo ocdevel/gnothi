@@ -3,7 +3,7 @@ import {shallow} from "zustand/shallow";
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import Box from "@mui/material/Box";
-import Behavior from '../../Behaviors/List/Item.tsx'
+import Behavior from '../../Behaviors/Track/Behavior.tsx'
 import React, {useEffect, useState} from "react";
 import {FieldName} from "../../Behaviors/utils";
 import Expand from '@mui/icons-material/FullscreenOutlined'

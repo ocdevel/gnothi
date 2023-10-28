@@ -148,7 +148,8 @@ export function Api({ app, stack }: sst.StackContext) {
   })
   addLogging(fnCron, "FnCron")
 
-  const cronHabitica = new sst.Cron(stack, "CronHabitica", {
+  // behaviors. Need to slowly start renaming
+  const cronBehaviors = new sst.Cron(stack, "CronBehaviors", {
     schedule: "rate(1 hour)",
     job: fnCron,
     // enabled: true

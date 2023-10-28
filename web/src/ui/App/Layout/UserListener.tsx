@@ -6,13 +6,21 @@ import {shallow} from "zustand/shallow";
 import * as S from '@gnothi/schemas'
 import dayjs from "dayjs";
 import {tz as momentTz} from 'moment-timezone'
+import {CREDIT_MINUTES, users_list_response} from "../../../../../schemas/users.ts";
 const tznames = momentTz.names()
 
 
 export default function UserListener() {
-  const setUser = useStore(useCallback(state => state.setUser, []))
-  const [send, whoami, users] = useStore(s => [
+  const [
+    send,
+    setUser,
+    creditActivate
+  ] = useStore(useCallback(s => [
     s.send,
+    s.setUser,
+    s.creditActivate
+  ], []))
+  const [whoami, users] = useStore(s => [
     s.res.users_whoami_response?.first,
     s.res.users_list_response?.hash
   ], shallow)
@@ -34,12 +42,17 @@ export default function UserListener() {
     // to user (need to account for viewer)
     const user = users?.[whoami?.uid]
     if (!user) {return}
+
     ensureTimezone(user)
     setUser({
       me: users[whoami.uid],
       viewer: users[whoami.vid],
       as: null
     })
+
+    // restore the fact they have an active credit on refresh
+    creditActivate(user.last_credit)
+
     // TODO handle as switch
     // if (viewer.asId && hash[viewer.asId]) {
     //   get().send('users_everything_request', {})

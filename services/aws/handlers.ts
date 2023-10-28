@@ -325,7 +325,7 @@ class CronHandler extends Handler<ScheduledEvent> {
     const caller = event.resources[0].toLowerCase()
     // FIXME no easy way to inform the CDK construct to pass something along. A tag? for now, I'll just match-make
     // based on the rule which triggered this function
-    const eventKey = caller.includes("habitica") ? "habitica_sync_cron"
+    const eventKey = caller.includes("fields") ? "fields_cron"
       : undefined // will need this error as I flesh out more crons
     return [{data: event, event: eventKey, trigger: "cron"}]
   }

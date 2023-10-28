@@ -7,7 +7,7 @@ import {
   date,
   boolean,
   integer,
-  uniqueIndex,
+  uniqueIndex, doublePrecision,
 } from 'drizzle-orm/pg-core';
 import {InferModel} from 'drizzle-orm'
 
@@ -69,11 +69,15 @@ export const users = pgTable('users', {
   // I don't think we need to index it, since we'll check code-side
   last_credit: timestamp("last_credit", {withTimezone: true}),
 
+  // habit-tracking
+  points: doublePrecision("points").default(0)
+
   // ws_id = sa.Column(sa.Unicode, index=True)
   // as = FKCol('users.id')
 }, (t) => {
   return {
     ix_users_last_books: index("ix_users_last_books").on(t.last_books),
+    ix_users_timezone: index("ix_users_timezone").on(t.timezone),
     ix_users_last_influencers: index("ix_users_last_influencers").on(t.last_influencers),
     ix_users_cognito_id: uniqueIndex("ix_users_cognito_id").on(t.cognito_id),
     ix_users_created_at: index("ix_users_created_at").on(t.created_at),

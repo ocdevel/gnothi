@@ -13,6 +13,7 @@ import {people, Person} from '../schemas/people'
 import {shares, sharesUsers, Share} from '../schemas/shares'
 import {DB} from "../db";
 import {FnContext} from "../../routes/types";
+import {Logger} from "../../aws/logs";
 
 /**
  * Each model has its own snooping capabilities, but this snoop() function is the top-level
@@ -118,6 +119,8 @@ export class Users extends Base {
       .where(eq(users.id, user.id)).execute()
     // notify of credit usage
     await this.context.handleReq({event: 'users_list_request', data: {}}, this.context)
+    Logger.metric({event: "users_usecredit_request", user: user})
+
     return true
   }
 }

@@ -3,7 +3,6 @@ import {Summarize} from "./Summarize"
 // import Ask from "./Ask"
 import Prompt from "./Prompt/Prompt"
 import Books from "./Books"
-import Behaviors from "./Behaviors"
 import Admin from "./Admin"
 import Divider from "@mui/material/Divider";
 import dayjs from 'dayjs'
@@ -18,7 +17,6 @@ import {useStore} from "../../../../data/store"
 import BooksIcon from '@mui/icons-material/AutoStoriesOutlined';
 import SummaryIcon from '@mui/icons-material/SummarizeOutlined';
 import ThemesIcon from '@mui/icons-material/DashboardOutlined';
-import BehaviorsIcon from '@mui/icons-material/InsertChartOutlinedRounded';
 import PromptIcon from '@mui/icons-material/ChatOutlined';
 import ExpandIcon from '@mui/icons-material/FullscreenOutlined';
 import AdminIcon from '@mui/icons-material/AdminPanelSettingsOutlined';
@@ -139,7 +137,7 @@ export default function Insights({entry_ids}: Insights) {
   useEffect(() => {
     if (!entry_ids.length) { return }
     getInsights()
-  }, [search, entryIdsShallow])
+  }, [search, entryIdsShallow, creditActive])
 
   // FIXME handle on a per-insight basis
   // if (!entry_ids?.length) {
@@ -179,7 +177,7 @@ export default function Insights({entry_ids}: Insights) {
         action={`The context for the query ${view === "list" ? "are the entries you see, based on your filters." : "is this entry"}`}
       >
         <Prompt entry_ids={entry_ids} view={view}/>
-      </Insight>, [Boolean(me?.premium), entryIdsShallow, view])}
+      </Insight>, [me?.premium, entryIdsShallow, view])}
 
       {useMemo(() => <Insight
         label="Summary & Themes"
@@ -191,14 +189,7 @@ export default function Insights({entry_ids}: Insights) {
         <Summarize view={view} entry_ids={entry_ids} />
       </Insight>, [view, entry_ids])}
 
-      {useMemo(() => <Insight
-        label="Behavior Tracking"
-        icon={<BehaviorsIcon {...iconProps} />}
-        moreClick={() => get().behaviors.setView({lastPage: "dashboard", page: "modal", view: "overall"})}
-        action="Here’s an overview of the daily habits and behaviors you’ve been tracking through Gnothi."
-      >
-        <Behaviors/>
-      </Insight>, [])}
+      {/* git-blame: removed behaviors from dashboard here */}
 
       {useMemo(() => <Insight
         label="Books"

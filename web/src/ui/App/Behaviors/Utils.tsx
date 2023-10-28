@@ -34,6 +34,9 @@ const options = {keep: [
   // 'toml'
 ]}
 
+function LinkRenderer(props) {
+  return <a href={props.href} target="_blank">{props.children}</a>
+}
 
 interface FieldName {
   name: string
@@ -55,7 +58,7 @@ export function FieldName({name, maxWidth}: FieldName) {
       className='react-markdown'
       remarkPlugins={[[strip, options], emoji]}
       skipHtml={true}
-      linkTarget={'_blank'}
+      components={{link: LinkRenderer}}
     >
       {name}
     </ReactMarkdown>

@@ -95,7 +95,8 @@ export const insights_prompt_request = new Route(r.insights_prompt_request,async
 })
 
 export const insights_prompt_response = new Route(r.insights_prompt_response,async (req, context) => {
-  const {messages, view, model, generative} = req
+  const {messages, view, model} = req
+  const generative = await context.m.users.canGenerative(context.user, req.generative)
   if (!generative) {return []}
   let messages_ = []
 
@@ -111,11 +112,11 @@ export const insights_prompt_response = new Route(r.insights_prompt_response,asy
     messages_ = [{
       id: ulid(),
       role: "system",
-      content: `${defaultSystemMessage} Below within triple quotes is a user's journal entry. Please read it and respond to the user's query: "${message.content}"`,
+      content: `${defaultSystemMessage} Between >>> and <<< is a user's journal entry. Please read it and respond to the user's query: "${message.content}"`,
     }, {
       id: message.id,
       role: "user",
-      content: `"""${joined}"""`
+      content: `>>> ${joined} <<<`
     }]
   } else if (messages.length > 1) {
     messages_ = messages

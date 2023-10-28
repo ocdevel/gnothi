@@ -166,6 +166,7 @@ export class Route<I extends z.ZodTypeAny, O extends z.ZodTypeAny, EI extends Ev
   o: DefO<O, EO>
   fn: Fn<I, O>
   constructor(defs: Route_<I, O, EI, EO>, fn: Fn<I, O>) {
+    if (!defs) {debugger}
     const {i, o} = defs
     this.i = {
       ...i,

@@ -30,6 +30,7 @@ export const fieldEntriesOld = pgTable('field_entries', {
   return {
     ix_field_entries_created_at: index("ix_field_entries_created_at").on(table.created_at),
     ix_field_entries_user_id: index("ix_field_entries_user_id").on(table.user_id),
+    // TODO day?
   }
 })
 

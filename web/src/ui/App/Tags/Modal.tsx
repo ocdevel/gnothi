@@ -13,7 +13,7 @@ import _ from "lodash";
 import {FullScreenDialog} from "../../Components/Dialog";
 import DialogContent from "@mui/material/DialogContent";
 import Grid from "@mui/material/Grid";
-import Sortable from "../../Components/Sortable";
+import {Sortable} from "../../Components/Sortable";
 import Create from "./Create";
 import Form from './Form'
 import {Tags} from '@gnothi/schemas/tags'

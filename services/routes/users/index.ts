@@ -92,3 +92,9 @@ export const users_acknowledge_request = new Route(r.users_acknowledge_request, 
   }).where(eq(users.id, uid))
   return []
 })
+
+export const users_credit_request = new Route(r.users_credit_request, async function(req, context) {
+  const {user, db} = context
+  await context.m.users.canGenerative(user, true)
+  return []
+})
