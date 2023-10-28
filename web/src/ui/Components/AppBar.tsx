@@ -151,13 +151,13 @@ export default function ResponsiveAppBar({
     handleCloseNavMenu()
   }
 
-  const logo = <Box
+  const logo = useMemo(() => <Box
       sx={{height: 30, mb: {md: .6}}}
     >
     <Link.Anchor to="/">
       <img src="/Gnothi_ShortnoLamp.svg" height="100%" />
     </Link.Anchor>
-  </Box>
+  </Box>, [])
 
   function renderLeft() {
     if (isModal) {
@@ -175,13 +175,14 @@ export default function ResponsiveAppBar({
       return  <Box sx={{ flexGrow: 1, display: { xs: 'flex', md: 'none' }, alignItems: "center" }}>
         <IconButton
           size="small"
-          aria-label="account of current user"
+          aria-label="app menu"
           aria-controls="menu-appbar"
           aria-haspopup="true"
           onClick={handleOpenNavMenu}
           color='primary'
+          sx={{mr: 2}}
         >
-          {/*<MenuIcon />*/}
+          <MenuIcon />
         </IconButton>
         <Menu
           id="menu-appbar"
