@@ -24,7 +24,7 @@ export function BehaviorLane(props: UpsertProps) {
     if (field?.service !== "habitica") {
       return null
     }
-    return <Alert2 severity="warning" title="Habitica Dicsonnected">
+    return <Alert2 severity="warning" title="Habitica Disconnected">
       Due to Habitica instability, we can no longer sync Habitica tasks. We've converted your Habitica tasks into Gnothi Behaviors and moved them to the Data column. We recommend assigning their correct column now (Habit, Daily, To-Do, Reward, or Data) and tracking here instead, as we have big plans for habit-tracking natively in Gnothi.
     </Alert2>
   }, [field?.service])

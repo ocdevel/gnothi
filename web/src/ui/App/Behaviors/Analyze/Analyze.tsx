@@ -36,6 +36,13 @@ export function Analyze() {
     s.behaviors.setView
   ], []))
 
+  useEffect(() => {
+    // If they got here from the tab (rather than redirected from a behavior), show the overall stats by default
+    if (view.view !== "view") {
+      setView({view: "overall", fid: null})
+    }
+  }, [])
+
   if (!(me?.premium || creditActive)) {
     return <Upgrade />
   }
@@ -53,10 +60,4 @@ export function Analyze() {
       }
     </Grid>
   </Grid>
-}
-
-
-
-export default function Modal() {
-  return <div>app/behaviors/analyze.tsx, delete this</div>
 }

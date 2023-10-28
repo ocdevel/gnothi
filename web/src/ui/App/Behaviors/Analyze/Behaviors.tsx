@@ -1,7 +1,10 @@
 import React, {useCallback} from "react";
 import {shallow} from "zustand/shallow";
 import {useStore} from "../../../../data/store";
-import {Behavior} from './Behavior.tsx'
+import {Behavior, Overall} from './Behavior.tsx'
+import CardContent from "@mui/material/CardContent";
+import {FieldName} from "../Utils.tsx";
+import Card from "@mui/material/Card";
 
 const laneOrder: Record<"habit"|"daily"|"todo"|"custom", number> = {
   habit: 0,
@@ -27,7 +30,9 @@ export function Behaviors() {
       // If lanes are equal, compare by sort
       return a.sort - b.sort;
     })
+
   return <>
+    <Overall />
     {sorted.map(b => <Behavior fid={b.id} key={b.id}/>)}
   </>
 }
