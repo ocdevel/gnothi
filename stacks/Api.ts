@@ -149,7 +149,7 @@ export function Api({ app, stack }: sst.StackContext) {
   addLogging(fnCron, "FnCron")
 
   // behaviors. Need to slowly start renaming
-  const cronBehaviors = new sst.Cron(stack, "CronBehaviors", {
+  const cronFields = new sst.Cron(stack, "CronFields", {
     schedule: "rate(1 hour)",
     job: fnCron,
     // enabled: true

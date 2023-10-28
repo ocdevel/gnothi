@@ -239,10 +239,10 @@ FROM
   WITH with_tz as (
     SELECT id, COALESCE(timezone, 'America/Los_Angeles') AS tz
     FROM users
-  )
+  ),
   -- Identify the fields and associated users to process based on the hour of execution in their local time
   active_fields AS (
-    SELECT f.*,
+    SELECT f.*
     FROM fields f
     JOIN with_tz ON with_tz.id = f.user_id
     WHERE
@@ -285,7 +285,7 @@ FROM
     SET 
       score_period = 0
     WHERE
-      id IN (SELECT field_id FROM quota_check)
+      id IN (SELECT id FROM quota_check)
     RETURNING id as field_id, user_id
   )
   UPDATE
