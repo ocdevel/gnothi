@@ -189,7 +189,7 @@ average_update AS (
 user_update AS (
   -- Update the user's score
   UPDATE users
-  SET points = points + CASE WHEN fields.score_enabled THEN (SELECT final_diff FROM score_direction) ELSE 0 END
+  SET points = users.points + CASE WHEN fields.score_enabled THEN (SELECT final_diff FROM score_direction) ELSE 0 END
   FROM fields
   WHERE 
     fields.id = ${field_id} AND

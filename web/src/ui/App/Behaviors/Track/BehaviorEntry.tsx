@@ -109,11 +109,11 @@ function NumberEntry({f, value, setValue, sendValue, isToday}: EntryVariant) {
   }, [value])
 
   const purchase = useCallback(() => {
-    if (f.value > points) {
+    if (f.points > points) {
       return addError(<Box>Not enough points for <FieldName name={f.name} /></Box>)
     }
-    sendValue(f.value)
-  }, [value, points])
+    sendValue(f.points)
+  }, [f.points, points])
 
   // wrap it so we can wait till blur to send
   const sendValue_ = useCallback((e: React.SyntheticEvent<HTMLInputElement>) => {
@@ -126,7 +126,7 @@ function NumberEntry({f, value, setValue, sendValue, isToday}: EntryVariant) {
       sx={{borderRadius:0}}
       onClick={purchase}
     >
-      {f.value}
+      {f.points}
     </Button>
   }
 
