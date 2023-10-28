@@ -29,7 +29,7 @@ export function Track() {
       </Card>
     </Box>
 
-    <Masonry columns={{xs: 1, sm: 2, md: 3, lg: 4}} spacing={2}>
+    <Masonry columns={{xs: 1, sm: 2, lg: 4}} spacing={2}>
       <Behaviors lane="reward"/>
       <Behaviors lane="habit" />
       <Behaviors lane="daily" />

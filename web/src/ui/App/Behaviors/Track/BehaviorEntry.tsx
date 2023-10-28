@@ -14,6 +14,7 @@ import ButtonGroup from "@mui/material/ButtonGroup";
 import Checkbox from "@mui/material/Checkbox";
 import Box from "@mui/material/Box";
 import {FieldName} from "../Utils.tsx";
+import InputAdornment from "@mui/material/InputAdornment";
 
 interface BehaviorEntry {
   f: S.Fields.fields_list_response
@@ -143,6 +144,11 @@ function NumberEntry({f, value, setValue, sendValue, isToday}: EntryVariant) {
       size="small"
       value={value}
       onChange={changeNumber}
+      InputProps={{
+        endAdornment: f.reset_quota > 1 ?
+          <InputAdornment position="end">/ {f.reset_quota}</InputAdornment>
+          : undefined
+      }}
     />
   </Box>
 }

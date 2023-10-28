@@ -21,7 +21,8 @@ export const Field = fieldsInsertSchema.extend({
   reset_period: fieldsInsertSchema.shape.reset_period.default("daily"),
   score_up_good: fieldsInsertSchema.shape.score_up_good.default(true),
   // having trouble with CoerceNumber helper, I think since we need it to be optional?
-  default_value_value: z.coerce.number().optional()
+  default_value_value: z.coerce.number().optional(),
+  reset_quota: z.coerce.number().default(1),
 
   // user_id: z.string().uuid(), // FK users.id
 })
