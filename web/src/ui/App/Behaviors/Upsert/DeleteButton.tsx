@@ -25,10 +25,12 @@ export function DeleteButton({form, field, isNew}: UpsertProps) {
 
   if (!fid) {return null}
 
+  const canDelete = !field.service || field.service === "habitica"
+
   return <Button
     className="btn-delete"
     color='error'
-    disabled={!!field.service}
+    disabled={!canDelete}
     onClick={destroy_}
     size='small'
   >Delete</Button>

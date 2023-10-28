@@ -51,12 +51,12 @@ function PeriodNumber({form, field, isNew}: UpsertProps) {
   const [reset_period, reset_every] = form.watch(["reset_period", "reset_every"])
   const resetEveryHelp = useMemo(() => <ResetEveryHelp />, [])
   const resetQuotaHelp = useMemo(() => <ResetQuotaHelp />, [])
-  if (reset_period === "daily") {return null}
+  // if (reset_period === "daily") {return null}
   return <>
-    <WithHelp
-      field={<TextField2 form={form} name="reset_every" label="Reset Every" type="number" />}
-      help={resetEveryHelp}
-    />
+    {/*<WithHelp*/}
+    {/*  field={<TextField2 form={form} name="reset_every" label="Reset Every" type="number" />}*/}
+    {/*  help={resetEveryHelp}*/}
+    {/*/>*/}
     <WithHelp
       field={<TextField2 form={form} name="reset_quota" label="Reset Quota" type="number" />}
       help={resetQuotaHelp}
