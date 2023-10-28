@@ -18,7 +18,7 @@ const get = useStore.getState
 
 
 // FIXME remove modal stuff fully, then export just the one component
-export function Analyze() {
+export default function Analyze() {
   const [
     me,
     creditActive,

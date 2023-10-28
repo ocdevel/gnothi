@@ -37,7 +37,7 @@ export function TripleDots({f}: { f: fields_list_response }) {
   const analyze = useCallback(() => {
     handleClose()
     setView({view: "view", fid})
-    navigate("/behaviors/analyze")
+    navigate("/b/analyze")
   }, [fid])
   const destroy_ = useCallback(() => {
     destroy(fid, handleClose)

@@ -10,7 +10,7 @@ import {zodResolver} from "@hookform/resolvers/zod";
 import {shallow} from "zustand/shallow";
 import {UpsertModal} from "./Upsert/Upsert.tsx";
 
-export function Layout() {
+export default function Layout() {
   const [
     fields,
     dayStr,
@@ -40,15 +40,15 @@ export function Layout() {
     return <Box sx={{display: "flex", justifyContent: "center", gap: 2}}>
       <Button
         component={Link}
-        to={"/behaviors"}
-        variant={location.pathname === "/behaviors" ? "outlined" : "text"}
+        to="/b"
+        variant={location.pathname === "/b" ? "outlined" : "text"}
       >
         Track
       </Button>
       <Button
         component={Link}
-        to="/behaviors/analyze"
-        variant={location.pathname === "/behaviors/analyze" ? "outlined" : "text"}
+        to="/b/analyze"
+        variant={location.pathname === "/b/analyze" ? "outlined" : "text"}
       >
         Analyze
       </Button>

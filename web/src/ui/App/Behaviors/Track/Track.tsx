@@ -10,7 +10,7 @@ import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import Masonry from "@mui/lab/Masonry";
 
-export function Track() {
+export default function Track() {
   const [
     points,
   ] = useStore(s => [
