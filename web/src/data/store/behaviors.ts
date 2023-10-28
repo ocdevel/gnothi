@@ -70,15 +70,12 @@ export const behaviorsSlice: StateCreator<
     dayStr: iso(),
     setDay: (day) => {
       const dayStr = iso(day)
-      set(state => ({
-        behaviors: {
-          ...get().behaviors,
-          day,
-          dayStr,
-          isToday: iso() === dayStr,
-          // start it over, since hook->setValues will merge (not accounting for lacking FE on new day)
-          values: {}
-        }
+      set(produce(state => {
+        state.behaviors.day = day
+        state.behaviors.dayStr = dayStr
+        state.behaviors.isToday = iso() === dayStr
+        // start it over, since hook->setValues will merge (not accounting for lacking FE on new day)
+        state.behaviors.values = {}
       }))
       get().send('fields_entries_list_request', {
         day: dayStr

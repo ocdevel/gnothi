@@ -50,9 +50,8 @@ export default function Entry({f}: BehaviorEntry) {
       value: parseFloat(value), // until we support strings,
       day: isToday ? null : dayStr,
     }
-    console.log(req)
     send(`fields_entries_post_request`, req)
-  }, [])
+  }, [isToday, dayStr])
 
   const setValue = useCallback((value: Value) => {
     setValues({[fid]: value})
