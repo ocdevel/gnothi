@@ -11,7 +11,7 @@ import Charts from './Charts.tsx'
 import TableQA from './TableQA.tsx'
 import CardContent from "@mui/material/CardContent";
 import Card from "@mui/material/Card";
-import {FieldName} from "../utils.tsx";
+import {FieldName} from "../Utils.tsx";
 import Typography from "@mui/material/Typography";
 
 const get = useStore.getState

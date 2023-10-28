@@ -11,9 +11,9 @@ import CardContent from "@mui/material/CardContent";
 
 export function Track() {
   const [
-    score,
+    points,
   ] = useStore(s => [
-    s.user?.me?.score,
+    s.user?.me?.points,
   ], shallow)
 
   return <Box>
@@ -23,7 +23,7 @@ export function Track() {
       <DayChanger/>
       <Card>
         <CardContent sx={{backgroundColor: "white", minWidth: 170}}>
-          Score: {score}
+          Points: {points}
         </CardContent>
       </Card>
     </Box>

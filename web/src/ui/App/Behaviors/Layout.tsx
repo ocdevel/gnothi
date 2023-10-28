@@ -1,6 +1,6 @@
 import Container from "@mui/material/Container";
 import Box from "@mui/material/Box";
-import {Link, Outlet} from "react-router-dom";
+import {Link, Outlet, useLocation} from "react-router-dom";
 import Button from "@mui/material/Button";
 import {useCallback, useEffect, useMemo} from "react";
 import {useStore} from "../../../data/store";
@@ -25,6 +25,7 @@ export function Layout() {
   ] = useStore(useCallback(s => [
     s.send,
   ], []))
+  const location = useLocation()
 
   useEffect(() => {
     if (!fields?.ids?.length) { return }
@@ -35,14 +36,33 @@ export function Layout() {
     fields?.ids?.slice().sort().join()
   ])
 
+  const navbar = useMemo(() => {
+    return <Box sx={{display: "flex", justifyContent: "center", gap: 2}}>
+      <Button
+        component={Link}
+        to={"/behaviors"}
+        variant={location.pathname === "/behaviors" ? "outlined" : "text"}
+      >
+        Track
+      </Button>
+      <Button
+        component={Link}
+        to="/behaviors/analyze"
+        variant={location.pathname === "/behaviors/analyze" ? "outlined" : "text"}
+      >
+        Analyze
+      </Button>
+    </Box>
+
+  }, [location.pathname])
+
+  const upsertModal = useMemo(() => <UpsertModal />, [])
+
   return <>
     <Container maxWidth={false}>
-      <Box sx={{display: "flex", justifyContent: "center", gap: 2}}>
-        <Button component={Link} to={"/behaviors"}>Track</Button>
-        <Button component={Link} to={"/behaviors/analyze"}>Analyze</Button>
-      </Box>
+      {navbar}
       <Outlet />
     </Container>
-    {useMemo(() => <UpsertModal />, [])}
+    {upsertModal}
   </>
 }

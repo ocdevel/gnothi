@@ -70,7 +70,7 @@ export const users = pgTable('users', {
   last_credit: timestamp("last_credit", {withTimezone: true}),
 
   // habit-tracking
-  score: doublePrecision("score").default(0)
+  points: doublePrecision("points").default(0)
 
   // ws_id = sa.Column(sa.Unicode, index=True)
   // as = FKCol('users.id')

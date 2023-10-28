@@ -35,12 +35,12 @@ export const fields_entries_list_request = new Route(r.fields_entries_list_reque
 })
 
 export const fields_entries_post_request = new Route(r.fields_entries_post_request, async (req, context) => {
-  const {uid, db: {drizzle}, user: {score}} = context
+  const {uid, db: {drizzle}, user: {points}} = context
 
   const updates = await context.m.fields.entriesPost(req)
   const {user_update, field_update, field_entry_update} = updates[0]
 
-  if (user_update.score === score && field_update.lane === "reward") {
+  if (user_update.points === points && field_update.lane === "reward") {
     throw new GnothiError({message: "Not enough points"})
   }
 
@@ -57,13 +57,6 @@ export const fields_entries_post_request = new Route(r.fields_entries_post_reque
     )
   ])
   return [field_entry_update]
-})
-
-export const fields_exclude_request = new Route(r.fields_exclude_request, async (req, context) => {
-  return context.m.fields.put({
-    id: req.id,
-    excluded_at: req.exclude ? new Date() : null
-  })
 })
 
 export const fields_influencers_list_request = new Route(r.fields_influencers_list_request, async (req, context) => {
@@ -85,5 +78,5 @@ export const fields_ask_response = new Route(r.fields_ask_response, async (req, 
 export const fields_cron = new Route(r.fields_cron, async (req, context) => {
   // don't do these parallel. Habitica is really shoddy and can 401/502 frequently, make sure our cron goes first
   await context.m.fields.cron()
-  await context.m.habitica.cron()
+  // await context.m.habitica.cron()
 })

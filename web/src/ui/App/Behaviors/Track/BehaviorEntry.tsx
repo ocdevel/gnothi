@@ -13,7 +13,7 @@ import Button from "@mui/material/Button";
 import ButtonGroup from "@mui/material/ButtonGroup";
 import Checkbox from "@mui/material/Checkbox";
 import Box from "@mui/material/Box";
-import {FieldName} from "../utils.tsx";
+import {FieldName} from "../Utils.tsx";
 
 interface BehaviorEntry {
   f: S.Fields.fields_list_response
@@ -85,9 +85,9 @@ function FiveStarEntry({f, value, setValue, sendValue, isToday}: EntryVariant) {
 
 function NumberEntry({f, value, setValue, sendValue, isToday}: EntryVariant) {
   const [
-    score,
+    points,
   ] = useStore(s => [
-    s.user?.me?.score || 0
+    s.user?.me?.points || 0
   ], shallow)
   const [
     addError
@@ -109,11 +109,11 @@ function NumberEntry({f, value, setValue, sendValue, isToday}: EntryVariant) {
   }, [value])
 
   const purchase = useCallback(() => {
-    if (f.value > score) {
+    if (f.value > points) {
       return addError(<Box>Not enough points for <FieldName name={f.name} /></Box>)
     }
     sendValue(f.value)
-  }, [value, score])
+  }, [value, points])
 
   // wrap it so we can wait till blur to send
   const sendValue_ = useCallback((e: React.SyntheticEvent<HTMLInputElement>) => {

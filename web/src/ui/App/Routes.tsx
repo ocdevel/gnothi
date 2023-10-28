@@ -12,7 +12,7 @@ const routes = [
   ...behaviorsRoutes,
   // {path: "account", element: <Account />},
   // ...groupRoutes,
-  {index: true,  element: <Navigate to="/behaviors" replace />},
+  {index: true,  element: <Navigate to="/j" replace />},
 ]
 
 export default routes

@@ -86,25 +86,16 @@ export const fields = pgTable('fields', {
   next_pred: doublePrecision("next_pred").default(0),
   avg: doublePrecision("avg").default(0),
 
-  // ---
-  // ---
-  // ---
-  // NEW STUFF
-  // ---
-  // ---
-  // ---
+  // --- Habit Tracking ---
 
   lane: lanes("lane").default("custom"),
   sort: integer("sort").default(0),
   // Currently just for setting the point-value of a Reward, but might come in handy later
-  value: doublePrecision("value").default(0),
+  points: doublePrecision("points").default(0),
 
   // analyze
   // ---
   analyze_enabled: boolean("analyze_enabled").default(true),
-  // Don't actually delete fields, unless it's the same day. Instead stop entries/graphs/correlations here
-  // TODO consider removing this. We can just let them enable/disable and it goes back into the analysis?
-  analyze_disabled_at: timestamp('analyze_disabled_at', {withTimezone: true}),
 
   // score
   // ---

@@ -1,6 +1,6 @@
 import Grid from "@mui/material/Grid";
 import ButtonBase from "@mui/material/ButtonBase";
-import {FieldName} from "../utils";
+import {FieldName} from "../Utils";
 import Badge from "@mui/material/Badge";
 import {useStore} from "../../../../data/store";
 import {shallow} from "zustand/shallow";

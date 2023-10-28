@@ -38,8 +38,13 @@ export class Fields extends Base {
     const {uid, db} = this.context
     const {drizzle} = db
     const {id, ...field} = req
+
     const res = await drizzle.update(fields)
-      .set(field)
+      .set({
+        ...field,
+        // detach the habitica service when they submit, so they have time to acknowledge it on the client
+        service: sql`CASE WHEN service='habitica' THEN NULL ELSE service END`
+      })
       .where(and(
         eq(fields.id, id),
         eq(fields.user_id, uid)
@@ -141,7 +146,7 @@ upsert AS (
     fields.id = ${field_id}
     AND (
       lane != 'reward' 
-      OR (lane = 'reward' AND ${value} <= (SELECT score FROM users WHERE users.id = ${uid}))
+      OR (lane = 'reward' AND ${value} <= (SELECT points FROM users WHERE users.id = ${uid}))
     )
   ON CONFLICT (field_id, "day") DO UPDATE SET "value" = ${value}
   RETURNING *
@@ -184,7 +189,7 @@ average_update AS (
 user_update AS (
   -- Update the user's score
   UPDATE users
-  SET score = score + CASE WHEN fields.score_enabled THEN (SELECT final_diff FROM score_direction) ELSE 0 END
+  SET points = points + CASE WHEN fields.score_enabled THEN (SELECT final_diff FROM score_direction) ELSE 0 END
   FROM fields
   WHERE 
     fields.id = ${field_id} AND
@@ -285,7 +290,7 @@ FROM
   UPDATE
     users u
   SET
-    score = score - qc.points_to_deduct
+    points = points - qc.points_to_deduct
   FROM
     quota_check qc
   WHERE

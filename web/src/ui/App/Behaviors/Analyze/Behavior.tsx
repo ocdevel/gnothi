@@ -2,7 +2,7 @@ import {shallow} from "zustand/shallow";
 import React, {useCallback} from "react";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
-import {FieldName} from "../utils.tsx";
+import {FieldName} from "../Utils.tsx";
 import {useStore} from "../../../../data/store";
 
 export function Behavior({fid}: {fid: string}) {

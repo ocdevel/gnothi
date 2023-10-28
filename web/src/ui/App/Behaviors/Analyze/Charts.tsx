@@ -6,7 +6,7 @@ import {CartesianGrid, Line, Tooltip, XAxis, YAxis, ResponsiveContainer,
 import moment from 'moment'
 
 import {useStore} from "@gnothi/web/src/data/store"
-import {FieldName} from "../utils.tsx";
+import {FieldName} from "../Utils.tsx";
 import {FullScreenDialog} from "@gnothi/web/src/ui/Components/Dialog";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
