@@ -228,6 +228,7 @@ FROM
   }
 
   async cron() {
+    const {db: {drizzle}} = this.context
     // Since there's no user.last_cron field tracking this, this function depends on being called excatly
     // once each hour without fail.
     // TODO add a user.last_cron, and use that instead of 0-1 hour checks
@@ -298,5 +299,6 @@ FROM
 -- END;
 -- $$;
 `
+    await drizzle.execute(megaQuery)
   }
 }

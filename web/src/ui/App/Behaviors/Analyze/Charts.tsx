@@ -83,9 +83,10 @@ export default function Charts() {
   }, [influencersAll, view])
 
   if (!influencersFiltered?.length) {
+    const fieldName = field ? <FieldName name={field.name} /> : null
     return <div>
       <NotEnough />
-      <Alert2 severity="warning" title="Insufficient number of days tracked for"><FieldName name={field?.name} /></Alert2>
+      <Alert2 severity="warning" title="Insufficient number of days tracked">{fieldName}</Alert2>
     </div>
   }
 

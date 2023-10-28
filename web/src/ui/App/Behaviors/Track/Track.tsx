@@ -8,6 +8,7 @@ import {shallow} from "zustand/shallow";
 import {useStore} from "../../../../data/store";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
+import Masonry from "@mui/lab/Masonry";
 
 export function Track() {
   const [
@@ -27,22 +28,31 @@ export function Track() {
         </CardContent>
       </Card>
     </Box>
-    <Grid container spacing={2}>
-      <Grid xs={12} sm={6} md={4} lg={3}>
-        <Behaviors lane="reward"/>
-      </Grid>
-      <Grid xs={12} sm={6} md={4} lg={3}>
-        <Behaviors lane="habit" />
-      </Grid>
-      <Grid xs={12} sm={6} md={4} lg={3}>
-        <Behaviors lane="daily" />
-      </Grid>
-      <Grid xs={12} sm={6} md={4} lg={3}>
-        <Behaviors lane="todo" />
-      </Grid>
-      <Grid xs={12} sm={6} md={4} lg={3}>
-        <Behaviors lane="custom"/>
-      </Grid>
-    </Grid>
+
+    <Masonry columns={{xs: 1, sm: 2, md: 3, lg: 4}} spacing={2}>
+      <Behaviors lane="reward"/>
+      <Behaviors lane="habit" />
+      <Behaviors lane="daily" />
+      <Behaviors lane="todo" />
+      <Behaviors lane="custom"/>
+    </Masonry>
+
+    {/*<Grid container spacing={2}>*/}
+    {/*  <Grid xs={12} sm={6} md={4} lg={3} sx={{height: "100%"}}>*/}
+    {/*    <Behaviors lane="reward"/>*/}
+    {/*  </Grid>*/}
+    {/*  <Grid xs={12} sm={6} md={4} lg={3} sx={{height: "100%"}}>*/}
+    {/*    <Behaviors lane="habit" />*/}
+    {/*  </Grid>*/}
+    {/*  <Grid xs={12} sm={6} md={4} lg={3} sx={{height: "100%"}}>*/}
+    {/*    <Behaviors lane="daily" />*/}
+    {/*  </Grid>*/}
+    {/*  <Grid xs={12} sm={6} md={4} lg={3} sx={{height: "100%"}}>*/}
+    {/*    <Behaviors lane="todo" />*/}
+    {/*  </Grid>*/}
+    {/*  <Grid xs={12} sm={6} md={4} lg={3} sx={{height: "100%"}}>*/}
+    {/*    <Behaviors lane="custom"/>*/}
+    {/*  </Grid>*/}
+    {/*</Grid>*/}
   </Box>
 }
