@@ -51,7 +51,7 @@ export default function UserListener() {
     })
 
     // restore the fact they have an active credit on refresh
-    creditActivate(user.last_credit)
+    creditActivate(user)
 
     // TODO handle as switch
     // if (viewer.asId && hash[viewer.asId]) {

@@ -8,6 +8,7 @@ import {useForm} from "react-hook-form";
 import {zodResolver} from "@hookform/resolvers/zod";
 import {useStore} from "../../../../data/store";
 import {fields_post_request} from "../../../../../../schemas/fields.ts";
+import {z} from 'zod'
 
 const scoringDefaults = {
   score_enabled: true,

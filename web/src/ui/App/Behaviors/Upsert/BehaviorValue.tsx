@@ -7,8 +7,8 @@ export function BehaviorValue(props: UpsertProps) {
   const {form, field} = props
   const help = useMemo(() => <ValueHelp />, [])
   const textfield = <TextField2
-    name='value'
-    label="Value"
+    name='points'
+    label="Points"
     form={form}
     type="number"
     // helperText={typeHelp}

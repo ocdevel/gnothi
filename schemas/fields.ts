@@ -15,11 +15,13 @@ export const Field = fieldsInsertSchema.extend({
   type: z.enum(["number", "fivestar", "check", "option", "habit", "daily", "todo", "reward"]).default("fivestar"),
   // drizzle-zod doesn't pick up default values from fields, which is needed or react-hook-form
   // need to extend all these to add the default
-  value: CoerceNumber.default(0),
+  points: z.coerce.number().default(0),
   analyze_enabled: fieldsInsertSchema.shape.analyze_enabled.default(true),
   default_value: fieldsInsertSchema.shape.default_value.default("value"),
   reset_period: fieldsInsertSchema.shape.reset_period.default("daily"),
-  score_up_good: fieldsInsertSchema.shape.score_up_good.default(true)
+  score_up_good: fieldsInsertSchema.shape.score_up_good.default(true),
+  // having trouble with CoerceNumber helper, I think since we need it to be optional?
+  default_value_value: z.coerce.number().optional()
 
   // user_id: z.string().uuid(), // FK users.id
 })

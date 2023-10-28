@@ -63,7 +63,7 @@ export interface AppSlice {
   selectedTags: {[k: string]: boolean},
   creditActive: boolean,
   creditSeconds: number
-  creditActivate: (lastCredit?: string) => void,
+  creditActivate: (user?: Users.User) => void,
 }
 
 export const appSlice: StateCreator<
@@ -153,14 +153,16 @@ export const appSlice: StateCreator<
 
   creditActive: false,
   creditSeconds: 0,
-  creditActivate: (lastCredit?: string) => {
+  creditActivate: (user) => {
     if (get().creditActive) { return }
 
     // may be restoring active credit from a page refresh
-    const creditSeconds = lastCredit ?
-      dayjs().diff(lastCredit, "seconds")
-      : 0
-    if (creditSeconds > Users.CREDIT_MINUTES * 60) { return }
+    let creditSeconds = 0
+    if (user) {
+      if (!user.last_credit) { return }
+      creditSeconds = dayjs().diff(user.last_credit, "seconds")
+      if (creditSeconds > Users.CREDIT_MINUTES * 60) { return }
+    }
 
     const creditInterval = setInterval(() => {
       const creditSeconds = get().creditSeconds + 1
