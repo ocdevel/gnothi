@@ -157,7 +157,7 @@ score_diff AS (
     ( 
       -- will be 0 if it was a reward they couldn't afford,  since upsert skipped
       COALESCE((SELECT "value" FROM upsert), 0) 
-      - COALESCE((SELECT value FROM old_value), 0)
+      - COALESCE((SELECT "value" FROM old_value), 0)
     ) AS diff
 ),
 -- Update the field's score and score_period

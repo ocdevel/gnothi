@@ -13,7 +13,7 @@ import Button from "@mui/material/Button";
 import ButtonGroup from "@mui/material/ButtonGroup";
 import Checkbox from "@mui/material/Checkbox";
 import Box from "@mui/material/Box";
-import {FieldName} from "../Utils.tsx";
+import {BehaviorName} from "../BehaviorName.tsx";
 import InputAdornment from "@mui/material/InputAdornment";
 
 interface BehaviorEntry {
@@ -110,7 +110,7 @@ function NumberEntry({f, value, setValue, sendValue, isToday}: EntryVariant) {
 
   const purchase = useCallback(() => {
     if (f.points > points) {
-      return addError(<Box>Not enough points for <FieldName name={f.name} /></Box>)
+      return addError(<Box>Not enough points for <BehaviorName name={f.name} /></Box>)
     }
     sendValue(f.points)
   }, [f.points, points])

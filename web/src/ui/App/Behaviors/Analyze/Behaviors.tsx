@@ -3,7 +3,7 @@ import {shallow} from "zustand/shallow";
 import {useStore} from "../../../../data/store";
 import {Behavior, Overall} from './Behavior.tsx'
 import CardContent from "@mui/material/CardContent";
-import {FieldName} from "../Utils.tsx";
+import {BehaviorName} from "../BehaviorName.tsx";
 import Card from "@mui/material/Card";
 
 const laneOrder: Record<"habit"|"daily"|"todo"|"custom", number> = {

@@ -42,7 +42,7 @@ interface FieldName {
   name: string
   maxWidth?: number | "${number}%"
 }
-export function FieldName({name, maxWidth}: FieldName) {
+export function BehaviorName({name, maxWidth}: FieldName) {
   // https://css-tricks.com/snippets/css/truncate-string-with-ellipsis/
   return <Box
     sx={{

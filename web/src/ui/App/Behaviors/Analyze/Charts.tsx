@@ -6,7 +6,7 @@ import {CartesianGrid, Line, Tooltip, XAxis, YAxis, ResponsiveContainer,
 import moment from 'moment'
 
 import {useStore} from "@gnothi/web/src/data/store"
-import {FieldName} from "../Utils.tsx";
+import {BehaviorName} from "../BehaviorName.tsx";
 import {FullScreenDialog} from "@gnothi/web/src/ui/Components/Dialog";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
@@ -83,7 +83,7 @@ export default function Charts() {
   }, [influencersAll, view])
 
   if (!influencersFiltered?.length) {
-    const fieldName = field ? <FieldName name={field.name} /> : null
+    const fieldName = field ? <BehaviorName name={field.name} /> : null
     return <div>
       <NotEnough />
       <Alert2 severity="warning" title="Insufficient number of days tracked">{fieldName}</Alert2>
@@ -94,7 +94,7 @@ export default function Charts() {
     const [fid, score] = row
     const inf = fieldsHash[fid]
     return <TableRow key={fid}>
-      <TableCell><FieldName name={inf.name} maxWidth={250} /></TableCell>
+      <TableCell><BehaviorName name={inf.name} maxWidth={250} /></TableCell>
       <TableCell>{ round_(score) }</TableCell>
       <TableCell>{ round_(inf.avg) }</TableCell>
       <TableCell>{ round_(inf.next_pred) }</TableCell>
@@ -105,7 +105,7 @@ export default function Charts() {
     if (field) {
       return <Stack direction="row" spacing={2} alignItems="flex-end">
         <Typography variant="h4">Behaviors most influencing</Typography>
-        <FieldName name={field.name} maxWidth={960} />
+        <BehaviorName name={field.name} maxWidth={960} />
       </Stack>
     }
     return <Typography variant="h4">Most influential behaviors</Typography>
@@ -218,7 +218,7 @@ export default function Charts() {
 
   if (field) {
     return <Stack spacing={2}>
-      <Typography variant="h4"><FieldName name={field.name} maxWidth={960} /></Typography>
+      <Typography variant="h4"><BehaviorName name={field.name} maxWidth={960} /></Typography>
       {renderChart()}
       {renderStats()}
       {renderTable()}

@@ -1,10 +1,10 @@
 import Grid from "@mui/material/Grid";
 import ButtonBase from "@mui/material/ButtonBase";
-import {FieldName} from "../Utils";
+import {BehaviorName} from "../BehaviorName.tsx";
 import Badge from "@mui/material/Badge";
 import {useStore} from "../../../../data/store";
 import {shallow} from "zustand/shallow";
-import React, {useCallback} from "react";
+import React, {useCallback, useState} from "react";
 import IconButton from "@mui/material/IconButton";
 import SortIcon from "@mui/icons-material/DragIndicatorOutlined";
 import EditIcon from "@mui/icons-material/EditOutlined";
@@ -24,6 +24,11 @@ interface Behavior {
 }
 export default function Item({fid, advanced}: Behavior) {
   // let rowStyle = {width: '100%', margin: 0}
+
+  const [elevation, setElevation] = useState(0)
+  const handleMouseOver = useCallback(() => setElevation(3), [])
+  const handleMouseOut = useCallback(() => setElevation(0), [])
+
   const [
     fields,
     setView,
@@ -51,7 +56,17 @@ export default function Item({fid, advanced}: Behavior) {
       <Card
         className={`behavior behavior-${f.type}`}
         key={f.id}
-        sx={{mb:1}}
+        onMouseOver={handleMouseOver}
+        onMouseOut={handleMouseOut}
+        elevation={elevation}
+        sx={{
+          mb:0.5,
+          border:1,
+          borderColor:"#eee",
+          '&:hover': {
+            borderColor: "primary.main",
+          },
+      }}
       >
         <Box
           sx={{
@@ -68,29 +83,25 @@ export default function Item({fid, advanced}: Behavior) {
           <BehaviorEntry f={f} />
           <TripleDots f={f} />
         </Box>
-        <CardContent
+        <Box
           sx={{
+            m:0,p:1,
             display: "flex",
             backgroundColor: "white",
             gap: 2,
             alignItems: 'center',
             justifyContent: 'space-between',
-            ...(f.excluded_at ? {
-              textDecoration: 'line-through',
-              opacity: .5
-            } : {})
+            // ...(f.excluded_at ? {
+            //   textDecoration: 'line-through',
+            //   opacity: .5
+            // } : {})
+            cursor: "pointer"
           }}
-        >
-
-
-        <Box
           className='field-name'
-          sx={{cursor: "pointer"}}
           onClick={handleEdit}
         >
-          <FieldName name={f.name} />
+          <BehaviorName name={f.name} />
         </Box>
-        </CardContent>
       </Card>
   )
 }

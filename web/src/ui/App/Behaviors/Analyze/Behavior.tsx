@@ -2,7 +2,7 @@ import {shallow} from "zustand/shallow";
 import React, {PropsWithChildren, useCallback} from "react";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
-import {FieldName} from "../Utils.tsx";
+import {BehaviorName} from "../BehaviorName.tsx";
 import {useStore} from "../../../../data/store";
 
 interface Item {
@@ -31,7 +31,7 @@ export function Overall() {
     setView({view: "overall", fid: null})
   }, [])
   return <Item onClick={onClick} active={view === "overall"}>
-    <FieldName name={"**Overall Analysis**"} />
+    <BehaviorName name={"**Overall Analysis**"} />
   </Item>
 }
 
@@ -57,6 +57,6 @@ export function Behavior({fid}: {fid: string}) {
     onClick={onClick}
     active={view.view === "view" && view.fid === fid}
   >
-    <FieldName name={behavior.name} />
+    <BehaviorName name={behavior.name} />
   </Item>
 }
