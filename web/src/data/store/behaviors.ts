@@ -23,6 +23,8 @@ type View = {
   view: ViewView
   fid: Id | null
 }
+type TimerStatus = "work" | "pause" | "stop"
+const DEFAULT_MINUTES = 25
 export interface BehaviorsSlice {
   behaviors: {
     values: {[k: string]: number | null}
@@ -39,6 +41,17 @@ export interface BehaviorsSlice {
     field_entries_list_response: (res: fields_entries_list_response) => void
 
     destroy: (fid?: string, cb?: () => void) => void
+
+    timer: {
+      fid: null | string
+      status: TimerStatus
+      seconds: number
+      minutesDesired?: number
+      interval: null | NodeJS.Timeout
+    }
+    timerActivate: (data: {fid: string, status: TimerStatus, minutesDesired: number}) => void
+    // just separate function so timerActivate doesn't get too crazy
+    timerFinish: () => void
   }
 }
 
@@ -102,6 +115,96 @@ export const behaviorsSlice: StateCreator<
       // eg an onClose handler, etc.
       cb && cb()
       get().send('fields_delete_request', {id})
+    },
+
+    timer: {
+      fid: null,
+      seconds: 0,
+      minutesDesired: DEFAULT_MINUTES,
+      status: "work", // work|pause -> done (waits here until they activate break) -> break -> delete
+      interval: null,
+    },
+    // separate from nested timer object so we can clobber the timer object
+    timerActivate: ({fid, status, minutesDesired=DEFAULT_MINUTES}) => {
+      const curr = get().behaviors.timer
+      if (curr.interval) {
+        clearInterval(curr.interval)
+      }
+      if (status === "stop") {
+        set(produce(s => {
+          s.behaviors.timer = {fid: null, seconds: 0, status: "stop", interval: null, minutesDesired: DEFAULT_MINUTES}
+        }))
+        return
+      }
+      if (status === "pause") {
+        set(produce(s => {
+          s.behaviors.timer = {...s.behaviors.timer, status: "pause"}
+        }))
+        return
+      }
+
+      // Else start new timer. Only one timer can be active a time, so this just wipes whatever they may have going
+      const interval = setInterval(() => {
+        // need to get it again, since this inner function is what's kept around (not scope above)
+        const curr = get().behaviors.timer
+        const seconds = curr.seconds + 1
+        set(produce(s => {
+          // Make sure to listen deeply on s.behaviors.seconds, since we're not replacing the whole timer
+          s.behaviors.timer.seconds = seconds
+        }))
+        if (seconds > minutesDesired * 60) {
+          get().behaviors.timerFinish()
+        }
+      }, 1000)
+      // resume or start over
+      const seconds = (curr.fid && curr.fid === fid) ? curr.seconds : 0
+      set(produce(s => {
+        s.behaviors.timer = {
+          fid,
+          seconds,
+          status: "work",
+          interval,
+          minutesDesired
+        }
+      }))
+    },
+    timerFinish() {
+      const curr = get().behaviors.timer
+      clearInterval(curr.interval)
+      const fid = curr.fid!
+      const currVal = get().res.fields_entries_list_response?.hash?.[fid]?.value || 0
+      const newVal = currVal + 1
+      get().behaviors.setValues({
+        [fid]: newVal
+      })
+      get().send("fields_entries_post_request", {
+        field_id: fid,
+        value: newVal,
+        // today. Even if they're nav'd back, just send for today
+        day: undefined
+      })
+      set(produce(s => {
+        s.behaviors.timer = {fid: null, seconds: 0, status: "work", interval: null, minutesDesired: DEFAULT_MINUTES}
+      }))
+
+      // Notify. For now I'm just doing default browser/OS notification, later add a sound effect & modal
+      const [title, message] = ["Timer up!", "Your behavior timer is up and you gained a point."]
+      // First, check if notifications are supported and granted permission
+      if (!("Notification" in window)) {
+        console.error("This browser does not support system notifications.");
+        alert(message)
+      } else if (Notification.permission === "granted") {
+        // If permission is already granted
+        new Notification(title, {body: message});
+      } else if (Notification.permission !== "denied") {
+        // Request permission if it's not denied
+        Notification.requestPermission().then(permission => {
+          if (permission === "granted") {
+            new Notification(title, {body: message});
+          }
+        });
+      }
+
     }
   }
 })

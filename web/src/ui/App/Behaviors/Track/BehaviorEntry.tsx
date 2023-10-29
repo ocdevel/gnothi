@@ -139,7 +139,7 @@ function NumberEntry({f, value, setValue, sendValue, isToday}: EntryVariant) {
       variant="standard"
       step='any'
       onBlur={sendValue_}
-      sx={{ml: 2, maxWidth: 100}}
+      sx={{ml: 2, maxWidth: 90}}
       size="small"
       value={value}
       onChange={changeNumber}

@@ -9,6 +9,7 @@ import {fields_post_request} from "@gnothi/schemas/fields.ts";
 import {zodResolver} from "@hookform/resolvers/zod";
 import {shallow} from "zustand/shallow";
 import {UpsertModal} from "./Upsert/Upsert.tsx";
+import {TimerModal} from "./Track/Timer.tsx"
 
 export default function Layout() {
   const [
@@ -57,6 +58,7 @@ export default function Layout() {
   }, [location.pathname])
 
   const upsertModal = useMemo(() => <UpsertModal />, [])
+  const timerModal = useMemo(() => <TimerModal />, [])
 
   return <>
     <Container maxWidth={false}>
@@ -64,5 +66,6 @@ export default function Layout() {
       <Outlet />
     </Container>
     {upsertModal}
+    {timerModal}
   </>
 }

@@ -5,21 +5,29 @@ import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
-import {useCallback} from "react";
+import {useCallback, useMemo} from "react";
 import {useStore} from "../../../../data/store";
 import {useNavigate} from "react-router-dom";
 import {fields_list_response} from "../../../../../../schemas/fields.ts";
+import {shallow} from "zustand/shallow";
+import {TimerControls} from "../Track/Timer.tsx";
 
 export function TripleDots({f}: { f: fields_list_response }) {
-  const fid = f.id
+  if (!f?.id) {return null}
+  return <TripleDots_ fid={f.id} />
+}
+export function TripleDots_({fid}: { fid: string }) {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const navigate = useNavigate()
+  const [timer] = useStore(s => [s.behaviors.timer], shallow)
   const [
     setView,
     destroy,
+    timerActivate
   ] = useStore(useCallback(s => [
     s.behaviors.setView,
     s.behaviors.destroy,
+    s.behaviors.timerActivate
   ], []))
 
   const open = Boolean(anchorEl);
@@ -39,15 +47,22 @@ export function TripleDots({f}: { f: fields_list_response }) {
     setView({view: "view", fid})
     navigate("/b/analyze")
   }, [fid])
+  const clickTimer = useCallback(() => {
+    handleClose()
+    setView({view: "timer", fid})
+  }, [fid])
   const destroy_ = useCallback(() => {
     destroy(fid, handleClose)
   }, [])
 
-  if (!fid) {return null}
+  const timerControls = useMemo(() => {
+    return <TimerControls fid={fid} />
+  }, [timer, fid])
 
   return (
     <>
-      <Box>
+      <Box sx={{display: "flex", alignItems: "center"}}>
+        {timerControls}
         <Tooltip title="Options">
           <IconButton
             onClick={handleClick}
@@ -102,6 +117,9 @@ export function TripleDots({f}: { f: fields_list_response }) {
         </MenuItem>
         <MenuItem onClick={analyze}>
           Analyze
+        </MenuItem>
+        <MenuItem onClick={clickTimer}>
+          Timer
         </MenuItem>
         <MenuItem onClick={destroy_}>
           Delete

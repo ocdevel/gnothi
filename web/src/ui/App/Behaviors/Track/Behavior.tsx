@@ -33,8 +33,10 @@ function Item_({f, fid}: {f: fields_list_response, fid: string}) {
   // let rowStyle = {width: '100%', margin: 0}
   const allActiveKey = `${f.lane}_all`
   const [
+    timerFid,
     allActive
   ] = useStore(s => [
+    s.behaviors.timer.fid,
     (s.user?.me?.[allActiveKey] || ["habit", "reward"].includes(f.lane))
   ], shallow)
   const [setView] = useStore(useCallback(s => [s.behaviors.setView], []))
@@ -61,6 +63,14 @@ function Item_({f, fid}: {f: fields_list_response, fid: string}) {
   ), [f])
 
   if (!allActive && !active) {return null}
+
+  const isTiming = timerFid === fid
+  const timerExtras = isTiming ? {
+    card: {elevation: 20},
+    cardSx: {borderColor: "primary.main", borderWidth: 3, mb: 1.5},
+  } : {
+    card: {}, cardSx: {}, box: {}
+  }
   return (
       <Card
         className={`behavior behavior-${f.type}`}
@@ -68,14 +78,17 @@ function Item_({f, fid}: {f: fields_list_response, fid: string}) {
         onMouseOver={handleMouseOver}
         onMouseOut={handleMouseOut}
         elevation={elevation}
+        {...timerExtras.card}
         sx={{
           opacity: active ? 1 : .5,
-          mb:0.5,
-          border:1,
-          borderColor:"#eee",
+          mb: 0.5,
+          borderWidth: 1,
+          borderStyle: "solid",
+          borderColor: "#eee",
           '&:hover': {
             borderColor: "primary.main",
           },
+          ...timerExtras.cardSx
       }}
       >
         <Box
