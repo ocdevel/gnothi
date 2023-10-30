@@ -30,6 +30,7 @@ import {UpsertProps, WithHelp} from "./Utils.tsx";
 import {DeleteButton} from "./DeleteButton.tsx";
 import {AnalyzeAdvanced} from "./AnalyzeAdvanced.tsx";
 import {ResetPeriods} from "./ResetPeriods.tsx";
+import {BehaviorNotes} from './BehaviorNotes.tsx'
 import {TrackingType} from "./TrackingType.tsx";
 import {ScoreAdvanced} from "./ScoreAdvanced.tsx";
 import {FullScreenDialog} from "../../../Components/Dialog.tsx";
@@ -137,10 +138,12 @@ export function UpsertModal() {
           <BehaviorLane {...upsertProps} />
           <TrackingType {...upsertProps} />
           <BehaviorValue {...upsertProps} />
+          <BehaviorNotes {...upsertProps} />
         </> : <>
           <BehaviorLane {...upsertProps} />
           <BehaviorType {...upsertProps} />
           <TrackingType {...upsertProps} />
+          <BehaviorNotes {...upsertProps} />
           <ResetPeriods {...upsertProps} />
           <Accordions
             defaultExpanded={0}

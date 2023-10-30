@@ -4,7 +4,7 @@ import {BehaviorName} from "../BehaviorName.tsx";
 import Badge from "@mui/material/Badge";
 import {useStore} from "../../../../data/store";
 import {shallow} from "zustand/shallow";
-import React, {useCallback, useState} from "react";
+import React, {useCallback, useMemo, useState} from "react";
 import IconButton from "@mui/material/IconButton";
 import SortIcon from "@mui/icons-material/DragIndicatorOutlined";
 import EditIcon from "@mui/icons-material/EditOutlined";
@@ -16,6 +16,8 @@ import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import {TripleDots} from "../Upsert/TripleDots.tsx";
+import Typography from "@mui/material/Typography";
+import ReactMarkdown from "react-markdown";
 
 interface Behavior {
   fid: string
@@ -44,6 +46,13 @@ export default function Item({fid, advanced}: Behavior) {
   }, [fid])
 
   if (!f) {return null} // not ready
+
+  const notes = useMemo(() => {
+    if (!f.notes) {return null}
+    return <Typography variant="body2">
+      <ReactMarkdown>{f.notes}</ReactMarkdown>
+    </Typography>
+  }, [f.notes])
 
   // TODO make tabs for this, Active | Inactive:
   // 1. Habits (nothing)
@@ -86,11 +95,7 @@ export default function Item({fid, advanced}: Behavior) {
         <Box
           sx={{
             m:0,p:1,
-            display: "flex",
             backgroundColor: "white",
-            gap: 2,
-            alignItems: 'center',
-            justifyContent: 'space-between',
             // ...(f.excluded_at ? {
             //   textDecoration: 'line-through',
             //   opacity: .5
@@ -101,6 +106,7 @@ export default function Item({fid, advanced}: Behavior) {
           onClick={handleEdit}
         >
           <BehaviorName name={f.name} />
+          {notes}
         </Box>
       </Card>
   )
