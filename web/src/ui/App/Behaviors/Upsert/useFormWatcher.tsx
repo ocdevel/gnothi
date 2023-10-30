@@ -84,13 +84,17 @@ export function useFormWatcher(): UpsertProps['form'] {
 
 
   useEffect(() => {
-    console.log({view})
     form.reset(field)
   }, [field])
 
   useEffect(() => {
     if (!lane) {
       // not available via form yet. TODO look into this, I didn't expect this.
+      return
+    }
+    if (field.lane === lane) {
+      // they're editing an existing one, and we just opened the modal. Don't reset values they've manually set,
+      // unless they click this a second time
       return
     }
     console.log({lane})
