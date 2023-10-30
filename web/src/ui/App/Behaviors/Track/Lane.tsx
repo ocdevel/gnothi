@@ -70,25 +70,22 @@ export default function Behaviors({lane}: Behaviors) {
   ], []))
 
   const [sorted, setSorted_] = useState([])
-  const setSorted = useDebouncedCallback((sorted) => setSorted_(sorted), 500 )
-
-  const laneFields = useMemo(() => {
-    // set secondary sort on .sort?
-    // actually nevermind, since server sends it sorted via SQL
-    return (fields?.rows || [])
-      .filter(f => f.lane === lane || (lane === "custom" && !f.lane))
-      // .slice().sort((a, b) => (a.sort - b.sort))
-  }, [fields?.rows])
+  const setSorted = useDebouncedCallback((sorted) => setSorted_(sorted), 500 , {trailing: true, leading: false})
 
   useEffect(() => {
+    // set secondary sort on .sort?
+    // actually nevermind, since server sends it sorted via SQL
+    const laneFields = (fields?.rows || [])
+      .filter(f => f.lane === lane || (lane === "custom" && !f.lane))
+      // .slice().sort((a, b) => (a.sort - b.sort))
     setSorted(laneFields)
-  }, [laneFields])
 
+  }, [fields?.rows])
 
-  const onReorder = useDebouncedCallback((newOrder: fields_list_response[]) => {
+  const onReorder = useCallback((newOrder: fields_list_response[]) => {
     setSorted_(newOrder)
     send("fields_sort_request", newOrder.map((f, i) => ({id: f.id, sort: i})))
-  })
+  }, [])
 
   // TODO cache-busting @ 49d212a2
   // ensure no longer needed. Original comment:

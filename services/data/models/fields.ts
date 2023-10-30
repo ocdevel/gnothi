@@ -68,6 +68,7 @@ export class Fields extends Base {
   async sort(req: S.Fields.fields_sort_request): Promise<void> {
     const {uid, db: {drizzle}} = this.context
     const q = sql.empty()
+
     req.forEach((f: S.Fields.fields_sort_request[0], i: number) => {
       q.append(i === 0 ? sql`WITH` : sql`,`)
       q.append(sql` update_${sql.raw(i)} AS (
@@ -75,8 +76,13 @@ export class Fields extends Base {
         WHERE id=${f.id} AND user_id=${uid} 
       )`)
     })
-    q.append(sql` SELECT * FROM fields WHERE user_id=${uid} ORDER BY sort ASC, created_at DESC;`)
-    return drizzle.execute(q)
+    // q.append(sql` SELECT * FROM fields WHERE user_id=${uid} ORDER BY sort ASC, created_at DESC;`)
+    // return drizzle.execute(q)
+
+    // FIXME the final select isn't the updated values for some reason. Investigate, or try to get batch API working
+    q.append(sql` SELECT 1`)
+    await drizzle.execute(q)
+    return this.list()
 
     // Can't get the batch API working, which is a huge bummer! Says it requires LibSQL, look into
     // https://orm.drizzle.team/docs/batch-api
