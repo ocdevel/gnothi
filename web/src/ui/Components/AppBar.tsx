@@ -154,7 +154,7 @@ export default function ResponsiveAppBar({
   const logo = useMemo(() => <Box
       sx={{height: 30, mb: {md: .6}}}
     >
-    <Link.Anchor to="/">
+    <Link.Anchor to={authenticated ? "/j" : "/"}>
       <img src="/Gnothi_ShortnoLamp.svg" height="100%" />
     </Link.Anchor>
   </Box>, [])

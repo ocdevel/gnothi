@@ -129,7 +129,6 @@ export default function Modal({close}: Modal) {
   function reorder(tags: Tags.tags_list_response[]) {
     const data = _.map(tags, ({id}, sort) => ({id, sort}))
     send('tags_reorder_request', data)
-
   }
 
   const renderTag = (tag: Tags.tags_list_response) => (
@@ -147,7 +146,7 @@ export default function Modal({close}: Modal) {
               justifyItems="flex-start">
           <Grid justifyContent='space-between' container item spacing={3}>
             <Grid item sm={12} md={7}>
-              {/*<Sortable items={tags} render={renderTag} onReorder={reorder}/>*/}
+              <Sortable items={tags} render={renderTag} onReorder={reorder}/>
               <Create/>
             </Grid>
             <Grid item sm={12} md={5}>
