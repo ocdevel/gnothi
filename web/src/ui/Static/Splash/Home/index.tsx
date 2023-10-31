@@ -21,12 +21,9 @@ export default function Home() {
       backgroundColor: colors.grey
     }}
   >
-    <Hero />
+    {/*<Hero />*/}
     {/*<Demo />*/}
     <HowItWorks />
-    <Box>
-      <Divider color='#50577a' variant="fullWidth" sx={{borderBottomWidth: 3, py: 1 }} />
-    </Box>
     <Discover_Simple />
     <SignUp />
   </Stack>

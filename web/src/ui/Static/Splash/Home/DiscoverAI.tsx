@@ -41,7 +41,7 @@ export default function DiscoverAI() {
       <Grid item xs={12} pb={4}
         alignItems="center">
         <Typography
-          variant="h2"
+          variant="h1"
           textAlign='center'
         >
           Discover more with AI

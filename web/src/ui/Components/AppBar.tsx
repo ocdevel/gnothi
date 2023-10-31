@@ -152,10 +152,10 @@ export default function ResponsiveAppBar({
   }
 
   const logo = useMemo(() => <Box
-      sx={{height: 30, mb: {md: .6}}}
+      sx={{height: 70, pt: 2}}
     >
     <Link.Anchor to="/">
-      <img src="/Gnothi_ShortnoLamp.svg" height="100%" />
+      <img src="/FullLogo_Transparent_NoBuffer.png" height="100%" />
     </Link.Anchor>
   </Box>, [])
 
@@ -266,7 +266,6 @@ export default function ResponsiveAppBar({
   return <>
     <AppBar
       position="static"
-      color='transparent'
       className='appbar'
       sx= {clearBottom ? {mb: 3} : {}}
     >

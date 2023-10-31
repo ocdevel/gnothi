@@ -92,7 +92,7 @@ export function FeatureCard({ title, icon, children }: FeatureCard) {
 
 
 interface Section {
-  color: 'dark' | 'light' | 'grey'
+  color: 'dark' | 'light' | 'grey' | 'blue'
 }
 export function Section({ children, color = 'light' }: React.PropsWithChildren<Section>) {
   const backgroundColor = {

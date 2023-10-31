@@ -9,8 +9,8 @@ import { LocalizationProvider } from '@mui/x-date-pickers'
 const colors = {
   grey: "#fafafa",
   black: "#000000",
-  white: "#ffffff"
-
+  white: "#ffffff",
+  blue: "#474fd6",
 }
 
 
@@ -23,9 +23,9 @@ export const styles = {
     xl: 12
   },
   sx: {
-    button1: {backgroundColor: 'primary.main', color: colors.white, fontFamily: "Poppins", fontWeight: '500'},
+    button1: {backgroundColor: 'primary.light', color: colors.black, fontFamily: "Poppins", fontWeight: '500'},
     //'#3A4784',
-    button2: {backgroundColor: "secondary.main", color: colors.white, fontFamily: "Poppins", fontWeight: '500'},
+    button2: {backgroundColor: "secondary.main", color: colors.black, fontFamily: "Poppins", fontWeight: '500'},
     
     featureIcon: {fontSize: 60, color: "#50577a"},
 
@@ -43,13 +43,14 @@ export const styles = {
 export const theme = createTheme({
   palette: {
     primary: {
-      main: '#50577A',
-      light: '#737894', // '#A7ABBC',
-      contrastText: '#ffffff',
+      main: '#474fd6',
+      light: '#e7f1ef',
+      dark: "#231d4c"
     },
     secondary: {
-      main: '#0077C2', // '#738fa7',
-      light: '#a7abbc', // '#6ba9bb',
+      main: '#f3e95d',
+      light: '#e7f1ef',
+      contrastText: '#231d4c',
     },
 
 
@@ -76,16 +77,16 @@ export const theme = createTheme({
   typography: {
     fontFamily: 'Poppins',
     h1: {
-      fontWeight: 400,
-      fontFamily: 'Antic Didone',
-      fontSize: '5rem',
-      lineHeight: '1.1',
-      marginBottom: '1rem'
-     
+      fontWeight: 300,
+      fontFamily: 'Poppins',
+      fontSize: '3.8rem',
+      lineHeight: '1.2',
+      marginBottom: '1.1rem'
+
     },
     h2: {
       fontWeight: 400,
-      fontFamily: 'Antic Didone',
+      fontFamily: 'Poppins',
       fontSize: '3rem',
       lineHeight: '1.3',
       marginBottom: '1rem'
@@ -105,7 +106,7 @@ export const theme = createTheme({
     },
     h5: {
       fontWeight: 400,
-      fontFamily: 'Antic Didone',
+      fontFamily: 'Poppins',
       lineHeight: '1.3',
       fontSize: "2rem"
     },
@@ -123,7 +124,7 @@ export const theme = createTheme({
       fontWeight: '300',
     },
     subtitle2: {
-      fontFamily: 'Antic Didone',
+      fontFamily: 'Poppins',
       fontSize: '1.6rem'
     },
     body1: {
