@@ -28,6 +28,8 @@ import IconButton from "@mui/material/IconButton";
 import {fields_list_response} from "../../../../../../schemas/fields.ts";
 import {Sortable} from '../../../Components/Sortable.tsx'
 import {useDebounce, useDebouncedCallback} from "use-debounce";
+import ButtonGroup from "@mui/material/ButtonGroup";
+import produce from "immer";
 
 const headers = {
   habit: "Habits",
@@ -50,15 +52,15 @@ interface Behaviors {
   lane: "habit" | "daily" | "todo" | "custom" | "reward"
 }
 
-// TODO memoize this component, with some setter just for advanced=true|false. False just
-// hides certain elements
 export default function Behaviors({lane}: Behaviors) {
-  const advanced = true
+  const allActiveKey = `${lane}_all`
   const [
-    user,
+    // user,
+    allActive,
     fields,
   ] = useStore(s => [
-    s.user,
+    // s.user,
+    s.user?.me?.[allActiveKey],
     s.res.fields_list_response,
   ], shallow)
   const [
@@ -68,9 +70,10 @@ export default function Behaviors({lane}: Behaviors) {
     s.send,
     s.behaviors.setView
   ], []))
-
   const [sorted, setSorted_] = useState([])
   const setSorted = useDebouncedCallback((sorted) => setSorted_(sorted), 500 , {trailing: true, leading: false})
+
+  // const {as, viewer, me} = user
 
   useEffect(() => {
     // set secondary sort on .sort?
@@ -87,36 +90,60 @@ export default function Behaviors({lane}: Behaviors) {
     send("fields_sort_request", newOrder.map((f, i) => ({id: f.id, sort: i})))
   }, [])
 
-  // TODO cache-busting @ 49d212a2
-  // ensure no longer needed. Original comment:
-  // having lots of trouble refreshing certain things, esp. dupes list after picking. Force it for now
-
   // see 3b92a768 for dynamic field groups. Revisit when more than one service. currently just habitica
   // git-blame: now removing Habitica, too unstable. Removing services for now, since adding habit-tracking to gnothi
   // see 186dc090: full gut of this file. May need to refer back to language, help, and functionality
-
-  const {as, viewer, me} = user
-
-  if (fields?.res?.error && fields.res.code === 403) {
-    return <h5>{fields.res.data[0].error}</h5>
-  }
 
   const onClick = useCallback(() => {
     setView({view: "new", fid: lane})
   }, [lane])
 
-  function renderBehavior(b: fields_list_response) {
-    return <Behavior key={b.id} fid={b.id} advanced={advanced} />
+  function renderBehavior(f: fields_list_response) {
+    return <Behavior key={f.id} fid={f.id} />
   }
 
+  const toggleAll = useCallback((val: boolean) => () => {
+    // do this first real fast, so the UI gets updated quickly; new response will come from the server
+    useStore.setState(produce(state => {
+      state.user.me[allActiveKey] = val
+    }))
+    send("users_put_request", {[allActiveKey]: val})
+  }, [allActiveKey])
+
+  const allToggle = useMemo(() => {
+    if (["habit", "reward"].includes(lane)) { return null }
+    return <ButtonGroup size="small">
+      <Button
+        onClick={toggleAll(false)}
+        variant={allActive ? "outlined" : "contained"}
+      >
+        Active
+      </Button>
+      <Button
+        onClick={toggleAll(true)}
+        variant={allActive ? "contained" : "outlined"}
+      >
+        All
+      </Button>
+    </ButtonGroup>
+  }, [allActive])
+
   const sortable = useMemo(() => {
+    // Currently not allowing sorting unless all items visible. TODO revisit this
+    if (!allActive) {
+      return sorted.map(renderBehavior)
+    }
     return <Sortable
       items={sorted}
       render={renderBehavior}
       onReorder={onReorder}
       sortableId={`sortable-${lane}`}
     />
-  }, [sorted])
+  }, [sorted, allActive])
+
+  if (fields?.res?.error && fields.res.code === 403) {
+    return <h5>{fields.res.data[0].error}</h5>
+  }
 
   return <div className="list">
     <Card
@@ -125,6 +152,8 @@ export default function Behaviors({lane}: Behaviors) {
       <CardContent sx={{mx: 1}}>
         <Box sx={{display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 2}}>
           <Typography variant="h4" color="primary" fontWeight={500}>{headers[lane]}</Typography>
+
+          {allToggle}
 
           <IconButton
             aria-label="add"

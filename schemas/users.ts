@@ -44,7 +44,10 @@ export type users_whoami_response = z.infer<typeof users_whoami_response>
 // on the server so it doesn't wipe other attrs! We'll allow nulls and empty-strings to get through, as a removal
 export const users_put_request = User.pick({
   timezone: true,
-  filter_days: true
+  filter_days: true,
+  daily_all: true,
+  todo_all: true,
+  custom_all: true
   // TODO add the profile fields
 }).partial()
 export type users_put_request = z.infer<typeof users_put_request>

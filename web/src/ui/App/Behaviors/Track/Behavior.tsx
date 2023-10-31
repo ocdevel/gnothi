@@ -18,34 +18,30 @@ import CardContent from "@mui/material/CardContent";
 import {TripleDots} from "../Upsert/TripleDots.tsx";
 import Typography from "@mui/material/Typography";
 import ReactMarkdown from "react-markdown";
+import {fields_list_response} from "../../../../../../schemas/fields.ts";
 
 interface Behavior {
   fid: string
-  advanced: boolean
   odd?: boolean
 }
-export default function Item({fid, advanced}: Behavior) {
+export default function Item({fid}: Behavior) {
+  const f = useStore(s => s.res.fields_list_response?.hash?.[fid], shallow)
+  if (!f) {return null}
+  return <Item_ f={f} fid={fid}/>
+}
+function Item_({f, fid}: {f: fields_list_response, fid: string}) {
   // let rowStyle = {width: '100%', margin: 0}
+  const allActiveKey = `${f.lane}_all`
+  const [allActive] = useStore(s => [s.user?.me?.[allActiveKey]], shallow)
+  const [setView] = useStore(useCallback(s => [s.behaviors.setView], []))
 
   const [elevation, setElevation] = useState(0)
   const handleMouseOver = useCallback(() => setElevation(3), [])
   const handleMouseOut = useCallback(() => setElevation(0), [])
 
-  const [
-    fields,
-    setView,
-  ] = useStore(s => [
-    s.res.fields_list_response,
-    s.behaviors.setView
-  ], shallow)
-
-  const f = fields?.hash?.[fid]
-
   const handleEdit = useCallback(() => {
     setView({view: "edit", fid})
   }, [fid])
-
-  if (!f) {return null} // not ready
 
   const notes = useMemo(() => {
     if (!f.notes) {return null}
@@ -54,13 +50,13 @@ export default function Item({fid, advanced}: Behavior) {
     </Typography>
   }, [f.notes])
 
-  // TODO make tabs for this, Active | Inactive:
-  // 1. Habits (nothing)
-  // 2. Dailies - due on that day vs not due
-  // 3. Todos - complete or not
-  // 4. Data - analyze_enabled=true vs false
-  const active = true
+  const active = useMemo(() => (
+    ["habit","reward"].includes(f.lane) ? true
+    : f.lane === "custom" ? f.analyze_enabled
+    : f.score_period < f.reset_quota
+  ), [f])
 
+  if (!allActive && !active) {return null}
   return (
       <Card
         className={`behavior behavior-${f.type}`}
@@ -69,6 +65,7 @@ export default function Item({fid, advanced}: Behavior) {
         onMouseOut={handleMouseOut}
         elevation={elevation}
         sx={{
+          opacity: active ? 1 : .5,
           mb:0.5,
           border:1,
           borderColor:"#eee",
