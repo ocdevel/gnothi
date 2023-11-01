@@ -32,7 +32,11 @@ export default function Item({fid}: Behavior) {
 function Item_({f, fid}: {f: fields_list_response, fid: string}) {
   // let rowStyle = {width: '100%', margin: 0}
   const allActiveKey = `${f.lane}_all`
-  const [allActive] = useStore(s => [s.user?.me?.[allActiveKey]], shallow)
+  const [
+    allActive
+  ] = useStore(s => [
+    (s.user?.me?.[allActiveKey] || ["habit", "reward"].includes(f.lane))
+  ], shallow)
   const [setView] = useStore(useCallback(s => [s.behaviors.setView], []))
 
   const [elevation, setElevation] = useState(0)

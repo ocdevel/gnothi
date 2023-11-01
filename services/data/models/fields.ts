@@ -170,8 +170,11 @@ score_diff AS (
 field_update AS (
   UPDATE fields
   SET 
-      score_total = CASE WHEN score_enabled THEN score_total + (SELECT diff FROM score_diff) ELSE score_total END,
-      score_period = CASE WHEN score_enabled THEN score_period + (SELECT diff FROM score_diff) ELSE score_period END
+    score_total = CASE WHEN score_enabled THEN score_total + (SELECT diff FROM score_diff) ELSE score_total END,
+    score_period = CASE 
+      WHEN reset_period = 'daily' THEN (SELECT "value" FROM upsert)
+      ELSE score_period + (SELECT diff FROM score_diff)
+    END
   WHERE id = ${field_id}
   RETURNING *
 ),
@@ -291,7 +294,7 @@ FROM
     SET 
       score_period = 0
     WHERE
-      id IN (SELECT id FROM quota_check)
+      id IN (SELECT id FROM active_fields)
     RETURNING id as field_id, user_id
   )
   UPDATE

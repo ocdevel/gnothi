@@ -60,7 +60,7 @@ export default function Behaviors({lane}: Behaviors) {
     fields,
   ] = useStore(s => [
     // s.user,
-    s.user?.me?.[allActiveKey],
+    (s.user?.me?.[allActiveKey] || ["habit", "reward"].includes(lane)),
     s.res.fields_list_response,
   ], shallow)
   const [
