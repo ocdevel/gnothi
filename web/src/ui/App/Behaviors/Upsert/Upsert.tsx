@@ -162,12 +162,10 @@ export function UpsertModal() {
         <Box>
           <h6>Coming features:</h6>
           <ul>
-            <li>Due dates (start, end). Especially for ToDos</li>
             <li>Nested items. Hoping for infinite trees, like Workflowy</li>
-            <li>Notes</li>
-            <li>Streaks</li>
+            <li>Due dates (start, end). Especially for ToDos</li>
             <li>More complex point system, using Sigmoid curve (rather than everything is + / - 1).</li>
-            <li>Display read-only parts (score_total, score_period, streak)</li>
+            <li>Display read-only parts (score_total, score_period)</li>
           </ul>
         </Box>
       </Stack2>

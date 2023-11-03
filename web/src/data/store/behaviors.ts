@@ -157,6 +157,7 @@ export const behaviorsSlice: StateCreator<
         }
       }, 1000)
       // resume or start over
+      const minutesDesired_ = curr.fid === fid ? curr.minutesDesired : minutesDesired
       const seconds = (curr.fid && curr.fid === fid) ? curr.seconds : 0
       set(produce(s => {
         s.behaviors.timer = {
@@ -164,7 +165,7 @@ export const behaviorsSlice: StateCreator<
           seconds,
           status: "work",
           interval,
-          minutesDesired
+          minutesDesired: minutesDesired_
         }
       }))
     },

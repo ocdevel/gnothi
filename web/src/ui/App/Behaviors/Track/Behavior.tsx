@@ -6,10 +6,8 @@ import {useStore} from "../../../../data/store";
 import {shallow} from "zustand/shallow";
 import React, {useCallback, useMemo, useState} from "react";
 import IconButton from "@mui/material/IconButton";
-import SortIcon from "@mui/icons-material/DragIndicatorOutlined";
-import EditIcon from "@mui/icons-material/EditOutlined";
-import ViewIcon from "@mui/icons-material/BarChartOutlined";
 import Stack from "@mui/material/Stack";
+import FastForwardIcon from '@mui/icons-material/FastForward';
 import BehaviorEntry from './BehaviorEntry.tsx'
 import Paper from "@mui/material/Paper";
 import Box from "@mui/material/Box";
@@ -19,6 +17,7 @@ import {TripleDots} from "../Upsert/TripleDots.tsx";
 import Typography from "@mui/material/Typography";
 import ReactMarkdown from "react-markdown";
 import {fields_list_response} from "../../../../../../schemas/fields.ts";
+import Tooltip from "@mui/material/Tooltip";
 
 interface Behavior {
   fid: string
@@ -61,6 +60,18 @@ function Item_({f, fid}: {f: fields_list_response, fid: string}) {
     : f.lane === "custom" ? f.analyze_enabled
     : f.score_period < f.reset_quota
   ), [f])
+
+  const streak = useMemo(() => {
+    if (!f.streak) {return null}
+    return <Box sx={{float: "right"}}>
+      <Tooltip title="Streak">
+        <Box sx={{display: "flex", alignContent: "center", gap: 0.5}}>
+          <FastForwardIcon />
+          <span>{f.streak}</span>
+        </Box>
+      </Tooltip>
+    </Box>
+  }, [f.streak])
 
   if (!allActive && !active) {return null}
 
@@ -119,6 +130,7 @@ function Item_({f, fid}: {f: fields_list_response, fid: string}) {
           className='field-name'
           onClick={handleEdit}
         >
+          {streak}
           <BehaviorName name={f.name} />
           {notes}
         </Box>

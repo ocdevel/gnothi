@@ -290,6 +290,7 @@ FROM
     UPDATE 
       fields
     SET 
+      streak = CASE WHEN score_period >= reset_quota THEN streak + 1 ELSE 0 END,
       score_period = 0
     WHERE
       id IN (SELECT id FROM active_fields)
