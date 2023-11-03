@@ -135,7 +135,7 @@ export function Ml(context: sst.StackContext) {
   fnBehaviors.addToRolePolicy(readSecretPolicy)
   // sst.Cron only works with ss.Function, manually creating my own cron here
   if (app.stage === "prod") {
-    const behaviorsRule = new aws_events.Rule(this, 'CronBehaviors', {
+    const behaviorsRule = new aws_events.Rule(stack, 'CronBehaviors', {
       schedule: aws_events.Schedule.rate(cdk.Duration.hours(1)),
     });
     behaviorsRule.addTarget(new aws_targets.LambdaFunction(fnBehaviors));

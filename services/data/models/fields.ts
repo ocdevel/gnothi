@@ -121,21 +121,24 @@ export class Fields extends Base {
     // remember to change that here too.
     const res = await db.query(sql`
 ${this.with_tz()},
--- Fetch the old value
-old_value AS (
-  SELECT 
-    CASE 
-      WHEN lane = 'reward' THEN 0
-      ELSE (
-        SELECT "value" 
-        FROM field_entries2
-        WHERE user_id = ${uid} AND field_id = ${field_id}
-        ORDER BY created_at DESC
-        LIMIT 1
-      )
-    END AS "value"
-  FROM fields
-  WHERE id = ${field_id}
+-- convert day requested to compatible with the user's timezone
+day_requested AS (
+  SELECT DATE(${this.tz_read(day)}) AS "day"
+  FROM with_tz
+),
+field AS (SELECT * FROM fields WHERE id = ${field_id} AND user_id = ${uid}),
+-- if there's an existing entry for today, pull that up for diffing against. We don't diff if they haven't logged
+-- today, or if it's a reward, so we return null from this CTE which gets COALESCE'd later
+existing_entry AS (
+  SELECT field_id, 
+    field_entries2."value"
+  FROM field_entries2
+  JOIN field 
+    ON field.id = field_entries2.field_id
+  WHERE field_id = ${field_id} 
+    AND lane != 'reward'
+    AND "day"=(SELECT "day" FROM day_requested)
+  -- LIMIT 1 -- there should only ever be one, so I'm commenting out to detect errors
 ),
 -- Your existing upsert logic
 upsert AS (
@@ -144,12 +147,12 @@ upsert AS (
     ${uid}, 
     ${field_id}, 
     ${value}, 
-    DATE(${this.tz_read(day)}), 
+    (SELECT "day" FROM day_requested), 
     ${this.tz_write(day)}
-  FROM fields
-  JOIN with_tz ON fields.user_id = with_tz.id
+  FROM field
+  JOIN with_tz ON field.user_id = with_tz.id
   WHERE 
-    fields.id = ${field_id}
+    field.id = ${field_id}
     AND (
       lane != 'reward' 
       OR (lane = 'reward' AND ${value} <= (SELECT points FROM users WHERE users.id = ${uid}))
@@ -157,36 +160,39 @@ upsert AS (
   ON CONFLICT (field_id, "day") DO UPDATE SET "value" = ${value}
   RETURNING *
 ),
--- Determine the score difference
+upsert_extra as (
+  SELECT upsert.*, 
+    field.score_enabled, 
+    CASE WHEN field.score_up_good THEN 1 ELSE -1 END AS direction
+  FROM upsert 
+  JOIN field ON field.id = upsert.field_id
+),
+-- If they have an entry already for today, the points we'll apply elsewhere are the diff form its last value, 
+-- and what they just submitted. If they don't have an entry, the "diff" is just the score whole-sale
 score_diff AS (
   SELECT 
+    upsert_extra.*,
     ( 
       -- will be 0 if it was a reward they couldn't afford,  since upsert skipped
-      COALESCE((SELECT "value" FROM upsert), 0) 
-      - COALESCE((SELECT "value" FROM old_value), 0)
+      COALESCE(upsert_extra.value, 0) 
+      -- will be 0 if it's the first entry of the day
+      - COALESCE(existing_entry.value, 0)
     ) AS diff
+  FROM upsert_extra 
+  LEFT JOIN existing_entry ON existing_entry.field_id = upsert_extra.field_id
 ),
 -- Update the field's score and score_period
 field_update AS (
   UPDATE fields
   SET 
-    score_total = CASE WHEN score_enabled THEN score_total + (SELECT diff FROM score_diff) ELSE score_total END,
-    score_period = CASE 
-      WHEN reset_period = 'daily' THEN (SELECT "value" FROM upsert)
-      ELSE score_period + (SELECT diff FROM score_diff)
-    END
+    score_total = score_total + score_diff.diff,
+    score_period = score_period + score_diff.diff
+  FROM score_diff
   WHERE id = ${field_id}
+    -- early exit all downstream scoring ops if score_enabled=FALSE. AI will the logged values (field_entries2) rather
+    -- than columns on fields, so those values are already accounted for 
+    AND fields.score_enabled IS TRUE
   RETURNING *
-),
--- Determine the direction of scoring based on score_up_good
-score_direction AS (
-  SELECT
-    (SELECT diff FROM score_diff) *
-    CASE
-      WHEN score_up_good THEN 1
-      ELSE -1
-    END AS final_diff
-  FROM field_update
 ),
 -- Update the field's average value
 average_update AS (
@@ -198,11 +204,12 @@ average_update AS (
 user_update AS (
   -- Update the user's score
   UPDATE users
-  SET points = users.points + CASE WHEN fields.score_enabled THEN (SELECT final_diff FROM score_direction) ELSE 0 END
-  FROM fields
+  SET points = users.points + score_diff.diff * score_diff.direction
+  FROM score_diff
   WHERE 
-    fields.id = ${field_id} AND
     users.id = ${uid}
+    AND score_diff.score_enabled IS TRUE 
+    AND score_diff.field_id = ${field_id}
   RETURNING users.*
 )
 SELECT
@@ -238,6 +245,7 @@ FROM
 
   async cron() {
     const {db: {drizzle}} = this.context
+    console.log("calling fields cron")
     // Since there's no user.last_cron field tracking this, this function depends on being called excatly
     // once each hour without fail.
     // TODO add a user.last_cron, and use that instead of 0-1 hour checks
@@ -308,6 +316,7 @@ FROM
 -- END;
 -- $$;
 `
-    await drizzle.execute(megaQuery)
+    await db.query(megaQuery)
+    console.log("called fields cron")
   }
 }

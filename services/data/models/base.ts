@@ -24,7 +24,7 @@ export class Base {
 
   // NOTE!! Wherever this is used, make sure the $param order is respected
   with_tz() {
-    return sql`WITH with_tz as (
+    return sql`WITH with_tz AS (
       SELECT id, COALESCE(timezone, 'America/Los_Angeles') AS tz
       FROM users WHERE id=${this.context.vid}
     )`
