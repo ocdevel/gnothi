@@ -65,6 +65,7 @@ export const lanes = pgEnum("lanes", [
  */
 export const fields = pgTable('fields', {
   id: idCol(),
+  parent_id: uuid("parent_id").references(() => fields.id, {onDelete: 'cascade'}),
   type: fieldTypes("type").default("fivestar"),
   name: varchar('name').notNull(),
   // Start entries/graphs/correlations here

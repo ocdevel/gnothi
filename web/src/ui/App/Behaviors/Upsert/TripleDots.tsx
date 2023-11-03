@@ -11,6 +11,7 @@ import {useNavigate} from "react-router-dom";
 import {fields_list_response} from "../../../../../../schemas/fields.ts";
 import {shallow} from "zustand/shallow";
 import {TimerControls} from "../Track/Timer.tsx";
+import AddIcon from "@mui/icons-material/AddCircleOutline";
 
 export function TripleDots({f}: { f: fields_list_response }) {
   if (!f?.id) {return null}
@@ -24,10 +25,12 @@ export function TripleDots_({fid}: { fid: string }) {
     setView,
     destroy,
     timerActivate,
+    setSubtaskParentId,
   ] = useStore(useCallback(s => [
     s.behaviors.setView,
     s.behaviors.destroy,
     s.behaviors.timerActivate,
+    s.behaviors.setSubtaskParentId,
   ], []))
 
   const open = Boolean(anchorEl);
@@ -50,6 +53,10 @@ export function TripleDots_({fid}: { fid: string }) {
   const clickTimer = useCallback(() => {
     handleClose()
     setView({view: "timer", fid})
+  }, [fid])
+  const addSubtask = useCallback(() => {
+    handleClose()
+    setSubtaskParentId(fid)
   }, [fid])
   const destroy_ = useCallback(() => {
     destroy(fid, handleClose)
@@ -115,6 +122,9 @@ export function TripleDots_({fid}: { fid: string }) {
       >
         <MenuItem onClick={edit}>
           Edit
+        </MenuItem>
+        <MenuItem onClick={addSubtask}>
+          Add Subtask
         </MenuItem>
         <MenuItem onClick={analyze}>
           Analyze

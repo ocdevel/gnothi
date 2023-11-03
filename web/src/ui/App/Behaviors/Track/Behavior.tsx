@@ -4,7 +4,7 @@ import {BehaviorName} from "../BehaviorName.tsx";
 import Badge from "@mui/material/Badge";
 import {useStore} from "../../../../data/store";
 import {shallow} from "zustand/shallow";
-import React, {useCallback, useMemo, useState} from "react";
+import React, {useCallback, useMemo, useRef, useState} from "react";
 import IconButton from "@mui/material/IconButton";
 import Stack from "@mui/material/Stack";
 import FastForwardIcon from '@mui/icons-material/FastForward';
@@ -16,9 +16,10 @@ import CardContent from "@mui/material/CardContent";
 import {TripleDots} from "../Upsert/TripleDots.tsx";
 import Typography from "@mui/material/Typography";
 import ReactMarkdown from "react-markdown";
-import {fields_list_response} from "../../../../../../schemas/fields.ts";
+import {fields_list_response, fields_post_request} from "../../../../../../schemas/fields.ts";
 import Tooltip from "@mui/material/Tooltip";
-import dayjs from "dayjs";
+import {Subtasks} from './Subtasks.tsx'
+import {BehaviorNotes} from "./BehaviorNotes.tsx";
 
 interface Behavior {
   fid: string
@@ -27,6 +28,7 @@ interface Behavior {
 export default function Item({fid}: Behavior) {
   const f = useStore(s => s.res.fields_list_response?.hash?.[fid], shallow)
   if (!f) {return null}
+  if (f.parent_id) { return null }
   return <Item_ f={f} fid={fid}/>
 }
 function Item_({f, fid}: {f: fields_list_response, fid: string}) {
@@ -48,13 +50,6 @@ function Item_({f, fid}: {f: fields_list_response, fid: string}) {
   const handleEdit = useCallback(() => {
     setView({view: "edit", fid})
   }, [fid])
-
-  const notes = useMemo(() => {
-    if (!f.notes) {return null}
-    return <Typography variant="body2">
-      <ReactMarkdown>{f.notes}</ReactMarkdown>
-    </Typography>
-  }, [f.notes])
 
   const active = useMemo(() => {
     // habits and rewards are always "due" (aka, no concept of that)
@@ -148,8 +143,9 @@ function Item_({f, fid}: {f: fields_list_response, fid: string}) {
         >
           {streak}
           <BehaviorName name={f.name} />
-          {notes}
+          <BehaviorNotes notes={f.notes} />
         </Box>
+        <Subtasks f={f} />
       </Card>
   )
 }

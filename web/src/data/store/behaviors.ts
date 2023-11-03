@@ -63,6 +63,9 @@ export interface BehaviorsSlice {
     timerActivate: (data: {fid: string, status: TimerStatus, minutesDesired: number}) => void
     // just separate function so timerActivate doesn't get too crazy
     timerFinish: () => void
+
+    subtaskParentId: null | string
+    setSubtaskParentId: (id: string | null) => void
   }
 }
 
@@ -216,6 +219,11 @@ export const behaviorsSlice: StateCreator<
         });
       }
 
-    }
+    },
+
+    subtaskParentId: null,
+    setSubtaskParentId: (id) => set(produce(state => {
+      state.behaviors.subtaskParentId = id
+    }))
   }
 })
