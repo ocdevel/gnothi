@@ -179,12 +179,9 @@ score_diff AS (
 field_update AS (
   UPDATE fields
   SET 
-    score_total = score_total + (SELECT diff FROM score_diff),
-    score_period = score_period + (SELECT diff FROM score_diff)
+    score_total = score_total + (CASE WHEN score_enabled THEN (SELECT diff FROM score_diff) ELSE 0 END),
+    score_period = score_period + (CASE WHEN score_enabled THEN (SELECT diff FROM score_diff) ELSE 0 END)
   WHERE id = ${field_id}
-    -- early exit all downstream scoring ops if score_enabled=FALSE. AI will the logged values (field_entries2) rather
-    -- than columns on fields, so those values are already accounted for 
-    AND fields.score_enabled IS TRUE
   RETURNING *
 ),
 -- Update the field's average value
@@ -197,7 +194,7 @@ average_update AS (
 user_update AS (
   -- Update the user's score
   UPDATE users
-  SET points = users.points + (
+  SET points = points + (
     SELECT (CASE WHEN score_enabled THEN diff * direction ELSE 0 END)
     FROM score_diff
   )
