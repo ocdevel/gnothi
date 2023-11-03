@@ -23,11 +23,11 @@ export function TripleDots_({fid}: { fid: string }) {
   const [
     setView,
     destroy,
-    timerActivate
+    timerActivate,
   ] = useStore(useCallback(s => [
     s.behaviors.setView,
     s.behaviors.destroy,
-    s.behaviors.timerActivate
+    s.behaviors.timerActivate,
   ], []))
 
   const open = Boolean(anchorEl);
@@ -54,6 +54,7 @@ export function TripleDots_({fid}: { fid: string }) {
   const destroy_ = useCallback(() => {
     destroy(fid, handleClose)
   }, [])
+
 
   const timerControls = useMemo(() => {
     return <TimerControls fid={fid} />
@@ -121,10 +122,39 @@ export function TripleDots_({fid}: { fid: string }) {
         <MenuItem onClick={clickTimer}>
           Timer
         </MenuItem>
+        <CompleteDelete fid={fid} close={handleClose} />
         <MenuItem onClick={destroy_}>
           Delete
         </MenuItem>
       </Menu>
     </>
   );
+}
+
+function CompleteDelete({fid, close}: {fid: string, close: () => void}) {
+  const [
+    send,
+    dayStr,
+    isToday,
+    f,
+  ] = useStore(useCallback(s => [
+    s.send,
+    s.behaviors.dayStr,
+    s.behaviors.isToday,
+    s.res.fields_list_response?.hash?.[fid]
+  ], []))
+  const completeDelete = useCallback(() => {
+    close()
+    send("fields_entries_post_request", {
+      field_id: fid,
+      day: isToday ? null : dayStr,
+      value: 1,
+      thenDelete: true
+    })
+  }, [fid])
+  if (!f) {return null}
+  if (f.lane !== "todo" || f.score_period > 0) {return null}
+  return <MenuItem onClick={completeDelete}>
+    Complete + Delete
+  </MenuItem>
 }

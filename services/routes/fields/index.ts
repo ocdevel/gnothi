@@ -36,12 +36,20 @@ export const fields_entries_list_request = new Route(r.fields_entries_list_reque
 
 export const fields_entries_post_request = new Route(r.fields_entries_post_request, async (req, context) => {
   const {uid, db: {drizzle}, user: {points}} = context
+  const {thenDelete} = req
 
   const updates = await context.m.fields.entriesPost(req)
   const {user_update, field_update, field_entry_update} = updates[0]
 
   if (user_update.points === points && field_update.lane === "reward") {
     throw new GnothiError({message: "Not enough points"})
+  }
+
+  // ToDos have a drop-down click for "complete + delete", as in: get the points and log whatever,
+  // but get this off my list
+  if (thenDelete) {
+    await drizzle.delete(fields)
+      .where(eq(fields.id, req.field_id))
   }
 
   await Promise.all([
@@ -51,7 +59,10 @@ export const fields_entries_post_request = new Route(r.fields_entries_post_reque
       context
     ),
     context.handleRes(
-      {...r.fields_list_request.o, op: "update"},
+      {
+        ...r.fields_list_request.o,
+        op: thenDelete ? "delete" : "update"
+      },
       {data: [field_update]},
       context
     )

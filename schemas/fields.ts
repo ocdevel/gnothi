@@ -83,6 +83,8 @@ export const fields_entries_post_request = FieldEntry.pick({
   field_id: true,
   day: true,
   value: true
+}).extend({
+  thenDelete: z.boolean().optional()
 })
 export const fields_delete_request = z.object({
   id: IdCol

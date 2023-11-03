@@ -64,7 +64,7 @@ function Item_({f, fid}: {f: fields_list_response, fid: string}) {
   const streak = useMemo(() => {
     if (!f.streak) {return null}
     return <Box sx={{float: "right"}}>
-      <Tooltip title="Streak">
+      <Tooltip title="Streak" arrow>
         <Box sx={{display: "flex", alignContent: "center", gap: 0.5}}>
           <FastForwardIcon />
           <span>{f.streak}</span>

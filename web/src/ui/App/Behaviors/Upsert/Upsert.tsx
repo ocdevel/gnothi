@@ -36,6 +36,7 @@ import {ScoreAdvanced} from "./ScoreAdvanced.tsx";
 import {FullScreenDialog} from "../../../Components/Dialog.tsx";
 import Charts from "../Analyze/Charts.tsx";
 import {useFormWatcher} from "./useFormWatcher.tsx";
+import ReactMarkdown from "react-markdown";
 
 export function UpsertModal() {
   const [
@@ -159,15 +160,7 @@ export function UpsertModal() {
             ]}
           />
         </>}
-        <Box>
-          <h6>Coming features:</h6>
-          <ul>
-            <li>Nested items. Hoping for infinite trees, like Workflowy</li>
-            <li>Due dates (start, end). Especially for ToDos</li>
-            <li>More complex point system, using Sigmoid curve (rather than everything is + / - 1).</li>
-            <li>Display read-only parts (score_total, score_period)</li>
-          </ul>
-        </Box>
+        <ShowMore f={field} />
       </Stack2>
       </CardContent>
     </Card>
@@ -185,6 +178,26 @@ export function UpsertModal() {
       {["overall","view"].includes(view) && <Charts />}
     </FullScreenDialog>
   </>
+}
+
+function ShowMore({f}: {fields_list_response}) {
+  const [show, setShow] = useState(false)
+  const fieldDump = "```json\n" + JSON.stringify(f, null, 2) + "\n```"
+  if (!show) {
+    return <Button onClick={() => setShow(true)}>Show More</Button>
+  }
+  return <Box>
+    <h6>Coming features:</h6>
+    <ul>
+      <li>Nested items. Hoping for infinite trees, like Workflowy</li>
+      <li>Due dates (start, end). Especially for ToDos</li>
+      <li>More complex point system, using Sigmoid curve (rather than everything is + / - 1).</li>
+      <li>Display read-only parts (score_total, score_period)</li>
+    </ul>
+    <ReactMarkdown>
+      {fieldDump}
+    </ReactMarkdown>
+  </Box>
 }
 
 
