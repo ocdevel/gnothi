@@ -24,7 +24,7 @@ export function NotEnough() {
         Keep tracking to see behaviors insights!
       </Typography>
       <Typography mb={2} variant={"body1"}>
-        After you have 3 or more days of behavior-tracking, this is where you’ll see charts and various insights. Be sure to continue tracking behaviors in the meantime.
+        After you have 6 or more days of behavior-tracking, this is where you’ll see charts and various insights. Be sure to continue tracking behaviors in the meantime.
       </Typography>
       <Typography color="primary" variant={"body1"} fontWeight={500}>
         Why is tracking crucial?
@@ -76,7 +76,7 @@ export function Upgrade() {
         Behavior analysis is a premium feature
       </Typography>
       <Typography mb={2} variant={"body1"}>
-        Upgrade to premium or use a credit to see charts and graphs, correlation analysis, predicted next-day values, top behavior influencers, and more. <strong>Note:</strong> this feature relies on 3 or more days of behavior tracking to generate insights. If you haven't tracked much yet, consider waiting to use a credit. On the other hand, a credit is site-wide, so you can experiment with the premium journal features (which don't rely on time for value).
+        Upgrade to premium or use a credit to see charts and graphs, correlation analysis, predicted next-day values, top behavior influencers, and more. <strong>Note:</strong> this feature relies on 6 or more days of behavior tracking to generate insights. If you haven't tracked much yet, consider waiting to use a credit. On the other hand, a credit is site-wide, so you can experiment with the premium journal features (which don't rely on time for value).
       </Typography>
       <CardActions sx={{backgroundColor: "white", alignContent: "center"}}>
         <BtnTryGenerative
