@@ -160,34 +160,27 @@ upsert AS (
   ON CONFLICT (field_id, "day") DO UPDATE SET "value" = ${value}
   RETURNING *
 ),
-upsert_extra as (
-  SELECT upsert.*, 
-    field.score_enabled, 
-    CASE WHEN field.score_up_good THEN 1 ELSE -1 END AS direction
-  FROM upsert 
-  JOIN field ON field.id = upsert.field_id
-),
 -- If they have an entry already for today, the points we'll apply elsewhere are the diff form its last value, 
 -- and what they just submitted. If they don't have an entry, the "diff" is just the score whole-sale
 score_diff AS (
   SELECT 
-    upsert_extra.*,
-    ( 
+    score_enabled, 
+    CASE WHEN score_up_good THEN 1 ELSE -1 END AS direction,
+    (
       -- will be 0 if it was a reward they couldn't afford,  since upsert skipped
-      COALESCE(upsert_extra.value, 0) 
+      COALESCE((SELECT "value" FROM upsert), 0) 
       -- will be 0 if it's the first entry of the day
-      - COALESCE(existing_entry.value, 0)
+      - COALESCE((SELECT "value" FROM existing_entry), 0)
     ) AS diff
-  FROM upsert_extra 
-  LEFT JOIN existing_entry ON existing_entry.field_id = upsert_extra.field_id
+  -- don't FROM upsert, since that may be null if "reward you can't afford"
+  FROM field WHERE field.id = ${field_id}
 ),
 -- Update the field's score and score_period
 field_update AS (
   UPDATE fields
   SET 
-    score_total = score_total + score_diff.diff,
-    score_period = score_period + score_diff.diff
-  FROM score_diff
+    score_total = score_total + (SELECT diff FROM score_diff),
+    score_period = score_period + (SELECT diff FROM score_diff)
   WHERE id = ${field_id}
     -- early exit all downstream scoring ops if score_enabled=FALSE. AI will the logged values (field_entries2) rather
     -- than columns on fields, so those values are already accounted for 
@@ -204,12 +197,12 @@ average_update AS (
 user_update AS (
   -- Update the user's score
   UPDATE users
-  SET points = users.points + score_diff.diff * score_diff.direction
-  FROM score_diff
+  SET points = users.points + (
+    SELECT (CASE WHEN score_enabled THEN diff * direction ELSE 0 END)
+    FROM score_diff
+  )
   WHERE 
     users.id = ${uid}
-    AND score_diff.score_enabled IS TRUE 
-    AND score_diff.field_id = ${field_id}
   RETURNING users.*
 )
 SELECT
