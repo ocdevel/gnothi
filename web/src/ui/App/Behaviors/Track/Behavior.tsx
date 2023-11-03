@@ -18,6 +18,7 @@ import Typography from "@mui/material/Typography";
 import ReactMarkdown from "react-markdown";
 import {fields_list_response} from "../../../../../../schemas/fields.ts";
 import Tooltip from "@mui/material/Tooltip";
+import dayjs from "dayjs";
 
 interface Behavior {
   fid: string
@@ -55,11 +56,26 @@ function Item_({f, fid}: {f: fields_list_response, fid: string}) {
     </Typography>
   }, [f.notes])
 
-  const active = useMemo(() => (
-    ["habit","reward"].includes(f.lane) ? true
-    : f.lane === "custom" ? f.analyze_enabled
-    : f.score_period < f.reset_quota
-  ), [f])
+  const active = useMemo(() => {
+    // habits and rewards are always "due" (aka, no concept of that)
+    if (["habit", "reward"].includes(f.lane)) {
+      return true
+    }
+    // Hide Data behaviors which have analyze_disabled. The intent there is "keept his around
+    // so as not to delete the data; but I'm no longer interested"
+    if (f.lane === "custom") {
+      return f.analyze_enabled
+    }
+    // For dailies, the only complexity is if it's not active for this particular day.
+    // Everything else (dailies & todos) are considered due, if they haven't met the quota
+    const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    const date = new Date();  // You can pass a specific date string to the Date constructor if needed
+    const dayName = days[date.getDay()];
+    if (f.lane === "daily" && !f[dayName]) {
+      return false
+    }
+    return f.score_period < f.reset_quota
+  }, [f])
 
   const streak = useMemo(() => {
     if (!f.streak) {return null}
