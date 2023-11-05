@@ -51,7 +51,7 @@ export const fields_post_request = Field.omit({
   next_pred: true,
   avg: true,
   score_total: true,
-  score_period: true,
+  //score_period: true,
   streak: true,
 })
 export type fields_post_request = z.infer<typeof fields_post_request>

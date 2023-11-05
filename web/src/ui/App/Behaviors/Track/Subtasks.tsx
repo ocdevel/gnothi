@@ -10,8 +10,10 @@ import {BehaviorNotes} from "./BehaviorNotes.tsx";
 import Checkbox from "@mui/material/Checkbox";
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import IconButton from "@mui/material/IconButton";
+import {shallow} from "zustand/shallow";
 
 type F = {f: fields_list_response}
+type Fid = {fid: string}
 export function Subtasks({f}: F) {
   return <>
     <ListSubtasks f={f} />
@@ -26,8 +28,15 @@ function ListSubtasks({f}: F) {
 }
 
 function ViewSubtask({f}: F) {
+  // const [send] = useStore(useCallback(s => [s.send], []))
+  // const f = useStore(s => s.res.fields_list_response?.hash?.[fid], shallow)
   const flex = {display: "flex", alignItems: "center"}
-  const changeCheck = () => {}
+  const changeCheck = () => {
+    send("fields_put_request", {
+      ...f,
+      score_period: f.score_period > 0 ? 0 : 1,
+    })
+  }
   return <Box>
     <Box sx={{...flex, justifyContent: "space-between"}}>
       <Box sx={flex}>
