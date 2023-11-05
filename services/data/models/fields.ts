@@ -286,6 +286,13 @@ FROM
       -- Only include fields where the quota hasn't been met. If they go above quota, that's given points on + button
       af.reset_quota > af.score_period  
   ),
+  agg_quota_check AS (
+    SELECT
+      user_id,
+      SUM(points_to_deduct) AS points_to_deduct
+    FROM quota_check
+    GROUP BY user_id
+  ),
   reset_score_period AS (
     UPDATE 
       fields
@@ -296,14 +303,10 @@ FROM
       id IN (SELECT id FROM active_fields)
     RETURNING id as field_id, user_id
   )
-  UPDATE
-    users u
-  SET
-    points = points - qc.points_to_deduct
-  FROM
-    quota_check qc
-  WHERE
-    u.id = qc.user_id AND qc.points_to_deduct > 0;
+  UPDATE users u
+  SET points = points - qc.points_to_deduct
+  FROM agg_quota_check qc
+  WHERE u.id = qc.user_id
 -- END;
 -- $$;
 `
