@@ -29,7 +29,7 @@ export const stripe_cancel_request = new Route(r.stripe_cancel_request, async (r
   if (!context.user.payment_id) {
     throw new Error(`Stripe: user ${uid} has no stripe_id`)
   }
-  const response = await stripe.subscriptions.del(user.payment_id)
+  const response = await stripe.subscriptions.cancel(user.payment_id)
   console.log({stripeDeletionResponse: response})
 
   // don't delete premium yet, the stripe callback will handle that.
