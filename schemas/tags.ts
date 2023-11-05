@@ -51,6 +51,12 @@ export type tags_toggle_request = z.infer<typeof tags_toggle_request>
 export const tags_toggle_response = tags_list_response
 export type tags_toggle_response = z.infer<typeof tags_toggle_response>
 
+export const tags_sort_request = z.object({
+  id: z.string(),
+  sort: z.number(),
+}).array()
+export type tags_sort_request = z.infer<typeof tags_sort_request>
+
 export const EntryTag = z.object({
   entry_id: z.string().uuid(), // entries.id FK
   tag_id: z.string().uuid(), // tags.id FK
@@ -111,8 +117,9 @@ export const routes = {
       snoopable: false
     },
     o: {
-      e: "void", // will call tags_get_request
-      s: Passthrough,
+      e: "tags_delete_response", // will call tags_get_request
+      event_as: "tags_list_response",
+      s: tags_list_response,
       t: {ws: true},
     }
   },
@@ -127,6 +134,19 @@ export const routes = {
       s: tags_toggle_response,
       event_as: "tags_list_response",
       op: "update",
+      t: {ws: true},
+    }
+  },
+  tags_sort_request: {
+    i: {
+      e: 'tags_sort_request',
+      s: tags_sort_request,
+      t: {ws: true},
+    },
+    o: {
+      e: 'tags_sort_response',
+      s: tags_list_response,
+      event_as: "tags_list_response",
       t: {ws: true},
     }
   }

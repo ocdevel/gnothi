@@ -42,7 +42,7 @@ export default function Form({tag}: Form) {
 
   return <Box className="form-tags-put">
     <Paper sx={styles.paper}>
-      {/*<Reorder />*/}
+      <Reorder />
       <Controller
         name="name"
         control={control}

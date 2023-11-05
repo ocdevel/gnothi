@@ -61,8 +61,8 @@ export const Events = z.enum([
   'tags_delete_response',
   'tags_get_request',
   'tags_get_response',
-  'tags_reorder_request',
-  'tags_reorder_response',
+  'tags_sort_request',
+  'tags_sort_response',
   'tags_toggle_request',
   'tags_toggle_response',
 
