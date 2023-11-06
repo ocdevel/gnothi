@@ -81,7 +81,7 @@ export function Menu2(props) {
 //   onChange?: (value: string) => void
 // }
 export function TextField2(props) {
-  const {name, form, onChange, autoFocus, ...rest} = props
+  const {name, form, onChange, ...rest} = props
   const className = `textfield-${name}`
   rest.className = rest.className ? `${rest.className} ${className}` : className
 
@@ -96,6 +96,7 @@ export function TextField2(props) {
 
   const inputProps = {
     sx: {borderRadius: 2},
+    ...(rest.inputProps || {})
   }
 
   if (!form) {

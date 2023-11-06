@@ -1,7 +1,7 @@
 import {useForm} from "react-hook-form";
 import {fields_list_response, fields_post_request} from "../../../../../../schemas/fields.ts";
 import {useStore} from "../../../../data/store";
-import React, {useCallback, useRef} from "react";
+import React, {useCallback, useEffect, useRef} from "react";
 import Box from "@mui/material/Box";
 import {TextField2} from "../../../Components/Form.tsx";
 import { useHotkeys } from 'react-hotkeys-hook'
@@ -71,32 +71,47 @@ function AddSubtask_({f}: F) {
     s.send,
     s.behaviors.setSubtaskParentId,
   ], []))
+
+  const inputRef = useRef(null)
+
   const form = useForm({
     defaultValues: fields_post_request.parse({ name: "", type: "check", lane: f.lane })
   })
+
   const submit = useCallback((data) => {
     send("fields_post_request", {...data, parent_id: f.id})
     form.setValue("name", "")
   }, [])
 
-  const clear = useCallback(() => {
-    setSubtaskParentId(null)
+  useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.focus()
+    }
   }, [])
+
+  const clear = useCallback(() => {
+    if (inputRef.current) {
+      setSubtaskParentId(null)
+    }
+  }, [inputRef.current])
+
   // useHotkeys('esc', clear)
+
+  const textfieldKeyDown = useCallback((e) => {
+    if (e.key === 'Escape') {
+      e.preventDefault(); // Prevent the default escape key behavior
+      clear(); // Your clear function
+      e.stopPropagation(); // Stop the event from bubbling up
+    }
+  })
 
   return <form onSubmit={form.handleSubmit(submit)}>
     <TextField2
-      autoFocus={true}
-      onKeyUp={event => {
-        if (event.key === 'Escape') {
-          clear()
-        }
-      }}
+      onKeyDown={textfieldKeyDown}
+      inputRef={inputRef}
       form={form}
       name="name"
-      // FIXME I gotta figure this out. The field comes in blurred, so it immediately clears.
-      // Maybe use some useRef to determine if it has a .current, before allowing clear?
-      // onBlur={clear}
+      onBlur={clear}
     />
   </form>
 }
