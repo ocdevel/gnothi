@@ -39,7 +39,7 @@ export default function MachineLearning() {
 
               <Grid item xs={12}> 
                  <Typography>
-                 Gnothi uses machine learning models like GPT-3, among others, that have been trained on large sets of data, to be able to provide you with helpful information, or insights.   
+                 Gnothi uses machine learning models like GPT, among others, that have been trained on large sets of data, to be able to provide you with helpful information, or insights.
                 </Typography>
               </Grid> 
 

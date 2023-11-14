@@ -89,7 +89,7 @@ export const insights_prompt_request = Insight.extend({
   entry_ids: z.string().array(),
   messages: Message.array(),
   generative: z.boolean().optional(),
-  model: z.enum(['gpt-3.5-turbo-16k', 'gpt-4'])
+  model: z.enum(['gpt-3.5-turbo-16k', 'gpt-4', 'gpt-4-1106-preview'])
 })
 export type insights_prompt_request = z.infer<typeof insights_prompt_request>
 export const insights_prompt_response = insights_prompt_request
