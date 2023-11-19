@@ -123,6 +123,9 @@ export const fields = pgTable('fields', {
   date_due: date("date_due"),
 
   notes: varchar("notes"),
+
+  // when a user starts a timer on a task, remember what it was for that task for ease of click
+  // timer: integer("timer").default(25),
 }, (table) => {
   return {
     ix_fields_user_id: index("ix_fields_user_id").on(table.user_id),

@@ -5,7 +5,7 @@ import {Select2, TextField2} from "../../../Components/Form.tsx";
 import {shallow} from "zustand/shallow";
 import Box from "@mui/material/Box";
 import {BasicDialog} from "../../../Components/Dialog.tsx";
-import {useCallback} from "react";
+import {useCallback, useEffect, useRef} from "react";
 import {useForm} from "react-hook-form";
 import {zodResolver} from "@hookform/resolvers/zod";
 import {z} from 'zod'
@@ -18,7 +18,6 @@ import PlayCircleIcon from '@mui/icons-material/PlayCircle';
 import PauseCircleIcon from '@mui/icons-material/PauseCircle';
 import StopCircleIcon from '@mui/icons-material/StopCircle';
 import IconButton from "@mui/material/IconButton";
-
 
 export function TimerModal() {
   const view = useStore(s => s.behaviors.view)
@@ -40,21 +39,41 @@ export function TimerModal() {
     setView({view: null, fid: null})
   }, [view.fid])
 
+  // having trouble with autoFocus in TextField. Doing it manually.
+  function setRef(element) {
+    if (!element) {return}
+    setTimeout(() => element.focus(), 1)
+  }
+
+  const textField = <TextField2
+    autoFocus
+    label="Minutes"
+    form={form}
+    name="timer"
+    inputRef={setRef}
+  />
+
   return <BasicDialog
     open={view.view === 'timer'}
     onClose={close}
     size="xl"
     title="Timer"
   >
-    <CardContent>
-      <WithHelp
-        field={<TextField2 label="Minutes" form={form} name="timer" />}
-        help={<ReactMarkdown>After the timer is up, if this task is scoreable, you'll get a point (and it will be checked off if applicable</ReactMarkdown>}
-      />
-    </CardContent>
-    <CardActions>
-      <Button onClick={form.handleSubmit(submit)}>Start</Button>
-    </CardActions>
+    <form onSubmit={form.handleSubmit(submit)}>
+      <CardContent>
+        <WithHelp
+          field={textField}
+          help={<ReactMarkdown>After the timer is up, if this task is scoreable, you'll get a point (and it will be checked off if applicable</ReactMarkdown>}
+        />
+      </CardContent>
+      <CardActions>
+        <Button
+          type="submit"
+        >
+          Start
+        </Button>
+      </CardActions>
+    </form>
   </BasicDialog>
 }
 
