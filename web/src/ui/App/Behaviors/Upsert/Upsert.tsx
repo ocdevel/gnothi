@@ -66,19 +66,6 @@ export function UpsertModal() {
 
   console.log(form.formState.errors)
 
-  const onCta = useCallback(() => setView({view: "new", fid: null}), [])
-  const ctas = as ? [] : [
-    // {
-    //   name: "Top Influencers",
-    //   secondary: true,
-    //   onClick: () => setView({view: "overall"}),
-    // },
-    // {
-    //   name: "Add Behavior",
-    //   onClick: onCta,
-    // }
-  ]
-
   const onClose = useCallback(() => setView({view: null, fid: null}), [])
   const open = ["new", "edit"].includes(view.view)
 
@@ -91,6 +78,14 @@ export function UpsertModal() {
     }
     onClose()
   }, [fid])
+
+  const ctas = as ? [] : [
+    {
+      name: "Save",
+      // secondary: true,
+      onClick: form.handleSubmit(submit)
+    },
+  ]
 
   const destroy = useCallback(() => {
     if (!fid) {return}
@@ -109,66 +104,57 @@ export function UpsertModal() {
         borderRadius: 2,
       }}
     >
-      <CardContent>
-        <Stack direction='row' justifyContent='space-between' alignItems='center' mb={2}>
-          <Typography variant="h4" color="primary" fontWeight={500} m={0}>{fid ? "Edit" : "Add New"}</Typography>
-          <CardActions sx={{justifyContent: 'flex-end'}}>
-            <Button
-              color="primary"
-              variant="contained"
-              onClick={form.handleSubmit(submit)}
-              className="btn-save"
-              size="small"
-            >
-              Save
-            </Button>
-          </CardActions>
-        </Stack>
-      <Stack2>
-        <WithHelp
-          field={<TextField2
-            name='name'
-            label="Name"
-            placeholder="Title of behavior to track"
-            className='input-name'
-            form={form}
-          />}
-          help={<Typography>Add the behavior you want to track. You can use Markdown (eg for links) and emojis. But try to keep it short, due to display formatting.</Typography>}
-        />
-        {lane === "reward" ? <>
-          <BehaviorLane {...upsertProps} />
-          <TrackingType {...upsertProps} />
-          <BehaviorValue {...upsertProps} />
-          <BehaviorNotes {...upsertProps} />
-        </> : <>
-          <BehaviorLane {...upsertProps} />
-          <BehaviorType {...upsertProps} />
-          <TrackingType {...upsertProps} />
-          <BehaviorNotes {...upsertProps} />
-          <ResetPeriods {...upsertProps} />
-          <Accordions
-            defaultExpanded={0}
-            accordions={[
-              {
-                title: "Advanced",
-                content: <Stack2>
-                  <AnalyzeAdvanced {...upsertProps} />
-                  <ScoreAdvanced {...upsertProps} />
-                  <DeleteButton {...upsertProps} />
-                </Stack2>
-              }
-            ]}
+      <CardContent
+        component="form"
+        onSubmit={form.handleSubmit(submit)}
+      >
+        <Stack2>
+          <WithHelp
+            field={<TextField2
+              name='name'
+              label="Name"
+              placeholder="Title of behavior to track"
+              className='input-name'
+              form={form}
+              autoFocus
+            />}
+            help={<Typography>Add the behavior you want to track. You can use Markdown (eg for links) and emojis. But try to keep it short, due to display formatting.</Typography>}
           />
-        </>}
-        <ShowMore f={field} />
-      </Stack2>
+          {lane === "reward" ? <>
+            <BehaviorLane {...upsertProps} />
+            <TrackingType {...upsertProps} />
+            <BehaviorValue {...upsertProps} />
+            <BehaviorNotes {...upsertProps} />
+          </> : <>
+            <BehaviorLane {...upsertProps} />
+            <BehaviorType {...upsertProps} />
+            <TrackingType {...upsertProps} />
+            <BehaviorNotes {...upsertProps} />
+            <ResetPeriods {...upsertProps} />
+            <Accordions
+              defaultExpanded={0}
+              accordions={[
+                {
+                  title: "Advanced",
+                  content: <Stack2>
+                    <AnalyzeAdvanced {...upsertProps} />
+                    <ScoreAdvanced {...upsertProps} />
+                    <DeleteButton {...upsertProps} />
+                  </Stack2>
+                }
+              ]}
+            />
+          </>}
+          <ShowMore f={field} />
+        </Stack2>
+        <button type='submit' style={{display: 'none'}}>Submit</button>
       </CardContent>
     </Card>
   }
 
   return <>
     <FullScreenDialog
-      title=""
+      title={fid ? "Edit" : "Add New"}
       className="behaviors upsert"
       ctas={ctas}
       open={open}

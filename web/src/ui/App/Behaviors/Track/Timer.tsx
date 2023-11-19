@@ -66,17 +66,11 @@ function TimerForm({field, close}: TimerForm) {
     send("fields_put_request", {...field, timer: data.timer})
   }, [])
 
-  // having trouble with autoFocus in TextField. Doing it manually.
-  function setRef(element) {
-    if (!element) {return}
-    setTimeout(() => element.focus(), 1)
-  }
   const textField = <TextField2
     label="Minutes"
     form={form}
     name="timer"
-    // autoFocus
-    inputRef={setRef}
+    autoFocus
   />
   return <form onSubmit={form.handleSubmit(submit)}>
     <CardContent>

@@ -10,7 +10,7 @@ import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
 import Button from "@mui/material/Button";
 import {Controller, ControllerProps, FieldValue, FieldValues, Path, UseFormReturn} from "react-hook-form";
-import React, {useState} from "react";
+import React, {useRef, useState} from "react";
 import {useForm} from "react-hook-form";
 import {yupResolver} from "@hookform/resolvers/yup";
 export * as yup from 'yup';
@@ -81,12 +81,17 @@ export function Menu2(props) {
 //   onChange?: (value: string) => void
 // }
 export function TextField2(props) {
-  const {name, form, onChange, ...rest} = props
+  const {name, form, onChange, autoFocus, ...rest} = props
   const className = `textfield-${name}`
   rest.className = rest.className ? `${rest.className} ${className}` : className
 
   if (!(form || onChange)) {
     throw `{form} or {onChange} required for TextField.${name}`
+  }
+
+  // I can't get autoFocus working almost ever, so I'm monkey-patching it
+  if (autoFocus) {
+    rest.inputRef = (el) => el && setTimeout(() => el.focus(), 1)
   }
 
   const inputProps = {
