@@ -125,7 +125,7 @@ export const fields = pgTable('fields', {
   notes: varchar("notes"),
 
   // when a user starts a timer on a task, remember what it was for that task for ease of click
-  // timer: integer("timer").default(25),
+  timer: integer("timer").default(25),
 }, (table) => {
   return {
     ix_fields_user_id: index("ix_fields_user_id").on(table.user_id),
@@ -148,7 +148,6 @@ export const fields = pgTable('fields', {
 
   }
 })
-
 
 export type Field = InferSelectModel<typeof fields>
 export const fieldId = (name='field_id') => uuid(name).notNull().references(() => fields.id, {onDelete: 'cascade'})

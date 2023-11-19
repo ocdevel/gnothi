@@ -131,13 +131,14 @@ export const behaviorsSlice: StateCreator<
     timer: {
       fid: null,
       seconds: 0,
-      minutesDesired: DEFAULT_MINUTES,
+      minutesDesired: undefined,
       status: "work", // work|pause -> done (waits here until they activate break) -> break -> delete
       interval: null,
     },
     // separate from nested timer object so we can clobber the timer object
     timerActivate: ({fid, status, minutesDesired=DEFAULT_MINUTES}) => {
       const curr = get().behaviors.timer
+
       clearInterval(curr.interval)
       if (status === "stop") {
         set(produce(s => {

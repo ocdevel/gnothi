@@ -23,6 +23,7 @@ export const Field = fieldsInsertSchema.extend({
   // having trouble with CoerceNumber helper, I think since we need it to be optional?
   default_value_value: z.coerce.number().optional(),
   reset_quota: z.coerce.number().default(1),
+  timer: z.coerce.number().optional(),
 
   // user_id: z.string().uuid(), // FK users.id
 })

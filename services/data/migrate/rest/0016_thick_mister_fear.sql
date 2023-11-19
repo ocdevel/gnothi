@@ -1,0 +1,1 @@
+ALTER TABLE "fields" ADD COLUMN "timer" integer DEFAULT 25;

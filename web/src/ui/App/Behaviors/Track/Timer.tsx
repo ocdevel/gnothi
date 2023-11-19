@@ -18,63 +18,81 @@ import PlayCircleIcon from '@mui/icons-material/PlayCircle';
 import PauseCircleIcon from '@mui/icons-material/PauseCircle';
 import StopCircleIcon from '@mui/icons-material/StopCircle';
 import IconButton from "@mui/material/IconButton";
+import {fields_list_response} from "../../../../../../schemas/fields.ts";
 
 export function TimerModal() {
   const view = useStore(s => s.behaviors.view)
+  const field = useStore(s => view.fid && s.res.fields_list_response?.hash?.[view.fid])
   const [
     setView,
-    timerActivate
   ] = useStore(useCallback(s => [
     s.behaviors.setView,
-    s.behaviors.timerActivate
   ], []))
-  const form = useForm({
-    resolver: zodResolver(z.object({timer: z.coerce.number()})),
-    defaultValues: {timer: 25}
-  })
 
   const close = useCallback(() => setView({view: null, fid: null}), [])
-  const submit = useCallback((data) => {
-    timerActivate({fid: view.fid, status: "work", minutesDesired: data.timer})
-    setView({view: null, fid: null})
-  }, [view.fid])
-
-  // having trouble with autoFocus in TextField. Doing it manually.
-  function setRef(element) {
-    if (!element) {return}
-    setTimeout(() => element.focus(), 1)
-  }
-
-  const textField = <TextField2
-    autoFocus
-    label="Minutes"
-    form={form}
-    name="timer"
-    inputRef={setRef}
-  />
-
   return <BasicDialog
     open={view.view === 'timer'}
     onClose={close}
     size="xl"
     title="Timer"
   >
-    <form onSubmit={form.handleSubmit(submit)}>
-      <CardContent>
-        <WithHelp
-          field={textField}
-          help={<ReactMarkdown>After the timer is up, if this task is scoreable, you'll get a point (and it will be checked off if applicable</ReactMarkdown>}
-        />
-      </CardContent>
-      <CardActions>
-        <Button
-          type="submit"
-        >
-          Start
-        </Button>
-      </CardActions>
-    </form>
+    {field && <TimerForm field={field} close={close} />}
   </BasicDialog>
+}
+
+// Separate form from the modal due to useForm data caching issues
+type TimerForm = { field: fields_list_response, close: () => void }
+function TimerForm({field, close}: TimerForm) {
+  const form = useForm({
+    resolver: zodResolver(z.object({timer: z.coerce.number()})),
+    defaultValues: {timer: field?.timer || 25}
+  })
+  const [
+    send,
+    timerActivate
+  ] = useStore(useCallback(s => [
+    s.send,
+    s.behaviors.timerActivate
+  ], []))
+
+  const submit = useCallback((data) => {
+    timerActivate({
+      fid: field.id,
+      status: "work",
+      minutesDesired: data.timer
+    })
+    close()
+    // save the time they use for future quick-start
+    send("fields_put_request", {...field, timer: data.timer})
+  }, [])
+
+  // having trouble with autoFocus in TextField. Doing it manually.
+  function setRef(element) {
+    if (!element) {return}
+    setTimeout(() => element.focus(), 1)
+  }
+  const textField = <TextField2
+    label="Minutes"
+    form={form}
+    name="timer"
+    // autoFocus
+    inputRef={setRef}
+  />
+  return <form onSubmit={form.handleSubmit(submit)}>
+    <CardContent>
+      <WithHelp
+        field={textField}
+        help={<ReactMarkdown>After the timer is up, if this task is scoreable, you'll get a point (and it will be checked off if applicable</ReactMarkdown>}
+      />
+    </CardContent>
+    <CardActions>
+      <Button
+        type="submit"
+      >
+        Start
+      </Button>
+    </CardActions>
+  </form>
 }
 
 export function TimerControls({fid}: {fid: string}) {
