@@ -9,6 +9,17 @@ import produce from 'immer'
 import _ from "lodash";
 import {SharingSlice} from "./sharing";
 import {fields_entries_list_response, fields_post_request} from "../../../../schemas/fields.ts";
+import { clearInterval as clearInterval_, clearTimeout, setInterval, setTimeout } from 'worker-timers';
+
+function clearInterval(intervalId: number | null) {
+  if (!intervalId) { return }
+  try {
+    clearInterval_(intervalId)
+  } catch(e) {
+    // worker-timers clearInterval throws instead of graceful, so just log for dev for now
+    console.error(e)
+  }
+}
 
 export const fmt = 'YYYY-MM-DD'
 export function iso(day?: Dayjs | string) {
@@ -47,7 +58,7 @@ export interface BehaviorsSlice {
       status: TimerStatus
       seconds: number
       minutesDesired?: number
-      interval: null | NodeJS.Timeout
+      interval: null | number
     }
     timerActivate: (data: {fid: string, status: TimerStatus, minutesDesired: number}) => void
     // just separate function so timerActivate doesn't get too crazy
@@ -127,9 +138,7 @@ export const behaviorsSlice: StateCreator<
     // separate from nested timer object so we can clobber the timer object
     timerActivate: ({fid, status, minutesDesired=DEFAULT_MINUTES}) => {
       const curr = get().behaviors.timer
-      if (curr.interval) {
-        clearInterval(curr.interval)
-      }
+      clearInterval(curr.interval)
       if (status === "stop") {
         set(produce(s => {
           s.behaviors.timer = {fid: null, seconds: 0, status: "stop", interval: null, minutesDesired: DEFAULT_MINUTES}

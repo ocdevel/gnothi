@@ -54,6 +54,7 @@
     "sass": "^1.68.0",
     "strip-markdown": "^5.0.1",
     "use-debounce": "^9.0.4",
+    "worker-timers": "^7.0.77",
     "yup": "^1.3.2",
     "zustand": "^4.4.1"
   },
