@@ -65,8 +65,8 @@ export interface BehaviorsSlice {
     timerFinish: () => void
 
     subtask: {
-      parentId: null | string
-      setParentId: (id: string | null) => void
+      addingTo: null | string
+      setAddingTo: (parentId: string | null) => void
       editingId: null | string
       setEditingId: (id: string | null) => void
     }
@@ -226,13 +226,15 @@ export const behaviorsSlice: StateCreator<
     },
 
     subtask: {
-      parentId: null,
-      setParentId: (id) => set(produce(state => {
-        state.behaviors.subtask.parentId = id
+      addingTo: null,
+      setAddingTo: (parentId) => set(produce(state => {
+        state.behaviors.subtask.addingTo = parentId
+        state.behaviors.subtask.editingId = null
       })),
       editingId: null,
       setEditingId: (id) => set(produce(state => {
         state.behaviors.subtask.editingId = id
+        state.behaviors.subtask.addingTo = null
       }))
     }
   }

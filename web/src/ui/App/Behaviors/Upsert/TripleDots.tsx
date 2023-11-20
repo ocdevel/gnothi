@@ -25,12 +25,12 @@ export function TripleDots_({fid}: { fid: string }) {
     setView,
     destroy,
     timerActivate,
-    setSubtaskParentId,
+    setAddingTo,
   ] = useStore(useCallback(s => [
     s.behaviors.setView,
     s.behaviors.destroy,
     s.behaviors.timerActivate,
-    s.behaviors.subtask.setParentId,
+    s.behaviors.subtask.setAddingTo,
   ], []))
 
   const open = Boolean(anchorEl);
@@ -56,7 +56,7 @@ export function TripleDots_({fid}: { fid: string }) {
   }, [fid])
   const addSubtask = useCallback(() => {
     handleClose()
-    setSubtaskParentId(fid)
+    setAddingTo(fid)
   }, [fid])
   const destroy_ = useCallback(() => {
     destroy(fid, handleClose)

@@ -11,28 +11,35 @@ import Checkbox from "@mui/material/Checkbox";
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import IconButton from "@mui/material/IconButton";
 import {shallow} from "zustand/shallow";
+import produce from "immer";
 
 type F = {f: fields_list_response}
-type Fid = {fid: string}
+type ParentChild = {parent: fields_list_response, child: fields_list_response}
+type ParentNoChild = {parent: fields_list_response}
+type ParentOptionalChild = {parent: fields_list_response, child?: fields_list_response}
+
 export function Subtasks({f}: F) {
   return <>
-    <ListSubtasks f={f} />
-    <AddSubtask f={f} />
+    <ListSubtasks parent={f} />
+    <AddSubtask parent={f} />
   </>
 }
 
-function ListSubtasks({f}: F) {
+function ListSubtasks({parent}: ParentNoChild) {
   const fields = useStore(s => s.res.fields_list_response?.rows || [])
-  const subtasks = fields.filter(f2 => f2.parent_id === f.id)
-  return subtasks.map(child => <ViewSubtask key={child.id} parent={f} child={child} />)
+  return fields
+    .filter(child => child.parent_id === parent.id)
+    .map(child => <ViewSubtask
+        key={child.id}
+        parent={parent}
+        child={child}
+      />
+    )
 }
 
-type ViewSubtask = {parent: fields_list_response, child: fields_list_response}
-function ViewSubtask({parent, child}: ViewSubtask) {
-  const [editingId] = useStore(s => [s.behaviors.subtask.editingId], shallow)
+function ViewSubtask({parent, child}: ParentChild) {
   const [
     send,
-    setEditingId,
   ] = useStore(useCallback(s => [
     s.send,
     s.behaviors.subtask.setEditingId
@@ -46,27 +53,16 @@ function ViewSubtask({parent, child}: ViewSubtask) {
     })
   }
 
-  const childName = useMemo(() => {
-    if (editingId === child.id) {
-      return <Upsert parent={parent} child={child} />
-    }
-    if (editingId !== child.id) {
-      return <Box sx={{flex:1, width: "100%"}} onClick={() => setEditingId(child.id)}>
-        <BehaviorName name={child.name} />
-      </Box>
-    }
-  }, [editingId, child])
-
   return <Box>
     <Box sx={{...flex, justifyContent: "space-between"}}>
-      <Box sx={flex}>
+      <Box sx={{...flex, flex: 1}}>
         <Checkbox
           defaultChecked
           className="check"
           checked={child.score_period > 0}
           onChange={changeCheck}
         />
-        {childName}
+        <SubtaskName parent={parent} child={child} />
       </Box>
       <Box>
         <IconButton onClick={() => {}}>
@@ -77,26 +73,48 @@ function ViewSubtask({parent, child}: ViewSubtask) {
     <BehaviorNotes notes={child.notes} />
   </Box>
 }
+function SubtaskName({parent, child}: ParentChild) {
+  const [
+    editingId,
+  ] = useStore(s => [
+    s.behaviors.subtask.editingId,
+  ], shallow)
+  const [setEditingId] = useStore(useCallback(s => [s.behaviors.subtask.setEditingId], []))
 
-function AddSubtask({f}: F) {
-  const subtaskParentId = useStore(s => s.behaviors.subtask.parentId)
-  if (subtaskParentId !== f.id) {return null}
-  return <Upsert parent={f} />
+  if (editingId === child.id) {
+    return <Upsert parent={parent} child={child} parentId={parent.id} />
+  }
+  return <Box
+    sx={{width: "100%", cursor: "pointer"}}
+    onClick={() => setEditingId(child.id)}
+  >
+    <BehaviorName name={child.name} />
+  </Box>
 }
 
+function AddSubtask({parent}: ParentNoChild) {
+  const addingTo = useStore(s => s.behaviors.subtask.addingTo)
+  if (addingTo && parent.id && addingTo === parent.id) {
+    return <Upsert
+      // force a re-render for the useRef & other complex HTML stuff
+      parentId={addingTo}
+      parent={parent}
+    />
+  }
+  return null
+}
 
-interface Upsert {
-  parent: fields_list_response
-  child?: fields_list_response
+type Upsert = ParentOptionalChild & {
+  parentId: string
   onSubmit?: () => void
 }
 function Upsert({parent, child}: Upsert) {
   const [
     send,
-    setParentId
+    setAddingTo
   ] = useStore(useCallback(s => [
     s.send,
-    s.behaviors.subtask.setParentId,
+    s.behaviors.subtask.setAddingTo,
   ], []))
 
   const form = useForm({
@@ -110,8 +128,10 @@ function Upsert({parent, child}: Upsert) {
   const inputRef = useRef(null)
   function setRef(el: any) {
     if (!el) {return}
-    inputRef.current = el
-    setTimeout(() => el.focus(), 1)
+    setTimeout(() => {
+      inputRef.current = el
+      el.focus()
+    }, 1)
   }
 
   const submit = useCallback((data) => {
@@ -126,7 +146,7 @@ function Upsert({parent, child}: Upsert) {
 
   const clear = useCallback(() => {
     if (inputRef.current) {
-      setParentId(null)
+      setAddingTo(null)
     }
   }, [inputRef.current])
 
@@ -142,6 +162,7 @@ function Upsert({parent, child}: Upsert) {
 
   return <form onSubmit={form.handleSubmit(submit)}>
     <TextField2
+      fullWidth
       variant="standard"
       onKeyDown={textfieldKeyDown}
       inputRef={setRef}
