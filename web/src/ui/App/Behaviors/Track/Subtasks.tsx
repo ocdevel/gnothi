@@ -27,8 +27,14 @@ export function Subtasks({f}: F) {
 
 function ListSubtasks({parent}: ParentNoChild) {
   const fields = useStore(s => s.res.fields_list_response?.rows || [])
+  const activeId = useStore(s => s.behaviors.subtask.activeIds[parent?.id])
   return fields
-    .filter(child => child.parent_id === parent.id)
+    .filter(child => {
+      if (activeId) {
+        return child.parent_id === activeId
+      }
+      return child.parent_id === parent.id
+    })
     .map(child => <ViewSubtask
         key={child.id}
         parent={parent}
@@ -40,9 +46,10 @@ function ListSubtasks({parent}: ParentNoChild) {
 function ViewSubtask({parent, child}: ParentChild) {
   const [
     send,
+    setActiveId
   ] = useStore(useCallback(s => [
     s.send,
-    s.behaviors.subtask.setEditingId
+    s.behaviors.subtask.setActiveId
   ], []))
   // const f = useStore(s => s.res.fields_list_response?.hash?.[fid], shallow)
   const flex = {display: "flex", alignItems: "center"}
@@ -65,7 +72,7 @@ function ViewSubtask({parent, child}: ParentChild) {
         <SubtaskName parent={parent} child={child} />
       </Box>
       <Box>
-        <IconButton onClick={() => {}}>
+        <IconButton onClick={() => setActiveId(child.id)}>
           <ChevronRightIcon />
         </IconButton>
       </Box>

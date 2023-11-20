@@ -69,6 +69,9 @@ export interface BehaviorsSlice {
       setAddingTo: (parentId: string | null) => void
       editingId: null | string
       setEditingId: (id: string | null) => void
+      // currently drilled-in subtask
+      activeIds: Record<string, null | string>
+      setActiveId: (parentId: string, childId: string) => void
     }
   }
 }
@@ -235,6 +238,11 @@ export const behaviorsSlice: StateCreator<
       setEditingId: (id) => set(produce(state => {
         state.behaviors.subtask.editingId = id
         state.behaviors.subtask.addingTo = null
+      })),
+      activeIds: {},
+      setActiveId: (parentId, childId) => set(produce(state => {
+        state.behaviosr.
+        state.behaviors.subtask.active[parentId] = childId
       }))
     }
   }
