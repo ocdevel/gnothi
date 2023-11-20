@@ -30,7 +30,7 @@ export function TripleDots_({fid}: { fid: string }) {
     s.behaviors.setView,
     s.behaviors.destroy,
     s.behaviors.timerActivate,
-    s.behaviors.setSubtaskParentId,
+    s.behaviors.subtask.setParentId,
   ], []))
 
   const open = Boolean(anchorEl);

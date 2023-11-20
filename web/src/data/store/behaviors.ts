@@ -64,8 +64,12 @@ export interface BehaviorsSlice {
     // just separate function so timerActivate doesn't get too crazy
     timerFinish: () => void
 
-    subtaskParentId: null | string
-    setSubtaskParentId: (id: string | null) => void
+    subtask: {
+      parentId: null | string
+      setParentId: (id: string | null) => void
+      editingId: null | string
+      setEditingId: (id: string | null) => void
+    }
   }
 }
 
@@ -221,9 +225,15 @@ export const behaviorsSlice: StateCreator<
 
     },
 
-    subtaskParentId: null,
-    setSubtaskParentId: (id) => set(produce(state => {
-      state.behaviors.subtaskParentId = id
-    }))
+    subtask: {
+      parentId: null,
+      setParentId: (id) => set(produce(state => {
+        state.behaviors.subtask.parentId = id
+      })),
+      editingId: null,
+      setEditingId: (id) => set(produce(state => {
+        state.behaviors.subtask.editingId = id
+      }))
+    }
   }
 })

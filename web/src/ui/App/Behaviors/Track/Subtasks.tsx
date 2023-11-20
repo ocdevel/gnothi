@@ -1,7 +1,7 @@
 import {useForm} from "react-hook-form";
 import {fields_list_response, fields_post_request} from "../../../../../../schemas/fields.ts";
 import {useStore} from "../../../../data/store";
-import React, {useCallback, useEffect, useRef} from "react";
+import React, {useCallback, useEffect, useMemo, useRef, useState} from "react";
 import Box from "@mui/material/Box";
 import {TextField2} from "../../../Components/Form.tsx";
 import { useHotkeys } from 'react-hotkeys-hook'
@@ -24,29 +24,49 @@ export function Subtasks({f}: F) {
 function ListSubtasks({f}: F) {
   const fields = useStore(s => s.res.fields_list_response?.rows || [])
   const subtasks = fields.filter(f2 => f2.parent_id === f.id)
-  return subtasks.map(f2 => <ViewSubtask k={f2.id} f={f2} />)
+  return subtasks.map(child => <ViewSubtask key={child.id} parent={f} child={child} />)
 }
 
-function ViewSubtask({f}: F) {
-  // const [send] = useStore(useCallback(s => [s.send], []))
+type ViewSubtask = {parent: fields_list_response, child: fields_list_response}
+function ViewSubtask({parent, child}: ViewSubtask) {
+  const [editingId] = useStore(s => [s.behaviors.subtask.editingId], shallow)
+  const [
+    send,
+    setEditingId,
+  ] = useStore(useCallback(s => [
+    s.send,
+    s.behaviors.subtask.setEditingId
+  ], []))
   // const f = useStore(s => s.res.fields_list_response?.hash?.[fid], shallow)
   const flex = {display: "flex", alignItems: "center"}
   const changeCheck = () => {
     send("fields_put_request", {
-      ...f,
-      score_period: f.score_period > 0 ? 0 : 1,
+      ...child,
+      score_period: child.score_period > 0 ? 0 : 1,
     })
   }
+
+  const childName = useMemo(() => {
+    if (editingId === child.id) {
+      return <Upsert parent={parent} child={child} />
+    }
+    if (editingId !== child.id) {
+      return <Box sx={{flex:1, width: "100%"}} onClick={() => setEditingId(child.id)}>
+        <BehaviorName name={child.name} />
+      </Box>
+    }
+  }, [editingId, child])
+
   return <Box>
     <Box sx={{...flex, justifyContent: "space-between"}}>
       <Box sx={flex}>
         <Checkbox
           defaultChecked
           className="check"
-          checked={f.score_period > 0}
+          checked={child.score_period > 0}
           onChange={changeCheck}
         />
-        <BehaviorName key={f.id} name={f.name} />
+        {childName}
       </Box>
       <Box>
         <IconButton onClick={() => {}}>
@@ -54,61 +74,77 @@ function ViewSubtask({f}: F) {
         </IconButton>
       </Box>
     </Box>
-    <BehaviorNotes notes={f.notes} />
+    <BehaviorNotes notes={child.notes} />
   </Box>
 }
 
 function AddSubtask({f}: F) {
-  const subtaskParentId = useStore(s => s.behaviors.subtaskParentId)
+  const subtaskParentId = useStore(s => s.behaviors.subtask.parentId)
   if (subtaskParentId !== f.id) {return null}
-  return <AddSubtask_ f={f} />
+  return <Upsert parent={f} />
 }
-function AddSubtask_({f}: F) {
+
+
+interface Upsert {
+  parent: fields_list_response
+  child?: fields_list_response
+  onSubmit?: () => void
+}
+function Upsert({parent, child}: Upsert) {
   const [
     send,
-    setSubtaskParentId
+    setParentId
   ] = useStore(useCallback(s => [
     s.send,
-    s.behaviors.setSubtaskParentId,
+    s.behaviors.subtask.setParentId,
   ], []))
 
-  const inputRef = useRef(null)
-
   const form = useForm({
-    defaultValues: fields_post_request.parse({ name: "", type: "check", lane: f.lane })
+    defaultValues: fields_post_request.parse({
+      name: child?.name || "",
+      type: "check",
+      lane: parent.lane
+    })
   })
 
-  const submit = useCallback((data) => {
-    send("fields_post_request", {...data, parent_id: f.id})
-    form.setValue("name", "")
-  }, [])
+  const inputRef = useRef(null)
+  function setRef(el: any) {
+    if (!el) {return}
+    inputRef.current = el
+    setTimeout(() => el.focus(), 1)
+  }
 
-  useEffect(() => {
-    if (inputRef.current) {
-      inputRef.current.focus()
+  const submit = useCallback((data) => {
+    if (child) {
+      send("fields_put_request", {...data, id: child.id})
+    }
+    else {
+      send("fields_post_request", {...data, parent_id: parent.id})
+      form.setValue("name", "")
     }
   }, [])
 
   const clear = useCallback(() => {
     if (inputRef.current) {
-      setSubtaskParentId(null)
+      setParentId(null)
     }
   }, [inputRef.current])
 
   // useHotkeys('esc', clear)
 
-  const textfieldKeyDown = useCallback((e) => {
+  const textfieldKeyDown = useCallback((e: any) => {
     if (e.key === 'Escape') {
       e.preventDefault(); // Prevent the default escape key behavior
       clear(); // Your clear function
       e.stopPropagation(); // Stop the event from bubbling up
     }
-  })
+  }, [])
 
   return <form onSubmit={form.handleSubmit(submit)}>
     <TextField2
+      variant="standard"
       onKeyDown={textfieldKeyDown}
-      inputRef={inputRef}
+      inputRef={setRef}
       form={form}
       name="name"
       onBlur={clear}

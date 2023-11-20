@@ -81,7 +81,7 @@ export function Menu2(props) {
 //   onChange?: (value: string) => void
 // }
 export function TextField2(props) {
-  const {name, form, onChange, ...rest} = props
+  const {name, form, onChange, autoFocus, ...rest} = props
   const className = `textfield-${name}`
   rest.className = rest.className ? `${rest.className} ${className}` : className
 
