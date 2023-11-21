@@ -286,6 +286,13 @@ FROM
       -- Only include fields where the quota hasn't been met. If they go above quota, that's given points on + button
       af.reset_quota > af.score_period  
   ),
+  -- deduct from score_total for any fields which didn't meet their quota
+  fields_update AS (
+    UPDATE fields
+    SET score_total = score_total - qc.points_to_deduct
+    FROM quota_check qc
+    WHERE fields.id = qc.id
+  ),
   agg_quota_check AS (
     SELECT
       user_id,
