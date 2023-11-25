@@ -33,6 +33,7 @@ const laneDefaults = {
     ...scoringDefaults,
     type: "number",
     reset_period: "daily",
+    reset_quota: 0
   },
   daily: {
     ...scoringDefaults,
@@ -52,6 +53,7 @@ const laneDefaults = {
     type: "number",
     reset_period: "never",
     score_up_good: false,
+    reset_quota: 0
   }
 }
 
