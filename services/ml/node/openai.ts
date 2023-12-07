@@ -32,14 +32,13 @@ function getOpenAi(): OpenAI {
   return openai_
 }
 
-type Model = "gpt-4" | "gpt-3.5-turbo-16k" | "gpt-3.5-turbo"
+type Model = "gpt-4-1106-preview" | "gpt-3.5-turbo-16k"
 type Message = {
   role: "user" | "system" | "assistant"
   content: string
 }
 export const tokenLimits = {
-  "gpt-4": 8000,
-  "gpt-3.5-turbo": 4096,
+  "gpt-4-1106-preview": 128000,
   "gpt-3.5-turbo-16k": 16000,
 }
 function truncate(inputMessages: Message[], responseLimit: number, model: Model): Message[] {
@@ -89,7 +88,7 @@ export async function completion(
   // use gpt-4 for prompt (insights), and gpt-3 for entry-level tasks like summarization.
   // Gpt3 does a decent job of that, and is faster/cheaper. Wheras prompt really benefits from a high-quality
   // psychological understanding of the text
-  const model = opts.model || "gpt-3.5-turbo-16k"
+  const model = opts.model || "gpt-4-1106-preview"
   const max_tokens = opts.max_tokens || 256
 
   const messages = Array.isArray(prompt) ? prompt : [
