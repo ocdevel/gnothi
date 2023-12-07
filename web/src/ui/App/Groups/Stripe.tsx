@@ -16,7 +16,7 @@ let stripe_
 
 export default function Stripe({submit, product='create_group'}) {
 const send = useStore(s => s.send)
-  const pk = useStore(s => s.rse.payments_publickey_response)
+  const pk = useStore(s => s.res.payments_publickey_response)
   const [ready, setReady] = useState(!!stripe_)
 
   useEffect(() => {

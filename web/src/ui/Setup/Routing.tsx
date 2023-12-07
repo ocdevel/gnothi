@@ -27,6 +27,10 @@ const Dashboard = React.lazy(() => import("../App/Entries/List"))
 const Track = React.lazy(() => import("../App/Behaviors/Track/Track"))
 const Analyze = React.lazy(() => import("../App/Behaviors/Analyze/Analyze"))
 
+const GroupsLayout = React.lazy(() => import("../App/Groups/Layout"))
+const GroupsList = React.lazy(() => import("../App/Groups/List/List.tsx"))
+const Group = React.lazy(() => import("../App/Groups/View"))
+
 
 const common = {
   errorElement: <Error />,
@@ -35,7 +39,7 @@ const common = {
 // const createBrowserRouter_ = Sentry.wrapCreateBrowserRouter(createBrowserRouter);
 const createBrowserRouter_ = createBrowserRouter
 
-const AUTH_ROUTES = ["j", "b"]
+const AUTH_ROUTES = ["j", "b", "g"]
 function isAuthRoute(pathname: string) {
   const split = pathname.split("/").filter(Boolean)
   return split.length > 0 && AUTH_ROUTES.includes(split[0])
@@ -59,6 +63,10 @@ const router = createBrowserRouter_([{
     {path: "b", ...common, element: <S><BehaviorsLayout /></S>, children: [
       {index: true, ...common, element: <S><Track /></S>},
       {path: "analyze", element: <S><Analyze /></S>}
+    ]},
+    {path: "g", ...common, element: <S><GroupsLayout /></S>, children: [
+      {index: true, ...common, element: <S><GroupsList /></S>},
+      {path: ":gid", element: <S><Group /></S>}
     ]},
   ]
 }])

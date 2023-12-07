@@ -48,14 +48,6 @@ def FKCol(fk, **kwargs):
     return sa.Column(psql.UUID(as_uuid=True), sa.ForeignKey(fk, **child_cascade), **kwargs)
 
 
-class AuthOld(Base):
-    __tablename__ = 'auth_old'
-
-    id = FKCol('users.id', index=True, primary_key=True)
-    email = sa.Column(sa.String(length=320), unique=True, index=True, nullable=False)
-    hashed_password = sa.Column(sa.String(length=72), nullable=False)
-    updated_at = DateCol()
-
 
 class User(Base):
     updated_at = DateCol(update=True)

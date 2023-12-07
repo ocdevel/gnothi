@@ -17,6 +17,7 @@ import FormHelperText from "@mui/material/FormHelperText";
 import {BasicDialog} from "../../../Components/Dialog";
 import Editor from "../../../Components/Editor";
 import {yup, makeForm, Checkbox2, Select2, TextField2} from "../../../Components/Form";
+import {shallow} from "zustand/shallow";
 
 const notYet = <b>This feature isn't yet built, but you can enable it now and I'll notify you when it's available.</b>
 
@@ -103,16 +104,37 @@ function Perk({form, perk}) {
   </Grid>
 }
 
-export default function Edit({show, close, group=null}) {
+export function EditModal() {
+  const view_ = useStore(s => s.groups.view)
+  const {view, gid} = view_
+  const show = view === 'view'
   const navigate = useNavigate()
-const send = useStore(s => s.send)
-  const as = useStore(s => s.as)
-  const groupPost = useStore(s => s.res.groups_post_response)
-  const groupPut = useStore(s => s.res.groups_put_response?.res)
-  const clearEvents = useStore(a => a.clearEvents)
+  const [
+    as,
+    groupPost,
+    groupPut,
+    group,
+  ] = useStore(s => [
+    s.user?.as,
+    s.res.groups_post_response,
+    s.res.groups_put_response?.res,
+    s.res.groups_list_response?.hash?.[gid]
+  ], shallow)
+  const [
+    send,
+    setView,
+    clearEvents,
+  ] = useStore(useCallback(s => [
+    s.send,
+    s.groups.setView,
+    s.clearEvents
+  ], []))
 
   const form = useForm(group)
   const privacy = form.watch('privacy')
+
+
+  const close = useCallback(() => setView({view: null, gid: null}), [])
 
   useEffect(() => {
     return function() {

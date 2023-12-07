@@ -3,29 +3,34 @@ import DialogContent from "@mui/material/DialogContent";
 import {FaRegComments, FaUsers} from "react-icons/fa";
 import ReactMarkdown from "react-markdown";
 import Button from "@mui/material/Button";
-import React from "react";
+import React, {useCallback} from "react";
 import {useStore} from "../../../../data/store";
 import {BasicDialog} from '../../../Components/Dialog'
 import {timeAgo} from "../../../../utils/utils";
 import {Loading} from "../../../Components/Routing";
+import {shallow} from "zustand/shallow";
 
-interface Modal {
-  show: boolean
-  close: () => void
-  gid: string
-}
-export default function Modal({show, close, gid}: Modal) {
-  const navigate = useNavigate()
-  const send = useStore(s => s.send)
+export function ViewModal() {
+  const [
+    view_
+  ] = useStore(s => [
+    s.groups.view
+  ], shallow)
+  const {view, gid} = view_
+  const send = useStore(useCallback(s => s.send, []))
   const group = useStore(s => s.res.groups_list_response?.hash?.[gid])
+  const show = view === 'view'
+  const navigate = useNavigate()
 
   function joinGroup() {
     send('groups_join_request', {id: gid})
-    navigate('/groups/' + gid)
+    navigate('/g/' + gid)
   }
 
   if (!group) {
-    return <Loading label='groups_list_response' />
+    // FIXME refactor this so Modal is always mounted, but doesn't depend on group variable
+    return null
+    // return <Loading label='groups_list_response' />
   }
 
   return <>
