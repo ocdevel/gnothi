@@ -100,7 +100,7 @@ export async function summarizeOpenai({texts}: FnIn): Promise<ParsedCompletion> 
   // get right, and we can just remove the results before returning
 
   // Don't rely on truncateMessages from openai.ts, since we only want to truncate the journal(s)
-  const model = "gpt-3.5-turbo-16k"
+  const model = "gpt-4-1106-preview"
   const max_tokens = 1024
   const squashedTokens = encode(squashed).tokens
   const lengths = {
@@ -210,7 +210,7 @@ export async function suggestNextEntry({entries, context, generative, view}: Sug
   if (!entries?.length) {return}
   const text = squashTexts(entries.map(getSummary))
   const response = await completion({
-    model: "gpt-3.5-turbo-16k",
+    model: "gpt-4-1106-preview",
     max_tokens: 256,
     prompt: `Between >>> and <<< are my prior journal entries. What should I journal about next to encourage personal growth?\n>>> ${text} <<<`
   })
