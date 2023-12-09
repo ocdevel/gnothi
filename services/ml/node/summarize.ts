@@ -123,6 +123,7 @@ export async function summarizeOpenai({texts}: FnIn): Promise<ParsedCompletion> 
     model,
     max_tokens,
     temperature: 0,
+    response_format: {type: "json_object"},
     prompt: messages,
     skipTruncate: true,
 

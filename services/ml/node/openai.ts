@@ -42,7 +42,6 @@ export const tokenLimits = {
   "gpt-3.5-turbo-16k": 16000,
 }
 function truncate(inputMessages: Message[], responseLimit: number, model: Model): Message[] {
-  const gpt4 = model === "gpt-4";
   const tokenLimit = tokenLimits[model]
 
   // Create a deep copy of the messages
