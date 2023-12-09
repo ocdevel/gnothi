@@ -30,11 +30,9 @@
     - key: mindfulness_expansion
       label: Mindfulness Expansion
       prompt: "What mindfulness or meditative practices could help me process the emotions and thoughts I've been experiencing?"
-    - category: Cognitive Behavioral Exploration
-      prompts:
-        - key: cbt_rewrite
-          label: CBT Journal Rewrite
-          prompt: "Rewrite the key points of my journal entry using CBT principles. Focus on identifying cognitive distortions and reframing them into more balanced and realistic thoughts. Highlight emotional responses and explore alternative, healthier perspectives. What challenges can be turned into opportunities for growth? How can I shift my thinking to foster a more positive and proactive mindset?"
+    - key: cbt_rewrite
+      label: CBT Journal Rewrite
+      prompt: "Rewrite the key points of my journal entry using CBT principles. Focus on identifying cognitive distortions and reframing them into more balanced and realistic thoughts. Highlight emotional responses and explore alternative, healthier perspectives. What challenges can be turned into opportunities for growth? How can I shift my thinking to foster a more positive and proactive mindset?"
 
 - category: Personal Learning and Inspiration
   prompts:
