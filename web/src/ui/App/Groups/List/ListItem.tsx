@@ -16,6 +16,7 @@ export function ListItem({gid}: ListItem) {
   ] = useStore(s => [
     s.res.groups_list_response?.hash?.[gid],
   ], shallow)
+
   const [
     setView,
   ] = useStore(useCallback(s => [

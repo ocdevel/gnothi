@@ -86,19 +86,19 @@ export const routes = {
   groups_list_request: {
     i: {
       e: 'groups_list_request',
-      s: z.object({}),
+      s: Passthrough,
       t: {ws: true},
     },
     o: {
       e: 'groups_list_response',
-      s: Group,
+      s: Passthrough,
       t: {ws: true},
     }
   },
   groups_get_request: {
     i: {
       e: 'groups_get_request',
-      s: z.object({}),
+      s: Passthrough,
       t: {ws: true},
     },
     o: {

@@ -4,6 +4,7 @@ import {useStore} from "@gnothi/web/src/data/store"
 import {EditModal} from './View/Edit'
 import {ViewModal} from './List/ViewModal.tsx'
 
+
 export default function Layout() {
   const send = useStore(s => s.send)
 

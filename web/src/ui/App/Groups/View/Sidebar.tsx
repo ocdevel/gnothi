@@ -3,7 +3,7 @@ import React, {useState, useEffect} from "react";
 import {useStore} from "../../../../data/store"
 import _ from 'lodash'
 import {FaBan, FaCrown} from "react-icons/fa";
-import Edit from "./Edit";
+// import Edit from "./Edit";
 import InviteMembers from "./InviteMembers";
 import {FaTrash} from "react-icons/fa";
 import {onlineIcon} from "../utils";
