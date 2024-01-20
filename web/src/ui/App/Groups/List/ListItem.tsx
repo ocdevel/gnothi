@@ -6,26 +6,26 @@ import CardContent from "@mui/material/CardContent";
 import CardHeader from "@mui/material/CardHeader";
 import {FaRegComments, FaUsers} from "react-icons/fa";
 import {timeAgo} from "../../../../utils/utils.tsx";
+import {Group} from "../../../../../../schemas/groups.ts";
+
 
 interface ListItem {
   gid: string
 }
 export function ListItem({gid}: ListItem) {
-  const [
-    g,
-  ] = useStore(s => [
-    s.res.groups_list_response?.hash?.[gid],
-  ], shallow)
+  const g= useStore(s => s.res.groups_list_response?.hash?.[gid])
+  if (!g) {return null}
+  return <ListItem_ key={gid} g={g} />
+}
 
+function ListItem_({g}: {g: Group}) {
   const [
-    setView,
+    showGroup,
   ] = useStore(useCallback(s => [
-    s.groups.setView
+    () => s.groups.setView({view: "view", id: g.id})
   ], []))
 
-  const showGroup = useCallback(() => setView({view: "view", gid}), [])
-
-  return <div key={gid}>
+  return <div>
     <Card className='mb-2 cursor-pointer' onClick={showGroup}>
       <CardContent>
         <CardHeader title={g.title} />

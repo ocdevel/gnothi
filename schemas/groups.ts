@@ -5,6 +5,11 @@ import {v4 as uuid} from "uuid";
 import * as Users from './users'
 export * as Groups from './groups'
 
+import {GroupsSelect, GroupsInsert, groups} from "../services/data/schemas/groups";
+import {createSelectSchema} from "drizzle-zod";
+
+// TODO figure out how to pull these via drizzle-zod from db schema. Getting typescript errors
+// every way I spin it (something about hard-coded arrays vs dynamic arrays)
 export const GroupPrivacy = z.enum([
   'public',
   'matchable',
@@ -18,30 +23,21 @@ export const GroupRoles = z.enum([
   'banned'
 ]).default("member")
 
-export const Group = z.object({
-  id: IdCol,
-  owner_id: IdCol, // users.id
-  title: z.string(),
-  text_short: z.string(),
-  text_long: z.string().optional(),
-  privacy: GroupPrivacy,
-  official: z.boolean().default(false),
-  created_at: dateCol(),
-  updated_at: dateCol(),
-
-  n_members: z.number().default(1),
-  n_messages: z.number().default(0),
-  last_message: dateCol(),
-  owner_name: z.string().optional(),
-
-  perk_member: z.number().default(0),
-  perk_member_donation: z.boolean().default(false),
-  perk_entry: z.number().default(0),
-  perk_entry_donation: z.boolean().default(false),
-  perk_video: z.number().default(0),
-  perk_video_donation: z.boolean().default(false),
-})
+export const Group = createSelectSchema(groups)
 export type Group = z.infer<typeof Group>
+
+export const groups_post_request = Group.pick({
+  title: true,
+  text_short: true,
+  text_long: true,
+  privacy: true,
+  perk_member: true,
+  perk_member_donation: true,
+  perk_entry: true,
+  perk_entry_donation: true,
+  perk_video: true,
+  perk_video_donation: true,
+})
 
 export const groups_get_response = Group
 export type groups_get_response = z.infer<typeof groups_get_response>
@@ -92,6 +88,34 @@ export const routes = {
     o: {
       e: 'groups_list_response',
       s: Passthrough,
+      t: {ws: true},
+    }
+  },
+  groups_post_request: {
+    i: {
+      e: "groups_post_request",
+      s: groups_post_request,
+      t: {ws: true},
+      snoopable: false,
+    },
+    o: {
+      e: "groups_post_response",
+      event_as: "groups_list_response",
+      s: Group,
+      t: {ws: true},
+    }
+  },
+  groups_join_request: {
+    i: {
+      e: "groups_join_request",
+      s: Passthrough,
+      t: {ws: true},
+      snoopable: false
+    },
+    o: {
+      e: "groups_join_response",
+      event_as: "groups_list_response",
+      s: Group,
       t: {ws: true},
     }
   },

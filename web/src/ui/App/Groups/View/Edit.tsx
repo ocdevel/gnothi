@@ -105,10 +105,8 @@ function Perk({form, perk}) {
 }
 
 export function EditModal() {
-  const view_ = useStore(s => s.groups.view)
-  const {view, gid} = view_
-  const show = view === 'view'
   const navigate = useNavigate()
+  const {view, id} = useStore(s => s.groups.view) // t-up for hash?.[id] below
   const [
     as,
     groupPost,
@@ -118,23 +116,21 @@ export function EditModal() {
     s.user?.as,
     s.res.groups_post_response,
     s.res.groups_put_response?.res,
-    s.res.groups_list_response?.hash?.[gid]
+    s.res.groups_list_response?.hash?.[id]
   ], shallow)
   const [
     send,
-    setView,
     clearEvents,
+    close,
   ] = useStore(useCallback(s => [
     s.send,
-    s.groups.setView,
-    s.clearEvents
+    s.clearEvents,
+    () => s.groups.setView({view: null, id: null})
   ], []))
+  const show = view == "edit" && id
 
   const form = useForm(group)
   const privacy = form.watch('privacy')
-
-
-  const close = useCallback(() => setView({view: null, gid: null}), [])
 
   useEffect(() => {
     return function() {

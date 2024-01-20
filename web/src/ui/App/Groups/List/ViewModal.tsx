@@ -10,29 +10,35 @@ import {timeAgo} from "../../../../utils/utils";
 import {Loading} from "../../../Components/Routing";
 import {shallow} from "zustand/shallow";
 
+const groupLoading = {
+  title: "Loading",
+  n_members: "Loading",
+  last_message: "Loading",
+  text_long: "Loading",
+}
+
 export function ViewModal() {
   const [
-    view_
+    {view, id}
   ] = useStore(s => [
     s.groups.view
   ], shallow)
-  const {view, gid} = view_
-  const send = useStore(useCallback(s => s.send, []))
-  const group = useStore(s => s.res.groups_list_response?.hash?.[gid])
-  const show = view === 'view'
+  const group = useStore(s => id ? s.res.groups_list_response?.hash?.[id] : groupLoading)
+  const [
+    send,
+    close
+  ] = useStore(useCallback(s => [
+    s.send,
+    () => s.groups.setView({id: null, view: null})
+  ], []))
+  const show = view === 'view' && id
   const navigate = useNavigate()
 
-  function joinGroup() {
-    send('groups_join_request', {id: gid})
-    navigate('/g/' + gid)
-  }
-
-  if (!group) {
-    // FIXME refactor this so Modal is always mounted, but doesn't depend on group variable
-    return null
-    // return <Loading label='groups_list_response' />
-  }
-
+  const joinGroup = useCallback(() => {
+    send('groups_join_request', {id})
+    navigate('/g/' + id)
+  }, [id])
+  
   return <>
     <BasicDialog
       open={show}
@@ -56,7 +62,12 @@ export function ViewModal() {
           <hr />
           <h5>About</h5>
           <div className='ml-2'>
-            <ReactMarkdown source={group.text_long} linkTarget='_blank' />
+            <ReactMarkdown
+              // FIXME replace with `components` in updated ReactMarkdonw
+              // linkTarget='_blank'
+            >
+              {group.text_long}
+            </ReactMarkdown>
           </div>
         </div> : null}
         <Button color='primary' variant='outlined' onClick={joinGroup}>Join Group</Button>

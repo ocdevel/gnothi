@@ -5,10 +5,13 @@ import {
   varchar,
   uuid,
   pgEnum,
-  boolean, integer, doublePrecision, primaryKey,
+  boolean,
+  integer,
+  doublePrecision,
+  primaryKey,
 } from 'drizzle-orm/pg-core';
 import {userId} from './users'
-import {InferInsertModel, InferModel, InferSelectModel} from 'drizzle-orm'
+import {InferInsertModel, InferSelectModel} from 'drizzle-orm'
 import {idCol, tsCol} from "./utils";
 
 // TODO bring in notes_notifs
@@ -54,7 +57,7 @@ export const groups = pgTable('groups', {
   ix_groups_privacy: index("ix_groups_privacy").on(t.privacy)
 }))
 export const groupId = (name="group_id") => uuid(name).notNull().references(() => groups.id, {onDelete: 'cascade'})
-export type GroupInsert = InferInsertModel<typeof groups>
+export type GroupsInsert = InferInsertModel<typeof groups>
 export type GroupsSelect = InferSelectModel<typeof groups>
 
 export const groupsUsers = pgTable("groups_users", {
