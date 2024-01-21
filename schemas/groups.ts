@@ -5,7 +5,7 @@ import {v4 as uuid} from "uuid";
 import * as Users from './users'
 export * as Groups from './groups'
 
-import {GroupsSelect, GroupsInsert, groups} from "../services/data/schemas/groups";
+import {GroupsSelect, GroupsInsert, groups, groupsUsers} from "../services/data/schemas/groups";
 import {createSelectSchema} from "drizzle-zod";
 
 // TODO figure out how to pull these via drizzle-zod from db schema. Getting typescript errors
@@ -38,6 +38,8 @@ export const groups_post_request = Group.pick({
   perk_video: true,
   perk_video_donation: true,
 })
+
+export const GroupUser = createSelectSchema(groupsUsers)
 
 export const groups_get_response = Group
 export type groups_get_response = z.infer<typeof groups_get_response>
@@ -82,12 +84,12 @@ export const routes = {
   groups_list_request: {
     i: {
       e: 'groups_list_request',
-      s: Passthrough,
+      s: z.object({}),
       t: {ws: true},
     },
     o: {
       e: 'groups_list_response',
-      s: Passthrough,
+      s: Group,
       t: {ws: true},
     }
   },
@@ -115,7 +117,7 @@ export const routes = {
     o: {
       e: "groups_join_response",
       event_as: "groups_list_response",
-      s: Group,
+      s: GroupUser,
       t: {ws: true},
     }
   },

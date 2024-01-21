@@ -10,20 +10,13 @@ import {timeAgo} from "../../../../utils/utils";
 import {Loading} from "../../../Components/Routing";
 import {shallow} from "zustand/shallow";
 
-const groupLoading = {
-  title: "Loading",
-  n_members: "Loading",
-  last_message: "Loading",
-  text_long: "Loading",
-}
-
 export function ViewModal() {
   const [
     {view, id}
   ] = useStore(s => [
     s.groups.view
   ], shallow)
-  const group = useStore(s => id ? s.res.groups_list_response?.hash?.[id] : groupLoading)
+  const group = useStore(s => id ? s.res.groups_list_response?.hash?.[id] : {})
   const [
     send,
     close
@@ -31,7 +24,7 @@ export function ViewModal() {
     s.send,
     () => s.groups.setView({id: null, view: null})
   ], []))
-  const show = view === 'view' && id
+  const show = Boolean(view === 'view' && id)
   const navigate = useNavigate()
 
   const joinGroup = useCallback(() => {
@@ -44,21 +37,21 @@ export function ViewModal() {
       open={show}
       size='xl'
       onClose={close}
-      title={group.title}
+      title={group?.title}
     >
       <DialogContent>
-        <div><FaUsers /> {group.n_members} members</div>
+        <div><FaUsers /> {group?.n_members} members</div>
         <div>
-          <span><FaRegComments /> {group.n_messages} messages</span>
-          <small className='muted ml-2'>({timeAgo(group.last_message)})</small>
+          <span><FaRegComments /> {group?.n_messages} messages</span>
+          <small className='muted ml-2'>({timeAgo(group?.last_message)})</small>
         </div>
         <hr />
 
         <div>
           <h5>Description</h5>
-          <div className='ml-2'>{group.text_short}</div>
+          <div className='ml-2'>{group?.text_short}</div>
         </div>
-        {group.text_long?.length ? <div>
+        {group?.text_long?.length ? <div>
           <hr />
           <h5>About</h5>
           <div className='ml-2'>
@@ -66,7 +59,7 @@ export function ViewModal() {
               // FIXME replace with `components` in updated ReactMarkdonw
               // linkTarget='_blank'
             >
-              {group.text_long}
+              {group?.text_long}
             </ReactMarkdown>
           </div>
         </div> : null}

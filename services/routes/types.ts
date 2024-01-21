@@ -11,6 +11,7 @@ import {Tag, tags} from '../data/schemas/tags'
 import {User, users} from '../data/schemas/users'
 import {WsConnection, wsConnections} from '../data/schemas/wsConnections'
 import {books, Book} from '../data/schemas/books'
+import {groups, Group} from '../data/schemas/groups'
 
 import {Habitica} from '../data/models/habitica'
 import {Users} from '../data/models/users'
@@ -21,6 +22,7 @@ import {Shares} from '../data/models/shares'
 import {Notes} from '../data/models/notes'
 import {Books} from '../data/models/books'
 import {Tags} from '../data/models/tags'
+import {Groups} from '../data/models/groups'
 
 import {Events} from '@gnothi/schemas/events'
 import {DB} from '../data/db'
@@ -85,6 +87,7 @@ export class FnContext {
     users,
     wsConnections,
     books,
+    groups,
   }
 
   // Instantiate models as properties to the FnContext. This allows the models context-access
@@ -100,6 +103,7 @@ export class FnContext {
     notes: Notes
     books: Books
     tags: Tags
+    groups: Groups
   }
 
   user: User
@@ -132,7 +136,8 @@ export class FnContext {
       shares: new Shares(this),
       notes: new Notes(this),
       books: new Books(this),
-      tags: new Tags(this)
+      tags: new Tags(this),
+      groups: new Groups(this)
     }
   }
 

@@ -678,31 +678,6 @@ class GroupRoles(enum.Enum):
 
 class Group(Base):
     __tablename__ = 'groups'
-    id = IDCol()
-    owner_id = FKCol('users.id', index=True, nullable=False)
-    title = Encrypt(sa.Unicode, nullable=False)
-    text_short = Encrypt(sa.Unicode, nullable=False)
-    text_long = Encrypt(sa.Unicode)
-    privacy = sa.Column(sa.Enum(GroupPrivacy), server_default=GroupPrivacy.public.value, nullable=False)
-    official = sa.Column(sa.Boolean, server_default="false")
-    created_at = DateCol()
-    updated_at = DateCol(update=True)
-
-    # On-updates to show on groups-list page, so don't need to run SQL each time
-    n_members = sa.Column(sa.Integer, server_default="1", nullable=False)
-    n_messages = sa.Column(sa.Integer, server_default="0", nullable=False)
-    last_message = sa.Column(sa.TIMESTAMP(timezone=True), server_default=sa.text("now()"), nullable=False)
-    owner_name = sa.Column(sa.Unicode)
-
-    # Perks
-    perk_member = sa.Column(sa.Float)
-    perk_member_donation = sa.Column(sa.Boolean, server_default="false")
-    perk_entry = sa.Column(sa.Float)
-    perk_entry_donation = sa.Column(sa.Boolean, server_default="false")
-    perk_video = sa.Column(sa.Float)
-    perk_video_donation = sa.Column(sa.Boolean, server_default="false")
-
-    owner = orm.relationship("User")
 
     @staticmethod
     def create_group(db, data, vid):
@@ -713,43 +688,6 @@ class Group(Base):
         db.commit()
         db.refresh(g)
         return g
-
-    @staticmethod
-    def get_groups(db):
-        return db.query(Group) \
-            .filter(Group.privacy == GroupPrivacy.public).all()
-
-    @staticmethod
-    def my_groups(db, vid):
-        rows = (db.query(Group, UserGroup)
-            .join(UserGroup.group)
-            .filter(
-                UserGroup.group_id == Group.id,
-                UserGroup.user_id == vid,
-                UserGroup.role != GroupRoles.banned
-            ).all())
-        for r in rows:
-            r[0].role = r[1].role
-        return [r[0] for r in rows]
-
-    @staticmethod
-    def join_group(db, gid, vid, role=GroupRoles.member):
-        if db.query(UserGroup).filter(UserGroup.user_id == vid, UserGroup.group_id == gid).first():
-            # already joined
-            raise GnothiException(400, "ALREADY_JOINED", "You've already joined this group")
-        ug = UserGroup(
-            user_id=vid,
-            group_id=gid,
-            role=role
-        )
-        db.add(ug)
-        db.execute(sa.text("""
-        update groups g 
-        set n_members=(select count(*) from users_groups ug where ug.group_id=:gid and ug.role!='banned')
-        where g.id=:gid
-        """), dict(gid=gid))
-        db.commit()
-        return ug
 
     @staticmethod
     def leave_group(db, gid, uid):
@@ -806,18 +744,6 @@ class UserGroup(Base):
             .filter(UG.group_id == gid, UG.role != GroupRoles.banned)\
             .all()
         return [str(r.user_id) for r in res]
-
-    @staticmethod
-    def check_access(db: Session, gid, vid, roles=None):
-        q = db.query(UserGroup.role)\
-            .filter(
-                UserGroup.user_id == vid,
-                UserGroup.group_id == gid,
-                UserGroup.role != GroupRoles.banned
-            )
-        if roles:
-            q = q.filter(UserGroup.role.in_(roles))
-        if not q.scalar(): raise GroupDenied()
 
     @staticmethod
     def invite_member(db: Session, gid, vid, email):

@@ -10,6 +10,7 @@ export default function Layout() {
 
   useEffect(() => {
     send('groups_list_request', {})
+    send('groups_mine_list_request', {})
   }, [])
 
   return <div className='groups'>

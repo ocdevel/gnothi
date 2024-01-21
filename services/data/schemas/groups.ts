@@ -41,6 +41,7 @@ export const groups = pgTable('groups', {
   privacy: groupPrivacy("privacy").notNull().default("public"),
   official: boolean("official").default(false),
 
+  // On-updates to show on groups-list page, so don't need to run SQL each time
   n_members: integer("n_members").notNull().default(1),
   n_messages: integer("n_messages").notNull().default(0),
   last_message: tsCol("last_message").notNull().defaultNow(),
