@@ -106,4 +106,26 @@ export class Groups extends Base {
     `)
     return groupUser
   }
+
+  async listMembers(gid: string) {
+    return []
+    // TODO convert the following python + sqlalchemy to node + drizzle-orm
+    // share = (db.query(Share).join(ShareGroup, sa.and_(
+    //     ShareGroup.obj_id == gid,
+    //     ShareGroup.share_id == Share.id
+    // )).subquery())
+    // share = orm.aliased(Share, share)
+    // rows = (
+    //     db.query(
+    //         User,
+    //         UserGroup,
+    //         share
+    //     )
+    //     .select_from(UserGroup).filter(UserGroup.group_id == gid)
+    //     .join(User)
+    //     .outerjoin(share)
+    //     .all())
+    // rows = [dict(user=r[0], user_group=r[1], share=r[2]) for r in rows]
+    // return Share.merge_shares(rows)
+  }
 }

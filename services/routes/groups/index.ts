@@ -45,5 +45,18 @@ export const groups_get_request = new Route(r.groups_get_request, async (req, co
 })
 
 export const groups_members_list_request = new Route(r.groups_members_list_request, async (req, context) => {
-  return []
+  const {groups} = context.m
+  await groups.checkAccess(req.id)
+  return groups.listMembers(req.id)
+
+
+  // TODO handle online status
+  // res = M.UserGroup.get_members(d.db, data.id)
+  // uids_ = []
+  // for r in res:
+  //     uid = str(r['user'].id)
+  //     uids_.append(uid)
+  //     r['user_group'].online = uid in d.mgr.uids()
+  // uids_ = dict(uids=uids_) if uids is True else {}
+  // return ResWrap(data=res, keyby='user.id', **uids_)
 })
