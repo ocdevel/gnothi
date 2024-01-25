@@ -47,6 +47,14 @@ export const shares_post_request = shares_put_request
 export type shares_post_request = z.infer<typeof shares_post_request>
 export const shares_post_response = shares_egress_list_response
 export type shares_post_response = z.infer<typeof shares_post_response>
+export const shares_delete_request = z.object({id: z.string().uuid()})
+export type shares_delete_request = z.infer<typeof shares_delete_request>
+export const shares_delete_response = shares_egress_list_response
+export type shares_delete_response = z.infer<typeof shares_delete_response>
+export const shares_emailcheck_request = z.object({email: z.string()})
+export type shares_emailcheck_request = z.infer<typeof shares_emailcheck_request>
+export const shares_emailcheck_response = z.object({email: z.string()})
+export type shares_emailcheck_response = z.infer<typeof shares_emailcheck_response>
 
 
 
@@ -82,8 +90,9 @@ export const routes = {
     o: {
       e: "shares_post_response",
       s: shares_post_response,
-      event_as: "shares_egress_list_request",
-      op: "update"
+      event_as: "shares_egress_list_response",
+      op: "update",
+      clears: "share_post_request",
     }
   },
   shares_put_request: {
@@ -95,8 +104,34 @@ export const routes = {
     o: {
       e: "shares_put_response",
       s: shares_put_response,
-      event_as: "shares_egress_list_request",
-      op: "update"
+      event_as: "shares_egress_list_response",
+      op: "update",
+      clears: "shares_put_request"
+    }
+  },
+  shares_delete_request: {
+    i: {
+      e: "shares_delete_request",
+      s: z.object({id: z.string()}),
+      snoopable: false
+    },
+    o: {
+      e: "shares_delete_response",
+      s: shares_delete_response,
+      event_as: "shares_egress_list_response",
+      op: "delete",
+      clears: "shares_delete_request"
+    },
+  },
+  shares_emailcheck_request: {
+    i: {
+      e: "shares_emailcheck_request",
+      s: shares_emailcheck_request,
+      snoopable: false
+    },
+    o: {
+      e: "shares_emailcheck_response",
+      s: shares_emailcheck_response,
     }
   }
 }

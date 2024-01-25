@@ -11,31 +11,29 @@ import Typography from "@mui/material/Typography";
 
 export default function Sharing() {
   const [
-    send,
     shares,
     view,
-    setView
   ] = useStore(s => [
-    s.send,
     s.res.shares_egress_list_response,
     s.sharing.view,
-    s.sharing.setView
   ], shallow)
-
-  const comingSoon = true
+  const [
+    send,
+    clickNew,
+    close,
+  ] = useStore(useCallback(s => [
+    s.send,
+    () => s.sharing.setView({tab: "egress", egress: "new", sid: null}),
+    () => s.sharing.setView({tab: null})
+  ], []))
 
   useEffect(() => {
+    // TODO Since modal is mounted anyway, this is kicked off (expensive on server). Have clever logic to only
+    // trigger this once first time modal is opened
     send('shares_egress_list_request', {})
   }, [])
 
-  const clickNew = useCallback(() => {
-    setView({tab: "outbound", outbound: "new", sid: null})
-  }, [])
-  const close = useCallback(() => {
-    setView({tab: null})
-  }, [])
-
-  const ctas: CTA[] = comingSoon ? [] : [{
+  const ctas: CTA[] = [{
     name: "New Share",
     onClick: clickNew,
   }]
@@ -45,14 +43,11 @@ export default function Sharing() {
   const renderInfo = useCallback(() => <div>Info goes here</div>, [])
 
   function renderContent() {
-    if (comingSoon) {
-      return <Typography>This feature is currently being migrated from the old site, coming back soon</Typography>
-    }
     return <Tabs
-      defaultTab={view.tab || "inbound"}
+      defaultTab={view.tab || "egress"}
       tabs={[
-        {label: "Inbound", value: "inbound", render: renderInbound},
-        {label: "Outbound", value: "outbound", render: renderOutbound},
+        {label: "Inbound", value: "ingress", render: renderInbound},
+        {label: "Outbound", value: "egress", render: renderOutbound},
         {label: "Info", value: "info", render: renderInfo},
       ]}
     />

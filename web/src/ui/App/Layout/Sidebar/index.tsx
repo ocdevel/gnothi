@@ -13,7 +13,7 @@ import Community from './Community'
 import {Account} from './Account'
 import {Misc} from './Misc'
 
-export default function Sidebar() {
+export function Sidebar() {
   return <Stack direction='column' justifyContent='space-between' sx={{height: '100%'}}>
     <Box flex={1}>
       <Journal />
@@ -24,6 +24,5 @@ export default function Sidebar() {
       <Divider />
       <Misc />
     </Box>
-    <Footer />
   </Stack>
 }

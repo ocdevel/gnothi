@@ -1,5 +1,5 @@
-import {useStore} from "@gnothi/web/src/data/store"
-import React, {useEffect} from "react";
+import {useStore} from "../../../../../data/store/index"
+import React, {useCallback, useEffect} from "react";
 import {trueKeys} from "@gnothi/web/src/utils/utils";
 import Error from "@gnothi/web/src/ui/Components/Error";
 import Grid from '@mui/material/Grid'
@@ -7,49 +7,64 @@ import Button from '@mui/material/Button'
 import FormHelperText from '@mui/material/FormHelperText'
 import Typography from '@mui/material/Typography'
 import Chip from '@mui/material/Chip'
-import {TextField2, makeForm, yup} from "@gnothi/web/src/ui/Components/Form";
+import {TextField2} from "../../../../Components/Form";
 import {maxWidth} from "../../../../../tmp/material-ui/packages/mui-system";
+import {z} from "zod"
+import {zodResolver} from "@hookform/resolvers/zod";
+import {useForm} from "react-hook-form";
+import {useLocalStore} from "./store.ts"
+import {shallow} from "zustand/shallow";
 
-const emailSchema = yup.object().shape({
-  email: yup.string().email().required(),
+const emailSchema = z.object({
+  email: z.string().email(),
 })
-const useForm = makeForm(emailSchema, {email: ''})
+type EmailSchema = z.infer<typeof emailSchema>
 
-type Hash = {[key: string]: boolean}
+// TODO convert everything over to useLocalStore for better performance / localized concern
 interface Users {
-  users: Hash
-  setUsers: (users: Hash) => void
+  users: Record<string, boolean>
+  setUsers: (users: Record<string, boolean>) => void
 }
 export default function Users({users, setUsers}: Users) {
-  const send = useStore(s => s.send)
-  const checked = useStore(s => s.res.shares_emailcheck_response?.first?.email)
-  const form = useForm()
+  const [
+    checked
+  ] = useStore(s => [
+    s.res.shares_emailcheck_response?.rows?.[0]
+  ], shallow)
+  const [
+    send,
+  ] = useStore(useCallback(s => [
+    s.send,
+  ], []))
+  // const [users, setUsers] = useLocalStore(s => [s.users, s.setUsers], shallow)
+
+  const form = useForm({
+    resolver: zodResolver(emailSchema),
+    defaultValues: {email: ""}
+  })
 
   useEffect(() => {
+    if (!checked?.email?.length) {return}
     const email = form.getValues('email')
-    if (checked && checked === email) {
+    if (checked.email === email) {
       setUsers({...users, [email]: true})
       form.reset({email: ""})
     }
   }, [checked])
 
-  const removeUser = email => () => {
-    setUsers({...users, [email]: false})
-  }
-
-  function submit(form) {
-    send('shares_emailcheck_request', form)
+  function submit(data: EmailSchema) {
+    send('shares_emailcheck_request', data)
   }
 
   function renderUsers() {
     const arr = trueKeys(users)
-    if (!arr.length) {return null}
+    if (!arr.length) { return null }
     return <>
       {arr.map(a => <Chip
         key={a}
         label={a}
         variant="outlined"
-        onDelete={removeUser(a)}
+        onDelete={() => setUsers({...users, [a]: false})}
       />)}
     </>
   }
@@ -79,7 +94,7 @@ export default function Users({users, setUsers}: Users) {
           />
         </Grid>
         <Grid item>
-          <Button size= 'small' variant='contained' color='secondary' type='submit'>Add</Button>
+          <Button size='small' variant='contained' color='secondary' type='submit'>Add</Button>
         </Grid>
       </Grid>
       <Error event={/shares\/email\/check/g} codes={[400, 404]} />

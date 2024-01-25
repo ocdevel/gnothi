@@ -70,6 +70,10 @@ export interface EventsSlice {
     // notifs_shares_list_response?: Api.ResUnwrap<z.infer<typeof r.notifs_shares_list_request.o.s>>
     shares_ingress_list_response?: Api.ResUnwrap<Shares.shares_ingress_list_response>
     shares_egress_list_response?: Api.ResUnwrap<Shares.shares_egress_list_response>
+    shares_post_response?: Api.ResUnwrap<Shares.shares_post_response>
+    shares_put_response?: Api.ResUnwrap<Shares.shares_put_response>
+    shares_delete_response?: Api.ResUnwrap<Shares.shares_delete_response>
+    shares_emailcheck_response?: Api.ResUnwrap<Shares.shares_emailcheck_response>
   }
   resBuff: EventsSlice['res']
   hooks: {

@@ -8,8 +8,56 @@ import {fields} from '../schemas/fields'
 import {fieldEntries} from '../schemas/fieldEntries'
 import { and, asc, desc, eq, or, inArray } from 'drizzle-orm';
 import {boolMapToKeys} from '@gnothi/schemas/utils'
+import {GnothiError} from "../../routes/errors.js";
+import {shares_emailcheck_response} from "../../../schemas/shares.js";
 
 export class Shares extends Base {
+  shareFields(profile=true, share=true) {
+    let res: string[] = []
+    if (profile) {
+      res.push(...'email username first_name last_name gender orientation birthday timezone bio'.split(" "))
+    }
+    if (share) {
+      res.push(...'fields books'.split(" "))
+    }
+    return res
+  }
+
+  async ingress() {
+    const {vid, db: {drizzle}} = this.context
+    const rows = await drizzle
+      .select()
+      .from(sharesUsers)
+      .innerJoin(shares, eq(shares.id, sharesUsers.share_id))
+      .innerJoin(users, eq(users.id, shares.user_id))
+      .where(eq(sharesUsers.obj_id, vid))
+    return this.mergeShares(rows)
+  }
+
+  mergeShares(rows) {
+    // For a user/group with multiple ingress shares, merge those into their maximum permissions.
+    // TODO do this via SQL instead of Python
+
+    // Javascript:
+    const sf = this.shareFields()
+    const merged = {}
+    for (const r of rows) {
+      const uid = r['user'].id
+      let exists = merged[uid]
+      if (!exists) {
+        merged[uid] = r
+        continue
+      }
+      exists = exists['share']
+      for (const k of sf) {
+        const v1 = exists[k]
+        const v2 = r['share'][k]
+        exists[k] = v1 || v2
+      }
+    }
+    return Object.values(merged)
+  }
+
   async egress() {
     const {vid, db} = this.context
     const {drizzle} = db
@@ -69,6 +117,18 @@ export class Shares extends Base {
 
     // TODO groups
 
+  }
+  async emailCheck(email: string): Promise<shares_emailcheck_response[]> {
+    const {db} = this.context
+    const {drizzle} = db
+    const rows = await drizzle
+      .select({email: users.email})
+      .from(users)
+      .where(eq(users.email, email))
+    if (!rows?.length) {
+      throw new GnothiError({code: 404, message: "No Gnothi user with that email. Have them sign up first."})
+    }
+    return rows
   }
 
 }

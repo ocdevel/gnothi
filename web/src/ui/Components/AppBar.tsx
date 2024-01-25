@@ -110,7 +110,7 @@ export function UserMenu() {
 type Clickable = {
   name: string
   to?: string
-  onClick?: () => void
+  onClick?: (...args: any[]) => any
   className?: string
 }
 export type Link = Clickable

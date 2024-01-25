@@ -1,5 +1,5 @@
 import {boolean, index, pgTable, varchar, uuid, primaryKey, timestamp, integer} from "drizzle-orm/pg-core";
-import {InferModel, sql} from 'drizzle-orm'
+import {InferModel, InferSelectModel, sql} from 'drizzle-orm'
 import {idCol, tsCol} from "./utils";
 import {userId, users} from "./users";
 import {tagId, tags} from './tags'
@@ -54,7 +54,7 @@ export const shares = pgTable("shares", {
 //   }
 // })
 
-export type Share = InferModel<typeof shares>
+export type ShareSelect = InferSelectModel<typeof shares>
 
 export const shareId = (col="share_id") => uuid(col).notNull().references(() => shares.id, {onDelete: 'cascade'})
 
@@ -64,19 +64,24 @@ export const sharesTags = pgTable('shares_tags', {
   selected: boolean("selected").default(true),
 }, (table) => {
   return {
-    pk: primaryKey(table.share_id, table.tag_id)
+    pk: primaryKey({
+			name: "pk_shares_tags",
+			columns: [table.share_id, table.tag_id]
+		})
   }
 })
-
-export type ShareTag = InferModel<typeof sharesTags>
+export type ShareTagSelect = InferSelectModel<typeof sharesTags>
 
 export const sharesUsers = pgTable('shares_users', {
   share_id: uuid("share_id").notNull().references(() => shares.id, {onDelete: 'cascade'}),
+	// TODO consider consolidating the tables (sharesJoins) with multiple optional FKs and attrs
   obj_id: uuid("obj_id").notNull().references(() => users.id, {onDelete: 'cascade'}),
 }, (table) => {
   return {
-    pk: primaryKey(table.share_id, table.obj_id)
+    pk: primaryKey({
+			name: "pk_shares_users",
+			columns: [table.share_id, table.obj_id]
+		})
   }
 })
-
-export type ShareUser = InferModel<typeof sharesUsers>
+export type ShareUserSelect = InferSelectModel<typeof sharesUsers>

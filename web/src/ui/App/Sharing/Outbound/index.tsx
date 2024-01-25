@@ -4,6 +4,7 @@ import {useStore} from "@gnothi/web/src/data/store"
 import {shallow} from "zustand/shallow";
 import Grid from "@mui/material/Grid";
 import List from './List'
+import {shares_post_request} from "../../../../../../schemas/shares.ts";
 
 
 
@@ -28,15 +29,20 @@ export default function Outbound() {
   // so just list all.
   // const isList = sharePage.list || (sharePage.id && !hash?.[sharePage.id])
 
-  const {outbound, sid} = view
+  const {egress, sid} = view
   const share = (sid && shares?.hash?.[sid]) || {}
 
   return <>
     <Grid container>
-      <Grid item>
-        <List />
-      </Grid>
-      <Grid item>
+      {
+        shares?.ids?.length ? (
+          <Grid item>
+            <List />
+          </Grid>
+        ) : null
+      }
+
+      <Grid item flex={1}>
         {/*<Button*/}
         {/*  variant={undefined /*false*!/*/}
         {/*  size='small'*/}
@@ -45,8 +51,7 @@ export default function Outbound() {
         {/*>*/}
         {/*  List Shares*/}
         {/*</Button>*/}
-        {outbound === "new" || outbound === "edit" ? <Form s={share} />
-          : null}
+        {["new", "edit"].includes(egress) ? <Form s={share} /> : null}
       </Grid>
     </Grid>
   </>

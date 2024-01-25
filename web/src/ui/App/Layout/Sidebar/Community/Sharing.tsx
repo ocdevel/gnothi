@@ -1,19 +1,33 @@
 import {useStore} from "../../../../../data/store";
-import React from "react";
+import React, {useCallback} from "react";
 import Badge from "@mui/material/Badge";
 import Box from "@mui/material/Box";
 import {NestedList, ListItem} from "../Utils";
+import {shallow} from "zustand/shallow";
 
 interface UserSwitcher {
   userId: string
   nShares?: number
 }
 export function UserSwitcher({userId, nShares=0}: UserSwitcher) {
-  const {me, as} = useStore(s => s.user?.me)
-  const users = useStore(s => s.res.users_list_response?.hash)
-  const setAs = useStore(a => a.setAs)
-  const notifs = useStore(s => s.res.notifs_notes_list_response?.hash)
+  const [
+    me,
+    as,
+    users,
+    notifs,
+  ] = useStore(s => [
+    s.user?.me,
+    s.user?.as,
+    s.res.users_list_response?.hash,
+    s.res.notifs_notes_list_response?.hash,
+  ], shallow)
   const thisUser = users?.[userId]
+  const isMe = userId === me?.id
+  const [
+    setAs
+  ] = useStore(useCallback(s => [
+    () => isMe ? setAs(null) : s.setAs(userId),
+  ], []))
 
   function renderName() {
     const notif = notifs?.[userId]
@@ -22,7 +36,6 @@ export function UserSwitcher({userId, nShares=0}: UserSwitcher) {
     }
     return <Badge color="primary" badgeContent={notif.count}>{thisUser?.email}</Badge>
   }
-  const isMe = userId === me?.id
   const isCurrent = (as === userId) || (!as && isMe)
   const title = <>
     {isCurrent && nShares > 0 ? "* " : ""}
@@ -31,20 +44,26 @@ export function UserSwitcher({userId, nShares=0}: UserSwitcher) {
 
   return <ListItem
     sx={{ml: 4}}
-    onClick={() => isMe ? setAs(null) : setAs(userId)}
+    onClick={setAs}
     secondary={title}
   />
 }
 
 export default function Sharing() {
-  const setSharePage = useStore(a => a.setSharePage)
-
-
-  const user = useStore(s => s.user)
-  const shares = useStore(s => s.res['shares_ingress_list_response'])
-  const notifs = useStore(s => s.res['notifs_shares_list_response']?.hash)
-  const users = useStore(s => s.res.users_list_response?.hash)
-
+  const [
+    user,
+    shares,
+    notifs,
+    users
+  ] = useStore(s => [
+    s.user,
+    s.res['shares_ingress_list_response'],
+    s.res['notifs_shares_list_response']?.hash,
+    s.res.users_list_response?.hash,
+  ], shallow)
+  const [openModal] = useStore(useCallback(s => [
+    () => s.sharing.setView({tab: "egress", egress: "new"})
+  ], []))
 
   if (!user?.me) {return null}
   const {as, viewer, me} = user
@@ -76,7 +95,7 @@ export default function Sharing() {
 
   return <>
       <ListItem
-        onClick={() => setSharePage({list: true})}
+        onClick={openModal}
         primary='Sharing'
         nested={true}
        />

@@ -158,6 +158,10 @@ export const Events = z.enum([
   'shares_egress_list_response',
   'shares_post_request',
   'shares_post_response',
+  'shares_put_request',
+  'shares_put_response',
+  'shares_delete_request',
+  'shares_delete_response',
   'shares_emailcheck_request',
   'shares_emailcheck_response',
 

@@ -1,7 +1,7 @@
 import {Link} from "react-router-dom";
 import z from "zod"
 import _ from "lodash";
-import React, {useEffect, useRef, useState} from "react";
+import React, {useCallback, useEffect, useRef, useState} from "react";
 import {FaChevronDown, FaChevronRight, FaRegQuestionCircle} from "react-icons/fa";
 import {useStore} from "@gnothi/web/src/data/store"
 import Groups from "./Groups";
@@ -23,6 +23,9 @@ import Divider from '@mui/material/Divider'
 import Typography from '@mui/material/Typography'
 import {shallow} from "zustand/shallow";
 import * as S from '@gnothi/schemas'
+import {useForm} from "react-hook-form";
+import {zodResolver} from "@hookform/resolvers/zod";
+import {shares_post_request} from "../../../../../../../schemas/shares.ts";
 
 const profile_fields = {
   username: {
@@ -178,41 +181,69 @@ interface ShareForm {
 }
 export default function ShareForm({s}: ShareForm) {
   const [
-    send,
     shares,
     view,
-    setView
+    postReq,
+    deleteReq,
+    postRes,
+    deleteRes,
   ] = useStore(s => [
-    s.send,
     s.res.shares_egress_list_response,
     s.sharing.view,
-    s.sharing.setView
+    s.req.shares_post_request,
+    s.req.shares_delete_request,
+    s.res.shares_post_response?.res,
+    s.res.shares_delete_response?.res
   ], shallow)
+  const [
+    send,
+    setView,
+    clearEvents,
+    cancel
+  ] = useStore(useCallback(s => [
+    s.send,
+    s.sharing.setView,
+    s.clearEvents,
+    () => s.sharing.setView({egress: null})
+  ], []))
 
-  const postRes = useStore(s => s.res.shares_post_response?.res)
+  // FIXME #lefthere shareSchema above doesn't match shares_post_request, consolidate before building out form
+  const form = useForm({
+    resolver: zodResolver(shares_post_request),
+
+  })
+
   const [entriesHelp, setEntriesHelp] = useState(false)
   const [share, setShare] = useState(s.share || {})
   const [tags, setTags] = useState(trueObj(s?.tags) || {})
   const [users, setUsers] = useState(trueObj(s?.users) || {})
   const [groups, setGroups] = useState(
     share?.id ? trueObj(s.groups)
-    : view.group ? {[view.group]: true}
+    : view.gid ? {[view.gid]: true}
     : {}
   )
 
   const id = share?.id
+  const postLoading = postReq && !postRes
+  const deleteLoading = deleteReq && !deleteRes
+
+
+  useEffect(() => {
+    // FIXME ensure this is matching req/res (like s.id == deleteRes.id), so we don't redirect from delayed other
+    if (deleteRes?.code === 200) {
+      clearEvents(["shares_delete_response"])
+      setView({tab: "egress", egress: "list"})
+    }
+  }, [deleteRes])
 
   useEffect(() => {
     // EE.on("wsResponse", onResponse)
     // return () => EE.off("wsResponse", onResponse)
-  }, [])
-
-  function onResponse(res) {
-    if (!~['shares/shares/post', 'shares/share/delete'].indexOf(res.action)) {return}
-    if (res.code === 200) {
-      setSharePage({list: true})
+    if (postRes?.code === 200) {
+      clearEvents(["shares_post_response"])
+      setView({tab: "egress", egress: "list"})
     }
-  }
+  }, [postRes])
 
   const submit = async e => {
     e.preventDefault()
@@ -233,7 +264,7 @@ export default function ShareForm({s}: ShareForm) {
   return <Card
     sx={{
       height: '100%',
-      maxWidth: 800,
+      // maxWidth: 800,
       display: 'flex',
       flexDirection: 'column',
       justifyContent: 'center',
@@ -305,8 +336,8 @@ export default function ShareForm({s}: ShareForm) {
         <Box
           marginLeft={2}>
           {_.map(feature_map, (v, k) => (
-          <ShareCheck key={k} v={v} k={k} form={share} setForm={setShare} />
-        ))}
+            <ShareCheck key={k} v={v} k={k} form={share} setForm={setShare} />
+          ))}
           </Box>
         </Grid>
         </Grid>
@@ -320,7 +351,7 @@ export default function ShareForm({s}: ShareForm) {
         onClick={submit}
         variant='contained'
         color="primary"
-        disabled={postRes?.submitting}
+        disabled={postLoading}
       >
         {id ? 'Save' : 'Submit'}
       </Button>&nbsp;
@@ -331,7 +362,7 @@ export default function ShareForm({s}: ShareForm) {
       >Delete</Button>}
       <Button
         size='small'
-        onClick={() => setView({outbound: null})}
+        onClick={cancel as any}
       >Cancel</Button>
     </CardActions>
   </Card>

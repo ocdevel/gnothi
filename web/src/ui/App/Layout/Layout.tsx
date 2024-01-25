@@ -15,7 +15,7 @@ import Container from "@mui/material/Container";
 import {ErrorSnack} from "../../Components/Error";
 // import GroupsToolbar from "../Groups/List/Toolbar"
 // import GroupToolbar from "../Groups/View/Toolbar"
-// import SharingModal from "../Sharing"
+import SharingModal from "../Sharing"
 import EntryModal from "../Entries/Modal"
 import PremiumModal from '../Account/PremiumModal'
 import BooksModal from '../Insights/Resources/Books'
@@ -23,6 +23,8 @@ import AppBar from './AppBar'
 import Footer from '../../Footer'
 import {AcknowledgeChecker} from "../../Setup/Acknowledge";
 import UserListener from './UserListener'
+import Grid from "@mui/material/Grid";
+import {Sidebar} from "./Sidebar";
 
 
 // Have this separate since it'd otherwise cause a re-render after every lastJsonMessage, etc.
@@ -57,15 +59,17 @@ export default function Layout() {
   // return <Box key={as}>
 
   return <>
-    <Box>
-      <AppBar />
-      <Banner />
-      <Container_ />
-      <Footer inApp={true} />
-    </Box>
+    <AppBar />
+    <Banner />
+    <Grid container>
+      <Grid item xs={3}><Sidebar /></Grid>
+      <Grid item xs={9}><Container_ /></Grid>
+    </Grid>
+    <Footer inApp={true} />
+
     <UserListener />
     <SetupApi />
-    {/*<SharingModal />*/}
+    <SharingModal />
     <EntryModal />
     <PremiumModal />
     <BooksModal />

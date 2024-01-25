@@ -1,6 +1,6 @@
 import {create} from 'zustand'
 import * as S from "@gnothi/schemas"
-import {StateCreator} from "zustand/esm";
+import {StateCreator} from "zustand";
 import {EventsSlice} from "./events";
 import {BehaviorsSlice} from "./behaviors";
 import {ApiSlice} from "./api";
@@ -11,13 +11,15 @@ import _ from "lodash";
 
 type Id = string | null
 // null means close the modal
-export type Tab = "inbound" | "outbound" | "info" | null
-export type Outbound = "new" | "view" | "edit"
+
+// TODO replace this (and others) with Page & Mode, or View & Mode, or something
+export type Tab = "ingress" | "egress" | "info" | null
+export type Egress = "list" | "new" | "view" | "edit"
 type View = {
   tab: Tab
-  outbound: Outbound
+  egress: Egress
   sid?: Id
-  group?: Id
+  gid?: Id
 }
 export interface SharingSlice {
   sharing: {
@@ -35,9 +37,9 @@ export const sharingSlice: StateCreator<
   sharing: {
     view: {
       tab: null,
-      outbound: "new",
+      egress: "new",
       sid: null,
-      group: null
+      gid: null
     },
     setView: (view) => set(produce(state => {
       // for keeping track of lastPage (where to close modal too), see behaviors
