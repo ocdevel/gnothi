@@ -127,6 +127,13 @@
       "when": 1700961346803,
       "tag": "0017_amazing_toad_men",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "5",
+      "when": 1706414317698,
+      "tag": "0018_rich_snowbird",
+      "breakpoints": true
     }
   ]
 }
