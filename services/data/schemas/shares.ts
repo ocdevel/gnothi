@@ -15,8 +15,7 @@ export const shares = pgTable("shares", {
   // TODO
   // Keep email for first migration. Transfer it to sharesUsers (create new rows based on joined user.id).
   // Then remove this email, rename email_visible to email (boolean)
-	email: varchar("email", { length: 255 }),
-  email_visible: boolean("email_visible").default(false),
+  email: boolean("email").default(false),
 
 	// profile: boolean("profile"),
   username: boolean("username").default(true),
