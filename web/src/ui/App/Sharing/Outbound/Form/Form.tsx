@@ -25,9 +25,11 @@ import {shallow} from "zustand/shallow";
 import * as S from '@gnothi/schemas'
 import {useForm} from "react-hook-form";
 import {zodResolver} from "@hookform/resolvers/zod";
-import {shares_post_request} from "../../../../../../../schemas/shares.ts";
+import {shares_post_request, ShareFeature, ShareProfileField} from "../../../../../../../schemas/shares.ts";
+import {useLocalStore} from "./store.ts";
 
-const profile_fields = {
+// Fix the below line. `key` should be in `shareProfileFields`, which is an array of strings.
+const profile_fields: {[key in ShareProfileField]: any} = {
   username: {
     label: "Username",
     help: "Recommended to enable this at a minimum. Unless you're sharing with a group and want to remain anonymous."
@@ -70,7 +72,7 @@ const profile_fields = {
   },
 }
 
-const feature_map = {
+const feature_map: {[key in ShareFeature]: any} = {
   profile: {
     label: 'Profile & People',
     help: "This allows users to view your profile info. Expand for more fine-grained control.",
@@ -86,14 +88,8 @@ const feature_map = {
   // },
 }
 
-const shareSchema = z.object({
-  fields: z.boolean(),
-  books: z.boolean(),
-  ..._.mapValues(profile_fields, () => z.boolean())
-})
-
 interface ShareCheck {
-  k: string
+  k: ShareProfileField | ShareFeature
   form: any
   setForm: any
   profile: boolean
@@ -176,6 +172,7 @@ function ShareCheck({k, form, setForm, profile=false}: ShareCheck) {
   </div>
 }
 
+
 interface ShareForm {
   s?: S.Shares.shares_egress_list_response
 }
@@ -210,7 +207,6 @@ export default function ShareForm({s}: ShareForm) {
   // FIXME #lefthere shareSchema above doesn't match shares_post_request, consolidate before building out form
   const form = useForm({
     resolver: zodResolver(shares_post_request),
-
   })
 
   const [entriesHelp, setEntriesHelp] = useState(false)

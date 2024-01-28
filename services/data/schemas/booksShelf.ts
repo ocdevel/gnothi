@@ -4,7 +4,7 @@ import {
   pgTable,
   index, pgEnum, doublePrecision, primaryKey,
 } from 'drizzle-orm/pg-core'
-import {InferModel} from "drizzle-orm"
+import {InferSelectModel} from "drizzle-orm"
 import {idCol, tsCol} from './utils'
 import {userId} from './users'
 
@@ -28,10 +28,13 @@ export const bookshelf = pgTable('bookshelf', {
 
 }, (table) => {
   return {
-    bookshelf_pkey: primaryKey(table.book_id, table.user_id),
+    bookshelf_pkey: primaryKey({
+      name: "bookshelf_pkey",
+      columns: [table.book_id, table.user_id]
+    }),
     ix_bookshelf_created_at: index("ix_bookshelf_created_at").on(table.created_at),
     ix_bookshelf_updated_at: index("ix_bookshelf_updated_at").on(table.updated_at),
   }
 })
 
-export type Bookshelf = InferModel<typeof bookshelf>
+export type BookshelfSelect = InferSelectModel<typeof bookshelf>

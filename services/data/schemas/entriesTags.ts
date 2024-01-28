@@ -14,7 +14,7 @@ export const entriesTags = pgTable('entries_tags', {
 
 }, (t) => {
   return {
-    pk: primaryKey(t.entry_id, t.tag_id)
+    pk: primaryKey({name: "entries_tags_pkey", columns: [t.entry_id, t.tag_id]})
   }
 })
 

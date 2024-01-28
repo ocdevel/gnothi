@@ -3,22 +3,24 @@ import {DB} from '../db'
 import * as S from '@gnothi/schemas'
 import {sql} from "drizzle-orm"
 import {users} from '../schemas/users'
-import {shares, sharesTags, sharesUsers, Share} from '../schemas/shares'
+import {shares, sharesTags, sharesUsers, Share, sharesGroups} from '../schemas/shares'
 import {fields} from '../schemas/fields'
 import {fieldEntries} from '../schemas/fieldEntries'
 import { and, asc, desc, eq, or, inArray } from 'drizzle-orm';
 import {boolMapToKeys} from '@gnothi/schemas/utils'
 import {GnothiError} from "../../routes/errors.js";
-import {shares_emailcheck_response} from "../../../schemas/shares.js";
+import {shares_emailcheck_response, shareProfileFields, shareFeatures} from "../../../schemas/shares";
+import {groups} from "../schemas/groups.js";
 
 export class Shares extends Base {
   shareFields(profile=true, share=true) {
     let res: string[] = []
     if (profile) {
-      res.push(...'email username first_name last_name gender orientation birthday timezone bio'.split(" "))
+      // FIXME are all fields being enabled regardless of client-side form?
+      res.push(...shareProfileFields)
     }
     if (share) {
-      res.push(...'fields books'.split(" "))
+      res.push(...shareFeatures)
     }
     return res
   }
@@ -85,8 +87,9 @@ export class Shares extends Base {
   async post(req: S.Shares.shares_post_request): Promise<Share> {
     const {vid, db} = this.context
     const {drizzle} = db
+    const {share, groups, tags, users} = req
     const postReq = {
-      ...req.share,
+      ...share,
       user_id: vid,
     }
     const res = await db.drizzle.insert(shares).values(postReq).returning()
@@ -104,19 +107,30 @@ export class Shares extends Base {
       await drizzle.update(shares).set(s).where(eq(shares.id, sid))
     }
 
-    const tids = boolMapToKeys(req.tags)
-    await drizzle.delete(sharesTags).where(eq(sharesTags.share_id, sid))
-    await drizzle.insert(sharesTags).values(tids.map(t => ({share_id: sid, tag_id: t})))
+    // delete previous ones. Easier than checking what's false in req, and setting if exists via SQL
+    await drizzle.execute(sql`
+      DELETE FROM shares_tags WHERE share_id=${sid};
+      DELETE FROM shares_users WHERE share_id=${sid};  
+      DELETE FROM shares_groups WHERE share_id=${sid};
+    `)
+
+    const shareJoin = (id: string) => ({share_id: sid, obj_id: id})
+
+    const sharesTags_ = boolMapToKeys(req.tags).map(shareJoin)
+    await drizzle.insert(sharesTags).values(sharesTags_)
 
     const emails = boolMapToKeys(req.users)
-    await drizzle.delete(sharesUsers).where(eq(sharesUsers.share_id, sid))
-    const uids = (
-      await drizzle.select([users.email]).from(users).where(inArray(users.email, emails))
-    ).map(r => r.email)
-    await drizzle.insert(sharesUsers).values(uids.map(u => ({share_id: sid, obj_id: u})))
+    const userRows = await drizzle
+      .select({id: users.id})
+      .from(users)
+      .where(inArray(users.email, emails))
+    const sharesUsers_ = userRows.map(r => shareJoin(r.id))
+    await drizzle.insert(sharesUsers).values(sharesUsers_)
 
-    // TODO groups
+    const sharesGroups_ = boolMapToKeys(req.groups).map(shareJoin)
+    await drizzle.insert(sharesGroups).values(sharesGroups_)
 
+    return [s]
   }
   async emailCheck(email: string): Promise<shares_emailcheck_response[]> {
     const {db} = this.context

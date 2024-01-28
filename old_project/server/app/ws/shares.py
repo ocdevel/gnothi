@@ -21,17 +21,6 @@ class Shares:
         return ResWrap(data=res, keyby='share.id')
 
     @staticmethod
-    async def on_email_check(data: PyS.EmailCheckPost, d) -> PyS.EmailCheckPost:
-        if d.viewer.email == data.email:
-            raise GnothiException(400, "PUNK", "That's you, silly!")
-        res = (d.db.query(M.User.email)
-            .filter_by(email=data.email)
-            .scalar())
-        if not res:
-            raise NotFound("No Gnothi user with that email. Have them sign up first.")
-        return dict(email=res)
-
-    @staticmethod
     async def on_shares_post(data: PyS.SharePost, d) -> PyS.Valid:
         data = data.dict()
         data['users'].pop(d.viewer.email, None)

@@ -394,6 +394,7 @@ class Share(Base):
 
     @staticmethod
     def put_post_share(db, vid, data):
+        # FIXME most of this is already converted to javascript, can remove soon (just double check)
         # Set the share itself
         share, tags, users, groups = data.get('share', {}), data.get('tags', {}),\
             data.get('users', {}), data.get('groups', {})

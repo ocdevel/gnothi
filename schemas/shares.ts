@@ -5,6 +5,27 @@ export * as Shares from './shares'
 import {shares} from '../services/data/schemas/shares'
 import {createInsertSchema} from "drizzle-zod"
 
+export const shareProfileFields = [
+  'username',
+  'email',
+  'first_name',
+  'last_name',
+  'bio',
+  'people',
+  'gender',
+  'orientation',
+  'birthday',
+  'timezone'
+] as const
+export type ShareProfileField = typeof shareProfileFields[number]
+
+export const shareFeatures = [
+  'profile',
+  'fields',
+  // 'books'
+] as const
+export type ShareFeature = typeof shareFeatures[number]
+
 export const Share = createInsertSchema(shares, {
   created_at: dateCol(),
 })

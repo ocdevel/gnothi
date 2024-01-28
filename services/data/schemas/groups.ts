@@ -72,7 +72,7 @@ export const groupsUsers = pgTable("groups_users", {
   joined_at: tsCol("created_at"),
   role: groupRoles("role").notNull().default("member")
 }, (t) => ({
-  pk: primaryKey(t.user_id, t.group_id)
+  pk: primaryKey({name: "groups_users_pkey", columns: [t.user_id, t.group_id]})
 }))
 export type GroupsUsersInsert = InferInsertModel<typeof groupsUsers>
 export type GroupsUsersSelect = InferSelectModel<typeof groupsUsers>
@@ -98,7 +98,7 @@ export const groupNotifs = pgTable("group_notifs", {
   count: integer("count").default(0),
   last_seen: tsCol("last_seen")
 }, (t) => ({
-  pk: primaryKey(t.user_id, t.obj_id)
+  pk: primaryKey({name: "groups_notifs_pkey", columns: [t.user_id, t.obj_id]})
 }))
 export type GroupNotifsInsert = InferInsertModel<typeof groupNotifs>
 export type GroupNotifsSelect = InferSelectModel<typeof groupNotifs>
