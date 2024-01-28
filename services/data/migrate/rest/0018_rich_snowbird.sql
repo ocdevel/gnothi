@@ -6,16 +6,16 @@ CREATE TABLE IF NOT EXISTS "shares_groups" (
 --> statement-breakpoint
 ALTER TABLE "shares" RENAME COLUMN "profile" TO "username";--> statement-breakpoint
 ALTER TABLE "shares_tags" RENAME COLUMN "tag_id" TO "obj_id";--> statement-breakpoint
-ALTER TABLE "shares_tags" DROP CONSTRAINT "shares_tags_tag_id_tags_id_fk";
+ALTER TABLE "shares_tags" DROP CONSTRAINT "shares_tags_tag_id_fkey";
 --> statement-breakpoint
 DROP INDEX IF EXISTS "ix_shares_email";--> statement-breakpoint
-ALTER TABLE "bookshelf" DROP CONSTRAINT "bookshelf_book_id_user_id";--> statement-breakpoint
-ALTER TABLE "entries_tags" DROP CONSTRAINT "entries_tags_entry_id_tag_id";--> statement-breakpoint
-ALTER TABLE "field_entries2" DROP CONSTRAINT "field_entries2_field_id_day";--> statement-breakpoint
+ALTER TABLE "bookshelf" DROP CONSTRAINT "bookshelf_pkey";--> statement-breakpoint
+ALTER TABLE "entries_tags" DROP CONSTRAINT "entries_tags_pkey";--> statement-breakpoint
+ALTER TABLE "field_entries2" DROP CONSTRAINT "field_entries2_pkey";--> statement-breakpoint
 ALTER TABLE "group_notifs" DROP CONSTRAINT "group_notifs_user_id_obj_id";--> statement-breakpoint
 ALTER TABLE "groups_users" DROP CONSTRAINT "groups_users_user_id_group_id";--> statement-breakpoint
-ALTER TABLE "influencers" DROP CONSTRAINT "influencers_field_id_influencer_id";--> statement-breakpoint
-ALTER TABLE "shares_tags" DROP CONSTRAINT "shares_tags_share_id_tag_id";--> statement-breakpoint
+ALTER TABLE "influencers" DROP CONSTRAINT "influencers_pkey";--> statement-breakpoint
+ALTER TABLE "shares_tags" DROP CONSTRAINT "shares_tags_pkey";--> statement-breakpoint
 ALTER TABLE "shares_users" DROP CONSTRAINT "shares_users_share_id_obj_id";--> statement-breakpoint
 ALTER TABLE "shares" ALTER COLUMN "fields" SET DEFAULT false;--> statement-breakpoint
 ALTER TABLE "shares" ALTER COLUMN "books" SET DEFAULT false;--> statement-breakpoint
@@ -59,8 +59,8 @@ EXCEPTION
 END $$;
 
 -- Step 1: Insert into shares_users
-INSERT INTO shares_users (share_id, obj_id)
-SELECT shares.id, users.id
+INSERT INTO shares_users (share_id, obj_id, email)
+SELECT shares.id, users.id, users.email
 FROM shares
 JOIN users ON shares.email = users.email;
 
