@@ -2,8 +2,8 @@ import {z} from 'zod'
 import {Route} from './api'
 import {Passthrough, dateCol, IdCol, BoolMap} from './utils'
 export * as Shares from './shares'
-import {shares} from '../services/data/schemas/shares'
-import {createInsertSchema} from "drizzle-zod"
+import {shares, sharesTags, sharesUsers} from '../services/data/schemas/shares'
+import {createInsertSchema, createSelectSchema} from "drizzle-zod"
 
 export const shareProfileFields = [
   'username',
@@ -18,7 +18,6 @@ export const shareProfileFields = [
   'timezone'
 ] as const
 export type ShareProfileField = typeof shareProfileFields[number]
-
 export const shareFeatures = [
   'profile',
   'fields',
@@ -31,40 +30,45 @@ export const Share = createInsertSchema(shares, {
 })
 export type Share = z.infer<typeof Share>
 
-export const ShareForm = z.object({
-  share: Share,
+// remove profile; that's a client-side trigger to show the inner fields
+// TODO gotta remove 'profile' from all server/schema stuff; just add it to the UI
+const sharesShareFields = [...shareProfileFields, ...shareFeatures].filter(k => k !== 'profile')
+const sharesShareZodArr = sharesShareFields.map( (k) => [k, z.boolean().optional()] )
+const sharesShareZodObj = z.object(Object.fromEntries(sharesShareZodArr))
+
+export const SharePost = z.object({
+  share: sharesShareZodObj,
   tags: BoolMap,
-  users: BoolMap,
+  users: z.record(
+    z.string().email(),
+    z.boolean(),
+  ).default(() => ({})),
   groups: BoolMap,
 })
-export type ShareForm = z.infer<typeof ShareForm>
-
-export const ShareTag = z.object({
-  share_id: z.string().uuid(), // shares.id FK
-  tag_id: z.string().uuid(), // tags.id FK
-  selected: z.boolean().default(true),
+export const SharePut = SharePost.extend({
+  id: z.string().uuid(),
 })
+export const ShareGet = SharePut.extend({
+  users: BoolMap
+})
+
+export const ShareTag = createSelectSchema(sharesTags)
 export type ShareTag = z.infer<typeof ShareTag>
 
-export const ShareUser = z.object({
-  share_id: z.string().uuid(), // shares.id FK
-  obj_id: z.string().uuid(), // users.id FK
-})
+export const ShareUser = createSelectSchema(sharesUsers)
 export type ShareUser = z.infer<typeof ShareUser>
 
 // export const ShareNotif = NotifCommon
 
 export const shares_ingress_list_response = ShareUser
 export type shares_ingress_list_response = z.infer<typeof shares_ingress_list_response>
-export const shares_egress_list_response = ShareForm
+export const shares_egress_list_response = ShareGet
 export type shares_egress_list_response = z.infer<typeof shares_egress_list_response>
-export const shares_put_request = ShareForm
+export const shares_put_request = SharePut
 export type shares_put_request = z.infer<typeof shares_put_request>
 export const shares_put_response = shares_egress_list_response
 export type shares_put_response = z.infer<typeof shares_put_response>
-export const shares_post_request = shares_put_request
-  .omit({share: true})
-  .extend({share: ShareForm.omit({id: true})})
+export const shares_post_request = SharePost
 export type shares_post_request = z.infer<typeof shares_post_request>
 export const shares_post_response = shares_egress_list_response
 export type shares_post_response = z.infer<typeof shares_post_response>
@@ -76,8 +80,6 @@ export const shares_emailcheck_request = z.object({email: z.string()})
 export type shares_emailcheck_request = z.infer<typeof shares_emailcheck_request>
 export const shares_emailcheck_response = z.object({email: z.string()})
 export type shares_emailcheck_response = z.infer<typeof shares_emailcheck_response>
-
-
 
 export const routes = {
   shares_ingress_list_request: {

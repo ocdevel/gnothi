@@ -13,7 +13,7 @@ export const dateCol = () => z.preprocess(
 export const IdCol = z.string().uuid()
 export const Passthrough = z.object({}).passthrough()
 
-export const BoolMap = z.record(z.string(), z.boolean()).default(() => {})
+export const BoolMap = z.record(z.string(), z.boolean()).default(() => ({}))
 export type BoolMap = z.infer<typeof BoolMap>
 
 export function boolMapToKeys(boolMap: BoolMap) {

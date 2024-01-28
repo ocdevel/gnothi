@@ -108,29 +108,41 @@ export class Shares extends Base {
     }
 
     // delete previous ones. Easier than checking what's false in req, and setting if exists via SQL
+    // Use CTE trick because "cannot insert multiple commands into a prepared statement"
     await drizzle.execute(sql`
-      DELETE FROM shares_tags WHERE share_id=${sid};
-      DELETE FROM shares_users WHERE share_id=${sid};  
+      WITH deleteTags AS (DELETE FROM shares_tags WHERE share_id=${sid}),
+      deleteUsers AS (DELETE FROM shares_users WHERE share_id=${sid})
       DELETE FROM shares_groups WHERE share_id=${sid};
     `)
 
+    let promises: Promise<any>[] = []
+
     const shareJoin = (id: string) => ({share_id: sid, obj_id: id})
 
-    const sharesTags_ = boolMapToKeys(req.tags).map(shareJoin)
-    await drizzle.insert(sharesTags).values(sharesTags_)
+    const sharesTagsIns = boolMapToKeys(req.tags).map(shareJoin)
+    if (sharesTagsIns.length) {
+      promises.push(drizzle.insert(sharesTags).values(sharesTagsIns))
+    }
 
     const emails = boolMapToKeys(req.users)
     const userRows = await drizzle
       .select({id: users.id})
       .from(users)
       .where(inArray(users.email, emails))
-    const sharesUsers_ = userRows.map(r => shareJoin(r.id))
-    await drizzle.insert(sharesUsers).values(sharesUsers_)
+    const sharesUsersIns = userRows.map(r => shareJoin(r.id))
+    if (sharesUsersIns.length) {
+      promises.push(drizzle.insert(sharesUsers).values(sharesUsersIns))
+    }
 
-    const sharesGroups_ = boolMapToKeys(req.groups).map(shareJoin)
-    await drizzle.insert(sharesGroups).values(sharesGroups_)
+    const sharesGroupsIns = boolMapToKeys(req.groups).map(shareJoin)
+    if (sharesGroupsIns.length) {
+      promises.push(drizzle.insert(sharesGroups).values(sharesGroupsIns))
+    }
 
-    return [s]
+    await Promise.all(promises)
+
+    // FIXME #lefthere return hydrated/joined row; but converted to BoolMap (or whatever's needed by egress_list_response)
+    return []
   }
   async emailCheck(email: string): Promise<shares_emailcheck_response[]> {
     const {db} = this.context

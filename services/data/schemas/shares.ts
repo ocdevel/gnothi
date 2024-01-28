@@ -1,9 +1,12 @@
-import {boolean, index, pgTable, varchar, uuid, primaryKey, timestamp, integer} from "drizzle-orm/pg-core";
+import {boolean, index, pgTable, varchar, uuid, primaryKey, timestamp, integer, pgEnum} from "drizzle-orm/pg-core";
 import {InferModel, InferSelectModel, sql} from 'drizzle-orm'
 import {idCol, tsCol} from "./utils";
 import {userId, users} from "./users";
 import {tagId, tags} from './tags'
 import {groupId} from "./groups";
+
+// TODO consider all the indexes in these tables. Eg, for
+// composite PKs, I may need dedicated indexes on the second columns
 
 // TODO currently using the old shares system until after a few releases, prompt, etc - then we'll get the new shares
 // system working.
@@ -12,11 +15,7 @@ export const shares = pgTable("shares", {
 	user_id: userId(),
   created_at: tsCol('created_at'),
 
-  // TODO
-  // Keep email for first migration. Transfer it to sharesUsers (create new rows based on joined user.id).
-  // Then remove this email, rename email_visible to email (boolean)
   email: boolean("email").default(false),
-
 	// profile: boolean("profile"),
   username: boolean("username").default(true),
   first_name: boolean("first_name").default(false),
@@ -62,14 +61,21 @@ export const sharesTags = pgTable('shares_tags', {
 })
 export type ShareTagSelect = InferSelectModel<typeof sharesTags>
 
+// No need for 'removed', just allow them to delete shares and the other use can re-initiate sharing
+// Use `rejected` for both rejecting on receipt; and blocking after accepted. UserA can't re-initiate
+export const sharesUsersState = pgEnum('sharesusersstate', ['pending', 'accepted', 'rejected']) //, 'removed'])
 export const sharesUsers = pgTable('shares_users', {
   share_id: shareId(),
   obj_id: userId("obj_id"),
+
+
 
   // TODO remove this, when I'm sure we're pulling the relevant profile fields based on privacy to
   // be seen by viewer. For now, show email here on view, since they'll have used the email to initiate
   // sharing; meaning they already know it, so it's no privacy concern
   email: varchar("email", { length: 255 }),
+
+  state: sharesUsersState("state").notNull().default('pending'),
 }, (table) => {
   return {
     pk: primaryKey({

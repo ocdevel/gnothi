@@ -4,16 +4,15 @@ import {shallow} from "zustand/shallow";
 import {useStore} from "../../../../data/store";
 
 export default function List() {
-    const [
-    shares,
+  const [
+    ids,
   ] = useStore(s => [
-    s.res.shares_egress_list_response,
+    s.res.shares_egress_list_response?.ids,
   ], shallow)
 
-  if (!shares?.ids) {return null}
-  const {ids, hash} = shares
+  if (ids) { return null }
 
   return <div>
-    {ids?.map(sid => <Item key={sid} s={hash[sid]}/>)}
+    {ids.map(sid => <Item key={sid} sid={sid}/>)}
   </div>
 }

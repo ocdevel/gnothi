@@ -7,7 +7,6 @@ import List from './List'
 import {shares_post_request} from "../../../../../../schemas/shares.ts";
 
 
-
 export default function Outbound() {
   const [
     send,

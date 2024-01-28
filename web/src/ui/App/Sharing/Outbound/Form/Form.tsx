@@ -256,7 +256,6 @@ export default function ShareForm({s}: ShareForm) {
     send('shares_delete_request', {id})
   }
 
-
   return <Card
     sx={{
       height: '100%',
