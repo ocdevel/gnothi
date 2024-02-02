@@ -49,7 +49,8 @@ export const SharePut = SharePost.extend({
   id: z.string().uuid(),
 })
 export const ShareGet = SharePut.extend({
-  users: BoolMap
+  // TODO double check no privacy issues here
+  share: Share
 })
 
 export const ShareTag = createSelectSchema(sharesTags)
@@ -101,7 +102,8 @@ export const routes = {
     o: {
       e: "shares_egress_list_response",
       s: shares_egress_list_response,
-      keyby: 'share.id'
+      // keyby: 'share.id'
+      keyby: 'id'
     }
   },
   shares_post_request: {

@@ -10,7 +10,7 @@ export default function List() {
     s.res.shares_egress_list_response?.ids,
   ], shallow)
 
-  if (ids) { return null }
+  if (!ids?.length) { return null }
 
   return <div>
     {ids.map(sid => <Item key={sid} sid={sid}/>)}

@@ -31,6 +31,7 @@ export default function Outbound() {
   const {egress, sid} = view
   const share = (sid && shares?.hash?.[sid]) || {}
 
+
   return <>
     <Grid container>
       {

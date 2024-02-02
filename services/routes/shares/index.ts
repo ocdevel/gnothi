@@ -15,8 +15,7 @@ export const shares_ingress_list_request = new Route(r.shares_ingress_list_reque
 })
 
 export const shares_egress_list_request = new Route(r.shares_egress_list_request, async (req, context) => {
-  return []
-  // return context.m.shares.egress()
+  return context.m.shares.egress()
 })
 
 export const shares_post_request = new Route(r.shares_post_request, async (req, context) => {

@@ -21,8 +21,8 @@ export default function Item({sid}: { sid: string }) {
     () => s.sharing.setView({tab: "egress", egress: "view", sid})
   ], []))
 
-
   function renderList(icon: JSX.Element, arr: any[], map_=_.identity) {
+    debugger
     arr = _.compact(arr)
     if (!arr?.length) {return null}
     return <div>{icon} {arr.map(map_).join(', ')}</div>

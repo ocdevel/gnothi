@@ -22,6 +22,14 @@ export function boolMapToKeys(boolMap: BoolMap) {
     .filter(v => v)
 }
 
+export function keysToBoolMap(keys?: string[]) {
+  return Object.fromEntries(
+    (keys || [])
+      .filter(k => k && k !== "NULL") // certain SQL JSON selects give literal "NULL"
+      .map(k => [k, true])
+  )
+}
+
 // zodResolver doesn't convert <input type="number" /> values to number, even as it has
 // the zod schema. Oh well, just convert manually
 export const CoerceNumber = z.number()

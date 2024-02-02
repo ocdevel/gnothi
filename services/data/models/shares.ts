@@ -7,7 +7,7 @@ import {shares, sharesTags, sharesUsers, Share, sharesGroups} from '../schemas/s
 import {fields} from '../schemas/fields'
 import {fieldEntries} from '../schemas/fieldEntries'
 import { and, asc, desc, eq, or, inArray } from 'drizzle-orm';
-import {boolMapToKeys} from '@gnothi/schemas/utils'
+import {boolMapToKeys, keysToBoolMap} from '../../../schemas/utils'
 import {GnothiError} from "../../routes/errors.js";
 import {shares_emailcheck_response, shareProfileFields, shareFeatures} from "../../../schemas/shares";
 import {groups} from "../schemas/groups.js";
@@ -60,28 +60,39 @@ export class Shares extends Base {
     return Object.values(merged)
   }
 
-  async egress() {
+  async egress(sid?: string) {
     const {vid, db} = this.context
-    const {drizzle} = db
+    const d = db.drizzle
 
-    const usersSq = drizzle.$with('usersSq').as(drizzle
-      .select({email: users.email, share_id: sharesUsers.share_id})
-      .from(sharesUsers)
-      .innerJoin(users, eq(users.id, sharesUsers.obj_id))
-    )
-    const res = await drizzle.with(usersSq)
-      .select({
-        share: shares,
-        tags: sql`array_agg(${sharesTags.tag_id})`.as('tags'),
-        users: sql`array_agg(${usersSq.email})`.as('users'),
-        // TODO groups
-      })
-      .from(shares)
-      .where(eq(shares.user_id, vid))
-      .leftJoin(sharesTags, eq(sharesTags.share_id, shares.id))
-      .leftJoin(usersSq, eq(usersSq.share_id, shares.id))
-      .groupBy(shares.id)
-    return res.map(DB.removeNull)
+    // aggregate shares.* into its json object as a single return column called "share"
+    const rows = await d.execute(sql`
+      SELECT 
+        s.id,
+        row_to_json(s) as share,
+        array_agg(st.obj_id) AS tags, 
+        array_agg(su.email) AS users,
+        array_agg(sg.obj_id) AS groups
+      FROM shares s
+      LEFT JOIN shares_tags st ON st.share_id = s.id
+      LEFT JOIN shares_users su ON su.share_id = s.id
+      LEFT JOIN shares_groups sg ON su.share_id = s.id
+      LEFT JOIN users u ON u.id = su.obj_id
+      WHERE s.user_id = ${vid}
+      ${sid ? sql`AND s.id = ${sid}` : sql``}
+      GROUP BY s.id;
+    `)
+    debugger
+    return rows.map((r) => {
+      const {groups, users, tags, ...rest} = r
+      return {
+        ...rest,
+        groups: keysToBoolMap(groups),
+        users: keysToBoolMap(users),
+        tags: keysToBoolMap(tags),
+      }
+    })
+
+    // git-blame drizzle native version (non-working attempt)
   }
 
   async post(req: S.Shares.shares_post_request): Promise<Share> {
@@ -141,8 +152,7 @@ export class Shares extends Base {
 
     await Promise.all(promises)
 
-    // FIXME #lefthere return hydrated/joined row; but converted to BoolMap (or whatever's needed by egress_list_response)
-    return []
+    return this.egress(sid)
   }
   async emailCheck(email: string): Promise<shares_emailcheck_response[]> {
     const {db} = this.context
