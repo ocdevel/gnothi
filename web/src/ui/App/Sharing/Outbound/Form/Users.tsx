@@ -12,7 +12,6 @@ import {maxWidth} from "../../../../../tmp/material-ui/packages/mui-system";
 import {z} from "zod"
 import {zodResolver} from "@hookform/resolvers/zod";
 import {useForm} from "react-hook-form";
-import {useLocalStore} from "./store.ts"
 import {shallow} from "zustand/shallow";
 
 const emailSchema = z.object({
@@ -20,23 +19,21 @@ const emailSchema = z.object({
 })
 type EmailSchema = z.infer<typeof emailSchema>
 
-// TODO convert everything over to useLocalStore for better performance / localized concern
-interface Users {
-  users: Record<string, boolean>
-  setUsers: (users: Record<string, boolean>) => void
-}
-export default function Users({users, setUsers}: Users) {
+export default function Users() {
   const [
-    checked
+    checked,
+    users,
   ] = useStore(s => [
-    s.res.shares_emailcheck_response?.rows?.[0]
+    s.res.shares_emailcheck_response?.rows?.[0],
+    s.sharing.form.users
   ], shallow)
   const [
     send,
+    setUsers
   ] = useStore(useCallback(s => [
     s.send,
+    s.sharing.form.setUsers
   ], []))
-  // const [users, setUsers] = useLocalStore(s => [s.users, s.setUsers], shallow)
 
   const form = useForm({
     resolver: zodResolver(emailSchema),

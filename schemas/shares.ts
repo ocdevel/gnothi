@@ -39,10 +39,7 @@ const sharesShareZodObj = z.object(Object.fromEntries(sharesShareZodArr))
 export const SharePost = z.object({
   share: sharesShareZodObj,
   tags: BoolMap,
-  users: z.record(
-    z.string().email(),
-    z.boolean(),
-  ).default(() => ({})),
+  users: BoolMap, // just remember that it's email: true, not uid: true
   groups: BoolMap,
 })
 export const SharePut = SharePost.extend({

@@ -1,18 +1,27 @@
 import {useStore} from "@gnothi/web/src/data/store"
-import React from "react";
+import React, {useCallback} from "react";
 import Checkbox from "@mui/material/Checkbox";
 import FormControl from "@mui/material/FormControl";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Typography from "@mui/material/Typography";
+import {useShallow} from "zustand/react/shallow";
 
 type Hash = {[key: string]: boolean}
-interface Groups {
-  groups: Hash
-  setGroups: (groups: Hash) => void
-}
-export default function Groups({groups, setGroups}: Groups) {
-  const send = useStore(s => s.send)
-  const g = useStore(s => s.res.groups_mine_list_response)
+export default function Groups() {
+  const [
+    g,
+    groups,
+  ] = useStore(useShallow(s => [
+    s.res.groups_mine_list_response,
+    s.sharing.form.groups
+  ]))
+  const [
+    send,
+    setGroups
+  ] = useStore(useCallback(s => [
+    s.send,
+    s.sharing.form.setGroups
+  ]))
 
   if (!g?.ids?.length) {return null}
 

@@ -1,42 +1,57 @@
 import _ from "lodash";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
-import {FaRegComments, FaUser} from "react-icons/fa";
-import React, {useCallback} from "react";
+import {FaRegComments, FaTags, FaUser} from "react-icons/fa";
+import React, {useCallback, useMemo} from "react";
 import * as S from "@gnothi/schemas"
 import {useStore} from "../../../../data/store";
 import {shallow} from "zustand/shallow";
+import {useShallow} from "zustand/react/shallow";
 
 export default function Item({sid}: { sid: string }) {
   const [
     myGroups,
-    s
-  ] = useStore(s => [
+    s,
+    tags,
+  ] = useStore(useShallow(s => [
     s.res.groups_mine_list_response?.hash,
-    s.res.shares_egress_list_response?.hash?.[sid]
-  ], shallow)
+    s.res.shares_egress_list_response?.hash?.[sid],
+    s.res.tags_list_response?.hash
+  ]))
   const [
     setView
   ] = useStore(useCallback(s => [
-    () => s.sharing.setView({tab: "egress", egress: "view", sid})
+    () => s.sharing.setView({tab: "egress", egress: "edit", sid})
   ], []))
 
-  function renderList(icon: JSX.Element, arr: any[], map_=_.identity) {
-    debugger
-    arr = _.compact(arr)
-    if (!arr?.length) {return null}
-    return <div>{icon} {arr.map(map_).join(', ')}</div>
-  }
+  const renderedTags = useMemo(() => {
+    const tagsKeys = s?.tags ? Object.keys(s.tags) : []
+    if (!tagsKeys?.length) {return null}
+    const tagsList = tagsKeys.map((id) => tags?.[id].name).join(', ')
+    return <div><FaTags /> {tagsList}</div>
+  }, [s?.tags, tags])
 
-  if (!s) {return null}
+  const renderedEmails = useMemo(() => {
+    const emails = s?.users ? Object.keys(s.users) : []
+    if (!emails?.length) {return null}
+    return <div><FaUser /> {emails.join(', ')}</div>
+  }, [s?.users])
+
+  const renderedGroups = useMemo(() => {
+    const groups = s?.groups ? Object.keys(s.groups) : []
+    if (!groups?.length) {return null}
+    return <div><FaRegComments /> {groups.map((id) => myGroups?.[id].title).join(', ')}</div>
+  }, [s?.groups, myGroups])
 
   return <Card
     sx={{mb: 2, cursor: 'pointer'}}
     onClick={setView}
   >
     <CardContent>
-      {renderList(<FaUser />, s.users)}
-      {renderList(<FaRegComments />, s.groups, (id) => myGroups?.[id].title)}
+      {renderedEmails}
+      {renderedTags}
+      {renderedGroups}
     </CardContent>
   </Card>
 }
+

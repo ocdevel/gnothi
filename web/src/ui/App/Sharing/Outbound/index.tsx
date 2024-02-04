@@ -5,21 +5,15 @@ import {shallow} from "zustand/shallow";
 import Grid from "@mui/material/Grid";
 import List from './List'
 import {shares_post_request} from "../../../../../../schemas/shares.ts";
+import {useShallow} from "zustand/react/shallow";
 
 
 export default function Outbound() {
   const [
-    send,
     shares,
-    view,
-    setView
-  ] = useStore(s => [
-    s.send,
+  ] = useStore(useShallow(s => [
     s.res.shares_egress_list_response,
-    s.sharing.view,
-    s.sharing.setView
-  ], shallow)
-
+  ]))
 
   // be23b9f8: show CantSnoop. New setup uses viewer data where attempting CantSnoop
 
@@ -28,21 +22,15 @@ export default function Outbound() {
   // so just list all.
   // const isList = sharePage.list || (sharePage.id && !hash?.[sharePage.id])
 
-  const {egress, sid} = view
-  const share = (sid && shares?.hash?.[sid]) || {}
-
+  const anyShares = Boolean(shares?.ids?.length)
 
   return <>
-    <Grid container>
-      {
-        shares?.ids?.length ? (
-          <Grid item>
-            <List />
-          </Grid>
-        ) : null
-      }
+    <Grid container spacing={2}>
+      {anyShares && <Grid item xs={12} md={6}>
+        <List />
+      </Grid>}
 
-      <Grid item flex={1}>
+      <Grid item xs={12} md={anyShares ? 6 : 12}>
         {/*<Button*/}
         {/*  variant={undefined /*false*!/*/}
         {/*  size='small'*/}
@@ -51,7 +39,7 @@ export default function Outbound() {
         {/*>*/}
         {/*  List Shares*/}
         {/*</Button>*/}
-        {["new", "edit"].includes(egress) ? <Form s={share} /> : null}
+        <Form  />
       </Grid>
     </Grid>
   </>

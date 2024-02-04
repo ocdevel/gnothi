@@ -70,7 +70,7 @@ export class Shares extends Base {
         s.id,
         row_to_json(s) as share,
         array_agg(st.obj_id) AS tags, 
-        array_agg(su.email) AS users,
+        array_agg(u.email) AS users,
         array_agg(sg.obj_id) AS groups
       FROM shares s
       LEFT JOIN shares_tags st ON st.share_id = s.id
@@ -108,7 +108,6 @@ export class Shares extends Base {
     return this.put(putReq, true)
   }
 
-
   async put(req: S.Shares.shares_put_request, isUpsert=false): Promise<Share> {
     const {vid, db} = this.context
     const {drizzle} = db
@@ -142,6 +141,7 @@ export class Shares extends Base {
       .where(inArray(users.email, emails))
     const sharesUsersIns = userRows.map(r => shareJoin(r.id))
     if (sharesUsersIns.length) {
+      // TODO also add user.email
       promises.push(drizzle.insert(sharesUsers).values(sharesUsersIns))
     }
 
