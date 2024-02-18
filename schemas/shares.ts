@@ -113,7 +113,7 @@ export const routes = {
       e: "shares_post_response",
       s: shares_post_response,
       event_as: "shares_egress_list_response",
-      op: "update",
+      op: "append",
       clears: "share_post_request",
     }
   },

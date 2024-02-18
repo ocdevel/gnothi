@@ -10,9 +10,9 @@ import {useShallow} from "zustand/react/shallow";
 
 export default function Outbound() {
   const [
-    shares,
+    sids,
   ] = useStore(useShallow(s => [
-    s.res.shares_egress_list_response,
+    s.res.shares_egress_list_response?.ids,
   ]))
 
   // be23b9f8: show CantSnoop. New setup uses viewer data where attempting CantSnoop
@@ -22,7 +22,7 @@ export default function Outbound() {
   // so just list all.
   // const isList = sharePage.list || (sharePage.id && !hash?.[sharePage.id])
 
-  const anyShares = Boolean(shares?.ids?.length)
+  const anyShares = Boolean(sids?.length)
 
   return <>
     <Grid container spacing={2}>

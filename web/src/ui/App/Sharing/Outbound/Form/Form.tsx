@@ -57,14 +57,16 @@ function ShareForm_({s, isNew}: ShareForm_) {
     postReq,
     deleteReq,
     postRes,
+    putRes,
     deleteRes,
-  ] = useStore(s => [
+  ] = useStore(useShallow(s => [
     s.sharing.view,
     s.req.shares_post_request,
     s.req.shares_delete_request,
     s.res.shares_post_response?.res,
+    s.res.shares_put_response?.res,
     s.res.shares_delete_response?.res
-  ], shallow)
+  ]))
   const [
     send,
     setView,
@@ -80,6 +82,7 @@ function ShareForm_({s, isNew}: ShareForm_) {
     s.sharing.form.reset,
     s.sharing.form.getForm,
   ], []))
+  const [loading, setLoading] = useState(false)
 
   const id = s?.id
 
@@ -100,10 +103,8 @@ function ShareForm_({s, isNew}: ShareForm_) {
 
   const [entriesHelp, setEntriesHelp] = useState(false)
 
-  const postLoading = postReq && !postRes
-  const deleteLoading = deleteReq && !deleteRes
-
   useEffect(() => {
+    setLoading(false)
     // FIXME ensure this is matching req/res (like s.id == deleteRes.id), so we don't redirect from delayed other
     if (deleteRes?.code === 200) {
       clearEvents(["shares_delete_response"])
@@ -112,17 +113,31 @@ function ShareForm_({s, isNew}: ShareForm_) {
   }, [deleteRes])
 
   useEffect(() => {
-    // EE.on("wsResponse", onResponse)
-    // return () => EE.off("wsResponse", onResponse)
+    setLoading(false)
     if (postRes?.code === 200) {
       clearEvents(["shares_post_response"])
       setView({tab: "egress", egress: "list"})
     }
   }, [postRes])
 
+  // FIXME refactor these 3 functions together. Also, can't clear responses, only requests
+  useEffect(() => {
+    setLoading(false)
+    if (putRes?.code === 200) {
+      clearEvents(["shares_put_response"])
+      setView({tab: "egress", egress: "list"})
+    }
+  }, [putRes])
+
   const submit = async e => {
     e.preventDefault()
-    send('shares_post_request', getForm())
+    setLoading(true)
+    const form = getForm()
+    if (id) {
+      send('shares_put_request', {id, ...form})
+    } else {
+      send('shares_post_request', form)
+    }
   }
 
   function deleteShare () {
@@ -217,7 +232,7 @@ function ShareForm_({s, isNew}: ShareForm_) {
         onClick={submit}
         variant='contained'
         color="primary"
-        disabled={postLoading}
+        disabled={loading}
       >
         {id ? 'Save' : 'Submit'}
       </Button>&nbsp;

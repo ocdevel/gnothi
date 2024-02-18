@@ -135,10 +135,12 @@ export class Shares extends Base {
     }
 
     const emails = boolMapToKeys(req.users)
-    const userRows = await drizzle
+    const userRows = emails.length ? (
+      await drizzle
       .select({id: users.id})
       .from(users)
       .where(inArray(users.email, emails))
+    ) : []
     const sharesUsersIns = userRows.map(r => shareJoin(r.id))
     if (sharesUsersIns.length) {
       // TODO also add user.email

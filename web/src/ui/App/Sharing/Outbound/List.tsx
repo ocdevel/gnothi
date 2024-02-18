@@ -12,6 +12,6 @@ export default function List() {
   ]))
 
   return <div>
-    {ids?.map(sid => <Item key={sid} sid={sid}/>)}
+    {ids?.map(sid => <Item key={sid} sid={sid} />)}
   </div>
 }

@@ -7,7 +7,7 @@ import {ApiSlice} from "./api";
 import {AppSlice} from "./app";
 import produce from 'immer'
 import _ from "lodash";
-import {ShareProfileField} from "../../../../schemas/shares.ts";
+import {ShareProfileField, shares_post_request} from "../../../../schemas/shares.ts";
 
 
 type Id = string | null
@@ -41,7 +41,8 @@ export interface SharingSlice {
       setTags: (tags: Record<string, boolean>) => void
       groups: Record<string, boolean>
       setGroups: (groups: Record<string, boolean>) => void
-      reset: (share: any) => void
+      reset: (share: shares_post_request) => void
+      getForm: () => shares_post_request
     }
   }
 }
