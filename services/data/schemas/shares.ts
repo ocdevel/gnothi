@@ -64,7 +64,10 @@ export const sharesTags = pgTable('shares_tags', {
   selected: boolean("selected").default(true),
 }, (table) => {
   return {
-    pk: primaryKey(table.share_id, table.tag_id)
+    pk: primaryKey({
+			name: "shares_tags_pkey",
+			columns: [table.share_id, table.tag_id]
+		})
   }
 })
 
@@ -75,7 +78,10 @@ export const sharesUsers = pgTable('shares_users', {
   obj_id: uuid("obj_id").notNull().references(() => users.id, {onDelete: 'cascade'}),
 }, (table) => {
   return {
-    pk: primaryKey(table.share_id, table.obj_id)
+    pk: primaryKey({
+			name: "shares_users_pkey",
+			columns: [table.share_id, table.obj_id]
+		})
   }
 })
 

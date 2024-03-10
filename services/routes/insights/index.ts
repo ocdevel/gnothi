@@ -32,7 +32,6 @@ export const insights_get_response = new Route(r.insights_get_response,async (re
   const promises = []
   // will be used to pair to which page called the insights client-side (eg list vs view)
   context.requestId = view
-  const generative = await context.m.users.canGenerative(user, req.generative)
 
   const entriesAll = await m.entries.getByIds(entry_ids)
   const entriesHash = Object.fromEntries(entriesAll.map(e => [e.id, e]))
@@ -43,7 +42,6 @@ export const insights_get_response = new Route(r.insights_get_response,async (re
     user_id,
     entries: entriesAll,
     query,
-    generative
   })
   const entriesFiltered = idsFiltered.map(id => entriesHash[id])
 
@@ -52,7 +50,6 @@ export const insights_get_response = new Route(r.insights_get_response,async (re
       context,
       query,
       user_id,
-      generative,
       // only send the top few matching documents. Ease the burden on QA ML, and
       // ensure best relevance from embedding-match
       entry_ids: idsFromVectorSearch.slice(0, 2)
@@ -74,13 +71,11 @@ export const insights_get_response = new Route(r.insights_get_response,async (re
     promises.push(summarizeInsights({
       context,
       entries: entriesFiltered,
-      generative
     }))
 
     promises.push(suggestNextEntry({
       context,
       entries: entriesFiltered,
-      generative,
       view
     }))
   }
@@ -96,6 +91,7 @@ export const insights_prompt_request = new Route(r.insights_prompt_request,async
 
 export const insights_prompt_response = new Route(r.insights_prompt_response,async (req, context) => {
   const {messages, view, model} = req
+  // FIXME insert here for only-presets
   const generative = await context.m.users.canGenerative(context.user, req.generative)
   if (!generative) {return []}
   let messages_ = []

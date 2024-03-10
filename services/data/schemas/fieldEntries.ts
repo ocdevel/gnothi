@@ -46,7 +46,7 @@ export const fieldEntries = pgTable('field_entries2', {
   dupe: integer('dupe').default(0)
 }, (table) => {
   return {
-    pk: primaryKey(table.field_id, table.day),
+    pk: primaryKey({name: "fields_entries2_pkey", columns: [table.field_id, table.day]}),
     ix_field_entries2_user_id: index("ix_field_entries2_user_id").on(table.user_id),
     ix_field_entries2_created_at: index("ix_field_entries2_created_at").on(table.created_at),
     ix_field_entries2_day: index("ix_field_entries2_day").on(table.day),

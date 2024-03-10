@@ -69,19 +69,11 @@ export async function entriesUpsertResponse(req: S.Entries.entries_upsert_respon
   
   const clean = await preprocess({text: entry.text, method: 'md2txt'})
 
-  const generative = await context.m.users.canGenerative(user)
-  if (!generative) {
-    skip_summarize = true
-  }
-
   const summary = skip_summarize ? {
     title: "",
     paras: clean.paras,
     body: {text: "", emotion: "", keywords: []}
-  } : await summarizeEntry({
-    ...clean,
-    generative
-  })
+  } : await summarizeEntry(clean)
   //console.log({summary})
 
   updates = {

@@ -6,7 +6,6 @@ import {useStore} from "@gnothi/web/src/data/store"
 import {shallow} from "zustand/shallow";
 import Grid from "@mui/material/Grid";
 import {Behaviors} from './Behaviors.tsx'
-import {NotEnough, Upgrade} from './AnalyzeDisabled.tsx'
 import Charts from './Charts.tsx'
 import TableQA from './TableQA.tsx'
 import CardContent from "@mui/material/CardContent";
@@ -21,11 +20,9 @@ const get = useStore.getState
 export default function Analyze() {
   const [
     me,
-    creditActive,
     view,
   ] = useStore(s => [
     s.user?.me,
-    s.creditActive,
     s.behaviors.view,
   ], shallow)
   const [
@@ -42,10 +39,6 @@ export default function Analyze() {
       setView({view: "overall", fid: null})
     }
   }, [])
-
-  if (!(me?.premium || creditActive)) {
-    return <Upgrade />
-  }
 
   return <Grid container direction="row" spacing={2}>
     <Grid item  xs={12} md={6}>

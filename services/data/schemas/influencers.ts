@@ -15,7 +15,7 @@ export const influencers = pgTable('influencers', {
   score: doublePrecision('score').notNull()
 }, (table) => {
   return {
-    pk: primaryKey(table.field_id, table.influencer_id),
+    pk: primaryKey({name: "influencers_pkey", columns: [table.field_id, table.influencer_id]}),
   }
 })
 

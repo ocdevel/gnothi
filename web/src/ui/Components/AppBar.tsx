@@ -23,7 +23,6 @@ import ProfileIcon from '@mui/icons-material/Person';
 import BackIcon from '@mui/icons-material/ArrowBackIosNewOutlined';
 import CircularProgress from "@mui/material/CircularProgress";
 import {shallow} from "zustand/shallow";
-import {CreditBanner} from "./CreditBanner.tsx";
 
 const buttonSx = {
   fontWeight: 300,
@@ -277,7 +276,6 @@ export default function ResponsiveAppBar({
           {renderRight()}
         </Toolbar>
       </Container>
-      <CreditBanner />
     </AppBar>
   </>
 }

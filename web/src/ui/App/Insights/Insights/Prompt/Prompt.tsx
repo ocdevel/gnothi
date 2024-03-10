@@ -20,7 +20,6 @@ import PromptSelector from './Selector.tsx'
 import type {Message} from '@gnothi/schemas/insights'
 import PremiumIcon from '@mui/icons-material/LockOutlined';
 import {shallow} from "zustand/shallow";
-import BtnTryGenerative from '../../../../Components/BtnTryGenerative'
 import ReactMarkdown from "react-markdown";
 
 // import {LinearProgress} from "@mui/material";
@@ -39,13 +38,11 @@ export default function Prompt({entry_ids, view}: Prompt) {
     modal,
     promptResponse,
     waiting,
-    creditActive
   ] = useStore(s => [
     s.user?.me,
     s.modals.prompt,
     s.res.insights_prompt_final?.hash?.[view],
     s.req.insights_prompt_request,
-    s.creditActive
   ], shallow)
   const [
     send,
@@ -75,7 +72,6 @@ export default function Prompt({entry_ids, view}: Prompt) {
     const updated = [...messages, message]
     setMessages(updated)
     const request = {
-      generative: useStore.getState().creditActive,
       view,
       entry_ids,
       messages: updated,
@@ -117,16 +113,16 @@ export default function Prompt({entry_ids, view}: Prompt) {
 
   function renderSubmit() {
     return <Grid item>
-      <BtnTryGenerative
-        btnProps={{
-          sx: {elevation: 12, fontWeight: 500},
-          // variant: (modal ? "contained" : "outlined"),
-          disabled: btnDisabled
-        }}
-        submit={submit}
-        tryLabel={waiting ? <CircularProgress /> : "Try Prompt"}
-        premiumLabel={waiting ? <CircularProgress/> : "Submit"}
-      />
+      <Button
+        sx={{elevation: 12, fontWeight: 500}}
+        // variant: (modal ? "contained" : "outlined"),
+        disabled={btnDisabled}
+        onnClick={submit}
+        variant="contained"
+        color="primary"
+      >
+        Submit
+      </Button>
     </Grid>
   }
 

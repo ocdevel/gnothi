@@ -105,10 +105,9 @@ interface Insights {
   entry_ids: string[]
 }
 export default function Insights({entry_ids}: Insights) {
-  const [search, me, creditActive] = useStore(s => [
+  const [search, me] = useStore(s => [
     s.filters.search,
     s.user?.me,
-    s.creditActive
   ], shallow)
 
   const view = entry_ids.length === 1 ? entry_ids[0] : "list"
@@ -124,7 +123,6 @@ export default function Insights({entry_ids}: Insights) {
     get().send("insights_get_request", {
       view,
       entry_ids,
-      generative: creditActive,
       insights: {
         summarize: true,
         query: search,
@@ -137,7 +135,7 @@ export default function Insights({entry_ids}: Insights) {
   useEffect(() => {
     if (!entry_ids.length) { return }
     getInsights()
-  }, [search, entryIdsShallow, creditActive])
+  }, [search, entryIdsShallow])
 
   // FIXME handle on a per-insight basis
   // if (!entry_ids?.length) {

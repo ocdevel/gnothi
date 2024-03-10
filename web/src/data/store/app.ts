@@ -8,7 +8,6 @@ import {produce} from 'immer'
 
 import dayjs from 'dayjs'
 import {SharingSlice} from "./sharing";
-import {CREDIT_MINUTES} from "../../../../schemas/users.ts";
 
 // TODO use mainTag as default tag
 export const initialFilters = Entries.entries_list_request.parse({})
@@ -61,9 +60,6 @@ export interface AppSlice {
 
   // ----- Other
   selectedTags: {[k: string]: boolean},
-  creditActive: boolean,
-  creditSeconds: number
-  creditActivate: (user?: Users.User) => void,
 }
 
 export const appSlice: StateCreator<
@@ -150,28 +146,4 @@ export const appSlice: StateCreator<
   // ee: {
   //   toolbar_groups_create: false
   // },
-
-  creditActive: false,
-  creditSeconds: 0,
-  creditActivate: (user) => {
-    if (get().creditActive) { return }
-
-    // may be restoring active credit from a page refresh
-    let creditSeconds = 0
-    if (user) {
-      if (!user.last_credit) { return }
-      creditSeconds = dayjs().diff(user.last_credit, "seconds")
-      if (creditSeconds > Users.CREDIT_MINUTES * 60) { return }
-    }
-
-    const creditInterval = setInterval(() => {
-      const creditSeconds = get().creditSeconds + 1
-      set({creditSeconds})
-      if (creditSeconds > Users.CREDIT_MINUTES * 60) {
-        set({creditActive: false})
-        clearInterval(creditInterval)
-      }
-    }, 1000)
-    set({creditActive: true, creditSeconds})
-  }
 })

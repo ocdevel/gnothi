@@ -70,7 +70,6 @@ async function emailMetrics(logEvents: LogEvent[]) {
       || m.includes("insights_prompt_request")
       || m.includes("checkout.session.completed")
       || m.includes("customer.subscription.deleted")
-      || m.includes("users_usecredit_request")
   }).map(parseLogJson).filter(Boolean)
   if (!metrics?.length) {return}
   await sendEmail(metricEmails,"Gnothi Metric", metrics)
