@@ -208,11 +208,28 @@ export default function Insights({entry_ids}: Insights) {
         <Admin view={view}/>
       </Insight>, [Boolean(me?.is_superuser)])}
 
-      <iframe style={{borderRadius: 8}} width="100%" height="315" src="https://www.youtube.com/embed/bi0KS8JdHbE" title="YouTube video player"
-        frameBorder="0"
-        allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-        allowFullScreen></iframe>
-
+      <Video />
+      <Box sx={{display:'flex', justifyContent: 'center'}}>
+        <DonateButton />
+      </Box>
     </Stack2>
   </div>
+}
+
+function Video() {
+  return <iframe style={{borderRadius: 8}} width="100%" height="315" src="https://www.youtube.com/embed/bi0KS8JdHbE"
+   title="YouTube video player"
+   frameBorder="0"
+   allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+   allowFullScreen
+  ></iframe>
+}
+
+function DonateButton() {
+  return <form action="https://www.paypal.com/donate" method="post" target="_top">
+    <input type="hidden" name="hosted_button_id" value="9A9KRVTQFFLFC"/>
+    <input type="image" src="https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif" border="0" name="submit"
+           title="PayPal - The safer, easier way to pay online!" alt="Donate with PayPal button"/>
+    <img alt="" border="0" src="https://www.paypal.com/en_US/i/scr/pixel.gif" width="1" height="1"/>
+  </form>
 }
