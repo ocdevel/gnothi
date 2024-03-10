@@ -9,21 +9,16 @@ import PremiumIcon from '@mui/icons-material/LockOutlined';
 
 
 export default function SuggestEntry() {
-  const premium = useStore(s => s.user?.me?.premium)
-  const setPremium = useStore(useCallback(s => s.modals.setPremium,[]))
   const insights_nextentry_response = useStore(s => s.res.insights_nextentry_response?.hash?.['list']?.text)
   const [showSuggested, setShowSuggested] = useState(false)
 
   // git-blame for popover
 
   function handleClick () {
-    if (premium) {
-      return setShowSuggested(!showSuggested)
-    }
-    setPremium(true)
+    setShowSuggested(!showSuggested)
   }
 
-  const loading = premium && !insights_nextentry_response?.length
+  const loading = !insights_nextentry_response?.length
   const disabled = loading && !showSuggested
   const startIcon = loading ? <CircularProgress size={10} /> : null
 
@@ -34,7 +29,6 @@ export default function SuggestEntry() {
       endIcon={startIcon}
       disabled={disabled}
       onClick={handleClick}
-      startIcon={premium ? null : <PremiumIcon />}
     >
       {showSuggested ? "Hide Suggestion" : "See Gnothi's suggested deep-dive"}
     </Button>
