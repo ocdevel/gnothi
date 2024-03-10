@@ -52,7 +52,7 @@ export default function Prompt({entry_ids, view}: Prompt) {
     s.modals.setPrompt,
   ], []))
   const [messages, setMessages] = useState<Message[]>([])
-  const [model, setModel] = useState<"gpt-3.5-turbo-16k" | "gpt-4-1106-preview">("gpt-4-1106-preview")
+  const [model, setModel] = useState<"gpt-3.5-turbo-16k" | "gpt-4-turbo-preview">("gpt-4-turbo-preview")
 
   const [prompt, setPrompt] = useState<string>("")
   const [showHelp, setShowHelp] = useState<boolean>(false)

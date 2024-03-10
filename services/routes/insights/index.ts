@@ -123,7 +123,7 @@ export const insights_prompt_response = new Route(r.insights_prompt_response,asy
   const response = await completion({
     // entry v summary handled above, so just replace either/or here
     model,
-    max_tokens: 384,
+    max_tokens: 1536,
     prompt: messages_.map(m => {
       // remove `id` from messages. Needed for request/response, but OpenAI doesn't want it
       const {id, ...rest} = m
