@@ -17,6 +17,7 @@ import {Insights} from '../../data/models/insights'
 import {Route} from '../types'
 import {ulid} from "ulid";
 import {inArray, eq, and} from "drizzle-orm";
+import {presetsFlat, presetsObj} from '../../../schemas/promptPresets.js'
 
 const r = S.Routes.routes
 
@@ -90,10 +91,18 @@ export const insights_prompt_request = new Route(r.insights_prompt_request,async
 })
 
 export const insights_prompt_response = new Route(r.insights_prompt_response,async (req, context) => {
-  const {messages, view, model} = req
-  // FIXME insert here for only-presets
-  const generative = await context.m.users.canGenerative(context.user, req.generative)
-  if (!generative) {return []}
+  let {messages, view, model} = req
+
+  if (!context.user.premium) {
+    const lastMessage = messages[messages.length - 1];
+    // ensure they only sent a preset, to prevent tampering
+    const presetMessages = presetsFlat.map(preset => preset.prompt)
+    if (!presetMessages.includes(lastMessage.content)) {
+      return []
+    }
+    messages = [lastMessage]
+  }
+
   let messages_ = []
 
   // on the first prompt, we'll tee it up with their entries. We'll send it back

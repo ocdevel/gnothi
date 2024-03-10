@@ -17,10 +17,11 @@ import Accordions from "../../../../Components/Accordions"
 import Container from "@mui/material/Container";
 import {FullScreenDialog} from "../../../../Components/Dialog";
 import PromptSelector from './Selector.tsx'
+import type {PromptYml} from "../../../../../../../schemas/promptPresets.ts";
 import type {Message} from '@gnothi/schemas/insights'
 import PremiumIcon from '@mui/icons-material/LockOutlined';
-import {shallow} from "zustand/shallow";
 import ReactMarkdown from "react-markdown";
+import {useShallow} from "zustand/react/shallow";
 
 // import {LinearProgress} from "@mui/material";
 // import axios from "axios"
@@ -34,29 +35,31 @@ type Prompt = Insight & {
 
 export default function Prompt({entry_ids, view}: Prompt) {
   const [
-    me,
+    premium,
     modal,
     promptResponse,
     waiting,
-  ] = useStore(s => [
-    s.user?.me,
+  ] = useStore(useShallow(s => [
+    s.user?.me?.premium,
     s.modals.prompt,
     s.res.insights_prompt_final?.hash?.[view],
     s.req.insights_prompt_request,
-  ], shallow)
+  ]))
   const [
     send,
     setModal,
+    setPremiumModal,
   ] = useStore(useCallback(s => [
     s.send,
     s.modals.setPrompt,
+    s.modals.setPremium,
   ], []))
   const [messages, setMessages] = useState<Message[]>([])
   const [model, setModel] = useState<"gpt-3.5-turbo-16k" | "gpt-4-turbo-preview">("gpt-4-turbo-preview")
 
-  const [prompt, setPrompt] = useState<string>("")
+  const [prompt, setPrompt] = useState<PromptYml | null>(null)
   const [showHelp, setShowHelp] = useState<boolean>(false)
-  const btnDisabled = waiting || prompt.length < 3
+  const btnDisabled = waiting || prompt?.prompt?.length < 3
 
   useEffect(() => {
     if (!promptResponse) { return }
@@ -67,8 +70,12 @@ export default function Prompt({entry_ids, view}: Prompt) {
   const submit = () => {
     // They didn't enter anything
     if (btnDisabled) {return}
+    if (!prompt) { return }
+    if (prompt.key === "custom" && !premium) {
+      return setPremiumModal(true)
+    }
 
-    const message = {role: "user", content: prompt, id: Date.now().toString()}
+    const message = {role: "user", content: prompt.prompt, id: Date.now().toString()}
     const updated = [...messages, message]
     setMessages(updated)
     const request = {
@@ -80,7 +87,7 @@ export default function Prompt({entry_ids, view}: Prompt) {
 
     send("insights_prompt_request", request)
     if (!modal) {
-      setPrompt("")
+      setPrompt(null)
       setModal(true)
     }
   }
@@ -117,7 +124,7 @@ export default function Prompt({entry_ids, view}: Prompt) {
         sx={{elevation: 12, fontWeight: 500}}
         // variant: (modal ? "contained" : "outlined"),
         disabled={btnDisabled}
-        onnClick={submit}
+        onClick={submit}
         variant="contained"
         color="primary"
       >

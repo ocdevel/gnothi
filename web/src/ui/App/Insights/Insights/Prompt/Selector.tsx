@@ -1,32 +1,27 @@
 import TextField from "@mui/material/TextField";
 import React, {useState} from "react";
-import presets from '../../../../../data/prompts.yml'
 import keyBy from "lodash/keyBy";
 import Autocomplete from "@mui/material/Autocomplete";
-
-type PromptYml = {key?: string, label: string, prompt: string}
-type CategoryYml = {category: string, prompts: PromptYml[]}
-const presetsFlat = (presets as CategoryYml[])
-  .map(category => category.prompts.map(prompt => ({...prompt, category: category.category})))
-  .flat()
-const presetsObj = keyBy(presetsFlat, 'key')
-
-type Option = PromptYml
+import {useStore} from "../../../../../data/store";
+import {useShallow} from "zustand/react/shallow";
+import {PromptYml, CategoryYml, presetsFlat, presetsObj} from "../../../../../../../schemas/promptPresets.ts";
 
 interface Selector {
-  prompt: string
-  setPrompt: (prompt: string) => void
+  prompt: PromptYml | null
+  setPrompt: (prompt: PromptYml | null) => void
 }
-
 export default function Selector({
   prompt,
   setPrompt,
 }: Selector) {
-  const [option, setOption] = useState<Option | null>(null)
+  const [premium] = useStore(useShallow(s => [
+    s.user?.me?.premium
+  ]))
 
+  const label = premium ? "Choose a preset or write your own" : "Choose a prompt"
   return <>
     <Autocomplete
-      freeSolo
+      freeSolo={premium}
       fullWidth
       options={presetsFlat}
       groupBy={(option) => option.category}
@@ -36,25 +31,24 @@ export default function Selector({
           {option.label}
         </li>
       )}
-      value={option}
+      value={prompt}
       onChange={(event, newValue) => {
-        setOption(newValue)
-        setPrompt(newValue?.prompt || "")
+        setPrompt(newValue)
       }}
       renderInput={(params) => <TextField
         {...params}
-        label="Choose a preset or write your own"
+        label={label}
         multiline
         minRows={2}
       />}
-      inputValue={option?.prompt || ''}
+      inputValue={prompt?.prompt || ''}
       onInputChange={(event, newValue) => {
-        setOption({
+        setPrompt({
           category: "",
+          key: "custom",
           label: newValue,
           prompt: newValue,
         })
-        setPrompt(newValue || "")
       }}
     />
   </>
