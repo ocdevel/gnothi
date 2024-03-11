@@ -65,7 +65,8 @@ export const insights_books_response = Insight.extend({
     title: z.string(),
     text: z.string(),
     author: z.string(),
-    topic: z.string()
+    topic: z.string(),
+    amazon: z.string().optional(),
   }).array()
 })
 export type insights_books_response = z.infer<typeof insights_books_response>

@@ -221,7 +221,7 @@ export default function Upsert(props: Upsert) {
         variant='contained'
         disabled={submitting}
         type="submit"
-        className="btn-submit-ai"
+        className="btn-submit"
         onClick={submitHandler}
       >
         Submit
