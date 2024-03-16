@@ -20,22 +20,24 @@ import {create} from "zustand";
 import {fields_list_response} from "../../../../../../schemas/fields.ts";
 import {iso} from "../../../../data/store/behaviors.ts";
 import dayjs from "dayjs";
+import {isNewDay} from "./DayChanger.tsx";
 
 const useLocalStore = create<{
   sendValue: (fid: string, value: any) => void
   setValue: (fid: string, value: any) => void
   setAndSend: (fid: string, value: any) => void
 }>()((set, get) => ({
-  // Update field-entries as they type / click, but not too fast; can cause race-condition in DB
   sendValue: (fid, value) => {
-    const {send, behaviors: {isToday, dayStr, setDay}} = useStore.getState()
     // If they interact with a behavior on the start of a new day, without having refreshed
-    // the page between yesterday and today, everything gets messed up. Re-set the day, then
-    // call this function afterwards. Note: at this point "isToday" is a lie, so it lets us check.
-    if (isToday && dayStr !== iso()) {
-      setDay(dayjs())
+    // the page between yesterday and today, everything gets messed up. Note that isNewDay is called
+    // on a setTimeout in DayChanger, so this shouldn't be necessary. But just in case, due to browser
+    // tab being open for a long time, we'll check again here.
+    const didRefresh = isNewDay()
+    if (didRefresh) {
       return setTimeout(() => get().sendValue(fid, value), 100)
     }
+
+    const {send, behaviors: {isToday, dayStr}} = useStore.getState()
 
     // don't do value?.length, because 0 is a valid value. Later: account for null, which is Fivestar unset().
     // Would need some unsetting logic server-side too
