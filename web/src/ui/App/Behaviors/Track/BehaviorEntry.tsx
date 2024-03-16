@@ -113,24 +113,24 @@ function NumberEntry({f}: BehaviorEntry) {
     let value = Number(e.target.value)
     if (isNaN(value)) {return}
     setValue(f.id, value)
-  }, [f])
+  }, [f.id])
 
   const changeByOne = useCallback((dir: -1 | 1) => () => {
     const val = value + dir
     setAndSend(f.id, val)
-  }, [f, value])
+  }, [f.id, value])
 
   const purchase = useCallback(() => {
     if (f.points > points) {
       return addError(<Box>Not enough points for <BehaviorName name={f.name} /></Box>)
     }
     sendValue(f.id, f.points)
-  }, [f.points, points])
+  }, [f.id, f.points, points])
 
   // wrap it so we can wait till blur to send
-  const sendValue_ = (e: React.SyntheticEvent<HTMLInputElement>) => {
+  const sendValue_ = useCallback((e: React.SyntheticEvent<HTMLInputElement>) => {
     sendValue(f.id, value)
-  }
+  }, [f.id, value])
 
   if (f.lane === "reward") {
     return <Button
