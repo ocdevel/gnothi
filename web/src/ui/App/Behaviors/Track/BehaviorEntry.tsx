@@ -18,6 +18,8 @@ import InputAdornment from "@mui/material/InputAdornment";
 import {useShallow} from "zustand/react/shallow";
 import {create} from "zustand";
 import {fields_list_response} from "../../../../../../schemas/fields.ts";
+import {iso} from "../../../../data/store/behaviors.ts";
+import dayjs from "dayjs";
 
 const useLocalStore = create<{
   sendValue: (fid: string, value: any) => void
@@ -26,11 +28,18 @@ const useLocalStore = create<{
 }>()((set, get) => ({
   // Update field-entries as they type / click, but not too fast; can cause race-condition in DB
   sendValue: (fid, value) => {
-    const {send, behaviors: {isToday, dayStr, values}} = useStore.getState()
+    const {send, behaviors: {isToday, dayStr, setDay}} = useStore.getState()
+    // If they interact with a behavior on the start of a new day, without having refreshed
+    // the page between yesterday and today, everything gets messed up. Re-set the day, then
+    // call this function afterwards. Note: at this point "isToday" is a lie, so it lets us check.
+    if (isToday && dayStr !== iso()) {
+      setDay(dayjs())
+      return setTimeout(() => get().sendValue(fid, value), 100)
+    }
+
     // don't do value?.length, because 0 is a valid value. Later: account for null, which is Fivestar unset().
     // Would need some unsetting logic server-side too
     if (value === null || value === undefined || value === "") {return}
-    debugger
     const req = {
       field_id: fid,
       value: parseFloat(value), // until we support strings,
