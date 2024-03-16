@@ -109,8 +109,14 @@ export class Fields extends Base {
 
   async entriesPost(req: S.Fields.fields_entries_post_request) {
     const {uid, db} = this.context
-    const {day, field_id, value} = req
+    const {field_id, value} = req
 
+    // drizzle-orm 0.30.0 changed handling of {mode: 'string'|'date'} to date columns. This is a hot-fix to just
+    // field-entries, and I need to investigate any other changes needed
+    let {day} = req
+    if (day && typeof day !== "string") {
+      day = day.toISOString()
+    }
 
     // Big ol' query which (1) logs the field-entry; (2) scores the field; (3) updates the global (user) score.
     // Thanks GPT!
