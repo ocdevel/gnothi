@@ -15,65 +15,57 @@ import Checkbox from "@mui/material/Checkbox";
 import Box from "@mui/material/Box";
 import {BehaviorName} from "../BehaviorName.tsx";
 import InputAdornment from "@mui/material/InputAdornment";
+import {useShallow} from "zustand/react/shallow";
+import {create} from "zustand";
+import {fields_list_response} from "../../../../../../schemas/fields.ts";
 
-interface BehaviorEntry {
-  f: S.Fields.fields_list_response
-}
-type Value = number | null
-type EntryVariant = BehaviorEntry & {
-  value: number
-  setValue: (value: Value) => void
-  sendValue: (value: Value) => void
-  isToday: boolean
-}
-export default function Entry({f}: BehaviorEntry) {
-  const [
-    value,
-    dayStr,
-    isToday,
-  ] = useStore(s => [
-    s.behaviors.values?.[f.id],
-    s.behaviors.dayStr,
-    s.behaviors.isToday,
-  ], shallow)
-  const [send, setValues] = useStore(useCallback(s => [s.send, s.behaviors.setValues], []))
-
-  const fid = f.id
-
+const useLocalStore = create<{
+  sendValue: (fid: string, value: any) => void
+  setValue: (fid: string, value: any) => void
+  setAndSend: (fid: string, value: any) => void
+}>()((set, get) => ({
   // Update field-entries as they type / click, but not too fast; can cause race-condition in DB
-  const sendValue = useCallback((value: any) => {
+  sendValue: (fid, value) => {
+    const {send, behaviors: {isToday, dayStr, values}} = useStore.getState()
     // don't do value?.length, because 0 is a valid value. Later: account for null, which is Fivestar unset().
     // Would need some unsetting logic server-side too
     if (value === null || value === undefined || value === "") {return}
+    debugger
     const req = {
       field_id: fid,
       value: parseFloat(value), // until we support strings,
       day: isToday ? null : dayStr,
     }
     send(`fields_entries_post_request`, req)
-  }, [isToday, dayStr])
-
-  const setValue = useCallback((value: Value) => {
+  },
+  setValue: (fid, value) => {
+    const {setValues} = useStore.getState().behaviors
     setValues({[fid]: value})
-  }, [])
+  },
+  setAndSend: (fid, value) => {
+    get().setValue(fid, value)
+    get().sendValue(fid, value)
+  }
+}))
 
-  const entryVariantProps = { f, value, setValue, sendValue, isToday }
-
+interface BehaviorEntry {
+  f: fields_list_response & {id: string} // for some reason id not coming in
+}
+export default function Entry({f}: BehaviorEntry) {
   if (f.type === 'fivestar') {
-    return <FiveStarEntry {...entryVariantProps} />
+    return <FiveStarEntry f={f} />
   }
-
   if (f.type === 'check') {
-    return <CheckEntry {...entryVariantProps} />
+    return <CheckEntry f={f} />
   }
-  return <NumberEntry {...entryVariantProps} />
+  return <NumberEntry f={f} />
 }
 
-function FiveStarEntry({f, value, setValue, sendValue, isToday}: EntryVariant) {
-  const changeStar = useCallback((event: any, value: number | null) => {
-    setValue(value)
-    sendValue(value)
-  }, [])
+function FiveStarEntry({f}: BehaviorEntry) {
+  const value = useStore(s => s.behaviors.values?.[f.id])
+  const [changeStar] = useLocalStore(useCallback(s => [
+    (event: any, value: number | null) => s.setAndSend(f.id, value)
+  ], [f]))
 
   return <Rating
     className="fivestar"
@@ -83,42 +75,51 @@ function FiveStarEntry({f, value, setValue, sendValue, isToday}: EntryVariant) {
   />
 }
 
-function NumberEntry({f, value, setValue, sendValue, isToday}: EntryVariant) {
+function NumberEntry({f}: BehaviorEntry) {
   const [
     points,
-  ] = useStore(s => [
-    s.user?.me?.points || 0
-  ], shallow)
+    value_,
+    isToday,
+  ] = useStore(useShallow(s => [
+    s.user?.me?.points || 0,
+    s.behaviors.values?.[f.id],
+    s.behaviors.isToday,
+  ]))
   const [
     addError
   ] = useStore(useCallback(s => [
     s.addError
   ], []))
+  const [setValue, sendValue, setAndSend] = useLocalStore(useCallback(s => [
+    s.setValue,
+    s.sendValue,
+    s.setAndSend
+  ], []))
 
-  value = value || 0
+  const value = value_ || 0
+
   const changeNumber = useCallback((e: React.SyntheticEvent<HTMLInputElement>) => {
     let value = Number(e.target.value)
     if (isNaN(value)) {return}
-    setValue(value)
-  }, [])
+    setValue(f.id, value)
+  }, [f])
 
   const changeByOne = useCallback((dir: -1 | 1) => () => {
     const val = value + dir
-    setValue(val)
-    sendValue(val)
-  }, [value])
+    setAndSend(f.id, val)
+  }, [f, value])
 
   const purchase = useCallback(() => {
     if (f.points > points) {
       return addError(<Box>Not enough points for <BehaviorName name={f.name} /></Box>)
     }
-    sendValue(f.points)
+    sendValue(f.id, f.points)
   }, [f.points, points])
 
   // wrap it so we can wait till blur to send
-  const sendValue_ = useCallback((e: React.SyntheticEvent<HTMLInputElement>) => {
-    sendValue(value)
-  }, [value])
+  const sendValue_ = (e: React.SyntheticEvent<HTMLInputElement>) => {
+    sendValue(f.id, value)
+  }
 
   if (f.lane === "reward") {
     return <Button
@@ -152,12 +153,14 @@ function NumberEntry({f, value, setValue, sendValue, isToday}: EntryVariant) {
   </Box>
 }
 
-function CheckEntry({f, value, setValue, sendValue, isToday}: EntryVariant) {
-  const changeCheck = useCallback((e: React.SyntheticEvent<HTMLInputElement>) => {
-    const val = e.target.checked ? 1 : 0
-    setValue(val)
-    sendValue(val)
-  }, [])
+function CheckEntry({f}: BehaviorEntry) {
+  const value = useStore(s => s.behaviors.values?.[f.id])
+  const [changeCheck] = useLocalStore(useCallback(s => [
+    (e: React.SyntheticEvent<HTMLInputElement>) => {
+      const val = e.target.checked ? 1 : 0
+      s.setAndSend(f.id, val)
+    }
+  ], [f]))
 
   return <Checkbox
     defaultChecked
