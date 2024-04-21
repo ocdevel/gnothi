@@ -55,7 +55,7 @@ export default function Prompt({entry_ids, view}: Prompt) {
     s.modals.setPremium,
   ], []))
   const [messages, setMessages] = useState<Message[]>([])
-  const [model, setModel] = useState<"gpt-3.5-turbo-16k" | "gpt-4-turbo-preview">("gpt-4-turbo-preview")
+  const [model, setModel] = useState<"gpt-3.5-turbo" | "gpt-4-turbo">("gpt-4-turbo")
 
   const [prompt, setPrompt] = useState<PromptYml | null>(null)
   const [showHelp, setShowHelp] = useState<boolean>(false)
@@ -111,8 +111,8 @@ export default function Prompt({entry_ids, view}: Prompt) {
           onChange={(e) => setModel(e.target.value)}
           label="Model"
         >
-          <MenuItem value="gpt-4">GPT4 - Slow, Wise</MenuItem>
-          <MenuItem value="gpt-3.5-turbo-16k">GPT3 - Fast, Simple</MenuItem>
+          <MenuItem value="gpt-4-turbo">GPT4 - Slow, Wise</MenuItem>
+          <MenuItem value="gpt-3.5-turbo">GPT3 - Fast, Simple</MenuItem>
         </Select>
       </FormControl>
     </Grid>

@@ -83,7 +83,7 @@ export const presets = [
       {
         "key": "dream_interpretation",
         "label": "Dream Interpretation",
-        "prompt": "Interpret the following dream(s). Use a Jungian-inspired approach, focusing on depth symbolism and concepts from the collective unconscious, integrated with modern interpretations of dream symbolism. The analysis will identify and focus on the most significant symbols or themes within your dream, consolidating them into a few overarching themes for interpretation. While not every element of the dream will be dissected, the analysis will delve deeply into particularly striking or unique symbols that stand out. The goal is to offer a unified and conclusive interpretation of these themes, potentially including life advice where appropriate."
+        "prompt": "Interpret the following dream(s). Focus on depth symbolism and concepts from the collective unconscious, integrated with modern interpretations of dream symbolism. The analysis will identify and focus on the most significant symbols or themes within the dream, consolidating them into a few overarching themes for interpretation. While not every element of the dream will be dissected, the analysis will delve deeply into particularly striking or unique symbols that stand out. Be bold and opinionated if appropriate, rather than vague and cookie-cutter. The goal is to offer a unified and conclusive interpretation of these themes, potentially including life advice where appropriate."
       }
     ]
   }
