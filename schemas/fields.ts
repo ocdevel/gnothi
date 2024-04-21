@@ -32,7 +32,7 @@ export type Field = z.infer<typeof Field>
 export const FieldEntry = z.object({
   // day & field_id may be queries independently, so compound primary-key not enough - index too
   field_id: IdCol,
-  day: dateCol(),
+  day: z.string().or(z.null()),
 
   created_at: dateCol(),
   value: CoerceNumber.default(0),
@@ -75,7 +75,7 @@ export const fields_sort_response = fields_list_response
 export type fields_sort_response = z.infer<typeof fields_sort_response>
 
 export const fields_entries_list_request = z.object({
-  day: dateCol().optional()
+  day: z.string().optional()
 })
 export type fields_entries_list_request = z.infer<typeof fields_entries_list_request>
 export const fields_entries_list_response = FieldEntry

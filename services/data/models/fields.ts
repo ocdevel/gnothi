@@ -93,7 +93,6 @@ export class Fields extends Base {
     // }))
   }
 
-
   async entriesList(req: S.Fields.fields_entries_list_request) {
     const {uid, db} = this.context
     const day = req.day
@@ -109,14 +108,7 @@ export class Fields extends Base {
 
   async entriesPost(req: S.Fields.fields_entries_post_request) {
     const {uid, db} = this.context
-    const {field_id, value} = req
-
-    // drizzle-orm 0.30.0 changed handling of {mode: 'string'|'date'} to date columns. This is a hot-fix to just
-    // field-entries, and I need to investigate any other changes needed
-    let {day} = req
-    if (day && typeof day !== "string") {
-      day = day.toISOString()
-    }
+    const {field_id, value, day} = req
 
     // Big ol' query which (1) logs the field-entry; (2) scores the field; (3) updates the global (user) score.
     // Thanks GPT!
@@ -244,6 +236,8 @@ FROM
    * check if that field is incomplete. If they completed it already (per `entriesPost()` above), they will have already gained the point(s); so this
    * function determines only how many points they lose (deducted from `user.points`) for today. Determining whether a field is incomplete is based on 
    * a the attributes of this field found in services/data/schemas/fields.ts.
+   * Note that fields don't need to be "unchecked" - a field shows an empty checkbox in the UI if there's no existing fieldEntry for today,
+   * and shows a filled checkbox otherwise.
    */
   async cron() {
     const {db: {drizzle}} = this.context
@@ -255,80 +249,77 @@ FROM
 -- CREATE OR REPLACE FUNCTION process_fields() RETURNS void LANGUAGE plpgsql AS $$
 -- BEGIN
   -- not using Base.with_tz since it selects where context.vid, we need all users
-  WITH with_tz as (
-    SELECT id, COALESCE(timezone, 'America/Los_Angeles') AS tz
-    FROM users
-  ),
-  -- Identify the fields and associated users to process based on the hour of execution in their local time
-  active_fields AS (
-    SELECT f.*
-    FROM fields f
-    JOIN with_tz ON with_tz.id = f.user_id
-    WHERE
-      -- rewards are reset-period=never, but allow for user-custom options too (instead of checking lane='reward')
-      f.reset_period != 'never'
-      AND f.score_enabled = true
-      AND (
-        (
-          f.reset_period = 'daily'
+      WITH with_tz AS (
+        SELECT id, COALESCE(timezone, 'America/Los_Angeles') AS tz
+        FROM users
+      ),
+      midnight_users AS (
+        SELECT *
+        FROM with_tz
+        WHERE EXTRACT(HOUR FROM now() AT TIME ZONE tz) = 0
+      ),
+      -- Identify the fields and associated users to process based on the hour of execution in their local time
+      active_fields AS (
+        SELECT f.*
+        FROM fields f
+        INNER JOIN midnight_users ON midnight_users.id = f.user_id
+        WHERE
+          -- rewards are reset-period=never, but allow for user-custom options too (instead of checking lane='reward')
+          f.reset_period != 'never' 
+          AND f.score_enabled = true
           AND (
-            (EXTRACT(DOW FROM now() AT TIME ZONE with_tz.tz) = 0 AND f.sunday)
-            OR (EXTRACT(DOW FROM now() AT TIME ZONE with_tz.tz) = 1 AND f.monday)
-            OR (EXTRACT(DOW FROM now() AT TIME ZONE with_tz.tz) = 2 AND f.tuesday)
-            OR (EXTRACT(DOW FROM now() AT TIME ZONE with_tz.tz) = 3 AND f.wednesday)
-            OR (EXTRACT(DOW FROM now() AT TIME ZONE with_tz.tz) = 4 AND f.thursday)
-            OR (EXTRACT(DOW FROM now() AT TIME ZONE with_tz.tz) = 5 AND f.friday)
-            OR (EXTRACT(DOW FROM now() AT TIME ZONE with_tz.tz) = 6 AND f.saturday)
+            (f.reset_period = 'daily' AND (
+              (EXTRACT(DOW FROM now() AT TIME ZONE midnight_users.tz) = 0 AND f.sunday)
+              OR (EXTRACT(DOW FROM now() AT TIME ZONE midnight_users.tz) = 1 AND f.monday)
+              OR (EXTRACT(DOW FROM now() AT TIME ZONE midnight_users.tz) = 2 AND f.tuesday)
+              OR (EXTRACT(DOW FROM now() AT TIME ZONE midnight_users.tz) = 3 AND f.wednesday)
+              OR (EXTRACT(DOW FROM now() AT TIME ZONE midnight_users.tz) = 4 AND f.thursday)
+              OR (EXTRACT(DOW FROM now() AT TIME ZONE midnight_users.tz) = 5 AND f.friday)
+              OR (EXTRACT(DOW FROM now() AT TIME ZONE midnight_users.tz) = 6 AND f.saturday)
+            ))
+            OR (f.reset_period = 'weekly' AND EXTRACT(DOW FROM now() AT TIME ZONE midnight_users.tz) = 0)
+            OR (f.reset_period = 'monthly' AND EXTRACT(DAY FROM now() AT TIME ZONE midnight_users.tz) = 1)
+          -- ... and so on for other periods
           )
-          AND EXTRACT(HOUR FROM now() AT TIME ZONE with_tz.tz) = 0
-        )
-        OR (f.reset_period = 'weekly' AND EXTRACT(DOW FROM now() AT TIME ZONE with_tz.tz) = 0 AND EXTRACT(HOUR FROM now() AT TIME ZONE with_tz.tz) = 0)
-        OR (f.reset_period = 'monthly' AND EXTRACT(DAY FROM now() AT TIME ZONE with_tz.tz) = 1 AND EXTRACT(HOUR FROM now() AT TIME ZONE with_tz.tz) = 0)
-        -- ... and so on for other periods
+      ),
+      quota_check AS (
+        SELECT
+          af.id,
+          af.user_id,
+          -- Only include fields where the quota hasn't been met. If they go above quota, that's given points on + button
+          GREATEST(af.reset_quota - af.score_period, 0) AS points_to_deduct
+        FROM active_fields af
+      ),
+      -- deduct from score_total for any fields which didn't meet their quota
+      fields_update AS (
+        UPDATE fields
+        SET score_total = score_total - qc.points_to_deduct
+        FROM quota_check qc
+        WHERE fields.id = qc.id
+      ),
+      agg_quota_check AS (
+        SELECT
+          user_id,
+          SUM(points_to_deduct) AS points_to_deduct
+        FROM quota_check
+        GROUP BY user_id
+      ),
+      reset_score_period AS (
+        UPDATE fields
+        SET score_period = 0,
+            streak = CASE WHEN score_period >= reset_quota THEN streak + 1 ELSE 0 END
+        FROM active_fields
+        WHERE fields.id = active_fields.id
+        RETURNING id as field_id, user_id
+      ),
+      update_users AS (
+        UPDATE users u
+        SET points = points - ac.points_to_deduct
+        FROM agg_quota_check ac
+        WHERE u.id = ac.user_id
       )
-  ),
-  quota_check AS (
-    SELECT
-      af.id,
-      af.user_id,
-      af.reset_quota - af.score_period AS points_to_deduct
-    FROM
-      active_fields af
-    WHERE
-      -- Only include fields where the quota hasn't been met. If they go above quota, that's given points on + button
-      af.reset_quota > af.score_period  
-  ),
-  -- deduct from score_total for any fields which didn't meet their quota
-  fields_update AS (
-    UPDATE fields
-    SET score_total = score_total - qc.points_to_deduct
-    FROM quota_check qc
-    WHERE fields.id = qc.id
-  ),
-  agg_quota_check AS (
-    SELECT
-      user_id,
-      SUM(points_to_deduct) AS points_to_deduct
-    FROM quota_check
-    GROUP BY user_id
-  ),
-  reset_score_period AS (
-    UPDATE 
-      fields
-    SET 
-      streak = CASE WHEN score_period >= reset_quota THEN streak + 1 ELSE 0 END,
-      score_period = 0
-    WHERE
-      id IN (SELECT id FROM active_fields)
-    RETURNING id as field_id, user_id
-  )
-  UPDATE users u
-  SET points = points - qc.points_to_deduct
-  FROM agg_quota_check qc
-  WHERE u.id = qc.user_id
--- END;
--- $$;
-`
+      SELECT 1;
+    `
     await db.query(megaQuery)
     console.log("called fields cron")
   }
