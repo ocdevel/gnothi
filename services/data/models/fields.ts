@@ -239,6 +239,12 @@ FROM
     return res
   }
 
+  /**
+   * Once every hour, this function is called via sst.Cron. Grab all users whose timezone dictates that now is midnight their time. For each of their fields
+   * check if that field is incomplete. If they completed it already (per `entriesPost()` above), they will have already gained the point(s); so this
+   * function determines only how many points they lose (deducted from `user.points`) for today. Determining whether a field is incomplete is based on 
+   * a the attributes of this field found in services/data/schemas/fields.ts.
+   */
   async cron() {
     const {db: {drizzle}} = this.context
     console.log("calling fields cron")
