@@ -259,9 +259,10 @@ WITH
     FROM with_tz wt
     WHERE EXTRACT(HOUR FROM now() AT TIME ZONE wt.tz) = 0
   ),
-  -- Identify the fields and associated users to process based on the hour of execution in their local time
+  -- Identify the fields to process based on the hour of execution in their local time
   active_fields AS (
-    SELECT f.*
+    SELECT f.*,
+      GREATEST(f.reset_quota - f.score_period, 0) AS points_to_deduct
     FROM fields f
     INNER JOIN midnight_users mu ON mu.id = f.user_id
     WHERE
@@ -282,43 +283,28 @@ WITH
         -- ... and so on for other periods
       )
   ),
-  quota_check AS (
-    SELECT
-      af.id,
-      af.user_id,
-      -- Only include fields where the quota hasn't been met. If they go above quota, that's given points on + button
-      GREATEST(af.reset_quota - af.score_period, 0) AS points_to_deduct
-    FROM active_fields af
-  ),
   -- Deduct from score_total for any fields which didn't meet their quota
   fields_update AS (
     UPDATE fields f
-    SET score_total = score_total - qc.points_to_deduct
-    FROM quota_check qc
-    WHERE f.id = qc.id
-  ),
-  agg_quota_check AS (
-    SELECT
-      qc.user_id,
-      SUM(qc.points_to_deduct) AS points_to_deduct
-    FROM quota_check qc
-    GROUP BY qc.user_id
-  ),
-  reset_score_period AS (
-    UPDATE fields f
-    SET score_period = 0,
-        streak = CASE WHEN f.score_period >= f.reset_quota THEN f.streak + 1 ELSE 0 END
+    SET 
+      score_total = f.score_total - af.points_to_deduct,
+      score_period = 0,
+      streak = CASE WHEN af.points_to_deduct > 0 THEN 0 ELSE f.streak + 1 END
     FROM active_fields af
     WHERE f.id = af.id
-    RETURNING f.id AS field_id, f.user_id
+  ),
+  agg_deduction AS (
+    SELECT af.user_id, SUM(af.points_to_deduct) AS points_to_deduct
+    FROM active_fields af
+    GROUP BY af.user_id
   ),
   update_users AS (
     UPDATE users u
-    SET points = points - ac.points_to_deduct
-    FROM agg_quota_check ac
-    WHERE u.id = ac.user_id
+    SET points = u.points - ad.points_to_deduct
+    FROM agg_deduction ad
+    WHERE u.id = ad.user_id
   )
-SELECT 1;
+  SELECT 1;
 `
     await db.query(megaQuery)
     console.log("called fields cron")

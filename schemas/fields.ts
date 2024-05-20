@@ -32,7 +32,7 @@ export type Field = z.infer<typeof Field>
 export const FieldEntry = z.object({
   // day & field_id may be queries independently, so compound primary-key not enough - index too
   field_id: IdCol,
-  day: z.string().or(z.null()),
+  day: z.string().nullable().optional(),
 
   created_at: dateCol(),
   value: CoerceNumber.default(0),
@@ -87,6 +87,7 @@ export const fields_entries_post_request = FieldEntry.pick({
 }).extend({
   thenDelete: z.boolean().optional()
 })
+
 export const fields_delete_request = z.object({
   id: IdCol
 })
