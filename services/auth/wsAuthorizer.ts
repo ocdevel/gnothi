@@ -3,6 +3,8 @@
 import {APIGatewayRequestAuthorizerHandler} from "aws-lambda";
 import {CognitoJwtVerifier} from "aws-jwt-verify";
 import {Logger} from "../aws/logs";
+import {SimpleJwksCache} from "aws-jwt-verify/jwk";
+import {SimpleJsonFetcher} from "aws-jwt-verify/https";
 
 const UserPoolId = process.env.USER_POOL_ID!;
 const AppClientId = process.env.USER_POOL_CLIENT_ID!;
@@ -13,6 +15,17 @@ export const handler: APIGatewayRequestAuthorizerHandler = async (event, context
       userPoolId: UserPoolId,
       tokenUse: "id",
       clientId: AppClientId,
+    }, {
+      jwksCache: new SimpleJwksCache({
+        fetcher: new SimpleJsonFetcher({
+          defaultRequestOptions: {
+            responseTimeout: 20000, // 1500=default. 30sec is Lambda max. Go for shy of Lambda max
+            // Additional request options:
+            // For NodeJS: https://nodejs.org/api/http.html#httprequestoptions-callback
+            // For Web (init object): https://developer.mozilla.org/en-US/docs/Web/API/fetch#syntax
+          },
+        }),
+      }),
     });
 
     const encodedToken = event.queryStringParameters!.idToken!;

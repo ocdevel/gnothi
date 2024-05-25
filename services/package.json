@@ -18,7 +18,7 @@
     "@aws-sdk/client-ses": "^3.421.0",
     "@aws-sdk/client-sns": "^3.421.0",
     "@aws-sdk/util-utf8-node": "^3.259.0",
-    "aws-jwt-verify": "^4.0.0",
+    "aws-jwt-verify": "^4.0.1",
     "aws-sdk": "^2.1467.0",
     "aws4": "^1.12.0",
     "gpt-token-utils": "^1.2.0",
