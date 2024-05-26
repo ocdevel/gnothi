@@ -109,14 +109,14 @@ const send = useStore(s => s.send)
   const as = useStore(s => s.as)
   const groupPost = useStore(s => s.res.groups_post_response)
   const groupPut = useStore(s => s.res.groups_put_response?.res)
-  const clearEvents = useStore(a => a.clearEvents)
+  const clearRes = useStore(a => a.clearRes)
 
   const form = useForm(group)
   const privacy = form.watch('privacy')
 
   useEffect(() => {
     return function() {
-      clearEvents(['groups_post_response', 'groups_put_response'])
+      clearRes(['groups_post_response', 'groups_put_response'])
     }
   }, [])
 

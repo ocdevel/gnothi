@@ -34,6 +34,9 @@ import * as Link from '../../../Components/Link'
 import Insights from '../../Insights/Insights/Insights.tsx'
 import dayjs from "dayjs";
 import CardActions from "@mui/material/CardActions";
+import {useShallow} from "zustand/react/shallow";
+import Alert from "@mui/material/Alert";
+import AlertTitle from "@mui/material/AlertTitle";
 
 
 // FIXME find a remark plugin, and refactor Behaviors/utils.tsx to share it
@@ -127,16 +130,14 @@ export default function View({entry, onClose}: Entry) {
     );
   }
 
-  function renderNotes() {
-    return <div>
+  const notes = useMemo(() => (
+    <div>
       <NotesList entry_id={id}/>
     </div>
-  }
+  ), [id])
 
-  function renderSidebar() {
-    return <Insights entry_ids={[id]} key={id}/>
-
-  }
+  const sidebar = useMemo(() => <Insights entry_ids={[id]} key={id}/>, [id])
+  const reframeCommit = useMemo(() => <ReframeCommit id={entry?.id} />, [entry?.id])
 
   return <Grid
     container
@@ -152,12 +153,13 @@ export default function View({entry, onClose}: Entry) {
             {renderButtons()}
           </CardActions>
           {renderEntry()}
-          {renderNotes()}
+          {reframeCommit}
+          {notes}
         </CardContent>
       </Card>
     </Grid>
     <Grid item xs={12} lg={5}>
-      {renderSidebar()}
+      {sidebar}
     </Grid>
   </Grid>
 }
@@ -194,3 +196,101 @@ export default function View({entry, onClose}: Entry) {
 //     </Grid>
 //   </Grid>
 // }
+
+/**
+ * After a user saves their journal entry, add a button called "Reframe", which when clicked reframes the journal
+ * entry in a more neutral tone with CBT principles, so they can sort of recalibrate their emotions. Then add a "
+ * button "Commit" which replaces the original entry with the reframed version, so they commit to this mindset.
+ */
+function ReframeCommit({id}) {
+  const [
+    send,
+    clearRes,
+    clearReq,
+    setEntryModal
+  ] = useStore(useCallback(state => [
+    state.send,
+    state.clearRes,
+    state.clearReq,
+    state.modals.setEntry
+  ], []));
+  const [
+    entry,
+    reframing,
+    reframed,
+    putRequest,
+    upsertResponse
+  ] = useStore(useShallow(state => [
+    state.res.entries_list_response?.hash?.[id],
+    state.req.entries_reframe_request,
+    state.res.entries_reframe_response?.first,
+    state.req.entries_put_request,
+    state.res.entries_upsert_response
+  ]))
+
+  const stage = useMemo(() => {
+    if (reframing) { return "reframing" }
+    if (upsertResponse) {
+      return "done"
+    }
+    if (reframed) {
+      return putRequest ? "putting" : "reframed"
+    }
+    return "none"
+  }, [reframing, reframed, putRequest, upsertResponse])
+
+  function reframe() {
+    send("entries_reframe_request", { id: entry.id, text: entry.text });
+  }
+  function commit() {
+    send("entries_put_request", {...entry, text: reframed.text})
+  }
+
+  // FIXME this is a hack because the modal isn't properly listening to updates on entries_list_response. Fix that
+  useEffect(() => {
+    if (stage === "done") {
+      setEntryModal({mode: "view", entry: upsertResponse})
+    }
+  }, [stage])
+  console.log({stage})
+
+  useEffect(() => {
+    return () => {
+      clearRes(["entries_upsert_response", "entries_reframe_response"])
+      clearReq(["entries_put_request", "entries_reframe_request"])
+    }
+  }, [])
+
+  function renderContent() {
+    if (["putting", "reframed"].includes(stage)) {
+      return <Alert severity="success">
+        <AlertTitle>Reframed version. Click commit to replace original entry.</AlertTitle>
+        <ReactMarkdown components={{link: LinkRenderer}}>
+          {reframed.text}
+        </ReactMarkdown>
+        <Button
+          variant="outlined"
+          onClick={commit}
+          disabled={stage === "putting"}
+          startIcon={stage === "putting" ? <CircularProgress size={10} /> : null}
+        >
+          Commit
+        </Button>
+      </Alert>
+    }
+    return <Button
+      variant="outlined"
+      onClick={reframe}
+      disabled={stage === "reframing"}
+      startIcon={stage === "reframing" ? <CircularProgress size={10} /> : null}
+    >
+      Reframe
+    </Button>
+  }
+
+  if (stage === "done") { return null; }
+
+  return <Box sx={{px: 4, spacing: 2}}>
+    {renderContent()}
+  </Box>
+}

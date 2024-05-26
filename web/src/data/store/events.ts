@@ -83,7 +83,8 @@ export interface EventsSlice {
   // set_users_profile_put: any
   // set_fields_field_entries_get: any
 
-  clearEvents: (events: Events.Events[]) => void
+  clearReq: (events: Events.Events[]) => void
+  clearRes: (events: Events.Events[]) => void
 }
 
 export const eventsSlice: StateCreator<
@@ -215,13 +216,20 @@ export const eventsSlice: StateCreator<
     }
   },
 
-  clearEvents: (events) => {
+  clearRes: (events) => {
     set(produce(state => {
       events.forEach(e => {
         state.res[e] = null
       })
     }))
   },
+  clearReq: (events) => {
+    set(produce(state => {
+      events.forEach(e => {
+        state.req[e] = null
+      })
+    }))
+  }
 
   // Tracks actual response data
 })

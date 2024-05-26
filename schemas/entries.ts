@@ -63,6 +63,7 @@ export const entries_put_request = EntryUpsert
   })
 export const entries_post_request = entries_put_request.omit({id: true})
 
+
 export type entries_put_request = z.infer<typeof entries_put_request>
 export type entries_post_request = z.infer<typeof entries_post_request>
 export const entries_upsert_response = EntryUpsert
@@ -71,6 +72,9 @@ export type entries_upsert_response = z.infer<typeof entries_upsert_response>
 // _response will have a version without the AI inserts. _final will have all the inserts
 export const entries_upsert_final = entries_upsert_response
 export type entries_upsert_final = z.infer<typeof entries_upsert_final>
+
+export const entries_reframe_request = EntryUpsert.pick({ id: true, text: true })
+export const entries_reframe_response = entries_reframe_request
 
 export const entries_delete_request = z.object({
   id: z.string()
@@ -154,6 +158,21 @@ export const routes = {
       clears: "entries_delete_request",
       keyby: 'id',
       op: "delete"
+    }
+  },
+  entries_reframe_request: {
+    i: {
+      e: "entries_reframe_request",
+      s: entries_reframe_request,
+      t: {ws: true}
+    },
+    o: {
+      e: "entries_reframe_response",
+      s: entries_reframe_response,
+      clears: "entries_reframe_request",
+      t: {ws: true},
+      keyby: "id",
+      op: "update"
     }
   }
 }

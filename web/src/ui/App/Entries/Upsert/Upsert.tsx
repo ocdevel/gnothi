@@ -72,7 +72,7 @@ export default function Upsert(props: Upsert) {
   const [advanced, setAdvanced] = useState(false)
   const entries_upsert_response = useStore(s => s.res.entries_upsert_response?.res)
   const entries_delete_response = useStore(s => s.res.entries_delete_response?.res)
-  const clear = useStore(a => a.clearEvents)
+  const clearRes = useStore(a => a.clearRes)
   const [changedDate, setChangedDate] = useState(false)
   const submitting = useStore(s => Boolean(s.req.entries_post_request || s.req.entries_put_request || s.req.entries_delete_request))
 
@@ -113,7 +113,7 @@ export default function Upsert(props: Upsert) {
     }
     const response = entries_upsert_response.data[0]
     clearDraft()
-    clear(["entries_upsert_response"])
+    clearRes(["entries_upsert_response"])
     // props.onClose?.()
     setEntryModal({mode: "view", entry: response})
   }, [entries_upsert_response])
