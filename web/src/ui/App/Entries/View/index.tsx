@@ -37,6 +37,7 @@ import CardActions from "@mui/material/CardActions";
 import {useShallow} from "zustand/react/shallow";
 import Alert from "@mui/material/Alert";
 import AlertTitle from "@mui/material/AlertTitle";
+import {create} from "zustand";
 
 
 // FIXME find a remark plugin, and refactor Behaviors/utils.tsx to share it
@@ -216,8 +217,8 @@ function ReframeCommit({id}) {
   ], []));
   const [
     entry,
-    reframing,
-    reframed,
+    reframeRequest,
+    reframeResponse,
     putRequest,
     upsertResponse
   ] = useStore(useShallow(state => [
@@ -225,48 +226,52 @@ function ReframeCommit({id}) {
     state.req.entries_reframe_request,
     state.res.entries_reframe_response?.first,
     state.req.entries_put_request,
-    state.res.entries_upsert_response
+    state.res.entries_upsert_response?.res
   ]))
 
-  const stage = useMemo(() => {
-    if (reframing) { return "reframing" }
-    if (upsertResponse) {
-      return "done"
+  const stage = useReframeStore(state => state.stage)
+  useEffect(() => {
+    const {setStage, stage} = useReframeStore.getState()
+    if (reframeRequest && stage === "none") {
+      setStage("reframing")
+    } else if (reframeResponse && stage === "reframing") {
+      useReframeStore.setState({ stage: "reframed", reframed: reframeResponse })
+      clearReq(["entries_reframe_request"])
+    } else if (putRequest && stage === "reframed") {
+      setStage("putting")
+      clearRes(["entries_reframe_response"])
+    } else if (upsertResponse && stage === "putting") {
+      // FIXME this is a hack because the modal isn't properly listening to updates on entries_list_response. Fix that
+      // setEntryModal({mode: "view", entry: upsertResponse})
+      // Getting [ { "code": "invalid_type", "expected": "string", "received": "undefined", "path": [ "entry_id" ], "message": "Required" } ]
+      // Just refresh for now
+      window.location.reload();
+
+      setStage("done")
+      clearReq(["entries_put_request"])
+      clearRes(["entries_put_response"])
     }
-    if (reframed) {
-      return putRequest ? "putting" : "reframed"
-    }
-    return "none"
-  }, [reframing, reframed, putRequest, upsertResponse])
+  }, [reframeRequest, reframeResponse, putRequest, upsertResponse])
 
   function reframe() {
     send("entries_reframe_request", { id: entry.id, text: entry.text });
   }
   function commit() {
-    send("entries_put_request", {...entry, text: reframed.text})
+    const newEntry = {
+      ...entry,
+      text: useReframeStore.getState().reframed.text
+    }
+    send("entries_put_request", newEntry)
   }
 
-  // FIXME this is a hack because the modal isn't properly listening to updates on entries_list_response. Fix that
-  useEffect(() => {
-    if (stage === "done") {
-      setEntryModal({mode: "view", entry: upsertResponse})
-    }
-  }, [stage])
   console.log({stage})
-
-  useEffect(() => {
-    return () => {
-      clearRes(["entries_upsert_response", "entries_reframe_response"])
-      clearReq(["entries_put_request", "entries_reframe_request"])
-    }
-  }, [])
 
   function renderContent() {
     if (["putting", "reframed"].includes(stage)) {
       return <Alert severity="success">
         <AlertTitle>Reframed version. Click commit to replace original entry.</AlertTitle>
         <ReactMarkdown components={{link: LinkRenderer}}>
-          {reframed.text}
+          {reframeResponse?.text}
         </ReactMarkdown>
         <Button
           variant="outlined"
@@ -294,3 +299,16 @@ function ReframeCommit({id}) {
     {renderContent()}
   </Box>
 }
+
+type Stage = "reframing" | "reframed" | "putting" | "done" | "none"
+const useReframeStore = create<{
+  stage: Stage
+  setStage: (stage: Stage) => void
+  entry: any
+  reframed: any
+}>()((set, get) => ({
+  stage: "none",
+  setStage: (stage) => set({stage}),
+  entry: null,
+  reframed: null,
+}))
