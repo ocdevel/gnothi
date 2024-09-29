@@ -9,7 +9,7 @@ import logging
 import boto3
 
 dir_ = f"{VECTORS_PATH}/books"
-file = f"{dir_}/embeddings.feather"
+file = f"{dir_}/embeddings2.feather"
 download_from = "gnothi-public"  # os.getenv("bucket_name")
 
 # if os.path.isdir(file):
@@ -18,7 +18,7 @@ download_from = "gnothi-public"  # os.getenv("bucket_name")
 if not os.path.exists(file):
     os.makedirs(dir_, exist_ok=True)
     s3 = boto3.client('s3')
-    s3_path = 'vectors/books/embeddings.feather'
+    s3_path = 'vectors/books/embeddings2.feather'
     logging.warning("{} doesn't exist. Downloading from {}/{}".format(
         file,
         download_from,
@@ -64,4 +64,8 @@ def main(event, context):
         'content': 'text',
         'genre': 'topic'
     })
+
+    # Apply the function to each ISBN in the DataFrame and assign to a new column
+    df['amazon'] = df['isbn'].apply(lambda x: f'https://www.amazon.com/dp/{x}/?tag=ha0d2-20' if x else None)
+
     return ordered.to_dict("records")

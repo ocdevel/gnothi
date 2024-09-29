@@ -34,6 +34,11 @@ export default function Books({view}: Insight) {
     i: number,
   ) {
 
+    const title = (
+      b.amazon ? <a href={b.amazon} target="_blank">{b.title}</a>
+      : b.title
+    )
+
     return <Stack direction="column" mb={2} key={b.id}>
       <Typography
         className='book'
@@ -42,7 +47,7 @@ export default function Books({view}: Insight) {
           variant: 'body1', mb: 1
          }}
          >
-        {b.title} by {b.author}
+        {title} by {b.author}
          </Typography>
 
       <Divider/>

@@ -14,14 +14,14 @@ export default function Create() {
   });
   const send = useStore(s => s.send)
   const tagsPost = useStore(s => s.res.tags_post_response?.res)
-  const clearEvents = useStore(useCallback(s => s.clearEvents, []))
+  const clearReq = useStore(useCallback(s => s.clearReq, []))
   const [waiting, setWaiting] = useState(false)
 
   useEffect(() => {
     if (tagsPost) {
       setWaiting(false)
       reset({name: ""})
-      clearEvents(['tags_post_request'])
+      clearReq(['tags_post_request'])
     }
   }, [tagsPost])
 

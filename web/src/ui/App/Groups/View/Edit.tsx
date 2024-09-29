@@ -104,8 +104,8 @@ function Perk({form, perk}) {
   </Grid>
 }
 
-export function EditModal() {
-  const navigate = useNavigate()
+export default function Edit({show, close, group=null}) {
+    const navigate = useNavigate()
   const {view, id} = useStore(s => s.groups.view) // t-up for hash?.[id] below
   const [
     as,
@@ -128,13 +128,14 @@ export function EditModal() {
     () => s.groups.setView({view: null, id: null})
   ], []))
   const show = view == "edit" && id
+  const clearRes = useStore(a => a.clearRes)
 
   const form = useForm(group)
   const privacy = form.watch('privacy')
 
   useEffect(() => {
     return function() {
-      clearEvents(['groups_post_response', 'groups_put_response'])
+      clearRes(['groups_post_response', 'groups_put_response'])
     }
   }, [])
 

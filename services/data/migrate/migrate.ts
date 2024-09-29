@@ -53,6 +53,7 @@ export async function main(event: MigrateEvent, context: Context): Promise<APIGa
   }
 
   if (event?.wipe) {
+    // FIXME this no longer works, `dbPostgres.pg.query is not a function`. I think after postgres-js / drizzle upgrade?
     await dbPostgres.pg.query(killConnections(dbname))
     await dbPostgres.pg.query(`drop database if exists ${dbname}`)
     await dbPostgres.pg.query(`create database ${dbname}`)

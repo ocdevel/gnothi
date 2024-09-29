@@ -148,6 +148,8 @@ export function Ml(context: sst.StackContext) {
   addLogging(fnStore, "FnStore")
   addLogging(fnBehaviors, "FnBehaviors")
 
+
+
   stack.addOutputs({
     fnBooks_: fnBooks.functionName,
     fnAsk_: fnAsk.functionName,

@@ -19,35 +19,12 @@ import {ulid} from "ulid"
 import Stack from "@mui/material/Stack";
 import {shallow} from "zustand/shallow";
 import {Stack2} from "../../../Components/Misc";
-import BtnTryGenerative from '../../../Components/BtnTryGenerative'
 import {SUMMARIZE_EMPTY, SUMMARIZE_DISABLED, SUMMARIZE_NOT_TRIGGERED} from "@gnothi/schemas/insights"
 
 const get = useStore.getState
 
 type Summarize = Insight & {
   entry_ids: string[]
-  isTryGenerative?: boolean
-}
-
-function TryGenerative({view, entry_ids}: Summarize) {
-  const me = useStore(s => s.user?.me)
-  const [creditActive, creditActivate] = useStore(s => [s.creditActive, s.creditActivate], shallow)
-
-  if (me?.premium || creditActive) {
-    return null
-  }
-
-  function submit() {
-    // git-blame: remove submit from here, it's a useEffect dep in Insights.tsx
-  }
-
-  // f8a18dd115e268833f7be9fb01dbf51a25f07f60 - content with "about this" and upgrade button
-  return <BtnTryGenerative
-    submit={submit}
-    btnProps={{fullWidth: true}}
-    tryLabel="Try Premium"
-    premiumLabel={null}
-  />
 }
 
 export function Summarize({view, entry_ids}: Summarize) {
@@ -71,7 +48,6 @@ export function Summarize({view, entry_ids}: Summarize) {
       <Typography className={klass} mb={2}>{summary.summary}</Typography>
       {/*<Typography variant="h5">Themes</Typography>*/}
       <Themes view={view} />
-      <TryGenerative view={view} entry_ids={entry_ids} />
     </Box>
   }
 

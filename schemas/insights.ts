@@ -65,7 +65,8 @@ export const insights_books_response = Insight.extend({
     title: z.string(),
     text: z.string(),
     author: z.string(),
-    topic: z.string()
+    topic: z.string(),
+    amazon: z.string().optional(),
   }).array()
 })
 export type insights_books_response = z.infer<typeof insights_books_response>
@@ -89,7 +90,7 @@ export const insights_prompt_request = Insight.extend({
   entry_ids: z.string().array(),
   messages: Message.array(),
   generative: z.boolean().optional(),
-  model: z.enum(['gpt-3.5-turbo-16k', 'gpt-4'])
+  model: z.enum(['gpt-3.5-turbo', 'gpt-4o'])
 })
 export type insights_prompt_request = z.infer<typeof insights_prompt_request>
 export const insights_prompt_response = insights_prompt_request

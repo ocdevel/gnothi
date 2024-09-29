@@ -183,6 +183,7 @@ export default function Footer({inApp}: Footer) {
       </Divider>
     </Box>}
 
+
     <Box
       sx={{
         mx: {xs: 2, lg: 5},
@@ -203,15 +204,5 @@ export default function Footer({inApp}: Footer) {
         Copyright © 2019-2023 OCDevel, LLC
       </Typography>
     </Box>
-
   </Box>
-
 }
-
-
-
-
-
-
-
-

@@ -105,10 +105,9 @@ interface Insights {
   entry_ids: string[]
 }
 export default function Insights({entry_ids}: Insights) {
-  const [search, me, creditActive] = useStore(s => [
+  const [search, me] = useStore(s => [
     s.filters.search,
     s.user?.me,
-    s.creditActive
   ], shallow)
 
   const view = entry_ids.length === 1 ? entry_ids[0] : "list"
@@ -124,7 +123,6 @@ export default function Insights({entry_ids}: Insights) {
     get().send("insights_get_request", {
       view,
       entry_ids,
-      generative: creditActive,
       insights: {
         summarize: true,
         query: search,
@@ -137,7 +135,7 @@ export default function Insights({entry_ids}: Insights) {
   useEffect(() => {
     if (!entry_ids.length) { return }
     getInsights()
-  }, [search, entryIdsShallow, creditActive])
+  }, [search, entryIdsShallow])
 
   // FIXME handle on a per-insight basis
   // if (!entry_ids?.length) {
@@ -210,11 +208,28 @@ export default function Insights({entry_ids}: Insights) {
         <Admin view={view}/>
       </Insight>, [Boolean(me?.is_superuser)])}
 
-      <iframe style={{borderRadius: 8}} width="100%" height="315" src="https://www.youtube.com/embed/bi0KS8JdHbE" title="YouTube video player"
-        frameBorder="0"
-        allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-        allowFullScreen></iframe>
-
+      <Video />
+      <Box sx={{display:'flex', justifyContent: 'center'}}>
+        <DonateButton />
+      </Box>
     </Stack2>
   </div>
+}
+
+function Video() {
+  return <iframe style={{borderRadius: 8}} width="100%" height="315" src="https://www.youtube.com/embed/bi0KS8JdHbE"
+   title="YouTube video player"
+   frameBorder="0"
+   allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+   allowFullScreen
+  ></iframe>
+}
+
+function DonateButton() {
+  return <form action="https://www.paypal.com/donate" method="post" target="_top">
+    <input type="hidden" name="hosted_button_id" value="9A9KRVTQFFLFC"/>
+    <input type="image" src="https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif" border="0" name="submit"
+           title="PayPal - The safer, easier way to pay online!" alt="Donate with PayPal button"/>
+    <img alt="" border="0" src="https://www.paypal.com/en_US/i/scr/pixel.gif" width="1" height="1"/>
+  </form>
 }

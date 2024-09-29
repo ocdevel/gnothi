@@ -10,7 +10,6 @@ import {shallow} from "zustand/shallow";
 import {DISCORD_LINK} from "../../../../utils/config.ts";
 import {useStore} from "../../../../data/store";
 import Button from "@mui/material/Button";
-import BtnTryGenerative from "../../../Components/BtnTryGenerative.tsx";
 
 export function NotEnough() {
   return <Card sx={{borderRadius: 2, height: "100%", backgroundColor: "white"}}>
@@ -46,44 +45,6 @@ export function NotEnough() {
           to={DISCORD_LINK}
           target="_blank"
         >Connect with the creators</Link.Button>
-      </CardActions>
-    </CardContent>
-  </Card>
-}
-
-export function Upgrade() {
-  const [
-    me,
-    creditActive
-  ] = useStore(s => [
-    s.user?.me,
-    s.creditActive
-  ], shallow)
-  const [send] = useStore(useCallback(s => [s.send], []))
-
-  function submitHandler() {
-    send("users_credit_request", {})
-  }
-
-  return <Card sx={{borderRadius: 2, height: "100%", backgroundColor: "white"}}>
-    <CardContent sx={{backgroundColor: "white", mx: 5}}>
-      <Box
-        sx={{display: "flex", alignItems: "center", justifyContent: "center", mt: 2}}
-      >
-        <RocketLaunchIcon sx={{color: "#50577a", fontSize: 40}}/>
-      </Box>
-      <Typography mt={1} textAlign="center" fontWeight={500} variant="h4" color="primary" mb={3}>
-        Behavior analysis is a premium feature
-      </Typography>
-      <Typography mb={2} variant={"body1"}>
-        Upgrade to premium or use a credit to see charts and graphs, correlation analysis, predicted next-day values, top behavior influencers, and more. <strong>Note:</strong> this feature relies on 6 or more days of behavior tracking to generate insights. If you haven't tracked much yet, consider waiting to use a credit. On the other hand, a credit is site-wide, so you can experiment with the premium journal features (which don't rely on time for value).
-      </Typography>
-      <CardActions sx={{backgroundColor: "white", alignContent: "center"}}>
-        <BtnTryGenerative
-          tryLabel={"Try Behavior Analysis"}
-          premiumLabel={""}
-          submit={submitHandler}
-        />
       </CardActions>
     </CardContent>
   </Card>

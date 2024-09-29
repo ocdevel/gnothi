@@ -14,6 +14,7 @@ import {eq, and, inArray} from "drizzle-orm"
 import * as _ from 'lodash'
 import {Logger} from "../../aws/logs";
 import dayjs from "dayjs";
+import {completion, Prompt} from "../../ml/node/openai.js";
 
 const r = S.Routes.routes
 
@@ -69,19 +70,11 @@ export async function entriesUpsertResponse(req: S.Entries.entries_upsert_respon
   
   const clean = await preprocess({text: entry.text, method: 'md2txt'})
 
-  const generative = await context.m.users.canGenerative(user)
-  if (!generative) {
-    skip_summarize = true
-  }
-
   const summary = skip_summarize ? {
     title: "",
     paras: clean.paras,
     body: {text: "", emotion: "", keywords: []}
-  } : await summarizeEntry({
-    ...clean,
-    generative
-  })
+  } : await summarizeEntry(clean)
   //console.log({summary})
 
   updates = {
@@ -124,3 +117,20 @@ export async function entriesUpsertResponse(req: S.Entries.entries_upsert_respon
 
   return [{...updated, tags: req.tags}]
 }
+
+export const entries_reframe_request = new Route(r.entries_reframe_request, async (req, context) => {
+  // const SYSTEM = `Between >>> and <<< the user will provide a journal entry. This entry may be emotionally charged, and your task is to reframe the entry, rewriting it objectively. This lets the user see their experience from a neutral standpoint; feeling validated that their experiences are real, but reframing their experiences with a healthier mindset. As much as possible, try not to remove content, and instead reframe existing content. But there may be rash statements or decisions in the entry which may be appropriate to recharacterize (eg "I should quit" to "it may be helpful to talk to my supervisor"). Use established psychology, such as CBT, to decide what's appropriate to remove, what and how to rewrite, etc.`
+
+  const SYSTEM = `Between >>> and <<< the user will provide a journal entry. This entry may be emotionally charged. Your task is to reframe the entry, rewriting it from a more objective and neutral standpoint. The goal is to help the user view their experiences with a healthier mindset. Retain the original content as much as possible, but reframe statements to encourage positive change and constructive thinking. Replace any rash decisions or extreme statements with more balanced and actionable suggestions (e.g., "I should quit my job" to "It may be helpful to discuss my concerns with my supervisor"). Use principles from established psychological practices such as Cognitive Behavioral Therapy (CBT) to guide the reframing process.
+`
+  const messages: Prompt = [
+    {role: "system", content: SYSTEM},
+    {role: "user", content: `>>> ${req.text} <<<`},
+  ]
+  const response = await completion({
+    max_tokens: 2048,
+    prompt: messages,
+    // skipTruncate: true,
+  })
+  return [{id: req.id, text: response}]
+})

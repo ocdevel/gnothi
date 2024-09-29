@@ -32,18 +32,16 @@ function getOpenAi(): OpenAI {
   return openai_
 }
 
-type Model = "gpt-4" | "gpt-3.5-turbo-16k" | "gpt-3.5-turbo"
+type Model = "gpt-4o" | "gpt-3.5-turbo"
 type Message = {
   role: "user" | "system" | "assistant"
   content: string
 }
 export const tokenLimits = {
-  "gpt-4": 8000,
-  "gpt-3.5-turbo": 4096,
-  "gpt-3.5-turbo-16k": 16000,
+  "gpt-4o": 128000,
+  "gpt-3.5-turbo": 16000,
 }
 function truncate(inputMessages: Message[], responseLimit: number, model: Model): Message[] {
-  const gpt4 = model === "gpt-4";
   const tokenLimit = tokenLimits[model]
 
   // Create a deep copy of the messages
@@ -89,7 +87,7 @@ export async function completion(
   // use gpt-4 for prompt (insights), and gpt-3 for entry-level tasks like summarization.
   // Gpt3 does a decent job of that, and is faster/cheaper. Wheras prompt really benefits from a high-quality
   // psychological understanding of the text
-  const model = opts.model || "gpt-3.5-turbo-16k"
+  const model = opts.model || "gpt-4o"
   const max_tokens = opts.max_tokens || 256
 
   const messages = Array.isArray(prompt) ? prompt : [
@@ -101,11 +99,11 @@ export async function completion(
   try {
     const completionRequest: CreateChatCompletionRequest = {
       model,
-      temperature: 0.2, // gpt suggests 0.2-0.4
+      // temperature: 0.2, // gpt suggests 0.2-0.4
       max_tokens,
-      top_p: .8, // gpt suggest 0.8, my preference was 1.0
-      frequency_penalty: .5, // gpt suggest 0.5, my preference was 1.0
-      presence_penalty: .5, // gpt suggest 0.5, my preference was 0.25
+      // top_p: .8, // gpt suggest 0.8, my preference was 1.0
+      // frequency_penalty: .5, // gpt suggest 0.5, my preference was 1.0
+      // presence_penalty: .5, // gpt suggest 0.5, my preference was 0.25
       // best_of
       ...rest ,
       messages: truncated

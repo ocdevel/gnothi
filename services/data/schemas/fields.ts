@@ -16,31 +16,46 @@ import {
 import {idCol, tsCol} from './utils'
 
 export const fieldTypes = pgEnum('fieldtype', [
-  // medication changes / substance intake
-  // sleep, diet, weight
+  // eg: medication dosage, substance intake, sleep hours, calories, weight. Or for quota-based dailies, how many of this daily is due
   "number",
-  // happiness score
+  // qualitative entries, eg: mood, sleep quality. 
   "fivestar",
-  // exercise
+  // Primarily for dailies & todos, eg: "take medicine", "write blog post", "exercise", "buy groceries"
   "check",
-  // moods (happy, sad, anxious, wired, bored, ..)
+  // User-choice. Not currently implemented, but could support things like moods (happy, sad, anxious, wired, bored, ..)
   "option"
-  // think of more
-  // weather_api?
-  // text entries?
+  // think of more: weather_api? text entries?
 ])
+
+// When a field has a defaultValue (what to enter for that field if the user didn't log an entry for that day), these are the following options
 export const defaultValTypes = pgEnum('defaultvaluetypes', [
-  "value",  // which includes None
+  // A specific value, like 0. Eg, for an "alcohol" field it's safe to assume if you didn't log it, you didn't drink. Leaving this empty (None) is also
+  // valid, as XGBoost can consider None a significant decision point (they forgot to enter, and that means something).
+  "value",  
+  // The average of all entries for this field. Eg, for "mood" it's safe to assume your mood, if not entered, is the average of all your mood entries
   "average",
+  // Pull the last known entry for this field. Eg for medication dosage (if you're interested in analyzing changes in dosage), it's safe to assume that if you
+  // didn't enter anything, then it hasn't changed since the last time you did.
   "ffill"
 ])
+
+// How frequently is this daily due. For "daily", they can still specify which days it's due (monday-sunday). For the others, the field will also consider
+// the reset_quota. Eg if reset_quota=2, and reset_period="weekly", then this field is due 2 times per week; but with no specific days - just "twice 
+// eventually each week".
 export const resetPeriods = pgEnum("resetperiods", [
   "daily",
   "weekly",
   "monthly",
   "yearly",
-  "never", // infinite counter, eg rewards
+  // This one is special, and primarly just used for rewards. It means it's never technically "due", that is - the field doesn't reset its counter.
+  "never",
 ])
+
+// Lanes don't technically have impact on the logic of how fields operate. Instead, they're templates which pre-populate attributes. 
+// habit: {type: number, score_enabled: true, reset_period: daily, reset_amount: 1, reset_quota: 1, [monday-sunday]: true}
+// daily: {...habit, type: check}
+// todo: {...daily, reset_period=never} 
+// They are, however, used to determine the visual location (column) this field shows up in the UI.
 export const lanes = pgEnum("lanes", [
   "habit",
   "daily",
@@ -49,69 +64,73 @@ export const lanes = pgEnum("lanes", [
   "reward",
 ])
 
-/**
- * Habit-tracking will operate like templates combining multiple columns. Eg
- * - Habits: type:number reset_period:daily reset_amount:1 monday:true, tuesday:true ...
- * - Dailies: type=check, (...habit)
- * - Todo: type=check, reset_period=never, (...daily)
- * - Rewards: ???
- */
 
-/**
- * Entries that change over time. Uses:
- * - Charts
- * - Effects of sentiment, topics on entries
- * - Global trends (exercise -> 73% happiness)
- */
 export const fields = pgTable('fields', {
   id: idCol(),
-  type: fieldTypes("type").default("fivestar"),
-  name: varchar('name').notNull(),
-  // Start entries/graphs/correlations here
   created_at: tsCol('created_at'),
+  user_id: userId(),
+
+  // type of the field, number|fivestar|check|option. 
+  type: fieldTypes("type").default("fivestar"),
+
+  // user-defined name of the field
+  name: varchar('name').notNull(),
+  
+  // See comment on the defaultValue enum above
   default_value: defaultValTypes("default_value").default("value"),
   default_value_value: doublePrecision('default_value_value'),
 
-  // option{single_or_multi, options:[], ..}
-  // number{float_or_int, ..}
-  attributes: json("attributes"),
+  // not currently used, ignore
+  attributes: json("attributes"), // option{single_or_multi, options:[], ..} number{float_or_int, ..}
+
+  // If a 3rd-party service manages this field, the service name and id
   service: varchar('service'),
-  // Used if pulling from external service
   service_id: varchar('service_id'),
 
-  user_id: userId(),
-
-  // Populated via ml.influencers.
+  // The Influencers machine learning job, a separate Lambda, periodically calculates the following properties:
+  // How much does this field contribute to all other fields, on average. That is, how "influential" is this field on your days in general (eg, sleep would rank high)
   influencer_score: doublePrecision("influencer_score").default(0),
+  // What's the predicted next value for this field. ML will actually predict, for example, your sleep quality for today
   next_pred: doublePrecision("next_pred").default(0),
+  // Just an average value of this field's entries
   avg: doublePrecision("avg").default(0),
 
-  // --- Habit Tracking ---
 
+  // Which lane does this belong to (see lanes enum above)
   lane: lanes("lane").default("custom"),
+  // Sort order in this lane (visual column)
   sort: integer("sort").default(0),
-  // Currently just for setting the point-value of a Reward, but might come in handy later
+  // Currently just for setting the point-value of a Reward. This is not the score (how well you're doing at this field), but instead a hard-coded "value"
+  // for this field. Eg for rewards, how much is this reward worth (how many points should it deduct from `user.points` when cashed in).
   points: doublePrecision("points").default(0),
 
-  // analyze
-  // ---
+  // Is analysis enabled for this field. That means, should the machine learning Lambda include this field in the influencers calculation. Disabling
+  // fields which are nonsensical is prudent, as it gives the ML algorithm a chance to focus on the more relevant fields.
   analyze_enabled: boolean("analyze_enabled").default(true),
 
-  // score
-  // ---
+  // Is scoring enabled for this field (can you lose or gain points). The main time to disable this is for the "custom" lane, which is used for data-tracking.
+  // Eg your weight, medication dosage, sleep-quality, mood - none of these should impact `user.points`. 
   score_enabled: boolean("score_enabled").default(false),
+  // The current score for this field. As in, over this field's lifetime, how well or poorly are you doing. 
   score_total: doublePrecision("score_total").default(0),
-  // when using scoring; are positive numbers good (pushups), or bad (beers)?
+  // When using scoring; are positive numbers good (pushups), or bad (beers)?
   score_up_good: boolean("score_up_good").default(true),
-  // what's the score for "today" (unlike the total)
+  // What's the score for this current scoring period (eg "today" or "this week"). This is used to determine, at the end of a score_period, whether the 
+  // field is considered "complete".
   score_period: doublePrecision("score_period").default(0),
+  // How many times in a row has this field been completed. If a period goes by with this incomplete, this will reset.
   streak: integer("streak").default(0),
 
-  // Reset Periods
+  // Reset Periods. Below are the attributes used to determine the technicals on how and when the field resets. Reseting a daily for example unchecks it for 
+  // the next day. If score_enabled=true, these attributes are checked to determine whether the field is incomplete, in which case points are deducted.
   // ---
+  // How often is this field due (see resetPeriod enum above)
   reset_period: resetPeriods("reset_period").default("daily"),
-  reset_quota: integer("reset_quota").default(1), // how many times per week this should be done
-  reset_every: integer("reset_every").default(1), // repeat every 2 weeks
+  // How many times per reset_period is this field due (eg 2 times per day, or 3 times per week)
+  reset_quota: integer("reset_quota").default(1), 
+  // More advanced: if reset_period=weekly, you can set this attirbute to 2 to make it "every other week". I don't think this attribute is currently in use?
+  reset_every: integer("reset_every").default(1), 
+  // monday-sunday. If reset_period=daily, you can mark specific days of the week this field is due.
   monday: boolean("monday").default(true),
   tuesday: boolean("tuesday").default(true),
   wednesday: boolean("wednesday").default(true),
@@ -119,9 +138,15 @@ export const fields = pgTable('fields', {
   friday: boolean("friday").default(true),
   saturday: boolean("saturday").default(true),
   sunday: boolean("sunday").default(true),
-  date_start: date("date_start"), // is there any value in this?
+  
+  // I'm not sure what this was for, or if it's in use...
+  date_start: date("date_start"),
+
+  // When is this due. This would only be of value for lane=todo. It's not currently impelemnted, but it would go like this: you don't lose any points for 
+  // a todo which isn't yet due; but after the due date, you lose points every day this todo isn't completed.
   date_due: date("date_due"),
 
+  // User-defined note-to-self for this field.
   notes: varchar("notes"),
 
   // when a user starts a timer on a task, remember what it was for that task for ease of click

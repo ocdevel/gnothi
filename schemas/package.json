@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "type": "module",
   "dependencies": {
-    "zod": "^3.22.2",
+    "zod": "^3.23.0",
     "drizzle-zod": "^0.5.1",
     "dayjs": "^1.11.10"
   }

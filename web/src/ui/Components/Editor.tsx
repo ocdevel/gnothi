@@ -57,7 +57,7 @@ export default function Editor(props: Editor) {
       config={{view: { menu: true, md: true, html: false }}}
       renderHTML={(text) => mdParser.render(text)}
       onChange={({text}) => change(field, text)}
-      onImageUpload={onImageUpload}
+      // onImageUpload={onImageUpload}
       {...rest}
     />}
   />

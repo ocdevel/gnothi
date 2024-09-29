@@ -36,16 +36,20 @@ export class Books extends Base {
     const {shelf, book} = req
     const {db, uid} = this.context
     const dir = shelfDirection[shelf]
+    const {id, ...rest} = book
     await Promise.all([
       db.drizzle.insert(books).values({
           ...book,
           thumbs: dir
         }).onConflictDoUpdate({
           target: books.id,
-          set: {thumbs: sql`${books.thumbs} + ${dir}`}
+          set: {
+            ...rest,
+            thumbs: sql`${books.thumbs} + ${dir}`
+          }
         }),
       db.drizzle.insert(bookshelf).values({
-        book_id: book.id,
+        book_id: id,
         user_id: uid,
         shelf
       }).onConflictDoUpdate({
@@ -53,7 +57,7 @@ export class Books extends Base {
         set: {shelf}
       })
     ])
-    return [{id: book.id, shelf}]
+    return [{id, shelf}]
   }
 
   async listThumbs(uid: string): Promise<Thumb[]> {

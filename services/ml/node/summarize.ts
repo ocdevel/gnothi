@@ -17,7 +17,6 @@ type ThemesOut = insights_themes_response['themes']
 export interface SummarizeEntryIn {
   text: string
   paras: string[]
-  generative: boolean
 }
 export interface SummarizeEntryOut {
   title: string
@@ -100,7 +99,7 @@ export async function summarizeOpenai({texts}: FnIn): Promise<ParsedCompletion> 
   // get right, and we can just remove the results before returning
 
   // Don't rely on truncateMessages from openai.ts, since we only want to truncate the journal(s)
-  const model = "gpt-3.5-turbo-16k"
+  const model = "gpt-4o"
   const max_tokens = 1024
   const squashedTokens = encode(squashed).tokens
   const lengths = {
@@ -123,6 +122,7 @@ export async function summarizeOpenai({texts}: FnIn): Promise<ParsedCompletion> 
     model,
     max_tokens,
     temperature: 0,
+    response_format: {type: "json_object"},
     prompt: messages,
     skipTruncate: true,
 
@@ -153,9 +153,8 @@ export async function summarizeLambda({texts}: FnIn): Promise<ParsedCompletion> 
 interface SummarizeInsights {
   entries: S.Entries.Entry[]
   context: FnContext,
-  generative: boolean
 }
-export async function summarizeInsights({context, entries, generative}: SummarizeInsights) {
+export async function summarizeInsights({context, entries}: SummarizeInsights) {
   async function sendInsights(parsed: ParsedCompletion): Promise<FnOut> {
     const themes: ThemesOut = parsed.themes
     const keywords = themes.map(t => t.keywords).flat()
@@ -182,17 +181,7 @@ export async function summarizeInsights({context, entries, generative}: Summariz
       themes: []
     })
   }
-  if (!generative) {
-    return sendInsights({
-      title: "",
-      summary: SUMMARIZE_DISABLED,
-      failed: true,
-      emotion: "neutral",
-      themes: []
-    })
-  }
-  const fn = generative ? summarizeOpenai : summarizeLambda
-  const parsed = await fn({
+  const parsed = await summarizeOpenai({
     // summarize summaries, NOT full originals (to reduce token max)
     texts: entries.map(getSummary),
   })
@@ -201,16 +190,14 @@ export async function summarizeInsights({context, entries, generative}: Summariz
 
 interface SuggestNextEntry {
   context: FnContext
-  generative: boolean
   entries: S.Entries.Entry[]
   view: string
 }
-export async function suggestNextEntry({entries, context, generative, view}: SuggestNextEntry) {
-  if (!generative) { return }
+export async function suggestNextEntry({entries, context, view}: SuggestNextEntry) {
   if (!entries?.length) {return}
   const text = squashTexts(entries.map(getSummary))
   const response = await completion({
-    model: "gpt-3.5-turbo-16k",
+    model: "gpt-4o",
     max_tokens: 256,
     prompt: `Between >>> and <<< are my prior journal entries. What should I journal about next to encourage personal growth?\n>>> ${text} <<<`
   })
@@ -222,14 +209,13 @@ export async function suggestNextEntry({entries, context, generative, view}: Sug
 }
 
 
-export async function summarizeEntry({text, paras, generative}: SummarizeEntryIn): Promise<SummarizeEntryOut> {
+export async function summarizeEntry({text, paras}: SummarizeEntryIn): Promise<SummarizeEntryOut> {
   // This shouldn't happen, but I haven't tested to ensure
   if (paras.length === 0) {
     throw "paras.length === 0, investigate"
   }
 
-  const fn = generative ? summarizeOpenai : summarizeLambda
-  const parsed = await fn({
+  const parsed = await summarizeOpenai({
     // summarize summaries, NOT full originals (to reduce token max)
     texts: paras,
   })

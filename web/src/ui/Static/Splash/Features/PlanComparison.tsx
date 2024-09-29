@@ -147,7 +147,7 @@ export default function PlanComparison({
           <CardContent sx={{marginX: 2}}>
             <PlanTitle
               title="Basic"
-              subtitle="AI Insights, No Generative AI"
+              subtitle="AI Insights"
               price="$0"
             />
             <FeatureItem
@@ -155,6 +155,10 @@ export default function PlanComparison({
               title="Unlimited Journal Entries:"
               // content="Write freely, no limits attached"
               content="Write as much as you want, whenever you want"
+            />
+            <FeatureItem
+              title="AI Chat - Presets:"
+              content="Choose from dream interpretations, feedback, self-reflection, and more"
             />
             <FeatureItem
               title="Behavior Tracking & Insights:"
@@ -168,6 +172,16 @@ export default function PlanComparison({
               title="Book Recommendations:"
               content="Discover reads that resonate with your journal themes"
             />
+            <FeatureItem
+              mt={3}
+              title="Summaries and Themes:"
+              content="Capture recurring patterns across your entries"
+            />
+            {/*<FeatureItem*/}
+            {/*  title="Magic Search:"*/}
+            {/*  // content="Scan and interpret your complete journal history"*/}
+            {/*  content="Query your entire journal history to extract valuable insights"*/}
+            {/*/>*/}
           </CardContent>
 
           <CardContent sx={{marginX: 2}}>
@@ -217,20 +231,11 @@ export default function PlanComparison({
             </PlanTitle>
 
             <FeatureItem
-              title="Interactive AI Chat:"
-              content="Get dream interpretations, feedback, journal prompts, and more"
+              title="AI Chat - Custom:"
+              content="Chat with AI about your journal entries; not limited to preset prompts."
             />
 
-            <FeatureItem
-              mt={3}
-              title="Summaries and Themes:"
-              content="Capture recurring patterns across your entries"
-            />
-            <FeatureItem
-              title="Magic Search:"
-              // content="Scan and interpret your complete journal history"
-              content="Query your entire journal history to extract valuable insights"
-            />
+
           </CardContent>
 
 
