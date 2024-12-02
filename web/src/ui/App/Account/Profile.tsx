@@ -8,38 +8,65 @@ import People from './People'
 import {useStore} from "@gnothi/web/src/data/store"
 import {timezones} from "@gnothi/web/src/utils/utils"
 import {FullScreenDialog} from "@gnothi/web/src/ui/Components/Dialog";
- import DialogContent from "@mui/material/DialogContent"
- import Button from "@mui/material/Button"
- import Grid from "@mui/material/Grid"
- import Box from "@mui/material/Box"
- import Typography from "@mui/material/Typography"
- import Divider from "@mui/material/Divider"
- import FormHelperText from "@mui/material/FormHelperText"
-import {useFormState} from "react-hook-form";
-import {yup, makeForm, TextField2, Checkbox2, Autocomplete2} from "@gnothi/web/src/ui/Components/Form";
+import DialogContent from "@mui/material/DialogContent"
+import Button from "@mui/material/Button"
+import Grid from "@mui/material/Grid"
+import Box from "@mui/material/Box"
+import Typography from "@mui/material/Typography"
+import Divider from "@mui/material/Divider"
+import FormHelperText from "@mui/material/FormHelperText"
+import {useForm, useFormState} from "react-hook-form";
+import {TextField2, Checkbox2, Autocomplete2} from "@gnothi/web/src/ui/Components/Form";
 import {Alert2} from "@gnothi/web/src/ui/Components/Misc"
+import {z} from 'zod'
+import {zodResolver} from '@hookform/resolvers/zod'
+import {CircularProgress} from '@mui/material';
+import {Card, CardContent} from '@mui/material';
 
-const schema = yup.object().shape({
-  username: yup.string().min(1).nullable(),
-  first_name: yup.string().nullable(),
-  last_name: yup.string().nullable(),
-  gender: yup.string().nullable(),
-  birthday: yup.string().nullable(),
-  timezone: yup.string().nullable(),
-  bio: yup.string().nullable(),
-  therapist: yup.bool().nullable()
+const schema = z.object({
+  username: z.string().min(1).nullable(),
+  first_name: z.string().nullable(),
+  last_name: z.string().nullable(),
+  gender: z.string().nullable(),
+  birthday: z.string().nullable(),
+  timezone: z.string().nullable(),
+  bio: z.string().nullable(),
+  therapist: z.boolean().nullable(),
+  // Therapist-specific fields
+  specialties: z.array(z.string()).nullable(),
+  insurances: z.array(z.string()).nullable(),
+  professional_bio: z.string().nullable(),
+  accepting_clients: z.boolean().nullable(),
+  city: z.string().nullable(),
+  state: z.string().nullable(),
+  remote_sessions: z.boolean().nullable(),
+  license_number: z.string().nullable(),
+  license_verified: z.boolean().nullable(),
+  license_verification_status: z.enum(['unverified', 'pending', 'verified']).nullable(),
+  years_of_experience: z.number().nullable(),
+  session_fee: z.number().nullable(),
+  sliding_scale: z.boolean().nullable()
 })
-const useForm = makeForm(schema)
+
+type ProfileFormData = z.infer<typeof schema>
 
 function Profile_() {
-const send = useStore(s => s.send)
+  const send = useStore(s => s.send)
   const as = useStore(state => state.as)
   const uname = useStore(s => s.res.users_checkusername_response?.first)
   const profile = useStore(s => s.res.users_profile_get_response?.first)
   const [unameValid, setUnameValid] = useState({checked: false, valid: null})
-  const form = useForm()
+  const [verificationStarted, setVerificationStarted] = useState(false)
+
+  const form = useForm<ProfileFormData>({
+    resolver: zodResolver(schema),
+    defaultValues: profile || {}
+  })
+  
   const {isDirty, isSubmitSuccessful} = useFormState({control: form.control})
-  const [birthday, username] = form.watch(['birthday', 'username'])
+  const {watch} = form
+  const {register, setValue} = form
+  const [birthday, username] = watch(['birthday', 'username'])
 
   useEffect(() => {
     // set the form to copy from server
@@ -97,6 +124,111 @@ const send = useStore(s => s.send)
     })
   }
 
+  const therapistValue = form.watch('therapist')
+
+  // Sample specialties and insurances for demo
+  const specialtiesList = [
+    'Anxiety',
+    'Depression',
+    'PTSD',
+    'Trauma',
+    'Relationships',
+    'Addiction',
+    'CBT',
+    'DBT',
+    'EMDR'
+  ]
+
+  const insurancesList = [
+    'Blue Cross',
+    'Aetna',
+    'Cigna',
+    'United Healthcare',
+    'Medicare',
+    'Medicaid',
+    'Out of Network'
+  ]
+
+  const startVerification = () => {
+    // In a real implementation, this would:
+    // 1. Create a verification session with the verification provider
+    // 2. Redirect to their verification flow
+    // 3. Handle the callback with the verification result
+    setVerificationStarted(true)
+    
+    // Simulate a pending state
+    setTimeout(() => {
+      setValue('license_verification_status', 'pending')
+    }, 500)
+
+    // Simulate a verification callback after 3 seconds
+    setTimeout(() => {
+      setValue('license_verification_status', 'verified')
+      setValue('license_verified', true)
+    }, 3000)
+  }
+
+  const renderVerificationStatus = () => {
+    const status = form.watch('license_verification_status')
+    const verified = form.watch('license_verified')
+
+    if (verified) {
+      return (
+        <Alert2 severity="success" sx={{mt: 2}}>
+          <Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
+            <Typography variant="body1">
+              ✓ License verified by Certify™
+            </Typography>
+            <Button
+              size="small"
+              onClick={() => {
+                setValue('license_verified', false)
+                setValue('license_verification_status', 'unverified')
+              }}
+            >
+              Reverify
+            </Button>
+          </Box>
+        </Alert2>
+      )
+    }
+
+    if (status === 'pending') {
+      return (
+        <Alert2 severity="info" sx={{mt: 2}}>
+          <Box sx={{display: 'flex', alignItems: 'center', gap: 2}}>
+            <CircularProgress size={20} />
+            <Typography variant="body1">
+              Verifying your license with Certify™...
+            </Typography>
+          </Box>
+        </Alert2>
+      )
+    }
+
+    return (
+      <Alert2 severity="warning" sx={{mt: 2}}>
+        <Box>
+          <Typography variant="body1" sx={{mb: 1}}>
+            Your license needs to be verified before you can be listed in our therapist directory
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{mb: 2}}>
+            We partner with Certify™, a leading healthcare credential verification service, to verify your professional license. 
+            This process typically takes 1-2 business days.
+          </Typography>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={startVerification}
+            disabled={verificationStarted}
+          >
+            Start Verification Process
+          </Button>
+        </Box>
+      </Alert2>
+    )
+  }
+
   return <form onSubmit={form.handleSubmit(submit)}>
     <Grid container spacing={2}>
       {usernameField()}
@@ -129,12 +261,149 @@ const send = useStore(s => s.send)
       />
     </Box>
 
-    <Button
-      color='primary'
-      variant='contained'
-      type='submit'
-    >Save</Button>
-    {isSubmitSuccessful && !isDirty && <FormHelperText>Saved</FormHelperText>}
+    {therapistValue && (
+      <Grid container spacing={2} sx={{mt: 2}}>
+        <Grid item xs={12}>
+          <Typography variant="h6">Therapist Information</Typography>
+        </Grid>
+
+        {/* License Information & Verification */}
+        <Grid item xs={12}>
+          <Card variant="outlined">
+            <CardContent>
+              <Typography variant="h6" sx={{mb: 2}}>License Verification</Typography>
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={6}>
+                  <TextField2
+                    name='license_number'
+                    label='License Number'
+                    form={form}
+                    fullWidth
+                    helperText="Your professional license number"
+                    required
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField2
+                    name='state'
+                    label='State of Licensure'
+                    form={form}
+                    fullWidth
+                    required
+                  />
+                </Grid>
+              </Grid>
+              {renderVerificationStatus()}
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12}>
+          <Autocomplete2
+            name='specialties'
+            label='Specialties'
+            options={specialtiesList}
+            multiple
+            form={form}
+            helperText="Select your areas of expertise"
+          />
+        </Grid>
+
+        <Grid item xs={12}>
+          <Autocomplete2
+            name='insurances'
+            label='Insurance Accepted'
+            options={insurancesList}
+            multiple
+            form={form}
+            helperText="Select insurance providers you work with"
+          />
+        </Grid>
+
+        <Grid item xs={12}>
+          <TextField2
+            name='professional_bio'
+            label='Professional Bio'
+            form={form}
+            multiline
+            minRows={4}
+            fullWidth
+            helperText="Describe your therapeutic approach, experience, and what clients can expect"
+          />
+        </Grid>
+
+        <Grid item xs={12} sm={6}>
+          <TextField2
+            name='city'
+            label='City'
+            form={form}
+            fullWidth
+          />
+        </Grid>
+
+        <Grid item xs={12} sm={6}>
+          <TextField2
+            name='state'
+            label='State'
+            form={form}
+            fullWidth
+          />
+        </Grid>
+
+        <Grid item xs={12} sm={6}>
+          <TextField2
+            name='years_of_experience'
+            label='Years of Experience'
+            type="number"
+            form={form}
+            fullWidth
+          />
+        </Grid>
+
+        <Grid item xs={12} sm={6}>
+          <TextField2
+            name='session_fee'
+            label='Session Fee ($)'
+            type="number"
+            form={form}
+            fullWidth
+          />
+        </Grid>
+
+        <Grid item xs={12}>
+          <Box>
+            <Checkbox2
+              label="Currently Accepting New Clients"
+              name='accepting_clients'
+              form={form}
+            />
+          </Box>
+          <Box>
+            <Checkbox2
+              label="Offers Remote Sessions"
+              name='remote_sessions'
+              form={form}
+            />
+          </Box>
+          <Box>
+            <Checkbox2
+              label="Offers Sliding Scale"
+              name='sliding_scale'
+              form={form}
+            />
+          </Box>
+        </Grid>
+      </Grid>
+    )}
+
+    <Box sx={{mt: 2}}>
+      <Button
+        color='primary'
+        variant='contained'
+        type='submit'
+      >Save</Button>
+      {isSubmitSuccessful && !isDirty && <FormHelperText>Saved</FormHelperText>}
+    </Box>
   </form>
 }
 

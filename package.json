@@ -12,7 +12,9 @@
     "typecheck": "tsc --noEmit",
     "test": "AWS_REGION=us-east-1 AWS_PROFILE=gnothiadmin sst bind -- vitest run",
     "test:gendata": "AWS_REGION=us-east-1 AWS_PROFILE=gnothiadmin sst bind -- vitest run services/tests/setup_mock.spec.ts",
-    "migrate:generate": "npx drizzle-kit generate:pg --schema services/data/schemas --out services/data/migrate/rest",
+    "migrate:generate": "drizzle-kit generate --config=drizzle.config.ts",
+    "migrate:up": "drizzle-kit up --config=drizzle.config.ts",
+    "migrate:push": "drizzle-kit push --config=drizzle.config.ts",
     "v0:migrate": "AWS_REGION=us-east-1 AWS_PROFILE=gnothiadmin sst bind vitest run services/data/migrate/v0/migrate.spec.ts --stage=legion4",
     "web:test": "playwright test --project=chromium --headed",
     "web:test:specific": "playwright test --project=chromium --headed tests/premium.spec.ts"
@@ -25,9 +27,9 @@
     "aws-cdk-lib": "2.171.1",
     "constructs": "10.4.2",
     "dotenv": "^16.3.1",
-    "drizzle-orm": "^0.30.10",
-    "drizzle-kit": "^0.21.4",
-    "postgres": "^3.4.4",
+    "drizzle-orm": "^0.38.2",
+    "drizzle-kit": "^0.30.1",
+    "postgres": "^3.4.5",
     "sst": "2.44.3",
     "typescript": "^5.1.6",
     "vitest": "^0.34.6"

@@ -128,4 +128,88 @@ export class Groups extends Base {
     // rows = [dict(user=r[0], user_group=r[1], share=r[2]) for r in rows]
     // return Share.merge_shares(rows)
   }
+
+  async snoop(gid: string): Promise<Pick<FnContext, 'viewer' | 'snooping'>> {
+    const [db, viewer] = [this.context.db, this.context.user]
+    const vid = viewer.id
+
+    const res = await db.drizzle.select({
+      group: groups,
+      groupUser: groupsUsers,
+      share: shares
+    })
+      .from(groups)
+      .leftJoin(groupsUsers, and(
+        eq(groupsUsers.group_id, gid),
+        eq(groupsUsers.user_id, vid),
+        ne(groupsUsers.role, 'banned')
+      ))
+      .leftJoin(shares, and(
+        eq(shares.obj_id, gid),
+        eq(shares.obj_type, 'group')
+      ))
+      .where(eq(groups.id, gid))
+
+    if (!res.length) {
+      return {snooping: false, viewer: {user: viewer}}
+    }
+
+    const {group, groupUser, share} = res[0]
+
+    // Check if user is a member or has accepted share
+    const isMember = !!groupUser
+    const hasAcceptedShare = share && await db.drizzle.select()
+      .from(sharesUsers)
+      .where(and(
+        eq(sharesUsers.share_id, share.id),
+        eq(sharesUsers.obj_id, vid),
+        eq(sharesUsers.state, 'accepted')
+      ))
+      .then(rows => rows.length > 0)
+
+    if (!isMember && !hasAcceptedShare) {
+      return {snooping: false, viewer: {user: viewer}}
+    }
+
+    // Apply group permissions based on privacy settings and role
+    const sanitizedGroup = this.applySharingPermissions(group, groupUser?.role || 'viewer')
+    return {
+      snooping: !isMember,
+      viewer: {
+        user: viewer,
+        group: sanitizedGroup,
+        role: groupUser?.role || 'viewer'
+      }
+    }
+  }
+
+  private applySharingPermissions(group: any, role: string): any {
+    const sanitizedGroup = {...group}
+    
+    // Define viewable fields based on role
+    const rolePermissions = {
+      owner: ['*'],
+      admin: ['*'],
+      moderator: ['id', 'name', 'description', 'privacy', 'created_at', 'updated_at', 'members', 'posts'],
+      member: ['id', 'name', 'description', 'privacy', 'created_at', 'members'],
+      viewer: ['id', 'name', 'description', 'privacy']
+    }
+
+    // Get allowed fields for role
+    const allowedFields = rolePermissions[role] || rolePermissions.viewer
+    
+    // If role has all permissions, return full group
+    if (allowedFields.includes('*')) {
+      return sanitizedGroup
+    }
+
+    // Filter out non-allowed fields
+    Object.keys(sanitizedGroup).forEach(key => {
+      if (!allowedFields.includes(key)) {
+        delete sanitizedGroup[key]
+      }
+    })
+
+    return sanitizedGroup
+  }
 }

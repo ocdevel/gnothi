@@ -1,4 +1,4 @@
-const errors = {
+export const errors = {
   ERROR: {
     message: "Error",
     code: 400

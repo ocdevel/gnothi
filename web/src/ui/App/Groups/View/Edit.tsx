@@ -104,7 +104,7 @@ function Perk({form, perk}) {
   </Grid>
 }
 
-export default function Edit({show, close, group=null}) {
+export default function Edit() {
     const navigate = useNavigate()
   const {view, id} = useStore(s => s.groups.view) // t-up for hash?.[id] below
   const [
@@ -127,7 +127,7 @@ export default function Edit({show, close, group=null}) {
     s.clearEvents,
     () => s.groups.setView({view: null, id: null})
   ], []))
-  const show = view == "edit" && id
+  const show = true // view == "edit" && id
   const clearRes = useStore(a => a.clearRes)
 
   const form = useForm(group)

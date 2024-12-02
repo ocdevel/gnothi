@@ -27,7 +27,7 @@ export const User = createInsertSchema(users, {
 export type User = z.infer<typeof User>
 
 export const UserSanitized = User.pick({
-  id: true, email: true, timzeone: true
+  id: true, email: true, timezone: true
 })
 export type UserSanitized = z.infer<typeof UserSanitized>
 
@@ -59,6 +59,7 @@ export const routes = {
       e: 'users_everything_request',
       s: Passthrough,
       t: {ws: true},
+      snoopable: true,
     },
     o: {
       e: 'users_everything_response',
@@ -152,5 +153,3 @@ export const routes = {
     }
   }
 }
-
-

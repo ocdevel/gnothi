@@ -87,11 +87,7 @@ export function Permission({k, profile=false}: ShareCheck) {
     s.user.me,
     s.sharing.form.share
   ]))
-  const [
-    setShare
-  ] = useStore(useCallback(s => [
-    s.sharing.form.share
-  ], []))
+  const setShare = useStore(s => s.sharing.form.setShare)
   const [help, setHelp] = useState(!!profile)
   const [showMore, setShowMore] = useState(false)
 
@@ -117,8 +113,7 @@ export function Permission({k, profile=false}: ShareCheck) {
     }
     setShare({
       ...share,
-      username: true,
-      bio: true,
+      ..._.mapValues(profileFields, () => true),
       profile: true
     })
   }
@@ -129,7 +124,7 @@ export function Permission({k, profile=false}: ShareCheck) {
         control={
           <Checkbox
             onChange={check}
-            checked={share[k]}
+            checked={share[k] ?? false}
             disabled={profile && !share.profile}
           />
         }

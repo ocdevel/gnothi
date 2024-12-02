@@ -1,6 +1,7 @@
 import {Routes} from '@gnothi/schemas'
 import {FnContext, Route} from '../types'
 import {users, User} from '../../data/schemas/users'
+import {shares, sharesUsers} from "../../data/schemas/shares"
 import {and, eq, sql} from 'drizzle-orm'
 import {DB} from '../../data/db'
 import {entriesUpsertResponse} from '../entries'
@@ -22,8 +23,8 @@ export const users_everything_request = new Route(r.users_everything_request, as
     // 'groups_mine_list_request',
     // 'notifs_groups_list_request',
     // 'notifs_notes_list_request',
-    // 'shares_ingress_list_request',
-    // 'shares_egress_list_request',
+    'shares_ingress_list_request',
+    //'shares_egress_list_request',
 
     'admin_analytics_list_request'
   ].map(async (event) => {
@@ -66,10 +67,34 @@ export const users_whoami_request = new Route(r.users_whoami_request, async (req
 // entering a group, etc. When called directly via list_request, just returning [user, viewer].
 // NOTE: whever list_response manually sent, be sure to run through S.Users.SantizeUser() to scrub
 export const users_list_request = new Route(r.users_list_request,async function(req, context) {
-  const users =  [context.user]
+  const {uid, db: {drizzle}} = context
+  
+  // Get users who are sharing with the current user (where we are the sharee/obj_id)
+  const sharingUsers = await drizzle
+    .select({
+      user: users,
+      share: shares
+    })
+    .from(sharesUsers)
+    .innerJoin(shares, eq(shares.id, sharesUsers.share_id))
+    .innerJoin(users, eq(users.id, shares.user_id))
+    .where(and(
+      eq(sharesUsers.obj_id, uid),  // we are the sharee
+      // eq(sharesUsers.state, 'accepted')
+    ))
 
-  // TODO fetch shares
-  return users
+  // Merge shares for users who have multiple shares
+  const mergedUsers = context.m.shares.mergeShares(sharingUsers)
+  
+  // Apply sharing permissions to each merged user+share
+  const sanitizedUsers = mergedUsers.map(({user, share}) => 
+    context.m.users.applySharingPermissions(user, share)
+  )
+
+  // Include the current user
+  const users_ = [context.user, ...sanitizedUsers]
+
+  return users_
 })
 
 export const users_put_request = new Route(r.users_put_request, async (req, context) => {

@@ -15,26 +15,27 @@ export function UserSwitcher({userId, nShares=0}: UserSwitcher) {
     as,
     users,
     notifs,
+    setAs,
   ] = useStore(s => [
     s.user?.me,
     s.user?.as,
     s.res.users_list_response?.hash,
     s.res.notifs_notes_list_response?.hash,
+    s.setAs,
   ], shallow)
+
   const thisUser = users?.[userId]
   const isMe = userId === me?.id
-  const [
-    setAs
-  ] = useStore(useCallback(s => [
-    () => isMe ? setAs(null) : s.setAs(userId),
-  ], []))
+  const handleClick = useCallback(() => {
+    setAs(isMe ? null : userId)
+  }, [isMe, userId, setAs])
 
   function renderName() {
     const notif = notifs?.[userId]
     if (!notif) {
-      return thisUser?.email
+      return thisUser?.email || `Unknown User (${userId})`
     }
-    return <Badge color="primary" badgeContent={notif.count}>{thisUser?.email}</Badge>
+    return <Badge color="primary" badgeContent={notif.count}>{thisUser?.email || `Unknown User (${userId})`}</Badge>
   }
   const isCurrent = (as === userId) || (!as && isMe)
   const title = <>
@@ -44,7 +45,7 @@ export function UserSwitcher({userId, nShares=0}: UserSwitcher) {
 
   return <ListItem
     sx={{ml: 4}}
-    onClick={setAs}
+    onClick={handleClick}
     secondary={title}
   />
 }
@@ -53,52 +54,68 @@ export default function Sharing() {
   const [
     user,
     shares,
-    notifs,
-    users
+    shareNotifs,
+    noteNotifs,
+    users,
+    send,
   ] = useStore(s => [
     s.user,
-    s.res['shares_ingress_list_response'],
+    s.res['shares_ingress_list_response']?.rows,
     s.res['notifs_shares_list_response']?.hash,
+    s.res['notifs_notes_list_response']?.hash,
     s.res.users_list_response?.hash,
+    s.send,
   ], shallow)
+
   const [openModal] = useStore(useCallback(s => [
-    () => s.sharing.setView({tab: "egress", egress: "new"})
+    () => s.sharing.setView({tab: "egress", egress: "new"}),
   ], []))
 
   if (!user?.me) {return null}
   const {as, viewer, me} = user
 
-  // FIXME
+  // Show notifications for both shares and notes
   let email: string | React.ReactNode = me.email
   if (as) {
-    email = viewer.display_name
+    email = viewer?.display_name
   } else {
-    const ne = notifs?.[shareId]
-    email = !ne ? email : <Badge color='error' badgeContent={ne}><span>{email}</span></Badge>
+    // Count total notifications
+    const totalNotifs = Object.values(shareNotifs || {}).reduce((sum, n) => sum + (n?.count || 0), 0) +
+      Object.values(noteNotifs || {}).reduce((sum, n) => sum + (n?.count || 0), 0)
+    
+    email = totalNotifs === 0 ? email : 
+      <Badge color='error' badgeContent={totalNotifs}>
+        <span>{email}</span>
+      </Badge>
   }
 
-  const nShares = shares?.ids?.length || 0
+  const nShares = shares?.length || 0
 
-  function renderSwitcher(shareId: string) {
-    const share = shares!.hash[shareId]
-    return <UserSwitcher userId={share.obj_id} key={shareId} nShares={nShares}/>
+  function renderSwitcher(share: any) {
+    return <UserSwitcher userId={share.user.id} key={share.user.id} nShares={nShares}/>
   }
 
   function renderSwitchers() {
-    // don't show "switch to self" if I'm the only one (no shares)
-    if (nShares === 0)  {return null}
+    // don't show anything if there are no shares
+    if (nShares === 0) {return null}
+
+    // Get unique list of users (me + sharers)
+    const userIds = new Set([me.id])
+    shares?.forEach(share => userIds.add(share.user.id))
+
     return <>
-      <UserSwitcher userId={me.id} nShares={nShares} />
-      {shares?.ids?.map(renderSwitcher)}
+      {Array.from(userIds).map(userId => 
+        <UserSwitcher userId={userId} key={userId} nShares={nShares} />
+      )}
     </>
   }
 
   return <>
-      <ListItem
-        onClick={openModal}
-        primary='Sharing'
-        nested={true}
-       />
+    <ListItem
+      onClick={openModal}
+      primary='Sharing'
+      nested={true}
+    />
     {renderSwitchers()}
   </>
 }

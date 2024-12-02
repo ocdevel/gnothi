@@ -14,9 +14,11 @@ export default function UserListener() {
   const [
     send,
     setUser,
+    as,
   ] = useStore(useCallback(s => [
     s.send,
     s.setUser,
+    s.user?.as,
   ], []))
   const [whoami, users] = useStore(s => [
     s.res.users_whoami_response?.first,
@@ -34,24 +36,30 @@ export default function UserListener() {
     }
   }
 
-  // listen to changes across, me, as, and users-list.
+  // listen to changes across me, as, and users-list.
   useEffect(() => {
-    // only set user/viewer when pre-requisites are present. Also returns if this user-list doesn't contain updates
-    // to user (need to account for viewer)
+    // only set user/viewer when pre-requisites are present
     const user = users?.[whoami?.uid]
     if (!user) {return}
 
     ensureTimezone(user)
     setUser({
       me: users[whoami.uid],
-      viewer: users[whoami.vid],
-      as: null
+      viewer: as ? users[as] : users[whoami.uid],
+      as
     })
+  }, [whoami, users, as, setUser])
 
-    // TODO handle as switch
-    // if (viewer.asId && hash[viewer.asId]) {
-    //   get().send('users_everything_request', {})
-    // }
-  }, [whoami, users])
+  // Trigger data refresh when switching users
+  useEffect(() => {
+    if (as !== undefined) {
+      // Only fetch the essential data needed for viewing another user
+      // This prevents clobbering UserB's data when viewing UserA
+      send('entries_list_request', {as})
+      send('tags_list_request', {as})
+      send('fields_list_request', {as})
+    }
+  }, [as, send])
+
   return null
 }

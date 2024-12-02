@@ -4,15 +4,20 @@ import {useCallback} from "react";
 import AppBar, {CTA, Link} from "../../Components/AppBar";
 import * as React from "react";
 import {useStore} from "../../../data/store";
+import IconButton from '@mui/material/IconButton';
+import MenuIcon from '@mui/icons-material/Menu';
+import Box from '@mui/material/Box';
 
 export default function AppBar_() {
   const location = useLocation()
   const [
     setShareView,
     setEntryModal,
+    toggleSidebar
   ] = useStore(s => [
     s.sharing.setView,
     s.modals.setEntry,
+    s.toggleSidebar
   ], shallow)
 
   const clickSharing = useCallback(() => {
@@ -22,13 +27,7 @@ export default function AppBar_() {
     setEntryModal({mode: "new"})
   }, [])
 
-  const links: Link[] = [
-    {name: "Journal", to: "/j", className: "btn-journal"},
-    {name: "Behaviors", to: "/b", className: "btn-behaviors"},
-    // {name: "Sharing", onClick: clickSharing, className: "btn-sharing"},
-    {name: "Groups", to: "/g", className: "btn-groups"},
-    // {name: "Resources", to: "/", className: "btn-resources"}
-  ]
+  const links: Link[] = []  
 
   const ctas: CTA[] =
     location.pathname.startsWith("/j") ? [{
@@ -38,10 +37,26 @@ export default function AppBar_() {
     : []
 
   const clearBottom = !['/privacy', '/terms', '/disclaimer'].includes(location.pathname)
+
+  const leftContent = (
+    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+      <IconButton
+        color="inherit"
+        aria-label="toggle sidebar"
+        onClick={toggleSidebar}
+        edge="start"
+        sx={{ mr: 2 }}
+      >
+        <MenuIcon />
+      </IconButton>
+    </Box>
+  )
+
   return <AppBar
     clearBottom={clearBottom}
     links={links}
     ctas={ctas}
+    leftContent={leftContent}
   />
   // return <>
   //   <Routes>

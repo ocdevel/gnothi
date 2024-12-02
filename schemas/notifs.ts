@@ -12,6 +12,11 @@ export const Notif = z.object({
 })
 export type Notif = z.infer<typeof Notif>
 
+export const NotifId = z.object({
+  id: IdCol
+})
+export type NotifId = z.infer<typeof NotifId>
+
 export const notifs_notes_list_response = Notif
 export type notifs_notes_list_response = z.infer<typeof notifs_notes_list_response>
 
@@ -45,6 +50,39 @@ export const routes = {
     },
     o: {
       e: 'notifs_shares_list_response',
+      s: Notif,
+      keyby: "obj_id"
+    },
+  },
+  notifs_shares_seen_request: {
+    i: {
+      e: 'notifs_shares_seen_request',
+      s: NotifId,
+    },
+    o: {
+      e: 'notifs_shares_list_response',
+      s: Notif,
+      keyby: "obj_id"
+    },
+  },
+  notifs_groups_seen_request: {
+    i: {
+      e: 'notifs_groups_seen_request',
+      s: NotifId,
+    },
+    o: {
+      e: 'notifs_groups_list_response',
+      s: Notif,
+      keyby: "obj_id"
+    },
+  },
+  notifs_notes_seen_request: {
+    i: {
+      e: 'notifs_notes_seen_request',
+      s: NotifId,
+    },
+    o: {
+      e: 'notifs_notes_list_response',
       s: Notif,
       keyby: "obj_id"
     },

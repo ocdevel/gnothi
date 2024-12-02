@@ -83,7 +83,7 @@ export type entries_delete_request = z.infer<typeof entries_delete_request>
 export const entries_delete_response = entries_delete_request
 export type entries_delete_response = z.infer<typeof entries_delete_response>
 
-export const routes = {
+export const routes: DefO<Route> = {
   entries_list_request: {
     i: {
       e: 'entries_list_request',

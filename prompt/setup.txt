@@ -1,0 +1,21 @@
+This project is a journaling webapp which uses AI to provide resources and insights for the journaler. v1 of the project was written in FastAPI and ran on a dedicated server. v2 has been converted to SST (serverless stack) using Node AWS Lambda for the majority of backend functions, and Docker Python Lambdas for some of the more complex ML functionality. Drizzle + Postgres are used on the backend, and React + MUI on the frontend. The new project has a strange paradigm of code-sharing using Zod and WebSockets, handling request / response with specific input / output definitions. The structure is as follows:
+* old_project/ - the old FastAPI backend. Bit-by-bit, as I convert code to the new project, I delete its prior implementation from here, until finally this folder will be empty. Not all has been converted, and even some converted code remains until I'm sure I got it right.
+* stacks/ - the SST infra code
+* services/ - the new backend code
+  * data/
+    * schemas/ - the Drizzle schema definitions
+    * models/ - the more complex classes for Drizzle interactions. CRUD, but with special handling, eg "snooping" logic (described later)
+    * db.ts & dbSingleton.ts - the DB connection code
+  * ml/ - the AI functionality
+    * python/ - the workhorse code for huggingface, embeddings, match-making, etc
+    * node/ - since most of the backend is Node, the proxy code for marshalling data to / from the Python Lambdas
+  * routes/ - the backend code for requests / responses
+    * main.ts - the main entrypoint for the backend. This will typically always want to be included when assessing backend logic
+* web/src - the frontend code
+  * data/api/ - tooling for request / response handling with the complex WebSockets / Zod logic
+  * store/ - the Zustand stores. Global state management handled here.
+  * ui/ - the React components
+* schemas/ - the Zod schema definitions for the routes, request / response formats. These will often want to be considered when working with either frontend or backend code.
+
+The task is to finish the migration of the Sharing feature. This was present in v1, and the conversion is incomplete in v2. old_project/ will want to be included in assessing the conversion, though note that some new paradigms have been introduced since v1. In particular, shares are now polymorphic - a share can be assigned to users, groups, and maybe more later. Sharing is a tool that allows UserA to share certain data with UserB. This data may include journal entries, behaviors, profile information, etc. For journal entries, UserA specifies which tags are shared; and all entries with that tag will then be shared. Once UserB gets receives the share, they'll see UserA's email / profile name / username (depending on which was shared) in their sidebar, with a notifications icon indicating how many new entries are present since they last viewed. Viewing the shared data is called "snooping". UserB activates "snoop" by clicking on UserA's name. This then sets `store.user.as` to UserA.id. `store.user.as` is then sent with every WebSocket request to the server. The server receives `as`, and handles permission checks and data fetching logic by deciding which to use: `uid` (UserB.id, called `store.user.me` on the frontend); or `vid` (UserA.id, called `store.user.as` in the frontend). On the backend, `vid` is typically used when fetching data, as an assumption is made that the permission-check has already been passed. This assumption will need to be taken into consideration while we work with the code, since I may not have converted all the old_project/ logic in this regard. This is possible also because, in services/routes/main.ts `vid` is assigned to `uid` if `vid` isn't present.
+

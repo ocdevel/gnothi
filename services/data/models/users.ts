@@ -23,7 +23,6 @@ import {Logger} from "../../aws/logs";
 export class Users extends Base {
   people?: Person[]
   async snoop(): Promise<Pick<FnContext, 'viewer' | 'snooping'>> {
-    // TODO why would vid == share_id? What is share_id? I need to revisit this
     const [db, viewer, share_id] = [this.context.db, this.context.user, this.context.vid]
     const vid = viewer.id
     if (!share_id || vid === share_id) {
@@ -38,9 +37,57 @@ export class Users extends Base {
       .innerJoin(shares, eq(shares.user_id, share_id))
       .innerJoin(sharesUsers, and(
         eq(shares.id, sharesUsers.share_id),
-        eq(sharesUsers.obj_id, vid)
+        eq(sharesUsers.obj_id, vid),
+        eq(sharesUsers.state, 'accepted')
       ))
-    return {snooping: true, viewer: res[0]}
+    
+    if (!res.length) {
+      return {snooping: false, viewer: {user: viewer}}
+    }
+
+    // Apply sharing permissions to the user object
+    const {user, share} = res[0]
+    const sanitizedUser = this.applySharingPermissions(user, share)
+    return {snooping: true, viewer: {user: sanitizedUser, share}}
+  }
+
+  private applySharingPermissions(user: User, share: Share): User {
+    const sanitizedUser = {...user}
+    const shareableFields = [
+      'email',
+      'username',
+      'first_name',
+      'last_name',
+      'gender',
+      'orientation',
+      'birthday',
+      'timezone',
+      'bio',
+      'people'
+    ]
+
+    // Hide fields that aren't shared
+    for (const field of shareableFields) {
+      if (!share[field]) {
+        sanitizedUser[field] = 'NA'
+      }
+    }
+
+    // Build display name based on shared fields
+    sanitizedUser.display_name = this.buildDisplayName(sanitizedUser)
+
+    return sanitizedUser
+  }
+
+  private buildDisplayName(user: User): string {
+    if (user.first_name && user.last_name) {
+      return `${user.first_name} ${user.last_name}`
+    }
+    if (user.first_name) return user.first_name
+    if (user.last_name) return user.last_name
+    if (user.username) return user.username
+    if (user.email) return user.email
+    return "Anonymous"
   }
   
   async lastCheckin() {

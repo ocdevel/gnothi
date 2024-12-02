@@ -12,6 +12,8 @@ import {User, users} from '../data/schemas/users'
 import {WsConnection, wsConnections} from '../data/schemas/wsConnections'
 import {books, Book} from '../data/schemas/books'
 import {groups, Group} from '../data/schemas/groups'
+import {Notifs} from '../data/models/notifs'
+import {notifsShares, notifsGroups, notifsNotes} from '../data/schemas/notifs'
 
 import {Habitica} from '../data/models/habitica'
 import {Users} from '../data/models/users'
@@ -88,6 +90,9 @@ export class FnContext {
     wsConnections,
     books,
     groups,
+    notifsShares,
+    notifsGroups,
+    notifsNotes,
   }
 
   // Instantiate models as properties to the FnContext. This allows the models context-access
@@ -104,6 +109,7 @@ export class FnContext {
     books: Books
     tags: Tags
     groups: Groups
+    notifs: Notifs
   }
 
   user: User
@@ -137,7 +143,8 @@ export class FnContext {
       notes: new Notes(this),
       books: new Books(this),
       tags: new Tags(this),
-      groups: new Groups(this)
+      groups: new Groups(this),
+      notifs: new Notifs(this)
     }
   }
 

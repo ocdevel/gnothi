@@ -1,7 +1,7 @@
 import React, {useState, useEffect} from 'react'
 import {Routes, Route, Outlet} from 'react-router-dom'
 import {useStore} from "@gnothi/web/src/data/store"
-import {EditModal} from './View/Edit'
+import EditModal from './View/Edit'
 import {ViewModal} from './List/ViewModal.tsx'
 
 

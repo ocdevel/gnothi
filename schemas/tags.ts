@@ -69,6 +69,7 @@ export const routes = {
       e: 'tags_list_request',
       s: Passthrough,
       t: {ws: true},
+      snoopable: true,
     },
     o: {
       e: 'tags_list_response',

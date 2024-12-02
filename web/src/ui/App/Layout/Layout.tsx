@@ -61,10 +61,19 @@ export default function Layout() {
   return <>
     <AppBar />
     <Banner />
-    <Grid container>
-      <Grid item xs={3}><Sidebar /></Grid>
-      <Grid item xs={9}><Container_ /></Grid>
-    </Grid>
+    <Box sx={{ display: 'flex' }}>
+      <Sidebar />
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          height: '100vh',
+          overflow: 'auto',
+        }}
+      >
+        <Container_ />
+      </Box>
+    </Box>
     <Footer inApp={true} />
 
     <UserListener />

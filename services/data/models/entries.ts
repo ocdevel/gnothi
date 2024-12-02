@@ -23,9 +23,15 @@ type Snoop = {
   for_ai?: boolean
 }
 
-function tagsToBoolMap(tags: any): Record<string, boolean> {
-  // comes in from json_agg, field returned as JSON string
-  return Object.fromEntries(tags.map(({tag_id}) => [tag_id, true]))
+function tagsToBoolMap(rows: any[]): Record<string, boolean> {
+  // Handles both json_agg format and Drizzle join format
+  if (!rows?.length) return {}
+  // If it's the old json_agg format
+  if (rows[0]?.tag_id) {
+    return Object.fromEntries(rows.map(({tag_id}) => [tag_id, true]))
+  }
+  // If it's the new Drizzle join format
+  return Object.fromEntries(rows.map(row => [row.entries_tags.tag_id, true]))
 }
 
 export class Entries extends Base {
@@ -38,7 +44,7 @@ export class Entries extends Base {
   }
 
   async filter(req: S.Entries.entries_list_request): Promise<entries_list_response[]> {
-    const {user, uid, db} = this.context
+    const {user, uid, vid, s} = this.context
     const {tags, startDate, endDate} = req
     const tids = boolMapToKeys(tags)
 
@@ -54,21 +60,25 @@ export class Entries extends Base {
     // TODO adding 2 days for good measure. Need to use with_tz instead in query
     const endDate_ = endDate || dayjs().add(2, "day").format('YYYY-MM-DD')
 
-    type EntriesSQL = Entry & { tags: string[] }
-    const rows = await db.query<EntriesSQL>(sql`
-      select e.*,
-          json_agg(et.*) as tags
-      from ${entries} e
-        inner join ${entriesTags} et on e.id = et.entry_id
-      where e.user_id = ${uid}
-        and e.created_at > ${startDate_}::date
-        and e.created_at <= ${endDate_}::date
-        and et.tag_id in ${tids}
-      group by e.id
-      order by e.created_at desc;
-    `)
-    // TODO update SQL to do this conversion, we'll use it elsewhere
-    return rows.map(row => ({...row, tags: tagsToBoolMap(row.tags)}))
+    // Use the snoop function to get entries with proper permission checks
+    const rows = await this.snoop({
+      sid: undefined,  // Not needed for filtering
+      tags: tids,
+      order_by: desc(s.entries.created_at),
+      days: undefined,  // We'll handle date filtering here
+      for_ai: false
+    })
+
+    // Filter by date range and format response
+    return rows
+      .filter(row => {
+        const created = dayjs(row.entries.created_at)
+        return created.isAfter(startDate_) && created.isBefore(endDate_)
+      })
+      .map(row => ({
+        ...row.entries,
+        tags: tagsToBoolMap([row.entries_tags])  // Pass just this row's tags
+      }))
   }
 
   async destroy(id: string) {
@@ -81,65 +91,82 @@ export class Entries extends Base {
   }
 
   async snoop({sid, entry_id, group_id, order_by, tags, days, for_ai}: Snoop): Promise<Entry[]> {
-    const {s, db, snooping, vid} = this.context
+    const {s, db, snooping, uid, vid} = this.context
     const {drizzle} = db
 
-    let q;
+    let q = drizzle.select().from(s.entries)
 
     if (snooping) {
-      q = drizzle.select().from(s.entries)
+      // When snooping, we need to:
+      // 1. Check that there's an accepted share between UserA (vid) and UserB (uid)
+      // 2. Only show entries that have tags which are shared
+      q = q
         .innerJoin(s.entriesTags, eq(s.entriesTags.entry_id, s.entries.id))
         .innerJoin(s.sharesTags, eq(s.sharesTags.tag_id, s.entriesTags.tag_id))
         .innerJoin(s.shares, eq(s.shares.id, s.sharesTags.share_id))
-        .innerJoin(s.sharesUsers, eq(s.sharesUsers.share_id, s.shares.id))
-        .where(and(
-          eq(s.sharesUsers.obj_id, vid),
-          eq(s.shares.user_id, sid)
+        .innerJoin(s.sharesUsers, and(
+          eq(s.sharesUsers.share_id, s.shares.id),
+          eq(s.sharesUsers.obj_id, uid),  // UserB is the viewer (obj_id)
+          eq(s.sharesUsers.state, 'accepted')
         ))
-    // } else if (group_id) {
-    //   q = db.query(Entry)
-    //     .join(EntryTag)
-    //     .join(ShareTag, ShareTag.tag_id == EntryTag.tag_id)
-    //     .join(ShareGroup, sa.and_(
-    //       ShareGroup.share_id == ShareTag.share_id,
-    //       ShareGroup.obj_id == group_id
-    //     ))
-    //     .join(UserGroup, sa.and_(
-    //       UserGroup.group_id == ShareGroup.obj_id,
-    //       UserGroup.user_id == vid
-    //     ));
+        .where(and(
+          eq(s.entries.user_id, vid),  // UserA is the owner of the entries
+          eq(s.shares.user_id, vid),   // UserA is the owner of the share
+        ))
+    } else if (group_id) {
+      // For group sharing:
+      // 1. Check that the share is associated with this group
+      // 2. Check that the viewer is a non-banned member of the group
+      // 3. Only show entries with shared tags
+      q = q
+        .innerJoin(s.entriesTags, eq(s.entriesTags.entry_id, s.entries.id))
+        .innerJoin(s.sharesTags, eq(s.sharesTags.tag_id, s.entriesTags.tag_id))
+        .innerJoin(s.shares, eq(s.shares.id, s.sharesTags.share_id))
+        .innerJoin(s.sharesGroups, and(
+          eq(s.sharesGroups.share_id, s.shares.id),
+          eq(s.sharesGroups.obj_id, group_id)
+        ))
+        .innerJoin(s.groupsUsers, and(
+          eq(s.groupsUsers.group_id, group_id),
+          eq(s.groupsUsers.user_id, uid),
+          not(eq(s.groupsUsers.role, 'banned'))
+        ))
+        .where(eq(s.entries.user_id, vid))
     } else {
-      q = drizzle.select().from(s.entries).where(eq(s.entries.user_id, vid))
+      // If not snooping or group sharing, just show the user's own entries
+      q = q.where(eq(s.entries.user_id, vid))
     }
 
+    // Additional filters
     if (entry_id) {
       q = q.where(eq(s.entries.id, entry_id))
     }
 
     if (for_ai) {
-      // q = q.filter(Entry.no_ai.isnot(True));
       q = q.where(not(eq(s.entries.no_ai, true)))
     }
 
     if (tags) {
       if (!snooping) {
-        q = q.innerJoin(s.entriesTags, eq(s.entries.id, s.entriesTags.entry_id))
-          .innerJoin(s.tags, eq(s.entriesTags.tag_id, s.tags.id))
+        // For non-snooping cases, we need to join with tags tables
+        q = q
+          .innerJoin(s.entriesTags, eq(s.entries.id, s.entriesTags.entry_id))
       }
       q = q.where(inArray(s.entriesTags.tag_id, tags))
     }
 
     if (days) {
-      const now = new Date();
-      const x_days = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+      const now = new Date()
+      const x_days = new Date(now.getTime() - days * 24 * 60 * 60 * 1000)
       q = q.where(lt(s.entries.created_at, x_days))
       order_by = asc(s.entries.created_at)
     }
 
     if (!order_by) {
-      order_by = desc(s.entries.created_at);
+      order_by = desc(s.entries.created_at)
     }
-    return q.order_by(order_by);
+
+    return q.orderBy(order_by)
   }
 
   async upsertOuter(
@@ -201,13 +228,37 @@ export class Entries extends Base {
     })
   }
 
-  async post(req: S.Entries.entries_post_request) {
-    const {db} = this.context
-    const {drizzle} = db
-    return this.upsertOuter(req, async (entry) => {
-      const res = await drizzle.insert(entries).values(entry).returning()
-      return res[0]
+  async post(data: S.Entries.EntryPost) {
+    const {vid, db: {drizzle}} = this.context
+    const {tags = {}, text} = data
+
+    // Create the entry
+    const [entry] = await drizzle
+      .insert(entries)
+      .values({
+        user_id: vid,
+        text,
+      })
+      .returning()
+
+    // Handle tags
+    const tagIds = Object.keys(tags)
+    const tagPromises = tagIds.map(async (tagId) => {
+      await drizzle
+        .insert(entriesTags)
+        .values({
+          entry_id: entry.id,
+          tag_id: tagId,
+        })
     })
+    await Promise.all(tagPromises)
+
+    // Create notifications for users who have access to these tags
+    if (tagIds.length > 0) {
+      await this.context.m.notifs.createEntryNotifs(entry.id, tagIds)
+    }
+
+    return entry
   }
 
   async getStuckEntry(user_id: string): Promise<S.Entries.entries_upsert_response | null> {

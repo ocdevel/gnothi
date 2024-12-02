@@ -30,7 +30,7 @@ export function Groups() {
   }
 
   return <>
-    <ListItem to='/groups' nested={true} primary='Groups'/>
+    <ListItem to='/g' nested={true} primary='Groups'/>
     {groups?.ids?.map(renderGroup)}
   </>
 }

@@ -62,43 +62,86 @@ export function ErrorSnack() {
    </Stack>
 }
 
+interface ErrorProps {
+  /**
+   * Event regex to match against. If provided, will only show errors from matching events
+   * Example: /shares\/email\/check/g
+   */
+  event?: RegExp
+  /**
+   * HTTP status codes to match against. If provided, will only show errors with matching codes
+   * Example: [400, 404]
+   */
+  codes?: number[]
+  /**
+   * Manual error message to display. If provided, will show this message instead of listening for errors
+   */
+  message?: string
+  /**
+   * Whether to show as an inline error (default) or as a snackbar
+   */
+  variant?: 'inline' | 'snackbar'
+  /**
+   * Additional styles to apply to the Alert component
+   */
+  sx?: any
+}
+
 /**
- * This is the old error component, which allowed for catching specific events and codes. Eg, if a snooper
- * doesn't have access to a feature, it'd show this there, rather than a red mayday situation. I'm not using it
- * anymore, and need to determine if it provides value anymore, or if I should scrub the codebase of its use
+ * Error component that can either show manual messages or listen for specific types of errors.
+ * Can be used both inline (next to form fields) or as a snackbar.
+ *
+ * @example
+ * // Show all email check errors inline
+ * <Error event={/shares\/email\/check/g} codes={[400, 404]} />
+ *
+ * // Show a manual error as a snackbar
+ * <Error message="Something went wrong" variant="snackbar" />
  */
-export default function Error({message, event, codes}: Error) {
-  const [details, setDetails] = useState<string[]>([])
-  const lastRes = useStore(state => state.lastRes)
+export default function Error({message, event, codes, variant = 'inline', sx}: ErrorProps) {
+  const lastRes = useStore(state => state.lastRes, shallow)
+  const addError = useStore(state => state.addError)
 
-  useEffect(() => {
-    if (!(event || codes)) {return}
-    if (!lastRes?.error) { return }
-    const cm = codes && ~codes.indexOf(lastRes.code)
-    const am = event && lastRes.event?.match(event)
-    const match = (codes && event) ? (cm && am) : (cm || am)
-    if (match) {
-      addDetail(lastRes.error)
+  // If it's a manual message and snackbar variant, add it to global errors
+  React.useEffect(() => {
+    if (message && variant === 'snackbar') {
+      addError(message)
+      return
     }
-  }, [lastRes])
-
-  useEffect(() => {
-    if (message) {addDetail(message)}
-    else {clearDetails()}
   }, [message])
 
-  function addDetail(detail: string) {
-    if (!detail?.length) {return}
-    setDetails([...details, detail])
+  // For manual inline messages, just show them directly
+  if (message && variant === 'inline') {
+    return (
+      <Alert severity="error" sx={{mb: 2, ...sx}}>
+        {message}
+      </Alert>
+    )
   }
 
-  function clearDetails() {setDetails([])}
+  // For event/code matching, check if we have a matching error
+  if (event || codes) {
+    if (!lastRes?.error) return null
 
-  if (!details.length) {return null}
+    const codeMatches = codes ? codes.includes(lastRes.code) : true
+    const eventMatches = event ? event.test(lastRes.event) : true
+    const matches = (codes && event) ? (codeMatches && eventMatches) : (codeMatches || eventMatches)
 
-  return (
-    <Alert sx={{mb: 2}} severity="error" onClose={clearDetails} dismissible>
-      {details.map(d => <div key={d}>{d}</div>)}
-    </Alert>
-  );
+    if (!matches) return null
+
+    const errorMessage = lastRes.error?.message || lastRes.data?.[0]?.error || "An error occurred"
+
+    if (variant === 'snackbar') {
+      addError(errorMessage)
+      return null
+    }
+
+    return (
+      <Alert severity="error" sx={{mb: 2, ...sx}}>
+        {errorMessage}
+      </Alert>
+    )
+  }
+
+  return null
 }

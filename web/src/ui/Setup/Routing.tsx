@@ -12,7 +12,6 @@ import {useStore} from "../../data/store";
 
 import {S, Error} from '../Components/Routing'
 
-
 const SplashLayout = React.lazy( () => import("../Static/Splash/Layout"))
 const Privacy = React.lazy(() => import("../Static/Privacy"))
 const Terms = React.lazy(() => import("../Static/Terms"))
@@ -28,9 +27,11 @@ const Track = React.lazy(() => import("../App/Behaviors/Track/Track"))
 const Analyze = React.lazy(() => import("../App/Behaviors/Analyze/Analyze"))
 
 const GroupsLayout = React.lazy(() => import("../App/Groups/Layout"))
-const GroupsList = React.lazy(() => import("../App/Groups/List/List.tsx"))
+const GroupsList = React.lazy(() => import("../App/Groups/List/List"))
 const Group = React.lazy(() => import("../App/Groups/View"))
 
+const TherapistsLayout = React.lazy(() => import('../App/Therapists/Layout'))
+const Therapists = React.lazy(() => import('../App/Therapists'))
 
 const common = {
   errorElement: <Error />,
@@ -68,6 +69,9 @@ const router = createBrowserRouter_([{
       {index: true, ...common, element: <S><GroupsList /></S>},
       {path: ":gid", element: <S><Group /></S>}
     ]},
+    {path: "t", ...common, element: <S><TherapistsLayout /></S>, children: [
+      {index: true, ...common, element: <S><Therapists  /></S>}
+    ]}
   ]
 }])
 

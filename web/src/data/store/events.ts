@@ -49,7 +49,6 @@ export interface EventsSlice {
     entries_delete_response?: Api.ResUnwrap<Entries.entries_delete_response>
     entries_notes_list_response?: Api.ResUnwrap<Notes.entries_notes_list_response>
     entries_notes_post_response?: Api.ResUnwrap<Notes.entries_notes_post_response>
-
     insights_get_response?: Api.ResUnwrap<Insights.insights_get_response>
     insights_summarize_response?: Api.ResUnwrap<Insights.insights_summarize_response>
     insights_prompt_response?: Api.ResUnwrap<Insights.insights_prompt_response>
@@ -73,6 +72,8 @@ export interface EventsSlice {
     shares_post_response?: Api.ResUnwrap<Shares.shares_post_response>
     shares_put_response?: Api.ResUnwrap<Shares.shares_put_response>
     shares_delete_response?: Api.ResUnwrap<Shares.shares_delete_response>
+    shares_accept_response?: Api.ResUnwrap<Shares.shares_egress_list_response>
+    shares_reject_response?: Api.ResUnwrap<Shares.shares_egress_list_response>
     shares_emailcheck_response?: Api.ResUnwrap<Shares.shares_emailcheck_response>
   }
   resBuff: EventsSlice['res']
@@ -139,7 +140,7 @@ export const eventsSlice: StateCreator<
     }
 
     const {chunk} = res
-
+    
     // If we're receiving chunks, handle special
     if (chunk && chunk.i > 0) {
       const workingOn = get().resBuff[event]?.res?.requestId
@@ -157,6 +158,7 @@ export const eventsSlice: StateCreator<
 
     // @ts-ignore
     const current = get().resBuff[event_as] || {ids: [], hash: {}}
+    
     let updates = {
       res,
       rows: data,
@@ -182,12 +184,12 @@ export const eventsSlice: StateCreator<
       }
 
       // 2. Reconstruct ids
-      if (op === "update") {
-        updates.ids = current.ids
-      } else if (op === 'prepend') {
-        updates.ids = [...updates.ids, ...current.ids]
-      } else if (op === 'append') {
-        updates.ids = [...current.ids, ...updates.ids]
+        if (op === "update") {
+          updates.ids = current.ids
+        } else if (op === 'prepend') {
+          updates.ids = [...updates.ids, ...current.ids]
+        } else if (op === 'append') {
+          updates.ids = [...current.ids, ...updates.ids]
       } else if (op === "delete") {
         // remove updates.ids from current.ids, assign to updates.ids
         updates.ids = current.ids.filter((id: string) => !~updates.ids.indexOf(id))
@@ -200,12 +202,14 @@ export const eventsSlice: StateCreator<
 
       // 4. Leave .first and .res alone
     }
+
     const shouldFlush = !chunk || (chunk.i === chunk.of)
     set(produce(state => {
       state.lastRes = res
 
       // Then start setting the object updates
       state.resBuff[event_as] = updates
+      
       if (shouldFlush) {
         state.res[event_as] = updates
         if (event !== event_as) {
@@ -215,6 +219,7 @@ export const eventsSlice: StateCreator<
         if (res.clears) { state.req[res.clears] = null }
       }
     }))
+
     if (shouldFlush) {
       get().hooks[event_as]?.(updates)
     }
@@ -227,6 +232,7 @@ export const eventsSlice: StateCreator<
       })
     }))
   },
+
   clearReq: (events) => {
     set(produce(state => {
       events.forEach(e => {

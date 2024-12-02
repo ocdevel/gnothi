@@ -10,7 +10,7 @@ import {FnContext} from './routes/types'
 import {Handlers} from './aws/handlers'
 import * as auth from './auth/appAuth'
 import routes from './routes'
-import {CantSnoop, GnothiError} from "./routes/errors";
+import {CantSnoop, errors, GnothiError} from "./routes/errors";
 import {z} from 'zod'
 import {db} from './data/dbSingleton'
 import {User, users} from './data/schemas/users'
@@ -67,14 +67,32 @@ export async function main({req, context}: ReqParsed): Promise<RecordResult> {
   const fnContext = new FnContext({
     db,
     user,
-    // TODO later when we add sharing, use `req.as_user`. Currently forcing it off by using uid
-    vid: user.id as string, // something's going on with drizzle...
+    vid: req.data?.as || user.id,
     connectionId,
-    // TODO handle this later instead, set toUids or something which pulls from DB
     handleReq,
     handleRes,
   })
   await fnContext.init()
+
+  if (fnContext.vid !== fnContext.uid) {
+    console.log('Checking snoop in main.ts:', {
+      vid: fnContext.vid,
+      uid: fnContext.uid
+    })
+    const canSnoop = await fnContext.m.shares.snoop(fnContext.uid)  // Check if vid can snoop uid
+    console.log('Can snoop?', canSnoop)
+    if (!canSnoop) {
+      return await handleRes(
+        {e: req.event, t: {}, keyby: null, event_as: null, clears: null, op: null},
+        {
+          code: 200,
+          data: [{notShared: true}],
+          event: req.event
+        },
+        fnContext
+      )
+    }
+  }
 
   return await handleReq(req, fnContext)
 
@@ -93,8 +111,12 @@ const handleReq: FnContext['handleReq'] = async (req, fnContext) => {
   if (!route) {
     throw new GnothiError({message: `No route found for ${req.event}`})
   }
-  if (fnContext.snooping && !route.snoopable) {
-    throw new CantSnoop()
+  if (fnContext.snooping && !route.i.snoopable) {
+    return await handleRes(
+      route.o,
+      { code: 200, data: [{notShared: true}] },
+      fnContext
+    )
   }
 
   let res: Partial<Api.Res<any>>
@@ -115,7 +137,6 @@ const handleReq: FnContext['handleReq'] = async (req, fnContext) => {
       ...res
     }
     Logger.error(req.event, {error})
-    debugger
   }
   return await handleRes(
     route.o,

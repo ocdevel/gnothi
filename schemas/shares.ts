@@ -4,6 +4,7 @@ import {Passthrough, dateCol, IdCol, BoolMap} from './utils'
 export * as Shares from './shares'
 import {shares, sharesTags, sharesUsers} from '../services/data/schemas/shares'
 import {createInsertSchema, createSelectSchema} from "drizzle-zod"
+import {users} from '../services/data/schemas/users'
 
 export const shareProfileFields = [
   'username',
@@ -58,7 +59,18 @@ export type ShareUser = z.infer<typeof ShareUser>
 
 // export const ShareNotif = NotifCommon
 
-export const shares_ingress_list_response = ShareUser
+// Create a schema for the ingress share response
+export const IngressShare = z.object({
+  id: z.string().uuid(),
+  share_id: z.string().uuid(),
+  obj_id: z.string().uuid(),
+  state: z.enum(['pending', 'accepted', 'rejected']),
+  share: Share,
+  user: createSelectSchema(users)  
+})
+
+// export const shares_ingress_list_response = ShareUser
+export const shares_ingress_list_response = IngressShare
 export type shares_ingress_list_response = z.infer<typeof shares_ingress_list_response>
 export const shares_egress_list_response = ShareGet
 export type shares_egress_list_response = z.infer<typeof shares_egress_list_response>
@@ -79,81 +91,107 @@ export type shares_emailcheck_request = z.infer<typeof shares_emailcheck_request
 export const shares_emailcheck_response = z.object({email: z.string()})
 export type shares_emailcheck_response = z.infer<typeof shares_emailcheck_response>
 
-export const routes = {
+export const routes: Route = {
   shares_ingress_list_request: {
     i: {
       e: 'shares_ingress_list_request',
-      s: Passthrough,
+      s: z.object({}),
+      t: {ws: true}
     },
     o: {
       e: 'shares_ingress_list_response',
       s: shares_ingress_list_response,
-      keyby: "obj_id"
+      t: {ws: true}
     }
   },
   shares_egress_list_request: {
     i: {
-      e: "shares_egress_list_request",
-      s: Passthrough,
+      e: 'shares_egress_list_request',
+      s: z.object({}),
+      t: {ws: true}
     },
     o: {
-      e: "shares_egress_list_response",
+      e: 'shares_egress_list_response',
       s: shares_egress_list_response,
-      // keyby: 'share.id'
-      keyby: 'id'
+      t: {ws: true}
     }
   },
   shares_post_request: {
     i: {
-      e: "shares_post_request",
+      e: 'shares_post_request',
       s: shares_post_request,
-      snoopable: false,
+      t: {ws: true}
     },
     o: {
-      e: "shares_post_response",
+      e: 'shares_post_response',
       s: shares_post_response,
-      event_as: "shares_egress_list_response",
-      op: "append",
-      clears: "share_post_request",
+      t: {ws: true},
+      event_as: 'shares_egress_list_response',
+      clears: 'shares_post_request',
+      op: 'append'
     }
   },
   shares_put_request: {
     i: {
-      e: "shares_put_request",
+      e: 'shares_put_request',
       s: shares_put_request,
-      snoopable: false,
+      t: {ws: true}
     },
     o: {
-      e: "shares_put_response",
+      e: 'shares_put_response',
       s: shares_put_response,
-      event_as: "shares_egress_list_response",
-      op: "update",
-      clears: "shares_put_request"
+      t: {ws: true},
+      event_as: 'shares_egress_list_response',
+      clears: 'shares_put_request',
+      op: 'update'
     }
   },
   shares_delete_request: {
     i: {
-      e: "shares_delete_request",
-      s: z.object({id: z.string()}),
-      snoopable: false
+      e: 'shares_delete_request',
+      s: shares_delete_request,
+      t: {ws: true}
     },
     o: {
-      e: "shares_delete_response",
+      e: 'shares_delete_response',
       s: shares_delete_response,
-      event_as: "shares_egress_list_response",
-      op: "delete",
-      clears: "shares_delete_request"
+      t: {ws: true}
+    }
+  },
+  shares_accept_request: {
+    i: {
+      e: 'shares_accept_request',
+      s: z.object({id: z.string().uuid()}),
+      t: {ws: true}
     },
+    o: {
+      e: 'shares_accept_response',
+      s: shares_egress_list_response,
+      t: {ws: true}
+    }
+  },
+  shares_reject_request: {
+    i: {
+      e: 'shares_reject_request',
+      s: z.object({id: z.string().uuid()}),
+      t: {ws: true}
+    },
+    o: {
+      e: 'shares_reject_response',
+      s: shares_egress_list_response,
+      t: {ws: true}
+    }
   },
   shares_emailcheck_request: {
     i: {
-      e: "shares_emailcheck_request",
+      e: 'shares_emailcheck_request',
       s: shares_emailcheck_request,
-      snoopable: false
+      t: {ws: true}
     },
     o: {
-      e: "shares_emailcheck_response",
+      e: 'shares_emailcheck_response',
       s: shares_emailcheck_response,
+      t: {ws: true}
     }
   }
 }

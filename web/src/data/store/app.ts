@@ -26,9 +26,10 @@ type EntryModal = null | {
 
 export interface AppSlice {
   // API response errors get handled a certain way. This is for manual error adding (eg client issues)
-  errors: React.ReactNode[]
-  setErrors: (error: React.ReactNode[]) => void
-  addError: (error: React.ReactNode) => void
+  errors: (string | React.ReactNode)[]
+  setErrors: (errors: (string | React.ReactNode)[]) => void
+  addError: (error: string | React.ReactNode) => void
+  clearErrors: () => void
 
   // ----- Insights
   filters: Entries.Filters
@@ -40,6 +41,10 @@ export interface AppSlice {
   user: User
   setAs: (as: string | null) => void
   setUser: (user: User) => void
+
+  // ----- UI State
+  sidebarOpen: boolean
+  toggleSidebar: () => void
 
   modals: {
     premium: boolean
@@ -72,6 +77,7 @@ export const appSlice: StateCreator<
   errors: [],
   setErrors: (errors) => set({errors}),
   addError: (error) => set({errors: [...get().errors, error]}),
+  clearErrors: () => set({errors: []}),
 
   // ----- Insights
   filters: initialFilters,
@@ -94,12 +100,10 @@ export const appSlice: StateCreator<
     viewer: null,
   },
   setAs: (as) => set(state => ({
-    user: {...state.user, as: as},
+    user: {...state.user, as}
   })),
 
   setUser: (user) => set({user}),
-  // setViewer exists in Init.tsx, since it depends on multiple
-  // states being present before its logic
 
   // changeAs: async (actions, id, helpers) => {
   //   const {emit} = helpers.getStoreActions().ws
@@ -120,8 +124,9 @@ export const appSlice: StateCreator<
   //   emit(['users/user/everything', {}])
   // },
 
-  profile: null,
-  setProfile: (profile) => set({profile}),
+  // UI State
+  sidebarOpen: true,
+  toggleSidebar: () => set(state => ({ sidebarOpen: !state.sidebarOpen })),
 
   modals: {
     premium: false,
@@ -138,6 +143,9 @@ export const appSlice: StateCreator<
     summary: null,
     setSummary: (view) => set(produce(state => {state.modals.summary = view})),
   },
+
+  profile: null,
+  setProfile: (profile) => set({profile}),
 
   // ----- Tags
   selectedTags: {},

@@ -70,14 +70,16 @@ function ShareForm_({s, isNew}: ShareForm_) {
   const [
     send,
     setView,
-    clearEvents,
+    clearReq,
+    clearRes,
     cancel,
     reset,
     getForm
   ] = useStore(useCallback(s => [
     s.send,
     s.sharing.setView,
-    s.clearEvents,
+    s.clearReq,
+    s.clearRes,
     () => s.sharing.setView({egress: null, sid: null}),
     s.sharing.form.reset,
     s.sharing.form.getForm,
@@ -107,7 +109,9 @@ function ShareForm_({s, isNew}: ShareForm_) {
     setLoading(false)
     // FIXME ensure this is matching req/res (like s.id == deleteRes.id), so we don't redirect from delayed other
     if (deleteRes?.code === 200) {
-      clearEvents(["shares_delete_response"])
+      reset()
+      clearReq(["shares_delete_request"])
+      clearRes(["shares_delete_response"])
       setView({tab: "egress", egress: "list"})
     }
   }, [deleteRes])
@@ -115,17 +119,19 @@ function ShareForm_({s, isNew}: ShareForm_) {
   useEffect(() => {
     setLoading(false)
     if (postRes?.code === 200) {
-      clearEvents(["shares_post_response"])
-      setView({tab: "egress", egress: "list"})
+      reset()
+      clearReq(["shares_post_request"])
+      clearRes(["shares_post_response"])
+      setView({tab: "egress", egress: "list", sid: null, gid: null})
     }
   }, [postRes])
 
-  // FIXME refactor these 3 functions together. Also, can't clear responses, only requests
   useEffect(() => {
     setLoading(false)
     if (putRes?.code === 200) {
-      clearEvents(["shares_put_response"])
-      setView({tab: "egress", egress: "list"})
+      clearReq(["shares_put_request"])
+      clearRes(["shares_put_response"])
+      setView({tab: "egress", egress: "list", sid: null, gid: null})
     }
   }, [putRes])
 
@@ -303,4 +309,3 @@ function ShareForm_({s, isNew}: ShareForm_) {
   //     >Cancel</Button>
   //   </CardActions>
   // </Card>
-

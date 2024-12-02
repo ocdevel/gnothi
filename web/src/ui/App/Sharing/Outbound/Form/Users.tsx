@@ -56,14 +56,16 @@ export default function Users() {
   function renderUsers() {
     const arr = trueKeys(users)
     if (!arr.length) { return null }
-    return <>
-      {arr.map(a => <Chip
-        key={a}
-        label={a}
-        variant="outlined"
-        onDelete={() => setUsers({...users, [a]: false})}
-      />)}
-    </>
+    return (
+      <>
+        {arr.map(a => <Chip
+          key={a}
+          label={a}
+          variant="outlined"
+          onDelete={() => setUsers({...users, [a]: false})}
+        />)}
+      </>
+    )
   }
 
   return (
@@ -94,7 +96,7 @@ export default function Users() {
           <Button size='small' variant='contained' color='secondary' type='submit'>Add</Button>
         </Grid>
       </Grid>
-      <Error event={/shares\/email\/check/g} codes={[400, 404]} />
+      <Error event={/shares\/email\/check/g} codes={[400, 404]} variant="inline" />
       {renderUsers()}
     </form>
   );
@@ -118,7 +120,7 @@ export default function Users() {
   //   <FormHelperText>
   //     Email of person you'll share data with. If they're not on Gnothi, have them sign up first.
   //   </FormHelperText>
-  //   <Error event={/shares\/email\/check/g} codes={[400, 404]} />
+  //   <Error event={/shares\/email\/check/g} codes={[400, 404]} variant="inline" />
   //   {renderUsers()}
   // </form>
 }

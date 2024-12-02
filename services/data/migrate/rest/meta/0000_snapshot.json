@@ -1,10 +1,8 @@
 {
-  "version": "5",
-  "dialect": "pg",
-  "id": "1e94143b-250c-4828-9459-e9758932778a",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "version": "7",
+  "dialect": "postgresql",
   "tables": {
-    "books": {
+    "public.books": {
       "name": "books",
       "schema": "",
       "columns": {
@@ -54,9 +52,13 @@
       },
       "indexes": {},
       "foreignKeys": {},
-      "compositePrimaryKeys": {}
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false,
+      "checkConstraints": {}
     },
-    "bookshelf": {
+    "public.bookshelf": {
       "name": "bookshelf",
       "schema": "",
       "columns": {
@@ -101,33 +103,49 @@
       },
       "indexes": {
         "ix_bookshelf_created_at": {
-          "name": "ix_bookshelf_created_at",
           "columns": [
-            "created_at"
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
           ],
-          "isUnique": false
+          "with": {},
+          "name": "ix_bookshelf_created_at",
+          "isUnique": false,
+          "method": "btree",
+          "concurrently": false
         },
         "ix_bookshelf_updated_at": {
-          "name": "ix_bookshelf_updated_at",
           "columns": [
-            "updated_at"
+            {
+              "expression": "updated_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
           ],
-          "isUnique": false
+          "with": {},
+          "name": "ix_bookshelf_updated_at",
+          "isUnique": false,
+          "method": "btree",
+          "concurrently": false
         }
       },
       "foreignKeys": {
         "bookshelf_user_id_users_id_fk": {
           "name": "bookshelf_user_id_users_id_fk",
           "tableFrom": "bookshelf",
-          "tableTo": "users",
           "columnsFrom": [
             "user_id"
           ],
+          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {
@@ -138,9 +156,13 @@
             "user_id"
           ]
         }
-      }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false,
+      "checkConstraints": {}
     },
-    "cache_entries": {
+    "public.cache_entries": {
       "name": "cache_entries",
       "schema": "",
       "columns": {
@@ -174,20 +196,24 @@
         "cache_entries_entry_id_entries_id_fk": {
           "name": "cache_entries_entry_id_entries_id_fk",
           "tableFrom": "cache_entries",
-          "tableTo": "entries",
           "columnsFrom": [
             "entry_id"
           ],
+          "tableTo": "entries",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
-      "compositePrimaryKeys": {}
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false,
+      "checkConstraints": {}
     },
-    "cache_users": {
+    "public.cache_users": {
       "name": "cache_users",
       "schema": "",
       "columns": {
@@ -221,20 +247,24 @@
         "cache_users_user_id_users_id_fk": {
           "name": "cache_users_user_id_users_id_fk",
           "tableFrom": "cache_users",
-          "tableTo": "users",
           "columnsFrom": [
             "user_id"
           ],
+          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
-      "compositePrimaryKeys": {}
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false,
+      "checkConstraints": {}
     },
-    "entries": {
+    "public.entries": {
       "name": "entries",
       "schema": "",
       "columns": {
@@ -312,45 +342,73 @@
       },
       "indexes": {
         "ix_entries_created_at": {
-          "name": "ix_entries_created_at",
           "columns": [
-            "created_at"
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
           ],
-          "isUnique": false
+          "with": {},
+          "name": "ix_entries_created_at",
+          "isUnique": false,
+          "method": "btree",
+          "concurrently": false
         },
         "ix_entries_updated_at": {
-          "name": "ix_entries_updated_at",
           "columns": [
-            "updated_at"
+            {
+              "expression": "updated_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
           ],
-          "isUnique": false
+          "with": {},
+          "name": "ix_entries_updated_at",
+          "isUnique": false,
+          "method": "btree",
+          "concurrently": false
         },
         "ix_entries_user_id": {
-          "name": "ix_entries_user_id",
           "columns": [
-            "user_id"
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
           ],
-          "isUnique": false
+          "with": {},
+          "name": "ix_entries_user_id",
+          "isUnique": false,
+          "method": "btree",
+          "concurrently": false
         }
       },
       "foreignKeys": {
         "entries_user_id_users_id_fk": {
           "name": "entries_user_id_users_id_fk",
           "tableFrom": "entries",
-          "tableTo": "users",
           "columnsFrom": [
             "user_id"
           ],
+          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
-      "compositePrimaryKeys": {}
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false,
+      "checkConstraints": {}
     },
-    "entries_tags": {
+    "public.entries_tags": {
       "name": "entries_tags",
       "schema": "",
       "columns": {
@@ -372,28 +430,28 @@
         "entries_tags_entry_id_entries_id_fk": {
           "name": "entries_tags_entry_id_entries_id_fk",
           "tableFrom": "entries_tags",
-          "tableTo": "entries",
           "columnsFrom": [
             "entry_id"
           ],
+          "tableTo": "entries",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         },
         "entries_tags_tag_id_tags_id_fk": {
           "name": "entries_tags_tag_id_tags_id_fk",
           "tableFrom": "entries_tags",
-          "tableTo": "tags",
           "columnsFrom": [
             "tag_id"
           ],
+          "tableTo": "tags",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {
@@ -404,9 +462,13 @@
             "tag_id"
           ]
         }
-      }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false,
+      "checkConstraints": {}
     },
-    "field_entries": {
+    "public.field_entries": {
       "name": "field_entries",
       "schema": "",
       "columns": {
@@ -445,51 +507,71 @@
       },
       "indexes": {
         "ix_field_entries_created_at": {
-          "name": "ix_field_entries_created_at",
           "columns": [
-            "created_at"
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
           ],
-          "isUnique": false
+          "with": {},
+          "name": "ix_field_entries_created_at",
+          "isUnique": false,
+          "method": "btree",
+          "concurrently": false
         },
         "ix_field_entries_user_id": {
-          "name": "ix_field_entries_user_id",
           "columns": [
-            "user_id"
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
           ],
-          "isUnique": false
+          "with": {},
+          "name": "ix_field_entries_user_id",
+          "isUnique": false,
+          "method": "btree",
+          "concurrently": false
         }
       },
       "foreignKeys": {
         "field_entries_user_id_users_id_fk": {
           "name": "field_entries_user_id_users_id_fk",
           "tableFrom": "field_entries",
-          "tableTo": "users",
           "columnsFrom": [
             "user_id"
           ],
+          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         },
         "field_entries_field_id_fields_id_fk": {
           "name": "field_entries_field_id_fields_id_fk",
           "tableFrom": "field_entries",
-          "tableTo": "fields",
           "columnsFrom": [
             "field_id"
           ],
+          "tableTo": "fields",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
-      "compositePrimaryKeys": {}
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false,
+      "checkConstraints": {}
     },
-    "field_entries2": {
+    "public.field_entries2": {
       "name": "field_entries2",
       "schema": "",
       "columns": {
@@ -539,60 +621,92 @@
       },
       "indexes": {
         "ix_field_entries2_created_at": {
-          "name": "ix_field_entries2_created_at",
           "columns": [
-            "created_at"
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
           ],
-          "isUnique": false
+          "with": {},
+          "name": "ix_field_entries2_created_at",
+          "isUnique": false,
+          "method": "btree",
+          "concurrently": false
         },
         "ix_field_entries2_day": {
-          "name": "ix_field_entries2_day",
           "columns": [
-            "day"
+            {
+              "expression": "day",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
           ],
-          "isUnique": false
+          "with": {},
+          "name": "ix_field_entries2_day",
+          "isUnique": false,
+          "method": "btree",
+          "concurrently": false
         },
         "ix_field_entries2_field_id": {
-          "name": "ix_field_entries2_field_id",
           "columns": [
-            "field_id"
+            {
+              "expression": "field_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
           ],
-          "isUnique": false
+          "with": {},
+          "name": "ix_field_entries2_field_id",
+          "isUnique": false,
+          "method": "btree",
+          "concurrently": false
         },
         "ix_field_entries2_user_id": {
-          "name": "ix_field_entries2_user_id",
           "columns": [
-            "user_id"
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
           ],
-          "isUnique": false
+          "with": {},
+          "name": "ix_field_entries2_user_id",
+          "isUnique": false,
+          "method": "btree",
+          "concurrently": false
         }
       },
       "foreignKeys": {
         "field_entries2_field_id_fields_id_fk": {
           "name": "field_entries2_field_id_fields_id_fk",
           "tableFrom": "field_entries2",
-          "tableTo": "fields",
           "columnsFrom": [
             "field_id"
           ],
+          "tableTo": "fields",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         },
         "field_entries2_user_id_users_id_fk": {
           "name": "field_entries2_user_id_users_id_fk",
           "tableFrom": "field_entries2",
-          "tableTo": "users",
           "columnsFrom": [
             "user_id"
           ],
+          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {
@@ -603,9 +717,13 @@
             "day"
           ]
         }
-      }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false,
+      "checkConstraints": {}
     },
-    "fields": {
+    "public.fields": {
       "name": "fields",
       "schema": "",
       "columns": {
@@ -703,45 +821,73 @@
       },
       "indexes": {
         "ix_fields_created_at": {
-          "name": "ix_fields_created_at",
           "columns": [
-            "created_at"
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
           ],
-          "isUnique": false
+          "with": {},
+          "name": "ix_fields_created_at",
+          "isUnique": false,
+          "method": "btree",
+          "concurrently": false
         },
         "ix_fields_excluded_at": {
-          "name": "ix_fields_excluded_at",
           "columns": [
-            "excluded_at"
+            {
+              "expression": "excluded_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
           ],
-          "isUnique": false
+          "with": {},
+          "name": "ix_fields_excluded_at",
+          "isUnique": false,
+          "method": "btree",
+          "concurrently": false
         },
         "ix_fields_user_id": {
-          "name": "ix_fields_user_id",
           "columns": [
-            "user_id"
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
           ],
-          "isUnique": false
+          "with": {},
+          "name": "ix_fields_user_id",
+          "isUnique": false,
+          "method": "btree",
+          "concurrently": false
         }
       },
       "foreignKeys": {
         "fields_user_id_users_id_fk": {
           "name": "fields_user_id_users_id_fk",
           "tableFrom": "fields",
-          "tableTo": "users",
           "columnsFrom": [
             "user_id"
           ],
+          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
-      "compositePrimaryKeys": {}
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false,
+      "checkConstraints": {}
     },
-    "influencers": {
+    "public.influencers": {
       "name": "influencers",
       "schema": "",
       "columns": {
@@ -769,28 +915,28 @@
         "influencers_field_id_fields_id_fk": {
           "name": "influencers_field_id_fields_id_fk",
           "tableFrom": "influencers",
-          "tableTo": "fields",
           "columnsFrom": [
             "field_id"
           ],
+          "tableTo": "fields",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         },
         "influencers_influencer_id_fields_id_fk": {
           "name": "influencers_influencer_id_fields_id_fk",
           "tableFrom": "influencers",
-          "tableTo": "fields",
           "columnsFrom": [
             "influencer_id"
           ],
+          "tableTo": "fields",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {
@@ -801,9 +947,13 @@
             "influencer_id"
           ]
         }
-      }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false,
+      "checkConstraints": {}
     },
-    "jobs": {
+    "public.jobs": {
       "name": "jobs",
       "schema": "",
       "columns": {
@@ -869,52 +1019,104 @@
       },
       "indexes": {
         "ix_jobs_created_at": {
-          "name": "ix_jobs_created_at",
           "columns": [
-            "created_at"
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
           ],
-          "isUnique": false
+          "with": {},
+          "name": "ix_jobs_created_at",
+          "isUnique": false,
+          "method": "btree",
+          "concurrently": false
         },
         "ix_jobs_machine_id": {
-          "name": "ix_jobs_machine_id",
           "columns": [
-            "machine_id"
+            {
+              "expression": "machine_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
           ],
-          "isUnique": false
+          "with": {},
+          "name": "ix_jobs_machine_id",
+          "isUnique": false,
+          "method": "btree",
+          "concurrently": false
         },
         "ix_jobs_method": {
-          "name": "ix_jobs_method",
           "columns": [
-            "method"
+            {
+              "expression": "method",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
           ],
-          "isUnique": false
+          "with": {},
+          "name": "ix_jobs_method",
+          "isUnique": false,
+          "method": "btree",
+          "concurrently": false
         },
         "ix_jobs_run_on": {
-          "name": "ix_jobs_run_on",
           "columns": [
-            "run_on"
+            {
+              "expression": "run_on",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
           ],
-          "isUnique": false
+          "with": {},
+          "name": "ix_jobs_run_on",
+          "isUnique": false,
+          "method": "btree",
+          "concurrently": false
         },
         "ix_jobs_state": {
-          "name": "ix_jobs_state",
           "columns": [
-            "state"
+            {
+              "expression": "state",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
           ],
-          "isUnique": false
+          "with": {},
+          "name": "ix_jobs_state",
+          "isUnique": false,
+          "method": "btree",
+          "concurrently": false
         },
         "ix_jobs_updated_at": {
-          "name": "ix_jobs_updated_at",
           "columns": [
-            "updated_at"
+            {
+              "expression": "updated_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
           ],
-          "isUnique": false
+          "with": {},
+          "name": "ix_jobs_updated_at",
+          "isUnique": false,
+          "method": "btree",
+          "concurrently": false
         }
       },
       "foreignKeys": {},
-      "compositePrimaryKeys": {}
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false,
+      "checkConstraints": {}
     },
-    "machines": {
+    "public.machines": {
       "name": "machines",
       "schema": "",
       "columns": {
@@ -947,24 +1149,44 @@
       },
       "indexes": {
         "ix_machines_created_at": {
-          "name": "ix_machines_created_at",
           "columns": [
-            "created_at"
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
           ],
-          "isUnique": false
+          "with": {},
+          "name": "ix_machines_created_at",
+          "isUnique": false,
+          "method": "btree",
+          "concurrently": false
         },
         "ix_machines_updated_at": {
-          "name": "ix_machines_updated_at",
           "columns": [
-            "updated_at"
+            {
+              "expression": "updated_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
           ],
-          "isUnique": false
+          "with": {},
+          "name": "ix_machines_updated_at",
+          "isUnique": false,
+          "method": "btree",
+          "concurrently": false
         }
       },
       "foreignKeys": {},
-      "compositePrimaryKeys": {}
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false,
+      "checkConstraints": {}
     },
-    "model_hypers": {
+    "public.model_hypers": {
       "name": "model_hypers",
       "schema": "",
       "columns": {
@@ -1021,45 +1243,73 @@
       },
       "indexes": {
         "ix_model_hypers_created_at": {
-          "name": "ix_model_hypers_created_at",
           "columns": [
-            "created_at"
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
           ],
-          "isUnique": false
+          "with": {},
+          "name": "ix_model_hypers_created_at",
+          "isUnique": false,
+          "method": "btree",
+          "concurrently": false
         },
         "ix_model_hypers_model": {
-          "name": "ix_model_hypers_model",
           "columns": [
-            "model"
+            {
+              "expression": "model",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
           ],
-          "isUnique": false
+          "with": {},
+          "name": "ix_model_hypers_model",
+          "isUnique": false,
+          "method": "btree",
+          "concurrently": false
         },
         "ix_model_hypers_model_version": {
-          "name": "ix_model_hypers_model_version",
           "columns": [
-            "model_version"
+            {
+              "expression": "model_version",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
           ],
-          "isUnique": false
+          "with": {},
+          "name": "ix_model_hypers_model_version",
+          "isUnique": false,
+          "method": "btree",
+          "concurrently": false
         }
       },
       "foreignKeys": {
         "model_hypers_user_id_users_id_fk": {
           "name": "model_hypers_user_id_users_id_fk",
           "tableFrom": "model_hypers",
-          "tableTo": "users",
           "columnsFrom": [
             "user_id"
           ],
+          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
-      "compositePrimaryKeys": {}
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false,
+      "checkConstraints": {}
     },
-    "notes": {
+    "public.notes": {
       "name": "notes",
       "schema": "",
       "columns": {
@@ -1111,58 +1361,86 @@
       },
       "indexes": {
         "ix_notes_created_at": {
-          "name": "ix_notes_created_at",
           "columns": [
-            "created_at"
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
           ],
-          "isUnique": false
+          "with": {},
+          "name": "ix_notes_created_at",
+          "isUnique": false,
+          "method": "btree",
+          "concurrently": false
         },
         "ix_notes_entry_id": {
-          "name": "ix_notes_entry_id",
           "columns": [
-            "entry_id"
+            {
+              "expression": "entry_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
           ],
-          "isUnique": false
+          "with": {},
+          "name": "ix_notes_entry_id",
+          "isUnique": false,
+          "method": "btree",
+          "concurrently": false
         },
         "ix_notes_user_id": {
-          "name": "ix_notes_user_id",
           "columns": [
-            "user_id"
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
           ],
-          "isUnique": false
+          "with": {},
+          "name": "ix_notes_user_id",
+          "isUnique": false,
+          "method": "btree",
+          "concurrently": false
         }
       },
       "foreignKeys": {
         "notes_entry_id_entries_id_fk": {
           "name": "notes_entry_id_entries_id_fk",
           "tableFrom": "notes",
-          "tableTo": "entries",
           "columnsFrom": [
             "entry_id"
           ],
+          "tableTo": "entries",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         },
         "notes_user_id_users_id_fk": {
           "name": "notes_user_id_users_id_fk",
           "tableFrom": "notes",
-          "tableTo": "users",
           "columnsFrom": [
             "user_id"
           ],
+          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
-      "compositePrimaryKeys": {}
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false,
+      "checkConstraints": {}
     },
-    "people": {
+    "public.people": {
       "name": "people",
       "schema": "",
       "columns": {
@@ -1206,31 +1484,43 @@
       },
       "indexes": {
         "ix_people_user_id": {
-          "name": "ix_people_user_id",
           "columns": [
-            "user_id"
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
           ],
-          "isUnique": false
+          "with": {},
+          "name": "ix_people_user_id",
+          "isUnique": false,
+          "method": "btree",
+          "concurrently": false
         }
       },
       "foreignKeys": {
         "people_user_id_users_id_fk": {
           "name": "people_user_id_users_id_fk",
           "tableFrom": "people",
-          "tableTo": "users",
           "columnsFrom": [
             "user_id"
           ],
+          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
-      "compositePrimaryKeys": {}
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false,
+      "checkConstraints": {}
     },
-    "profile_matches": {
+    "public.profile_matches": {
       "name": "profile_matches",
       "schema": "",
       "columns": {
@@ -1258,28 +1548,28 @@
         "profile_matches_user_id_users_id_fk": {
           "name": "profile_matches_user_id_users_id_fk",
           "tableFrom": "profile_matches",
-          "tableTo": "users",
           "columnsFrom": [
             "user_id"
           ],
+          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         },
         "profile_matches_match_id_users_id_fk": {
           "name": "profile_matches_match_id_users_id_fk",
           "tableFrom": "profile_matches",
-          "tableTo": "users",
           "columnsFrom": [
             "match_id"
           ],
+          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {
@@ -1290,9 +1580,13 @@
             "match_id"
           ]
         }
-      }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false,
+      "checkConstraints": {}
     },
-    "shares": {
+    "public.shares": {
       "name": "shares",
       "schema": "",
       "columns": {
@@ -1350,45 +1644,73 @@
       },
       "indexes": {
         "ix_shares_email": {
-          "name": "ix_shares_email",
           "columns": [
-            "email"
+            {
+              "expression": "email",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
           ],
-          "isUnique": false
+          "with": {},
+          "name": "ix_shares_email",
+          "isUnique": false,
+          "method": "btree",
+          "concurrently": false
         },
         "ix_shares_last_seen": {
-          "name": "ix_shares_last_seen",
           "columns": [
-            "last_seen"
+            {
+              "expression": "last_seen",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
           ],
-          "isUnique": false
+          "with": {},
+          "name": "ix_shares_last_seen",
+          "isUnique": false,
+          "method": "btree",
+          "concurrently": false
         },
         "ix_shares_user_id": {
-          "name": "ix_shares_user_id",
           "columns": [
-            "user_id"
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
           ],
-          "isUnique": false
+          "with": {},
+          "name": "ix_shares_user_id",
+          "isUnique": false,
+          "method": "btree",
+          "concurrently": false
         }
       },
       "foreignKeys": {
         "shares_user_id_users_id_fk": {
           "name": "shares_user_id_users_id_fk",
           "tableFrom": "shares",
-          "tableTo": "users",
           "columnsFrom": [
             "user_id"
           ],
+          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
-      "compositePrimaryKeys": {}
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false,
+      "checkConstraints": {}
     },
-    "shares_tags": {
+    "public.shares_tags": {
       "name": "shares_tags",
       "schema": "",
       "columns": {
@@ -1417,28 +1739,28 @@
         "shares_tags_share_id_shares_id_fk": {
           "name": "shares_tags_share_id_shares_id_fk",
           "tableFrom": "shares_tags",
-          "tableTo": "shares",
           "columnsFrom": [
             "share_id"
           ],
+          "tableTo": "shares",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         },
         "shares_tags_tag_id_tags_id_fk": {
           "name": "shares_tags_tag_id_tags_id_fk",
           "tableFrom": "shares_tags",
-          "tableTo": "tags",
           "columnsFrom": [
             "tag_id"
           ],
+          "tableTo": "tags",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {
@@ -1449,9 +1771,13 @@
             "tag_id"
           ]
         }
-      }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false,
+      "checkConstraints": {}
     },
-    "tags": {
+    "public.tags": {
       "name": "tags",
       "schema": "",
       "columns": {
@@ -1498,38 +1824,58 @@
       },
       "indexes": {
         "ix_tags_created_at": {
-          "name": "ix_tags_created_at",
           "columns": [
-            "created_at"
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
           ],
-          "isUnique": false
+          "with": {},
+          "name": "ix_tags_created_at",
+          "isUnique": false,
+          "method": "btree",
+          "concurrently": false
         },
         "ix_tags_user_id": {
-          "name": "ix_tags_user_id",
           "columns": [
-            "user_id"
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
           ],
-          "isUnique": false
+          "with": {},
+          "name": "ix_tags_user_id",
+          "isUnique": false,
+          "method": "btree",
+          "concurrently": false
         }
       },
       "foreignKeys": {
         "tags_user_id_users_id_fk": {
           "name": "tags_user_id_users_id_fk",
           "tableFrom": "tags",
-          "tableTo": "users",
           "columnsFrom": [
             "user_id"
           ],
+          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
-      "compositePrimaryKeys": {}
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false,
+      "checkConstraints": {}
     },
-    "users": {
+    "public.users": {
       "name": "users",
       "schema": "",
       "columns": {
@@ -1688,96 +2034,153 @@
       },
       "indexes": {
         "ix_users_cognito_id": {
-          "name": "ix_users_cognito_id",
           "columns": [
-            "cognito_id"
+            {
+              "expression": "cognito_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
           ],
-          "isUnique": false
+          "with": {},
+          "name": "ix_users_cognito_id",
+          "isUnique": false,
+          "method": "btree",
+          "concurrently": false
         },
         "ix_users_created_at": {
-          "name": "ix_users_created_at",
           "columns": [
-            "created_at"
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
           ],
-          "isUnique": false
+          "with": {},
+          "name": "ix_users_created_at",
+          "isUnique": false,
+          "method": "btree",
+          "concurrently": false
         },
         "ix_users_email": {
-          "name": "ix_users_email",
           "columns": [
-            "email"
+            {
+              "expression": "email",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
           ],
-          "isUnique": true
+          "with": {},
+          "name": "ix_users_email",
+          "isUnique": true,
+          "method": "btree",
+          "concurrently": false
         },
         "ix_users_last_books": {
-          "name": "ix_users_last_books",
           "columns": [
-            "last_books"
+            {
+              "expression": "last_books",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
           ],
-          "isUnique": false
+          "with": {},
+          "name": "ix_users_last_books",
+          "isUnique": false,
+          "method": "btree",
+          "concurrently": false
         },
         "ix_users_last_influencers": {
-          "name": "ix_users_last_influencers",
           "columns": [
-            "last_influencers"
+            {
+              "expression": "last_influencers",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
           ],
-          "isUnique": false
+          "with": {},
+          "name": "ix_users_last_influencers",
+          "isUnique": false,
+          "method": "btree",
+          "concurrently": false
         },
         "ix_users_updated_at": {
-          "name": "ix_users_updated_at",
           "columns": [
-            "updated_at"
+            {
+              "expression": "updated_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
           ],
-          "isUnique": false
+          "with": {},
+          "name": "ix_users_updated_at",
+          "isUnique": false,
+          "method": "btree",
+          "concurrently": false
         }
       },
       "foreignKeys": {},
-      "compositePrimaryKeys": {}
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false,
+      "checkConstraints": {}
     }
   },
   "enums": {
-    "defaultvaluetypes": {
+    "public.defaultvaluetypes": {
       "name": "defaultvaluetypes",
-      "values": {
-        "value": "value",
-        "average": "average",
-        "ffill": "ffill"
-      }
+      "schema": "public",
+      "values": [
+        "value",
+        "average",
+        "ffill"
+      ]
     },
-    "fieldtype": {
+    "public.fieldtype": {
       "name": "fieldtype",
-      "values": {
-        "number": "number",
-        "fivestar": "fivestar",
-        "check": "check",
-        "option": "option"
-      }
+      "schema": "public",
+      "values": [
+        "number",
+        "fivestar",
+        "check",
+        "option"
+      ]
     },
-    "machinetypes": {
+    "public.machinetypes": {
       "name": "machinetypes",
-      "values": {
-        "gpu": "gpu",
-        "server": "server"
-      }
+      "schema": "public",
+      "values": [
+        "gpu",
+        "server"
+      ]
     },
-    "notetypes": {
+    "public.notetypes": {
       "name": "notetypes",
-      "values": {
-        "label": "label",
-        "note": "note",
-        "resource": "resource"
-      }
+      "schema": "public",
+      "values": [
+        "label",
+        "note",
+        "resource"
+      ]
     },
-    "shelves": {
+    "public.shelves": {
       "name": "shelves",
-      "values": {
-        "ai": "ai",
-        "like": "like",
-        "already_read": "already_read",
-        "dislike": "dislike",
-        "remove": "remove",
-        "recommend": "recommend",
-        "cosine": "cosine"
-      }
+      "schema": "public",
+      "values": [
+        "ai",
+        "like",
+        "already_read",
+        "dislike",
+        "remove",
+        "recommend",
+        "cosine"
+      ]
     }
   },
   "schemas": {},
@@ -1785,5 +2188,11 @@
     "schemas": {},
     "tables": {},
     "columns": {}
-  }
+  },
+  "id": "1e94143b-250c-4828-9459-e9758932778a",
+  "prevId": "00000000-0000-0000-0000-000000000000",
+  "sequences": {},
+  "policies": {},
+  "views": {},
+  "roles": {}
 }

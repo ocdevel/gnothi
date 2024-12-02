@@ -5,9 +5,9 @@ import {useCallback, useEffect} from "react";
 import {CTA} from "../../Components/AppBar";
 import {shallow} from "zustand/shallow";
 import {useStore} from "../../../data/store";
-import Inbound from "./Inbound";
 import Outbound from './Outbound'
 import Typography from "@mui/material/Typography";
+import Box from "@mui/material/Box";
 
 export default function Sharing() {
   const [
@@ -28,8 +28,6 @@ export default function Sharing() {
   ], []))
 
   useEffect(() => {
-    // TODO Since modal is mounted anyway, this is kicked off (expensive on server). Have clever logic to only
-    // trigger this once first time modal is opened
     send('shares_egress_list_request', {})
   }, [])
 
@@ -38,15 +36,48 @@ export default function Sharing() {
     onClick: clickNew,
   }]
 
-  const renderInbound = useCallback(() => <Inbound />, [])
   const renderOutbound = useCallback(() => <Outbound />, [])
-  const renderInfo = useCallback(() => <div>Info goes here</div>, [])
+  const renderInfo = useCallback(() => (
+    <Box sx={{p: 2}}>
+      <Typography variant="h6" gutterBottom>About Sharing in Gnothi</Typography>
+      
+      <Typography variant="subtitle1" gutterBottom>What is Sharing?</Typography>
+      <Typography paragraph>
+        Sharing in Gnothi allows you to selectively share parts of your journal and profile with other users. You can create multiple shares with different permissions for the same user, and Gnothi will automatically merge these shares to give them the maximum allowed access.
+      </Typography>
+
+      <Typography variant="subtitle1" gutterBottom>How Sharing Works</Typography>
+      <Typography paragraph>
+        • You can share specific profile fields (email, name, bio, etc) and journal tags with other users
+        • Users you share with will only see the information you explicitly allow
+        • If you create multiple shares for the same user, they'll get the most permissive access from all shares
+        • Shares can be to individual users or groups
+        • Users must accept your share request before they can see your information
+      </Typography>
+
+      <Typography variant="subtitle1" gutterBottom>Privacy & Control</Typography>
+      <Typography paragraph>
+        • You maintain full control over what others can see
+        • You can modify or revoke shares at any time
+        • The recipient will only see entries from the tags you've shared
+        • Profile fields are individually controlled (email, username, birthday, etc)
+        • Recipients can't reshare your information with others
+      </Typography>
+
+      <Typography variant="subtitle1" gutterBottom>Managing Shares</Typography>
+      <Typography paragraph>
+        • Create new shares using the "New Share" button
+        • View and manage existing shares in the "Outbound" tab
+        • See users who are sharing with you in the sidebar under "Community"
+        • Each share can have different permissions, even for the same user
+      </Typography>
+    </Box>
+  ), [])
 
   function renderContent() {
     return <Tabs
       defaultTab={view.tab || "egress"}
       tabs={[
-        {label: "Inbound", value: "ingress", render: renderInbound},
         {label: "Outbound", value: "egress", render: renderOutbound},
         {label: "Info", value: "info", render: renderInfo},
       ]}

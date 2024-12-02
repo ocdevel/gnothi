@@ -28,11 +28,20 @@ export class Shares extends Base {
   async ingress() {
     const {vid, db: {drizzle}} = this.context
     const rows = await drizzle
-      .select()
+      .select({
+        id: sharesUsers.share_id,
+        share_id: sharesUsers.share_id,
+        obj_id: sharesUsers.obj_id,
+        state: sharesUsers.state,
+        share: shares,
+        user: users
+      })
       .from(sharesUsers)
       .innerJoin(shares, eq(shares.id, sharesUsers.share_id))
       .innerJoin(users, eq(users.id, shares.user_id))
       .where(eq(sharesUsers.obj_id, vid))
+
+    // Merge shares for users who have multiple shares
     return this.mergeShares(rows)
   }
 
@@ -69,43 +78,141 @@ export class Shares extends Base {
       SELECT 
         s.id,
         row_to_json(s) as share,
-        array_agg(st.obj_id) AS tags, 
-        array_agg(u.email) AS users,
-        array_agg(sg.obj_id) AS groups
+        array_remove(array_agg(DISTINCT st.obj_id), NULL) AS tags,
+        array_remove(array_agg(DISTINCT u.email), NULL) AS users,
+        array_remove(array_agg(DISTINCT sg.obj_id), NULL) AS groups,
+        array_remove(array_agg(DISTINCT su.state), NULL) AS states
       FROM shares s
       LEFT JOIN shares_tags st ON st.share_id = s.id
       LEFT JOIN shares_users su ON su.share_id = s.id
-      LEFT JOIN shares_groups sg ON su.share_id = s.id
+      LEFT JOIN shares_groups sg ON sg.share_id = s.id
       LEFT JOIN users u ON u.id = su.obj_id
       WHERE s.user_id = ${vid}
       ${sid ? sql`AND s.id = ${sid}` : sql``}
       GROUP BY s.id;
     `)
-    debugger
+
     return rows.map((r) => {
-      const {groups, users, tags, ...rest} = r
+      const {groups, users, tags, states, ...rest} = r
       return {
         ...rest,
-        groups: keysToBoolMap(groups),
-        users: keysToBoolMap(users),
-        tags: keysToBoolMap(tags),
+        groups: keysToBoolMap(groups || []),
+        users: keysToBoolMap(users || []),
+        tags: keysToBoolMap(tags || []),
+        states: states || []
       }
     })
-
-    // git-blame drizzle native version (non-working attempt)
   }
 
-  async post(req: S.Shares.shares_post_request): Promise<Share> {
+  async snoop(targetUserId: string): Promise<boolean> {
     const {vid, db} = this.context
     const {drizzle} = db
-    const {share, groups, tags, users} = req
-    const postReq = {
-      ...share,
-      user_id: vid,
-    }
-    const res = await db.drizzle.insert(shares).values(postReq).returning()
-    const putReq = {...req, share: res[0]}
-    return this.put(putReq, true)
+
+    // Check if there's an accepted share that allows viewing
+    const shares2 = await drizzle
+      .select()
+      .from(sharesUsers)
+      .innerJoin(shares, eq(shares.id, sharesUsers.share_id))
+      .where(and(
+        eq(shares.user_id, targetUserId),
+        eq(sharesUsers.obj_id, vid),
+        eq(sharesUsers.state, 'accepted')
+      ))
+    return shares2.length > 0
+  }
+
+  async acceptShare(shareId: string) {
+    const {vid, db} = this.context
+    const {drizzle} = db
+
+    await drizzle
+      .update(sharesUsers)
+      .set({state: 'accepted'})
+      .where(and(
+        eq(sharesUsers.share_id, shareId),
+        eq(sharesUsers.obj_id, vid)
+      ))
+
+    return this.ingress()
+  }
+
+  async rejectShare(shareId: string) {
+    const {vid, db} = this.context
+    const {drizzle} = db
+
+    await drizzle
+      .update(sharesUsers)
+      .set({state: 'rejected'})
+      .where(and(
+        eq(sharesUsers.share_id, shareId),
+        eq(sharesUsers.obj_id, vid)
+      ))
+
+    return this.ingress()
+  }
+
+  async deleteShare(shareId: string) {
+    const {vid, db} = this.context
+    const {drizzle} = db
+
+    await drizzle
+      .delete(shares)
+      .where(and(
+        eq(shares.id, shareId),
+        eq(shares.user_id, vid)
+      ))
+
+    return this.egress()
+  }
+
+  async post(data: S.Shares.SharePost) {
+    const {vid, db: {drizzle}} = this.context
+    // Remove self from users list if present
+    delete data.users[vid]
+
+    // Create the share
+    const [share] = await drizzle
+      .insert(shares)
+      .values({
+        user_id: vid,
+        ...this.shareFields(data.profile, data.share),
+      })
+      .returning()
+
+    // Handle users
+    const userPromises = Object.keys(data.users).map(async (userId) => {
+      await drizzle
+        .insert(sharesUsers)
+        .values({
+          share_id: share.id,
+          obj_id: userId,
+        })
+      // Create notification for the shared user
+      await this.context.m.notifs.createShareNotif(share.id, userId)
+    })
+
+    // Handle tags
+    const tagPromises = Object.keys(data.tags).map(async (tagId) => {
+      await drizzle
+        .insert(sharesTags)
+        .values({
+          share_id: share.id,
+          obj_id: tagId,
+        })
+    })
+
+    // Handle groups
+    const groupPromises = Object.keys(data.groups).map(async (groupId) => {
+      await drizzle
+        .insert(sharesGroups)
+        .values({
+          share_id: share.id,
+          obj_id: groupId,
+        })
+    })
+
+    await Promise.all([...userPromises, ...tagPromises, ...groupPromises])
+    return share
   }
 
   async put(req: S.Shares.shares_put_request, isUpsert=false): Promise<Share> {
