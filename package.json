@@ -7,6 +7,7 @@
     "build": "AWS_PROFILE=gnothiadmin sst build",
     "deploy:staging": "AWS_PROFILE=gnothiadmin sst deploy --stage=staging",
     "deploy:prod": "AWS_PROFILE=gnothiadmin sst deploy --stage=prod",
+    "deploy:prod:web": "AWS_PROFILE=gnothiadmin sst deploy Web --stage=prod",
     "deploy:shared-dev": "AWS_PROFILE=gnothiadmin sst deploy --stage=shared-dev",
     "remove": "AWS_PROFILE=gnothiadmin sst remove",
     "console": "AWS_PROFILE=gnothiadmin sst console",

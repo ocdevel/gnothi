@@ -81,7 +81,7 @@ export class DB {
         i.host = {
           host: "localhost",
           port: 5432,
-          username: "postgres",
+          username: "lefnire",
           password: "password"
         }
       }

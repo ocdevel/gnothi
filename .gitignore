@@ -39,3 +39,5 @@ cdk.context.json
 
 tmp
 sst-remove
+.aider*
+.env

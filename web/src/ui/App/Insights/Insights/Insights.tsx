@@ -208,10 +208,11 @@ export default function Insights({entry_ids}: Insights) {
         <Admin view={view}/>
       </Insight>, [Boolean(me?.is_superuser)])}
 
-      <Video />
       <Box sx={{display:'flex', justifyContent: 'center'}}>
         <DonateButton />
       </Box>
+      <Video />
+
     </Stack2>
   </div>
 }
