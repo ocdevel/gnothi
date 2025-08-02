@@ -229,24 +229,21 @@ export default function Insights({entry_ids}: Insights) {
 function Recommendations() {
   return (
     <Box>
-      <Typography variant="body1" fontWeight={500} color="primary" sx={{ mt: 2 }}>
+      <Typography variant="body1" fontWeight={500} color="primary" sx={{ mt: 2, mb: 1 }}>
         Analog Companions
-      </Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ mt: 1, mb: 2 }}>
-        The feel of a great pen on quality paper can deepen your journaling experience. Here are our top picks available on Amazon.
       </Typography>
 
       <Box sx={{ mb: 2 }}>
-        <Typography variant="subtitle1" fontWeight="bold">A Journal for Structure</Typography>
-        <Typography variant="body2" sx={{ mb: 1 }}>
+        <Typography variant="body1" fontWeight={500}>A Journal for Structure</Typography>
+        <Typography variant="body2" sx={{ my: 1 }}>
           The <strong>Leuchtturm1917 notebook</strong> is a modern classic. With numbered pages and a built-in index, it's the perfect physical tool for organizing your entries and tracking the themes you uncover here.
         </Typography>
         <Link href="https://amzn.to/4m7ozcb" target="_blank" rel="noopener noreferrer">View on Amazon</Link>
       </Box>
 
       <Box sx={{ mb: 2 }}>
-        <Typography variant="subtitle1" fontWeight="bold">A Pen for Clarity</Typography>
-        <Typography variant="body2" sx={{ mb: 1 }}>
+        <Typography variant="body1" fontWeight={500}>A Pen for Clarity</Typography>
+        <Typography variant="body2" sx={{ my: 1 }}>
           The <strong>Sakura Pigma Micron</strong> delivers a crisp, consistent line with archival ink that won't fade or bleed. It’s the ideal instrument for capturing your most important thoughts.
         </Typography>
         <Link href="https://amzn.to/45vpQDU" target="_blank" rel="noopener noreferrer">View on Amazon</Link>
@@ -254,16 +251,13 @@ function Recommendations() {
 
       <Divider sx={{ my: 2 }} />
 
-      <Typography variant="body1" fontWeight={500} color="primary" sx={{ mt: 2 }}>
+      <Typography variant="body1" fontWeight={500} color="primary" sx={{ mt: 2, mb: 1 }}>
         Deeper Learning
-      </Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ mt: 1, mb: 2 }}>
-        Complement your personal insights with evidence-based knowledge.
       </Typography>
 
       <Box>
-        <Typography variant="subtitle1" fontWeight="bold">The Science of Well-being</Typography>
-        <Typography variant="body2" sx={{ mb: 1 }}>
+        <Typography variant="body1" fontWeight={500}>The Science of Well-being</Typography>
+        <Typography variant="body2" sx={{ my: 1 }}>
           Understand the research behind happiness and building better habits. This landmark Yale University course on Coursera has helped millions turn reflection into actionable, positive change.
         </Typography>
         <Link href="https://imp.i384100.net/N9Jdn1" target="_blank" rel="noopener noreferrer">Enroll for Free on Coursera</Link>
