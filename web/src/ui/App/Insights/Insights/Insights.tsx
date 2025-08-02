@@ -5,6 +5,7 @@ import Prompt from "./Prompt/Prompt"
 import Books from "./Books"
 import Admin from "./Admin"
 import Divider from "@mui/material/Divider";
+import Link from "@mui/material/Link";
 import dayjs from 'dayjs'
 import {
   FaLock
@@ -20,6 +21,7 @@ import ThemesIcon from '@mui/icons-material/DashboardOutlined';
 import PromptIcon from '@mui/icons-material/ChatOutlined';
 import ExpandIcon from '@mui/icons-material/FullscreenOutlined';
 import AdminIcon from '@mui/icons-material/AdminPanelSettingsOutlined';
+import AutoAwesomeOutlinedIcon from '@mui/icons-material/AutoAwesomeOutlined';
 import Tooltip from "@mui/material/Tooltip"
 
 
@@ -208,13 +210,66 @@ export default function Insights({entry_ids}: Insights) {
         <Admin view={view}/>
       </Insight>, [Boolean(me?.is_superuser)])}
 
-      <Box sx={{display:'flex', justifyContent: 'center'}}>
+      {/*<Box sx={{display:'flex', justifyContent: 'center'}}>
         <DonateButton />
-      </Box>
+      </Box>*/}
+      {useMemo(() => <Insight
+        label="Enhance Your Practice"
+        icon={<AutoAwesomeOutlinedIcon {...iconProps} />}
+        description="Take your self-reflection to the next level with these curated resources."
+      >
+        <Recommendations />
+      </Insight>, [])}
       <Video />
 
     </Stack2>
   </div>
+}
+
+function Recommendations() {
+  return (
+    <Box>
+      <Typography variant="body1" fontWeight={500} color="primary" sx={{ mt: 2 }}>
+        Analog Companions
+      </Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mt: 1, mb: 2 }}>
+        The feel of a great pen on quality paper can deepen your journaling experience. Here are our top picks available on Amazon.
+      </Typography>
+
+      <Box sx={{ mb: 2 }}>
+        <Typography variant="subtitle1" fontWeight="bold">A Journal for Structure</Typography>
+        <Typography variant="body2" sx={{ mb: 1 }}>
+          The <strong>Leuchtturm1917 notebook</strong> is a modern classic. With numbered pages and a built-in index, it's the perfect physical tool for organizing your entries and tracking the themes you uncover here.
+        </Typography>
+        <Link href="https://amzn.to/4m7ozcb" target="_blank" rel="noopener noreferrer">View on Amazon</Link>
+      </Box>
+
+      <Box sx={{ mb: 2 }}>
+        <Typography variant="subtitle1" fontWeight="bold">A Pen for Clarity</Typography>
+        <Typography variant="body2" sx={{ mb: 1 }}>
+          The <strong>Sakura Pigma Micron</strong> delivers a crisp, consistent line with archival ink that won't fade or bleed. It’s the ideal instrument for capturing your most important thoughts.
+        </Typography>
+        <Link href="https://amzn.to/45vpQDU" target="_blank" rel="noopener noreferrer">View on Amazon</Link>
+      </Box>
+
+      <Divider sx={{ my: 2 }} />
+
+      <Typography variant="body1" fontWeight={500} color="primary" sx={{ mt: 2 }}>
+        Deeper Learning
+      </Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mt: 1, mb: 2 }}>
+        Complement your personal insights with evidence-based knowledge.
+      </Typography>
+
+      <Box>
+        <Typography variant="subtitle1" fontWeight="bold">The Science of Well-being</Typography>
+        <Typography variant="body2" sx={{ mb: 1 }}>
+          Understand the research behind happiness and building better habits. This landmark Yale University course on Coursera has helped millions turn reflection into actionable, positive change.
+        </Typography>
+        <Link href="https://imp.i384100.net/N9Jdn1" target="_blank" rel="noopener noreferrer">Enroll for Free on Coursera</Link>
+      </Box>
+    </Box>
+  );
 }
 
 function Video() {
@@ -229,8 +284,8 @@ function Video() {
 function DonateButton() {
   return <form action="https://www.paypal.com/donate" method="post" target="_top">
     <input type="hidden" name="hosted_button_id" value="9A9KRVTQFFLFC"/>
-    <input type="image" src="https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif" border="0" name="submit"
+    <input type="image" src="https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif" name="submit"
            title="PayPal - The safer, easier way to pay online!" alt="Donate with PayPal button"/>
-    <img alt="" border="0" src="https://www.paypal.com/en_US/i/scr/pixel.gif" width="1" height="1"/>
+    <img alt="" src="https://www.paypal.com/en_US/i/scr/pixel.gif" width="1" height="1"/>
   </form>
 }
