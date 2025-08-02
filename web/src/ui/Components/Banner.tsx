@@ -18,7 +18,7 @@ interface LocalStore {
 }
 const useLocalStore = create<LocalStore>((set, get) => ({
   banners: [
-    <SunsetBanner key="sunset" />
+    // <SunsetBanner key="sunset" />
   ],
   addBanner: (banner) => set(s => ({banners: [...s.banners, banner]})),
   closeBanner: (i) => set(s => ({
@@ -47,16 +47,13 @@ function SunsetBanner() {
         <DialogTitle>Important Update About Gnothi's Future</DialogTitle>
         <DialogContent>
           <Typography paragraph>
-            After 5.5 years and much personal financial investment, with only ~$100 in subscription revenue,
-            I can no longer afford to maintain this project.
+            After 5.5 years and much personal financial investment, with near-zero subscription revenue, I can no longer afford to maintain this project.
           </Typography>
           <Typography paragraph>
-            I'm working on a data export feature that will be available before and after the sunset date,
-            ensuring you'll always have access to your data.
+            I'm working on a data export feature that will be available before and after the sunset date, ensuring you'll always have access to your data.
           </Typography>
           <Typography paragraph>
-            While unlikely, if enough users subscribe or donate, the project could continue. If you'd like to help
-            or have questions, please reach out at <a href="https://ocdevel.com/contact">ocdevel.com/contact</a>
+            While unlikely, if enough users subscribe or donate, the project could continue. If you have questions, please reach out at <a href="https://ocdevel.com/contact">ocdevel.com/contact</a>
           </Typography>
         </DialogContent>
         <DialogActions>

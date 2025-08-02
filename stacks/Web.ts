@@ -2,6 +2,8 @@ import { use, StackContext, StaticSite, Job } from "sst/constructs";
 import { Api } from "./Api";
 import { Auth } from "./Auth";
 import { Misc } from "./Misc";
+import {DistributionDomainProps} from "sst/constructs/Distribution";
+import {StaticSiteDomainProps} from "sst/constructs/StaticSite";
 
 export function Web({ app, stack }: StackContext) {
   const {http, ws} = use(Api);
@@ -18,7 +20,7 @@ export function Web({ app, stack }: StackContext) {
     VITE_USER_POOL_CLIENT_ID: auth.userPoolClientId,
   }
 
-  const customDomain = (
+  const customDomain: StaticSiteDomainProps | undefined = (
     app.stage === "prod" ? {
       domainName: domains.root,
       domainAlias: `www.${domains.root}`,
