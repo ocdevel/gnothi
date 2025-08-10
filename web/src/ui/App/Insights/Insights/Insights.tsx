@@ -214,11 +214,11 @@ export default function Insights({entry_ids}: Insights) {
         <DonateButton />
       </Box>*/}
       {useMemo(() => <Insight
-        label="Enhance Your Practice"
+        label="Turn Journal Insights Into Calm with Headspace"
         icon={<AutoAwesomeOutlinedIcon {...iconProps} />}
-        description="Take your self-reflection to the next level with these curated resources."
+        description="When your entries surface stress or distraction, tap into short, science-backed meditations, breathing breaks, focus sounds, and sleepcasts to reset, refocus, and rest in minutes."
       >
-        <Recommendations />
+        <Affiliate />
       </Insight>, [])}
       <Video />
 
@@ -226,42 +226,21 @@ export default function Insights({entry_ids}: Insights) {
   </div>
 }
 
-function Recommendations() {
+function Affiliate() {
   return (
-    <Box>
-      <Typography variant="body1" fontWeight={500} color="primary" sx={{ mt: 2, mb: 1 }}>
-        Analog Companions
-      </Typography>
-
-      <Box sx={{ mb: 2 }}>
-        <Typography variant="body1" fontWeight={500}>A Journal for Structure</Typography>
-        <Typography variant="body2" sx={{ my: 1 }}>
-          The <strong>Leuchtturm1917 notebook</strong> is a modern classic. With numbered pages and a built-in index, it's the perfect physical tool for organizing your entries and tracking the themes you uncover here.
-        </Typography>
-        <Link href="https://amzn.to/4m7ozcb" target="_blank" rel="noopener noreferrer">View on Amazon</Link>
-      </Box>
-
-      <Box sx={{ mb: 2 }}>
-        <Typography variant="body1" fontWeight={500}>A Pen for Clarity</Typography>
-        <Typography variant="body2" sx={{ my: 1 }}>
-          The <strong>Sakura Pigma Micron</strong> delivers a crisp, consistent line with archival ink that won't fade or bleed. It’s the ideal instrument for capturing your most important thoughts.
-        </Typography>
-        <Link href="https://amzn.to/45vpQDU" target="_blank" rel="noopener noreferrer">View on Amazon</Link>
-      </Box>
-
-      <Divider sx={{ my: 2 }} />
-
-      <Typography variant="body1" fontWeight={500} color="primary" sx={{ mt: 2, mb: 1 }}>
-        Deeper Learning
-      </Typography>
-
-      <Box>
-        <Typography variant="body1" fontWeight={500}>The Science of Well-being</Typography>
-        <Typography variant="body2" sx={{ my: 1 }}>
-          Understand the research behind happiness and building better habits. This landmark Yale University course on Coursera has helped millions turn reflection into actionable, positive change.
-        </Typography>
-        <Link href="https://imp.i384100.net/N9Jdn1" target="_blank" rel="noopener noreferrer">Enroll for Free on Coursera</Link>
-      </Box>
+    <Box sx={{textAlign: 'center'}}>
+      <Link href="https://track.flexlinkspro.com/g.ashx?foid=156074.13686.1125965&trid=1512996.227734&foc=16&fot=9999&fos=6" target="_blank" rel="noopener noreferrer">
+        <img
+          src="/ads/headspace_anxious_optim.png"
+          alt="Turn Journal Insights Into Calm with Headspace"
+          style={{
+            maxWidth: '100%',
+            height: 'auto',
+            borderRadius: 8,
+            display: 'block'
+          }}
+        />
+      </Link>
     </Box>
   );
 }
