@@ -214,9 +214,9 @@ export default function Insights({entry_ids}: Insights) {
         <DonateButton />
       </Box>*/}
       {useMemo(() => <Insight
-        label="Turn Journal Insights Into Calm with Headspace"
+        label="Turn Insights Into Calm with Headspace"
         icon={<AutoAwesomeOutlinedIcon {...iconProps} />}
-        description="When your entries surface stress or distraction, tap into short, science-backed meditations, breathing breaks, focus sounds, and sleepcasts to reset, refocus, and rest in minutes."
+        action="When your entries surface stress or distraction, tap into short, science-backed meditations, breathing breaks, focus sounds, and sleepcasts to reset, refocus, and rest in minutes."
       >
         <Affiliate />
       </Insight>, [])}
@@ -229,7 +229,7 @@ export default function Insights({entry_ids}: Insights) {
 function Affiliate() {
   return (
     <Box sx={{textAlign: 'center'}}>
-      <Link href="https://track.flexlinkspro.com/g.ashx?foid=156074.13686.1125965&trid=1512996.227734&foc=16&fot=9999&fos=6" target="_blank" rel="noopener noreferrer">
+      <Link sx={{display: 'inline-block'}} href="https://track.flexlinkspro.com/g.ashx?foid=156074.13686.1125965&trid=1512996.227734&foc=16&fot=9999&fos=6" target="_blank" rel="noopener noreferrer">
         <img
           src="/ads/headspace_anxious_optim.png"
           alt="Turn Journal Insights Into Calm with Headspace"
